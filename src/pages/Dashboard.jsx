@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, CurrencyRupeeIcon, ShoppingBagIcon, CubeIcon, ExclamationTriangleIcon, BanknotesIcon, PlusIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import api from '../api/api'
 import Loader from '../components/Loader'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 const cardIcons = [
   <CurrencyRupeeIcon className="w-8 h-8 text-blue-500" />,
@@ -34,6 +34,8 @@ export default function Dashboard({ onLogout }) {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [dateRange, setDateRange] = useState('month'); // <-- Add this line
+  const [purchaseDateFrom, setPurchaseDateFrom] = useState('');
+  const [purchaseDateTo, setPurchaseDateTo] = useState('');
   const navigate = useNavigate();
 
   // Fetch metrics
@@ -70,9 +72,15 @@ export default function Dashboard({ onLogout }) {
     queryFn: () => api.get('/analytics/purchase-summary/').then(res => res.data)
   })
   const { data: salesSummary, isLoading: loadingSalesSummary } = useQuery({
-    queryKey: ['sales-summary'],
-    queryFn: () => api.get('/analytics/sales-summary/').then(res => res.data)
-  })
+    queryKey: ['sales-summary', dateFrom, dateTo],
+    queryFn: () =>
+      api.get('/analytics/sales-summary/', {
+        params: {
+          ...(dateFrom && { date_from: dateFrom }),
+          ...(dateTo && { date_to: dateTo }),
+        },
+      }).then(res => res.data)
+});
 
   // Quick Actions
   const handleQuickAction = (action) => {
@@ -145,15 +153,109 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  // New function for exporting Inventory summary as CSV
+  const handleExportInventoryCsv = async () => {
+    try {
+      const response = await api.get('/analytics/inventory-summary/', {
+        params: { export: 'csv' },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'inventory-summary.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('Failed to export inventory summary.');
+    }
+  };
+
+  // New function for exporting Purchase summary as CSV
+  const handleExportPurchaseCsv = async () => {
+    try {
+      const response = await api.get('/analytics/purchase-summary/', {
+        params: {
+          ...(dateFrom && { date_from: dateFrom }),
+          ...(dateTo && { date_to: dateTo }),
+          export: 'csv',
+        },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'purchase-summary.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('Failed to export purchase summary.');
+    }
+  };
+
+  // New function for exporting Sales summary as CSV
+  const handleExportSalesCsv = async () => {
+    try {
+      const response = await api.get('/analytics/sales-summary/', {
+        params: {
+          ...(dateFrom && { date_from: dateFrom }),
+          ...(dateTo && { date_to: dateTo }),
+          export: 'csv',
+        },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'sales-summary.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('Failed to export sales summary.');
+    }
+  };
+
+  // Combine sales and purchase data by date for the chart
+  const salesVsPurchasesData = useMemo(() => {
+    // Assume salesSummary.sales_by_date and purchaseSummary.purchases_by_date are arrays like [{date: '2024-07-01', total_sales: 1000}]
+    const salesByDate = salesSummary?.sales_by_date || [];
+    const purchasesByDate = purchaseSummary?.purchases_by_date || [];
+
+    // Create a map for quick lookup
+    const salesMap = Object.fromEntries(salesByDate.map(item => [item.date, item.total_sales]));
+    const purchasesMap = Object.fromEntries(purchasesByDate.map(item => [item.date, item.total_purchases]));
+
+    // Get all unique dates
+    const allDates = Array.from(new Set([...salesByDate.map(i => i.date), ...purchasesByDate.map(i => i.date)])).sort();
+
+    // Build the combined array
+    return allDates.map(date => ({
+      date,
+      Sales: salesMap[date] || 0,
+      Purchases: purchasesMap[date] || 0,
+    }));
+  }, [salesSummary, purchaseSummary]);
+
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
         <div className="h-16 flex items-center justify-center font-bold text-xl text-blue-600 dark:text-blue-400">ERP</div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <a href="#" className="block px-4 py-2 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold">Dashboard</a>
+          <Link to="/" className="block px-4 py-2 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold">Dashboard</Link>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Sales</a>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Purchases</a>
+          <Link
+            to="/purchase"
+            className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Purchases
+          </Link>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Inventory</a>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Clients</a>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Analytics</a>
@@ -249,7 +351,16 @@ export default function Dashboard({ onLogout }) {
             </div>
             {/* Inventory Distribution */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col items-center">
-              <span className="font-semibold text-gray-900 dark:text-white mb-2">Inventory Distribution</span>
+              <div className="flex w-full justify-between items-center mb-2">
+                <span className="font-semibold text-gray-900 dark:text-white">Inventory Distribution</span>
+                <button
+                  onClick={handleExportInventoryCsv}
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                  title="Export Inventory as CSV"
+                >
+                  Export CSV
+                </button>
+              </div>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
@@ -601,6 +712,21 @@ export default function Dashboard({ onLogout }) {
                 </BarChart>
               </ResponsiveContainer>
             )}
+          </section>
+
+          {/* Sales vs Purchases by Date */}
+          <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mt-6">
+            <span className="font-semibold text-gray-900 dark:text-white mb-2 block">Sales vs Purchases (by Date)</span>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={salesVsPurchasesData}>
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Sales" stroke="#2563eb" strokeWidth={2} />
+                <Line type="monotone" dataKey="Purchases" stroke="#22c55e" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </section>
         </main>
       </div>

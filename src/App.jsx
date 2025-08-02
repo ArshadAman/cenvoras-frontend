@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
+import Purchase from './pages/Purchase'
 
 const getToken = () => !!localStorage.getItem('token')
 
@@ -23,6 +24,10 @@ function App() {
         <Route
           path="/dashboard"
           element={isAuthenticated ? <Dashboard onLogout={() => setIsAuthenticated(false)} /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/purchase"
+          element={isAuthenticated ? <Purchase /> : <Navigate to="/login" replace />}
         />
         <Route
           path="*"
