@@ -1,16 +1,6 @@
-import axios from "axios";
+import api from './api';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
-});
-
-// Attach JWT token if needed
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
+// Purchase Bills API endpoints
 export const getPurchaseBills = params =>
   api.get("/billing/purchase-bills/", { params }).then(res => res.data);
 
@@ -18,17 +8,25 @@ export const getPurchaseBill = id =>
   api.get(`/billing/purchase-bills/${id}/`).then(res => res.data);
 
 export const createPurchaseBill = data =>
-  api.post("/billing/purchase-bills/", data);
+  api.post("/billing/purchase-bills/", data).then(res => res.data);
 
 export const updatePurchaseBill = (id, data) =>
-  api.put(`/billing/purchase-bills/${id}/`, data);
+  api.put(`/billing/purchase-bills/${id}/edit/`, data).then(res => res.data);
 
 export const deletePurchaseBill = id =>
-  api.delete(`/billing/purchase-bills/${id}/`);
+  api.delete(`/billing/purchase-bills/${id}/edit/`).then(res => res.data);
 
 export const uploadPurchaseCsv = formData =>
   api.post("/billing/upload-purchase-bills-csv/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
-  });
+  }).then(res => res.data);
 
-// Add more API functions for other endpoints if needed
+// Product API endpoints for purchase form
+export const getProducts = () =>
+  api.get("/inventory/products/").then(res => res.data);
+
+export const createProduct = (data) =>
+  api.post("/inventory/add-product/", data).then(res => res.data);
+
+export const updateProduct = (id, data) =>
+  api.put(`/inventory/product/${id}/`, data).then(res => res.data);

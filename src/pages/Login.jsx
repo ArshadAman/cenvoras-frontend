@@ -30,6 +30,7 @@ export default function Login({ onLogin }) {
               const token = response.data.token || response.data.access
               if (token) {
                 localStorage.setItem('token', token)
+                localStorage.setItem('refresh', response.data.refresh)
                 if (onLogin) onLogin() // trigger auth state update in App
                 navigate('/dashboard')
               } else {

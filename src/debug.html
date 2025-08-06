@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug LocalStorage</title>
+</head>
+<body>
+    <h1>LocalStorage Debug</h1>
+    <div id="debug"></div>
+    <script>
+        const debugDiv = document.getElementById('debug');
+        const token = localStorage.getItem('token');
+        const refresh = localStorage.getItem('refresh');
+        
+        debugDiv.innerHTML = `
+            <p><strong>Token:</strong> ${token ? token.substring(0, 50) + '...' : 'NOT FOUND'}</p>
+            <p><strong>Refresh:</strong> ${refresh ? refresh.substring(0, 50) + '...' : 'NOT FOUND'}</p>
+            <p><strong>Full Token:</strong> <textarea rows="3" cols="80">${token || 'NOT FOUND'}</textarea></p>
+            <p><strong>Full Refresh:</strong> <textarea rows="3" cols="80">${refresh || 'NOT FOUND'}</textarea></p>
+        `;
+    </script>
+</body>
+</html>

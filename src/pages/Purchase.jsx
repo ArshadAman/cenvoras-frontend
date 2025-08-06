@@ -15,6 +15,17 @@ export default function Purchase() {
   const [deleteBill, setDeleteBill] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
 
+  // Fix: Handle edit properly
+  const handleEdit = (bill) => {
+    setEditBill(bill);
+    setShowForm(true); // This was missing!
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditBill(null);
+  };
+
   return (
     <Layout>
       <div className="flex-1 flex flex-col">
@@ -39,7 +50,7 @@ export default function Purchase() {
         </header>
         <main className="flex-1 p-4">
           <PurchaseTable
-            onEdit={setEditBill}
+            onEdit={handleEdit} // Use the fixed handler
             onView={setShowDetails}
             onDelete={setDeleteBill}
           />
@@ -49,10 +60,7 @@ export default function Purchase() {
       {showForm && (
         <PurchaseForm
           bill={editBill}
-          onClose={() => {
-            setShowForm(false);
-            setEditBill(null);
-          }}
+          onClose={handleCloseForm} // Use the fixed handler
         />
       )}
       {showDetails && (
