@@ -28,10 +28,10 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
     setFieldValue(`items.${idx}.product_name`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
-    setFieldValue(`items.${idx}.price`, product.purchase_price || 0);
-    setFieldValue(`items.${idx}.hsn_code`, product.hsn_code || "");
-    setFieldValue(`items.${idx}.discount`, 0);
-    setFieldValue(`items.${idx}.tax`, product.tax || 0);
+    setFieldValue(`items.${idx}.price`, product.purchase_price ?? product.price ?? 0); // <-- Fix here
+    setFieldValue(`items.${idx}.hsn_code`, product.hsn_code || product.hsn_sac_code || "");
+    setFieldValue(`items.${idx}.discount`, product.discount ?? 0);
+    setFieldValue(`items.${idx}.tax`, product.tax ?? 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
     setInputValue(product.name);
     setShowDropdown(false);
@@ -109,7 +109,7 @@ const PurchaseSchema = Yup.object().shape({
       product_name: Yup.string().required().min(1),
       quantity: Yup.number().required().min(1),
       unit: Yup.string().required(),
-      amount: Yup.number().required().min(0),
+      // amount: Yup.number().required().min(0),
     })
   ).min(1),
 });
@@ -193,27 +193,38 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             try {
               // Handle product creation/updates first
               const processedItems = validItems.map(item => {
-                const trimmedProductName = item.product_name.trim();
-                let productValue;
-                if (item.isExistingProduct && item.product_id) {
-                  productValue = item.product_id;
-                } else {
-                  productValue = trimmedProductName;
-                }
+                const quantity = Number(item.quantity) || 0;
+                const price = Number(item.price) || 0;
+                const discount = Number(item.discount) || 0;
+                const tax = Number(item.tax) || 0;
+                const discountAmount = ((quantity * price) * discount) / 100;
+                const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
+                const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
+
                 return {
-                  product: productValue,
+                  product: item.isExistingProduct && item.product_id ? item.product_id : item.product_name.trim(),
                   hsn_sac_code: item.hsn_code || "",
                   unit: item.unit || "pcs",
-                  quantity: parseInt(item.quantity) || 1,
-                  price: parseFloat(item.price) || 0,
-                  amount: parseFloat(item.amount) || 0,
-                  discount: parseFloat(item.discount) || 0,
-                  tax: parseFloat(item.tax) || 0,
+                  quantity,
+                  price,
+                  amount: Number(calculatedAmount.toFixed(2)), // <-- Fix: round to 2 decimals
+                  discount,
+                  tax,
                 };
               });
               
-              const totalAmount = values.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+              const totalAmount = validItems.reduce((sum, item) => {
+                const quantity = Number(item.quantity) || 0;
+                const price = Number(item.price) || 0;
+                const discount = Number(item.discount) || 0;
+                const tax = Number(item.tax) || 0;
+                const discountAmount = ((quantity * price) * discount) / 100;
+                const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
+                const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
+                return sum + calculatedAmount;
+              }, 0);
 
+              // Fix: round to 2 decimals and send as a number
               const purchaseData = {
                 bill_number: values.bill_number,
                 bill_date: values.bill_date,
@@ -223,7 +234,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 vendor_gstin: values.vendor_gstin || null,
                 gst_treatment: values.gst_treatment || null,
                 journal: values.journal,
-                total_amount: totalAmount,
+                total_amount: Number(totalAmount.toFixed(2)),
                 items: processedItems
               };
               
@@ -359,69 +370,17 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                         <div>Action</div>
                       </div>
                       
-                      {values.items.map((item, idx) => {
-                        // Parse numbers safely
-                        const quantity = Number(item.quantity) || 0;
-                        const price = Number(item.price) || 0;
-                        const discount = Number(item.discount) || 0;
-                        const tax = Number(item.tax) || 0;
-
-                        // Calculate discount and tax as percentages
-                        const discountAmount = ((quantity * price) * discount) / 100;
-                        const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
-                        const amount = ((quantity * price) - discountAmount) + taxAmount;
-
-                        // Update amount if changed
-                        if (amount !== item.amount) {
-                          setFieldValue(`items.${idx}.amount`, amount, false);
-                        }
-
-                        return (
-                          <div key={idx} className="grid grid-cols-9 gap-2 items-end bg-gray-50 rounded p-2">
-                            <div>
-                              <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} />
-                            </div>
-                            <Field name={`items.${idx}.hsn_code`}>
-                              {({ field }) => (
-                                <input {...field} placeholder="HSN/SAC" className="w-full p-2 border rounded text-sm" />
-                              )}
-                            </Field>
-                            <Field name={`items.${idx}.quantity`}>
-                              {({ field }) => (
-                                <input {...field} type="number" min="1" placeholder="Qty" className="w-full p-2 border rounded text-sm" />
-                              )}
-                            </Field>
-                            <Field name={`items.${idx}.unit`}>
-                              {({ field }) => (
-                                <select {...field} className="w-full p-2 border rounded text-sm">
-                                  {units.map(u => <option key={u} value={u}>{u}</option>)}
-                                </select>
-                              )}
-                            </Field>
-                            <Field name={`items.${idx}.price`}>
-                              {({ field }) => (
-                                <input {...field} type="number" min="0" step="0.01" placeholder="Price" className="w-full p-2 border rounded text-sm" />
-                              )}
-                            </Field>
-                            <Field name={`items.${idx}.discount`}>
-                              {({ field }) => (
-                                <input {...field} type="number" min="0" max="100" step="0.01" placeholder="Discount %" className="w-full p-2 border rounded text-sm" />
-                              )}
-                            </Field>
-                            <Field name={`items.${idx}.tax`}>
-                              {({ field }) => (
-                                <input {...field} type="number" min="0" max="100" step="0.01" placeholder="Tax %" className="w-full p-2 border rounded text-sm" />
-                              )}
-                            </Field>
-                            <div>
-                              <input type="number" value={item.amount?.toFixed(2) || "0.00"} readOnly className="w-full p-2 border rounded text-sm bg-gray-100" />
-                            </div>
-                            <button type="button" className="text-red-500 px-2 py-1 text-sm" onClick={() => remove(idx)} disabled={values.items.length === 1}>
-                              Remove
-                            </button>
-                          </div>
-                        );
-                      })}
+                      {values.items.map((item, idx) => (
+                        <PurchaseItemRow
+                          key={idx}
+                          item={item}
+                          idx={idx}
+                          values={values}
+                          setFieldValue={setFieldValue}
+                          remove={remove}
+                          units={units}
+                        />
+                      ))}
                       
                       <button
                         type="button"
@@ -450,22 +409,23 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               <div className="flex justify-end mt-4">
                 <div className="w-48">
                   <label className="block text-sm font-medium mb-1">Total Amount *</label>
-                  <Field name="total_amount">
-                    {({ field, form }) => {
-                      const total = values.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                      if (total !== Number(field.value)) {
-                        form.setFieldValue("total_amount", total.toFixed(2), false);
-                      }
-                      return (
-                        <input
-                          {...field}
-                          value={total.toFixed(2)}
-                          readOnly
-                          className="w-full p-2 border rounded text-right font-semibold bg-gray-100"
-                        />
-                      );
-                    }}
-                  </Field>
+                  <input
+                    type="number"
+                    value={
+                      values.items.reduce((sum, item) => {
+                        const quantity = Number(item.quantity) || 0;
+                        const price = Number(item.price) || 0;
+                        const discount = Number(item.discount) || 0;
+                        const tax = Number(item.tax) || 0;
+                        const discountAmount = ((quantity * price) * discount) / 100;
+                        const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
+                        const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
+                        return sum + calculatedAmount;
+                      }, 0).toFixed(2)
+                    }
+                    readOnly
+                    className="w-full p-2 border rounded text-right font-semibold bg-gray-100"
+                  />
                 </div>
               </div>
 
@@ -480,6 +440,68 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
           )}
         </Formik>
       </div>
+    </div>
+  );
+}
+
+function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units }) {
+  const quantity = Number(item.quantity) || 0;
+  const price = Number(item.price) || 0;
+  const discount = Number(item.discount) || 0;
+  const tax = Number(item.tax) || 0;
+
+  const discountAmount = ((quantity * price) * discount) / 100;
+  const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
+  const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
+
+  return (
+    <div className="grid grid-cols-9 gap-2 items-end bg-gray-50 rounded p-2">
+      <div>
+        <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} />
+      </div>
+      <Field name={`items.${idx}.hsn_code`}>
+        {({ field }) => (
+          <input {...field} placeholder="HSN/SAC" className="w-full p-2 border rounded text-sm" />
+        )}
+      </Field>
+      <Field name={`items.${idx}.quantity`}>
+        {({ field }) => (
+          <input {...field} type="number" min="1" placeholder="Qty" className="w-full p-2 border rounded text-sm" />
+        )}
+      </Field>
+      <Field name={`items.${idx}.unit`}>
+        {({ field }) => (
+          <select {...field} className="w-full p-2 border rounded text-sm">
+            {units.map(u => <option key={u} value={u}>{u}</option>)}
+          </select>
+        )}
+      </Field>
+      <Field name={`items.${idx}.price`}>
+        {({ field }) => (
+          <input {...field} type="number" min="0" step="0.01" placeholder="Price" className="w-full p-2 border rounded text-sm" />
+        )}
+      </Field>
+      <Field name={`items.${idx}.discount`}>
+        {({ field }) => (
+          <input {...field} type="number" min="0" max="100" step="0.01" placeholder="Discount %" className="w-full p-2 border rounded text-sm" />
+        )}
+      </Field>
+      <Field name={`items.${idx}.tax`}>
+        {({ field }) => (
+          <input {...field} type="number" min="0" max="100" step="0.01" placeholder="Tax %" className="w-full p-2 border rounded text-sm" />
+        )}
+      </Field>
+      <div>
+        <input
+          type="number"
+          value={calculatedAmount.toFixed(2)}
+          readOnly
+          className="w-full p-2 border rounded text-sm bg-gray-100"
+        />
+      </div>
+      <button type="button" className="text-red-500 px-2 py-1 text-sm" onClick={() => remove(idx)} disabled={values.items.length === 1}>
+        Remove
+      </button>
     </div>
   );
 }
