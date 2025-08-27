@@ -13,7 +13,7 @@ export default function Layout({ children, onLogout }) {
           <Link to="/dashboard" className={`block px-4 py-2 rounded ${location.pathname === "/dashboard" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Dashboard</Link>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Sales</a>
           <Link to="/purchase" className={`block px-4 py-2 rounded ${location.pathname === "/purchase" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Purchases</Link>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Inventory</a>
+          <Link to="/inventory" className={`block px-4 py-2 rounded ${location.pathname === "/inventory" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Inventory</Link>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Clients</a>
           <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Analytics</a>
         </nav>

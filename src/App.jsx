@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
+import Inventory from './pages/Inventory'
 
 const getToken = () => !!localStorage.getItem('token')
 
@@ -28,6 +29,10 @@ function App() {
         <Route
           path="/purchase"
           element={isAuthenticated ? <Purchase /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/inventory"
+          element={isAuthenticated ? <Inventory /> : <Navigate to="/login" replace />}
         />
         <Route
           path="*"
