@@ -4,6 +4,7 @@ import PurchaseForm from "../components/purchase/PurchaseForm";
 import PurchaseDetailsModal from "../components/purchase/PurchaseDetailsModal";
 import PurchaseDeleteDialog from "../components/purchase/PurchaseDeleteDialog";
 import PurchaseUploadCsv from "../components/purchase/PurchaseUploadCsv";
+import PurchaseSummary from "../components/purchase/PurchaseSummary";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
@@ -49,6 +50,7 @@ export default function Purchase() {
           </div>
         </header>
         <main className="flex-1 p-4">
+          <PurchaseSummary />
           <PurchaseTable
             onEdit={handleEdit} // Use the fixed handler
             onView={setShowDetails}
