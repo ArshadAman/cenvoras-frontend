@@ -1,63 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { createProduct, updateProduct, getCategories, getUnits, getSuppliers } from "../../api/inventory";
+import { createProduct, updateProduct } from "../../api/inventory";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 const productSchema = Yup.object().shape({
   name: Yup.string()
     .required("Product name is required")
-    .max(100, "Name must be 100 characters or less"),
-  sku: Yup.string()
-    .required("SKU is required")
-    .max(50, "SKU must be 50 characters or less"),
-  description: Yup.string()
-    .max(500, "Description must be 500 characters or less"),
-  category: Yup.string()
-    .required("Category is required"),
+    .max(255, "Name must be 255 characters or less"),
+  hsn_sac_code: Yup.string()
+    .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
-    .required("Unit is required"),
-  unit_price: Yup.number()
-    .required("Unit price is required")
-    .min(0, "Price must be positive"),
-  current_stock: Yup.number()
-    .required("Current stock is required")
+    .required("Unit is required")
+    .max(20, "Unit must be 20 characters or less"),
+  price: Yup.string()
+    .required("Price is required")
+    .matches(/^\d+(\.\d{1,2})?$/, "Price must be a valid decimal number"),
+  stock: Yup.number()
+    .required("Stock is required")
+    .integer("Stock must be a whole number")
     .min(0, "Stock must be positive"),
-  min_stock_level: Yup.number()
-    .min(0, "Minimum stock must be positive"),
-  max_stock_level: Yup.number()
-    .min(0, "Maximum stock must be positive"),
-  supplier: Yup.string(),
-  location: Yup.string()
-    .max(100, "Location must be 100 characters or less"),
-  barcode: Yup.string()
-    .max(50, "Barcode must be 50 characters or less"),
+  low_stock_alert: Yup.number()
+    .integer("Low stock alert must be a whole number")
+    .min(0, "Low stock alert must be positive"),
 });
 
 export default function ProductForm({ product, onClose }) {
   const queryClient = useQueryClient();
   const isEdit = !!product;
 
-  // Fetch reference data
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: getCategories,
-  });
 
-  const { data: units } = useQuery({
-    queryKey: ["units"],
-    queryFn: getUnits,
-  });
-
-  const { data: suppliers } = useQuery({
-    queryKey: ["suppliers"],
-    queryFn: getSuppliers,
-  });
-
-  const categoriesList = Array.isArray(categories) ? categories : categories?.data || categories?.results || [];
-  const unitsList = Array.isArray(units) ? units : units?.data || units?.results || [];
-  const suppliersList = Array.isArray(suppliers) ? suppliers : suppliers?.data || suppliers?.results || [];
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -87,26 +60,21 @@ export default function ProductForm({ product, onClose }) {
 
   const initialValues = {
     name: product?.name || "",
-    sku: product?.sku || "",
-    description: product?.description || "",
-    category: product?.category || "",
+    hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
     unit: product?.unit || "",
-    unit_price: product?.unit_price || "",
-    current_stock: product?.current_stock || "",
-    min_stock_level: product?.min_stock_level || "",
-    max_stock_level: product?.max_stock_level || "",
-    supplier: product?.supplier || "",
-    location: product?.location || "",
-    barcode: product?.barcode || "",
+    price: product?.price || product?.purchase_price || product?.unit_price || "",
+    stock: product?.stock || product?.current_stock || "",
+    low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
   };
 
   const handleSubmit = (values, { setSubmitting }) => {
     const productData = {
-      ...values,
-      unit_price: parseFloat(values.unit_price),
-      current_stock: parseFloat(values.current_stock),
-      min_stock_level: values.min_stock_level ? parseFloat(values.min_stock_level) : null,
-      max_stock_level: values.max_stock_level ? parseFloat(values.max_stock_level) : null,
+      name: values.name,
+      hsn_sac_code: values.hsn_sac_code || null,
+      unit: values.unit,
+      price: values.price,
+      stock: parseInt(values.stock),
+      low_stock_alert: parseInt(values.low_stock_alert) || 0,
     };
 
     if (isEdit) {
@@ -159,103 +127,59 @@ export default function ProductForm({ product, onClose }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    SKU *
+                    HSN/SAC Code
                   </label>
                   <Field
-                    name="sku"
+                    name="hsn_sac_code"
                     type="text"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter SKU"
+                    placeholder="Enter HSN or SAC code"
                   />
-                  <ErrorMessage name="sku" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-500 text-xs mt-1" />
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Unit */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
+                  Unit *
                 </label>
                 <Field
-                  name="description"
-                  as="textarea"
-                  rows={3}
+                  name="unit"
+                  type="text"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter product description"
+                  placeholder="e.g., pcs, kg, liters, meters"
                 />
-                <ErrorMessage name="description" component="div" className="text-red-500 text-xs mt-1" />
-              </div>
-
-              {/* Category and Unit */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Category *
-                  </label>
-                  <Field
-                    name="category"
-                    as="select"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Category</option>
-                    {categoriesList.map((category) => (
-                      <option key={category.id || category.name} value={category.name || category}>
-                        {category.name || category}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage name="category" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Unit *
-                  </label>
-                  <Field
-                    name="unit"
-                    as="select"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Unit</option>
-                    {unitsList.map((unit) => (
-                      <option key={unit.id || unit.name} value={unit.name || unit}>
-                        {unit.name || unit}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage name="unit" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
+                <ErrorMessage name="unit" component="div" className="text-red-500 text-xs mt-1" />
               </div>
 
               {/* Pricing and Stock */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Unit Price *
+                    Price *
                   </label>
                   <Field
-                    name="unit_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    name="price"
+                    type="text"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0.00"
                   />
-                  <ErrorMessage name="unit_price" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="price" component="div" className="text-red-500 text-xs mt-1" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Current Stock *
+                    Stock *
                   </label>
                   <Field
-                    name="current_stock"
+                    name="stock"
                     type="number"
                     min="0"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0"
                   />
-                  <ErrorMessage name="current_stock" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="stock" component="div" className="text-red-500 text-xs mt-1" />
                 </div>
 
                 <div>
@@ -263,88 +187,27 @@ export default function ProductForm({ product, onClose }) {
                     Stock Value
                   </label>
                   <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
-                    ₹{(parseFloat(values.current_stock || 0) * parseFloat(values.unit_price || 0)).toFixed(2)}
+                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.price || 0)).toFixed(2)}
                   </div>
                 </div>
               </div>
 
-              {/* Stock Levels */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Minimum Stock Level
-                  </label>
-                  <Field
-                    name="min_stock_level"
-                    type="number"
-                    min="0"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter minimum stock level"
-                  />
-                  <ErrorMessage name="min_stock_level" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Maximum Stock Level
-                  </label>
-                  <Field
-                    name="max_stock_level"
-                    type="number"
-                    min="0"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter maximum stock level"
-                  />
-                  <ErrorMessage name="max_stock_level" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
-              </div>
-
-              {/* Additional Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Supplier
-                  </label>
-                  <Field
-                    name="supplier"
-                    as="select"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Supplier</option>
-                    {suppliersList.map((supplier) => (
-                      <option key={supplier.id || supplier.name} value={supplier.name || supplier}>
-                        {supplier.name || supplier}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage name="supplier" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Storage Location
-                  </label>
-                  <Field
-                    name="location"
-                    type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., Warehouse A, Shelf 1"
-                  />
-                  <ErrorMessage name="location" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Barcode
-                  </label>
-                  <Field
-                    name="barcode"
-                    type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter barcode"
-                  />
-                  <ErrorMessage name="barcode" component="div" className="text-red-500 text-xs mt-1" />
-                </div>
+              {/* Low Stock Alert */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Low Stock Alert Level
+                </label>
+                <Field
+                  name="low_stock_alert"
+                  type="number"
+                  min="0"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter low stock alert threshold (0 to disable)"
+                />
+                <ErrorMessage name="low_stock_alert" component="div" className="text-red-500 text-xs mt-1" />
+                <p className="text-xs text-gray-500 mt-1">
+                  You'll receive alerts when stock falls below this level
+                </p>
               </div>
 
               {/* Form Actions */}

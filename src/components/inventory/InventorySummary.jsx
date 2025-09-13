@@ -24,22 +24,11 @@ export default function InventorySummary() {
   // Calculate metrics
   const totalProducts = productsList.length;
   const totalStockValue = stockValuation?.total_value || productsList.reduce((sum, product) => {
-    return sum + (parseFloat(product.current_stock || 0) * parseFloat(product.unit_price || 0));
+    return sum + (parseFloat(product.stock || 0) * parseFloat(product.purchase_price || product.price || 0));
   }, 0);
   
-  const inStockProducts = productsList.filter(product => parseFloat(product.current_stock || 0) > 0).length;
-  const outOfStockProducts = productsList.filter(product => parseFloat(product.current_stock || 0) === 0).length;
-  
-  // Categories breakdown
-  const categoryStats = productsList.reduce((acc, product) => {
-    const category = product.category || 'Uncategorized';
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {});
-  
-  const topCategories = Object.entries(categoryStats)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 3);
+  const inStockProducts = productsList.filter(product => parseFloat(product.stock || 0) > 0).length;
+  const outOfStockProducts = productsList.filter(product => parseFloat(product.stock || 0) === 0).length;
 
   if (productsLoading) {
     return (
@@ -121,59 +110,32 @@ export default function InventorySummary() {
         </div>
       </div>
 
-      {/* Alerts and Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Low Stock Alerts */}
-        {lowStockList.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div className="flex items-center mb-3">
-              <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">Low Stock Alert</h3>
-            </div>
-            <div className="space-y-2">
-              {lowStockList.slice(0, 3).map(product => (
-                <div key={product.id} className="flex justify-between items-center text-sm">
-                  <span className="text-red-700 dark:text-red-300">{product.name}</span>
-                  <span className="font-medium text-red-800 dark:text-red-200">
-                    {product.current_stock} {product.unit}
-                  </span>
-                </div>
-              ))}
-              {lowStockList.length > 3 && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  +{lowStockList.length - 3} more products need reorder
-                </p>
-              )}
-            </div>
+      {/* Low Stock Alerts */}
+      {lowStockList.length > 0 && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">Low Stock Alert</h3>
           </div>
-        )}
-
-        {/* Top Categories */}
-        {topCategories.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-center mb-3">
-              <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200">Top Categories</h3>
-            </div>
-            <div className="space-y-2">
-              {topCategories.map(([category, count], index) => (
-                <div key={category} className="flex justify-between items-center text-sm">
-                  <span className="text-blue-700 dark:text-blue-300">
-                    {index + 1}. {category}
-                  </span>
-                  <span className="font-medium text-blue-800 dark:text-blue-200">
-                    {count} products
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-2">
+            {lowStockList.slice(0, 5).map(product => (
+              <div key={product.id} className="flex justify-between items-center text-sm">
+                <span className="text-red-700 dark:text-red-300">{product.name}</span>
+                <span className="font-medium text-red-800 dark:text-red-200">
+                  {product.stock} {product.unit}
+                </span>
+              </div>
+            ))}
+            {lowStockList.length > 5 && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                +{lowStockList.length - 5} more products need reorder
+              </p>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

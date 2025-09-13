@@ -85,7 +85,7 @@ export default function Inventory() {
         </div>
 
         {/* Inventory Summary */}
-        <InventorySummary />
+        {/* <InventorySummary /> */}
 
         {/* Inventory Table */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -98,9 +98,9 @@ export default function Inventory() {
             </p>
           </div>
           <InventoryTable
-            onEditProduct={handleEditProduct}
-            onViewProduct={handleViewProduct}
-            onDeleteProduct={handleDeleteProduct}
+            onEdit={handleEditProduct}
+            onView={handleViewProduct}
+            onDelete={handleDeleteProduct}
             onStockAdjustment={handleStockAdjustment}
           />
         </div>

@@ -9,11 +9,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [page, setPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
-    category: "",
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
     supplier: "",
@@ -51,23 +49,17 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   // Frontend search and filter
   const filteredProducts = productsRaw
     .filter(product => {
-      // Search by product name, SKU, or description
+      // Search by product name or description
       const searchLower = search.toLowerCase();
       const matchesSearch = product.name?.toLowerCase().includes(searchLower) ||
-        product.sku?.toLowerCase().includes(searchLower) ||
         product.description?.toLowerCase().includes(searchLower);
       
-      // Category filter
-      let matchesCategory = true;
-      const category = advancedFilters.category || categoryFilter;
-      if (category) {
-        matchesCategory = product.category === category;
-      }
+
       
       // Stock filter
       let matchesStock = true;
-      const currentStock = parseFloat(product.current_stock || 0);
-      const minStock = parseFloat(product.min_stock_level || 0);
+  const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
+  const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
       
       if (stockFilter === "in-stock") {
         matchesStock = currentStock > 0;
@@ -88,7 +80,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       // Price range filter
       let matchesPrice = true;
       if (advancedFilters.priceRange.min || advancedFilters.priceRange.max) {
-        const price = parseFloat(product.unit_price || 0);
+        const price = parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0);
         if (advancedFilters.priceRange.min) {
           matchesPrice = matchesPrice && price >= parseFloat(advancedFilters.priceRange.min);
         }
@@ -114,7 +106,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         matchesSupplier = product.supplier?.toLowerCase().includes(advancedFilters.supplier.toLowerCase());
       }
       
-      return matchesSearch && matchesCategory && matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
+      return matchesSearch && matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
     })
     .sort((a, b) => {
       // Frontend ordering
@@ -124,8 +116,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
       if (ordering === "unit_price") return parseFloat(a.unit_price || 0) - parseFloat(b.unit_price || 0);
       if (ordering === "-unit_price") return parseFloat(b.unit_price || 0) - parseFloat(a.unit_price || 0);
-      if (ordering === "category") return (a.category || "").localeCompare(b.category || "");
-      if (ordering === "-category") return (b.category || "").localeCompare(a.category || "");
+
       return 0;
     });
 
@@ -197,12 +188,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
   // Get stock status styling
   const getStockStatus = (product) => {
-    const currentStock = parseFloat(product.current_stock || 0);
-    const minStock = parseFloat(product.min_stock_level || 0);
-    
+    const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
+    const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
+
     if (currentStock === 0) {
       return { text: "Out of Stock", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" };
-    } else if (currentStock <= minStock) {
+    } else if (minStock > 0 && currentStock > 0 && currentStock <= minStock) {
       return { text: "Low Stock", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" };
     } else {
       return { text: "In Stock", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" };
@@ -215,7 +206,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       <div className="flex flex-wrap gap-2 mb-4">
         <input
           className="border rounded px-2 py-1 text-sm"
-          placeholder="Search by name, SKU, or description"
+          placeholder="Search by name or description"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -230,8 +221,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           <option value="current_stock">Stock (Low to High)</option>
           <option value="-unit_price">Price (High to Low)</option>
           <option value="unit_price">Price (Low to High)</option>
-          <option value="category">Category (A-Z)</option>
-          <option value="-category">Category (Z-A)</option>
         </select>
         <select
           value={stockFilter}
@@ -306,8 +295,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 />
               </th>
               <th className="text-left py-3 px-4">Product</th>
-              <th className="text-left py-3 px-4">SKU</th>
-              <th className="text-left py-3 px-4">Category</th>
               <th className="text-center py-3 px-4">Stock</th>
               <th className="text-right py-3 px-4">Unit Price</th>
               <th className="text-right py-3 px-4">Total Value</th>
@@ -322,14 +309,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   .map((_, i) => (
                     <tr key={i}>
                       <td
-                        colSpan={9}
+                        colSpan={7}
                         className="py-6 animate-pulse bg-gray-100 dark:bg-gray-700 rounded"
                       />
                     </tr>
                   ))
               : filteredProducts.map((product) => {
                   const stockStatus = getStockStatus(product);
-                  const totalValue = parseFloat(product.current_stock || 0) * parseFloat(product.unit_price || 0);
+              const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0);
                   
                   return (
                     <tr
@@ -354,24 +341,18 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-mono text-sm">{product.sku}</td>
-                      <td className="py-3 px-4">
-                        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs">
-                          {product.category || 'Uncategorized'}
-                        </span>
-                      </td>
                       <td className="py-3 px-4 text-center">
                         <div className="font-medium">
-                          {product.current_stock} {product.unit}
+                            {parseFloat(product.stock ?? product.current_stock ?? 0)} {product.unit}
                         </div>
-                        {product.min_stock_level && (
-                          <div className="text-xs text-gray-500">
-                            Min: {product.min_stock_level}
-                          </div>
-                        )}
+                          {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
+                            <div className="text-xs text-gray-500">
+                              Min: {product.low_stock_alert ?? product.min_stock_level} {product.unit}
+                            </div>
+                          )}
                       </td>
                       <td className="py-3 px-4 text-right font-medium">
-                        ₹{parseFloat(product.unit_price || 0).toFixed(2)}
+                        ₹{parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0).toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-green-700 dark:text-green-300">
                         ₹{totalValue.toLocaleString(undefined, {
@@ -385,27 +366,17 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center space-x-1">
-                        <button
-                          className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-xs"
-                          onClick={() => onView(product.id)}
-                        >
-                          View
-                        </button>
+                        {/* View button removed */}
                         <button
                           className="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-xs"
                           onClick={() => onEdit(product)}
                         >
                           Edit
                         </button>
-                        <button
-                          className="px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition text-xs"
-                          onClick={() => onStockAdjustment(product)}
-                        >
-                          Stock
-                        </button>
+                        {/* Stock button removed */}
                         <button
                           className="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-xs"
-                          onClick={() => onDelete(product.id)}
+                          onClick={() => onDelete(product)}
                         >
                           Delete
                         </button>

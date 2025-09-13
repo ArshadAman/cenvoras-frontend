@@ -9,7 +9,8 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
     mutationFn: deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["lowStockProducts"] });
+      queryClient.invalidateQueries({ queryKey: ["stockValuation"] });
       onSuccess?.();
       onClose();
     },

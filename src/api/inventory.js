@@ -7,11 +7,31 @@ export const getProducts = (params) =>
 export const getProduct = (id) =>
   api.get(`/inventory/product/${id}/`).then(res => res.data);
 
-export const createProduct = (data) =>
-  api.post("/inventory/add-product/", data).then(res => res.data);
+export const createProduct = (data) => {
+  // Map frontend fields to backend schema
+  const backendData = {
+    name: data.name,
+    hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
+    stock: parseInt(data.stock || data.current_stock || 0),
+    unit: data.unit,
+    price: data.price || data.unit_price,
+    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
+  };
+  return api.post("/inventory/add-product/", backendData).then(res => res.data);
+};
 
-export const updateProduct = (id, data) =>
-  api.put(`/inventory/product/${id}/`, data).then(res => res.data);
+export const updateProduct = (id, data) => {
+  // Map frontend fields to backend schema
+  const backendData = {
+    name: data.name,
+    hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
+    stock: parseInt(data.stock || data.current_stock || 0),
+    unit: data.unit,
+    price: data.price || data.unit_price,
+    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
+  };
+  return api.put(`/inventory/product/${id}/`, backendData).then(res => res.data);
+};
 
 export const deleteProduct = (id) =>
   api.delete(`/inventory/product/${id}/`).then(res => res.data);
