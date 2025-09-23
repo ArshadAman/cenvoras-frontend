@@ -4,9 +4,10 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tool
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, CurrencyRupeeIcon, ShoppingBagIcon, CubeIcon, ExclamationTriangleIcon, BanknotesIcon, PlusIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import api from '../api/api'
 import Loader from '../components/Loader'
+import Layout from '../components/Layout'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const cardIcons = [
   <CurrencyRupeeIcon className="w-8 h-8 text-blue-500" />,
@@ -243,65 +244,9 @@ export default function Dashboard({ onLogout }) {
   }, [salesSummary, purchaseSummary]);
 
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-        <div className="h-16 flex items-center justify-center font-bold text-xl text-blue-600 dark:text-blue-400">ERP</div>
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          <Link to="/" className="block px-4 py-2 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold">Dashboard</Link>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Sales</a>
-          <Link
-            to="/purchase"
-            className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-          >
-            Purchases
-          </Link>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Inventory</a>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Clients</a>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Analytics</a>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Topbar */}
-        <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow flex items-center justify-between px-6 h-16">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-              <span className="sr-only">Open sidebar</span>
-              <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">Dashboard</span>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Dark mode toggle */}
-            <button
-              onClick={() => document.documentElement.classList.toggle('dark')}
-              className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-              title="Toggle dark mode"
-            >
-              <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 4.66l-.71-.71M4.05 4.05l-.71-.71" /></svg>
-            </button>
-            {/* Notifications */}
-            <button className="relative p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-              <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-            >
-              Logout
-            </button>
-            {/* User avatar */}
-            <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">A</div>
-          </div>
-        </header>
-
-        {/* Main Dashboard */}
-        <main className="flex-1 p-6 space-y-8">
-          {/* Metric Cards */}
+    <Layout onLogout={onLogout}>
+      <main className="flex-1 p-6 space-y-8">
+        {/* Metric Cards */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
@@ -729,7 +674,6 @@ export default function Dashboard({ onLogout }) {
             </ResponsiveContainer>
           </section>
         </main>
-      </div>
-    </div>
+    </Layout>
   )
 }

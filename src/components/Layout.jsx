@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -11,18 +12,28 @@ export default function Layout({ children, onLogout }) {
         <div className="h-16 flex items-center justify-center font-bold text-xl text-blue-600 dark:text-blue-400">ERP</div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           <Link to="/dashboard" className={`block px-4 py-2 rounded ${location.pathname === "/dashboard" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Dashboard</Link>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Sales</a>
+          <Link to="/sales" className={`block px-4 py-2 rounded ${location.pathname === "/sales" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Sales</Link>
           <Link to="/purchase" className={`block px-4 py-2 rounded ${location.pathname === "/purchase" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Purchases</Link>
           <Link to="/inventory" className={`block px-4 py-2 rounded ${location.pathname === "/inventory" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Inventory</Link>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Clients</a>
-          <a href="#" className="block px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">Analytics</a>
+          <Link to="/clients" className={`block px-4 py-2 rounded ${location.pathname === "/clients" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Clients</Link>
+          <Link to="/analytics" className={`block px-4 py-2 rounded ${location.pathname === "/analytics" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Analytics</Link>
         </nav>
       </aside>
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Navbar */}
         <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow flex items-center justify-between px-6 h-16">
-          <span className="font-bold text-lg text-gray-900 dark:text-white">ERP System</span>
+          <div className="flex items-center">
+            <button
+              className="md:hidden p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 mr-3"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span className="font-bold text-lg text-gray-900 dark:text-white">ERP System</span>
+          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => document.documentElement.classList.toggle('dark')}
@@ -42,6 +53,57 @@ export default function Layout({ children, onLogout }) {
             <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">A</div>
           </div>
         </header>
+        
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <nav className="px-4 py-2 space-y-1">
+              <Link 
+                to="/dashboard" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/dashboard" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link 
+                to="/sales" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/sales" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sales
+              </Link>
+              <Link 
+                to="/purchase" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/purchase" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Purchases
+              </Link>
+              <Link 
+                to="/inventory" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/inventory" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Inventory
+              </Link>
+              <Link 
+                to="/clients" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/clients" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Clients
+              </Link>
+              <Link 
+                to="/analytics" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/analytics" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Analytics
+              </Link>
+            </nav>
+          </div>
+        )}
+
         {/* Page Content */}
         <main className="flex-1 p-6 space-y-8">
           {children}
