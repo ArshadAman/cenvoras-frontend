@@ -20,12 +20,7 @@ export default function SalesSummary() {
   });
   const thisMonthRevenue = thisMonthInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount || 0), 0);
 
-  // Since backend doesn't have payment status, assume all invoices are pending
-  const paidInvoices = [];
-  const pendingInvoices = invoices;  // All invoices are considered pending
-  const partialInvoices = [];
-  const paidAmount = 0;
-  const pendingAmount = totalRevenue;
+  // Payment status functionality removed - not supported by backend
 
   // Calculate overdue invoices (assuming 30 days payment terms)
   const today = new Date();
@@ -37,7 +32,7 @@ export default function SalesSummary() {
 
   // Top customers
   const customerTotals = invoices.reduce((acc, invoice) => {
-    const customer = invoice.customer || 'Unknown';
+    const customer = invoice.customer_name || 'Unknown';
     acc[customer] = (acc[customer] || 0) + parseFloat(invoice.total_amount || 0);
     return acc;
   }, {});
@@ -103,94 +98,49 @@ export default function SalesSummary() {
           </div>
         </div>
 
-        {/* Paid Amount */}
+        {/* Average Invoice Value */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Paid Amount</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                ₹{paidAmount.toLocaleString()}
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Invoice Value</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                ₹{totalInvoices > 0 ? (totalRevenue / totalInvoices).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {paidInvoices.length} invoices
+                Per invoice
               </p>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
           </div>
         </div>
 
-        {/* Outstanding Amount */}
+        {/* Total Items Sold */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                ₹{pendingAmount.toLocaleString()}
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Items Sold</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {invoices.reduce((sum, invoice) => sum + (invoice.items?.length || 0), 0)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {pendingInvoices.length + partialInvoices.length} invoices
+                Across all invoices
               </p>
             </div>
-            <div className="p-3 bg-red-100 dark:bg-red-900 rounded-full">
-              <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Payment Status Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Payment Status */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Payment Status</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Paid</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-20 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full" 
-                    style={{ width: `${totalInvoices > 0 ? (paidInvoices.length / totalInvoices) * 100 : 0}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{paidInvoices.length}</span>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Pending</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-20 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-red-500 h-2 rounded-full" 
-                    style={{ width: `${totalInvoices > 0 ? (pendingInvoices.length / totalInvoices) * 100 : 0}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{pendingInvoices.length}</span>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Partial</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-20 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-yellow-500 h-2 rounded-full" 
-                    style={{ width: `${totalInvoices > 0 ? (partialInvoices.length / totalInvoices) * 100 : 0}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{partialInvoices.length}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      {/* Top Customers */}
+      <div className="grid grid-cols-1 gap-6">
         {/* Top Customers */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Customers</h3>

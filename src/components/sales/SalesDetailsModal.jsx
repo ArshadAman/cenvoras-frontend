@@ -79,6 +79,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
 
   if (!isOpen) return null;
 
+  // Check if any items have HSN codes to conditionally show HSN column
+  const hasHsnCodes = invoiceDetails?.items?.some(item => 
+    item.hsn_sac_code || item.hsn_code
+  ) || false;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-4xl font-sans max-h-[90vh] overflow-y-auto">
@@ -148,12 +153,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
                         <span>{new Date(invoiceDetails.due_date).toLocaleDateString()}</span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Status:</span>
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        pending
-                      </span>
-                    </div>
                     {invoiceDetails.payment_terms && (
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-600">Payment Terms:</span>
@@ -170,22 +169,38 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <span className="font-bold text-gray-800">{invoiceDetails.customer}</span>
+                      <span className="font-bold text-gray-800">{invoiceDetails.customer_name}</span>
                     </div>
+                    {invoiceDetails.customer_email && (
+                      <div className="text-gray-600">
+                        Email: {invoiceDetails.customer_email}
+                      </div>
+                    )}
+                    {invoiceDetails.customer_phone && (
+                      <div className="text-gray-600">
+                        Phone: {invoiceDetails.customer_phone}
+                      </div>
+                    )}
                     {invoiceDetails.customer_address && (
                       <div className="text-gray-600 whitespace-pre-line">
                         {invoiceDetails.customer_address}
                       </div>
                     )}
-                    {invoiceDetails.customer_gstin && (
-                      <div>
-                        <span className="font-medium text-gray-600">GSTIN: </span>
-                        <span>{invoiceDetails.customer_gstin}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Delivery Information */}
+              {invoiceDetails.delivery_address && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
+                    Delivery Information
+                  </h3>
+                  <div className="text-sm text-gray-600 whitespace-pre-line">
+                    {invoiceDetails.delivery_address}
+                  </div>
+                </div>
+              )}
 
               {/* Items Table */}
               <div className="mb-8">
@@ -195,7 +210,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
                     <thead>
                       <tr className="bg-gray-100">
                         <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold">Product</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">HSN</th>
+                        {hasHsnCodes && (
+                          <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">HSN/SAC</th>
+                        )}
                         <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Qty</th>
                         <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Unit</th>
                         <th className="border border-gray-300 px-4 py-2 text-right text-sm font-semibold">Rate</th>
@@ -219,11 +236,13 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
                         return (
                           <tr key={index}>
                             <td className="border border-gray-300 px-4 py-2 text-sm">
-                              {item.product_detail?.name || item.product_name}
+                              {item.product_detail?.name || item.product_name || item.product}
                             </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {item.hsn_code || '-'}
-                            </td>
+                            {hasHsnCodes && (
+                              <td className="border border-gray-300 px-4 py-2 text-center text-sm">
+                                {item.hsn_sac_code || item.hsn_code || '-'}
+                              </td>
+                            )}
                             <td className="border border-gray-300 px-4 py-2 text-center text-sm">
                               {quantity}
                             </td>

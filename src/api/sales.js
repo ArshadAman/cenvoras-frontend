@@ -11,10 +11,10 @@ export const createSalesInvoice = data =>
   api.post("/billing/sales-invoices/", data).then(res => res.data);
 
 export const updateSalesInvoice = (id, data) =>
-  api.put(`/billing/sales-invoices/${id}/`, data).then(res => res.data);
+  api.put(`/billing/sales-invoices/${id}/edit/`, data).then(res => res.data);
 
 export const deleteSalesInvoice = id =>
-  api.delete(`/billing/sales-invoices/${id}/`).then(res => res.data);
+  api.delete(`/billing/sales-invoices/${id}/edit/`).then(res => res.data);
 
 export const uploadSalesCsv = formData =>
   api.post("/billing/upload-sales-invoices-csv/", formData, {

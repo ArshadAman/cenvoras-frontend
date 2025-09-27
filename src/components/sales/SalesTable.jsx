@@ -16,7 +16,6 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     dateRange: { start: "", end: "" },
     amountRange: { min: "", max: "" },
     customer: "",
-    paymentStatus: "",
     status: "all",
     hasOverdue: false,
   });
@@ -54,7 +53,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
       // Search by invoice number or customer (case-insensitive)
       const searchLower = search.toLowerCase();
       const matchesSearch = invoice.invoice_number?.toLowerCase().includes(searchLower) ||
-        invoice.customer?.toLowerCase().includes(searchLower);
+        invoice.customer_name?.toLowerCase().includes(searchLower);
       
       // Date range filter (use advanced filters if available, otherwise basic)
       const dateRange = advancedFilters.dateRange.start || advancedFilters.dateRange.end 
@@ -87,14 +86,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
       // Customer filter
       let matchesCustomer = true;
       if (advancedFilters.customer) {
-        matchesCustomer = invoice.customer?.toLowerCase().includes(advancedFilters.customer.toLowerCase());
-      }
-      
-      // Payment Status filter (Note: backend doesn't have payment_status, we'll handle this differently)
-      let matchesPaymentStatus = true;
-      if (advancedFilters.paymentStatus) {
-        // For now, assume all invoices are pending since backend doesn't have payment status
-        matchesPaymentStatus = advancedFilters.paymentStatus === 'pending';
+        matchesCustomer = invoice.customer_name?.toLowerCase().includes(advancedFilters.customer.toLowerCase());
       }
       
       // Overdue filter
@@ -106,7 +98,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
         matchesOverdue = dueDate < today;
       }
       
-      return matchesSearch && matchesDate && matchesAmount && matchesCustomer && matchesPaymentStatus && matchesOverdue;
+      return matchesSearch && matchesDate && matchesAmount && matchesCustomer && matchesOverdue;
     })
     .sort((a, b) => {
       // Frontend ordering
@@ -162,7 +154,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     const csvData = dataToExport.map(invoice => [
       invoice.invoice_number,
       invoice.invoice_date,
-      invoice.customer,
+      invoice.customer_name,
       invoice.total_amount,
       invoice.items?.length || 0
     ]);
@@ -294,9 +286,6 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                 Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Payment Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Items
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -325,18 +314,13 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-white">
-                    {invoice.customer}
+                    {invoice.customer_name}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     ₹{Number(invoice.total_amount).toLocaleString()}
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                    pending
-                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {invoice.items?.length || 0} items
@@ -349,12 +333,12 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                     >
                       View
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => onEdit(invoice)}
                       className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
                     >
                       Edit
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => onDelete(invoice)}
                       className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"

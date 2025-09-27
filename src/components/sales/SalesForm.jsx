@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Formik, Form, Field, FieldArray } from "formik";
+import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getCustomers } from "../../api/sales";
 import { toast } from "react-toastify";
@@ -10,7 +10,7 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [inputValue, setInputValue] = useState(values.items[idx]?.product_name || "");
+  const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,11 +26,15 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
   }, []);
 
   const selectProduct = (product) => {
-    setFieldValue(`items.${idx}.product_name`, product.name);
+    setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.price ?? 0);
-    setFieldValue(`items.${idx}.hsn_code`, product.hsn_code || product.hsn_sac_code || "");
+    // Calculate amount automatically
+    const quantity = values.items[idx]?.quantity || 1;
+    const amount = quantity * (product.price ?? 0);
+    setFieldValue(`items.${idx}.amount`, amount);
+    setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.discount`, 0);
     setFieldValue(`items.${idx}.tax`, 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
@@ -41,7 +45,7 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
-    setFieldValue(`items.${idx}.product_name`, value);
+    setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
 
@@ -58,7 +62,7 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
 
   return (
     <div className="relative">
-      <Field name={`items.${idx}.product_name`}>
+      <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
             <input
@@ -66,7 +70,7 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Product name"
-              className="w-full p-2 border rounded text-sm"
+              className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
               autoComplete="off"
             />
             {meta.touched && meta.error && (
@@ -102,6 +106,11 @@ function CustomerAutocomplete({ values, setFieldValue }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.customer_name || "");
 
+  // Sync inputValue with Formik values
+  useEffect(() => {
+    setInputValue(values.customer_name || "");
+  }, [values.customer_name]);
+
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -116,10 +125,11 @@ function CustomerAutocomplete({ values, setFieldValue }) {
   }, []);
 
   const selectCustomer = (customer) => {
-    // Backend expects customer ID, not name
-    setFieldValue('customer', customer.id);
+    // New API: set customer_name directly, optionally set email for Customer record creation
+    setFieldValue('customer_name', customer.name);
+    setFieldValue('customer_email', customer.email || '');
+    setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
-    setFieldValue('customer_gstin', customer.gstin || '');
     setInputValue(customer.name);
     setShowDropdown(false);
   };
@@ -127,7 +137,7 @@ function CustomerAutocomplete({ values, setFieldValue }) {
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
-    setFieldValue('customer', value);  // For manual entry, store the name
+    setFieldValue('customer_name', value);  // For manual entry, store the name
 
     if (value.trim()) {
       const filtered = customers.filter(customer =>
@@ -142,15 +152,15 @@ function CustomerAutocomplete({ values, setFieldValue }) {
 
   return (
     <div className="relative">
-      <Field name="customer">
+      <Field name="customer_name">
         {({ field, meta }) => (
           <div>
             <input
-              {...field}
+              name="customer_name"
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Customer name"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
             {meta.touched && meta.error && (
               <div className="text-red-500 text-sm mt-1">{meta.error}</div>
@@ -179,21 +189,39 @@ function CustomerAutocomplete({ values, setFieldValue }) {
 }
 
 const SalesSchema = Yup.object().shape({
-  invoice_number: Yup.string().required().min(1).max(100),
-  invoice_date: Yup.string().required(),
-  due_date: Yup.string().nullable(),
-  customer: Yup.string().required(),
+  // Required fields
+  customer_name: Yup.string().required("Customer name is required").min(1).max(255),
+  invoice_number: Yup.string().required("Invoice number is required").min(1).max(100),
+  invoice_date: Yup.string().required("Invoice date is required"),
+  
+  // Optional fields for customer record creation
+  customer_email: Yup.string().email("Invalid email format").nullable(),
+  customer_phone: Yup.string().nullable(),
   customer_address: Yup.string().nullable(),
-  customer_gstin: Yup.string().nullable().max(15),
-  payment_terms: Yup.string().nullable().max(50),
-  total_amount: Yup.number().required(),
+  
+  // Optional invoice fields
+  due_date: Yup.string().nullable(),
+  delivery_address: Yup.string().nullable(),
+  gst_treatment: Yup.string().nullable(),
+  journal: Yup.string().nullable(),
+  total_amount: Yup.number().nullable(),
+  
+  // Items array - at least one item required
   items: Yup.array().of(
     Yup.object().shape({
-      product_name: Yup.string().required().min(1),
-      quantity: Yup.number().required().min(1),
-      unit: Yup.string().required(),
+      // Required item fields
+      product: Yup.string().required("Product is required").min(1),
+      quantity: Yup.number().required("Quantity is required").min(1),
+      price: Yup.number().required("Price is required").min(0),
+      amount: Yup.number().required("Amount is required").min(0),
+      
+      // Optional item fields
+      hsn_sac_code: Yup.string().nullable(),
+      unit: Yup.string().nullable(),
+      discount: Yup.number().nullable().min(0),
+      tax: Yup.number().nullable().min(0),
     })
-  ).min(1),
+  ).min(1, "At least one item is required"),
 });
 
 const units = ["pcs", "kg", "ltr", "box", "meter"];
@@ -237,37 +265,44 @@ export default function SalesForm({ isOpen, onClose, editData }) {
         
         <Formik
           initialValues={{
+            // Required fields
+            customer_name: editData?.customer_name || "",
             invoice_number: editData?.invoice_number || "",
             invoice_date: editData?.invoice_date || new Date().toISOString().split('T')[0],
-            due_date: editData?.due_date || "",
-            customer: editData?.customer || "",
+            
+            // Optional customer fields (for Customer record creation)
+            customer_email: editData?.customer_email || "",
+            customer_phone: editData?.customer_phone || "",
             customer_address: editData?.customer_address || "",
-            customer_gstin: editData?.customer_gstin || "",
-            payment_terms: editData?.payment_terms || "",
-            total_amount: editData?.total_amount || "0.00",
+            
+            // Optional invoice fields
+            due_date: editData?.due_date || "",
+            delivery_address: editData?.delivery_address || "",
+            gst_treatment: editData?.gst_treatment || "registered",
+            journal: editData?.journal || "Sales",
+            total_amount: editData?.total_amount || null,
+            
             items: editData?.items?.map(item => ({
-              product_name: item.product_detail?.name || item.product_name || "",
-              product_id: item.product_detail?.id || item.product_id || null,
+              product: item.product || item.product_name || "",
+              product_id: item.product_id || null,
               quantity: item.quantity || 1,
-              unit: item.unit || "pcs",
               price: item.price || 0,
+              amount: item.amount || (item.quantity * item.price) || 0,
+              unit: item.unit || "pcs",
+              hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
               discount: item.discount || 0,
               tax: item.tax || 0,
-              hsn_code: item.hsn_code || "",
-              tax_rate: item.tax_rate || 0,
-              amount: item.amount || 0,
-              isExistingProduct: !!(item.product_detail?.id || item.product_id),
+              isExistingProduct: !!(item.product_id),
             })) || [{
-              product_name: "",
+              product: "",
               product_id: null,
               quantity: 1,
-              unit: "pcs",
               price: 0,
+              amount: 0, // Required field
+              unit: "pcs",
+              hsn_sac_code: "",
               discount: 0,
               tax: 0,
-              hsn_code: "",
-              tax_rate: 0,
-              amount: 0,
               isExistingProduct: false,
             }]
           }}
@@ -277,56 +312,90 @@ export default function SalesForm({ isOpen, onClose, editData }) {
             // Validate items
             for (let i = 0; i < values.items.length; i++) {
               const item = values.items[i];
-              if (!item.product_name || item.product_name.trim() === '') {
-                setFieldError(`items.${i}.product_name`, 'Product name is required');
-                toast.error(`Product name is required for item ${i + 1}`);
+              if (!item.product || item.product.trim() === '') {
+                setFieldError(`items.${i}.product`, 'Product is required');
+                toast.error(`Product is required for item ${i + 1}`);
                 setSubmitting(false);
                 return;
               }
             }
             
             const validItems = values.items.filter(item => 
-              item.product_name && item.product_name.trim() !== ''
+              item.product && item.product.trim() !== ''
             );
             
             if (validItems.length === 0) {
-              toast.error('At least one item with a valid product name is required');
+              toast.error('At least one item with a valid product is required');
               setSubmitting(false);
               return;
             }
             
             try {
-              const processedItems = validItems.map(item => {
-                const quantity = Number(item.quantity) || 0;
+                            const processedItems = values.items.map(item => {
+                const quantity = Number(item.quantity) || 1;
                 const price = Number(item.price) || 0;
-                const discount = Number(item.discount) || 0;
-                const tax = Number(item.tax) || 0;
-                const discountAmount = ((quantity * price) * discount) / 100;
-                const taxableAmount = (quantity * price) - discountAmount;
-                const taxAmount = (taxableAmount * tax) / 100;
-                const totalAmount = taxableAmount + taxAmount;
+                const amount = Number(item.amount) || (quantity * price);
                 
                 return {
-                  product_name: item.product_name,
-                  product_id: item.isExistingProduct ? item.product_id : null,
+                  product: item.product, // Use product field instead of product_name
                   quantity: quantity,
-                  unit: item.unit,
                   price: price,
-                  discount: discount,
-                  tax: tax,
-                  hsn_code: item.hsn_code,
-                  tax_rate: item.tax_rate || 0,
-                  amount: totalAmount,
+                  amount: amount, // Required field in new schema
+                  unit: item.unit || null,
+                  hsn_sac_code: item.hsn_sac_code || null,
+                  discount: Number(item.discount) || null,
+                  tax: Number(item.tax) || null,
                 };
               });
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
-              const formData = {
-                ...values,
-                total_amount: totalAmount.toFixed(2),
-                items: processedItems,
-              };
+              let formData;
+
+              if (isEdit) {
+                // Edit API expects different structure with UUIDs
+                formData = {
+                  customer: editData.customer || editData.customer_id, // Use original customer UUID
+                  invoice_number: values.invoice_number,
+                  invoice_date: values.invoice_date,
+                  due_date: values.due_date || null,
+                  delivery_address: values.delivery_address || null,
+                  gst_treatment: values.gst_treatment || null,
+                  journal: values.journal || "Sales",
+                  total_amount: totalAmount.toString(),
+                  created_by: editData.created_by, // Use original created_by UUID
+                  items: processedItems.map(item => ({
+                    product: item.product_id || item.product, // Use product UUID if available
+                    quantity: item.quantity,
+                    unit: item.unit || null,
+                    price: item.price.toString(),
+                    discount: item.discount ? item.discount.toString() : null,
+                    tax: item.tax ? item.tax.toString() : null,
+                    amount: item.amount.toString(),
+                  }))
+                };
+              } else {
+                // Create API expects customer_name structure
+                formData = {
+                  // Required fields
+                  customer_name: values.customer_name,
+                  invoice_number: values.invoice_number,
+                  invoice_date: values.invoice_date,
+                  items: processedItems,
+                  
+                  // Optional customer fields (for Customer record creation)
+                  ...(values.customer_email && { customer_email: values.customer_email }),
+                  ...(values.customer_phone && { customer_phone: values.customer_phone }),
+                  ...(values.customer_address && { customer_address: values.customer_address }),
+                  
+                  // Optional invoice fields
+                  ...(values.due_date && { due_date: values.due_date }),
+                  ...(values.delivery_address && { delivery_address: values.delivery_address }),
+                  ...(values.gst_treatment && { gst_treatment: values.gst_treatment }),
+                  ...(values.journal && { journal: values.journal }),
+                  ...(totalAmount && { total_amount: totalAmount }),
+                };
+              }
 
               if (isEdit) {
                 updateMutation.mutate({ id: editData.id, data: formData });
@@ -409,20 +478,34 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                       Customer Name *
                     </label>
                     <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+                    <ErrorMessage name="customer_name" component="div" className="text-red-500 text-sm mt-1" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer GSTIN
+                      Customer Email <span className="text-xs text-gray-500">(optional - creates customer record)</span>
                     </label>
                     <Field
-                      name="customer_gstin"
-                      type="text"
+                      name="customer_email"
+                      type="email"
                       className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="customer@example.com"
                     />
                   </div>
                 </div>
 
+                {/* Additional Customer Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Customer Phone
+                    </label>
+                    <Field
+                      name="customer_phone"
+                      type="tel"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="+91 9876543210"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Customer Address
@@ -430,20 +513,53 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                     <Field
                       name="customer_address"
                       as="textarea"
+                      rows="2"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="Customer's address"
+                    />
+                  </div>
+                </div>
+
+                {/* Address & Additional Fields */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Delivery Address
+                    </label>
+                    <Field
+                      name="delivery_address"
+                      as="textarea"
                       rows="3"
                       className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="123 Delivery Address, City, State"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      GST Treatment
+                    </label>
+                    <Field
+                      name="gst_treatment"
+                      as="select"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="registered">Registered</option>
+                      <option value="unregistered">Unregistered</option>
+                      <option value="export">Export</option>
+                    </Field>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Payment Terms
+                      Journal
                     </label>
                     <Field
-                      name="payment_terms"
+                      name="journal"
                       type="text"
                       className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     />
-
                   </div>
                 </div>
 
@@ -464,13 +580,28 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                             {/* Quantity */}
                             <div className="col-span-1">
                               <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Qty *</label>
-                              <Field
-                                name={`items.${index}.quantity`}
-                                type="number"
-                                min="1"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
+                              <Field name={`items.${index}.quantity`}>
+                                {({ field }) => (
+                                  <input
+                                    {...field}
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    onChange={(e) => {
+                                      const quantity = e.target.value;
+                                      setFieldValue(`items.${index}.quantity`, quantity);
+                                      
+                                      // Calculate amount when both quantity and price exist
+                                      if (quantity && values.items[index]?.price) {
+                                        const price = parseFloat(values.items[index].price) || 0;
+                                        const amount = parseFloat(quantity) * price;
+                                        setFieldValue(`items.${index}.amount`, amount);
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </Field>
                             </div>
                             
                             {/* Unit */}
@@ -488,14 +619,42 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                             </div>
                             
                             {/* Price */}
-                            <div className="col-span-2">
+                            <div className="col-span-1">
                               <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Price</label>
+                              <Field name={`items.${index}.price`}>
+                                {({ field }) => (
+                                  <input
+                                    {...field}
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    onChange={(e) => {
+                                      const price = e.target.value;
+                                      setFieldValue(`items.${index}.price`, price);
+                                      
+                                      // Calculate amount when both price and quantity exist
+                                      if (price && values.items[index]?.quantity) {
+                                        const quantity = parseFloat(values.items[index].quantity) || 0;
+                                        const amount = parseFloat(price) * quantity;
+                                        setFieldValue(`items.${index}.amount`, amount);
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </Field>
+                            </div>
+
+                            {/* Amount */}
+                            <div className="col-span-1">
+                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Amount *</label>
                               <Field
-                                name={`items.${index}.price`}
+                                name={`items.${index}.amount`}
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                className="w-full p-2 border rounded text-sm bg-gray-100 dark:bg-gray-500 dark:border-gray-400 dark:text-white"
+                                readOnly
                               />
                             </div>
                             
@@ -524,11 +683,11 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                               />
                             </div>
                             
-                            {/* HSN */}
-                            <div className="col-span-2">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">HSN</label>
+                            {/* HSN/SAC */}
+                            <div className="col-span-1">
+                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">HSN/SAC</label>
                               <Field
-                                name={`items.${index}.hsn_code`}
+                                name={`items.${index}.hsn_sac_code`}
                                 type="text"
                                 className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                               />

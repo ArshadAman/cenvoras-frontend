@@ -66,7 +66,6 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
       'customer_address',
       'customer_gstin',
       'payment_terms',
-      'payment_status',
       'product_name',
       'quantity',
       'unit',
@@ -200,7 +199,6 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
           <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
             <li>• Include headers: bill_number, sale_date, customer_name, etc.</li>
             <li>• Date format: YYYY-MM-DD</li>
-            <li>• Payment status: pending, partial, or paid</li>
             <li>• Use comma separator</li>
           </ul>
         </div>

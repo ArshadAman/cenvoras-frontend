@@ -33,7 +33,6 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
       dateRange: { start: "", end: "" },
       amountRange: { min: "", max: "" },
       customer: "",
-      paymentStatus: "",
       status: "all",
       hasOverdue: false,
     });
@@ -114,21 +113,6 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
             onChange={(e) => handleChange("customer", e.target.value)}
             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-white"
           />
-        </div>
-
-        {/* Payment Status */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Payment Status</label>
-          <select
-            value={filters.paymentStatus}
-            onChange={(e) => handleChange("paymentStatus", e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-white"
-          >
-            <option value="">All</option>
-            <option value="pending">Pending</option>
-            <option value="partial">Partial</option>
-            <option value="paid">Paid</option>
-          </select>
         </div>
 
         {/* Overdue Filter */}
