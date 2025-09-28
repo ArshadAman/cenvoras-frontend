@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { format, subDays } from 'date-fns';
+import LedgerSummary from '../components/ledger/LedgerSummary';
+import LedgerTable from '../components/ledger/LedgerTable';
+import PaymentForm from '../components/ledger/PaymentForm';
+import { useQuery } from '@tanstack/react-query';
+import { getCustomers } from '../api/customers';
+
+const Ledger = () => {
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [dateFilter, setDateFilter] = useState({
+    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd')
+  });
+
+  // Fetch customers for filter dropdown
+  const { data: customersData } = useQuery({
+    queryKey: ['customers', { search: '', page: 1, page_size: 1000 }],
+    queryFn: () => getCustomers({ search: '', page: 1, page_size: 1000 }),
+  });
+
+  const customers = customersData?.results || [];
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentForm(false);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCustomer('');
+    setDateFilter({
+      startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+      endDate: format(new Date(), 'yyyy-MM-dd')
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="md:flex md:items-center md:justify-between">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+            Client Ledger
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Track client payments and account balances
+          </p>
+        </div>
+        <div className="mt-4 flex md:mt-0 md:ml-4">
+          <button
+            type="button"
+            onClick={() => setShowPaymentForm(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+          >
+            <svg className="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Record Payment
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            Filters
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
+            <div>
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Search
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  id="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 dark:focus:placeholder-gray-500 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="Search transactions..."
+                />
+              </div>
+            </div>
+
+            {/* Customer Filter */}
+            <div>
+              <label htmlFor="customer-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Customer
+              </label>
+              <select
+                id="customer-filter"
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              >
+                <option value="">All Customers</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date From */}
+            <div>
+              <label htmlFor="date-from" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                From Date
+              </label>
+              <input
+                type="date"
+                id="date-from"
+                value={dateFilter.startDate}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+
+            {/* Date To */}
+            <div>
+              <label htmlFor="date-to" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                To Date
+              </label>
+              <input
+                type="date"
+                id="date-to"
+                value={dateFilter.endDate}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Clear Filters Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+            >
+              <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Dashboard */}
+      <LedgerSummary 
+        dateFilter={dateFilter}
+        customerFilter={selectedCustomer}
+      />
+
+      {/* Ledger Table */}
+      <LedgerTable
+        searchTerm={searchTerm}
+        dateFilter={dateFilter}
+        customerFilter={selectedCustomer}
+      />
+
+      {/* Payment Form Modal */}
+      {showPaymentForm && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
+            </div>
+
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentForm(false)}
+                  className="bg-white dark:bg-gray-800 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    Record Payment
+                  </h3>
+                  <PaymentForm
+                    onSuccess={handlePaymentSuccess}
+                    onCancel={() => setShowPaymentForm(false)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Ledger;

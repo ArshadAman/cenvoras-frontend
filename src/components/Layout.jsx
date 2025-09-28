@@ -15,7 +15,8 @@ export default function Layout({ children, onLogout }) {
           <Link to="/sales" className={`block px-4 py-2 rounded ${location.pathname === "/sales" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Sales</Link>
           <Link to="/purchase" className={`block px-4 py-2 rounded ${location.pathname === "/purchase" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Purchases</Link>
           <Link to="/inventory" className={`block px-4 py-2 rounded ${location.pathname === "/inventory" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Inventory</Link>
-          <Link to="/clients" className={`block px-4 py-2 rounded ${location.pathname === "/clients" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Clients</Link>
+          <Link to="/customers" className={`block px-4 py-2 rounded ${location.pathname === "/customers" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Customers</Link>
+          <Link to="/ledger" className={`block px-4 py-2 rounded ${location.pathname === "/ledger" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Ledger</Link>
           <Link to="/analytics" className={`block px-4 py-2 rounded ${location.pathname === "/analytics" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Analytics</Link>
         </nav>
       </aside>
@@ -87,11 +88,18 @@ export default function Layout({ children, onLogout }) {
                 Inventory
               </Link>
               <Link 
-                to="/clients" 
-                className={`block px-4 py-2 rounded ${location.pathname === "/clients" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                to="/customers" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/customers" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Clients
+                Customers
+              </Link>
+              <Link 
+                to="/ledger" 
+                className={`block px-4 py-2 rounded ${location.pathname === "/ledger" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Ledger
               </Link>
               <Link 
                 to="/analytics" 

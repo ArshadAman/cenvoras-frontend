@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { createSalesInvoice, updateSalesInvoice, getProducts, getCustomers } from "../../api/sales";
+import { createSalesInvoice, updateSalesInvoice, getProducts } from "../../api/sales";
+import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -159,6 +160,12 @@ function CustomerAutocomplete({ values, setFieldValue }) {
               name="customer_name"
               value={inputValue}
               onChange={handleInputChange}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+              onFocus={() => {
+                if (inputValue.trim() && filteredCustomers.length > 0) {
+                  setShowDropdown(true);
+                }
+              }}
               placeholder="Customer name"
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
@@ -169,15 +176,16 @@ function CustomerAutocomplete({ values, setFieldValue }) {
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-10 bg-white border rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
+        <div className="absolute z-10 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
           {filteredCustomers.map(customer => (
             <div
               key={customer.id}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+              className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium">{customer.name}</div>
-              <div className="text-gray-500 text-xs">
+              <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
+              <div className="text-gray-500 dark:text-gray-400 text-xs">
+                {customer.email && `${customer.email} | `}
                 {customer.address} {customer.gstin && `| GSTIN: ${customer.gstin}`}
               </div>
             </div>
@@ -233,7 +241,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
   const createMutation = useMutation({
     mutationFn: createSalesInvoice,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["salesBills"] });
+      queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       toast.success("Sales bill created successfully!");
       onClose();
     },
@@ -245,7 +253,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => updateSalesInvoice(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["salesBills"] });
+      queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       toast.success("Sales bill updated successfully!");
       onClose();
     },

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getSalesInvoices } from "../../api/sales";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getSalesInvoices, deleteSalesInvoice } from "../../api/sales";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
 
 export default function SalesTable({ onEdit, onView, onDelete }) {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("-invoice_date"); // default: newest first
   const [page, setPage] = useState(1);
@@ -134,13 +136,21 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     const confirmed = window.confirm(`Are you sure you want to delete ${selectedInvoices.size} sales invoices?`);
     if (confirmed) {
       try {
-        for (const invoiceId of selectedInvoices) {
-          await onDelete(invoiceId);
-        }
+        const deletePromises = Array.from(selectedInvoices).map(invoiceId => 
+          deleteSalesInvoice(invoiceId)
+        );
+        
+        await Promise.all(deletePromises);
+        
+        // Invalidate queries to refresh the data
+        queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+        
+        toast.success(`Successfully deleted ${selectedInvoices.size} sales invoices!`);
         setSelectedInvoices(new Set());
         setShowBulkActions(false);
       } catch (error) {
-        alert('Error deleting some invoices. Please try again.');
+        console.error('Bulk delete error:', error);
+        toast.error('Error deleting some invoices. Please try again.');
       }
     }
   };

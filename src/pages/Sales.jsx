@@ -28,24 +28,40 @@ export default function Sales() {
 
   return (
     <Layout>
-      <div className="flex-1 flex flex-col">
-        <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow flex items-center justify-between px-6 h-16">
-          <span className="font-bold text-lg text-gray-900 dark:text-white">
-            Sales Invoices
-          </span>
-          <div className="flex gap-2">
-            <button
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-              onClick={() => setShowForm(true)}
-            >
-              + New Sale
-            </button>
-            <button
-              className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800 text-sm"
-              onClick={() => setShowUpload(true)}
-            >
-              Upload CSV
-            </button>
+      <div className="space-y-8">
+        {/* Page Header */}
+        <header className="bg-white dark:bg-gray-800 shadow">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Sales Invoices
+                </h1>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Manage sales invoices and track revenue
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowUpload(true)}
+                  className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md shadow-sm"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Upload CSV
+                </button>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  New Sale
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 

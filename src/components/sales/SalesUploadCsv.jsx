@@ -12,7 +12,7 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
     mutationFn: uploadSalesCsv,
     onSuccess: (data) => {
       toast.success(`Successfully uploaded ${data?.created_count || 0} sales bills!`);
-      queryClient.invalidateQueries({ queryKey: ["salesBills"] });
+      queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       onClose();
       setFile(null);
     },

@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
 import Sales from './pages/Sales'
 import Inventory from './pages/Inventory'
+import Customers from './pages/Customers'
+import Ledger from './pages/Ledger'
 
 const getToken = () => !!localStorage.getItem('token')
 
@@ -38,6 +40,14 @@ function App() {
         <Route
           path="/inventory"
           element={isAuthenticated ? <Inventory /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/customers"
+          element={isAuthenticated ? <Customers /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/ledger"
+          element={isAuthenticated ? <Ledger /> : <Navigate to="/login" replace />}
         />
         <Route
           path="*"
