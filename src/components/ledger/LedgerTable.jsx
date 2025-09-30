@@ -4,9 +4,9 @@ import { getClientLedger } from '../../api/ledger';
 import Loader from '../Loader';
 import { format } from 'date-fns';
 
-const LedgerTable = ({ searchTerm, dateFilter, customerFilter }) => {
+const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState('created_at');
+  const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
   const itemsPerPage = 20;
 
@@ -66,19 +66,6 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter }) => {
 
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'dd/MM/yyyy');
-  };
-
-  const getTransactionTypeColor = (type) => {
-    switch (type) {
-      case 'payment':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'invoice':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'adjustment':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-    }
   };
 
   if (isLoading) {
@@ -150,19 +137,19 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter }) => {
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                      onClick={() => handleSort('created_at')}
+                      onClick={() => handleSort('date')}
                     >
-                      Date {getSortIcon('created_at')}
+                      Date {getSortIcon('date')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                      onClick={() => handleSort('customer__name')}
+                      onClick={() => handleSort('customer')}
                     >
-                      Customer {getSortIcon('customer__name')}
+                      Customer {getSortIcon('customer')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Type
+                      Invoice
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Description
@@ -170,16 +157,26 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter }) => {
                     <th
                       scope="col"
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                      onClick={() => handleSort('amount')}
+                      onClick={() => handleSort('debit')}
                     >
-                      Amount {getSortIcon('amount')}
+                      Debit {getSortIcon('debit')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                      onClick={() => handleSort('running_balance')}
+                      onClick={() => handleSort('credit')}
                     >
-                      Balance {getSortIcon('running_balance')}
+                      Credit {getSortIcon('credit')}
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      onClick={() => handleSort('balance')}
+                    >
+                      Balance {getSortIcon('balance')}
+                    </th>
+                    <th scope="col" className="relative px-6 py-3">
+                      <span className="sr-only">Actions</span>
                     </th>
                   </tr>
                 </thead>
@@ -187,38 +184,58 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter }) => {
                   {ledgerEntries.map((entry) => (
                     <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {formatDate(entry.created_at)}
+                        {formatDate(entry.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {entry.customer_name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          ID: {entry.customer}
+                          {entry.customer?.name || 'Unknown Customer'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(entry.transaction_type)}`}>
-                          {entry.transaction_type}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {entry.invoice || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                         <div className="max-w-xs truncate" title={entry.description}>
                           {entry.description}
                         </div>
-                        {entry.reference && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Ref: {entry.reference}
-                          </div>
-                        )}
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Created: {formatDate(entry.created_at)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <span className={`font-medium ${entry.transaction_type === 'payment' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {entry.transaction_type === 'payment' ? '+' : '-'}{formatCurrency(Math.abs(entry.amount))}
+                        <span className={`font-medium ${entry.debit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <span className={`font-medium ${entry.credit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(entry.running_balance)}
+                        {formatCurrency(entry.balance)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => onEdit && onEdit(entry)}
+                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 p-1 rounded"
+                            title="Edit entry"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => onDelete && onDelete(entry)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded"
+                            title="Delete entry"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

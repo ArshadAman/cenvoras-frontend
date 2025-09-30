@@ -99,16 +99,16 @@ const paymentSchema = Yup.object().shape({
   date: Yup.string().required("Date is required"),
 });
 
-export default function PaymentForm({ isOpen, onClose }) {
+export default function PaymentForm({ onSuccess, onCancel }) {
   const queryClient = useQueryClient();
 
   const recordPaymentMutation = useMutation({
     mutationFn: recordClientPayment,
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["ledger"] });
+      queryClient.invalidateQueries({ queryKey: ["clientLedger"] });
       queryClient.invalidateQueries({ queryKey: ["ledgerStats"] });
       toast.success("Payment recorded successfully!");
-      onClose();
+      if (onSuccess) onSuccess();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to record payment");
@@ -135,26 +135,7 @@ export default function PaymentForm({ isOpen, onClose }) {
     date: format(new Date(), 'yyyy-MM-dd'),
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Record Payment
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
 
         <Formik
           initialValues={initialValues}
@@ -224,7 +205,7 @@ export default function PaymentForm({ isOpen, onClose }) {
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={onCancel}
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Cancel
@@ -250,7 +231,5 @@ export default function PaymentForm({ isOpen, onClose }) {
             </Form>
           )}
         </Formik>
-      </div>
-    </div>
   );
 }
