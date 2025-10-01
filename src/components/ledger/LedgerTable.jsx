@@ -141,10 +141,10 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         <div className="mb-4 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+          <h3 className="text-lg font-medium text-white dark:text-white">
             Ledger Entries
           </h3>
           <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -166,13 +166,13 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
                   <tr>
                     {onBulkSelect && (
                       <th scope="col" className="relative px-6 py-3">
                         <input
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10 backdrop-filter backdrop-blur-10"
                           checked={isAllCurrentPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -183,39 +183,39 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                     )}
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
                       onClick={() => handleSort('date')}
                     >
                       Date {getSortIcon('date')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
                       onClick={() => handleSort('account_name')}
                     >
                       Account {getSortIcon('account_name')}
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                       Reference
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                       Description
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      className="px-6 py-3 text-right text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
                       onClick={() => handleSort('debit')}
                     >
                       Debit {getSortIcon('debit')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      className="px-6 py-3 text-right text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
                       onClick={() => handleSort('credit')}
                     >
                       Credit {getSortIcon('credit')}
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                       Source
                     </th>
                     <th scope="col" className="relative px-6 py-3">
@@ -223,38 +223,38 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
                   {ledgerEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={entry.id} className="hover:bg-white/10 transition-colors">
                       {onBulkSelect && (
-                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-white">
                           <input
                             type="checkbox"
-                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700"
+                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10 backdrop-filter backdrop-blur-10"
                             checked={selectedEntries.includes(entry.id)}
                             onChange={(e) => handleSelectEntry(entry.id, e.target.checked)}
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm  text-white drop-shadow-lg">
                         {formatDate(entry.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm  text-white drop-shadow-lg">
                           {entry.account_code} - {entry.account_name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                        <div className="text-xs text-cyan-300  capitalize">
                           {entry.account_type}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm  text-white drop-shadow-lg">
                         {entry.reference || '-'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        <div className="max-w-xs truncate" title={entry.description}>
+                      <td className="px-6 py-4 text-sm text-white">
+                        <div className="max-w-xs truncate  drop-shadow-lg" title={entry.description}>
                           {entry.description || 'General Ledger Entry'}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-cyan-300 ">
                           <span>Created: {formatDate(entry.created_at)}</span>
                           {entry.entry_number && (
                             <span className="ml-2">Entry #{entry.entry_number}</span>
@@ -262,38 +262,38 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={`font-medium ${entry.debit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <div className={` drop-shadow-lg text-lg ${entry.debit > 0 ? 'text-red-300' : 'text-white'}`}>
                           {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
                         </div>
                         {entry.debit > 0 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-cyan-300 ">
                             Debit
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={`font-medium ${entry.credit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <div className={` drop-shadow-lg text-lg ${entry.credit > 0 ? 'text-green-300' : 'text-white'}`}>
                           {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                         </div>
                         {entry.credit > 0 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-cyan-300 ">
                             Credit
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {entry.sales_invoice_number && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mr-2">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-400/40 text-blue-100 backdrop-filter backdrop-blur-10 border-2 border-blue-300 mr-2 drop-shadow-lg">
                             📄 Sales #{entry.sales_invoice_number}
                           </span>
                         )}
                         {entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 mr-2">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-orange-400/40 text-orange-100 backdrop-filter backdrop-blur-10 border-2 border-orange-300 mr-2 drop-shadow-lg">
                             🧾 Purchase #{entry.purchase_bill_number}
                           </span>
                         )}
                         {!entry.sales_invoice_number && !entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-400/40 text-green-100 backdrop-filter backdrop-blur-10 border-2 border-green-300 drop-shadow-lg">
                             📝 Manual Entry
                           </span>
                         )}
@@ -302,10 +302,10 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => onEdit && onEdit(entry)}
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 p-1 rounded"
+                            className="text-white dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 p-1 rounded"
                             title="Edit entry"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
@@ -314,7 +314,7 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                             className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded"
                             title="Delete entry"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
@@ -328,34 +328,34 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+              <div className="backdrop-filter backdrop-blur-10 bg-white/5 px-4 py-3 flex items-center justify-between border-t border-white/10 sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="relative inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-md text-white bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-md text-white bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10"
                   >
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-white  drop-shadow-lg">
                       Showing{' '}
-                      <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span>
+                      <span className="font-black text-cyan-300">{(currentPage - 1) * itemsPerPage + 1}</span>
                       {' '}to{' '}
-                      <span className="font-medium">
+                      <span className="font-black text-cyan-300">
                         {Math.min(currentPage * itemsPerPage, totalCount)}
                       </span>
                       {' '}of{' '}
-                      <span className="font-medium">{totalCount}</span>
+                      <span className="font-black text-cyan-300">{totalCount}</span>
                       {' '}results
                     </p>
                   </div>

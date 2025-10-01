@@ -239,11 +239,11 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+    <div className="bg-white/5 backdrop-filter backdrop-blur-20 p-4 rounded shadow border border-white/10">
       {/* Enhanced Filters */}
       <div className="flex flex-wrap gap-2 mb-4">
         <input
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search Bill Number or Vendor"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -251,36 +251,36 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         <select
           value={ordering}
           onChange={(e) => setOrdering(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
         >
-          <option value="-bill_date">Newest</option>
-          <option value="bill_date">Oldest</option>
-          <option value="-total_amount">Amount (High to Low)</option>
-          <option value="total_amount">Amount (Low to High)</option>
+          <option value="-bill_date" className="bg-[#1a2341] text-white">Newest</option>
+          <option value="bill_date" className="bg-[#1a2341] text-white">Oldest</option>
+          <option value="-total_amount" className="bg-[#1a2341] text-white">Amount (High to Low)</option>
+          <option value="total_amount" className="bg-[#1a2341] text-white">Amount (Low to High)</option>
         </select>
         <input
           type="date"
           placeholder="From Date"
           value={dateFilter.start}
           onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
         />
         <input
           type="date"
           placeholder="To Date"
           value={dateFilter.end}
           onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
         />
         <button
           onClick={() => setDateFilter({ start: "", end: "" })}
-          className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
+          className="px-3 py-1 bg-gray-500/30 text-white border border-gray-300/50 rounded hover:bg-gray-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
         >
           Clear Dates
         </button>
         <button
           onClick={() => setShowAdvancedFilters(true)}
-          className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition text-sm flex items-center gap-1"
+          className="px-3 py-1 bg-purple-500/30 text-white border border-purple-300/50 rounded hover:bg-purple-500/50 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 drop-shadow-lg"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
@@ -294,12 +294,12 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         <div className="flex items-center gap-4">
           {selectedBills.size > 0 && (
             <>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-white/80 drop-shadow-lg">
                 {selectedBills.size} selected
               </span>
               <button
                 onClick={() => setShowBulkActions(!showBulkActions)}
-                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm"
+                className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
               >
                 Bulk Actions
               </button>
@@ -309,7 +309,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
             <div className="flex gap-2">
               <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+                className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
               >
                 Delete Selected
               </button>
@@ -320,7 +320,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         <div className="flex gap-2">
           <button
             onClick={exportToCSV}
-            className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm flex items-center gap-1"
+            className="px-3 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 drop-shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -329,7 +329,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
           </button>
           <button
             onClick={exportDetailedCSV}
-            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm flex items-center gap-1"
+            className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 drop-shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -342,21 +342,21 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
+            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
               <th className="text-left py-3 px-4 rounded-l-lg">
                 <input
                   type="checkbox"
                   checked={filteredBills.length > 0 && selectedBills.size === filteredBills.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded"
+                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                 />
               </th>
-              <th className="text-left py-3 px-4">Bill Number</th>
-              <th className="text-left py-3 px-4">Bill Date</th>
-              <th className="text-left py-3 px-4">Vendor</th>
-              <th className="text-left py-3 px-4">Items</th>
-              <th className="text-right py-3 px-4">Total Amount</th>
-              <th className="text-center py-3 px-4 rounded-r-lg">Actions</th>
+              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Bill Number</th>
+              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Bill Date</th>
+              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Vendor</th>
+              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Items</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Amount</th>
+              <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -367,40 +367,40 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     <tr key={i}>
                       <td
                         colSpan={7}
-                        className="py-6 animate-pulse bg-gray-100 dark:bg-gray-700 rounded"
+                        className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
                       />
                     </tr>
                   ))
               : filteredBills.map((bill) => (
                   <tr
                     key={bill.id}
-                    className="bg-white dark:bg-gray-900 shadow rounded-lg border border-gray-100 dark:border-gray-800"
+                    className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300"
                   >
                     <td className="py-3 px-4">
                       <input
                         type="checkbox"
                         checked={selectedBills.has(bill.id)}
                         onChange={(e) => handleSelectBill(bill.id, e.target.checked)}
-                        className="rounded"
+                        className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                       />
                     </td>
-                    <td className="py-3 px-4 font-semibold text-blue-700 dark:text-blue-200">
+                    <td className="py-3 px-4 font-semibold text-white drop-shadow-lg">
                       {bill.bill_number}
                     </td>
-                    <td className="py-3 px-4">{bill.bill_date}</td>
-                    <td className="py-3 px-4">{bill.vendor_name}</td>
+                    <td className="py-3 px-4 text-white drop-shadow-lg">{bill.bill_date}</td>
+                    <td className="py-3 px-4 text-white drop-shadow-lg">{bill.vendor_name}</td>
                     <td className="py-3 px-4">
                       {bill.items && bill.items.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {bill.items.map((item) => (
                             <div
                               key={item.id}
-                              className="bg-blue-50 dark:bg-blue-900/40 rounded-lg px-3 py-2 flex flex-col min-w-[140px] shadow-sm"
+                              className="bg-blue-500/30 border border-blue-300/50 rounded-lg px-3 py-2 flex flex-col min-w-[140px] shadow-sm backdrop-filter backdrop-blur-10"
                             >
-                              <span className="font-medium text-blue-800 dark:text-blue-100 truncate">
+                              <span className="font-medium text-white drop-shadow-lg truncate">
                                 {item.product || "Product"}
                               </span>
-                              <span className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                              <span className="text-xs text-white/80 drop-shadow-md mt-1">
                                 Qty:{" "}
                                 <span className="font-semibold">
                                   {item.quantity}
@@ -435,30 +435,30 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-gray-400">No items</span>
+                        <span className="text-white/60 drop-shadow-md">No items</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-green-700 dark:text-green-300">
-                      {Number(bill.total_amount).toLocaleString(undefined, {
+                    <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
+                      ₹{Number(bill.total_amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </td>
                     <td className="py-3 px-4 text-center space-x-2">
                       <button
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                        className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
                         onClick={() => onView(bill.id)}
                       >
                         View
                       </button>
                       <button
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
+                        className="px-3 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
                         onClick={() => onEdit(bill)}
                       >
                         Edit
                       </button>
                       <button
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                        className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
                         onClick={() => onDelete(bill.id)}
                       >
                         Delete
@@ -476,7 +476,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               ? data.length === 0
               : ((!data.data || data.data.length === 0) &&
                   (!data.results || data.results.length === 0)))) && (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-white/80 drop-shadow-lg">
             <p>No purchase bills found.</p>
             <p className="text-sm mt-2">
               Click "New Purchase" to create your first purchase bill.
@@ -487,15 +487,15 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       {/* Pagination */}
       <div className="flex justify-end mt-4 gap-2">
         <button
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
           disabled={page === 1}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
         >
           Prev
         </button>
-        <span className="px-2 py-1">{page}</span>
+        <span className="px-2 py-1 text-white drop-shadow-lg">{page}</span>
         <button
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
           disabled={!data?.next && !data?.data?.next}
           onClick={() => setPage((p) => p + 1)}
         >

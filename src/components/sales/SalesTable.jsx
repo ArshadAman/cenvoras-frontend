@@ -191,7 +191,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
       {/* Header with Search and Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -201,16 +201,16 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
               placeholder="Search bills..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-4 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 w-full sm:w-64"
             />
-            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-white/70 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium"
+            className="px-3 py-2 border border-white/30 rounded-lg hover:bg-white/20 bg-white/10 backdrop-filter backdrop-blur-10 text-sm font-medium text-white drop-shadow-lg"
           >
             Filters
           </button>
@@ -220,18 +220,18 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
           <select
             value={ordering}
             onChange={(e) => setOrdering(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+            className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10 text-white text-sm"
           >
-            <option value="-invoice_date">Newest First</option>
-            <option value="invoice_date">Oldest First</option>
-            <option value="-total_amount">Highest Amount</option>
-            <option value="total_amount">Lowest Amount</option>
+            <option value="-invoice_date" className="bg-[#1a2341] text-white">Newest First</option>
+            <option value="invoice_date" className="bg-[#1a2341] text-white">Oldest First</option>
+            <option value="-total_amount" className="bg-[#1a2341] text-white">Highest Amount</option>
+            <option value="total_amount" className="bg-[#1a2341] text-white">Lowest Amount</option>
           </select>
           
           {selectedInvoices.size > 0 && (
             <button
               onClick={() => setShowBulkActions(!showBulkActions)}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              className="px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 backdrop-filter backdrop-blur-10 drop-shadow-lg text-sm"
             >
               Actions ({selectedInvoices.size})
             </button>
@@ -250,21 +250,21 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
       {/* Bulk Actions */}
       {showBulkActions && selectedInvoices.size > 0 && (
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="mb-4 p-4 bg-blue-500/20 backdrop-filter backdrop-blur-10 rounded-lg border border-blue-300/50">
           <div className="flex items-center justify-between">
-            <span className="text-blue-800 dark:text-blue-200 font-medium">
+            <span className="text-white font-medium drop-shadow-lg">
               {selectedInvoices.size} invoices selected
             </span>
             <div className="flex gap-2">
               <button
                 onClick={exportToCSV}
-                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                className="px-3 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 backdrop-filter backdrop-blur-10 drop-shadow-lg text-sm"
               >
                 Export CSV
               </button>
               <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 backdrop-filter backdrop-blur-10 drop-shadow-lg text-sm"
               >
                 Delete Selected
               </button>
@@ -275,83 +275,83 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+        <table className="min-w-full text-sm border-separate border-spacing-y-2">
+          <thead>
+            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
+              <th className="px-6 py-3 text-left rounded-l-lg">
                 <input
                   type="checkbox"
                   checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded"
+                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
                 Invoice Details
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
                 Customer
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
                 Amount
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
                 Items
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg rounded-r-lg">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody>
             {filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              <tr key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
                     onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
-                    className="rounded"
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-white drop-shadow-lg">
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-white/70 drop-shadow-md">
                     {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">
+                  <div className="text-sm text-white drop-shadow-lg">
                     {invoice.customer_name}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-white drop-shadow-lg">
                     ₹{Number(invoice.total_amount).toLocaleString()}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70 drop-shadow-md">
                   {invoice.items?.length || 0} items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
                     <button
                       onClick={() => onView(invoice)}
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200"
+                      className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
                     >
                       View
                     </button>
                     {/* <button
                       onClick={() => onEdit(invoice)}
-                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200"
+                      className="px-3 py-1 bg-indigo-500/30 text-white border border-indigo-300/50 rounded hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
                     >
                       Edit
                     </button> */}
                     <button
                       onClick={() => onDelete(invoice)}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                      className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
                     >
                       Delete
                     </button>
@@ -366,7 +366,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
       {filteredInvoices.length === 0 && (
         <div className="text-center py-12">
           <svg
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="mx-auto h-12 w-12 text-white/60 drop-shadow-md"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -378,8 +378,8 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No sales bills</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <h3 className="mt-2 text-sm font-medium text-white drop-shadow-lg">No sales bills</h3>
+          <p className="mt-1 text-sm text-white/70 drop-shadow-md">
             Get started by creating a new sales bill.
           </p>
         </div>

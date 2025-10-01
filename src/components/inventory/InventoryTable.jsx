@@ -26,14 +26,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
   if (error) {
     return (
-      <div className="p-4 text-red-600">
+      <div className="p-4 text-red-300 font-bold drop-shadow-lg">
         Error loading inventory: {error.message}
         <button
           onClick={() => {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="ml-4 px-2 py-1 bg-red-500 text-white rounded text-xs"
+          className="ml-4 px-2 py-1 bg-red-500/80 text-white rounded text-xs backdrop-filter backdrop-blur-10 border border-red-300/30 font-bold transition-colors"
         >
           Clear Auth & Re-login
         </button>
@@ -192,20 +192,20 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
 
     if (currentStock === 0) {
-      return { text: "Out of Stock", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" };
+      return { text: "Out of Stock", className: "bg-red-500/30 text-red-200 border border-red-300/50 backdrop-filter backdrop-blur-10 font-bold" };
     } else if (minStock > 0 && currentStock > 0 && currentStock <= minStock) {
-      return { text: "Low Stock", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" };
+      return { text: "Low Stock", className: "bg-yellow-500/30 text-yellow-200 border border-yellow-300/50 backdrop-filter backdrop-blur-10 font-bold" };
     } else {
-      return { text: "In Stock", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" };
+      return { text: "In Stock", className: "bg-green-500/30 text-green-200 border border-green-300/50 backdrop-filter backdrop-blur-10 font-bold" };
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg p-4 rounded">
       {/* Enhanced Filters */}
       <div className="flex flex-wrap gap-2 mb-4">
         <input
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search by name or description"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -213,7 +213,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <select
           value={ordering}
           onChange={(e) => setOrdering(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
         >
           <option value="name">Name (A-Z)</option>
           <option value="-name">Name (Z-A)</option>
@@ -225,7 +225,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <select
           value={stockFilter}
           onChange={(e) => setStockFilter(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
+          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
         >
           <option value="all">All Stock</option>
           <option value="in-stock">In Stock</option>
@@ -234,7 +234,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         </select>
         <button
           onClick={() => setShowAdvancedFilters(true)}
-          className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition text-sm"
+          className="px-3 py-1 bg-purple-500/30 text-purple-200 border border-purple-300/50 rounded hover:bg-purple-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
         >
           Advanced Filters
         </button>
@@ -245,12 +245,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <div className="flex items-center gap-4">
           {selectedProducts.size > 0 && (
             <>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-cyan-300 font-bold drop-shadow-lg">
                 {selectedProducts.size} selected
               </span>
               <button
                 onClick={() => setShowBulkActions(!showBulkActions)}
-                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm"
+                className="px-3 py-1 bg-blue-500/30 text-blue-200 border border-blue-300/50 rounded hover:bg-blue-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
               >
                 Bulk Actions
               </button>
@@ -260,7 +260,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <div className="flex gap-2">
               <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+                className="px-3 py-1 bg-red-500/30 text-red-200 border border-red-300/50 rounded hover:bg-red-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
               >
                 Delete Selected
               </button>
@@ -271,7 +271,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <div className="flex gap-2">
           <button
             onClick={exportToCSV}
-            className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm flex items-center gap-1"
+            className="px-3 py-1 bg-green-500/30 text-green-200 border border-green-300/50 rounded hover:bg-green-400/40 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 font-bold"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -285,21 +285,21 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
+            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
               <th className="text-left py-3 px-4 rounded-l-lg">
                 <input
                   type="checkbox"
                   checked={filteredProducts.length > 0 && selectedProducts.size === filteredProducts.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded"
+                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                 />
               </th>
-              <th className="text-left py-3 px-4">Product</th>
-              <th className="text-center py-3 px-4">Stock</th>
-              <th className="text-right py-3 px-4">Unit Price</th>
-              <th className="text-right py-3 px-4">Total Value</th>
-              <th className="text-center py-3 px-4">Status</th>
-              <th className="text-center py-3 px-4 rounded-r-lg">Actions</th>
+              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Product</th>
+              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Stock</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Unit Price</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Value</th>
+              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Status</th>
+              <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -310,7 +310,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     <tr key={i}>
                       <td
                         colSpan={7}
-                        className="py-6 animate-pulse bg-gray-100 dark:bg-gray-700 rounded"
+                        className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
                       />
                     </tr>
                   ))
@@ -321,40 +321,40 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   return (
                     <tr
                       key={product.id}
-                      className="bg-white dark:bg-gray-900 shadow rounded-lg border border-gray-100 dark:border-gray-800"
+                      className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300"
                     >
                       <td className="py-3 px-4">
                         <input
                           type="checkbox"
                           checked={selectedProducts.has(product.id)}
                           onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                          className="rounded"
+                          className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-blue-700 dark:text-blue-200">
+                        <div className="font-semibold text-white drop-shadow-lg">
                           {product.name}
                         </div>
                         {product.description && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <div className="text-xs text-white/70 drop-shadow-md mt-1">
                             {product.description.substring(0, 50)}...
                           </div>
                         )}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <div className="font-medium">
+                        <div className="font-medium text-white drop-shadow-lg">
                             {parseFloat(product.stock ?? product.current_stock ?? 0)} {product.unit}
                         </div>
                           {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-white/60 drop-shadow-md">
                               Min: {product.low_stock_alert ?? product.min_stock_level} {product.unit}
                             </div>
                           )}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium">
+                      <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
                         ₹{parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0).toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-green-700 dark:text-green-300">
+                      <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
                         ₹{totalValue.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -368,14 +368,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       <td className="py-3 px-4 text-center space-x-1">
                         {/* View button removed */}
                         <button
-                          className="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-xs"
+                          className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
                           onClick={() => onEdit(product)}
                         >
                           Edit
                         </button>
                         {/* Stock button removed */}
                         <button
-                          className="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-xs"
+                          className="px-2 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
                           onClick={() => onDelete(product)}
                         >
                           Delete
@@ -394,7 +394,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               ? data.length === 0
               : ((!data.data || data.data.length === 0) &&
                   (!data.results || data.results.length === 0)))) && (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-white/80 drop-shadow-lg">
             <p>No products found.</p>
             <p className="text-sm mt-2">
               Click "Add Product" to create your first inventory item.
@@ -406,15 +406,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       {/* Pagination */}
       <div className="flex justify-end mt-4 gap-2">
         <button
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
           disabled={page === 1}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
         >
           Prev
         </button>
-        <span className="px-2 py-1">{page}</span>
+        <span className="px-2 py-1 text-white drop-shadow-lg">{page}</span>
         <button
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
           disabled={!data?.next && !data?.data?.next}
           onClick={() => setPage((p) => p + 1)}
         >

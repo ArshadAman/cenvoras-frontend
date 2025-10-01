@@ -98,12 +98,12 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/4"></div>
+          <div className="h-4 bg-white/20 rounded w-1/4"></div>
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              <div key={i} className="h-4 bg-white/20 rounded"></div>
             ))}
           </div>
         </div>
@@ -113,8 +113,8 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div className="text-center text-red-600 dark:text-red-400">
+      <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg p-6">
+        <div className="text-center text-red-300 font-bold drop-shadow-lg">
           Error loading customers: {error.message}
         </div>
       </div>
@@ -125,12 +125,12 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
   const isIndeterminate = selectedCustomers.size > 0 && selectedCustomers.size < customers.length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Customers ({totalCount})
+        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
+      {/* Header with search and actions */}
+      <div className="p-6 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <h2 className="text-lg font-bold text-white drop-shadow-lg">
+            👥 Customers ({totalCount})
           </h2>
           
           {/* Search and Controls */}
@@ -138,7 +138,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
             <input
               type="text"
               placeholder="Search customers..."
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-3 py-2 border border-white/30 rounded-md bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -147,7 +147,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
             />
             
             <select
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-3 py-2 border border-white/30 rounded-md bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
               value={ordering}
               onChange={(e) => {
                 setOrdering(e.target.value);
@@ -166,19 +166,19 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
 
         {/* Bulk Actions */}
         {showBulkActions && (
-          <div className="mt-4 flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-            <span className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="mt-4 flex items-center gap-3 p-3 bg-cyan-500/20 backdrop-filter backdrop-blur-10 border border-cyan-300/30 rounded-md">
+            <span className="text-sm text-cyan-300 font-bold drop-shadow-lg">
               {selectedCustomers.size} customer(s) selected
             </span>
             <button
               onClick={handleBulkDelete}
-              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded"
+              className="px-3 py-1 bg-red-500/80 hover:bg-red-400/90 text-white text-sm rounded backdrop-filter backdrop-blur-10 border border-red-300/30 font-bold transition-colors"
             >
               Delete Selected
             </button>
             <button
               onClick={exportToCSV}
-              className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded"
+              className="px-3 py-1 bg-green-500/80 hover:bg-green-400/90 text-white text-sm rounded backdrop-filter backdrop-blur-10 border border-green-300/30 font-bold transition-colors"
             >
               Export Selected
             </button>
@@ -189,7 +189,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
             <tr>
               <th className="px-6 py-3 text-left">
                 <input
@@ -202,63 +202,63 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                   className="rounded border-gray-300 dark:border-gray-600"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Customer
+                            <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+                Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Contact
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 GSTIN
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
             {customers.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan="6" className="px-6 py-12 text-center text-white font-bold drop-shadow-lg">
                   No customers found
                 </td>
               </tr>
             ) : (
               customers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={customer.id} className="hover:bg-white/10 transition-colors">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
                       checked={selectedCustomers.has(customer.id)}
                       onChange={(e) => handleCustomerSelect(customer.id, e.target.checked)}
-                      className="rounded border-gray-300 dark:border-gray-600"
+                      className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                     />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-bold text-white drop-shadow-lg">
                         {customer.name}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-cyan-300 font-medium">
                         {customer.email}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 dark:text-white">
+                    <div className="text-sm text-white font-medium drop-shadow-lg">
                       {customer.phone || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 dark:text-white">
+                    <div className="text-sm text-white font-medium drop-shadow-lg">
                       {customer.gstin || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="text-sm text-cyan-300 font-medium drop-shadow-lg">
                       {format(new Date(customer.created_at), 'MMM dd, yyyy')}
                     </div>
                   </td>
@@ -266,19 +266,19 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => onView(customer)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
+                        className="text-blue-300 hover:text-blue-100 text-sm font-bold drop-shadow-lg transition-colors"
                       >
                         View
                       </button>
                       <button
                         onClick={() => onEdit(customer)}
-                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-sm"
+                        className="text-green-300 hover:text-green-100 text-sm font-bold drop-shadow-lg transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => onDelete(customer)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
+                        className="text-red-300 hover:text-red-100 text-sm font-bold drop-shadow-lg transition-colors"
                       >
                         Delete
                       </button>
@@ -302,14 +302,14 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-sm border border-white/20 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10 bg-white/10 text-white font-bold transition-colors"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-sm border border-white/20 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10 bg-white/10 text-white font-bold transition-colors"
               >
                 Next
               </button>

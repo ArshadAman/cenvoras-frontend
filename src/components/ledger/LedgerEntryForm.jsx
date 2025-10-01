@@ -73,15 +73,15 @@ function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) 
       />
       
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black dark:ring-gray-600 ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1a2341]/95 backdrop-filter backdrop-blur-20 border border-white/20 shadow-2xl max-h-60 rounded-md py-1 text-base ring-1 ring-white/20 overflow-auto focus:outline-none sm:text-sm">
           {filteredCustomers.map((customer) => (
             <div
               key={customer.id}
-              className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm"
+              className="px-3 py-2 hover:bg-white/20 cursor-pointer text-sm transition-colors"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-xs">
+              <div className="font-bold text-gray-900 dark:text-white">{customer.name}</div>
+              <div className="text-cyan-600 dark:text-cyan-300 text-xs font-medium">
                 {customer.email && `${customer.email}`}
                 {customer.phone && ` | ${customer.phone}`}
               </div>
@@ -177,7 +177,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
         <Form className="space-y-4">
           {/* Customer Selection */}
           <div>
-            <label htmlFor="customer" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="customer" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
               Customer *
             </label>
             <LedgerCustomerAutocomplete 
@@ -191,7 +191,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
 
           {/* Date */}
           <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="date" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
               Date *
             </label>
             <Field
@@ -204,7 +204,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="description" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
               Description *
             </label>
             <Field
@@ -219,7 +219,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
 
           {/* Invoice (optional) */}
           <div>
-            <label htmlFor="invoice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="invoice" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
               Invoice ID (optional)
             </label>
             <Field
@@ -234,7 +234,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
           {/* Debit and Credit */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="debit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="debit" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
                 Debit Amount
               </label>
               <Field
@@ -249,7 +249,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
             </div>
 
             <div>
-              <label htmlFor="credit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="credit" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
                 Credit Amount
               </label>
               <Field
@@ -264,7 +264,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
             </div>
           </div>
 
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs text-cyan-300 font-bold drop-shadow-lg">
             * Note: Either debit or credit must be greater than 0. Both cannot be zero.
           </div>
 

@@ -214,15 +214,15 @@ export default function ChartOfAccounts() {
 
   return (
     <Layout>
-      <div className="p-6">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421] p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-3xl font-bold text-white">
                 Chart of Accounts
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <p className="text-[#b6e0f7] mt-2">
                 Manage your accounting structure and financial categories
               </p>
             </div>
@@ -242,7 +242,7 @@ export default function ChartOfAccounts() {
                   setEditingAccount(null);
                   setIsAccountFormOpen(true);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                className="bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] hover:from-[#b6e0f7] hover:to-[#eaf6fa] text-[#1a2341] px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -259,7 +259,7 @@ export default function ChartOfAccounts() {
               return (
                 <div
                   key={type}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer"
+                  className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-200 cursor-pointer transform hover:scale-105 shadow-lg"
                   onClick={() => setAccountTypeFilter(accountTypeFilter === type ? '' : type)}
                 >
                   <div className="flex justify-between items-center">
@@ -280,11 +280,11 @@ export default function ChartOfAccounts() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#b6e0f7] mb-2">
                 Search Accounts
               </label>
               <div className="relative">
@@ -389,10 +389,10 @@ export default function ChartOfAccounts() {
         )}
 
         {/* Accounts Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="min-w-full divide-y divide-white/10">
+              <thead className="bg-white/10">
                 <tr>
                   <th scope="col" className="relative px-6 py-3">
                     <input

@@ -7,6 +7,7 @@ import CustomerSummary from "../components/customers/CustomerSummary";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
+import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Customers() {
   const [showForm, setShowForm] = useState(false);
@@ -26,71 +27,88 @@ export default function Customers() {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        {/* Page Header */}
-        <header className="bg-white dark:bg-gray-800 shadow">
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421]">
+        {/* Hero Header Section */}
+        <div className="relative overflow-hidden">
+          {/* Background Elements */}
+          <div className="absolute inset-0">
+            <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full opacity-10 blur-2xl"></div>
+            <div className="absolute top-20 right-20 w-24 h-24 bg-gradient-to-r from-[#b6e0f7] to-[#eaf6fa] rounded-full opacity-10 blur-xl"></div>
+          </div>
+
+          {/* Header Content */}
+          <div className="relative px-6 pt-8 pb-16">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Customer Management
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Manage your customer database and relationships
-                </p>
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-2xl shadow-lg">
+                  <UserGroupIcon className="h-8 w-8 text-[#1a2341]" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-[#b6e0f7] to-[#7fd3f7] bg-clip-text text-transparent">
+                    Customer Management
+                  </h1>
+                  <p className="text-[#b6e0f7] mt-2">Manage your customer database and relationships</p>
+                </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add Customer
-                </button>
-              </div>
+              
+              {/* Action Button */}
+              <button
+                onClick={() => setShowForm(true)}
+                className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-medium rounded-xl hover:from-[#b6e0f7] hover:to-[#eaf6fa] transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>Add Customer</span>
+              </button>
             </div>
           </div>
-        </header>
+        </div>
 
-        {/* Customer Summary */}
-        <CustomerSummary />
+        {/* Main Content Area */}
+        <div className="px-6 pb-8">
+          {/* Summary Cards */}
+          <div className="mb-8">
+            <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl p-6">
+              <CustomerSummary />
+            </div>
+          </div>
 
-        {/* Customer Table */}
-        <CustomerTable
-          onEdit={handleEdit}
-          onView={(customer) => setShowDetails(customer)}
-          onDelete={(customer) => setDeleteCustomer(customer)}
-        />
-
-        {/* Modals */}
-        {showForm && (
-          <CustomerForm 
-            isOpen={showForm} 
-            onClose={handleCloseForm}
-            editData={editCustomer}
-          />
-        )}
-
-        {showDetails && (
-          <CustomerDetailsModal
-            isOpen={!!showDetails}
-            onClose={() => setShowDetails(null)}
-            customer={showDetails}
-          />
-        )}
-
-        {deleteCustomer && (
-          <CustomerDeleteDialog
-            isOpen={!!deleteCustomer}
-            onClose={() => setDeleteCustomer(null)}
-            customer={deleteCustomer}
-          />
-        )}
-
-        <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+          {/* Customer Table Container */}
+          <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            <CustomerTable
+              onEdit={handleEdit}
+              onView={(customer) => setShowDetails(customer)}
+              onDelete={(customer) => setDeleteCustomer(customer)}
+            />
+          </div>
+        </div>
       </div>
+
+      {/* Modals */}
+      {showForm && (
+        <CustomerForm 
+          isOpen={showForm} 
+          onClose={handleCloseForm}
+          editData={editCustomer}
+        />
+      )}
+
+      {showDetails && (
+        <CustomerDetailsModal
+          isOpen={!!showDetails}
+          onClose={() => setShowDetails(null)}
+          customer={showDetails}
+        />
+      )}
+
+      {deleteCustomer && (
+        <CustomerDeleteDialog
+          isOpen={!!deleteCustomer}
+          onClose={() => setDeleteCustomer(null)}
+          customer={deleteCustomer}
+        />
+      )}
+
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </Layout>
   );
 }
