@@ -5,8 +5,10 @@ import LedgerTable from '../components/ledger/LedgerTable';
 import PaymentForm from '../components/ledger/PaymentForm';
 import LedgerEntryForm from '../components/ledger/LedgerEntryForm';
 import LedgerDeleteDialog from '../components/ledger/LedgerDeleteDialog';
+import BulkDeleteModal from '../components/BulkDeleteModal';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api/customers';
+import { bulkDeleteLedgerEntries, getAccounts } from '../api/ledger';
 import Layout from '../components/Layout';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -16,20 +18,22 @@ const Ledger = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [selectedEntries, setSelectedEntries] = useState([]);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState('');
   const [dateFilter, setDateFilter] = useState({
     startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd')
   });
 
-  // Fetch customers for filter dropdown
-  const { data: customersData } = useQuery({
-    queryKey: ['customers', { search: '', page: 1, page_size: 1000 }],
-    queryFn: () => getCustomers({ search: '', page: 1, page_size: 1000 }),
+  // Fetch accounts for filter dropdown
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts', { search: '', page: 1, page_size: 1000 }],
+    queryFn: () => getAccounts({ search: '', page: 1, page_size: 1000 }),
   });
 
-  const customers = customersData?.results || [];
+  const accounts = accountsData?.results || [];
 
   const handlePaymentSuccess = () => {
     setShowPaymentForm(false);
@@ -57,11 +61,26 @@ const Ledger = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCustomer('');
+    setSelectedAccount('');
     setDateFilter({
       startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
       endDate: format(new Date(), 'yyyy-MM-dd')
     });
+  };
+
+  // Bulk selection handlers
+  const handleBulkSelect = (entryIds) => {
+    setSelectedEntries(entryIds);
+  };
+
+  const clearSelection = () => {
+    setSelectedEntries([]);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedEntries.length > 0) {
+      setIsBulkDeleteOpen(true);
+    }
   };
 
   return (
@@ -118,26 +137,26 @@ const Ledger = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 dark:focus:placeholder-gray-500 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Search transactions..."
+                  placeholder="Search descriptions..."
                 />
               </div>
             </div>
 
-            {/* Customer Filter */}
+            {/* Account Filter */}
             <div>
-              <label htmlFor="customer-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Customer
+              <label htmlFor="account-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Account
               </label>
               <select
-                id="customer-filter"
-                value={selectedCustomer}
-                onChange={(e) => setSelectedCustomer(e.target.value)}
+                id="account-filter"
+                value={selectedAccount}
+                onChange={(e) => setSelectedAccount(e.target.value)}
                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
               >
-                <option value="">All Customers</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
+                <option value="">All Accounts</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.code} - {account.name}
                   </option>
                 ))}
               </select>
@@ -194,13 +213,47 @@ const Ledger = () => {
         customerFilter={selectedCustomer}
       /> */}
 
+      {/* Bulk Actions Toolbar */}
+      {selectedEntries.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div className="px-4 py-3 sm:px-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {selectedEntries.length} {selectedEntries.length === 1 ? 'entry' : 'entries'} selected
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={clearSelection}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Clear Selection
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Selected
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Ledger Table */}
       <LedgerTable
         searchTerm={searchTerm}
         dateFilter={dateFilter}
-        customerFilter={selectedCustomer}
+        accountFilter={selectedAccount}
         onEdit={handleEditEntry}
         onDelete={handleDeleteEntry}
+        selectedEntries={selectedEntries}
+        onBulkSelect={handleBulkSelect}
       />
 
       {/* Payment Form Modal */}
@@ -289,6 +342,19 @@ const Ledger = () => {
           </div>
         </div>
       )}
+
+      {/* Bulk Delete Modal */}
+      <BulkDeleteModal
+        isOpen={isBulkDeleteOpen}
+        onClose={() => setIsBulkDeleteOpen(false)}
+        selectedItems={selectedEntries}
+        onClearSelection={clearSelection}
+        bulkDeleteFn={bulkDeleteLedgerEntries}
+        invalidateQueries={[['generalLedgerEntries']]}
+        itemType="ledger entry"
+        title="Delete Selected Ledger Entries"
+        description="Are you sure you want to delete the selected ledger entries? This action cannot be undone and will remove these transactions from your records."
+      />
 
       {/* Delete Confirmation Dialog */}
       <LedgerDeleteDialog

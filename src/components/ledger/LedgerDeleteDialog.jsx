@@ -34,7 +34,17 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
   };
 
   const formatDate = (dateString) => {
-    return format(new Date(dateString), 'dd/MM/yyyy');
+    if (!dateString) return '-';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) return '-';
+      return format(date, 'dd/MM/yyyy');
+    } catch (error) {
+      console.warn('Invalid date format:', dateString);
+      return '-';
+    }
   };
 
   if (!isOpen || !entry) return null;

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getClientLedger } from '../../api/ledger';
+import { getGeneralLedgerEntries } from '../../api/ledger';
 import Loader from '../Loader';
 import { format } from 'date-fns';
 
-const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete }) => {
+const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, selectedEntries = [], onBulkSelect }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -16,27 +16,27 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
     error,
     refetch
   } = useQuery({
-    queryKey: ['clientLedger', {
-      search: searchTerm,
+    queryKey: ['generalLedgerEntries', {
+      description: searchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      customer: customerFilter,
+      account: accountFilter,
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
     }],
-    queryFn: () => getClientLedger({
-      search: searchTerm,
+    queryFn: () => getGeneralLedgerEntries({
+      description: searchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      customer: customerFilter,
+      account: accountFilter,
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
     }),
   });
 
-  const ledgerEntries = ledgerData?.results || [];
+  const ledgerEntries = ledgerData?.entries || [];
   const totalCount = ledgerData?.count || 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -49,6 +49,30 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
     }
     setCurrentPage(1);
   };
+
+  // Bulk selection handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allEntryIds = ledgerEntries.map(entry => entry.id);
+      onBulkSelect && onBulkSelect([...new Set([...selectedEntries, ...allEntryIds])]);
+    } else {
+      const currentPageIds = ledgerEntries.map(entry => entry.id);
+      onBulkSelect && onBulkSelect(selectedEntries.filter(id => !currentPageIds.includes(id)));
+    }
+  };
+
+  const handleSelectEntry = (entryId, isSelected) => {
+    if (isSelected) {
+      onBulkSelect && onBulkSelect([...selectedEntries, entryId]);
+    } else {
+      onBulkSelect && onBulkSelect(selectedEntries.filter(id => id !== entryId));
+    }
+  };
+
+  const isAllCurrentPageSelected = ledgerEntries.length > 0 && 
+    ledgerEntries.every(entry => selectedEntries.includes(entry.id));
+
+  const isSomeCurrentPageSelected = ledgerEntries.some(entry => selectedEntries.includes(entry.id));
 
   const getSortIcon = (field) => {
     if (sortBy !== field) {
@@ -65,7 +89,17 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
   };
 
   const formatDate = (dateString) => {
-    return format(new Date(dateString), 'dd/MM/yyyy');
+    if (!dateString) return '-';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) return '-';
+      return format(date, 'dd/MM/yyyy');
+    } catch (error) {
+      console.warn('Invalid date format:', dateString);
+      return '-';
+    }
   };
 
   if (isLoading) {
@@ -134,6 +168,19 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
+                    {onBulkSelect && (
+                      <th scope="col" className="relative px-6 py-3">
+                        <input
+                          type="checkbox"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700"
+                          checked={isAllCurrentPageSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
+                          }}
+                          onChange={handleSelectAll}
+                        />
+                      </th>
+                    )}
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -144,12 +191,12 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                      onClick={() => handleSort('customer')}
+                      onClick={() => handleSort('account_name')}
                     >
-                      Customer {getSortIcon('customer')}
+                      Account {getSortIcon('account_name')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Invoice
+                      Reference
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Description
@@ -168,12 +215,8 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
                     >
                       Credit {getSortIcon('credit')}
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                      onClick={() => handleSort('balance')}
-                    >
-                      Balance {getSortIcon('balance')}
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Source
                     </th>
                     <th scope="col" className="relative px-6 py-3">
                       <span className="sr-only">Actions</span>
@@ -183,32 +226,39 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {ledgerEntries.map((entry) => (
                     <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      {onBulkSelect && (
+                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <input
+                            type="checkbox"
+                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700"
+                            checked={selectedEntries.includes(entry.id)}
+                            onChange={(e) => handleSelectEntry(entry.id, e.target.checked)}
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {formatDate(entry.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {entry.customer?.name || 'Unknown Customer'}
+                          {entry.account_code} - {entry.account_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {entry.account_type}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {entry.invoice || '-'}
+                        {entry.reference || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                         <div className="max-w-xs truncate" title={entry.description}>
-                          {entry.description}
+                          {entry.description || 'General Ledger Entry'}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {entry.invoice ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                              📄 Invoice Linked
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              💰 Payment
-                            </span>
+                          <span>Created: {formatDate(entry.created_at)}</span>
+                          {entry.entry_number && (
+                            <span className="ml-2">Entry #{entry.entry_number}</span>
                           )}
-                          <span className="ml-2">Created: {formatDate(entry.created_at)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -217,7 +267,7 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
                         </div>
                         {entry.debit > 0 && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {entry.invoice ? 'Sales Invoice' : 'A/R Increase'}
+                            Debit
                           </div>
                         )}
                       </td>
@@ -227,17 +277,26 @@ const LedgerTable = ({ searchTerm, dateFilter, customerFilter, onEdit, onDelete 
                         </div>
                         {entry.credit > 0 && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {entry.invoice ? 'Revenue' : 'Payment Received'}
+                            Credit
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className={`font-medium ${entry.balance >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
-                          {formatCurrency(entry.balance)}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {entry.balance > 0 ? 'Customer Owes' : entry.balance < 0 ? 'Credit Balance' : 'Paid in Full'}
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {entry.sales_invoice_number && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mr-2">
+                            📄 Sales #{entry.sales_invoice_number}
+                          </span>
+                        )}
+                        {entry.purchase_bill_number && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 mr-2">
+                            🧾 Purchase #{entry.purchase_bill_number}
+                          </span>
+                        )}
+                        {!entry.sales_invoice_number && !entry.purchase_bill_number && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            📝 Manual Entry
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">

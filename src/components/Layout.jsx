@@ -9,7 +9,7 @@ export default function Layout({ children, onLogout }) {
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-        <div className="h-16 flex items-center justify-center font-bold text-xl text-blue-600 dark:text-blue-400">Canvoras</div>
+        <div className="h-16 flex items-center justify-center font-bold text-xl text-blue-600 dark:text-blue-400">Cenvora</div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           <Link to="/dashboard" className={`block px-4 py-2 rounded ${location.pathname === "/dashboard" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Dashboard</Link>
           <Link to="/sales" className={`block px-4 py-2 rounded ${location.pathname === "/sales" ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold" : "hover:bg-gray-200 dark:hover:bg-gray-700"}`}>Sales</Link>
@@ -32,7 +32,7 @@ export default function Layout({ children, onLogout }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">Canvoras</span>
+            <span className="font-bold text-lg text-gray-900 dark:text-white">Cenvora</span>
           </div>
           <div className="flex items-center gap-4">
             <button
