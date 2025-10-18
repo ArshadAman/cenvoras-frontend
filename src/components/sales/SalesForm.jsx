@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange }) {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -59,6 +59,11 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
     } else {
       setShowDropdown(false);
     }
+
+    // Trigger auto-add row functionality
+    if (onInputChange && value.trim()) {
+      onInputChange();
+    }
   };
 
   return (
@@ -73,6 +78,22 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
               placeholder="Product name"
               className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
               autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === 'Tab' || (e.key === 'Enter' && !showDropdown)) {
+                  e.preventDefault();
+                  const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${idx}.quantity"]`);
+                  if (nextInput) nextInput.focus();
+                }
+                // Handle dropdown navigation
+                if (e.key === 'ArrowDown' && showDropdown) {
+                  e.preventDefault();
+                  // Focus first dropdown item
+                }
+                if (e.key === 'Enter' && showDropdown && filteredProducts.length > 0) {
+                  e.preventDefault();
+                  selectProduct(filteredProducts[0]);
+                }
+              }}
             />
             {meta.touched && meta.error && (
               <div className="text-red-500 text-xs mt-1">{meta.error}</div>
@@ -238,6 +259,18 @@ export default function SalesForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
 
+  // Auto-focus the first product field when form opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        const firstProductInput = document.querySelector('input[name="items.0.product"]');
+        if (firstProductInput) {
+          firstProductInput.focus();
+        }
+      }, 100);
+    }
+  }, [isOpen]);
+
   const createMutation = useMutation({
     mutationFn: createSalesInvoice,
     onSuccess: () => {
@@ -267,9 +300,18 @@ export default function SalesForm({ isOpen, onClose, editData }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 w-full max-w-4xl max-h-[95vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6 text-blue-700 dark:text-blue-400">
-          {isEdit ? "Edit Sales Bill" : "New Sales Bill"}
-        </h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+            {isEdit ? "Edit Sales Bill" : "New Sales Bill"}
+          </h2>
+          <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-400">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>⌨️ Keyboard-friendly:</strong> Tab/Enter to navigate • Auto-add rows while typing • 
+              <kbd className="bg-blue-200 dark:bg-blue-800 px-1 rounded">Ctrl+S</kbd> to save • 
+              <kbd className="bg-blue-200 dark:bg-blue-800 px-1 rounded">Esc</kbd> to close
+            </p>
+          </div>
+        </div>
         
         <Formik
           initialValues={{
@@ -444,7 +486,19 @@ export default function SalesForm({ isOpen, onClose, editData }) {
             const grandTotal = subtotal - totalDiscount + totalTax;
 
             return (
-              <Form className="space-y-6">
+              <Form 
+                className="space-y-6"
+                onKeyDown={(e) => {
+                  // Handle global keyboard shortcuts
+                  if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    document.querySelector('button[type="submit"]')?.click();
+                  }
+                  if (e.key === 'Escape') {
+                    onClose();
+                  }
+                }}
+              >
                 {/* Header Info */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -575,15 +629,54 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                 <div>
                   <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Items</h3>
                   <FieldArray name="items">
-                    {({ push, remove }) => (
-                      <div>
-                        {values.items.map((item, index) => (
-                          <div key={index} className="grid grid-cols-12 gap-2 items-start mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                            {/* Product Name */}
-                            <div className="col-span-3">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Product *</label>
-                              <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} />
-                            </div>
+                    {({ push, remove }) => {
+                      // Function to auto-add new row when user starts typing in the last row
+                      const handleAutoAddRow = (currentIndex) => {
+                        const isLastRow = currentIndex === values.items.length - 1;
+                        const currentItem = values.items[currentIndex];
+                        
+                        // Check if current row has meaningful data (product name or any other field)
+                        const hasData = currentItem?.product?.trim() || 
+                                       (currentItem?.quantity && currentItem.quantity > 1) || 
+                                       (currentItem?.price && currentItem.price > 0) || 
+                                       currentItem?.hsn_sac_code?.trim();
+                        
+                        if (isLastRow && hasData) {
+                          // Only add if there isn't already an empty row at the end
+                          const nextRowExists = values.items[currentIndex + 1];
+                          if (!nextRowExists) {
+                            // Add new empty row
+                            push({
+                              product_name: "",
+                              product_id: null,
+                              quantity: 1,
+                              unit: "pcs", 
+                              price: 0,
+                              discount: 0,
+                              tax: 0,
+                              hsn_code: "",
+                              tax_rate: 0,
+                              amount: 0,
+                              isExistingProduct: false,
+                            });
+                          }
+                        }
+                      };
+
+                      return (
+                        <div>
+                          {values.items.map((item, index) => (
+                            <div key={index} className="grid grid-cols-12 gap-2 items-start mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                              {/* Product Name */}
+                              <div className="col-span-3">
+                                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Product *</label>
+                                <ProductAutocomplete 
+                                  idx={index} 
+                                  values={values} 
+                                  setFieldValue={setFieldValue}
+                                  onInputChange={() => handleAutoAddRow(index)}
+                                />
+                              </div>
                             
                             {/* Quantity */}
                             <div className="col-span-1">
@@ -606,6 +699,19 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                                         const amount = parseFloat(quantity) * price;
                                         setFieldValue(`items.${index}.amount`, amount);
                                       }
+
+                                      // Auto-add row when user enters quantity
+                                      if (quantity && parseFloat(quantity) > 0) {
+                                        handleAutoAddRow(index);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      // Tab or Enter to move to next field
+                                      if (e.key === 'Tab' || e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.price"]`);
+                                        if (nextInput) nextInput.focus();
+                                      }
                                     }}
                                   />
                                 )}
@@ -615,14 +721,24 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                             {/* Unit */}
                             <div className="col-span-1">
                               <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Unit</label>
-                              <Field
-                                name={`items.${index}.unit`}
-                                as="select"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              >
-                                {units.map(unit => (
-                                  <option key={unit} value={unit}>{unit}</option>
-                                ))}
+                              <Field name={`items.${index}.unit`}>
+                                {({ field }) => (
+                                  <select
+                                    {...field}
+                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Tab' || e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.price"]`);
+                                        if (nextInput) nextInput.focus();
+                                      }
+                                    }}
+                                  >
+                                    {units.map(unit => (
+                                      <option key={unit} value={unit}>{unit}</option>
+                                    ))}
+                                  </select>
+                                )}
                               </Field>
                             </div>
                             
@@ -647,6 +763,19 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                                         const amount = parseFloat(price) * quantity;
                                         setFieldValue(`items.${index}.amount`, amount);
                                       }
+
+                                      // Auto-add row when user enters price
+                                      if (price && parseFloat(price) > 0) {
+                                        handleAutoAddRow(index);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      // Tab or Enter to move to discount field
+                                      if (e.key === 'Tab' || e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.discount"]`);
+                                        if (nextInput) nextInput.focus();
+                                      }
                                     }}
                                   />
                                 )}
@@ -669,36 +798,87 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                             {/* Discount */}
                             <div className="col-span-1">
                               <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Disc %</label>
-                              <Field
-                                name={`items.${index}.discount`}
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
+                              <Field name={`items.${index}.discount`}>
+                                {({ field }) => (
+                                  <input
+                                    {...field}
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Tab' || e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.tax"]`);
+                                        if (nextInput) nextInput.focus();
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </Field>
                             </div>
                             
                             {/* Tax */}
                             <div className="col-span-1">
                               <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Tax %</label>
-                              <Field
-                                name={`items.${index}.tax`}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
+                              <Field name={`items.${index}.tax`}>
+                                {({ field }) => (
+                                  <input
+                                    {...field}
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Tab' || e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.hsn_sac_code"]`);
+                                        if (nextInput) nextInput.focus();
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </Field>
                             </div>
                             
                             {/* HSN/SAC */}
                             <div className="col-span-1">
                               <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">HSN/SAC</label>
-                              <Field
-                                name={`items.${index}.hsn_sac_code`}
-                                type="text"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
+                              <Field name={`items.${index}.hsn_sac_code`}>
+                                {({ field }) => (
+                                  <input
+                                    {...field}
+                                    type="text"
+                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    onChange={(e) => {
+                                      setFieldValue(`items.${index}.hsn_sac_code`, e.target.value);
+                                      // Auto-add row when HSN is entered
+                                      if (e.target.value.trim()) {
+                                        handleAutoAddRow(index);
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Tab' || e.key === 'Enter') {
+                                        e.preventDefault();
+                                        // Try to focus on next row's product field
+                                        const nextRowIndex = index + 1;
+                                        const nextProductInput = document.querySelector(`input[name="items.${nextRowIndex}.product"]`);
+                                        if (nextProductInput) {
+                                          nextProductInput.focus();
+                                        } else {
+                                          // If no next row, ensure one exists and focus on it
+                                          handleAutoAddRow(index);
+                                          setTimeout(() => {
+                                            const newProductInput = document.querySelector(`input[name="items.${nextRowIndex}.product"]`);
+                                            if (newProductInput) newProductInput.focus();
+                                          }, 100);
+                                        }
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </Field>
                             </div>
                             
                             {/* Remove Button */}
@@ -715,27 +895,33 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                           </div>
                         ))}
                         
-                        <button
-                          type="button"
-                          onClick={() => push({
-                            product_name: "",
-                            product_id: null,
-                            quantity: 1,
-                            unit: "pcs",
-                            price: 0,
-                            discount: 0,
-                            tax: 0,
-                            hsn_code: "",
-                            tax_rate: 0,
-                            amount: 0,
-                            isExistingProduct: false,
-                          })}
-                          className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                        >
-                          + Add Item
-                        </button>
-                      </div>
-                    )}
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => push({
+                              product_name: "",
+                              product_id: null,
+                              quantity: 1,
+                              unit: "pcs",
+                              price: 0,
+                              discount: 0,
+                              tax: 0,
+                              hsn_code: "",
+                              tax_rate: 0,
+                              amount: 0,
+                              isExistingProduct: false,
+                            })}
+                            className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                          >
+                            + Add Item
+                          </button>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Items auto-add as you type. Manual add button available for mouse users.
+                          </p>
+                        </div>
+                        </div>
+                      );
+                    }}
                   </FieldArray>
                 </div>
 
