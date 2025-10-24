@@ -391,26 +391,26 @@ export default function Login({ onLogin }) {
       </div>
 
       {/* Enhanced Navigation */}
-      <nav className="relative z-20 flex justify-between items-center px-8 pt-8">
-        <Link to="/" className="login-brand flex items-center gap-3 group">
-          <div className="w-12 h-12 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-            <span className="text-white font-bold text-xl">C</span>
+      <nav className="relative z-20 flex flex-col sm:flex-row justify-between items-center px-4 sm:px-8 pt-6 sm:pt-8 gap-4 sm:gap-0">
+        <Link to="/" className="login-brand flex items-center gap-2 sm:gap-3 group">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+            <span className="text-white font-bold text-lg sm:text-xl">C</span>
           </div>
-          <span className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent">
+          <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent">
             Cenvora
           </span>
         </Link>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <Link 
             to="/" 
-            className="text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group"
+            className="text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group text-sm sm:text-base"
           >
             Home
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
           </Link>
           <Link 
             to="/signup" 
-            className="px-6 py-2.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-semibold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-semibold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
           >
             Sign Up
           </Link>
@@ -419,13 +419,13 @@ export default function Login({ onLogin }) {
 
       {/* Main Content */}
       <div className="relative z-20 min-h-screen flex items-center justify-center px-4 py-6">
-        <div className="login-container w-full max-w-3xl">
+        <div className="login-container w-full max-w-lg sm:max-w-2xl lg:max-w-3xl">
           {/* Glass morphism card */}
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-8 lg:p-10 relative overflow-hidden">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
             {/* Animated background elements */}
-            <div className="absolute -top-4 -left-4 w-32 h-32 bg-gradient-to-br from-[#7fd3f7]/30 to-[#b6e0f7]/20 rounded-full blur-2xl"></div>
-            <div className="absolute -bottom-4 -right-4 w-28 h-28 bg-gradient-to-tl from-[#1a2341]/20 to-[#7fd3f7]/25 rounded-full blur-2xl"></div>
-            <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-r from-[#b6e0f7]/15 to-[#eaf6fa]/10 rounded-full blur-xl transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute -top-4 -left-4 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-[#7fd3f7]/30 to-[#b6e0f7]/20 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-4 -right-4 w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-tl from-[#1a2341]/20 to-[#7fd3f7]/25 rounded-full blur-2xl"></div>
+            <div className="absolute top-1/2 left-1/2 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-[#b6e0f7]/15 to-[#eaf6fa]/10 rounded-full blur-xl transform -translate-x-1/2 -translate-y-1/2"></div>
             
             {/* Shimmer overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 shimmer"></div>
@@ -433,13 +433,13 @@ export default function Login({ onLogin }) {
             <div className="relative z-10">
               {/* Header */}
               <div className="text-center mb-6">
-                <h2 className="login-title gradient-text text-3xl lg:text-4xl font-bold mb-3">
+                <h2 className="login-title gradient-text text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
                   Welcome Back
                 </h2>
-                <p className="login-subtitle text-[#b6e0f7]/80 text-base lg:text-lg">
+                <p className="login-subtitle text-[#b6e0f7]/80 text-sm sm:text-base lg:text-lg">
                   Sign in to your Cenvora account
                 </p>
-                <div className="w-16 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto mt-3"></div>
+                <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto mt-3"></div>
               </div>
               
               <Formik
@@ -468,16 +468,16 @@ export default function Login({ onLogin }) {
                 {({ isSubmitting }) => (
                   <Form className="space-y-5">
                     {/* Login Fields Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 gap-5">
                       {/* Username Field */}
                       <div className="login-field-group">
-                        <label className="block text-white/90 font-semibold mb-2 text-base lg:text-lg">Username</label>
+                        <label className="block text-white/90 font-semibold mb-2 text-sm sm:text-base lg:text-lg">Username</label>
                         <div className="relative group">
                           <div className="absolute inset-0 bg-gradient-to-r from-[#7fd3f7]/20 to-[#b6e0f7]/20 rounded-xl blur-sm group-focus-within:blur-md transition-all duration-300"></div>
                           <Field
                             type="text"
                             name="username"
-                            className="login-input relative w-full px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#7fd3f7]/60 focus:bg-white/10 focus:scale-[1.02] hover:bg-white/8 hover:border-white/30 transition-all duration-300 text-white placeholder-white/50 text-base lg:text-lg font-medium"
+                            className="login-input relative w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#7fd3f7]/60 focus:bg-white/10 focus:scale-[1.02] hover:bg-white/8 hover:border-white/30 transition-all duration-300 text-white placeholder-white/50 text-sm sm:text-base lg:text-lg font-medium"
                             placeholder="Enter your username"
                           />
                           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#7fd3f7]/0 via-[#7fd3f7]/10 to-[#7fd3f7]/0 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
@@ -487,13 +487,13 @@ export default function Login({ onLogin }) {
                       
                       {/* Password Field */}
                       <div className="login-field-group">
-                        <label className="block text-white/90 font-semibold mb-2 text-base lg:text-lg">Password</label>
+                        <label className="block text-white/90 font-semibold mb-2 text-sm sm:text-base lg:text-lg">Password</label>
                         <div className="relative group">
                           <div className="absolute inset-0 bg-gradient-to-r from-[#7fd3f7]/20 to-[#b6e0f7]/20 rounded-xl blur-sm group-focus-within:blur-md transition-all duration-300"></div>
                           <Field
                             type={showPassword ? "text" : "password"}
                             name="password"
-                            className="login-input relative w-full px-4 py-3 pr-12 bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#7fd3f7]/60 focus:bg-white/10 focus:scale-[1.02] hover:bg-white/8 hover:border-white/30 transition-all duration-300 text-white placeholder-white/50 text-base lg:text-lg font-medium"
+                            className="login-input relative w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#7fd3f7]/60 focus:bg-white/10 focus:scale-[1.02] hover:bg-white/8 hover:border-white/30 transition-all duration-300 text-white placeholder-white/50 text-sm sm:text-base lg:text-lg font-medium"
                             placeholder="Enter your password"
                           />
                           <button

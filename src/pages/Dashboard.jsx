@@ -276,43 +276,43 @@ export default function Dashboard({ onLogout }) {
   return (
     <Layout onLogout={onLogout}>
       <main className="dashboard-bg flex-1">
-        <div className="p-8 space-y-8">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
           {/* Dashboard Header */}
-          <div className="text-center mb-12">
-            <h1 className="gradient-text text-5xl lg:text-6xl font-bold mb-4">
+          <div className="text-center mb-8 lg:mb-12">
+            <h1 className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4">
               Business Dashboard
             </h1>
-            <p className="text-[#b6e0f7]/80 text-lg lg:text-xl max-w-2xl mx-auto">
+            <p className="text-[#b6e0f7]/80 text-sm sm:text-base lg:text-lg xl:text-xl max-w-2xl mx-auto px-4">
               Monitor your business performance with real-time insights and analytics
             </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto mt-4"></div>
+            <div className="w-16 sm:w-20 lg:w-24 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto mt-4"></div>
           </div>
 
           {/* Metric Cards */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
                   <div
                     key={card.label}
-                    className={`glass-card p-6 relative overflow-hidden group cursor-pointer ${card.bgGradient}`}
+                    className={`glass-card p-4 sm:p-6 relative overflow-hidden group cursor-pointer ${card.bgGradient}`}
                   >
                     
                     <div className="relative z-10">
                       <div className="flex items-center justify-between mb-4">
-                        <div className={`p-3 rounded-2xl bg-gradient-to-r ${card.gradient} shadow-lg`}>
+                        <div className={`p-2 sm:p-3 rounded-2xl bg-gradient-to-r ${card.gradient} shadow-lg`}>
                           <div className="text-white">
                             {card.icon}
                           </div>
                         </div>
-                        <ArrowTrendingUpIcon className="w-6 h-6 text-[#7fd3f7]/60" />
+                        <ArrowTrendingUpIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#7fd3f7]/60" />
                       </div>
                       
                       <div className="space-y-2">
-                        <div className="text-3xl font-bold text-white">
+                        <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
                           {card.value}
                         </div>
-                        <div className="text-[#b6e0f7]/80 text-sm font-medium">
+                        <div className="text-[#b6e0f7]/80 text-xs sm:text-sm font-medium">
                           {card.label}
                         </div>
                       </div>
@@ -323,29 +323,29 @@ export default function Dashboard({ onLogout }) {
           </section>
 
           {/* Analytics Charts */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Sales vs Purchases */}
-            <div className="glass-card p-6 group">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <ChartBarIcon className="w-6 h-6 text-[#7fd3f7]" />
+            <div className="glass-card p-4 sm:p-6 group">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+                <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-3">
+                  <ChartBarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#7fd3f7]" />
                   Sales vs Purchases
                 </h3>
                 <select
                   value={dateRange}
                   onChange={e => setDateRange(e.target.value)}
-                  className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50"
+                  className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50"
                 >
                   <option value="month">This Month</option>
                   <option value="quarter">This Quarter</option>
                   <option value="year">This Year</option>
                 </select>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4">
-                <ResponsiveContainer width="100%" height={250}>
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-2 sm:p-4">
+                <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={metrics?.sales_vs_purchases || []}>
-                    <XAxis dataKey="name" stroke="#b6e0f7" fontSize={12} />
-                    <YAxis stroke="#b6e0f7" fontSize={12} />
+                    <XAxis dataKey="name" stroke="#b6e0f7" fontSize={10} />
+                    <YAxis stroke="#b6e0f7" fontSize={10} />
                     <Tooltip 
                       contentStyle={{
                         backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -356,29 +356,29 @@ export default function Dashboard({ onLogout }) {
                       }}
                     />
                     <Legend />
-                    <Line type="monotone" dataKey="Sales" stroke="#7fd3f7" strokeWidth={3} dot={{fill: '#7fd3f7', strokeWidth: 2, r: 4}} />
-                    <Line type="monotone" dataKey="Purchases" stroke="#b6e0f7" strokeWidth={3} dot={{fill: '#b6e0f7', strokeWidth: 2, r: 4}} />
+                    <Line type="monotone" dataKey="Sales" stroke="#7fd3f7" strokeWidth={2} dot={{fill: '#7fd3f7', strokeWidth: 1, r: 3}} />
+                    <Line type="monotone" dataKey="Purchases" stroke="#b6e0f7" strokeWidth={2} dot={{fill: '#b6e0f7', strokeWidth: 1, r: 3}} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Inventory Distribution */}
-            <div className="glass-card p-6 group">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <CubeIcon className="w-6 h-6 text-[#7fd3f7]" />
+            <div className="glass-card p-4 sm:p-6 group">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+                <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-3">
+                  <CubeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#7fd3f7]" />
                   Inventory Distribution
                 </h3>
                 <button
                   onClick={handleExportInventoryCsv}
-                  className="px-4 py-2 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-semibold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm"
+                  className="px-3 py-2 sm:px-4 sm:py-2 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-semibold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs sm:text-sm"
                 >
                   Export CSV
                 </button>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 flex justify-center">
-                <ResponsiveContainer width="100%" height={250}>
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-2 sm:p-4 flex justify-center">
+                <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie
                       data={(lowStock?.products || []).map(product => ({
@@ -389,9 +389,9 @@ export default function Dashboard({ onLogout }) {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
+                      outerRadius={60}
                       fill="#7fd3f7"
-                      label={{fill: '#ffffff', fontSize: 12}}
+                      label={{fill: '#ffffff', fontSize: 10}}
                     >
                       {(lowStock?.products || []).map((_, index) => (
                         <Cell key={`cell-${index}`} fill={['#7fd3f7', '#b6e0f7', '#eaf6fa', '#ffd93d', '#6bcf7f'][index % 5]} />
@@ -412,18 +412,18 @@ export default function Dashboard({ onLogout }) {
             </div>
 
             {/* GST Collected/Paid */}
-            <div className="glass-card p-6 group">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <BanknotesIcon className="w-6 h-6 text-[#7fd3f7]" />
+            <div className="glass-card p-4 sm:p-6 group">
+              <div className="mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-3">
+                  <BanknotesIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#7fd3f7]" />
                   GST Collected / Paid
                 </h3>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4">
-                <ResponsiveContainer width="100%" height={250}>
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-2 sm:p-4">
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={metrics?.gst_collected_paid || []}>
-                    <XAxis dataKey="name" stroke="#b6e0f7" fontSize={12} />
-                    <YAxis stroke="#b6e0f7" fontSize={12} />
+                    <XAxis dataKey="name" stroke="#b6e0f7" fontSize={10} />
+                    <YAxis stroke="#b6e0f7" fontSize={10} />
                     <Tooltip 
                       contentStyle={{
                         backgroundColor: 'rgba(255, 255, 255, 0.1)',

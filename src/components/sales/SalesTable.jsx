@@ -273,37 +273,41 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
-              <th className="px-6 py-3 text-left rounded-l-lg">
-                <input
-                  type="checkbox"
-                  checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
-                />
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Invoice Details
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Customer
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Items
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg rounded-r-lg">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+      {/* Table for desktop, Cards for mobile */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border-separate border-spacing-y-2">
+            <thead>
+              <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
+                <th className="px-6 py-3 text-left rounded-l-lg">
+                  <input
+                    type="checkbox"
+                    checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                  Invoice Details
+                </th>
+                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                  Amount (Before Tax)
+                </th>
+                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                  Total Amount (With Tax)
+                </th>
+                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                  Items
+                </th>
+                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg rounded-r-lg">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
             {filteredInvoices.map((invoice) => (
               <tr key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300">
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -329,7 +333,36 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-white drop-shadow-lg">
-                    ₹{Number(invoice.total_amount).toLocaleString()}
+                    ₹{(() => {
+                      // Calculate untaxed amount from items
+                      const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                        const quantity = parseFloat(item.quantity || 0);
+                        const price = parseFloat(item.price || 0);
+                        return sum + (quantity * price);
+                      }, 0) || 0;
+                      return Number(untaxedAmount).toLocaleString();
+                    })()}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-white drop-shadow-lg">
+                    ₹{(() => {
+                      // Calculate total amount including tax
+                      const calculations = invoice.items?.reduce((acc, item) => {
+                        const quantity = parseFloat(item.quantity || 0);
+                        const price = parseFloat(item.price || 0);
+                        const tax = parseFloat(item.tax || 0);
+                        const subtotal = quantity * price;
+                        const taxAmount = (subtotal * tax) / 100;
+                        return {
+                          untaxed: acc.untaxed + subtotal,
+                          taxAmount: acc.taxAmount + taxAmount
+                        };
+                      }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
+                      
+                      const totalWithTax = calculations.untaxed + calculations.taxAmount;
+                      return Number(totalWithTax).toLocaleString();
+                    })()}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70 drop-shadow-md">
@@ -361,6 +394,99 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
             ))}
           </tbody>
         </table>
+        </div>
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-4">
+        {filteredInvoices.map((invoice) => (
+          <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+            {/* Card Header */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={selectedInvoices.has(invoice.id)}
+                  onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
+                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                />
+                <div>
+                  <div className="text-lg font-semibold text-white">
+                    #{invoice.invoice_number}
+                  </div>
+                  <div className="text-sm text-white/70">
+                    {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Customer:</span>
+                <span className="text-sm font-medium text-white">{invoice.customer_name}</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Amount (Before Tax):</span>
+                <span className="text-sm font-medium text-white">
+                  ₹{(() => {
+                    const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                      const quantity = parseFloat(item.quantity || 0);
+                      const price = parseFloat(item.price || 0);
+                      return sum + (quantity * price);
+                    }, 0) || 0;
+                    return Number(untaxedAmount).toLocaleString();
+                  })()}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Total (With Tax):</span>
+                <span className="text-lg font-semibold text-[#7fd3f7]">
+                  ₹{(() => {
+                    const calculations = invoice.items?.reduce((acc, item) => {
+                      const quantity = parseFloat(item.quantity || 0);
+                      const price = parseFloat(item.price || 0);
+                      const tax = parseFloat(item.tax || 0);
+                      const subtotal = quantity * price;
+                      const taxAmount = (subtotal * tax) / 100;
+                      return {
+                        untaxed: acc.untaxed + subtotal,
+                        taxAmount: acc.taxAmount + taxAmount
+                      };
+                    }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
+                    
+                    const totalWithTax = calculations.untaxed + calculations.taxAmount;
+                    return Number(totalWithTax).toLocaleString();
+                  })()}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Items:</span>
+                <span className="text-sm text-white">{invoice.items?.length || 0} items</span>
+              </div>
+            </div>
+
+            {/* Card Actions */}
+            <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+              <button
+                onClick={() => onView(invoice)}
+                className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+              >
+                View
+              </button>
+              <button
+                onClick={() => onDelete(invoice)}
+                className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {filteredInvoices.length === 0 && (

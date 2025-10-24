@@ -86,13 +86,13 @@ const Ledger = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421] p-6 space-y-8">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421] p-4 sm:p-6 space-y-6 sm:space-y-8">
         {/* Page Header */}
         <header className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-white">
+                <h1 className="text-xl sm:text-2xl font-bold text-white">
                   Client Ledger
                 </h1>
                 <p className="mt-1 text-sm text-[#b6e0f7]">
@@ -102,7 +102,7 @@ const Ledger = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowPaymentForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] text-sm font-medium rounded-xl shadow-lg hover:from-[#b6e0f7] hover:to-[#eaf6fa] transform hover:scale-105 transition-all duration-200"
+                  className="inline-flex items-center px-3 sm:px-4 py-2 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] text-sm font-medium rounded-xl shadow-lg hover:from-[#b6e0f7] hover:to-[#eaf6fa] transform hover:scale-105 transition-all duration-200"
                 >
                   <PlusIcon className="w-4 h-4 mr-2" />
                   Record Payment
@@ -115,10 +115,10 @@ const Ledger = () => {
         {/* Filters */}
         <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-white mb-4">
+            <h3 className="text-base sm:text-lg font-medium text-white mb-4">
               Filters
             </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Search */}
             <div>
               <label htmlFor="search" className="block text-sm font-medium text-[#b6e0f7]">
@@ -216,7 +216,7 @@ const Ledger = () => {
         {selectedEntries.length > 0 && (
           <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg">
             <div className="px-4 py-3 sm:px-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                 <div className="flex items-center">
                   <span className="text-sm font-medium text-white">
                     {selectedEntries.length} {selectedEntries.length === 1 ? 'entry' : 'entries'} selected

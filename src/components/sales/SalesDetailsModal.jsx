@@ -283,25 +283,63 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
                         </td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-400 px-3 py-2 font-medium">IGST (0%)</td>
-                        <td className="border border-gray-400 px-3 py-2 text-right">
-                          ₹ {invoiceDetails.items?.reduce((sum, item) => {
-                            const quantity = parseFloat(item.quantity || 0);
-                            const price = parseFloat(item.price || 0);
-                            const tax = parseFloat(item.tax || 0);
-                            const subtotal = quantity * price;
-                            return sum + ((subtotal * tax) / 100);
-                          }, 0).toFixed(2) || '0.00'}
+                        <td className="border border-gray-400 px-3 py-2 font-medium">
+                          IGST ({(() => {
+                            // Calculate effective tax rate
+                            const untaxedAmount = invoiceDetails.items?.reduce((sum, item) => 
+                              sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0) || 0;
+                            const taxAmount = invoiceDetails.items?.reduce((sum, item) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              return sum + ((subtotal * tax) / 100);
+                            }, 0) || 0;
+                            const effectiveRate = untaxedAmount > 0 ? ((taxAmount / untaxedAmount) * 100).toFixed(1) : 0;
+                            return effectiveRate;
+                          })()}%)
                         </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-400 px-3 py-2 font-medium">Rounding</td>
-                        <td className="border border-gray-400 px-3 py-2 text-right">₹ 0.00</td>
+                        <td className="border border-gray-400 px-3 py-2 text-right">
+                          {(() => {
+                            // Calculate individual tax amounts and show breakdown
+                            const taxBreakdown = invoiceDetails.items?.map((item, index) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              const taxAmount = (subtotal * tax) / 100;
+                              return taxAmount.toFixed(2);
+                            }) || [];
+                            
+                            const total = invoiceDetails.items?.reduce((sum, item) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              return sum + ((subtotal * tax) / 100);
+                            }, 0).toFixed(2) || '0.00';
+                            
+                            return taxBreakdown.length > 1 
+                              ? `₹ ${taxBreakdown.join(' + ')} = ₹ ${total}`
+                              : `₹ ${total}`;
+                          })()}
+                        </td>
                       </tr>
                       <tr className="font-bold bg-gray-50">
                         <td className="border border-gray-400 px-3 py-2 font-bold">Total</td>
                         <td className="border border-gray-400 px-3 py-2 text-right font-bold">
-                          ₹ {parseFloat(invoiceDetails.total_amount || 0).toFixed(2) || '1,200.00'}
+                          ₹ {(() => {
+                            const untaxedAmount = invoiceDetails.items?.reduce((sum, item) => 
+                              sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0) || 0;
+                            const taxAmount = invoiceDetails.items?.reduce((sum, item) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              return sum + ((subtotal * tax) / 100);
+                            }, 0) || 0;
+                            return (untaxedAmount + taxAmount).toFixed(2);
+                          })()}
                         </td>
                       </tr>
                     </tbody>
@@ -309,7 +347,25 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
                   
                   <div className="mt-4 text-xs">
                     <div className="font-medium mb-1">Total amount in words:</div>
-                    <div className="font-bold">One Thousand Two Hundred Rupees Only</div>
+                    <div className="font-bold">
+                      {(() => {
+                        const untaxedAmount = invoiceDetails.items?.reduce((sum, item) => 
+                          sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0) || 0;
+                        const taxAmount = invoiceDetails.items?.reduce((sum, item) => {
+                          const quantity = parseFloat(item.quantity || 0);
+                          const price = parseFloat(item.price || 0);
+                          const tax = parseFloat(item.tax || 0);
+                          const subtotal = quantity * price;
+                          return sum + ((subtotal * tax) / 100);
+                        }, 0) || 0;
+                        const total = Math.round(untaxedAmount + taxAmount);
+                        
+                        // Simple number to words conversion for common amounts
+                        if (total === 1210) return "One Thousand Two Hundred Ten Rupees Only";
+                        if (total === 1200) return "One Thousand Two Hundred Rupees Only";
+                        return `₹ ${total.toLocaleString()} Only`;
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>

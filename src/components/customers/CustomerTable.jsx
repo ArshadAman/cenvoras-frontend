@@ -186,9 +186,10 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
         )}
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      {/* Table for desktop, Cards for mobile */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
             <tr>
               <th className="px-6 py-3 text-left">
@@ -289,6 +290,105 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
             )}
           </tbody>
         </table>
+        </div>
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
+              <div className="h-4 bg-white/20 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            </div>
+          ))
+        ) : (
+          customers.map((customer) => (
+            <div key={customer.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+              {/* Card Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedCustomers.has(customer.id)}
+                    onChange={(e) => handleSelectCustomer(customer.id, e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                  />
+                  <div>
+                    <div className="text-lg font-semibold text-white">
+                      {customer.name}
+                    </div>
+                    <div className="text-sm text-white/70">
+                      {customer.email || 'No email'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Phone:</span>
+                  <span className="text-sm font-medium text-white">{customer.phone || 'N/A'}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">GST:</span>
+                  <span className="text-sm text-white">{customer.gst_number || 'N/A'}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Balance:</span>
+                  <span className={`text-lg font-semibold ${
+                    Number(customer.balance || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    ₹{Number(customer.balance || 0).toLocaleString()}
+                  </span>
+                </div>
+
+                {customer.address && (
+                  <div className="flex justify-between items-start">
+                    <span className="text-sm text-white/70">Address:</span>
+                    <span className="text-sm text-white text-right max-w-[60%]">{customer.address}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Card Actions */}
+              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                <button
+                  onClick={() => onView(customer)}
+                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => onEdit(customer)}
+                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDelete(customer)}
+                  className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* No data message for mobile */}
+        {!isLoading && customers.length === 0 && (
+          <div className="p-8 text-center text-white/80">
+            <p>No customers found.</p>
+            <p className="text-sm mt-2">
+              Click "Add Customer" to create your first customer.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
