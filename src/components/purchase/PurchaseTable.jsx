@@ -338,9 +338,10 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
           </button>
         </div>
       </div>
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-separate border-spacing-y-2">
+      {/* Table for desktop, Cards for mobile */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
             <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
               <th className="text-left py-3 px-4 rounded-l-lg">
@@ -468,6 +469,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                 ))}
           </tbody>
         </table>
+        </div>
 
         {/* No data message */}
         {!isLoading &&
@@ -477,6 +479,95 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               : ((!data.data || data.data.length === 0) &&
                   (!data.results || data.results.length === 0)))) && (
           <div className="p-8 text-center text-white/80 drop-shadow-lg">
+            <p>No purchase bills found.</p>
+            <p className="text-sm mt-2">
+              Click "New Purchase" to create your first purchase bill.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
+              <div className="h-4 bg-white/20 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            </div>
+          ))
+        ) : (
+          filteredBills.map((bill) => (
+            <div key={bill.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+              {/* Card Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedBills.has(bill.id)}
+                    onChange={(e) => handleSelectBill(bill.id, e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                  />
+                  <div>
+                    <div className="text-lg font-semibold text-white">
+                      {bill.bill_number}
+                    </div>
+                    <div className="text-sm text-white/70">
+                      {format(new Date(bill.bill_date), 'MMM dd, yyyy')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Vendor:</span>
+                  <span className="text-sm font-medium text-white">{bill.vendor_name}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Items:</span>
+                  <span className="text-sm text-white">{bill.items?.length || 0} items</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Total Amount:</span>
+                  <span className="text-lg font-semibold text-[#7fd3f7]">
+                    ₹{Number(bill.total_amount || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card Actions */}
+              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                <button
+                  onClick={() => onView(bill)}
+                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => onEdit(bill)}
+                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDelete(bill)}
+                  className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* No data message for mobile */}
+        {!isLoading && filteredBills.length === 0 && (
+          <div className="p-8 text-center text-white/80">
             <p>No purchase bills found.</p>
             <p className="text-sm mt-2">
               Click "New Purchase" to create your first purchase bill.

@@ -64,7 +64,6 @@ export default function Sales() {
         background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
         min-height: 100vh;
         position: relative;
-        overflow: hidden;
       }
       
       .glass-card {
@@ -103,9 +102,9 @@ export default function Sales() {
 
   return (
     <Layout>
-      <div className="sales-bg relative overflow-hidden">
+      <div className="sales-bg relative">
         {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0">
           <div className="particle absolute top-20 left-10 w-2 h-2 bg-[#7fd3f7]/30 rounded-full" style={{animationDuration: '15s'}}></div>
           <div className="particle absolute top-40 right-20 w-3 h-3 bg-[#b6e0f7]/40 rounded-full" style={{animationDuration: '12s'}}></div>
           <div className="particle absolute bottom-40 left-20 w-1.5 h-1.5 bg-[#eaf6fa]/50 rounded-full" style={{animationDuration: '18s'}}></div>
@@ -117,31 +116,31 @@ export default function Sales() {
           <div className="floating-element absolute top-1/2 left-1/4 w-12 h-12 bg-gradient-to-br from-[#eaf6fa]/20 to-[#7fd3f7]/20 rounded-full blur-md"></div>
         </div>
 
-        <div className="relative z-10 p-8 space-y-8">
+        <div className="relative z-10 p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
           {/* Page Header */}
-          <div className="text-center mb-12">
-            <div className="flex justify-center items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-3xl flex items-center justify-center shadow-lg">
-                <CurrencyRupeeIcon className="w-8 h-8 text-white" />
+          <div className="text-center mb-8 lg:mb-12">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-lg">
+                <CurrencyRupeeIcon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <h1 className="gradient-text text-5xl lg:text-6xl font-bold">
+              <h1 className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold">
                 Sales Management
               </h1>
             </div>
-            <p className="text-[#b6e0f7]/80 text-lg lg:text-xl max-w-2xl mx-auto">
+            <p className="text-[#b6e0f7]/80 text-sm sm:text-base lg:text-lg xl:text-xl max-w-2xl mx-auto px-4">
               Create, manage and track your sales invoices with powerful analytics
             </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto mt-4"></div>
+            <div className="w-16 sm:w-20 lg:w-24 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto mt-4"></div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-8 lg:mb-12">
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden group"
+              className="flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-base sm:text-lg rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden group"
             >
               <span className="relative z-10 flex items-center gap-3">
-                <PlusIcon className="w-6 h-6" />
+                <PlusIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                 Create New Sale
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
@@ -149,26 +148,26 @@ export default function Sales() {
             
             <button
               onClick={() => setShowUpload(true)}
-              className="flex items-center gap-3 px-8 py-4 glass-card text-white font-bold text-lg hover:bg-white/20 transition-all duration-300 group"
+              className="flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 glass-card text-white font-bold text-base sm:text-lg hover:bg-white/20 transition-all duration-300 group"
             >
-              <ArrowUpTrayIcon className="w-6 h-6 text-[#7fd3f7]" />
+              <ArrowUpTrayIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#7fd3f7]" />
               Upload CSV Data
             </button>
           </div>
 
           {/* Sales Summary */}
-          <div className="mb-8">
+          <div className="mb-6 lg:mb-8">
             <SalesSummary />
           </div>
 
           {/* Sales Table */}
-          <div className="glass-card p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <CurrencyRupeeIcon className="w-7 h-7 text-[#7fd3f7]" />
+          <div className="glass-card p-4 sm:p-6 lg:p-8">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
+                <CurrencyRupeeIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#7fd3f7]" />
                 Sales Invoices
               </h2>
-              <p className="text-[#b6e0f7]/80 mt-2">View, edit, and manage all your sales transactions</p>
+              <p className="text-[#b6e0f7]/80 mt-2 text-sm sm:text-base">View, edit, and manage all your sales transactions</p>
             </div>
             <div className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden">
               <SalesTable

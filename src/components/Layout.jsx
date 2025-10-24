@@ -7,6 +7,7 @@ import {
   CubeIcon, 
   UsersIcon, 
   BookOpenIcon,
+  UserIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -23,6 +24,8 @@ export default function Layout({ children, onLogout }) {
         background: rgba(26, 35, 65, 0.95);
         backdrop-filter: blur(20px);
         border-right: 1px solid rgba(127, 211, 247, 0.2);
+        z-index: 50;
+        position: relative;
       }
       
       .glass-nav-item {
@@ -75,12 +78,13 @@ export default function Layout({ children, onLogout }) {
     { path: "/inventory", label: "Inventory", icon: CubeIcon },
     { path: "/customers", label: "Customers", icon: UsersIcon },
     { path: "/ledger", label: "Ledger", icon: BookOpenIcon },
+    { path: "/profile", label: "Profile", icon: UserIcon },
   ];
 
   return (
     <div className="flex min-h-screen" style={{background: 'linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%)'}}>
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative overflow-hidden">
+      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative z-50">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
@@ -129,7 +133,7 @@ export default function Layout({ children, onLogout }) {
         </div>
       </aside>
       {/* Main Content */}
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col relative z-10">
         {/* Mobile Header */}
         <header className="md:hidden sticky top-0 z-20 bg-[#1a2341]/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6 h-16">
           <button
@@ -155,7 +159,7 @@ export default function Layout({ children, onLogout }) {
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm">
+          <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
             <div className="glass-sidebar w-72 h-full relative overflow-hidden">
               {/* Background decoration */}
               <div className="absolute inset-0 overflow-hidden">

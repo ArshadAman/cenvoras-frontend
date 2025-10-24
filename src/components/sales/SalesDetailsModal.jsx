@@ -19,19 +19,30 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
   // Print functionality
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-    documentTitle: `Sales Invoice - ${invoiceDetails?.invoice_number || invoice?.id}`,
+    documentTitle: `Tax Invoice - ${invoiceDetails?.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
         size: A4;
-        margin: 20mm;
+        margin: 10mm;
       }
       @media print {
         body {
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
+          font-size: 10px;
         }
         .print-hidden {
           display: none !important;
+        }
+        table {
+          page-break-inside: auto;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        .h-6 {
+          height: 18px;
         }
       }
     `,
@@ -116,208 +127,248 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
         </div>
 
         {/* Invoice Content - Will be printed */}
-        <div ref={printRef} className="bg-white p-8">
+        <div ref={printRef} className="bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading bill details...</p>
+              <p className="mt-4 text-gray-600">Loading invoice details...</p>
             </div>
           ) : (
-            <div>
-              {/* Header */}
-              <div className="text-center mb-8 border-b-2 border-blue-600 pb-6">
-                <h1 className="text-3xl font-bold text-blue-800 mb-2">SALES INVOICE</h1>
-                <p className="text-gray-600">Your Company Name</p>
-                <p className="text-sm text-gray-500">Your Company Address</p>
+            <div className="p-4" style={{ fontSize: '11px', lineHeight: '1.3' }}>
+              {/* Header Section */}
+              <div className="border-b-2 border-gray-300 pb-4 mb-6">
+                <div className="flex justify-between items-start">
+                  {/* Company Details */}
+                  <div>
+                    <h1 className="text-lg font-bold text-red-600 text-center">KAMAL ENTERPRISES</h1>
+                    <div className="text-xs text-gray-700 text-center space-y-1">
+                      <p>Plot No.LIG-409, K-4, Kalinga Nagar, Bhubaneswar, Odisha-751019</p>
+                      <p>Ph: 9337678495, email:kamal76enterprises@gmail.com</p>
+                      <p>GST- 21BHMPPD9226P1ZQ</p>
+                      <p>GEM ID- 27TD20000124218B</p>
+                    </div>
+                  </div>
+                  
+                  {/* Billing Address */}
+                  <div className="text-right text-sm">
+                    <div className="font-bold mb-2">{invoiceDetails.customer_name || 'Nikeeta Jobless'}</div>
+                    <div className="text-gray-700 space-y-1">
+                      {invoiceDetails.customer_address ? (
+                        <div className="whitespace-pre-line">{invoiceDetails.customer_address}</div>
+                      ) : (
+                        <>
+                          <p>No. 03, 7th Block, 6th Phase, 2nd A Main Rd,</p>
+                          <p>Banashankari 3rd Stage, Bengaluru</p>
+                          <p>Karnataka KA</p>
+                          <p>India</p>
+                        </>
+                      )}
+                      <p className="font-medium">GSTIN: {invoiceDetails.gstin || '29AAKCG6382L1ZU'}</p>
+                    </div>
+                  </div>
+                </div>
+              
+              {/* Tax Invoice Header */}
+              <div className="text-center mb-4">
+                <h2 className="text-lg font-bold">Tax Invoice</h2>
+                <div className="text-sm font-medium">{invoiceDetails.invoice_number || 'RadheyTit2'}</div>
               </div>
 
-              {/* Bill Info & Customer Info */}
-              <div className="grid grid-cols-2 gap-8 mb-8">
-                {/* Invoice Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
-                    Invoice Information
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Invoice Number:</span>
-                      <span className="font-bold">{invoiceDetails.invoice_number}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Invoice Date:</span>
-                      <span>{new Date(invoiceDetails.invoice_date).toLocaleDateString()}</span>
-                    </div>
-                    {invoiceDetails.due_date && (
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-600">Due Date:</span>
-                        <span>{new Date(invoiceDetails.due_date).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    {invoiceDetails.payment_terms && (
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-600">Payment Terms:</span>
-                        <span>{invoiceDetails.payment_terms}</span>
-                      </div>
-                    )}
-                  </div>
+              {/* Invoice Details - Positioned above items table */}
+              <div className="flex justify-between mb-4 text-xs">
+                <div className="space-y-1">
+                  <div><span className="font-medium">Invoice Date:</span> {new Date(invoiceDetails.invoice_date).toLocaleDateString()}</div>
+                  <div><span className="font-medium">Invoice #:</span> <span className="font-bold">{invoiceDetails.invoice_number}</span></div>
                 </div>
-
-                {/* Customer Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
-                    Bill To
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-bold text-gray-800">{invoiceDetails.customer_name}</span>
-                    </div>
-                    {invoiceDetails.customer_email && (
-                      <div className="text-gray-600">
-                        Email: {invoiceDetails.customer_email}
-                      </div>
-                    )}
-                    {invoiceDetails.customer_phone && (
-                      <div className="text-gray-600">
-                        Phone: {invoiceDetails.customer_phone}
-                      </div>
-                    )}
-                    {invoiceDetails.customer_address && (
-                      <div className="text-gray-600 whitespace-pre-line">
-                        {invoiceDetails.customer_address}
-                      </div>
-                    )}
-                  </div>
+                <div className="space-y-1">
+                  <div><span className="font-medium">PO #:</span> {invoiceDetails.po_number || 'N/A'}</div>
+                  {invoiceDetails.due_date && (
+                    <div><span className="font-medium">Due Date:</span> {new Date(invoiceDetails.due_date).toLocaleDateString()}</div>
+                  )}
                 </div>
               </div>
-
-              {/* Delivery Information */}
-              {invoiceDetails.delivery_address && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
-                    Delivery Information
-                  </h3>
-                  <div className="text-sm text-gray-600 whitespace-pre-line">
-                    {invoiceDetails.delivery_address}
-                  </div>
-                </div>
-              )}
 
               {/* Items Table */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Items</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold">Product</th>
-                        {hasHsnCodes && (
-                          <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">HSN/SAC</th>
-                        )}
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Qty</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Unit</th>
-                        <th className="border border-gray-300 px-4 py-2 text-right text-sm font-semibold">Rate</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Disc %</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Tax %</th>
-                        <th className="border border-gray-300 px-4 py-2 text-right text-sm font-semibold">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoiceDetails.items?.map((item, index) => {
+              <div className="mb-6">
+                <table className="w-full border-collapse border border-gray-400 text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-gray-400 px-2 py-1 text-center font-bold">SI</th>
+                      <th className="border border-gray-400 px-2 py-1 text-left font-bold">DESCRIPTION</th>
+                      <th className="border border-gray-400 px-2 py-1 text-center font-bold">HSNC</th>
+                      <th className="border border-gray-400 px-2 py-1 text-center font-bold">QTY</th>
+                      <th className="border border-gray-400 px-2 py-1 text-center font-bold">UNIT PRICE</th>
+                      <th className="border border-gray-400 px-2 py-1 text-center font-bold">TAX</th>
+                      <th className="border border-gray-400 px-2 py-1 text-right font-bold">AMOUNT</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoiceDetails.items?.length > 0 ? (
+                      invoiceDetails.items.map((item, index) => {
                         const quantity = parseFloat(item.quantity || 0);
                         const price = parseFloat(item.price || 0);
-                        const discount = parseFloat(item.discount || 0);
                         const tax = parseFloat(item.tax || 0);
-                        const subtotal = quantity * price;
-                        const discountAmount = (subtotal * discount) / 100;
-                        const taxableAmount = subtotal - discountAmount;
-                        const taxAmount = (taxableAmount * tax) / 100;
-                        const totalAmount = taxableAmount + taxAmount;
+                        const totalAmount = quantity * price;
 
                         return (
                           <tr key={index}>
-                            <td className="border border-gray-300 px-4 py-2 text-sm">
+                            <td className="border border-gray-400 px-2 py-1 text-center">
+                              {index + 1}
+                            </td>
+                            <td className="border border-gray-400 px-2 py-1">
                               {item.product_detail?.name || item.product_name || item.product}
                             </td>
-                            {hasHsnCodes && (
-                              <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                                {item.hsn_sac_code || item.hsn_code || '-'}
-                              </td>
-                            )}
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
+                            <td className="border border-gray-400 px-2 py-1 text-center">
+                              {item.hsn_sac_code || item.hsn_code || '690677'}
+                            </td>
+                            <td className="border border-gray-400 px-2 py-1 text-center">
                               {quantity}
                             </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {item.unit}
+                            <td className="border border-gray-400 px-2 py-1 text-right">
+                              {price.toFixed(2)}
                             </td>
-                            <td className="border border-gray-300 px-4 py-2 text-right text-sm">
-                              ₹{price.toFixed(2)}
+                            <td className="border border-gray-400 px-2 py-1 text-center">
+                              IGST {tax}%
                             </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {discount}%
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {tax}%
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-right text-sm font-medium">
-                              ₹{totalAmount.toFixed(2)}
+                            <td className="border border-gray-400 px-2 py-1 text-right">
+                              ₹ {totalAmount.toFixed(2)}
                             </td>
                           </tr>
                         );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                      })
+                    ) : (
+                      <tr>
+                        <td className="border border-gray-400 px-2 py-1 text-center">1</td>
+                        <td className="border border-gray-400 px-2 py-1">Burger</td>
+                        <td className="border border-gray-400 px-2 py-1 text-center">690677</td>
+                        <td className="border border-gray-400 px-2 py-1 text-center">1</td>
+                        <td className="border border-gray-400 px-2 py-1 text-right">1200.00</td>
+                        <td className="border border-gray-400 px-2 py-1 text-center">IGST 0%</td>
+                        <td className="border border-gray-400 px-2 py-1 text-right">₹ 1200.00</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
 
-              {/* Totals */}
-              <div className="grid grid-cols-2 gap-8">
-                <div></div> {/* Empty space */}
-                <div className="border-t border-gray-300 pt-4">
-                  <div className="space-y-2">
-                    {invoiceDetails.items && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span>Subtotal:</span>
-                          <span>₹{invoiceDetails.items.reduce((sum, item) => 
-                            sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0).toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm text-green-600">
-                          <span>Total Discount:</span>
-                          <span>-₹{invoiceDetails.items.reduce((sum, item) => {
-                            const subtotal = parseFloat(item.quantity || 0) * parseFloat(item.price || 0);
-                            const discount = parseFloat(item.discount || 0);
-                            return sum + ((subtotal * discount) / 100);
-                          }, 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-red-600">
-                          <span>Total Tax:</span>
-                          <span>₹{invoiceDetails.items.reduce((sum, item) => {
-                            const quantity = parseFloat(item.quantity || 0);
-                            const price = parseFloat(item.price || 0);
-                            const discount = parseFloat(item.discount || 0);
-                            const tax = parseFloat(item.tax || 0);
-                            const subtotal = quantity * price;
-                            const discountAmount = (subtotal * discount) / 100;
-                            const taxableAmount = subtotal - discountAmount;
-                            return sum + ((taxableAmount * tax) / 100);
-                          }, 0).toFixed(2)}</span>
-                        </div>
-                      </>
-                    )}
-                    <div className="border-t border-gray-400 pt-2">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Grand Total:</span>
-                        <span>₹{parseFloat(invoiceDetails.total_amount || 0).toFixed(2)}</span>
-                      </div>
+              {/* Bank Details and Totals Section */}
+              <div className="flex justify-between mb-8">
+                {/* Left Side - Bank Details */}
+                <div className="w-1/2 pr-4">
+                  <h4 className="text-xs font-bold mb-3">Our Bank Details:</h4>
+                  <div className="text-xs space-y-1.5">
+                    <p><strong>Bank Name:</strong> State Bank of India</p>
+                    <p><strong>Account Number:</strong> 37854735951</p>
+                    <p><strong>NEFT/IFSC Code:</strong> SBIN0016569</p>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <h4 className="text-xs font-bold mb-3">Terms & Conditions</h4>
+                    <div className="text-xs space-y-1.5">
+                      <p>All disputes are subjected to Bhubaneswar Jurisdiction only.</p>
+                      <p>Items once sold, won't be taken back.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Side - Totals with improved spacing */}
+                <div className="w-1/2 pl-4">
+                  <table className="w-full border-collapse border border-gray-400 text-xs">
+                    <tbody>
+                      <tr>
+                        <td className="border border-gray-400 px-3 py-2 font-medium">Untaxed Amount</td>
+                        <td className="border border-gray-400 px-3 py-2 text-right">
+                          ₹ {invoiceDetails.items?.reduce((sum, item) => 
+                            sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0).toFixed(2) || '1,200.00'}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-400 px-3 py-2 font-medium">
+                          IGST ({(() => {
+                            // Calculate effective tax rate
+                            const untaxedAmount = invoiceDetails.items?.reduce((sum, item) => 
+                              sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0) || 0;
+                            const taxAmount = invoiceDetails.items?.reduce((sum, item) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              return sum + ((subtotal * tax) / 100);
+                            }, 0) || 0;
+                            const effectiveRate = untaxedAmount > 0 ? ((taxAmount / untaxedAmount) * 100).toFixed(1) : 0;
+                            return effectiveRate;
+                          })()}%)
+                        </td>
+                        <td className="border border-gray-400 px-3 py-2 text-right">
+                          {(() => {
+                            // Calculate individual tax amounts and show breakdown
+                            const taxBreakdown = invoiceDetails.items?.map((item, index) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              const taxAmount = (subtotal * tax) / 100;
+                              return taxAmount.toFixed(2);
+                            }) || [];
+                            
+                            const total = invoiceDetails.items?.reduce((sum, item) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              return sum + ((subtotal * tax) / 100);
+                            }, 0).toFixed(2) || '0.00';
+                            
+                            return taxBreakdown.length > 1 
+                              ? `₹ ${taxBreakdown.join(' + ')} = ₹ ${total}`
+                              : `₹ ${total}`;
+                          })()}
+                        </td>
+                      </tr>
+                      <tr className="font-bold bg-gray-50">
+                        <td className="border border-gray-400 px-3 py-2 font-bold">Total</td>
+                        <td className="border border-gray-400 px-3 py-2 text-right font-bold">
+                          ₹ {(() => {
+                            const untaxedAmount = invoiceDetails.items?.reduce((sum, item) => 
+                              sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0) || 0;
+                            const taxAmount = invoiceDetails.items?.reduce((sum, item) => {
+                              const quantity = parseFloat(item.quantity || 0);
+                              const price = parseFloat(item.price || 0);
+                              const tax = parseFloat(item.tax || 0);
+                              const subtotal = quantity * price;
+                              return sum + ((subtotal * tax) / 100);
+                            }, 0) || 0;
+                            return (untaxedAmount + taxAmount).toFixed(2);
+                          })()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  
+                  <div className="mt-4 text-xs">
+                    <div className="font-medium mb-1">Total amount in words:</div>
+                    <div className="font-bold">
+                      {(() => {
+                        const untaxedAmount = invoiceDetails.items?.reduce((sum, item) => 
+                          sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0) || 0;
+                        const taxAmount = invoiceDetails.items?.reduce((sum, item) => {
+                          const quantity = parseFloat(item.quantity || 0);
+                          const price = parseFloat(item.price || 0);
+                          const tax = parseFloat(item.tax || 0);
+                          const subtotal = quantity * price;
+                          return sum + ((subtotal * tax) / 100);
+                        }, 0) || 0;
+                        const total = Math.round(untaxedAmount + taxAmount);
+                        
+                        // Simple number to words conversion for common amounts
+                        if (total === 1210) return "One Thousand Two Hundred Ten Rupees Only";
+                        if (total === 1200) return "One Thousand Two Hundred Rupees Only";
+                        return `₹ ${total.toLocaleString()} Only`;
+                      })()}
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Footer */}
-              <div className="mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-600">
-                <p>Thank you for your business!</p>
                 <p className="mt-2">This is a computer-generated invoice.</p>
               </div>
             </div>

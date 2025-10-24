@@ -9,6 +9,7 @@ import Sales from './pages/Sales'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
 import Ledger from './pages/Ledger'
+import Profile from './pages/Profile'
 
 const getToken = () => !!localStorage.getItem('token')
 const getActiveSession = () => !!localStorage.getItem('activeSession')
@@ -61,6 +62,13 @@ function App() {
         <Route
           path="/ledger"
           element={isAuthenticated ? <Ledger /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/profile"
+          element={isAuthenticated ? <Profile onLogout={() => {
+            localStorage.removeItem('activeSession');
+            setIsAuthenticated(false);
+          }} /> : <Navigate to="/" replace />}
         />
         <Route
           path="*"

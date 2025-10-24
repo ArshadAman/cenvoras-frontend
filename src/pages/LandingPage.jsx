@@ -4,6 +4,7 @@ import { animate, createScope, spring, stagger } from 'animejs';
 
 export default function LandingPage() {
   const [activeSection, setActiveSection] = useState('home');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const root = useRef(null);
   const scope = useRef(null);
 
@@ -69,47 +70,68 @@ export default function LandingPage() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       scope.current = createScope({ root }).add(self => {
-        // Hero section animations
+        // Navigation animations
+        animate('nav', {
+          opacity: [0, 1],
+          translateY: [-20, 0],
+          duration: 600,
+          delay: 0,
+          easing: 'outCubic'
+        });
+
+        // Hero brand animation
         animate('.hero-brand', {
           opacity: [0, 1],
-          scale: [0.5, 1],
+          scale: [0.8, 1],
           duration: 800,
           delay: 200,
           easing: 'outCubic'
         });
 
-        animate('.hero-title', {
+        // Desktop nav items staggered animation
+        animate('.nav-item', {
           opacity: [0, 1],
-          translateY: [30, 0],
-          duration: 600,
-          delay: 400,
+          translateX: [20, 0],
+          delay: stagger(100, { start: 300 }),
+          duration: 500,
           easing: 'outCubic'
         });
 
-        animate('.hero-subtitle', {
+        // Hero title animation
+        animate('.hero-title', {
           opacity: [0, 1],
-          translateY: [20, 0],
-          duration: 600,
+          translateY: [40, 0],
+          duration: 800,
           delay: 600,
           easing: 'outCubic'
         });
 
+        // Hero subtitle animation
+        animate('.hero-subtitle', {
+          opacity: [0, 1],
+          translateY: [30, 0],
+          duration: 700,
+          delay: 800,
+          easing: 'outCubic'
+        });
+
+        // Hero CTA buttons animation
         animate('.hero-cta', {
           opacity: [0, 1],
           translateY: [30, 0],
           scale: [0.9, 1],
-          delay: stagger(100, { start: 800 }),
-          duration: 500,
+          delay: stagger(150, { start: 1000 }),
+          duration: 600,
           easing: 'outCubic'
         });
 
         // Feature cards animation
         animate('.feature-card', {
           opacity: [0, 1],
-          translateY: [40, 0],
+          translateY: [50, 0],
           scale: [0.9, 1],
-          delay: stagger(200, { start: 1000 }),
-          duration: 600,
+          delay: stagger(200, { start: 1200 }),
+          duration: 700,
           easing: 'outCubic'
         });
       });
@@ -236,69 +258,184 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-20 flex justify-between items-center px-8 pt-8">
-        <div className="hero-brand flex items-center gap-3 group">
-          <div className="w-12 h-12 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-xl">C</span>
+      <nav className="relative z-50 px-4 sm:px-8 pt-6 sm:pt-8 opacity-0">
+        <div className="flex justify-between items-center">
+          <div className="hero-brand flex items-center gap-2 sm:gap-3 group cursor-pointer opacity-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+              <span className="text-white font-bold text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300">C</span>
+            </div>
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+              Cenvora
+            </span>
           </div>
-          <span className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent">
-            Cenvora
-          </span>
-        </div>
-        <div className="flex items-center gap-6">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8 desktop-nav">
+            <button 
+              onClick={() => scrollToSection('features')}
+              className={`nav-item text-[#7fd3f7] hover:text-[#b6e0f7] transition-all duration-300 font-semibold relative group transform hover:scale-105 opacity-0 ${activeSection === 'features' ? 'text-[#b6e0f7]' : ''}`}
+            >
+              Features
+              <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 ${activeSection === 'features' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+            </button>
+            <button 
+              onClick={() => scrollToSection('about')}
+              className={`nav-item text-[#7fd3f7] hover:text-[#b6e0f7] transition-all duration-300 font-semibold relative group transform hover:scale-105 opacity-0 ${activeSection === 'about' ? 'text-[#b6e0f7]' : ''}`}
+            >
+              About
+              <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 ${activeSection === 'about' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+            </button>
+            <button 
+              onClick={() => scrollToSection('contact')}
+              className={`nav-item text-[#7fd3f7] hover:text-[#b6e0f7] transition-all duration-300 font-semibold relative group transform hover:scale-105 opacity-0 ${activeSection === 'contact' ? 'text-[#b6e0f7]' : ''}`}
+            >
+              Contact
+              <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 ${activeSection === 'contact' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+            </button>
+            <Link 
+              to="/login" 
+              className="nav-item px-6 py-3 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden group opacity-0"
+            >
+              <span className="relative z-10">Sign In</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
           <button 
-            onClick={() => scrollToSection('features')}
-            className={`text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group ${activeSection === 'features' ? 'text-[#b6e0f7]' : ''}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="nav-item md:hidden p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:scale-110 transition-all duration-300 group shadow-lg opacity-0"
           >
-            Features
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
+            <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isMobileMenuOpen ? (
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2.5} 
+                  d="M6 18L18 6M6 6l12 12"
+                  className="animate-pulse" 
+                />
+              ) : (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 12h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 18h16" />
+                </>
+              )}
+            </svg>
           </button>
-          <button 
-            onClick={() => scrollToSection('about')}
-            className={`text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group ${activeSection === 'about' ? 'text-[#b6e0f7]' : ''}`}
-          >
-            About
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button 
-            onClick={() => scrollToSection('contact')}
-            className={`text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group ${activeSection === 'contact' ? 'text-[#b6e0f7]' : ''}`}
-          >
-            Contact
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <Link 
-            to="/login" 
-            className="px-6 py-2.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-semibold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            Sign In
-          </Link>
         </div>
       </nav>
 
+      {/* Mobile Menu Overlay - Outside nav for proper z-index layering */}
+      <div className={`md:hidden fixed inset-0 z-[100] transition-all duration-500 ease-in-out ${
+        isMobileMenuOpen 
+          ? 'opacity-100 visible' 
+          : 'opacity-0 invisible pointer-events-none'
+      }`}>
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2341] via-[#0d1421] to-[#1a2341]"></div>
+        
+        {/* Menu Panel */}
+        <div className={`relative h-full w-full flex flex-col transform transition-all duration-500 ease-out ${
+          isMobileMenuOpen 
+            ? 'translate-y-0 scale-100' 
+            : '-translate-y-8 scale-95'
+        }`}>
+          {/* Mobile Menu Header */}
+          <div className="flex justify-between items-center p-6 border-b border-[#7fd3f7]/20 bg-gradient-to-r from-[#1a2341]/90 to-[#2d3a5f]/90 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">C</span>
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent">
+                Cenvora
+              </span>
+            </div>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-3 rounded-xl bg-gradient-to-r from-[#7fd3f7]/20 to-[#b6e0f7]/20 backdrop-blur-sm border border-[#7fd3f7]/30 text-white hover:bg-[#7fd3f7]/30 hover:scale-110 transition-all duration-300 group"
+            >
+              <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile Menu Items - Centered in remaining space */}
+          <div className="flex-1 flex flex-col justify-center items-center space-y-8 px-8 py-12 relative">
+            {/* Background decoration */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#7fd3f7]/5 to-transparent"></div>
+            
+            {[
+              { id: 'features', label: 'Features', delay: 'delay-75' },
+              { id: 'about', label: 'About', delay: 'delay-150' },
+              { id: 'contact', label: 'Contact', delay: 'delay-225' }
+            ].map((item, index) => (
+              <button 
+                key={item.id}
+                onClick={() => {
+                  scrollToSection(item.id);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`relative w-full max-w-sm text-2xl font-bold text-center py-4 px-8 rounded-2xl transition-all duration-500 transform hover:scale-105 ${item.delay} ${
+                  isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+                } ${
+                  activeSection === item.id 
+                    ? 'bg-gradient-to-r from-[#7fd3f7]/30 to-[#b6e0f7]/30 text-[#b6e0f7] shadow-xl border border-[#7fd3f7]/50 backdrop-blur-sm' 
+                    : 'text-[#7fd3f7] hover:text-[#b6e0f7] hover:bg-gradient-to-r hover:from-[#7fd3f7]/10 hover:to-[#b6e0f7]/10 border border-[#7fd3f7]/20 hover:border-[#7fd3f7]/40 backdrop-blur-sm'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+            
+            {/* Sign In Button - Separated with more space */}
+            <div className="pt-8">
+              <Link 
+                to="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block w-full max-w-sm text-2xl font-bold text-center py-4 px-8 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-105 delay-300 relative overflow-hidden group ${
+                  isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+                }`}
+              >
+                <span className="relative z-10">Sign In</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Enhanced Decorative Elements */}
+          <div className="absolute top-1/4 left-8 w-2 h-16 bg-gradient-to-b from-[#7fd3f7]/80 to-transparent rounded-full opacity-80 animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-8 w-3 h-12 bg-gradient-to-t from-[#b6e0f7]/80 to-transparent rounded-full opacity-80 animate-pulse"></div>
+          <div className="absolute top-1/2 left-4 w-1 h-8 bg-gradient-to-b from-[#eaf6fa]/60 to-transparent rounded-full opacity-60"></div>
+          <div className="absolute top-1/3 right-12 w-1.5 h-6 bg-gradient-to-t from-[#7fd3f7]/40 to-transparent rounded-full opacity-70"></div>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <section id="home" className="relative z-20 min-h-screen flex items-center justify-center px-4 py-20">
+      <section id="home" className="relative z-10 min-h-screen flex items-center justify-center px-4 py-16 sm:py-20">
         <div className="text-center max-w-6xl">
-          <h1 className="hero-title gradient-text text-6xl lg:text-8xl font-extrabold mb-8 leading-tight">
+          <h1 className="hero-title gradient-text text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold mb-6 sm:mb-8 leading-tight">
             Business Management
             <br />
             <span className="text-white">Simplified</span>
           </h1>
-          <p className="hero-subtitle text-[#b6e0f7]/90 text-xl lg:text-2xl mb-12 max-w-4xl mx-auto leading-relaxed">
+          <p className="hero-subtitle text-[#b6e0f7]/90 text-base sm:text-lg md:text-xl lg:text-2xl mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
             Streamline your operations with Cenvora - the all-in-one platform for sales, inventory, 
             customer management, and financial tracking. Built for growing businesses.
           </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
             <Link 
               to="/signup" 
-              className="hero-cta px-8 py-4 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden group"
+              className="hero-cta px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-base sm:text-lg rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden group"
             >
               <span className="relative z-10">Start Free Trial</span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
             </Link>
             <button 
               onClick={() => scrollToSection('features')}
-              className="hero-cta px-8 py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white font-bold text-lg rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
+              className="hero-cta px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white font-bold text-base sm:text-lg rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
             >
               Explore Features
             </button>
@@ -307,7 +444,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative z-20 py-20 px-4">
+      <section id="features" className="relative z-10 py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
@@ -345,7 +482,7 @@ export default function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="relative z-20 py-20 px-4">
+      <section id="about" className="relative z-10 py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-12 shadow-2xl">
             <div className="text-center mb-12">
@@ -421,7 +558,7 @@ export default function LandingPage() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="relative z-20 py-20 px-4">
+      <section id="contact" className="relative z-10 py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
