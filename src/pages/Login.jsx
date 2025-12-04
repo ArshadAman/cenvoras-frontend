@@ -448,17 +448,25 @@ export default function Login({ onLogin }) {
                 onSubmit={async (values, { setSubmitting, setFieldError }) => {
                   setLoading(true)
                   try {
+                    console.log('Attempting login...');
                     const response = await api.post('/users/login/', values)
+                    console.log('Login response:', response.data);
                     const token = response.data.token || response.data.access
                     if (token) {
+                      console.log('Token received, saving to localStorage');
                       localStorage.setItem('token', token)
                       localStorage.setItem('refresh', response.data.refresh)
-                      if (onLogin) onLogin()
-                      navigate('/dashboard')
+                      if (onLogin) {
+                        console.log('Calling onLogin prop');
+                        onLogin()
+                      }
+                      // navigate('/dashboard') // Rely on App.jsx declarative redirect
                     } else {
+                      console.error('No token in response');
                       setFieldError('username', 'No token received')
                     }
                   } catch (error) {
+                    console.error('Login error:', error);
                     setFieldError('username', 'Invalid credentials')
                   }
                   setLoading(false)

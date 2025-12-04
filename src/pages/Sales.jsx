@@ -17,78 +17,7 @@ export default function Sales() {
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
 
-  // Add theme CSS
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      @keyframes floatUp {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-10px) rotate(5deg); }
-      }
-      
-      @keyframes gradient-shift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      
-      @keyframes particle-float {
-        0% { transform: translateY(100vh) translateX(-5px) rotate(0deg); opacity: 0; }
-        10% { opacity: 0.6; }
-        90% { opacity: 0.6; }
-        100% { transform: translateY(-100vh) translateX(5px) rotate(180deg); opacity: 0; }
-      }
-      
-      .floating-element {
-        animation: floatUp 8s infinite ease-in-out;
-      }
-      
-      .floating-element:nth-child(2) { animation-delay: -1s; }
-      .floating-element:nth-child(3) { animation-delay: -2s; }
-      .floating-element:nth-child(4) { animation-delay: -3s; }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        animation: gradient-shift 6s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .particle {
-        animation: particle-float linear infinite;
-      }
-      
-      .sales-bg {
-        background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
-        min-height: 100vh;
-        position: relative;
-      }
-      
-      .glass-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 24px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 35px 70px rgba(0, 0, 0, 0.25);
-        border-color: rgba(127, 211, 247, 0.3);
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      if (document.head.contains(styleSheet)) {
-        document.head.removeChild(styleSheet);
-      }
-    };
-  }, []);
+  // Add theme CSS - REMOVED (Moved to index.css)
 
   const handleEdit = (invoice) => {
     setEditInvoice(invoice);
@@ -102,7 +31,7 @@ export default function Sales() {
 
   return (
     <Layout>
-      <div className="sales-bg relative">
+      <div className="page-bg relative">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div className="particle absolute top-20 left-10 w-2 h-2 bg-[#7fd3f7]/30 rounded-full" style={{animationDuration: '15s'}}></div>

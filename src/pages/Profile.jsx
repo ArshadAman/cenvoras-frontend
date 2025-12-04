@@ -201,91 +201,7 @@ const Profile = ({ onLogout }) => {
 
   const queryClient = useQueryClient();
 
-  // Add theme CSS
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      .profile-bg {
-        background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
-        min-height: 100vh;
-      }
-      
-      .glass-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-card:hover {
-        border-color: rgba(127, 211, 247, 0.2);
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
-      }
-      
-      .glass-input {
-        background: rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-input:focus {
-        background: rgba(0, 0, 0, 0.3);
-        border-color: rgba(127, 211, 247, 0.5);
-        box-shadow: 0 0 20px rgba(127, 211, 247, 0.1);
-        outline: none;
-      }
-      
-      .glass-input:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        background: rgba(255, 255, 255, 0.02);
-      }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: gradient-shift 6s ease infinite;
-      }
-
-      .stat-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        transition: all 0.3s ease;
-      }
-
-      .stat-card:hover {
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateY(-2px);
-      }
-      
-      @keyframes fade-in {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-      }
-      
-      .animate-fade-in {
-        animation: fade-in 0.2s ease-out forwards;
-      }
-      
-      @keyframes gradient-shift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
+  // Add theme CSS - REMOVED (Moved to index.css)
 
   // Fetch user profile
   const { data: userProfile, isLoading, error } = useQuery({
@@ -403,7 +319,7 @@ const Profile = ({ onLogout }) => {
   if (isLoading) {
     return (
       <Layout onLogout={onLogout}>
-        <div className="profile-bg">
+        <div className="page-bg">
           <div className="container mx-auto px-4 py-8">
             <Loader />
           </div>
@@ -415,7 +331,7 @@ const Profile = ({ onLogout }) => {
   if (error) {
     return (
       <Layout onLogout={onLogout}>
-        <div className="profile-bg">
+        <div className="page-bg">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto">
               <div className="glass-card p-8 text-center">
@@ -433,7 +349,7 @@ const Profile = ({ onLogout }) => {
 
   return (
     <Layout onLogout={onLogout}>
-      <div className="profile-bg">
+      <div className="page-bg">
         <div className="container mx-auto px-4 py-8 lg:py-12">
           <div className="max-w-7xl mx-auto">
             

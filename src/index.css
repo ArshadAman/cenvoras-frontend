@@ -1,3 +1,111 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Backgrounds */
+  .page-bg {
+    background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Glassmorphism */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card:hover {
+    border-color: rgba(127, 211, 247, 0.2);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .glass-input {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(127, 211, 247, 0.5);
+    box-shadow: 0 0 20px rgba(127, 211, 247, 0.1);
+    outline: none;
+  }
+
+  .glass-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* Typography */
+  .gradient-text {
+    background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 6s ease infinite;
+  }
+
+  /* Cards */
+  .stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+  }
+
+  /* Animations */
+  @keyframes fade-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out forwards;
+  }
+  
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes floatUp {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+  }
+  
+  .floating-element {
+    animation: floatUp 8s infinite ease-in-out;
+  }
+  
+  .floating-element:nth-child(2) { animation-delay: -1s; }
+  .floating-element:nth-child(3) { animation-delay: -2s; }
+  .floating-element:nth-child(4) { animation-delay: -3s; }
+
+  @keyframes particle-float {
+    0% { transform: translateY(100vh) translateX(-5px) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-100vh) translateX(5px) rotate(180deg); opacity: 0; }
+  }
+  
+  .particle {
+    animation: particle-float linear infinite;
+  }
+}
