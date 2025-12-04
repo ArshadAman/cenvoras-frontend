@@ -3,14 +3,192 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import Layout from '../components/Layout';
 import Loader from '../components/Loader';
-import { UserIcon, EnvelopeIcon, PhoneIcon, BuildingOfficeIcon, MapPinIcon, EyeIcon, EyeSlashIcon, DocumentTextIcon, CalendarIcon, ChartBarIcon } from '@heroicons/react/24/outline';
-import { getUserProfile, updateUserProfile } from '../api/users';
+import { 
+  UserIcon, 
+  EnvelopeIcon, 
+  PhoneIcon, 
+  BuildingOfficeIcon, 
+  MapPinIcon, 
+  EyeIcon, 
+  EyeSlashIcon, 
+  DocumentTextIcon, 
+  CalendarIcon, 
+  ChartBarIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  XMarkIcon,
+  KeyIcon
+} from '@heroicons/react/24/outline';
+import { getUserProfile, updateUserProfile, changePassword } from '../api/users';
 
-const Profile = ({ onLogout }) => {
-  const [isEditing, setIsEditing] = useState(false);
+const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_new_password: ''
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => {
+      toast.success('Password changed successfully!');
+      onClose();
+      setPasswordData({
+        current_password: '',
+        new_password: '',
+        confirm_new_password: ''
+      });
+    },
+    onError: (error) => {
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (typeof errorData === 'object' && !errorData.detail && !errorData.message) {
+          Object.entries(errorData).forEach(([field, messages]) => {
+            if (Array.isArray(messages)) {
+              messages.forEach(msg => toast.error(`${field}: ${msg}`));
+            } else {
+              toast.error(`${field}: ${messages}`);
+            }
+          });
+        } else {
+          const errorMessage = errorData.detail || errorData.message || 'Failed to change password';
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error('Network error. Please try again.');
+      }
+    }
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!passwordData.current_password) {
+      toast.error('Current password is required');
+      return;
+    }
+    if (passwordData.new_password !== passwordData.confirm_new_password) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (passwordData.new_password.length < 8) {
+      toast.error('New password must be at least 8 characters long');
+      return;
+    }
+
+    changePasswordMutation.mutate(passwordData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="glass-card w-full max-w-md p-8 relative animate-fade-in">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+        >
+          <XMarkIcon className="w-6 h-6" />
+        </button>
+        
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+          <KeyIcon className="w-6 h-6 mr-2 text-cyan-400" />
+          Change Password
+        </h3>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-white/70">Current Password</label>
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                name="current_password"
+                value={passwordData.current_password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 pr-12 glass-input rounded-xl text-white placeholder-white/30"
+                placeholder="Enter current password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+              >
+                {showCurrentPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-white/70">New Password</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                name="new_password"
+                value={passwordData.new_password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 pr-12 glass-input rounded-xl text-white placeholder-white/30"
+                placeholder="Min 8 characters"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+              >
+                {showNewPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-white/70">Confirm New Password</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirm_new_password"
+                value={passwordData.confirm_new_password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 pr-12 glass-input rounded-xl text-white placeholder-white/30"
+                placeholder="Re-enter new password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+              >
+                {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={changePasswordMutation.isLoading}
+              className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {changePasswordMutation.isLoading ? 'Updating Password...' : 'Update Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const Profile = ({ onLogout }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -18,59 +196,12 @@ const Profile = ({ onLogout }) => {
     phone: '',
     business_name: '',
     business_address: '',
-    gstin: '',
-    current_password: '',
-    new_password: '',
-    confirm_new_password: ''
+    gstin: ''
   });
 
   const queryClient = useQueryClient();
 
-  // Add theme CSS
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      .profile-bg {
-        background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
-        min-height: 100vh;
-      }
-      
-      .glass-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 24px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-input {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-input:focus {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(127, 211, 247, 0.5);
-        box-shadow: 0 0 20px rgba(127, 211, 247, 0.3);
-      }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
+  // Add theme CSS - REMOVED (Moved to index.css)
 
   // Fetch user profile
   const { data: userProfile, isLoading, error } = useQuery({
@@ -98,23 +229,39 @@ const Profile = ({ onLogout }) => {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: updateUserProfile,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['userProfile']);
+    onSuccess: async (data) => {
+      // Refetch the profile data to ensure we have the latest
+      await queryClient.invalidateQueries(['userProfile']);
+      await queryClient.refetchQueries(['userProfile']);
+      
       toast.success('Profile updated successfully!');
       setIsEditing(false);
-      // Clear password fields
-      setFormData(prev => ({
-        ...prev,
-        current_password: '',
-        new_password: '',
-        confirm_new_password: ''
-      }));
     },
     onError: (error) => {
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          'Failed to update profile';
-      toast.error(errorMessage);
+      // Handle different types of errors
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        // Check for field-specific errors
+        if (typeof errorData === 'object' && !errorData.detail && !errorData.message) {
+          // Display field-specific errors
+          Object.entries(errorData).forEach(([field, messages]) => {
+            if (Array.isArray(messages)) {
+              messages.forEach(msg => toast.error(`${field}: ${msg}`));
+            } else {
+              toast.error(`${field}: ${messages}`);
+            }
+          });
+        } else {
+          // Display general error message
+          const errorMessage = errorData.detail || 
+                              errorData.message || 
+                              'Failed to update profile';
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error('Network error. Please check your connection and try again.');
+      }
     }
   });
 
@@ -137,43 +284,7 @@ const Profile = ({ onLogout }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Validate GSTIN format if provided
-    if (formData.gstin && formData.gstin.length > 0) {
-      const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
-      if (!gstinRegex.test(formData.gstin)) {
-        toast.error('Please enter a valid GSTIN format (e.g., 29ABCDE1234F1Z5)');
-        return;
-      }
-    }
-    
-    // Validate passwords if trying to change password
-    if (formData.new_password || formData.confirm_new_password) {
-      if (!formData.current_password) {
-        toast.error('Current password is required to change password');
-        return;
-      }
-      if (formData.new_password !== formData.confirm_new_password) {
-        toast.error('New passwords do not match');
-        return;
-      }
-      if (formData.new_password.length < 8) {
-        toast.error('New password must be at least 8 characters long');
-        return;
-      }
-    }
-
-    // Validate email/password changes require current password
-    const originalProfile = userProfile?.profile;
-    if (originalProfile && (
-      formData.email !== originalProfile.email
-    )) {
-      if (!formData.current_password) {
-        toast.error('Current password is required to change email address');
-        return;
-      }
-    }
-
+    console.log('Submitting profile update...', formData);
     // Prepare data for submission
     const updateData = {
       first_name: formData.first_name,
@@ -184,13 +295,6 @@ const Profile = ({ onLogout }) => {
       business_address: formData.business_address,
       gstin: formData.gstin
     };
-
-    // Include password fields only if they're provided
-    if (formData.current_password && formData.new_password) {
-      updateData.current_password = formData.current_password;
-      updateData.new_password = formData.new_password;
-      updateData.confirm_new_password = formData.confirm_new_password;
-    }
 
     updateProfileMutation.mutate(updateData);
   };
@@ -207,10 +311,7 @@ const Profile = ({ onLogout }) => {
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
-        gstin: profile.gstin || '',
-        current_password: '',
-        new_password: '',
-        confirm_new_password: ''
+        gstin: profile.gstin || ''
       });
     }
   };
@@ -218,7 +319,7 @@ const Profile = ({ onLogout }) => {
   if (isLoading) {
     return (
       <Layout onLogout={onLogout}>
-        <div className="profile-bg">
+        <div className="page-bg">
           <div className="container mx-auto px-4 py-8">
             <Loader />
           </div>
@@ -230,7 +331,7 @@ const Profile = ({ onLogout }) => {
   if (error) {
     return (
       <Layout onLogout={onLogout}>
-        <div className="profile-bg">
+        <div className="page-bg">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto">
               <div className="glass-card p-8 text-center">
@@ -248,339 +349,284 @@ const Profile = ({ onLogout }) => {
 
   return (
     <Layout onLogout={onLogout}>
-      <div className="profile-bg">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="glass-card p-8 mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-4xl font-bold gradient-text mb-2">Profile Settings</h1>
-                  <p className="text-white/70">Manage your account information and preferences</p>
-                </div>
-                <div className="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-10 h-10 text-white" />
-                </div>
+      <div className="page-bg">
+        <div className="container mx-auto px-4 py-8 lg:py-12">
+          <div className="max-w-7xl mx-auto">
+            
+            {/* Page Header */}
+            <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <h1 className="text-4xl font-bold gradient-text mb-2">Profile Settings</h1>
+                <p className="text-white/60 text-lg">Manage your personal information and account preferences</p>
               </div>
               
-              {/* Account Statistics */}
-              {userProfile && userProfile.account_stats && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/10">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <CalendarIcon className="w-5 h-5 text-cyan-400 mr-2" />
-                      <span className="text-white/70 text-sm">Account Age</span>
-                    </div>
-                    <p className="text-2xl font-bold text-white">{userProfile.account_stats.days_since_signup} days</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <ChartBarIcon className="w-5 h-5 text-cyan-400 mr-2" />
-                      <span className="text-white/70 text-sm">Trial Remaining</span>
-                    </div>
-                    <p className="text-2xl font-bold text-green-400">{userProfile.account_stats.trial_days_remaining} days</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <DocumentTextIcon className="w-5 h-5 text-cyan-400 mr-2" />
-                      <span className="text-white/70 text-sm">Total Invoices</span>
-                    </div>
-                    <p className="text-2xl font-bold text-white">{userProfile.account_stats.total_invoices}</p>
-                  </div>
-                </div>
-              )}
+              <button
+                onClick={() => setIsPasswordModalOpen(true)}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-xl border border-white/10 transition-all duration-300 flex items-center whitespace-nowrap"
+              >
+                <KeyIcon className="w-4 h-4 mr-2 text-cyan-400" />
+                Change Password
+              </button>
             </div>
 
-            {/* Subscription Status */}
-            {userProfile && userProfile.profile && (
-              <div className="glass-card p-6 mb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-2">Subscription Status</h3>
-                    <div className="flex items-center space-x-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        userProfile.profile.subscription_status === 'trial' 
-                          ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' 
-                          : 'bg-green-500/20 text-green-300 border border-green-500/30'
-                      }`}>
-                        {userProfile.profile.subscription_status === 'trial' ? 'Trial' : 'Premium'}
-                      </span>
-                      {userProfile.profile.is_trial_active && (
-                        <span className="text-white/70 text-sm">
-                          Trial ends: {new Date(userProfile.profile.trial_ends_at).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-white/70">GST Invoice Generation</p>
-                    <span className={`text-sm font-medium ${
-                      userProfile.profile.can_generate_gst_invoice ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {userProfile.profile.can_generate_gst_invoice ? 'Enabled' : 'Disabled'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Profile Form */}
-            <div className="glass-card p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Personal Information */}
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                    <UserIcon className="w-5 h-5 mr-2 text-cyan-400" />
-                    Personal Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        name="first_name"
-                        value={formData.first_name}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder="Enter your first name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        name="last_name"
-                        value={formData.last_name}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder="Enter your last name"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                    <EnvelopeIcon className="w-5 h-5 mr-2 text-cyan-400" />
-                    Contact Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder="Enter your phone number"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Business Information */}
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                    <BuildingOfficeIcon className="w-5 h-5 mr-2 text-cyan-400" />
-                    Business Information
-                  </h3>
-                  <div className="grid grid-cols-1 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Business Name
-                      </label>
-                      <input
-                        type="text"
-                        name="business_name"
-                        value={formData.business_name}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder="Enter your business name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        GSTIN (GST Identification Number)
-                      </label>
-                      <input
-                        type="text"
-                        name="gstin"
-                        value={formData.gstin}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder="Enter your GSTIN (e.g., 29ABCDE1234F1Z5)"
-                        maxLength={15}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Business Address
-                      </label>
-                      <textarea
-                        name="business_address"
-                        value={formData.business_address}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        rows={3}
-                        className="w-full px-4 py-3 glass-input rounded-lg text-white placeholder-white/50 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                        placeholder="Enter your business address"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password Change Section */}
-                {isEditing && (
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                      <EyeIcon className="w-5 h-5 mr-2 text-cyan-400" />
-                      Change Password (Optional)
-                    </h3>
-                    <div className="grid grid-cols-1 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">
-                          Current Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showCurrentPassword ? "text" : "password"}
-                            name="current_password"
-                            value={formData.current_password}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 pr-12 glass-input rounded-lg text-white placeholder-white/50"
-                            placeholder="Enter current password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
-                          >
-                            {showCurrentPassword ? (
-                              <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                              <EyeIcon className="w-5 h-5" />
-                            )}
-                          </button>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Left Column: Profile Summary & Stats */}
+              <div className="space-y-8">
+                {/* Profile Summary Card */}
+                <div className="glass-card p-8 text-center relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-cyan-500/10 to-transparent"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-32 h-32 mx-auto mb-6 rounded-full p-1 bg-gradient-to-br from-cyan-400 to-blue-500 shadow-xl">
+                      <div className="w-full h-full rounded-full bg-[#1a2341] flex items-center justify-center overflow-hidden">
+                        <UserIcon className="w-16 h-16 text-white/80" />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-white/80 mb-2">
-                            New Password
-                          </label>
-                          <div className="relative">
-                            <input
-                              type={showNewPassword ? "text" : "password"}
-                              name="new_password"
-                              value={formData.new_password}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3 pr-12 glass-input rounded-lg text-white placeholder-white/50"
-                              placeholder="Enter new password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
-                            >
-                              {showNewPassword ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                              ) : (
-                                <EyeIcon className="w-5 h-5" />
-                              )}
-                            </button>
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold text-white mb-1">
+                      {userProfile?.profile?.first_name} {userProfile?.profile?.last_name}
+                    </h2>
+                    <p className="text-cyan-400 font-medium mb-4">{userProfile?.profile?.business_name || 'Business Owner'}</p>
+                    
+                    <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                      <ShieldCheckIcon className={`w-5 h-5 mr-2 ${
+                        userProfile?.profile?.subscription_status === 'trial' ? 'text-yellow-400' : 'text-green-400'
+                      }`} />
+                      <span className="text-white/90 font-medium">
+                        {userProfile?.profile?.subscription_status === 'trial' ? 'Trial Plan' : 'Premium Plan'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Stats */}
+                {userProfile?.account_stats && (
+                  <div className="glass-card p-6">
+                    <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
+                      <ChartBarIcon className="w-5 h-5 mr-2 text-cyan-400" />
+                      Account Overview
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="stat-card p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mr-4">
+                            <CalendarIcon className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-white/50 text-xs uppercase tracking-wider">Member Since</p>
+                            <p className="text-white font-semibold">{userProfile.account_stats.days_since_signup} days ago</p>
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-white/80 mb-2">
-                            Confirm New Password
-                          </label>
-                          <div className="relative">
-                            <input
-                              type={showConfirmPassword ? "text" : "password"}
-                              name="confirm_new_password"
-                              value={formData.confirm_new_password}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3 pr-12 glass-input rounded-lg text-white placeholder-white/50"
-                              placeholder="Confirm new password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
-                            >
-                              {showConfirmPassword ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                              ) : (
-                                <EyeIcon className="w-5 h-5" />
-                              )}
-                            </button>
+                      </div>
+
+                      <div className="stat-card p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mr-4">
+                            <SparklesIcon className="w-5 h-5 text-green-400" />
+                          </div>
+                          <div>
+                            <p className="text-white/50 text-xs uppercase tracking-wider">Trial Status</p>
+                            <p className="text-white font-semibold">{userProfile.account_stats.trial_days_remaining} days left</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="stat-card p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mr-4">
+                            <DocumentTextIcon className="w-5 h-5 text-purple-400" />
+                          </div>
+                          <div>
+                            <p className="text-white/50 text-xs uppercase tracking-wider">Total Invoices</p>
+                            <p className="text-white font-semibold">{userProfile.account_stats.total_invoices} generated</p>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end space-x-4 pt-6 border-t border-white/10">
-                  {!isEditing ? (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-700 transition duration-300 transform hover:scale-105 shadow-lg"
-                    >
-                      Edit Profile
-                    </button>
-                  ) : (
-                    <>
+              {/* Right Column: Edit Form */}
+              <div className="lg:col-span-2">
+                <div className="glass-card p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-xl font-bold text-white">Account Details</h3>
+                    {!isEditing && (
                       <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition duration-300 border border-white/20"
+                        onClick={() => setIsEditing(true)}
+                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-xl border border-white/10 transition-all duration-300 flex items-center"
                       >
-                        Cancel
+                        <SparklesIcon className="w-4 h-4 mr-2 text-cyan-400" />
+                        Edit Profile
                       </button>
-                      <button
-                        type="submit"
-                        disabled={updateProfileMutation.isLoading}
-                        className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {updateProfileMutation.isLoading ? 'Saving...' : 'Save Changes'}
-                      </button>
-                    </>
-                  )}
+                    )}
+                  </div>
+
+                  <form id="profile-form" onSubmit={handleSubmit} className="space-y-8">
+                    {/* Personal Info Section */}
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center">
+                        <UserIcon className="w-4 h-4 mr-2" />
+                        Personal Information
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-white/70">First Name</label>
+                          <input
+                            type="text"
+                            name="first_name"
+                            value={formData.first_name}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            placeholder="Enter first name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-white/70">Last Name</label>
+                          <input
+                            type="text"
+                            name="last_name"
+                            value={formData.last_name}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            placeholder="Enter last name"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-white/5"></div>
+
+                    {/* Contact Info Section */}
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center">
+                        <EnvelopeIcon className="w-4 h-4 mr-2" />
+                        Contact Details
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-white/70">Email Address</label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            placeholder="name@example.com"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-white/70">Phone Number</label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            placeholder="+91 98765 43210"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-white/5"></div>
+
+                    {/* Business Info Section */}
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center">
+                        <BuildingOfficeIcon className="w-4 h-4 mr-2" />
+                        Business Information
+                      </h4>
+                      <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-white/70">Business Name</label>
+                            <input
+                              type="text"
+                              name="business_name"
+                              value={formData.business_name}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isLoading}
+                              className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                              placeholder="Your Business Name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-white/70">GSTIN</label>
+                            <input
+                              type="text"
+                              name="gstin"
+                              value={formData.gstin}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isLoading}
+                              className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                              placeholder="29ABCDE1234F1Z5"
+                              maxLength={15}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-white/70">Business Address</label>
+                          <textarea
+                            name="business_address"
+                            value={formData.business_address}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            rows={3}
+                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30 resize-none"
+                            placeholder="Full business address"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    {isEditing && (
+                      <div className="flex items-center justify-end space-x-4 pt-6 mt-8 border-t border-white/10">
+                        <button
+                          type="button"
+                          onClick={handleCancel}
+                          className="px-6 py-3 rounded-xl text-white font-medium hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={updateProfileMutation.isLoading}
+                          className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                          {updateProfileMutation.isLoading ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Saving Changes...
+                            </span>
+                          ) : (
+                            'Save Changes'
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </form>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
+        
+        {/* Password Modal */}
+        <ChangePasswordModal 
+          isOpen={isPasswordModalOpen} 
+          onClose={() => setIsPasswordModalOpen(false)} 
+        />
       </div>
     </Layout>
   );

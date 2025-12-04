@@ -30,7 +30,7 @@ export default function Purchase() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421]">
+      <div className="page-bg">
         {/* Hero Header Section */}
         <div className="relative overflow-hidden">
           {/* Background Elements */}

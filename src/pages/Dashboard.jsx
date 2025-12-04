@@ -23,46 +23,7 @@ export default function Dashboard({ onLogout }) {
   const [purchaseDateTo, setPurchaseDateTo] = useState('');
   const navigate = useNavigate();
 
-  // Add clean theme CSS without distracting animations
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .dashboard-bg {
-        background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
-        min-height: 100vh;
-      }
-      
-      .glass-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 24px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 35px 70px rgba(0, 0, 0, 0.25);
-        border-color: rgba(127, 211, 247, 0.3);
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      if (document.head.contains(styleSheet)) {
-        document.head.removeChild(styleSheet);
-      }
-    };
-  }, []);
+  // Add clean theme CSS - REMOVED (Moved to index.css)
 
   // Fetch metrics
   const { data: metrics, isLoading: loadingMetrics, error } = useQuery({
@@ -275,7 +236,7 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <Layout onLogout={onLogout}>
-      <main className="dashboard-bg flex-1">
+      <main className="page-bg flex-1">
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
           {/* Dashboard Header */}
           <div className="text-center mb-8 lg:mb-12">

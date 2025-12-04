@@ -1,736 +1,429 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { animate, createScope, spring, stagger } from 'animejs';
+import { 
+  Bars3Icon, 
+  XMarkIcon, 
+  CheckCircleIcon, 
+  ChartBarIcon, 
+  BoltIcon, 
+  ShieldCheckIcon, 
+  UserGroupIcon, 
+  CurrencyRupeeIcon, 
+  ArrowRightIcon, 
+  StarIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
+} from '@heroicons/react/24/outline';
+
+// Simple hook for scroll animations
+const useScrollAnimation = () => {
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-slide-up');
+          entry.target.classList.remove('opacity-0', 'translate-y-10');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.scroll-animate').forEach((el) => {
+      el.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700');
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+};
+
+import CanvasBackground from '../components/CanvasBackground';
 
 export default function LandingPage() {
-  const [activeSection, setActiveSection] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const root = useRef(null);
-  const scope = useRef(null);
+  const [activeFaq, setActiveFaq] = useState(null);
+  
+  useScrollAnimation();
 
-  // Add CSS animations
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      @keyframes floatUp {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-10px) rotate(5deg); }
-      }
-      
-      @keyframes gradient-shift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      
-      @keyframes particle-float {
-        0% { transform: translateY(100vh) translateX(-5px) rotate(0deg); opacity: 0; }
-        10% { opacity: 0.6; }
-        90% { opacity: 0.6; }
-        100% { transform: translateY(-100vh) translateX(5px) rotate(180deg); opacity: 0; }
-      }
-      
-      .floating-element {
-        animation: floatUp 12s infinite ease-in-out;
-      }
-      
-      .floating-element:nth-child(2) { animation-delay: -2s; }
-      .floating-element:nth-child(3) { animation-delay: -4s; }
-      .floating-element:nth-child(4) { animation-delay: -6s; }
-      .floating-element:nth-child(5) { animation-delay: -8s; }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        animation: gradient-shift 8s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .particle {
-        animation: particle-float 15s infinite linear;
-      }
-      
-      .particle:nth-child(1) { animation-delay: -3s; }
-      .particle:nth-child(2) { animation-delay: -8s; }
-      .particle:nth-child(3) { animation-delay: -12s; }
-      
-      .scroll-smooth {
-        scroll-behavior: smooth;
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      scope.current = createScope({ root }).add(self => {
-        // Navigation animations
-        animate('nav', {
-          opacity: [0, 1],
-          translateY: [-20, 0],
-          duration: 600,
-          delay: 0,
-          easing: 'outCubic'
-        });
-
-        // Hero brand animation
-        animate('.hero-brand', {
-          opacity: [0, 1],
-          scale: [0.8, 1],
-          duration: 800,
-          delay: 200,
-          easing: 'outCubic'
-        });
-
-        // Desktop nav items staggered animation
-        animate('.nav-item', {
-          opacity: [0, 1],
-          translateX: [20, 0],
-          delay: stagger(100, { start: 300 }),
-          duration: 500,
-          easing: 'outCubic'
-        });
-
-        // Hero title animation
-        animate('.hero-title', {
-          opacity: [0, 1],
-          translateY: [40, 0],
-          duration: 800,
-          delay: 600,
-          easing: 'outCubic'
-        });
-
-        // Hero subtitle animation
-        animate('.hero-subtitle', {
-          opacity: [0, 1],
-          translateY: [30, 0],
-          duration: 700,
-          delay: 800,
-          easing: 'outCubic'
-        });
-
-        // Hero CTA buttons animation
-        animate('.hero-cta', {
-          opacity: [0, 1],
-          translateY: [30, 0],
-          scale: [0.9, 1],
-          delay: stagger(150, { start: 1000 }),
-          duration: 600,
-          easing: 'outCubic'
-        });
-
-        // Feature cards animation
-        animate('.feature-card', {
-          opacity: [0, 1],
-          translateY: [50, 0],
-          scale: [0.9, 1],
-          delay: stagger(200, { start: 1200 }),
-          duration: 700,
-          easing: 'outCubic'
-        });
-      });
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-      scope.current?.revert();
-    };
-  }, []);
-
-  // Scroll to section
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(sectionId);
-    }
+  const toggleFaq = (index) => {
+    setActiveFaq(activeFaq === index ? null : index);
   };
 
-  // All features from the app
   const features = [
     {
-      icon: '📊',
-      title: 'Sales Management',
-      description: 'Complete sales pipeline management with lead tracking, deal closure, and performance analytics.',
-      details: ['Lead management', 'Sales pipeline tracking', 'Revenue analytics', 'Customer insights']
+      icon: ChartBarIcon,
+      title: 'Advanced Analytics',
+      description: 'Gain deep insights into your business performance with real-time dashboards and custom reports.'
     },
     {
-      icon: '📦',
-      title: 'Inventory Management', 
-      description: 'Real-time inventory tracking with automated stock alerts and product management.',
-      details: ['Stock level monitoring', 'Product categorization', 'Low stock alerts', 'Stock adjustments']
+      icon: BoltIcon,
+      title: 'Lightning Fast',
+      description: 'Experience zero lag with our optimized platform designed for speed and efficiency.'
     },
     {
-      icon: '👥',
-      title: 'Customer Management',
-      description: 'Comprehensive customer database with detailed profiles and interaction history.',
-      details: ['Customer profiles', 'Contact management', 'Customer history', 'Relationship tracking']
+      icon: ShieldCheckIcon,
+      title: 'Bank-Grade Security',
+      description: 'Your data is protected with state-of-the-art encryption and regular security audits.'
     },
     {
-      icon: '💰',
-      title: 'Purchase Management',
-      description: 'Streamlined purchase processes with vendor management and purchase tracking.',
-      details: ['Purchase orders', 'Vendor management', 'Purchase analytics', 'Cost tracking']
-    },
-    {
-      icon: '📋',
-      title: 'General Ledger',
-      description: 'Complete accounting system with chart of accounts and financial reporting.',
-      details: ['Chart of accounts', 'Double-entry bookkeeping', 'Financial statements', 'Trial balance']
-    },
-    {
-      icon: '📈',
-      title: 'Analytics & Reports',
-      description: 'Powerful business intelligence with real-time dashboards and custom reports.',
-      details: ['Business dashboard', 'Custom reports', 'Performance metrics', 'Data visualization']
-    },
-    {
-      icon: '💳',
-      title: 'Payment Processing',
-      description: 'Integrated payment solutions with multiple payment methods and tracking.',
-      details: ['Payment tracking', 'Invoice management', 'Payment history', 'Outstanding balances']
-    },
-    {
-      icon: '🔄',
-      title: 'Bulk Operations',
-      description: 'Efficient bulk data management for large-scale operations and data imports.',
-      details: ['Bulk data entry', 'CSV imports', 'Mass updates', 'Data migration tools']
+      icon: UserGroupIcon,
+      title: 'Team Collaboration',
+      description: 'Work together seamlessly with role-based access control and real-time updates.'
     }
   ];
 
+  const pricingPlans = [
+    {
+      name: 'Starter',
+      price: '₹49',
+      period: '/month',
+      description: 'Perfect for freelancers and small startups.',
+      features: ['Basic Invoicing', 'Expense Tracking', '5 Clients', 'Email Support'],
+      highlight: false
+    },
+    {
+      name: 'Growth',
+      price: '₹199',
+      period: '/month',
+      description: 'For growing businesses scaling up.',
+      features: ['Unlimited Invoicing', 'Inventory Management', '50 Clients', 'Priority Support', 'Financial Reports'],
+      highlight: true
+    },
+    {
+      name: 'Pro',
+      price: '₹499',
+      period: '/month',
+      description: 'Ultimate power for established enterprises.',
+      features: ['Everything in Growth', 'API Access', 'Unlimited Clients', 'Dedicated Account Manager', 'Custom Branding'],
+      highlight: false
+    }
+  ];
+
+  const faqs = [
+    {
+      question: "Is there a free trial available?",
+      answer: "Yes! We offer a 14-day free trial on all plans so you can explore Cenvora risk-free."
+    },
+    {
+      question: "Can I upgrade or downgrade my plan?",
+      answer: "Absolutely. You can change your plan at any time from your account settings."
+    },
+    {
+      question: "Is my data secure?",
+      answer: "We use industry-standard encryption and secure servers to ensure your data is always safe."
+    },
+    {
+      question: "Do you offer customer support?",
+      answer: "Yes, our dedicated support team is available 24/7 to assist you with any queries."
+    }
+  ];
+
+
+
   return (
-    <div ref={root} className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#2d3a5f] to-[#1a2341] relative overflow-hidden scroll-smooth">
+    <div className="min-h-screen bg-[#0f172a] text-white overflow-x-hidden font-sans selection:bg-cyan-500/30 relative">
       
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
-          {/* Moving paths */}
-          <path d="M-200,100 Q200,50 600,100 Q1000,150 1600,100" stroke="url(#gradient1)" strokeWidth="2" fill="none" opacity="0.4" />
-          <path d="M-100,300 Q300,250 700,300 Q1100,350 1500,300" stroke="url(#gradient2)" strokeWidth="1.5" fill="none" opacity="0.3" />
-          <path d="M0,600 Q360,450 720,600 Q1080,750 1440,600" stroke="url(#gradient3)" strokeWidth="1" fill="none" opacity="0.3" />
-          
-          {/* Animated geometric patterns */}
-          <circle cx="200" cy="150" r="3" fill="#7fd3f7" opacity="0.8" className="floating-element">
-            <animate attributeName="r" values="2;5;2" dur="4s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="800" cy="300" r="4" fill="#b6e0f7" opacity="0.7" className="floating-element" />
-          <circle cx="1200" cy="500" r="2.5" fill="#eaf6fa" opacity="0.8" className="floating-element" />
-          
-          {/* Additional floating elements */}
-          <rect x="100" y="100" width="4" height="4" fill="#b6e0f7" opacity="0.5" className="floating-element" transform="rotate(45)">
-            <animateTransform attributeName="transform" type="rotate" values="0;360" dur="10s" repeatCount="indefinite" />
-          </rect>
-          
-          {/* Gradients */}
-          <defs>
-            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#7fd3f7" />
-              <stop offset="50%" stopColor="#b6e0f7" />
-              <stop offset="100%" stopColor="#eaf6fa" />
-            </linearGradient>
-            <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#b6e0f7" />
-              <stop offset="100%" stopColor="#7fd3f7" />
-            </linearGradient>
-            <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#eaf6fa" />
-              <stop offset="100%" stopColor="#b6e0f7" />
-            </linearGradient>
-          </defs>
-          
-          {/* Grid pattern */}
-          <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#7fd3f7" strokeWidth="0.5" opacity="0.1"/>
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#grid)" opacity="0.03" />
-        </svg>
-        
-        {/* Animated Particles */}
-        <div className="particle absolute left-10 w-1 h-1 bg-[#7fd3f7]/60 rounded-full"></div>
-        <div className="particle absolute left-20 w-2 h-2 bg-[#b6e0f7]/40 rounded-full"></div>
-        <div className="particle absolute right-16 w-1.5 h-1.5 bg-[#eaf6fa]/50 rounded-full"></div>
-      </div>
+      {/* Advanced Interactive Background */}
+      <CanvasBackground />
 
-      {/* Navigation */}
-      <nav className="relative z-50 px-4 sm:px-8 pt-6 sm:pt-8 opacity-0">
-        <div className="flex justify-between items-center">
-          <div className="hero-brand flex items-center gap-2 sm:gap-3 group cursor-pointer opacity-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-              <span className="text-white font-bold text-lg sm:text-xl group-hover:rotate-12 transition-transform duration-300">C</span>
-            </div>
-            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
-              Cenvora
-            </span>
-          </div>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8 desktop-nav">
-            <button 
-              onClick={() => scrollToSection('features')}
-              className={`nav-item text-[#7fd3f7] hover:text-[#b6e0f7] transition-all duration-300 font-semibold relative group transform hover:scale-105 opacity-0 ${activeSection === 'features' ? 'text-[#b6e0f7]' : ''}`}
-            >
-              Features
-              <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 ${activeSection === 'features' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-            </button>
-            <button 
-              onClick={() => scrollToSection('about')}
-              className={`nav-item text-[#7fd3f7] hover:text-[#b6e0f7] transition-all duration-300 font-semibold relative group transform hover:scale-105 opacity-0 ${activeSection === 'about' ? 'text-[#b6e0f7]' : ''}`}
-            >
-              About
-              <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 ${activeSection === 'about' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-            </button>
-            <button 
-              onClick={() => scrollToSection('contact')}
-              className={`nav-item text-[#7fd3f7] hover:text-[#b6e0f7] transition-all duration-300 font-semibold relative group transform hover:scale-105 opacity-0 ${activeSection === 'contact' ? 'text-[#b6e0f7]' : ''}`}
-            >
-              Contact
-              <span className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 ${activeSection === 'contact' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-            </button>
-            <Link 
-              to="/login" 
-              className="nav-item px-6 py-3 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden group opacity-0"
-            >
-              <span className="relative z-10">Sign In</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="nav-item md:hidden p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:scale-110 transition-all duration-300 group shadow-lg opacity-0"
-          >
-            <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2.5} 
-                  d="M6 18L18 6M6 6l12 12"
-                  className="animate-pulse" 
-                />
-              ) : (
-                <>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 12h16" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 18h16" />
-                </>
-              )}
-            </svg>
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Overlay - Outside nav for proper z-index layering */}
-      <div className={`md:hidden fixed inset-0 z-[100] transition-all duration-500 ease-in-out ${
-        isMobileMenuOpen 
-          ? 'opacity-100 visible' 
-          : 'opacity-0 invisible pointer-events-none'
-      }`}>
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2341] via-[#0d1421] to-[#1a2341]"></div>
-        
-        {/* Menu Panel */}
-        <div className={`relative h-full w-full flex flex-col transform transition-all duration-500 ease-out ${
-          isMobileMenuOpen 
-            ? 'translate-y-0 scale-100' 
-            : '-translate-y-8 scale-95'
-        }`}>
-          {/* Mobile Menu Header */}
-          <div className="flex justify-between items-center p-6 border-b border-[#7fd3f7]/20 bg-gradient-to-r from-[#1a2341]/90 to-[#2d3a5f]/90 backdrop-blur-sm">
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full z-50 bg-[#1a2341]/80 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">C</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <span className="text-white font-bold text-xl">C</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent">
-                Cenvora
-              </span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">Cenvora</span>
             </div>
-            <button 
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-3 rounded-xl bg-gradient-to-r from-[#7fd3f7]/20 to-[#b6e0f7]/20 backdrop-blur-sm border border-[#7fd3f7]/30 text-white hover:bg-[#7fd3f7]/30 hover:scale-110 transition-all duration-300 group"
-            >
-              <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Mobile Menu Items - Centered in remaining space */}
-          <div className="flex-1 flex flex-col justify-center items-center space-y-8 px-8 py-12 relative">
-            {/* Background decoration */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#7fd3f7]/5 to-transparent"></div>
             
-            {[
-              { id: 'features', label: 'Features', delay: 'delay-75' },
-              { id: 'about', label: 'About', delay: 'delay-150' },
-              { id: 'contact', label: 'Contact', delay: 'delay-225' }
-            ].map((item, index) => (
-              <button 
-                key={item.id}
-                onClick={() => {
-                  scrollToSection(item.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`relative w-full max-w-sm text-2xl font-bold text-center py-4 px-8 rounded-2xl transition-all duration-500 transform hover:scale-105 ${item.delay} ${
-                  isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-                } ${
-                  activeSection === item.id 
-                    ? 'bg-gradient-to-r from-[#7fd3f7]/30 to-[#b6e0f7]/30 text-[#b6e0f7] shadow-xl border border-[#7fd3f7]/50 backdrop-blur-sm' 
-                    : 'text-[#7fd3f7] hover:text-[#b6e0f7] hover:bg-gradient-to-r hover:from-[#7fd3f7]/10 hover:to-[#b6e0f7]/10 border border-[#7fd3f7]/20 hover:border-[#7fd3f7]/40 backdrop-blur-sm'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-            
-            {/* Sign In Button - Separated with more space */}
-            <div className="pt-8">
-              <Link 
-                to="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`block w-full max-w-sm text-2xl font-bold text-center py-4 px-8 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-105 delay-300 relative overflow-hidden group ${
-                  isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-                }`}
-              >
-                <span className="relative z-10">Sign In</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+            <div className="hidden md:flex items-center gap-8">
+              <a href="#features" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Features</a>
+              <a href="#pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Pricing</a>
+              <a href="#testimonials" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Testimonials</a>
+              <Link to="/login" className="text-sm font-medium text-white hover:text-cyan-400 transition-colors">Log In</Link>
+              <Link to="/signup" className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-300">
+                Get Started
               </Link>
             </div>
-          </div>
 
-          {/* Enhanced Decorative Elements */}
-          <div className="absolute top-1/4 left-8 w-2 h-16 bg-gradient-to-b from-[#7fd3f7]/80 to-transparent rounded-full opacity-80 animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-8 w-3 h-12 bg-gradient-to-t from-[#b6e0f7]/80 to-transparent rounded-full opacity-80 animate-pulse"></div>
-          <div className="absolute top-1/2 left-4 w-1 h-8 bg-gradient-to-b from-[#eaf6fa]/60 to-transparent rounded-full opacity-60"></div>
-          <div className="absolute top-1/3 right-12 w-1.5 h-6 bg-gradient-to-t from-[#7fd3f7]/40 to-transparent rounded-full opacity-70"></div>
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-slate-300 hover:text-white">
+              {isMobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
-      </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-20 left-0 w-full bg-[#1a2341] border-b border-white/10 p-4 flex flex-col gap-4 shadow-2xl animate-fade-in">
+            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-lg hover:bg-white/5">Features</a>
+            <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-lg hover:bg-white/5">Pricing</a>
+            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-lg hover:bg-white/5">Log In</Link>
+            <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-cyan-600 rounded-lg text-center font-bold">Get Started</Link>
+          </div>
+        )}
+      </nav>
 
       {/* Hero Section */}
-      <section id="home" className="relative z-10 min-h-screen flex items-center justify-center px-4 py-16 sm:py-20">
-        <div className="text-center max-w-6xl">
-          <h1 className="hero-title gradient-text text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold mb-6 sm:mb-8 leading-tight">
-            Business Management
-            <br />
-            <span className="text-white">Simplified</span>
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-cyan-500/20 rounded-full blur-[120px] -z-10 opacity-50 animate-pulse-slow"></div>
+        <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-purple-500/10 rounded-full blur-[100px] -z-10 opacity-30"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in">
+            <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span className="text-sm font-medium text-cyan-300">New: Inventory Tracking 2.0</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 animate-slide-up">
+            Master Your <br />
+            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">Business Universe.</span>
           </h1>
-          <p className="hero-subtitle text-[#b6e0f7]/90 text-base sm:text-lg md:text-xl lg:text-2xl mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
-            Streamline your operations with Cenvora - the all-in-one platform for sales, inventory, 
-            customer management, and financial tracking. Built for growing businesses.
+          
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 animate-slide-up delay-100">
+            Cenvora provides the ultimate toolkit for modern businesses. Track sales, manage inventory, and analyze growth—all in one stunning interface.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
-            <Link 
-              to="/signup" 
-              className="hero-cta px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-base sm:text-lg rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden group"
-            >
-              <span className="relative z-10">Start Free Trial</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up delay-200">
+            <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-lg shadow-xl shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 group">
+              Start Free Trial
+              <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button 
-              onClick={() => scrollToSection('features')}
-              className="hero-cta px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white font-bold text-base sm:text-lg rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
-            >
-              Explore Features
-            </button>
+            <a href="#features" className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 rounded-xl font-bold text-lg hover:bg-white/10 hover:-translate-y-1 transition-all duration-300">
+              View Demo
+            </a>
+          </div>
+
+          {/* 3D Dashboard Mockup */}
+          <div className="mt-20 relative mx-auto max-w-5xl animate-slide-up delay-300 perspective-1000">
+            <div className="relative rounded-2xl bg-[#1a2341] border border-white/10 shadow-2xl shadow-cyan-500/10 overflow-hidden transform rotate-x-12 hover:rotate-x-0 transition-transform duration-700 ease-out">
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
+              <img src="/dashboard.png" alt="App Dashboard" className="w-full h-auto opacity-90" />
+              
+              {/* Floating Elements */}
+              <div className="absolute -right-10 top-10 p-4 bg-[#1a2341]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl animate-float hidden md:block">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500/20 rounded-lg"><CurrencyRupeeIcon className="w-6 h-6 text-green-400" /></div>
+                  <div>
+                    <p className="text-xs text-slate-400">Total Revenue</p>
+                    <p className="text-lg font-bold text-white">₹1,24,500</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -left-10 bottom-20 p-4 bg-[#1a2341]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl animate-float hidden md:block" style={{ animationDelay: '2s' }}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/20 rounded-lg"><UserGroupIcon className="w-6 h-6 text-purple-400" /></div>
+                  <div>
+                    <p className="text-xs text-slate-400">New Customers</p>
+                    <p className="text-lg font-bold text-white">+128</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative z-10 py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
-              Complete Business Suite
-            </h2>
-            <p className="text-[#b6e0f7]/80 text-xl max-w-3xl mx-auto">
-              Everything you need to manage and grow your business, all in one integrated platform
-            </p>
+      {/* Why Choose Us */}
+      <section className="py-24 bg-[#131b33]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 scroll-animate">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Leading Businesses Choose Cenvora</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">We don't just provide software; we provide a competitive advantage.</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-colors duration-300 scroll-animate">
+              <div className="w-14 h-14 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-6">
+                <BoltIcon className="w-8 h-8 text-cyan-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Lightning Performance</h3>
+              <p className="text-slate-400 leading-relaxed">Built on cutting-edge tech, Cenvora loads instantly and handles thousands of transactions without breaking a sweat.</p>
+            </div>
+            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/30 transition-colors duration-300 scroll-animate" style={{ transitionDelay: '100ms' }}>
+              <div className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6">
+                <ShieldCheckIcon className="w-8 h-8 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Unbreakable Security</h3>
+              <p className="text-slate-400 leading-relaxed">Enterprise-grade encryption and automated backups ensure your business data is safer than in a bank vault.</p>
+            </div>
+            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition-colors duration-300 scroll-animate" style={{ transitionDelay: '200ms' }}>
+              <div className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
+                <ChartBarIcon className="w-8 h-8 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Actionable Insights</h3>
+              <p className="text-slate-400 leading-relaxed">Turn raw data into profit. Our AI-powered analytics help you spot trends and opportunities before your competitors.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-20 scroll-animate">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Everything you need to <br /><span className="text-cyan-400">scale faster.</span></h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <div key={index} className="feature-card bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 hover:bg-white/15 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl group">
-                <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
+              <div key={index} className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:-translate-y-2 scroll-animate" style={{ transitionDelay: `${index * 100}ms` }}>
+                <feature.icon className="w-10 h-10 text-cyan-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
+                <p className="text-sm text-slate-400">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 bg-[#131b33]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 scroll-animate">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-slate-400">No hidden fees. Cancel anytime.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {pricingPlans.map((plan, index) => (
+              <div 
+                key={index} 
+                className={`relative p-8 rounded-3xl border ${plan.highlight ? 'bg-gradient-to-b from-cyan-900/20 to-[#1a2341] border-cyan-500/50 shadow-2xl shadow-cyan-500/10 scale-105 z-10' : 'bg-[#1a2341] border-white/10'} flex flex-col scroll-animate`}
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-cyan-500 text-white text-xs font-bold uppercase tracking-wider rounded-full">
+                    Most Popular
+                  </div>
+                )}
+                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-white">{plan.price}</span>
+                  <span className="text-slate-500">{plan.period}</span>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[#7fd3f7] transition-colors duration-300">
-                  {feature.title}
-                </h3>
-                <p className="text-[#b6e0f7]/80 mb-6 leading-relaxed">
-                  {feature.description}
-                </p>
-                <ul className="space-y-2">
-                  {feature.details.map((detail, i) => (
-                    <li key={i} className="text-[#eaf6fa]/70 text-sm flex items-center">
-                      <span className="w-1.5 h-1.5 bg-[#7fd3f7] rounded-full mr-3"></span>
-                      {detail}
+                <ul className="space-y-4 mb-8 flex-1">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
+                      <CheckCircleIcon className={`w-5 h-5 ${plan.highlight ? 'text-cyan-400' : 'text-slate-500'}`} />
+                      {feature}
                     </li>
                   ))}
                 </ul>
+                <Link 
+                  to="/signup" 
+                  className={`w-full py-3 rounded-xl font-bold text-center transition-all duration-300 ${plan.highlight ? 'bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/25' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                >
+                  {/* Choose {plan.name} */}
+                  {plan.name=="Starter" ? 'Start Trial' : 'Coming Soon'}
+                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="relative z-10 py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-12 shadow-2xl">
-            <div className="text-center mb-12">
-              <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
-                About Cenvora
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto"></div>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h3 className="text-3xl font-bold text-white mb-6">
-                  Empowering Business Growth
-                </h3>
-                <p className="text-[#b6e0f7]/90 text-lg mb-6 leading-relaxed">
-                  Cenvora is designed to simplify complex business operations through intelligent automation 
-                  and intuitive design. We believe that powerful business tools should be accessible to 
-                  businesses of all sizes.
-                </p>
-                <p className="text-[#b6e0f7]/90 text-lg mb-8 leading-relaxed">
-                  Our comprehensive platform eliminates the need for multiple disconnected systems, 
-                  providing a unified solution that grows with your business.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">500+</div>
-                    <div className="text-[#b6e0f7]/70">Active Users</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">99.9%</div>
-                    <div className="text-[#b6e0f7]/70">Uptime</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">24/7</div>
-                    <div className="text-[#b6e0f7]/70">Support</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">8+</div>
-                    <div className="text-[#b6e0f7]/70">Core Features</div>
+      {/* Testimonials */}
+      <section id="testimonials" className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 scroll-animate">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Loved by Businesses</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-8 rounded-2xl bg-white/5 border border-white/10 scroll-animate" style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="flex gap-1 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => <StarIcon key={star} className="w-5 h-5 text-yellow-400 fill-yellow-400" />)}
+                </div>
+                <p className="text-slate-300 mb-6 leading-relaxed">"Cenvora completely transformed how we manage our inventory. The insights are incredible and the interface is just beautiful."</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
+                  <div>
+                    <p className="font-bold text-white">Sarah Johnson</p>
+                    <p className="text-xs text-slate-500">CEO, TechStart</p>
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-8">
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                  <h4 className="text-xl font-bold text-[#7fd3f7] mb-3">🎯 Our Mission</h4>
-                  <p className="text-[#b6e0f7]/80">
-                    To democratize enterprise-level business management tools, making them accessible 
-                    and affordable for businesses of all sizes.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                  <h4 className="text-xl font-bold text-[#7fd3f7] mb-3">🚀 Our Vision</h4>
-                  <p className="text-[#b6e0f7]/80">
-                    To become the leading platform that empowers businesses to optimize their operations, 
-                    make data-driven decisions, and achieve sustainable growth.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                  <h4 className="text-xl font-bold text-[#7fd3f7] mb-3">⭐ Our Values</h4>
-                  <p className="text-[#b6e0f7]/80">
-                    Innovation, reliability, and customer success drive everything we do. We're committed 
-                    to continuous improvement and exceptional user experience.
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="relative z-10 py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
-              Get In Touch
-            </h2>
-            <p className="text-[#b6e0f7]/80 text-xl max-w-3xl mx-auto">
-              Ready to transform your business operations? We're here to help you get started.
-            </p>
+      {/* FAQ Section */}
+      <section className="py-24 bg-[#131b33]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 scroll-animate">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-              <h3 className="text-3xl font-bold text-white mb-8">Send us a Message</h3>
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Name</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                      placeholder="Your Name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Email</label>
-                    <input
-                      type="email"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Subject</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                    placeholder="How can we help?"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Message</label>
-                  <textarea
-                    rows="5"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                    placeholder="Tell us about your business needs..."
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 px-6 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="rounded-xl bg-[#1a2341] border border-white/5 overflow-hidden scroll-animate">
+                <button 
+                  onClick={() => toggleFaq(index)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
                 >
-                  Send Message
+                  <span className="font-semibold text-white">{faq.question}</span>
+                  {activeFaq === index ? <ChevronUpIcon className="w-5 h-5 text-cyan-400" /> : <ChevronDownIcon className="w-5 h-5 text-slate-500" />}
                 </button>
-              </form>
-            </div>
-            
-            {/* Contact Information */}
-            <div className="space-y-8">
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-                <h3 className="text-2xl font-bold text-white mb-6">Contact Information</h3>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-xl flex items-center justify-center">
-                      <span className="text-[#1a2341] text-xl">📧</span>
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Email</div>
-                      <div className="text-[#b6e0f7]/80">support@cenvora.app</div>
-                    </div>
+                {activeFaq === index && (
+                  <div className="px-6 pb-4 text-slate-400 animate-fade-in">
+                    {faq.answer}
                   </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-xl flex items-center justify-center">
-                      <span className="text-[#1a2341] text-xl">📞</span>
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Phone</div>
-                      <div className="text-[#b6e0f7]/80">+1 (555) 123-4567</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-xl flex items-center justify-center">
-                      <span className="text-[#1a2341] text-xl">🕒</span>
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Business Hours</div>
-                      <div className="text-[#b6e0f7]/80">Mon - Fri: 9AM - 6PM EST</div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
-              
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-                <h3 className="text-2xl font-bold text-white mb-6">Get Started Today</h3>
-                <p className="text-[#b6e0f7]/80 mb-6">
-                  Ready to transform your business operations? Start your free trial and see the difference Cenvora can make.
-                </p>
-                <div className="space-y-4">
-                  <Link 
-                    to="/signup"
-                    className="block w-full py-3 px-6 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 text-center"
-                  >
-                    Start Free Trial
-                  </Link>
-                  <Link 
-                    to="/login"
-                    className="block w-full py-3 px-6 bg-white/10 border border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all duration-300 text-center"
-                  >
-                    Sign In
-                  </Link>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 opacity-20"></div>
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10 scroll-animate">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to elevate your business?</h2>
+          <p className="text-xl text-slate-300 mb-10">Join thousands of businesses using Cenvora to grow faster and smarter.</p>
+          <Link to="/signup" className="inline-block px-10 py-4 bg-white text-blue-900 font-bold text-lg rounded-xl shadow-2xl hover:scale-105 transition-transform duration-300">
+            Get Started for Free
+          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-20 py-12 px-4 border-t border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <footer className="bg-[#0f1525] py-12 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-xl flex items-center justify-center">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold">C</span>
                 </div>
-                <span className="text-2xl font-bold gradient-text">Cenvora</span>
+                <span className="text-xl font-bold text-white">Cenvora</span>
               </div>
-              <p className="text-[#b6e0f7]/70 mb-4 max-w-md">
-                Empowering businesses with comprehensive management tools. Streamline your operations and accelerate growth.
+              <p className="text-slate-500 text-sm max-w-xs">
+                The all-in-one business management platform designed for the modern era.
               </p>
-              <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-300 cursor-pointer">
-                  <span className="text-[#7fd3f7] text-sm">📘</span>
-                </div>
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-300 cursor-pointer">
-                  <span className="text-[#7fd3f7] text-sm">🐦</span>
-                </div>
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-300 cursor-pointer">
-                  <span className="text-[#7fd3f7] text-sm">💼</span>
-                </div>
-              </div>
             </div>
-            
             <div>
-              <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-[#b6e0f7]/70">
-                <li><button onClick={() => scrollToSection('features')} className="hover:text-[#7fd3f7] transition-colors">Features</button></li>
-                <li><button onClick={() => scrollToSection('about')} className="hover:text-[#7fd3f7] transition-colors">About</button></li>
-                <li><button onClick={() => scrollToSection('contact')} className="hover:text-[#7fd3f7] transition-colors">Contact</button></li>
-                <li><Link to="/signup" className="hover:text-[#7fd3f7] transition-colors">Sign Up</Link></li>
+              <h4 className="font-bold text-white mb-4">Product</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><a href="#features" className="hover:text-cyan-400">Features</a></li>
+                <li><a href="#pricing" className="hover:text-cyan-400">Pricing</a></li>
+                <li><Link to="/login" className="hover:text-cyan-400">Login</Link></li>
               </ul>
             </div>
-            
             <div>
-              <h4 className="text-white font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-[#b6e0f7]/70">
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Terms of Service</a></li>
+              <h4 className="font-bold text-white mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><a href="#" className="hover:text-cyan-400">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-cyan-400">Terms of Service</a></li>
               </ul>
             </div>
           </div>
-          
-          <div className="border-t border-white/10 pt-8 text-center">
-            <p className="text-[#b6e0f7]/70">
-              © {new Date().getFullYear()} Cenvora. All rights reserved. Built with ❤️ for growing businesses.
-            </p>
+          <div className="pt-8 border-t border-white/5 text-center text-sm text-slate-600">
+            &copy; {new Date().getFullYear()} Cenvora. All rights reserved.
           </div>
         </div>
       </footer>

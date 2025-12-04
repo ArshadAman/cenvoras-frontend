@@ -157,63 +157,82 @@ export default function Layout({ children, onLogout }) {
           <div className="w-10"> {/* Spacer for centering */}</div>
         </header>
 
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-            <div className="glass-sidebar w-72 h-full relative overflow-hidden">
-              {/* Background decoration */}
-              <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
-                <div className="absolute bottom-20 right-10 w-16 h-16 bg-gradient-to-br from-[#b6e0f7]/15 to-[#eaf6fa]/15 rounded-full blur-lg"></div>
-              </div>
-              
-              <div className="relative z-10 h-20 flex items-center justify-center border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-lg">C</span>
-                  </div>
-                  <span className="gradient-text text-2xl font-extrabold tracking-tight">Cenvora</span>
+        {/* Mobile Menu Overlay with Transition */}
+        <div 
+          className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
+            isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Sidebar */}
+          <div 
+            className={`glass-sidebar w-72 h-full relative overflow-hidden transition-transform duration-300 ${
+              isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
+              <div className="absolute bottom-20 right-10 w-16 h-16 bg-gradient-to-br from-[#b6e0f7]/15 to-[#eaf6fa]/15 rounded-full blur-lg"></div>
+            </div>
+            
+            <div className="relative z-10 h-20 flex items-center justify-between px-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">C</span>
                 </div>
+                <span className="gradient-text text-2xl font-extrabold tracking-tight">Cenvora</span>
               </div>
-              
-              <nav className="flex-1 px-6 py-8 space-y-3 relative z-10">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  
-                  return (
-                    <Link 
-                      key={item.path}
-                      to={item.path} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`glass-nav-item flex items-center gap-4 px-4 py-3 rounded-2xl text-white font-medium ${
-                        isActive ? 'active' : ''
-                      }`}
-                    >
-                      <Icon className="w-6 h-6 text-[#7fd3f7]" />
-                      <span className={isActive ? 'text-[#7fd3f7]' : 'text-white'}>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-              
-              {/* Logout button at bottom */}
-              <div className="px-6 pb-6 relative z-10">
-                {onLogout && (
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-[#ff6b6b] to-[#ffa8a8] text-white font-bold rounded-2xl hover:from-[#ff5252] hover:to-[#ff9999] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6 text-white" />
+              </button>
+            </div>
+            
+            <nav className="flex-1 px-6 py-8 space-y-3 relative z-10">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
+                return (
+                  <Link 
+                    key={item.path}
+                    to={item.path} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`glass-nav-item flex items-center gap-4 px-4 py-3 rounded-2xl text-white font-medium ${
+                      isActive ? 'active' : ''
+                    }`}
                   >
-                    Logout
-                  </button>
-                )}
-              </div>
+                    <Icon className="w-6 h-6 text-[#7fd3f7]" />
+                    <span className={isActive ? 'text-[#7fd3f7]' : 'text-white'}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            
+            {/* Logout button at bottom */}
+            <div className="px-6 pb-6 relative z-10">
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-[#ff6b6b] to-[#ffa8a8] text-white font-bold rounded-2xl hover:from-[#ff5252] hover:to-[#ff9999] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  Logout
+                </button>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Page Content */}
         {children}
