@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createProduct, updateProduct } from "../../api/inventory";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const productSchema = Yup.object().shape({
   name: Yup.string()
@@ -14,6 +15,13 @@ const productSchema = Yup.object().shape({
   unit: Yup.string()
     .required("Unit is required")
     .max(20, "Unit must be 20 characters or less"),
+  secondary_unit: Yup.string()
+    .max(20, "Secondary unit must be 20 characters or less")
+    .nullable(),
+  conversion_factor: Yup.number()
+    .integer("Conversion factor must be a whole number")
+    .min(1, "Conversion factor must be at least 1")
+    .nullable(),
   price: Yup.string()
     .required("Price is required")
     .matches(/^\d+(\.\d{1,2})?$/, "Price must be a valid decimal number"),
@@ -29,8 +37,6 @@ const productSchema = Yup.object().shape({
 export default function ProductForm({ product, onClose }) {
   const queryClient = useQueryClient();
   const isEdit = !!product;
-
-
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -62,6 +68,8 @@ export default function ProductForm({ product, onClose }) {
     name: product?.name || "",
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
     unit: product?.unit || "",
+    secondary_unit: product?.secondary_unit || "",
+    conversion_factor: product?.conversion_factor || 1,
     price: product?.price || product?.purchase_price || product?.unit_price || "",
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
@@ -72,6 +80,8 @@ export default function ProductForm({ product, onClose }) {
       name: values.name,
       hsn_sac_code: values.hsn_sac_code || null,
       unit: values.unit,
+      secondary_unit: values.secondary_unit || null,
+      conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
       price: values.price,
       stock: parseInt(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
@@ -85,20 +95,30 @@ export default function ProductForm({ product, onClose }) {
     setSubmitting(false);
   };
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all";
+  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {isEdit ? "Edit Product" : "Add New Product"}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal Content */}
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+          <h2 className="text-xl font-bold text-white">
+            {isEdit ? "Edit Product" : "New Product"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -108,127 +128,134 @@ export default function ProductForm({ product, onClose }) {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting, values, setFieldValue }) => (
-            <Form className="space-y-6">
-              {/* Basic Information */}
+          {({ isSubmitting, values }) => (
+            <Form className="p-6 md:p-8 space-y-8">
+              {/* Section 1: Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Product Name *
-                  </label>
+                  <label className={labelClass}>Product Name *</label>
                   <Field
                     name="name"
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter product name"
+                    className={inputClass}
+                    placeholder="e.g. Wireless Headphones"
                   />
-                  <ErrorMessage name="name" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    HSN/SAC Code
-                  </label>
+                  <label className={labelClass}>HSN/SAC Code</label>
                   <Field
                     name="hsn_sac_code"
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter HSN or SAC code"
+                    className={inputClass}
+                    placeholder="e.g. 8518"
                   />
-                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
               </div>
 
-              {/* Unit */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Unit *
-                </label>
-                <Field
-                  name="unit"
-                  type="text"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., pcs, kg, liters, meters"
-                />
-                <ErrorMessage name="unit" component="div" className="text-red-500 text-xs mt-1" />
-              </div>
-
-              {/* Pricing and Stock */}
+              {/* Section 2: Units */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Price *
-                  </label>
+                  <label className={labelClass}>Primary Unit *</label>
+                  <Field
+                    name="unit"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. pcs"
+                  />
+                  <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Secondary Unit</label>
+                  <Field
+                    name="secondary_unit"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. Box"
+                  />
+                  <ErrorMessage name="secondary_unit" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Conversion Factor</label>
+                  <Field
+                    name="conversion_factor"
+                    type="number"
+                    min="1"
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 3: Pricing & Stock */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className={labelClass}>Price (₹) *</label>
                   <Field
                     name="price"
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={inputClass}
                     placeholder="0.00"
                   />
-                  <ErrorMessage name="price" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="price" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Stock *
-                  </label>
+                  <label className={labelClass}>Opening Stock *</label>
                   <Field
                     name="stock"
                     type="number"
                     min="0"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={inputClass}
                     placeholder="0"
                   />
-                  <ErrorMessage name="stock" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Stock Value
-                  </label>
-                  <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                  <label className={labelClass}>Stock Value</label>
+                  <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
                     ₹{(parseFloat(values.stock || 0) * parseFloat(values.price || 0)).toFixed(2)}
                   </div>
                 </div>
               </div>
 
-              {/* Low Stock Alert */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Low Stock Alert Level
-                </label>
-                <Field
-                  name="low_stock_alert"
-                  type="number"
-                  min="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter low stock alert threshold (0 to disable)"
-                />
-                <ErrorMessage name="low_stock_alert" component="div" className="text-red-500 text-xs mt-1" />
-                <p className="text-xs text-gray-500 mt-1">
-                  You'll receive alerts when stock falls below this level
-                </p>
-              </div>
+               {/* Section 4: Alerts */}
+               <div>
+                  <label className={labelClass}>Low Stock Alert</label>
+                  <Field
+                    name="low_stock_alert"
+                    type="number"
+                    min="0"
+                    className={inputClass}
+                    placeholder="e.g. 10"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Get notified when stock falls below this level.
+                  </p>
+               </div>
 
-              {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+              {/* Actions */}
+              <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2.5 text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="btn-primary shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting || createMutation.isLoading || updateMutation.isLoading
-                    ? "Saving..."
-                    : isEdit
-                    ? "Update Product"
-                    : "Create Product"}
+                  {isSubmitting ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
                 </button>
               </div>
             </Form>

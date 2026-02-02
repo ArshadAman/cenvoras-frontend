@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   ChartBarIcon, 
@@ -16,61 +16,6 @@ export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Add theme CSS
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      .glass-sidebar {
-        background: rgba(26, 35, 65, 0.95);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(127, 211, 247, 0.2);
-        z-index: 50;
-        position: relative;
-      }
-      
-      .glass-nav-item {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-nav-item:hover {
-        background: rgba(127, 211, 247, 0.1);
-        border-color: rgba(127, 211, 247, 0.3);
-        transform: translateX(5px);
-      }
-      
-      .glass-nav-item.active {
-        background: rgba(127, 211, 247, 0.2);
-        border-color: rgba(127, 211, 247, 0.4);
-        transform: translateX(8px);
-      }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        animation: gradient-shift 6s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      @keyframes gradient-shift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      if (document.head.contains(styleSheet)) {
-        document.head.removeChild(styleSheet);
-      }
-    };
-  }, []);
-
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon },
     { path: "/sales", label: "Sales", icon: CurrencyRupeeIcon },
@@ -82,25 +27,23 @@ export default function Layout({ children, onLogout }) {
   ];
 
   return (
-    <div className="flex min-h-screen" style={{background: 'linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%)'}}>
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative z-50">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
-          <div className="absolute bottom-20 right-10 w-16 h-16 bg-gradient-to-br from-[#b6e0f7]/15 to-[#eaf6fa]/15 rounded-full blur-lg"></div>
-        </div>
+    <div className="flex min-h-screen bg-black text-white font-sans selection:bg-purple-500/30">
+      {/* Background Texture Grid */}
+      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
+
+      {/* Sidebar - Desktop */}
+      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative z-50 h-screen sticky top-0">
         
-        <div className="relative z-10 h-20 flex items-center justify-center border-b border-white/10">
+        {/* Logo Area */}
+        <div className="h-20 flex items-center px-6 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">C</span>
-            </div>
-            <span className="gradient-text text-2xl font-extrabold tracking-tight">Cenvora</span>
+            <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-purple-500 rounded-lg shadow-lg shadow-purple-500/20"></div>
+            <span className="text-xl font-bold tracking-tight">Cenvora</span>
           </div>
         </div>
         
-        <nav className="flex-1 px-6 py-8 space-y-3 relative z-10">
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -109,55 +52,54 @@ export default function Layout({ children, onLogout }) {
               <Link 
                 key={item.path}
                 to={item.path} 
-                className={`glass-nav-item flex items-center gap-4 px-4 py-3 rounded-2xl text-white font-medium ${
-                  isActive ? 'active' : ''
+                className={`glass-nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 font-medium ${
+                  isActive ? 'active text-white' : 'hover:text-gray-200'
                 }`}
               >
-                <Icon className="w-6 h-6 text-[#7fd3f7]" />
-                <span className={isActive ? 'text-[#7fd3f7]' : 'text-white'}>{item.label}</span>
+                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
         
-        {/* Logout button at bottom */}
-        <div className="px-6 pb-6 relative z-10">
+        {/* Logout Area */}
+        <div className="p-4 border-t border-white/5">
           {onLogout && (
             <button
               onClick={onLogout}
-              className="w-full px-4 py-3 bg-gradient-to-r from-[#ff6b6b] to-[#ffa8a8] text-white font-bold rounded-2xl hover:from-[#ff5252] hover:to-[#ff9999] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="w-full px-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2"
             >
-              Logout
+              Sign Out
             </button>
           )}
         </div>
       </aside>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative z-10">
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-20 bg-[#1a2341]/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6 h-16">
+        <header className="md:hidden sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 h-16">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors duration-300"
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             {isMobileMenuOpen ? (
-              <XMarkIcon className="w-6 h-6 text-[#7fd3f7]" />
+              <XMarkIcon className="w-6 h-6" />
             ) : (
-              <Bars3Icon className="w-6 h-6 text-[#7fd3f7]" />
+              <Bars3Icon className="w-6 h-6" />
             )}
           </button>
           
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
-            <span className="gradient-text text-xl font-bold">Cenvora</span>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gradient-to-tr from-cyan-400 to-purple-500 rounded-lg"></div>
+            <span className="text-lg font-bold">Cenvora</span>
           </div>
           
-          <div className="w-10"> {/* Spacer for centering */}</div>
+          <div className="w-10"></div> {/* Spacer */}
         </header>
 
-        {/* Mobile Menu Overlay with Transition */}
+        {/* Mobile Menu Overlay */}
         <div 
           className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
             isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -165,38 +107,27 @@ export default function Layout({ children, onLogout }) {
         >
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
             onClick={() => setIsMobileMenuOpen(false)}
           />
           
-          {/* Sidebar */}
+          {/* Mobile Sidebar */}
           <div 
-            className={`glass-sidebar w-72 h-full relative overflow-hidden transition-transform duration-300 ${
+            className={`absolute top-0 bottom-0 left-0 w-72 bg-[#111] border-r border-white/10 transform transition-transform duration-300 flex flex-col ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            {/* Background decoration */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
-              <div className="absolute bottom-20 right-10 w-16 h-16 bg-gradient-to-br from-[#b6e0f7]/15 to-[#eaf6fa]/15 rounded-full blur-lg"></div>
-            </div>
-            
-            <div className="relative z-10 h-20 flex items-center justify-between px-6 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-lg">C</span>
-                </div>
-                <span className="gradient-text text-2xl font-extrabold tracking-tight">Cenvora</span>
-              </div>
+            <div className="h-16 flex items-center justify-between px-6 border-b border-white/10">
+              <span className="text-xl font-bold">Menu</span>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                className="p-2 -mr-2 text-gray-400 hover:text-white"
               >
-                <XMarkIcon className="w-6 h-6 text-white" />
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
             
-            <nav className="flex-1 px-6 py-8 space-y-3 relative z-10">
+            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -206,28 +137,27 @@ export default function Layout({ children, onLogout }) {
                     key={item.path}
                     to={item.path} 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`glass-nav-item flex items-center gap-4 px-4 py-3 rounded-2xl text-white font-medium ${
-                      isActive ? 'active' : ''
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+                       isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                     }`}
                   >
-                    <Icon className="w-6 h-6 text-[#7fd3f7]" />
-                    <span className={isActive ? 'text-[#7fd3f7]' : 'text-white'}>{item.label}</span>
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}
             </nav>
             
-            {/* Logout button at bottom */}
-            <div className="px-6 pb-6 relative z-10">
-              {onLogout && (
+            <div className="p-4 border-t border-white/10">
+               {onLogout && (
                 <button
                   onClick={() => {
                     onLogout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-[#ff6b6b] to-[#ffa8a8] text-white font-bold rounded-2xl hover:from-[#ff5252] hover:to-[#ff9999] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
                 >
-                  Logout
+                  Sign Out
                 </button>
               )}
             </div>
@@ -235,7 +165,9 @@ export default function Layout({ children, onLogout }) {
         </div>
 
         {/* Page Content */}
-        {children}
+        <main className="flex-1 overflow-y-auto relative z-10">
+           {children}
+        </main>
       </div>
     </div>
   );

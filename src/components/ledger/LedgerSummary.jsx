@@ -2,6 +2,12 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getLedgerStats } from '../../api/ledger';
 import Loader from '../Loader';
+import { 
+  BanknotesIcon, 
+  DocumentTextIcon, 
+  WalletIcon, 
+  UserGroupIcon 
+} from '@heroicons/react/24/outline';
 
 const LedgerSummary = ({ dateFilter, customerFilter }) => {
   const {
@@ -33,16 +39,14 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2"></div>
-                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                </div>
+          <div key={i} className="bento-card p-5 animate-pulse">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-white/10 rounded"></div>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <div className="h-4 bg-white/10 rounded mb-2 w-1/2"></div>
+                <div className="h-6 bg-white/10 rounded w-3/4"></div>
               </div>
             </div>
           </div>
@@ -53,7 +57,7 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-8">
+      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-8">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -61,16 +65,16 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+            <h3 className="text-sm font-medium text-red-200">
               Error loading summary
             </h3>
-            <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+            <div className="mt-2 text-sm text-red-300">
               <p>{error?.message || 'Failed to fetch ledger statistics'}</p>
             </div>
             <div className="mt-4">
               <button
                 onClick={() => refetch()}
-                className="bg-red-100 dark:bg-red-800 px-3 py-2 rounded-md text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700"
+                className="bg-red-500/20 px-3 py-2 rounded-lg text-sm font-medium text-red-200 hover:bg-red-500/30 transition-colors"
               >
                 Try Again
               </button>
@@ -96,49 +100,25 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     {
       name: 'Total Payments',
       value: formatCurrency(stats.total_payments),
-      icon: (
-        <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-        </svg>
-      ),
-      change: null,
-      changeType: null,
+      icon: <BanknotesIcon className="w-8 h-8 text-green-400" />,
       color: 'green'
     },
     {
       name: 'Total Invoices',
       value: formatCurrency(stats.total_invoices),
-      icon: (
-        <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-      change: null,
-      changeType: null,
+      icon: <DocumentTextIcon className="w-8 h-8 text-blue-400" />,
       color: 'blue'
     },
     {
       name: 'Net Balance',
       value: formatCurrency(stats.net_balance),
-      icon: (
-        <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-      change: null,
-      changeType: null,
+      icon: <WalletIcon className="w-8 h-8 text-indigo-400" />,
       color: stats.net_balance >= 0 ? 'green' : 'red'
     },
     {
       name: 'Active Customers',
       value: stats.total_customers?.toString() || '0',
-      icon: (
-        <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-      ),
-      change: null,
-      changeType: null,
+      icon: <UserGroupIcon className="w-8 h-8 text-purple-400" />,
       color: 'purple'
     }
   ];
@@ -167,80 +147,45 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
   ];
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 space-y-6">
       {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryCards.map((item) => (
-          <div key={item.name} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  {item.icon}
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      {item.name}
-                    </dt>
-                    <dd className={`text-lg font-medium ${
-                      item.color === 'green' ? 'text-green-900 dark:text-green-100' :
-                      item.color === 'blue' ? 'text-blue-900 dark:text-blue-100' :
-                      item.color === 'red' ? 'text-red-900 dark:text-red-100' :
-                      item.color === 'purple' ? 'text-purple-900 dark:text-purple-100' :
-                      'text-indigo-900 dark:text-indigo-100'
-                    }`}>
-                      {item.value}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-              {item.change && (
-                <div className="mt-3">
-                  <div className={`inline-flex items-baseline px-2.5 py-0.5 rounded-full text-sm font-medium ${
-                    item.changeType === 'increase' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}>
-                    {item.changeType === 'increase' ? (
-                      <svg className="-ml-1 mr-0.5 flex-shrink-0 self-center h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
-                    ) : (
-                      <svg className="-ml-1 mr-0.5 flex-shrink-0 self-center h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    <span className="sr-only">{item.changeType === 'increase' ? 'Increased' : 'Decreased'} by</span>
-                    {item.change}
-                  </div>
-                </div>
-              )}
+          <div key={item.name} className="bento-card p-5 flex items-center shadow-lg shadow-black/20">
+            <div className={`flex-shrink-0 p-3 rounded-xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
+              {item.icon}
+            </div>
+            <div className="ml-5">
+              <dt className="text-sm font-medium text-gray-400 truncate uppercase tracking-wide">
+                {item.name}
+              </dt>
+              <dd className="mt-1 text-2xl font-bold text-white drop-shadow-md">
+                {item.value}
+              </dd>
             </div>
           </div>
         ))}
       </div>
 
       {/* Additional Statistics */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Additional Statistics
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {additionalStats.map((stat) => (
-              <div key={stat.name} className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.value}
-                </div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                  {stat.name}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {stat.description}
-                </div>
+      <div className="bento-card p-6">
+        <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
+          Additional Insights
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {additionalStats.map((stat) => (
+            <div key={stat.name} className="text-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+              <div className="text-2xl font-bold text-white mb-1">
+                {stat.value}
               </div>
-            ))}
-          </div>
+              <div className="text-sm font-medium text-cyan-300">
+                {stat.name}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {stat.description}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

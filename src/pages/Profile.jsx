@@ -93,11 +93,11 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-md p-8 relative animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bento-card w-full max-w-md p-8 relative animate-fade-up shadow-2xl shadow-cyan-900/20">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
         >
           <XMarkIcon className="w-6 h-6" />
         </button>
@@ -109,20 +109,20 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white/70">Current Password</label>
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Current Password</label>
             <div className="relative">
               <input
                 type={showCurrentPassword ? "text" : "password"}
                 name="current_password"
                 value={passwordData.current_password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 pr-12 glass-input rounded-xl text-white placeholder-white/30"
+                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all pr-12"
                 placeholder="Enter current password"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
               >
                 {showCurrentPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
@@ -130,20 +130,20 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white/70">New Password</label>
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">New Password</label>
             <div className="relative">
               <input
                 type={showNewPassword ? "text" : "password"}
                 name="new_password"
                 value={passwordData.new_password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 pr-12 glass-input rounded-xl text-white placeholder-white/30"
+                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all pr-12"
                 placeholder="Min 8 characters"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
               >
                 {showNewPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
@@ -151,20 +151,20 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-white/70">Confirm New Password</label>
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Confirm New Password</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirm_new_password"
                 value={passwordData.confirm_new_password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 pr-12 glass-input rounded-xl text-white placeholder-white/30"
+                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all pr-12"
                 placeholder="Re-enter new password"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
               >
                 {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
@@ -175,7 +175,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={changePasswordMutation.isLoading}
-              className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {changePasswordMutation.isLoading ? 'Updating Password...' : 'Update Password'}
             </button>
@@ -374,13 +374,13 @@ const Profile = ({ onLogout }) => {
               {/* Left Column: Profile Summary & Stats */}
               <div className="space-y-8">
                 {/* Profile Summary Card */}
-                <div className="glass-card p-8 text-center relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-cyan-500/10 to-transparent"></div>
+                <div className="bento-card p-8 text-center relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-full h-32 bg-white/5 opacity-50"></div>
                   
-                  <div className="relative z-10">
-                    <div className="w-32 h-32 mx-auto mb-6 rounded-full p-1 bg-gradient-to-br from-cyan-400 to-blue-500 shadow-xl">
-                      <div className="w-full h-full rounded-full bg-[#1a2341] flex items-center justify-center overflow-hidden">
-                        <UserIcon className="w-16 h-16 text-white/80" />
+                  <div className="relative z-10 mt-4">
+                    <div className="w-32 h-32 mx-auto mb-6 rounded-full p-1 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 ring-1 ring-white/10 shadow-2xl">
+                      <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center overflow-hidden">
+                        <UserIcon className="w-16 h-16 text-gray-400 group-hover:text-white transition-colors duration-300" />
                       </div>
                     </div>
                     
@@ -402,44 +402,44 @@ const Profile = ({ onLogout }) => {
 
                 {/* Account Stats */}
                 {userProfile?.account_stats && (
-                  <div className="glass-card p-6">
-                    <h3 className="text-lg font-semibold text-white mb-6 flex items-center">
+                  <div className="bento-card p-6">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center">
                       <ChartBarIcon className="w-5 h-5 mr-2 text-cyan-400" />
                       Account Overview
                     </h3>
                     <div className="space-y-4">
-                      <div className="stat-card p-4 flex items-center justify-between">
+                      <div className="stat-card bg-[#111] border border-white/5 p-4 flex items-center justify-between rounded-xl hover:bg-white/5 transition-colors">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mr-4">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mr-4 border border-blue-500/20">
                             <CalendarIcon className="w-5 h-5 text-blue-400" />
                           </div>
                           <div>
-                            <p className="text-white/50 text-xs uppercase tracking-wider">Member Since</p>
-                            <p className="text-white font-semibold">{userProfile.account_stats.days_since_signup} days ago</p>
+                            <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Member Since</p>
+                            <p className="text-white font-bold mt-0.5">{userProfile.account_stats.days_since_signup} days ago</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="stat-card p-4 flex items-center justify-between">
+                      <div className="stat-card bg-[#111] border border-white/5 p-4 flex items-center justify-between rounded-xl hover:bg-white/5 transition-colors">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mr-4">
+                          <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center mr-4 border border-green-500/20">
                             <SparklesIcon className="w-5 h-5 text-green-400" />
                           </div>
                           <div>
-                            <p className="text-white/50 text-xs uppercase tracking-wider">Trial Status</p>
-                            <p className="text-white font-semibold">{userProfile.account_stats.trial_days_remaining} days left</p>
+                            <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Trial Status</p>
+                            <p className="text-white font-bold mt-0.5">{userProfile.account_stats.trial_days_remaining} days left</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="stat-card p-4 flex items-center justify-between">
+                      <div className="stat-card bg-[#111] border border-white/5 p-4 flex items-center justify-between rounded-xl hover:bg-white/5 transition-colors">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center mr-4">
+                          <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mr-4 border border-purple-500/20">
                             <DocumentTextIcon className="w-5 h-5 text-purple-400" />
                           </div>
                           <div>
-                            <p className="text-white/50 text-xs uppercase tracking-wider">Total Invoices</p>
-                            <p className="text-white font-semibold">{userProfile.account_stats.total_invoices} generated</p>
+                            <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Total Invoices</p>
+                            <p className="text-white font-bold mt-0.5">{userProfile.account_stats.total_invoices} generated</p>
                           </div>
                         </div>
                       </div>
@@ -448,17 +448,16 @@ const Profile = ({ onLogout }) => {
                 )}
               </div>
 
-              {/* Right Column: Edit Form */}
               <div className="lg:col-span-2">
-                <div className="glass-card p-8">
+                <div className="bento-card p-8">
                   <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">Account Details</h3>
                     {!isEditing && (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-xl border border-white/10 transition-all duration-300 flex items-center"
+                        className="btn-secondary flex items-center gap-2"
                       >
-                        <SparklesIcon className="w-4 h-4 mr-2 text-cyan-400" />
+                        <SparklesIcon className="w-4 h-4 text-cyan-400" />
                         Edit Profile
                       </button>
                     )}
@@ -467,119 +466,115 @@ const Profile = ({ onLogout }) => {
                   <form id="profile-form" onSubmit={handleSubmit} className="space-y-8">
                     {/* Personal Info Section */}
                     <div className="space-y-6">
-                      <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center">
+                      <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center border-b border-white/5 pb-2">
                         <UserIcon className="w-4 h-4 mr-2" />
                         Personal Information
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-white/70">First Name</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">First Name</label>
                           <input
                             type="text"
                             name="first_name"
                             value={formData.first_name}
                             onChange={handleInputChange}
                             disabled={!isEditing || updateProfileMutation.isLoading}
-                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="Enter first name"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-white/70">Last Name</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Last Name</label>
                           <input
                             type="text"
                             name="last_name"
                             value={formData.last_name}
                             onChange={handleInputChange}
                             disabled={!isEditing || updateProfileMutation.isLoading}
-                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="Enter last name"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="h-px bg-white/5"></div>
-
                     {/* Contact Info Section */}
                     <div className="space-y-6">
-                      <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center">
+                      <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center border-b border-white/5 pb-2">
                         <EnvelopeIcon className="w-4 h-4 mr-2" />
                         Contact Details
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-white/70">Email Address</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Email Address</label>
                           <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
                             disabled={!isEditing || updateProfileMutation.isLoading}
-                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="name@example.com"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-white/70">Phone Number</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Phone Number</label>
                           <input
                             type="tel"
                             name="phone"
                             value={formData.phone}
                             onChange={handleInputChange}
                             disabled={!isEditing || updateProfileMutation.isLoading}
-                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="+91 98765 43210"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="h-px bg-white/5"></div>
-
                     {/* Business Info Section */}
                     <div className="space-y-6">
-                      <h4 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider flex items-center">
+                      <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center border-b border-white/5 pb-2">
                         <BuildingOfficeIcon className="w-4 h-4 mr-2" />
                         Business Information
                       </h4>
                       <div className="grid grid-cols-1 gap-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-white/70">Business Name</label>
+                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Business Name</label>
                             <input
                               type="text"
                               name="business_name"
                               value={formData.business_name}
                               onChange={handleInputChange}
                               disabled={!isEditing || updateProfileMutation.isLoading}
-                              className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                               placeholder="Your Business Name"
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-white/70">GSTIN</label>
+                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">GSTIN</label>
                             <input
                               type="text"
                               name="gstin"
                               value={formData.gstin}
                               onChange={handleInputChange}
                               disabled={!isEditing || updateProfileMutation.isLoading}
-                              className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                               placeholder="29ABCDE1234F1Z5"
                               maxLength={15}
                             />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-white/70">Business Address</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Business Address</label>
                           <textarea
                             name="business_address"
                             value={formData.business_address}
                             onChange={handleInputChange}
                             disabled={!isEditing || updateProfileMutation.isLoading}
                             rows={3}
-                            className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-white/30 resize-none"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all resize-none disabled:opacity-50"
                             placeholder="Full business address"
                           />
                         </div>
@@ -592,14 +587,14 @@ const Profile = ({ onLogout }) => {
                         <button
                           type="button"
                           onClick={handleCancel}
-                          className="px-6 py-3 rounded-xl text-white font-medium hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-300"
+                          className="px-6 py-3 rounded-xl text-gray-400 font-medium hover:text-white hover:bg-white/5 transition-all duration-300"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={updateProfileMutation.isLoading}
-                          className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                          className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {updateProfileMutation.isLoading ? (
                             <span className="flex items-center">
@@ -607,7 +602,7 @@ const Profile = ({ onLogout }) => {
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
-                              Saving Changes...
+                              Saving...
                             </span>
                           ) : (
                             'Save Changes'

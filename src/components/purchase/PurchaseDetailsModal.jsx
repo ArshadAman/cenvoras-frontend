@@ -4,6 +4,8 @@ import { getPurchaseBill } from "../../api/purchase";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { createPortal } from "react-dom";
+import { XMarkIcon, PrinterIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 export default function PurchaseDetailsModal({ billId, onClose }) {
   const printRef = useRef();
@@ -29,6 +31,13 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
         body {
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
+          background: white !important;
+          color: black !important;
+        }
+        .print-content {
+          background: white !important;
+          color: black !important;
+          padding: 0 !important;
         }
         .print-hidden {
           display: none !important;
@@ -43,11 +52,27 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
     try {
       const element = printRef.current;
+      // Temporarily switch to light mode for PDF generation
+      const wasDark = element.classList.contains('text-white');
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#ffffff', // Ensure white background for PDF
         logging: false,
+        onclone: (clonedDoc) => {
+             // Force white background and black text on cloned element for capture
+             const clonedElement = clonedDoc.querySelector('[data-print-target]');
+             if(clonedElement) {
+                clonedElement.style.backgroundColor = 'white';
+                clonedElement.style.color = 'black';
+                // You might need to target specific children to invert colors back to black if they are white
+                 clonedElement.querySelectorAll('*').forEach(el => {
+                     // Reset text colors that might be white classes
+                     el.style.color = 'inherit';
+                 });
+             }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -79,145 +104,156 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
   if (!billId) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-4xl font-sans max-h-[90vh] overflow-y-auto">
-        {/* Action Buttons - Hidden during print */}
-        <div className="print-hidden flex justify-end gap-2 mb-4">
-          <button
-            onClick={handlePrint}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-            Print
-          </button>
-          <button
-            onClick={handleDownloadPDF}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            PDF
-          </button>
-          <button
-            onClick={onClose}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Close
-          </button>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      
+      <div className="relative w-full max-w-4xl bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up bg-[#09090b] border border-white/10 max-h-[90vh] flex flex-col rounded-2xl overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 print-hidden">
+           <h3 className="text-xl font-bold text-white">Invoice Details</h3>
+           <div className="flex gap-2">
+             <button
+               onClick={handlePrint}
+               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+               title="Print"
+             >
+               <PrinterIcon className="w-5 h-5" />
+             </button>
+             <button
+               onClick={handleDownloadPDF}
+               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Download PDF"
+             >
+               <ArrowDownTrayIcon className="w-5 h-5" />
+             </button>
+             <button
+               onClick={onClose}
+               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+             >
+               <XMarkIcon className="w-6 h-6" />
+             </button>
+           </div>
         </div>
 
-        {/* Printable Content */}
-        <div ref={printRef} className="bg-white p-6">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6 bg-[#09090b]">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           ) : (
-            <div>
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6 border-b-2 border-blue-600 pb-4">
+             // We use a specific structure here to separate screen view (Dark) from print view (White) if we wanted to
+             // But for simplicity and user request "no white elements", we will style this document as Dark Mode.
+             // However, for printing/PDF, we usually want white. handling this via CSS @media print is best.
+             // We will apply Dark styles by default.
+            <div ref={printRef} data-print-target className="print-content text-white font-sans max-w-3xl mx-auto">
+              
+              {/* Invoice Header */}
+              <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-blue-700">
-                    Purchase Invoice
+                  <h2 className="text-3xl font-bold text-blue-500 mb-1">
+                    INVOICE
                   </h2>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-sm text-gray-400">
                     #{bill.bill_number}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-700 font-semibold">
-                    Date:
+                  <div className="text-sm text-gray-400 font-semibold uppercase tracking-wider">
+                    Date
                   </div>
-                  <div className="text-lg font-medium">{bill.bill_date}</div>
+                  <div className="text-lg font-medium text-white">{bill.bill_date}</div>
                 </div>
               </div>
 
               {/* Vendor and Journal Info */}
-              <div className="mb-6 grid grid-cols-2 gap-6">
+              <div className="mb-8 grid grid-cols-2 gap-8">
                 <div>
-                  <div className="font-semibold text-gray-700 text-lg mb-2">
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                     Vendor Details
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-lg font-medium">{bill.vendor_name}</div>
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <div className="text-lg font-bold text-white mb-1">{bill.vendor_name}</div>
                     {bill.vendor_address && (
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="text-sm text-gray-400">
                         {bill.vendor_address}
                       </div>
                     )}
-                    {bill.vendor_gstin && (
-                      <div className="text-sm text-gray-600 mt-1">
-                        GSTIN: {bill.vendor_gstin}
-                      </div>
-                    )}
-                    {bill.vendor_phone && (
-                      <div className="text-sm text-gray-600 mt-1">
-                        Phone: {bill.vendor_phone}
-                      </div>
-                    )}
+                    {(bill.vendor_gstin || bill.vendor_phone) && <div className="mt-3 space-y-1">
+                        {bill.vendor_gstin && (
+                        <div className="text-xs text-gray-500">
+                            GSTIN: <span className="text-gray-300">{bill.vendor_gstin}</span>
+                        </div>
+                        )}
+                        {bill.vendor_phone && (
+                        <div className="text-xs text-gray-500">
+                            Phone: <span className="text-gray-300">{bill.vendor_phone}</span>
+                        </div>
+                        )}
+                    </div>}
                   </div>
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-700 text-lg mb-2">
-                    Journal & Tax Details
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                    Journal & Details
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-lg font-medium">{bill.journal}</div>
-                    {bill.gst_treatment && (
-                      <div className="text-sm text-gray-600 mt-1">
-                        GST Treatment: {bill.gst_treatment}
-                      </div>
-                    )}
-                    {bill.place_of_supply && (
-                      <div className="text-sm text-gray-600 mt-1">
-                        Place of Supply: {bill.place_of_supply}
-                      </div>
-                    )}
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <div className="text-lg font-medium text-white">{bill.journal}</div>
+                    <div className="mt-2 space-y-1">
+                        {bill.gst_treatment && (
+                        <div className="text-xs text-gray-500">
+                            GST Treatment: <span className="text-gray-300">{bill.gst_treatment}</span>
+                        </div>
+                        )}
+                        {bill.place_of_supply && (
+                        <div className="text-xs text-gray-500">
+                            Place of Supply: <span className="text-gray-300">{bill.place_of_supply}</span>
+                        </div>
+                        )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Items Table */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">Items</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+              <div className="mb-8">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Items</h3>
+                <div className="overflow-hidden border border-white/10 rounded-xl">
+                  <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="bg-blue-600 text-white">
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Item</th>
-                        <th className="px-4 py-3 text-center text-sm font-semibold">Qty</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Rate</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Discount</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Tax</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Amount</th>
+                      <tr className="bg-white/5 text-gray-400 border-b border-white/10">
+                        <th className="px-4 py-3 text-left font-semibold">Item</th>
+                        <th className="px-4 py-3 text-center font-semibold">Qty</th>
+                        <th className="px-4 py-3 text-right font-semibold">Rate</th>
+                        <th className="px-4 py-3 text-right font-semibold">Disc.</th>
+                        <th className="px-4 py-3 text-right font-semibold">Tax</th>
+                        <th className="px-4 py-3 text-right font-semibold text-white">Amount</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-white/5">
                       {bill.items?.map((item, index) => (
-                        <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                          <td className="px-4 py-3 border-b">
-                            <div className="font-medium">{item.item_name}</div>
+                        <tr key={index} className="bg-transparent hover:bg-white/5 transition-colors">
+                          <td className="px-4 py-3 font-medium text-white">
+                            <div>{item.item_name}</div>
                             {item.description && (
-                              <div className="text-sm text-gray-500">{item.description}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
                             )}
                           </td>
-                          <td className="px-4 py-3 border-b text-center">
+                          <td className="px-4 py-3 text-center text-gray-300">
                             {item.quantity} {item.unit}
                           </td>
-                          <td className="px-4 py-3 border-b text-right">
+                          <td className="px-4 py-3 text-right text-gray-300">
                             ₹{parseFloat(item.rate || 0).toFixed(2)}
                           </td>
-                          <td className="px-4 py-3 border-b text-right">
+                          <td className="px-4 py-3 text-right text-gray-300">
                             {item.discount_type === 'percentage' ? `${item.discount || 0}%` : `₹${parseFloat(item.discount || 0).toFixed(2)}`}
                           </td>
-                          <td className="px-4 py-3 border-b text-right">
+                          <td className="px-4 py-3 text-right text-gray-300">
                             ₹{parseFloat(item.tax_amount || 0).toFixed(2)}
                           </td>
-                          <td className="px-4 py-3 border-b text-right font-medium">
+                          <td className="px-4 py-3 text-right font-bold text-white">
                             ₹{parseFloat(item.amount || 0).toFixed(2)}
                           </td>
                         </tr>
@@ -228,31 +264,29 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
               </div>
 
               {/* Totals Section */}
-              <div className="flex justify-end mb-6">
-                <div className="w-96">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Subtotal:</span>
-                        <span>₹{parseFloat(bill.sub_total || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Discount:</span>
-                        <span>₹{parseFloat(bill.total_discount || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Tax:</span>
-                        <span>₹{parseFloat(bill.total_tax || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Adjustment:</span>
-                        <span>₹{parseFloat(bill.adjustment || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="border-t-2 border-blue-600 pt-2">
-                        <div className="flex justify-between text-lg font-bold text-blue-700">
-                          <span>Total Amount:</span>
-                          <span>₹{parseFloat(bill.total || 0).toFixed(2)}</span>
-                        </div>
+              <div className="flex justify-end mb-8">
+                <div className="w-80">
+                  <div className="bg-white/5 p-6 rounded-xl border border-white/10 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Subtotal</span>
+                      <span className="text-white">₹{parseFloat(bill.sub_total || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total Discount</span>
+                      <span className="text-white">₹{parseFloat(bill.total_discount || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total Tax</span>
+                      <span className="text-white">₹{parseFloat(bill.total_tax || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Adjustment</span>
+                      <span className="text-white">₹{parseFloat(bill.adjustment || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-white/10 pt-3 mt-1">
+                      <div className="flex justify-between text-lg font-bold">
+                        <span className="text-blue-400">Total Amount</span>
+                        <span className="text-white">₹{parseFloat(bill.total || 0).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -261,19 +295,19 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
               {/* Notes and Terms */}
               {(bill.notes || bill.terms_conditions) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-white/10 pt-6">
                   {bill.notes && (
                     <div>
-                      <h4 className="font-semibold text-gray-700 mb-2">Notes</h4>
-                      <div className="bg-gray-50 p-3 rounded text-sm">
+                      <h4 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Notes</h4>
+                      <div className="text-sm text-gray-400 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">
                         {bill.notes}
                       </div>
                     </div>
                   )}
                   {bill.terms_conditions && (
                     <div>
-                      <h4 className="font-semibold text-gray-700 mb-2">Terms & Conditions</h4>
-                      <div className="bg-gray-50 p-3 rounded text-sm">
+                      <h4 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Terms & Conditions</h4>
+                      <div className="text-sm text-gray-400 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">
                         {bill.terms_conditions}
                       </div>
                     </div>
@@ -282,13 +316,14 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
               )}
 
               {/* Footer */}
-              <div className="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
-                Generated on {new Date().toLocaleDateString()}
+              <div className="mt-8 pt-6 border-t border-white/10 text-center text-xs text-gray-600">
+                Generated from Cenvoras System on {new Date().toLocaleDateString()}
               </div>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

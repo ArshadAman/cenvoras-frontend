@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getSalesInvoice } from "../../api/sales";
 import { useReactToPrint } from "react-to-print";
@@ -95,8 +96,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
     item.hsn_sac_code || item.hsn_code
   ) || false;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+  return createPortal(
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999]">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-4xl font-sans max-h-[90vh] overflow-y-auto">
         {/* Action Buttons - Hidden during print */}
         <div className="print-hidden flex justify-end gap-2 mb-4">
@@ -375,6 +376,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

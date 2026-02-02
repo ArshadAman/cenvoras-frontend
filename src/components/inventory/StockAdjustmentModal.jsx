@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { createStockAdjustment } from "../../api/inventory";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const stockAdjustmentSchema = Yup.object().shape({
   adjustment_type: Yup.string()
@@ -71,30 +72,45 @@ export default function StockAdjustmentModal({ product, onClose }) {
 
   if (!product) return null;
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all";
+  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal Content */}
+      <div className="relative w-full max-w-md bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+          <h2 className="text-xl font-bold text-white">
             Stock Adjustment
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
         {/* Product Info */}
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-          <h3 className="font-medium text-gray-800 dark:text-gray-200">{product.name}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">SKU: {product.sku}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Current Stock: <span className="font-medium">{product.current_stock} {product.unit}</span>
-          </p>
+        <div className="bg-purple-500/10 border-b border-white/5 p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-bold text-white">{product.name}</h3>
+              <p className="text-xs text-purple-300 mt-0.5">SKU: {product.sku}</p>
+            </div>
+            <div className="text-right">
+              <span className="block text-2xl font-mono text-white">{product.current_stock}</span>
+              <span className="text-xs text-gray-400">{product.unit}</span>
+            </div>
+          </div>
         </div>
 
         <Formik
@@ -103,44 +119,42 @@ export default function StockAdjustmentModal({ product, onClose }) {
           onSubmit={handleSubmit}
         >
           {({ isSubmitting, values }) => (
-            <Form className="space-y-4">
+            <Form className="p-6 space-y-5">
+              
               {/* Adjustment Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Adjustment Type *
-                </label>
+                <label className={labelClass}>Adjustment Type *</label>
                 <Field
                   name="adjustment_type"
                   as="select"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                 >
-                  <option value="add">Add Stock</option>
-                  <option value="remove">Remove Stock</option>
-                  <option value="set">Set Stock Level</option>
+                  <option value="add">Add Stock (+)</option>
+                  <option value="remove">Remove Stock (-)</option>
+                  <option value="set">Set Stock Level (=)</option>
                 </Field>
-                <ErrorMessage name="adjustment_type" component="div" className="text-red-500 text-xs mt-1" />
+                <ErrorMessage name="adjustment_type" component="div" className="text-red-400 text-xs mt-1" />
               </div>
 
               {/* Quantity */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Quantity *
-                </label>
+                <label className={labelClass}>Quantity to Adjust *</label>
                 <Field
                   name="quantity"
                   type="number"
                   min="0"
                   step="0.01"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter quantity"
+                  className={inputClass}
+                  placeholder="0.00"
                 />
-                <ErrorMessage name="quantity" component="div" className="text-red-500 text-xs mt-1" />
+                <ErrorMessage name="quantity" component="div" className="text-red-400 text-xs mt-1" />
                 
                 {/* New Stock Level Preview */}
                 {values.quantity && (
-                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
-                    <span className="text-blue-700 dark:text-blue-300">
-                      New stock level: {getNewStockLevel(values.adjustment_type, values.quantity, product.current_stock)} {product.unit}
+                  <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10 flex justify-between items-center">
+                    <span className="text-xs text-gray-400">New Stock Level:</span>
+                    <span className="font-mono text-purple-400 font-bold">
+                       {getNewStockLevel(values.adjustment_type, values.quantity, product.current_stock)} {product.unit}
                     </span>
                   </div>
                 )}
@@ -148,15 +162,13 @@ export default function StockAdjustmentModal({ product, onClose }) {
 
               {/* Reason */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Reason *
-                </label>
+                <label className={labelClass}>Reason *</label>
                 <Field
                   name="reason"
                   as="select"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                 >
-                  <option value="">Select reason</option>
+                  <option value="">Select reason...</option>
                   <option value="received_shipment">Received Shipment</option>
                   <option value="damaged_goods">Damaged Goods</option>
                   <option value="theft_loss">Theft/Loss</option>
@@ -167,41 +179,39 @@ export default function StockAdjustmentModal({ product, onClose }) {
                   <option value="production_consumption">Production Consumption</option>
                   <option value="other">Other</option>
                 </Field>
-                <ErrorMessage name="reason" component="div" className="text-red-500 text-xs mt-1" />
+                <ErrorMessage name="reason" component="div" className="text-red-400 text-xs mt-1" />
               </div>
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Notes
-                </label>
+                <label className={labelClass}>Notes</label>
                 <Field
                   name="notes"
                   as="textarea"
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Additional notes (optional)"
+                  rows={2}
+                  className={inputClass}
+                  placeholder="Optional details..."
                 />
-                <ErrorMessage name="notes" component="div" className="text-red-500 text-xs mt-1" />
+                <ErrorMessage name="notes" component="div" className="text-red-400 text-xs mt-1" />
               </div>
 
               {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || stockAdjustmentMutation.isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="btn-primary py-2 px-6 shadow-lg shadow-purple-500/20"
                 >
                   {isSubmitting || stockAdjustmentMutation.isLoading
-                    ? "Recording..."
-                    : "Record Adjustment"}
+                    ? "Saving..."
+                    : "Confirm Adjustment"}
                 </button>
               </div>
             </Form>

@@ -6,6 +6,7 @@ import { recordClientPayment } from "../../api/ledger";
 import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 // Customer Autocomplete for payment form
 function PaymentCustomerAutocomplete({ values, setFieldValue }) {
@@ -52,34 +53,39 @@ function PaymentCustomerAutocomplete({ values, setFieldValue }) {
     }
   };
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+
   return (
     <div className="relative">
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-        onFocus={() => {
-          if (inputValue.trim() && filteredCustomers.length > 0) {
-            setShowDropdown(true);
-          }
-        }}
-        placeholder="Search and select customer"
-        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-        required
-      />
+      <div className="relative">
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-500 pointer-events-none" />
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+          onFocus={() => {
+            if (inputValue.trim() && filteredCustomers.length > 0) {
+              setShowDropdown(true);
+            }
+          }}
+          placeholder="Search and select customer"
+          className={inputClass}
+          required
+        />
+      </div>
       {showDropdown && (
-        <div className="absolute z-10 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
+        <div className="absolute z-10 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl w-full max-h-40 overflow-y-auto mt-1">
           {filteredCustomers.map(customer => (
             <div
               key={customer.id}
-              className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm"
+              className="px-4 py-2.5 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-xs">
+              <div className="font-medium text-white">{customer.name}</div>
+              <div className="text-gray-400 text-xs mt-0.5">
                 {customer.email && `${customer.email}`}
-                {customer.phone && ` | ${customer.phone}`}
+                {customer.phone && ` • ${customer.phone}`}
               </div>
             </div>
           ))}
@@ -135,101 +141,98 @@ export default function PaymentForm({ onSuccess, onCancel }) {
     date: format(new Date(), 'yyyy-MM-dd'),
   };
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+
   return (
+    <Formik
+      initialValues={initialValues}
+      validationSchema={paymentSchema}
+      onSubmit={handleSubmit}
+    >
+      {({ values, setFieldValue, isSubmitting }) => (
+        <Form className="space-y-5">
+          {/* Customer Selection */}
+          <div>
+            <label className={labelClass}>Customer *</label>
+            <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+            <Field name="customer" type="hidden" />
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
+          </div>
 
-        <Formik
-          initialValues={initialValues}
-          validationSchema={paymentSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ values, setFieldValue, isSubmitting }) => (
-            <Form className="px-6 py-4 space-y-4">
-              {/* Customer Selection */}
-              <div>
-                <label htmlFor="customer" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Customer *
-                </label>
-                <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
-                <Field name="customer" type="hidden" />
-                <ErrorMessage name="customer" component="div" className="mt-1 text-sm text-red-600" />
-              </div>
+          {/* Amount */}
+          <div>
+            <label className={labelClass}>Payment Amount *</label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+              <Field
+                id="amount"
+                name="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                className={`${inputClass} pl-7`}
+                placeholder="0.00"
+              />
+            </div>
+            <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
+          </div>
 
-              {/* Amount */}
-              <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Payment Amount *
-                </label>
-                <Field
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter payment amount"
-                />
-                <ErrorMessage name="amount" component="div" className="mt-1 text-sm text-red-600" />
-              </div>
+          {/* Date */}
+          <div>
+            <label className={labelClass}>Payment Date *</label>
+            <Field
+              id="date"
+              name="date"
+              type="date"
+              className={inputClass}
+            />
+            <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+          </div>
 
-              {/* Date */}
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Payment Date *
-                </label>
-                <Field
-                  id="date"
-                  name="date"
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                />
-                <ErrorMessage name="date" component="div" className="mt-1 text-sm text-red-600" />
-              </div>
+          {/* Description */}
+          <div>
+            <label className={labelClass}>Description</label>
+            <Field
+              id="description"
+              name="description"
+              as="textarea"
+              rows={2}
+              className={inputClass}
+              placeholder="Payment description (optional)"
+            />
+            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-red-400" />
+          </div>
 
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <Field
-                  id="description"
-                  name="description"
-                  as="textarea"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Payment description (optional)"
-                />
-                <ErrorMessage name="description" component="div" className="mt-1 text-sm text-red-600" />
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || recordPaymentMutation.isLoading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting || recordPaymentMutation.isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Recording...
-                    </span>
-                  ) : (
-                    "Record Payment"
-                  )}
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
+          {/* Form Actions */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || recordPaymentMutation.isLoading}
+              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20"
+            >
+              {isSubmitting || recordPaymentMutation.isLoading ? (
+                <span className="flex items-center gap-2">
+                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Recording...
+                </span>
+              ) : (
+                "Record Payment"
+              )}
+            </button>
+          </div>
+        </Form>
+      )}
+    </Formik>
   );
 }

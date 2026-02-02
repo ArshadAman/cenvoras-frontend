@@ -14,6 +14,8 @@ export const createProduct = (data) => {
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
+    secondary_unit: data.secondary_unit || null,
+    conversion_factor: parseInt(data.conversion_factor || 1),
     price: data.price || data.unit_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
   };
@@ -27,6 +29,8 @@ export const updateProduct = (id, data) => {
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
+    secondary_unit: data.secondary_unit || null,
+    conversion_factor: parseInt(data.conversion_factor || 1),
     price: data.price || data.unit_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
   };
@@ -38,16 +42,23 @@ export const deleteProduct = (id) =>
 
 // Stock management endpoints
 export const getStockMovements = (params) =>
-  api.get("/inventory/stock-movements/", { params }).then(res => res.data);
+  api.get("/inventory/transfers/", { params }).then(res => res.data);
 
 export const createStockMovement = (data) =>
-  api.post("/inventory/stock-movements/", data).then(res => res.data);
+  api.post("/inventory/transfers/", data).then(res => res.data);
 
 export const getStockAdjustments = (params) =>
   api.get("/inventory/stock-adjustments/", { params }).then(res => res.data);
 
 export const createStockAdjustment = (data) =>
   api.post("/inventory/stock-adjustments/", data).then(res => res.data);
+
+// Warehouses and Stock Points
+export const getWarehouses = () =>
+  api.get("/inventory/warehouses/").then(res => res.data);
+
+export const getStockPoints = (params) =>
+  api.get("/inventory/stock-points/", { params }).then(res => res.data);
 
 // Categories and units
 export const getCategories = () =>

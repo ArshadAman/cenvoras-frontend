@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadSalesCsv } from "../../api/sales";
 import { toast } from "react-toastify";
@@ -109,8 +110,8 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+  return createPortal(
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999]">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -220,6 +221,7 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
