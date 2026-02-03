@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import SalesTable from "../components/sales/SalesTable";
 import SalesForm from "../components/sales/SalesForm";
 import SalesDetailsModal from "../components/sales/SalesDetailsModal";
@@ -9,6 +10,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon } from '@heroicons/react/24/outline';
+import { getUserProfile } from "../api/users";
 
 export default function Sales() {
   const [showForm, setShowForm] = useState(false);
@@ -17,7 +19,22 @@ export default function Sales() {
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
 
-  // Add theme CSS - REMOVED (Moved to index.css)
+  // Fetch user profile for invoice customization
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Extract business info from profile
+  const businessInfo = userProfile?.profile ? {
+    business_name: userProfile.profile.business_name,
+    business_address: userProfile.profile.business_address,
+    phone: userProfile.profile.phone,
+    email: userProfile.profile.email,
+    gstin: userProfile.profile.gstin,
+    gem_id: userProfile.profile.gem_id,
+  } : {};
 
   const handleEdit = (invoice) => {
     setEditInvoice(invoice);
@@ -89,6 +106,7 @@ export default function Sales() {
           isOpen={!!showDetails}
           onClose={() => setShowDetails(null)}
           invoice={showDetails}
+          businessInfo={businessInfo}
         />
       )}
 

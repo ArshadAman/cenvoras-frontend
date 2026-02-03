@@ -65,11 +65,14 @@ export default function Inventory() {
           
           <div className="flex gap-3">
             <button
-              onClick={() => setShowStockTransfer(true)}
-              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm"
+              disabled
+              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 text-gray-500 shadow-sm cursor-not-allowed opacity-60 relative"
             >
               <ArrowsRightLeftIcon className="h-4 w-4" />
               <span>Transfer Stock</span>
+              <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full">
+                Soon
+              </span>
             </button>
             <button
               onClick={handleAddProduct}

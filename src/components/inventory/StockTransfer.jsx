@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getWarehouses, getProducts, getStockPoints, createStockMovement } from "../../api/inventory";
 import { toast } from "react-toastify";
+import { 
+  XMarkIcon, 
+  ArrowsRightLeftIcon, 
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 
 // Schema
 const transferSchema = Yup.object().shape({
@@ -24,42 +31,48 @@ const transferSchema = Yup.object().shape({
 
 export default function StockTransfer({ onClose }) {
   const queryClient = useQueryClient();
-  const [selectedProductStock, setSelectedProductStock] = useState({}); // Map product ID to available batches
+  const [sourceId, setSourceId] = useState(null);
 
   // Queries
-  // Queries
-  const { data: warehouses } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
-  const { data: products } = useQuery({ queryKey: ["products"], queryFn: () => getProducts() });
-  // We need stock points to filter batches valid for source warehouse
-  // However, fetching ALL stock points might be heavy. 
-  // Ideally, we fetch stock points for the selected Source Warehouse.
-  const [sourceId, setSourceId] = useState(null);
+  const { data: warehousesData } = useQuery({ 
+    queryKey: ["warehouses"], 
+    queryFn: getWarehouses 
+  });
   
-  const { data: stockPoints } = useQuery({
+  const { data: productsData } = useQuery({ 
+    queryKey: ["products"], 
+    queryFn: () => getProducts() 
+  });
+  
+  const { data: stockPointsData } = useQuery({
     queryKey: ["stockPoints", sourceId], 
     queryFn: () => getStockPoints({ warehouse: sourceId }),
     enabled: !!sourceId
   });
 
+  // Safe data extraction
+  const warehouses = Array.isArray(warehousesData) ? warehousesData : warehousesData?.results || warehousesData?.data || [];
+  const products = Array.isArray(productsData) ? productsData : productsData?.results || productsData?.data || [];
+  const stockPoints = Array.isArray(stockPointsData) ? stockPointsData : stockPointsData?.results || stockPointsData?.data || [];
+
   const createMutation = useMutation({
     mutationFn: createStockMovement,
     onSuccess: () => {
       queryClient.invalidateQueries(["stockPoints"]);
-      queryClient.invalidateQueries(["stockMovements"]); // or "transfers" if we used that key
-      toast.success("Stock Transfer created successfully!");
+      queryClient.invalidateQueries(["stockMovements"]);
+      toast.success("Stock Transfer completed successfully!");
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create transfer");
+      toast.error(error?.message || "Failed to create transfer");
     }
   });
 
   const handleSubmit = (values) => {
-    // Transform to backend format
     const payload = {
       source_warehouse: values.source_warehouse,
       destination_warehouse: values.destination_warehouse,
-      status: 'completed', // Auto-complete for now
+      status: 'completed',
       items: values.items.map(item => ({
         product: item.product,
         batch: item.batch,
@@ -69,11 +82,58 @@ export default function StockTransfer({ onClose }) {
     createMutation.mutate(payload);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
-        <h2 className="text-xl font-bold mb-4 dark:text-white">New Stock Transfer</h2>
+  // Get batches for a product
+  const getBatchesForProduct = (productId) => {
+    console.log('[DEBUG] getBatchesForProduct called with productId:', productId);
+    console.log('[DEBUG] stockPoints:', stockPoints);
+    console.log('[DEBUG] sourceId:', sourceId);
+    
+    if (!productId || !stockPoints.length) {
+      console.log('[DEBUG] Returning empty - no productId or stockPoints');
+      return [];
+    }
+    
+    const filtered = stockPoints.filter(sp => {
+      console.log('[DEBUG] Checking stockPoint:', sp);
+      const spProductId = sp?.batch?.product || sp?.product;
+      console.log('[DEBUG] spProductId:', spProductId, 'vs productId:', productId);
+      const matches = String(spProductId) === String(productId) && (sp?.quantity || 0) > 0;
+      console.log('[DEBUG] matches:', matches);
+      return matches;
+    });
+    
+    console.log('[DEBUG] Filtered batches:', filtered);
+    return filtered;
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Modal */}
+      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden bg-[#111] border border-white/10 rounded-2xl shadow-2xl">
         
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-cyan-500/20 rounded-xl">
+              <ArrowsRightLeftIcon className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Stock Transfer</h2>
+              <p className="text-xs text-gray-400">Move inventory between warehouses</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
         <Formik
           initialValues={{
             source_warehouse: "",
@@ -83,106 +143,173 @@ export default function StockTransfer({ onClose }) {
           validationSchema={transferSchema}
           onSubmit={handleSubmit}
         >
-          {({ values, setFieldValue }) => {
-            // Update sourceId state when form value changes to trigger query
-            useEffect(() => {
-              if (values.source_warehouse !== sourceId) {
-                setSourceId(values.source_warehouse);
-              }
-            }, [values.source_warehouse]);
-
-            return (
-              <Form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {({ values, setFieldValue, isSubmitting }) => (
+            <Form>
+              <div className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
+                
+                {/* Warehouse Selection */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium dark:text-gray-300">Source Warehouse</label>
-                    <Field as="select" name="source_warehouse" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white p-2 border">
-                      <option value="">Select Source</option>
-                      {warehouses?.map(w => (
-                        <option key={w.id} value={w.id}>{w.name}</option>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Source Warehouse</label>
+                    <Field
+                      as="select"
+                      name="source_warehouse"
+                      className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none"
+                      onChange={(e) => {
+                        setFieldValue('source_warehouse', e.target.value);
+                        setSourceId(e.target.value || null);
+                        // Clear product selections when warehouse changes
+                        values.items.forEach((_, idx) => {
+                          setFieldValue(`items.${idx}.product`, "");
+                          setFieldValue(`items.${idx}.batch`, "");
+                        });
+                      }}
+                    >
+                      <option value="" className="bg-[#1a1a1a]">Select Source</option>
+                      {warehouses.map(w => (
+                        <option key={w.id} value={w.id} className="bg-[#1a1a1a]">{w.name}</option>
                       ))}
                     </Field>
-                    <ErrorMessage name="source_warehouse" component="div" className="text-red-500 text-sm" />
+                    <ErrorMessage name="source_warehouse" component="div" className="text-red-400 text-xs mt-1" />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium dark:text-gray-300">Destination Warehouse</label>
-                    <Field as="select" name="destination_warehouse" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white p-2 border">
-                      <option value="">Select Destination</option>
-                      {warehouses?.map(w => (
-                        <option key={w.id} value={w.id}>{w.name}</option>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Destination Warehouse</label>
+                    <Field
+                      as="select"
+                      name="destination_warehouse"
+                      className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none"
+                    >
+                      <option value="" className="bg-[#1a1a1a]">Select Destination</option>
+                      {warehouses.map(w => (
+                        <option key={w.id} value={w.id} className="bg-[#1a1a1a]">{w.name}</option>
                       ))}
                     </Field>
-                    <ErrorMessage name="destination_warehouse" component="div" className="text-red-500 text-sm" />
+                    <ErrorMessage name="destination_warehouse" component="div" className="text-red-400 text-xs mt-1" />
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-medium mb-2 dark:text-white">Items</h3>
+                {/* Items */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Items to Transfer</label>
+                  
                   <FieldArray name="items">
                     {({ push, remove }) => (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {values.items.map((item, index) => {
-                          // Filter batches for selected product available in source warehouse
-                          const availableBatches = stockPoints?.filter(sp => 
-                            sp.batch.product === item.product && sp.quantity > 0
-                          ) || [];
-
+                          const batches = getBatchesForProduct(item.product);
+                          
                           return (
-                            <div key={index} className="flex gap-2 items-start border p-2 rounded relative">
+                            <div key={index} className="flex gap-3 items-start p-3 bg-white/5 border border-white/10 rounded-lg">
+                              {/* Product */}
                               <div className="flex-1">
-                                <Field as="select" name={`items.${index}.product`} className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white">
-                                  <option value="">Select Product</option>
-                                  {products?.results?.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                <Field
+                                  as="select"
+                                  name={`items.${index}.product`}
+                                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm"
+                                  onChange={(e) => {
+                                    setFieldValue(`items.${index}.product`, e.target.value);
+                                    setFieldValue(`items.${index}.batch`, "");
+                                  }}
+                                >
+                                  <option value="" className="bg-[#1a1a1a]">Select Product</option>
+                                  {products.map(p => (
+                                    <option key={p.id} value={p.id} className="bg-[#1a1a1a]">{p.name}</option>
                                   ))}
                                 </Field>
-                                <ErrorMessage name={`items.${index}.product`} component="div" className="text-red-500 text-xs" />
+                                <ErrorMessage name={`items.${index}.product`} component="div" className="text-red-400 text-xs mt-1" />
                               </div>
 
+                              {/* Batch */}
                               <div className="flex-1">
-                                <Field as="select" name={`items.${index}.batch`} className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" disabled={!item.product || !sourceId}>
-                                  <option value="">Select Batch</option>
-                                  {availableBatches.map(sp => (
-                                    <option key={sp.batch.id} value={sp.batch.id}>
-                                      {sp.batch.batch_number} (Qty: {sp.quantity})
+                                <Field
+                                  as="select"
+                                  name={`items.${index}.batch`}
+                                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm disabled:opacity-50"
+                                  disabled={!item.product || !sourceId}
+                                >
+                                  <option value="" className="bg-[#1a1a1a]">
+                                    {!sourceId ? 'Select source first' : !item.product ? 'Select product' : 'Select Batch'}
+                                  </option>
+                                  {batches.map(sp => (
+                                    <option key={sp?.batch?.id || sp?.id} value={sp?.batch?.id || sp?.id} className="bg-[#1a1a1a]">
+                                      {sp?.batch?.batch_number || sp?.batch_number || 'Batch'} (Qty: {sp?.quantity || 0})
                                     </option>
                                   ))}
                                 </Field>
-                                <ErrorMessage name={`items.${index}.batch`} component="div" className="text-red-500 text-xs" />
+                                <ErrorMessage name={`items.${index}.batch`} component="div" className="text-red-400 text-xs mt-1" />
                               </div>
 
-                              <div className="w-24">
-                                <Field type="number" name={`items.${index}.quantity`} className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white" placeholder="Qty" />
-                                <ErrorMessage name={`items.${index}.quantity`} component="div" className="text-red-500 text-xs" />
+                              {/* Quantity */}
+                              <div className="w-20">
+                                <Field
+                                  type="number"
+                                  name={`items.${index}.quantity`}
+                                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center"
+                                  min="1"
+                                />
+                                <ErrorMessage name={`items.${index}.quantity`} component="div" className="text-red-400 text-xs mt-1" />
                               </div>
 
-                              <button type="button" onClick={() => remove(index)} className="text-red-500 hover:text-red-700 p-2">
-                                X
+                              {/* Remove */}
+                              <button
+                                type="button"
+                                onClick={() => values.items.length > 1 && remove(index)}
+                                disabled={values.items.length === 1}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <TrashIcon className="w-4 h-4" />
                               </button>
                             </div>
                           );
                         })}
-                        <button type="button" onClick={() => push({ product: "", batch: "", quantity: 1 })} className="text-blue-500 hover:text-blue-700 text-sm">
-                          + Add Item
+
+                        <button
+                          type="button"
+                          onClick={() => push({ product: "", batch: "", quantity: 1 })}
+                          className="w-full py-2 border border-dashed border-white/20 rounded-lg text-cyan-400 hover:border-cyan-500/50 hover:bg-cyan-500/5 text-sm flex items-center justify-center gap-2"
+                        >
+                          <PlusIcon className="w-4 h-4" />
+                          Add Item
                         </button>
                       </div>
                     )}
                   </FieldArray>
-                  <ErrorMessage name="items" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
+              </div>
 
-                <div className="flex justify-end gap-3 pt-4">
-                  <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-50">Cancel</button>
-                  <button type="submit" disabled={createMutation.isLoading} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                    {createMutation.isLoading ? "Transferring..." : "Complete Transfer"}
-                  </button>
-                </div>
-              </Form>
-            );
-          }}
+              {/* Footer */}
+              <div className="p-5 border-t border-white/10 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isLoading || isSubmitting}
+                  className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {createMutation.isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                      Transferring...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowsRightLeftIcon className="w-4 h-4" />
+                      Complete Transfer
+                    </>
+                  )}
+                </button>
+              </div>
+            </Form>
+          )}
         </Formik>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
