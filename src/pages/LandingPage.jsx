@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ChartBarIcon, 
@@ -8,7 +8,10 @@ import {
   ArrowRightIcon, 
   CheckCircleIcon,
   DevicePhoneMobileIcon,
-  GlobeAltIcon
+  GlobeAltIcon,
+  HomeIcon,
+  ShoppingCartIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 
 // Hook for scroll animations
@@ -31,6 +34,88 @@ const useScrollAnimation = () => {
 
     return () => observer.disconnect();
   }, []);
+};
+
+// Screenshot Showcase Component
+const ScreenshotShowcase = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashbaord.png' },
+    { id: 'sales', label: 'Sales', icon: ShoppingCartIcon, image: '/sales.png' },
+    { id: 'inventory', label: 'Inventory', icon: CubeIcon, image: '/inventory.png' },
+  ];
+
+  return (
+    <div className="mt-24 opacity-0 animate-fade-up delay-300 relative">
+      {/* Tab Navigation */}
+      <div className="flex justify-center gap-2 mb-8">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+              activeTab === tab.id
+                ? 'bg-white text-black shadow-lg shadow-white/20'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Screenshot Container */}
+      <div className="relative group perspective-[2000px]">
+        {/* Behind Glow */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 rounded-[2rem] blur-3xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+        
+        {/* Main Container */}
+        <div className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-w-6xl bg-[#0a0a0a] transform group-hover:translate-y-[-4px] transition-transform duration-700 ease-out">
+          <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent pointer-events-none z-10 mix-blend-overlay"></div>
+          
+          {/* Screenshots with transitions */}
+          {tabs.map((tab) => (
+            <img 
+              key={tab.id}
+              src={tab.image} 
+              alt={`Cenvora ${tab.label} Interface`} 
+              loading="lazy"
+              className={`w-full h-auto object-cover transition-opacity duration-500 ${
+                activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Feature Pills */}
+      <div className="flex flex-wrap justify-center gap-3 mt-8">
+        {activeTab === 'dashboard' && (
+          <>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Real-time Analytics</span>
+            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">Live Charts</span>
+            <span className="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-xs font-medium">Quick Actions</span>
+          </>
+        )}
+        {activeTab === 'sales' && (
+          <>
+            <span className="px-4 py-1.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-full text-xs font-medium">One-Click Invoicing</span>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">GST Compliant</span>
+            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">PDF Export</span>
+          </>
+        )}
+        {activeTab === 'inventory' && (
+          <>
+            <span className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full text-xs font-medium">Batch Tracking</span>
+            <span className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full text-xs font-medium">Low Stock Alerts</span>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Multi-Warehouse</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default function LandingPage() {
@@ -92,23 +177,8 @@ export default function LandingPage() {
              </a>
           </div>
 
-          {/* Hero Image (Cinematic Glow) */}
-          <div className="mt-24 opacity-0 animate-fade-up delay-300 relative group perspective-[2000px]">
-             {/* 1. Behind Glow */}
-             <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 rounded-[2rem] blur-3xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-             
-             {/* 2. Main Container (Tilted) */}
-             <div className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-w-6xl bg-[#0a0a0a] flex items-center justify-center transform group-hover:rotate-x-1 transition-transform duration-1000 ease-out">
-                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent pointer-events-none z-10 mix-blend-overlay"></div>
-                
-                {/* Dashboard Image */}
-                <img 
-                  src="/dashboard.png" 
-                  alt="Cenvora Dashboard Interface" 
-                  className="w-full h-auto object-cover" 
-                />
-             </div>
-          </div>
+          {/* Hero Screenshot Showcase */}
+          <ScreenshotShowcase />
         </div>
       </section>
 
