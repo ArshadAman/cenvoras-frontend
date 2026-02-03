@@ -8,6 +8,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("-bill_date"); // default: newest first
   const [page, setPage] = useState(1);
+  const [limit] = useState(10); // Items per page
   const [selectedBills, setSelectedBills] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
@@ -23,11 +24,10 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["purchaseBills", search, ordering, page],
-    queryFn: () => getPurchaseBills({ search, ordering, page }),
+    queryKey: ["purchaseBills", page, limit],
+    queryFn: () => getPurchaseBills({ page, limit }),
+    keepPreviousData: true, // Smooth pagination transitions
   });
-
-  console.log("Purchase Bills API data:", data); // <
 
   if (error) {
     return (
@@ -392,51 +392,34 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     <td className="py-3 px-4 text-white drop-shadow-lg">{bill.vendor_name}</td>
                     <td className="py-3 px-4">
                       {bill.items && bill.items.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {bill.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="bg-blue-500/30 border border-blue-300/50 rounded-lg px-3 py-2 flex flex-col min-w-[140px] shadow-sm backdrop-filter backdrop-blur-10"
-                            >
-                              <span className="font-medium text-white drop-shadow-lg truncate">
-                                {item.product || "Product"}
+                        <div className="flex items-center gap-2">
+                          {/* Show first 2 items as compact pills */}
+                          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                            {bill.items.slice(0, 2).map((item, idx) => (
+                              <span
+                                key={item.id || idx}
+                                className="inline-flex items-center px-2 py-1 bg-white/10 text-white/90 text-xs rounded-md border border-white/10 truncate max-w-[90px]"
+                                title={`${item.product || 'Product'} - Qty: ${item.quantity} × ₹${Number(item.price).toFixed(0)}`}
+                              >
+                                {(item.product || 'Product').length > 12 
+                                  ? (item.product || 'Product').slice(0, 12) + '...' 
+                                  : (item.product || 'Product')}
                               </span>
-                              <span className="text-xs text-white/80 drop-shadow-md mt-1">
-                                Qty:{" "}
-                                <span className="font-semibold">
-                                  {item.quantity}
-                                </span>{" "}
-                                {item.unit}
-                                {item.price !== undefined && (
-                                  <>
-                                    {" "}
-                                    &middot;{" "}
-                                    <span>
-                                      Price:{" "}
-                                      <span className="font-semibold">
-                                        {Number(item.price).toFixed(2)}
-                                      </span>
-                                    </span>
-                                  </>
-                                )}
-                                {item.amount !== undefined && (
-                                  <>
-                                    {" "}
-                                    &middot;{" "}
-                                    <span>
-                                      Amt:{" "}
-                                      <span className="font-semibold">
-                                        {Number(item.amount).toFixed(2)}
-                                      </span>
-                                    </span>
-                                  </>
-                                )}
-                              </span>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                          {/* Show count badge if more items */}
+                          {bill.items.length > 2 && (
+                            <span className="inline-flex items-center justify-center w-6 h-6 bg-purple-500/30 text-purple-300 text-xs font-semibold rounded-full border border-purple-400/30">
+                              +{bill.items.length - 2}
+                            </span>
+                          )}
+                          {/* Total items indicator */}
+                          <span className="text-[10px] text-gray-500 ml-1">
+                            ({bill.items.length} items)
+                          </span>
                         </div>
                       ) : (
-                        <span className="text-white/60 drop-shadow-md">No items</span>
+                        <span className="text-gray-500 text-xs italic">No items</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
@@ -576,22 +559,29 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         )}
       </div>
       {/* Pagination */}
-      <div className="flex justify-end mt-4 gap-2">
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={page === 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          Prev
-        </button>
-        <span className="px-2 py-1 text-white drop-shadow-lg">{page}</span>
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={!data?.next && !data?.data?.next}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
+      <div className="flex justify-between items-center mt-4">
+        <span className="text-sm text-gray-400">
+          {data?.pagination ? `Showing ${((data.pagination.page - 1) * data.pagination.limit) + 1}-${Math.min(data.pagination.page * data.pagination.limit, data.pagination.total_count)} of ${data.pagination.total_count}` : ''}
+        </span>
+        <div className="flex gap-2 items-center">
+          <button
+            className="px-3 py-1.5 border border-white/20 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            disabled={!data?.pagination?.has_prev}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            ← Prev
+          </button>
+          <span className="px-3 py-1 text-white text-sm">
+            Page {data?.pagination?.page || page} of {data?.pagination?.total_pages || 1}
+          </span>
+          <button
+            className="px-3 py-1.5 border border-white/20 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            disabled={!data?.pagination?.has_next}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next →
+          </button>
+        </div>
       </div>
 
       {/* Advanced Filters Modal */}

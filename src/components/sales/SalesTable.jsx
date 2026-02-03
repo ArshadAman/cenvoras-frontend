@@ -29,14 +29,15 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
   if (error) {
     return (
-      <div className="p-4 text-red-600">
-        Error loading sales invoices: {error.message}
+      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+        <h3 className="text-lg font-bold text-white mb-1">Error loading invoices</h3>
+        <p className="text-sm text-red-300 mb-4">{error.message}</p>
         <button
           onClick={() => {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="ml-4 px-2 py-1 bg-red-500 text-white rounded text-xs"
+          className="btn-secondary text-sm"
         >
           Clear Auth & Re-login
         </button>
@@ -184,8 +185,8 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center h-64 bento-card">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
       </div>
     );
   }
@@ -278,61 +279,61 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border-separate border-spacing-y-2">
             <thead>
-              <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
-                <th className="px-6 py-3 text-left rounded-l-lg">
+              <tr className="bg-white/5 border-b border-white/10">
+                <th className="px-6 py-4 text-left rounded-l-lg">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
                 </th>
-                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Invoice Details
                 </th>
-                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Amount (Before Tax)
                 </th>
-                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Total Amount (With Tax)
                 </th>
-                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Items
                 </th>
-                <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg rounded-r-lg">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
             {filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300">
+              <tr key={invoice.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
                     onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white drop-shadow-lg">
+                  <div className="text-sm font-medium text-white">
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-sm text-white/70 drop-shadow-md">
+                  <div className="text-sm text-gray-400">
                     {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-white drop-shadow-lg">
+                  <div className="text-sm text-white">
                     {invoice.customer_name}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white drop-shadow-lg">
+                  <div className="text-sm font-medium text-white">
                     ₹{(() => {
                       // Calculate untaxed amount from items
                       const untaxedAmount = invoice.items?.reduce((sum, item) => {
@@ -345,7 +346,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white drop-shadow-lg">
+                  <div className="text-sm font-bold text-cyan-400">
                     ₹{(() => {
                       // Calculate total amount including tax
                       const calculations = invoice.items?.reduce((acc, item) => {
@@ -365,26 +366,26 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                     })()}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70 drop-shadow-md">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                   {invoice.items?.length || 0} items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
                     <button
                       onClick={() => onView(invoice)}
-                      className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                      className="px-3 py-1 bg-white/5 text-gray-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
                     >
                       View
                     </button>
                     {/* <button
                       onClick={() => onEdit(invoice)}
-                      className="px-3 py-1 bg-indigo-500/30 text-white border border-indigo-300/50 rounded hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                      className="px-3 py-1 bg-white/5 text-indigo-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
                     >
                       Edit
                     </button> */}
                     <button
                       onClick={() => onDelete(invoice)}
-                      className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                      className="px-3 py-1 bg-red-500/10 text-red-300 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors"
                     >
                       Delete
                     </button>

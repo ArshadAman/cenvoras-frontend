@@ -3,29 +3,18 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
+import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
+import { INDIAN_STATES } from "../../utils/constants"; // Added imports
 import { toast } from "react-toastify";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange }) {
-  const [products, setProducts] = useState([]);
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await getProducts();
-        const productList = Array.isArray(response) ? response : response.data || response.results || [];
-        setProducts(productList);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    };
-    fetchProducts();
-  }, []);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
@@ -79,7 +68,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange }) {
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Product name"
-              className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
               autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === 'Tab' || (e.key === 'Enter' && !showDropdown)) {
@@ -89,12 +78,13 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange }) {
                 }
                 // Handle dropdown navigation
                 if (showDropdown && filteredProducts.length > 0) {
+                  const displayLimit = Math.min(filteredProducts.length, 50);
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    setSelectedIndex(prev => (prev < filteredProducts.length - 1) ? prev + 1 : 0);
+                    setSelectedIndex(prev => (prev < displayLimit - 1) ? prev + 1 : 0);
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : filteredProducts.length - 1);
+                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : displayLimit - 1);
                   } else if (e.key === 'Enter' && selectedIndex >= 0) {
                     e.preventDefault();
                     selectProduct(filteredProducts[selectedIndex]);
@@ -107,29 +97,34 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange }) {
               }}
             />
             {meta.touched && meta.error && (
-              <div className="text-red-500 text-xs mt-1">{meta.error}</div>
+              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-10 bg-white dark:bg-gray-700 border rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
-          {filteredProducts.map((product, index) => (
+        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+          {filteredProducts.slice(0, 50).map((product, index) => (
             <div
               key={product.id}
-              className={`px-3 py-2 cursor-pointer text-sm ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
                 index === selectedIndex 
-                  ? 'bg-blue-100 dark:bg-blue-800' 
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                  ? 'bg-cyan-500/20 text-white' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
               onClick={() => selectProduct(product)}
             >
-              <div className="font-medium dark:text-white">{product.name}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-xs">
+              <div className="font-medium">{product.name}</div>
+              <div className="text-gray-500 text-xs mt-0.5">
                 Unit: {product.unit} | Price: ₹{product.price}
               </div>
             </div>
           ))}
+          {filteredProducts.length > 50 && (
+             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+                Showing top 50 results...
+             </div>
+          )}
         </div>
       )}
     </div>
@@ -137,8 +132,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange }) {
 }
 
 // Customer Autocomplete Component  
-function CustomerAutocomplete({ values, setFieldValue }) {
-  const [customers, setCustomers] = useState([]);
+function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.customer_name || "");
@@ -149,19 +143,6 @@ function CustomerAutocomplete({ values, setFieldValue }) {
   useEffect(() => {
     setInputValue(values.customer_name || "");
   }, [values.customer_name]);
-
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await getCustomers();
-        const customerList = Array.isArray(response) ? response : response.data || response.results || [];
-        setCustomers(customerList);
-      } catch (error) {
-        console.error('Error fetching customers:', error);
-      }
-    };
-    fetchCustomers();
-  }, []);
 
   const selectCustomer = (customer) => {
     // New API: set customer_name directly, optionally set email for Customer record creation
@@ -211,22 +192,23 @@ function CustomerAutocomplete({ values, setFieldValue }) {
               }}
               onKeyDown={(e) => {
                 if (showDropdown) {
+                  const displayLimit = Math.min(filteredCustomers.length, 50);
+                  const totalItems = displayLimit + (inputValue.trim() ? 1 : 0); // +1 for "Add New"
+                  
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    const maxIndex = filteredCustomers.length + (filteredCustomers.length === 0 ? 0 : 0); // +1 for "Add New Customer"
-                    setSelectedIndex(prev => (prev < maxIndex - 1) ? prev + 1 : 0);
+                    setSelectedIndex(prev => (prev < totalItems - 1) ? prev + 1 : 0);
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    const maxIndex = filteredCustomers.length + (filteredCustomers.length === 0 ? 0 : 0);
-                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : maxIndex - 1);
+                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalItems - 1);
                   } else if (e.key === 'Enter' && selectedIndex >= 0) {
                     e.preventDefault();
-                    if (selectedIndex < filteredCustomers.length) {
+                    if (selectedIndex < displayLimit) {
                       selectCustomer(filteredCustomers[selectedIndex]);
                     } else {
                       // "Add New Customer" option
                       setShowNewCustomerModal(true);
-                      setShowDropdown(false);
+                       setShowDropdown(false);
                     }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -236,47 +218,52 @@ function CustomerAutocomplete({ values, setFieldValue }) {
                 }
               }}
               placeholder="Customer name"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
             />
             {meta.touched && meta.error && (
-              <div className="text-red-500 text-sm mt-1">{meta.error}</div>
+              <div className="text-red-400 text-sm mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-10 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
-          {filteredCustomers.map((customer, index) => (
+        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+          {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
-              className={`px-3 py-2 cursor-pointer text-sm ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-blue-100 dark:bg-blue-800'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                  ? 'bg-cyan-500/20 text-white' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-xs">
+              <div className="font-medium">{customer.name}</div>
+              <div className="text-gray-500 text-xs mt-0.5">
                 {customer.email && `${customer.email} | `}
                 {customer.address} {customer.gstin && `| GSTIN: ${customer.gstin}`}
               </div>
             </div>
           ))}
-          {filteredCustomers.length === 0 && inputValue.trim() && (
+          {filteredCustomers.length > 50 && (
+             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+                Showing top 50 results...
+             </div>
+          )}
+          {inputValue.trim() && (
             <div
-              className={`px-3 py-2 cursor-pointer text-sm ${
-                selectedIndex === 0
-                  ? 'bg-blue-100 dark:bg-blue-800'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+              className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
+                selectedIndex === Math.min(filteredCustomers.length, 50)
+                  ? 'bg-cyan-500/20 text-white' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
               onClick={() => {
                 setShowNewCustomerModal(true);
                 setShowDropdown(false);
               }}
             >
-              <div className="font-medium text-blue-600 dark:text-blue-400">
-                ➕ Add New Customer: "{inputValue}"
+              <div className="font-medium text-cyan-400 flex items-center gap-2">
+                <span>➕</span> Add New Customer: "{inputValue}"
               </div>
             </div>
           )}
@@ -285,54 +272,82 @@ function CustomerAutocomplete({ values, setFieldValue }) {
       
       {/* Add New Customer Modal */}
       {showNewCustomerModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4 dark:text-white">Add New Customer</h3>
-            <div className="space-y-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-blue-900/30 animate-fade-up overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <h3 className="text-lg font-bold text-white">Add New Customer</h3>
+              <button
+                type="button"
+                onClick={() => setShowNewCustomerModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Form */}
+            <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Name</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Name *</label>
                 <input
                   type="text"
                   defaultValue={inputValue}
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
                   id="new-customer-name"
+                  placeholder="Customer name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
                 <input
                   type="email"
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
                   id="new-customer-email"
+                  placeholder="email@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Phone</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
                 <input
                   type="tel"
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
                   id="new-customer-phone"
+                  placeholder="+91 98765 43210"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Address</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Address</label>
                 <textarea
-                  rows={3}
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  rows={2}
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all resize-none"
                   id="new-customer-address"
+                  placeholder="Full address"
                 ></textarea>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">GSTIN</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">GSTIN</label>
                 <input
                   type="text"
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
                   id="new-customer-gstin"
                   placeholder="e.g., 29AAKCG6382L1ZU"
                 />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            
+            {/* Actions */}
+            <div className="p-5 pt-0 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowNewCustomerModal(false)}
+                className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -342,7 +357,6 @@ function CustomerAutocomplete({ values, setFieldValue }) {
                   const address = document.getElementById('new-customer-address').value;
                   const gstin = document.getElementById('new-customer-gstin').value;
                   
-                  // Set the values in the form
                   setFieldValue('customer_name', name);
                   setFieldValue('customer_email', email);
                   setFieldValue('customer_phone', phone);
@@ -352,16 +366,9 @@ function CustomerAutocomplete({ values, setFieldValue }) {
                   setInputValue(name);
                   setShowNewCustomerModal(false);
                 }}
-                className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-lg transition-all shadow-lg shadow-blue-900/30 text-sm font-medium"
               >
                 Add Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowNewCustomerModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
-              >
-                Cancel
               </button>
             </div>
           </div>
@@ -375,6 +382,7 @@ const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
   invoice_number: Yup.string().required("Invoice number is required").min(1).max(100),
+  warehouse: Yup.string().required("Warehouse is required"),
   invoice_date: Yup.string().required("Invoice date is required"),
   
   // Optional fields for customer record creation
@@ -397,6 +405,7 @@ const SalesSchema = Yup.object().shape({
       // Required item fields
       product: Yup.string().required("Product is required").min(1),
       quantity: Yup.number().required("Quantity is required").min(1),
+      batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
       price: Yup.number().required("Price is required").min(0),
       amount: Yup.number().required("Amount is required").min(0),
       
@@ -412,8 +421,88 @@ const SalesSchema = Yup.object().shape({
 const units = ["pcs", "kg", "ltr", "box", "meter"];
 
 export default function SalesForm({ isOpen, onClose, editData }) {
+  // Keyboard Shortcuts Logic
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // F2 to Save
+      if (e.key === "F2") {
+        e.preventDefault();
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if(submitBtn) {
+            submitBtn.click();
+            toast.info("Saving Invoice (F2)...");
+        }
+      }
+      
+      // Esc to Close
+      if (e.key === "Escape") {
+        const isDropdownOpen = document.querySelector('.absolute.z-10'); // Basic check if any autocomplete is open
+        if (!isDropdownOpen) {
+             e.preventDefault();
+             onClose();
+        }
+      }
+
+      // Enter Navigation (Enter acts like Tab)
+      if (e.key === "Enter") {
+        const target = e.target;
+        // Only if it's an input or select, and NOT a button/textarea
+        if ((target.tagName === "INPUT" || target.tagName === "SELECT") && !target.dataset.noEnter) {
+          e.preventDefault();
+          const form = target.form;
+          if (form) {
+              const index = Array.prototype.indexOf.call(form, target);
+              // Find next navigable element
+              let nextIndex = index + 1;
+              let found = false;
+              while (form.elements[nextIndex]) {
+                 const next = form.elements[nextIndex];
+                 // Skip hidden, disabled, or readOnly that shouldn't be focused
+                 if (next.tagName !== "FIELDSET" && !next.hidden && !next.disabled && next.offsetParent !== null && next.tabIndex >= 0) {
+                     next.focus();
+                     found = true;
+                     break;
+                 }
+                 nextIndex++;
+              }
+              // If last element, maybe add row? For now just stop.
+          }
+        }
+      }
+    };
+
+    if (isOpen) {
+        window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
+  const { data: warehouses } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  
+  // Lifted state: Fetch products and customers once at top level
+  const { data: productsResult } = useQuery({ 
+      queryKey: ["products"], 
+      queryFn: getProducts,
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+  const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
+
+  const { data: customersResult } = useQuery({ 
+      queryKey: ["customers"], 
+      queryFn: getCustomers,
+      staleTime: 5 * 60 * 1000, 
+  });
+  const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
+  
+  // State to track selected warehouse for stock filtering
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState(editData?.warehouse || "");
+
+  const { data: stockPoints } = useQuery({
+    queryKey: ["stockPoints", selectedWarehouseId],
+    queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
+    enabled: !!selectedWarehouseId
+  });
 
   // Auto-focus the first product field when form opens
   useEffect(() => {
@@ -453,20 +542,29 @@ export default function SalesForm({ isOpen, onClose, editData }) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 w-full max-w-[98vw] max-h-[95vh] overflow-y-auto">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-            {isEdit ? "Edit Sales Bill" : "New Sales Bill"}
-          </h2>
-          <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-400">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>⌨️ Keyboard-friendly:</strong> Tab/Enter to navigate • Auto-add rows while typing • 
-              <kbd className="bg-blue-200 dark:bg-blue-800 px-1 rounded">Ctrl+S</kbd> to save • 
-              <kbd className="bg-blue-200 dark:bg-blue-800 px-1 rounded">Esc</kbd> to close
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
+        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-1">
+              {isEdit ? "Edit Sales Invoice" : "New Sales Invoice"}
+            </h2>
+             <p className="text-xs text-gray-400 flex items-center gap-2">
+              <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
+              <span>•</span>
+              <span><kbd className="bg-white/10 px-1 rounded text-white">Esc</kbd> to close</span>
             </p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         
         <Formik
@@ -487,6 +585,8 @@ export default function SalesForm({ isOpen, onClose, editData }) {
             due_date: editData?.due_date || "",
             delivery_address: editData?.delivery_address || "",
             gst_treatment: editData?.gst_treatment || "registered",
+            place_of_supply: editData?.place_of_supply || "", // New field
+            warehouse: editData?.warehouse || "", // New field
             journal: editData?.journal || "Sales",
             total_amount: editData?.total_amount || null,
             
@@ -645,7 +745,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
 
             return (
               <Form 
-                className="space-y-6"
+                className="p-0"
                 onKeyDown={(e) => {
                   // Handle global keyboard shortcuts
                   if (e.ctrlKey && e.key === 's') {
@@ -660,149 +760,207 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                   }
                 }}
               >
-                {/* Header Info */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Invoice Number *
-                    </label>
-                    <Field
-                      name="invoice_number"
-                      type="text"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Invoice Date *
-                    </label>
-                    <Field
-                      name="invoice_date"
-                      type="date"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Due Date
-                    </label>
-                    <Field
-                      name="due_date"
-                      type="date"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Customer Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Name *
-                    </label>
-                    <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
-                    <ErrorMessage name="customer_name" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Email <span className="text-xs text-gray-500">(optional - creates customer record)</span>
-                    </label>
-                    <Field
-                      name="customer_email"
-                      type="email"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="customer@example.com"
-                    />
-                  </div>
-                </div>
-
-                {/* Additional Customer Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Phone
-                    </label>
-                    <Field
-                      name="customer_phone"
-                      type="tel"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="+91 9876543210"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Address
-                    </label>
-                    <Field
-                      name="customer_address"
-                      as="textarea"
-                      rows="2"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="Customer's address"
-                    />
-                  </div>
-                </div>
-
-                {/* Address & Additional Fields */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Delivery Address
-                    </label>
-                    <div className="mb-2">
-                      <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <input
-                          type="checkbox"
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFieldValue('delivery_address', values.customer_address);
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        Same as customer address
+                <div className="p-8 space-y-8">
+                  {/* Header Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  
+                    {/* Customer Autocomplete */}
+                    <div className="relative">
+                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer *
                       </label>
+                      <CustomerAutocomplete 
+                          values={values} 
+                          setFieldValue={setFieldValue} 
+                          customers={customers} 
+                      />
+                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
                     </div>
-                    <Field
-                      name="delivery_address"
-                      as="textarea"
-                      rows="3"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="123 Delivery Address, City, State"
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      GST Treatment
-                    </label>
-                    <Field
-                      name="gst_treatment"
-                      as="select"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    >
-                      <option value="registered">Registered</option>
-                      <option value="unregistered">Unregistered</option>
-                      <option value="export">Export</option>
-                    </Field>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Invoice Number *
+                      </label>
+                      <Field
+                        name="invoice_number"
+                        type="text"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Invoice Date *
+                      </label>
+                      <Field
+                        name="invoice_date"
+                        type="date"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                         Warehouse *
+                      </label>
+                      <Field
+                        name="warehouse"
+                        as="select"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      >
+                        <option value="">Select Warehouse</option>
+                        {warehouses?.map(w => (
+                           <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                      </Field>
+                      <ErrorMessage name="warehouse" component="div" className="text-red-400 text-xs mt-1" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Place of Supply
+                      </label>
+                      <Field
+                        name="place_of_supply"
+                        as="select"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      >
+                        <option value="">Select State</option>
+                        {INDIAN_STATES.map(s => (
+                          <option key={s.code} value={s.code}>{s.name}</option>
+                        ))}
+                      </Field>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Due Date
+                      </label>
+                      <Field
+                        name="due_date"
+                        type="date"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Journal
-                    </label>
-                    <Field
-                      name="journal"
-                      type="text"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
+
+                  {/* Customer Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Name *
+                      </label>
+                      {/* Capture warehouse change */}
+                      {(() => {
+                           // A simple effect to sync warehouse state
+                           useEffect(() => {
+                             if (values.warehouse !== selectedWarehouseId) {
+                               setSelectedWarehouseId(values.warehouse);
+                             }
+                           }, [values.warehouse]);
+                           return null;
+                      })()}
+                      <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-sm mt-1" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Email <span className="text-gray-600">(creates customer record)</span>
+                      </label>
+                      <Field
+                        name="customer_email"
+                        type="email"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="customer@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Additional Customer Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Phone
+                      </label>
+                      <Field
+                        name="customer_phone"
+                        type="tel"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="+91 9876543210"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Address
+                      </label>
+                      <Field
+                        name="customer_address"
+                        as="textarea"
+                        rows="2"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="Customer's address"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address & Additional Fields */}
+                  <div className="grid grid-cols-1 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Delivery Address
+                      </label>
+                      <div className="mb-2">
+                        <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFieldValue('delivery_address', values.customer_address);
+                              }
+                            }}
+                            className="rounded border-white/10 bg-[#111] text-cyan-500 focus:ring-cyan-500"
+                          />
+                          Same as customer address
+                        </label>
+                      </div>
+                      <Field
+                        name="delivery_address"
+                        as="textarea"
+                        rows="3"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="123 Delivery Address, City, State"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        GST Treatment
+                      </label>
+                      <Field
+                        name="gst_treatment"
+                        as="select"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      >
+                        <option value="registered">Registered</option>
+                        <option value="unregistered">Unregistered</option>
+                        <option value="export">Export</option>
+                      </Field>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Journal
+                      </label>
+                      <Field
+                        name="journal"
+                        type="text"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Items */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Items</h3>
+                <div className="p-8 bg-[#151515] border-t border-b border-white/5">
+                  <h3 className="text-lg font-bold text-white mb-4">Items</h3>
                   <FieldArray name="items">
                     {({ push, remove }) => {
                       // Function to auto-add new row when user starts typing in the last row
@@ -825,6 +983,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                               product_name: "",
                               product_id: null,
                               quantity: 1,
+                              free_quantity: 0,
                               unit: "pcs", 
                               price: 0,
                               discount: 0,
@@ -839,236 +998,176 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                       };
 
                       return (
-                        <div>
-                          {values.items.map((item, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 items-start mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                              {/* Product Name */}
-                              <div className="col-span-3">
-                                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Product *</label>
-                                <ProductAutocomplete 
-                                  idx={index} 
-                                  values={values} 
-                                  setFieldValue={setFieldValue}
-                                  onInputChange={() => handleAutoAddRow(index)}
-                                />
-                              </div>
-                            
-                            {/* Quantity */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Qty *</label>
-                              <Field name={`items.${index}.quantity`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    min="0.01"
-                                    step="0.01"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                    onChange={(e) => {
-                                      const quantity = e.target.value;
-                                      setFieldValue(`items.${index}.quantity`, quantity);
-                                      
-                                      // Calculate amount when both quantity and price exist
-                                      if (quantity && values.items[index]?.price) {
-                                        const price = parseFloat(values.items[index].price) || 0;
-                                        const amount = parseFloat(quantity) * price;
-                                        setFieldValue(`items.${index}.amount`, amount);
-                                      }
+                        <div className="space-y-4">
+                          {/* Desktop Header Row */}
+                          <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
+                             <div className="col-span-3">Product</div>
+                             <div className="col-span-2">Batch</div>
+                             <div className="col-span-1 text-center">Qty</div>
+                             <div className="col-span-1 text-center text-green-400">Free</div>
+                             <div className="col-span-1">Unit</div>
+                             <div className="col-span-1 text-right">Price</div>
+                             <div className="col-span-1 text-center">Disc/Tax%</div>
+                             <div className="col-span-1 text-right">Amount</div>
+                             <div className="col-span-1 text-center"></div>
+                          </div>
 
-                                      // Auto-add row when user enters quantity
-                                      if (quantity && parseFloat(quantity) > 0) {
-                                        handleAutoAddRow(index);
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      // Tab or Enter to move to next field
-                                      if (e.key === 'Tab' || e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.price"]`);
-                                        if (nextInput) nextInput.focus();
-                                      }
-                                    }}
+                          {values.items.map((item, index) => {
+                             // Batches filtering logic
+                             const productBatches = stockPoints
+                               ?.filter(sp => sp.batch.product === item.product_id && sp.quantity > 0)
+                               ?.map(sp => ({
+                                 id: sp.batch.id, 
+                                 name: sp.batch.batch_number, 
+                                 expiry: sp.batch.expiry_date,
+                                 qty: sp.quantity
+                               })) || [];
+
+                             return (
+
+                          <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-[#111] border border-white/5 rounded-xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
+                            
+                            {/* Product (3 cols) */}
+                            <div className="md:col-span-3">
+                              <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Product</label>
+                              <div className="relative">
+                                  <ProductAutocomplete 
+                                      idx={index}
+                                      values={values}
+                                      setFieldValue={setFieldValue}
+                                      products={products}
+                                      onInputChange={() => handleAutoAddRow(index)}
                                   />
-                                )}
-                              </Field>
+                              </div>
                             </div>
-                            
-                            {/* Unit */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Unit</label>
-                              <Field name={`items.${index}.unit`}>
-                                {({ field }) => (
-                                  <select
-                                    {...field}
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Tab' || e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.price"]`);
-                                        if (nextInput) nextInput.focus();
+
+                            {/* Batch (2 cols) */}
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Batch</label>
+                                <Field name={`items.${index}.batch`}>
+                                    {({ field }) => (
+                                    <select
+                                        {...field}
+                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 outline-none text-xs"
+                                        disabled={!item.product_id}
+                                    >
+                                        <option value="">Auto (FEFO)</option>
+                                        {productBatches.map(b => (
+                                        <option key={b.id} value={b.id}>
+                                            {b.name} ({b.qty})
+                                        </option>
+                                        ))}
+                                    </select>
+                                    )}
+                                </Field>
+                            </div>
+
+                            {/* Qty (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Qty</label>
+                                <Field
+                                    name={`items.${index}.quantity`}
+                                    type="number"
+                                    min="1"
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-center text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
+                                    onChange={(e) => {
+                                      const qty = e.target.value;
+                                      setFieldValue(`items.${index}.quantity`, qty);
+                                      if (values.items[index]?.price) {
+                                         const price = parseFloat(values.items[index].price) || 0;
+                                         const amount = price * (parseFloat(qty) || 0);
+                                         setFieldValue(`items.${index}.amount`, amount);
                                       }
                                     }}
-                                  >
-                                    {units.map(unit => (
-                                      <option key={unit} value={unit}>{unit}</option>
-                                    ))}
-                                  </select>
-                                )}
-                              </Field>
+                                />
                             </div>
-                            
-                            {/* Price */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Price</label>
-                              <Field name={`items.${index}.price`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
+
+                            {/* Free Qty (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-green-400">Free</label>
+                                <Field
+                                    name={`items.${index}.free_quantity`}
                                     type="number"
                                     min="0"
-                                    step="0.01"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    placeholder="0"
+                                    className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
+                                />
+                            </div>
+
+                            {/* Unit (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Unit</label>
+                                <Field name={`items.${index}.unit`}>
+                                    {({ field }) => (
+                                    <select {...field} className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs">
+                                        {units.map(u => <option key={u} value={u}>{u}</option>)}
+                                    </select>
+                                    )}
+                                </Field>
+                            </div>
+
+                            {/* Price (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Price</label>
+                                <Field
+                                    name={`items.${index}.price`}
+                                    type="number"
+                                    min="0"
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
                                     onChange={(e) => {
                                       const price = e.target.value;
                                       setFieldValue(`items.${index}.price`, price);
                                       
-                                      // Calculate amount when both price and quantity exist
                                       if (price && values.items[index]?.quantity) {
                                         const quantity = parseFloat(values.items[index].quantity) || 0;
                                         const amount = parseFloat(price) * quantity;
                                         setFieldValue(`items.${index}.amount`, amount);
                                       }
-
-                                      // Auto-add row when user enters price
                                       if (price && parseFloat(price) > 0) {
                                         handleAutoAddRow(index);
                                       }
                                     }}
-                                    onKeyDown={(e) => {
-                                      // Tab or Enter to move to discount field
-                                      if (e.key === 'Tab' || e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.discount"]`);
-                                        if (nextInput) nextInput.focus();
-                                      }
-                                    }}
-                                  />
-                                )}
-                              </Field>
+                                />
                             </div>
 
-                            {/* Amount */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Amount *</label>
-                              <Field
-                                name={`items.${index}.amount`}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm bg-gray-100 dark:bg-gray-500 dark:border-gray-400 dark:text-white"
-                                readOnly
-                              />
+                            {/* Disc/Tax (1 col) */}
+                            <div className="md:col-span-1 flex flex-col gap-2">
+                                <div className="flex items-center gap-1">
+                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
+                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Tax</label>
+                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
+                                </div>
                             </div>
-                            
-                            {/* Discount */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Disc %</label>
-                              <Field name={`items.${index}.discount`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Tab' || e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.tax"]`);
-                                        if (nextInput) nextInput.focus();
-                                      }
-                                    }}
-                                  />
-                                )}
-                              </Field>
+
+                            {/* Amount (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Amount</label>
+                                <div className="w-full px-2 py-3 text-right font-bold text-cyan-400 text-xs">
+                                    {item.amount?.toFixed(2) || "0.00"}
+                                </div>
                             </div>
-                            
-                            {/* Tax */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Tax %</label>
-                              <Field name={`items.${index}.tax`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Tab' || e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${index}.hsn_sac_code"]`);
-                                        if (nextInput) nextInput.focus();
-                                      }
-                                    }}
-                                  />
-                                )}
-                              </Field>
+
+                            {/* Remove (1 col) */}
+                            <div className="md:col-span-1 flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() => remove(index)}
+                                    disabled={values.items.length === 1}
+                                    className="text-gray-500 hover:text-red-400 transition-colors p-2 disabled:opacity-30 hover:bg-white/5 rounded-lg"
+                                    title="Remove Item"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
                             </div>
-                            
-                            {/* HSN/SAC */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">HSN/SAC</label>
-                              <Field name={`items.${index}.hsn_sac_code`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="text"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                    onChange={(e) => {
-                                      setFieldValue(`items.${index}.hsn_sac_code`, e.target.value);
-                                      // Auto-add row when HSN is entered
-                                      if (e.target.value.trim()) {
-                                        handleAutoAddRow(index);
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Tab' || e.key === 'Enter') {
-                                        e.preventDefault();
-                                        // Try to focus on next row's product field
-                                        const nextRowIndex = index + 1;
-                                        const nextProductInput = document.querySelector(`input[name="items.${nextRowIndex}.product"]`);
-                                        if (nextProductInput) {
-                                          nextProductInput.focus();
-                                        } else {
-                                          // If no next row, ensure one exists and focus on it
-                                          handleAutoAddRow(index);
-                                          setTimeout(() => {
-                                            const newProductInput = document.querySelector(`input[name="items.${nextRowIndex}.product"]`);
-                                            if (newProductInput) newProductInput.focus();
-                                          }, 100);
-                                        }
-                                      }
-                                    }}
-                                  />
-                                )}
-                              </Field>
-                            </div>
-                            
-                            {/* Remove Button */}
-                            <div className="col-span-1 flex items-end">
-                              <button
-                                type="button"
-                                onClick={() => remove(index)}
-                                disabled={values.items.length === 1}
-                                className="w-full p-2 bg-red-500 text-white rounded text-sm hover:bg-red-600 disabled:opacity-50"
-                              >
-                                ✕
-                              </button>
-                            </div>
+
                           </div>
-                        ))}
+                          );
+                        })}
                         
                         <div className="flex items-center justify-between">
                           <button
@@ -1086,12 +1185,15 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                               amount: 0,
                               isExistingProduct: false,
                             })}
-                            className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                            className="btn-secondary text-sm flex items-center gap-2"
                           >
-                            + Add Item
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Item
                           </button>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Items auto-add as you type. Manual add button available for mouse users.
+                          <p className="text-xs text-gray-500">
+                            Pro Tip: Items are auto-added as you type.
                           </p>
                         </div>
                         </div>
@@ -1101,43 +1203,51 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                 </div>
 
                 {/* Totals */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>₹{subtotal.toFixed(2)}</span>
+                <div className="bg-[#111] border border-white/10 p-8 rounded-xl shadow-inner">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between text-gray-400">
+                      <span>Subtotal</span>
+                      <span className="text-white font-medium">₹{subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>Total Discount:</span>
+                    <div className="flex justify-between text-green-400">
+                      <span>Total Discount</span>
                       <span>-₹{totalDiscount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-red-600">
-                      <span>Total Tax:</span>
+                    <div className="flex justify-between text-red-400">
+                      <span>Total Tax</span>
                       <span>₹{totalTax.toFixed(2)}</span>
                     </div>
-                    <hr className="border-gray-300 dark:border-gray-600" />
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Grand Total:</span>
-                      <span>₹{grandTotal.toFixed(2)}</span>
+                    <div className="h-px bg-white/10 my-3"></div>
+                    <div className="flex justify-between font-bold text-xl">
+                      <span className="text-white">Grand Total</span>
+                      <span className="text-cyan-400">₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="text-right text-xs text-gray-500 mt-1 uppercase tracking-wide">
+                      {grandTotal > 0 ? "Amount Payble" : ""}
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-600">
+                <div className="p-8 bg-black/20 flex justify-end space-x-3 rounded-b-2xl">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px]"
                   >
-                    {isSubmitting ? "Saving..." : isEdit ? "Update Bill" : "Create Bill"}
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                         Saving...
+                      </span>
+                    ) : (isEdit ? "Update Invoice" : "Create Invoice")}
                   </button>
                 </div>
               </Form>
@@ -1145,6 +1255,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
           }}
         </Formik>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

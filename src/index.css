@@ -2,114 +2,154 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    background-color: #000000;
+    color: #f5f5f7;
+    font-family: 'Inter', sans-serif; /* Clean, modern base font */
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif; /* Stylish, premium heading font */
+  }
+}
+
 @layer components {
-  /* Backgrounds */
-  .page-bg {
-    background: linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%);
-    min-height: 100vh;
-    position: relative;
+  /* Grid Background Pattern */
+  .bg-grid {
+    background-size: 40px 40px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
   }
 
-  /* Glassmorphism */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Dark Mode Bento Card with subtle glass effect */
+  .bento-card {
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+    padding: 2rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2); 
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+    height: 100%;
   }
 
-  .glass-card:hover {
-    border-color: rgba(127, 211, 247, 0.2);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px);
+  .bento-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    background: rgba(30, 30, 30, 0.8);
   }
 
-  .glass-input {
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
+  /* Typography Utilities */
+  .text-headline {
+    font-size: 4rem; /* Larger */
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+  }
+  
+  .text-subhead {
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: #a1a1aa; /* Zinc-400 */
+    letter-spacing: -0.01em;
+  }
+
+  /* Floating Pill Navbar */
+  .glass-nav {
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    border-radius: 9999px;
+    margin-top: 1rem;
+    /* Centered styling handled in component layout */
   }
 
-  .glass-input:focus {
-    background: rgba(0, 0, 0, 0.3);
-    border-color: rgba(127, 211, 247, 0.5);
-    box-shadow: 0 0 20px rgba(127, 211, 247, 0.1);
-    outline: none;
+  /* Button Styles */
+  .btn-primary {
+    background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
   }
 
-  .glass-input:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.02);
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
+    transform: translateY(-1px);
   }
 
-  /* Typography */
-  .gradient-text {
-    background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-    background-size: 400% 400%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradient-shift 6s ease infinite;
-  }
-
-  /* Cards */
-  .stat-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    transition: all 0.3s ease;
-  }
-
-  .stat-card:hover {
+  .btn-secondary {
     background: rgba(255, 255, 255, 0.05);
-    transform: translateY(-2px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e5e5e5;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 24px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   /* Animations */
-  @keyframes fade-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   
-  .animate-fade-in {
-    animation: fade-in 0.2s ease-out forwards;
+  .animate-fade-up {
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
   }
   
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  
-  @keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  .delay-300 { animation-delay: 0.3s; }
+
+  /* App Sidebar Utilities */
+  .glass-sidebar {
+    background: rgba(10, 10, 10, 0.6); /* Translucent dark */
+    backdrop-filter: saturate(180%) blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.08); 
   }
 
-  @keyframes floatUp {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-10px) rotate(5deg); }
+  .glass-nav-item {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border: 1px solid transparent;
   }
-  
-  .floating-element {
-    animation: floatUp 8s infinite ease-in-out;
-  }
-  
-  .floating-element:nth-child(2) { animation-delay: -1s; }
-  .floating-element:nth-child(3) { animation-delay: -2s; }
-  .floating-element:nth-child(4) { animation-delay: -3s; }
 
-  @keyframes particle-float {
-    0% { transform: translateY(100vh) translateX(-5px) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.6; }
-    100% { transform: translateY(-100vh) translateX(5px) rotate(180deg); opacity: 0; }
+  .glass-nav-item:hover, .glass-nav-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
   }
-  
-  .particle {
-    animation: particle-float linear infinite;
+
+  .glass-nav-item.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-weight: 600;
   }
 }

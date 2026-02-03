@@ -1,35 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Bars3Icon, 
-  XMarkIcon, 
-  CheckCircleIcon, 
   ChartBarIcon, 
   BoltIcon, 
   ShieldCheckIcon, 
   UserGroupIcon, 
-  CurrencyRupeeIcon, 
   ArrowRightIcon, 
-  StarIcon,
-  ChevronDownIcon,
-  ChevronUpIcon
+  CheckCircleIcon,
+  DevicePhoneMobileIcon,
+  GlobeAltIcon,
+  HomeIcon,
+  ShoppingCartIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 
-// Simple hook for scroll animations
+// Hook for scroll animations
 const useScrollAnimation = () => {
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('animate-slide-up');
-          entry.target.classList.remove('opacity-0', 'translate-y-10');
+          entry.target.classList.add('animate-fade-up');
+          entry.target.classList.remove('opacity-0', 'translate-y-8');
           observer.unobserve(entry.target);
         }
       });
     }, { threshold: 0.1 });
 
     document.querySelectorAll('.scroll-animate').forEach((el) => {
-      el.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700');
+      el.classList.add('opacity-0', 'translate-y-8'); // Start hidden
       observer.observe(el);
     });
 
@@ -37,394 +36,320 @@ const useScrollAnimation = () => {
   }, []);
 };
 
-import CanvasBackground from '../components/CanvasBackground';
-
-export default function LandingPage() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeFaq, setActiveFaq] = useState(null);
+// Screenshot Showcase Component
+const ScreenshotShowcase = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
   
-  useScrollAnimation();
-
-  const toggleFaq = (index) => {
-    setActiveFaq(activeFaq === index ? null : index);
-  };
-
-  const features = [
-    {
-      icon: ChartBarIcon,
-      title: 'Advanced Analytics',
-      description: 'Gain deep insights into your business performance with real-time dashboards and custom reports.'
-    },
-    {
-      icon: BoltIcon,
-      title: 'Lightning Fast',
-      description: 'Experience zero lag with our optimized platform designed for speed and efficiency.'
-    },
-    {
-      icon: ShieldCheckIcon,
-      title: 'Bank-Grade Security',
-      description: 'Your data is protected with state-of-the-art encryption and regular security audits.'
-    },
-    {
-      icon: UserGroupIcon,
-      title: 'Team Collaboration',
-      description: 'Work together seamlessly with role-based access control and real-time updates.'
-    }
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashbaord.png' },
+    { id: 'sales', label: 'Sales', icon: ShoppingCartIcon, image: '/sales.png' },
+    { id: 'inventory', label: 'Inventory', icon: CubeIcon, image: '/inventory.png' },
   ];
-
-  const pricingPlans = [
-    {
-      name: 'Starter',
-      price: '₹49',
-      period: '/month',
-      description: 'Perfect for freelancers and small startups.',
-      features: ['Basic Invoicing', 'Expense Tracking', '5 Clients', 'Email Support'],
-      highlight: false
-    },
-    {
-      name: 'Growth',
-      price: '₹199',
-      period: '/month',
-      description: 'For growing businesses scaling up.',
-      features: ['Unlimited Invoicing', 'Inventory Management', '50 Clients', 'Priority Support', 'Financial Reports'],
-      highlight: true
-    },
-    {
-      name: 'Pro',
-      price: '₹499',
-      period: '/month',
-      description: 'Ultimate power for established enterprises.',
-      features: ['Everything in Growth', 'API Access', 'Unlimited Clients', 'Dedicated Account Manager', 'Custom Branding'],
-      highlight: false
-    }
-  ];
-
-  const faqs = [
-    {
-      question: "Is there a free trial available?",
-      answer: "Yes! We offer a 14-day free trial on all plans so you can explore Cenvora risk-free."
-    },
-    {
-      question: "Can I upgrade or downgrade my plan?",
-      answer: "Absolutely. You can change your plan at any time from your account settings."
-    },
-    {
-      question: "Is my data secure?",
-      answer: "We use industry-standard encryption and secure servers to ensure your data is always safe."
-    },
-    {
-      question: "Do you offer customer support?",
-      answer: "Yes, our dedicated support team is available 24/7 to assist you with any queries."
-    }
-  ];
-
-
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white overflow-x-hidden font-sans selection:bg-cyan-500/30 relative">
+    <div className="mt-24 opacity-0 animate-fade-up delay-300 relative">
+      {/* Tab Navigation */}
+      <div className="flex justify-center gap-2 mb-8">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+              activeTab === tab.id
+                ? 'bg-white text-black shadow-lg shadow-white/20'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Screenshot Container */}
+      <div className="relative group perspective-[2000px]">
+        {/* Behind Glow */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 rounded-[2rem] blur-3xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+        
+        {/* Main Container */}
+        <div className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-w-6xl bg-[#0a0a0a] transform group-hover:translate-y-[-4px] transition-transform duration-700 ease-out">
+          <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent pointer-events-none z-10 mix-blend-overlay"></div>
+          
+          {/* Screenshots with transitions */}
+          {tabs.map((tab) => (
+            <img 
+              key={tab.id}
+              src={tab.image} 
+              alt={`Cenvora ${tab.label} Interface`} 
+              loading="lazy"
+              className={`w-full h-auto object-cover transition-opacity duration-500 ${
+                activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Feature Pills */}
+      <div className="flex flex-wrap justify-center gap-3 mt-8">
+        {activeTab === 'dashboard' && (
+          <>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Real-time Analytics</span>
+            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">Live Charts</span>
+            <span className="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-xs font-medium">Quick Actions</span>
+          </>
+        )}
+        {activeTab === 'sales' && (
+          <>
+            <span className="px-4 py-1.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-full text-xs font-medium">One-Click Invoicing</span>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">GST Compliant</span>
+            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">PDF Export</span>
+          </>
+        )}
+        {activeTab === 'inventory' && (
+          <>
+            <span className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full text-xs font-medium">Batch Tracking</span>
+            <span className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full text-xs font-medium">Low Stock Alerts</span>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Multi-Warehouse</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default function LandingPage() {
+  useScrollAnimation();
+
+  return (
+    <div className="font-sans text-white overflow-x-hidden bg-black selection:bg-purple-500/30">
       
-      {/* Advanced Interactive Background */}
-      <CanvasBackground />
+      {/* Background Texture Grid */}
+      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1a2341]/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                <span className="text-white font-bold text-xl">C</span>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">Cenvora</span>
-            </div>
-            
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Pricing</a>
-              <a href="#testimonials" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Testimonials</a>
-              <Link to="/login" className="text-sm font-medium text-white hover:text-cyan-400 transition-colors">Log In</Link>
-              <Link to="/signup" className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-300">
-                Get Started
-              </Link>
-            </div>
+      {/* 1. Floating Pill Navbar */}
+      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
+        <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
+          <Link to="/" className="text-lg font-bold tracking-tight text-white hover:opacity-80 transition-opacity flex items-center gap-2">
+            <div className="w-6 h-6 bg-gradient-to-tr from-cyan-400 to-purple-500 rounded-lg"></div>
+            Cenvora
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <a href="#testimonials" className="hover:text-white transition-colors">Enterprise</a>
+          </div>
 
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-slate-300 hover:text-white">
-              {isMobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
-            </button>
+          <div className="flex items-center gap-4">
+             <Link to="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Log In</Link>
+             <Link to="/signup" className="text-sm font-semibold bg-white text-black px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">
+              Get Started
+             </Link>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-20 left-0 w-full bg-[#1a2341] border-b border-white/10 p-4 flex flex-col gap-4 shadow-2xl animate-fade-in">
-            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-lg hover:bg-white/5">Features</a>
-            <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-lg hover:bg-white/5">Pricing</a>
-            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="p-3 rounded-lg hover:bg-white/5">Log In</Link>
-            <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-cyan-600 rounded-lg text-center font-bold">Get Started</Link>
-          </div>
-        )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-cyan-500/20 rounded-full blur-[120px] -z-10 opacity-50 animate-pulse-slow"></div>
-        <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-purple-500/10 rounded-full blur-[100px] -z-10 opacity-30"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in">
-            <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span className="text-sm font-medium text-cyan-300">New: Inventory Tracking 2.0</span>
+      {/* 2. Hero Section */}
+      <section className="pt-40 pb-20 text-center relative overflow-hidden z-10">
+        {/* Background Ambient Glow */}
+        <div className="absolute top-0 inset-x-0 h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-transparent -z-10"></div>
+        
+        <div className="max-w-5xl mx-auto px-6 relative">
+          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-8 opacity-0 animate-fade-up tracking-wide">
+             <span className="animate-pulse mr-2">●</span> ENGINEERED FOR PERFECTION
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 animate-slide-up">
-            Master Your <br />
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">Business Universe.</span>
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-none">
+            Commerce, <br/>
+            Evolved.
           </h1>
-          
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 animate-slide-up delay-100">
-            Cenvora provides the ultimate toolkit for modern businesses. Track sales, manage inventory, and analyze growth—all in one stunning interface.
+          <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-12 opacity-0 animate-fade-up delay-200 leading-relaxed font-light">
+            Forget clunky ERPs. Cenvora is the <span className="text-white font-medium">high-performance engine</span> your business deserves. Real-time inventory, instant billing, and insights that feel like clairvoyance.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up delay-200">
-            <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-lg shadow-xl shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 group">
-              Start Free Trial
-              <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0 animate-fade-up delay-300">
+            <Link to="/signup" className="btn-primary w-full sm:w-auto shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]">
+              Experience Cenvora
             </Link>
-            <a href="#features" className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 rounded-xl font-bold text-lg hover:bg-white/10 hover:-translate-y-1 transition-all duration-300">
-              View Demo
-            </a>
+            <a href="#demo" className="btn-secondary w-full sm:w-auto justify-center">
+              Watch the magic <ArrowRightIcon className="w-5 h-5"/>
+             </a>
           </div>
 
-          {/* 3D Dashboard Mockup */}
-          <div className="mt-20 relative mx-auto max-w-5xl animate-slide-up delay-300 perspective-1000">
-            <div className="relative rounded-2xl bg-[#1a2341] border border-white/10 shadow-2xl shadow-cyan-500/10 overflow-hidden transform rotate-x-12 hover:rotate-x-0 transition-transform duration-700 ease-out">
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
-              <img src="/dashboard.png" alt="App Dashboard" className="w-full h-auto opacity-90" />
-              
-              {/* Floating Elements */}
-              <div className="absolute -right-10 top-10 p-4 bg-[#1a2341]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl animate-float hidden md:block">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-500/20 rounded-lg"><CurrencyRupeeIcon className="w-6 h-6 text-green-400" /></div>
+          {/* Hero Screenshot Showcase */}
+          <ScreenshotShowcase />
+        </div>
+      </section>
+
+      {/* 3. Bento Grid Section */}
+      <section id="features" className="py-32 relative z-10">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="text-center mb-24 scroll-animate">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white tracking-tight">It’s not just software.<br/> It’s a superpower.</h2>
+            <p className="text-2xl text-gray-500 font-light max-w-2xl mx-auto">Every pixel designed to save you time and make you money.</p>
+          </div>
+
+          {/* Bento Grid layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[650px]">
+             
+             {/* Card 1: Inventory (Gradient) */}
+             <div className="bento-card col-span-1 md:col-span-2 row-span-2 scroll-animate flex flex-col justify-between group !p-0 bg-gradient-to-br from-[#101010] to-black overflow-hidden relative">
+                <div className="p-10 z-20 relative">
+                   <div className="flex items-center gap-2 mb-4 text-cyan-400 font-bold text-xs tracking-widest uppercase">
+                      <ChartBarIcon className="w-5 h-5" /> inventory 2.0
+                   </div>
+                   <h3 className="text-4xl font-bold mb-4 text-white">Inventory that thinks.</h3>
+                   <p className="text-gray-400 max-w-md text-lg leading-relaxed">Stop guessing. We track every batch, every expiry, and every movement across all your warehouses in real-time. It’s like having a dedicated manager for every shelf.</p>
+                </div>
+                
+                {/* Visual decoration */}
+                <div className="relative w-full h-80 mt-auto">
+                   <div className="absolute inset-x-12 -bottom-12 bg-[#0a0a0a] rounded-t-2xl border border-white/10 shadow-2xl h-full p-6 transform translate-y-8 group-hover:translate-y-4 transition-transform duration-700 ease-out">
+                      {/* Abstract UI Lines */}
+                      <div className="space-y-4 opacity-50 group-hover:opacity-100 transition-opacity duration-700">
+                         <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                            <div className="h-3 w-32 bg-gray-800 rounded-full"></div>
+                            <div className="h-3 w-12 bg-green-500/20 rounded-full"></div>
+                         </div>
+                         {[1,2,3].map(i => (
+                             <div key={i} className="h-10 w-full bg-white/5 rounded-xl border border-white/5 flex items-center px-4">
+                                <div className="h-2 w-full bg-gray-800/50 rounded-full"></div>
+                             </div>
+                         ))}
+                      </div>
+                   </div>
+                   {/* Glow effect */}
+                   <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-cyan-900/20 to-transparent pointer-events-none"></div>
+                </div>
+             </div>
+
+             {/* Card 2: Security */}
+             <div className="bento-card bg-[#0a0a0a] scroll-animate group border-green-900/20 hover:border-green-500/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-32 bg-green-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+                <div className="flex flex-col h-full justify-between relative z-10">
+                   <div className="w-14 h-14 bg-green-900/10 rounded-2xl flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform duration-300">
+                      <ShieldCheckIcon className="w-7 h-7" />
+                   </div>
+                   <div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Fort Knox, Digital.</h3>
+                      <p className="text-gray-500 text-sm leading-relaxed">Your data is encrypted with AES-256 and backed up daily. Sleep soundly knowing your business is bulletproof.</p>
+                   </div>
+                </div>
+             </div>
+
+             {/* Card 3: Mobile */}
+             <div className="bento-card bg-[#0a0a0a] scroll-animate group hover:border-blue-500/30 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-900/5 group-hover:to-blue-900/10 transition-colors"></div>
+                <div className="flex flex-col h-full justify-center items-center text-center relative z-10">
+                   <div className="relative mb-8">
+                      <div className="absolute inset-0 bg-blue-500/30 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <DevicePhoneMobileIcon className="relative w-16 h-16 text-blue-400 group-hover:-translate-y-2 transition-transform duration-300" />
+                   </div>
+                   <h3 className="text-xl font-bold mb-2 text-white">Your shop, anywhere.</h3>
+                   <p className="text-gray-500 text-sm px-4">Check sales from your couch. Or the beach. Works on any device, instantly.</p>
+                </div>
+             </div>
+
+          </div>
+          
+          {/* Second Row of Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div className="bento-card bg-[#0a0a0a] scroll-animate flex items-center p-0 overflow-hidden relative group">
+                  <div className="p-10 w-2/3 relative z-10">
+                      <h3 className="text-3xl font-bold mb-3 text-white">Ludicrous Speed.</h3>
+                      <p className="text-gray-500 text-lg">Billing so fast, your customers won't have time to blink. Keyboard-first design for power users.</p>
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-purple-900/20 to-transparent"></div>
+                  <BoltIcon className="absolute -right-8 -bottom-8 w-48 h-48 text-purple-600/10 rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500" />
+              </div>
+              <div className="bento-card bg-[#0a0a0a] scroll-animate p-10 flex items-center justify-between group hover:bg-[#0f0f0f]">
                   <div>
-                    <p className="text-xs text-slate-400">Total Revenue</p>
-                    <p className="text-lg font-bold text-white">₹1,24,500</p>
+                    <h3 className="text-3xl font-bold mb-3 text-white">Global Scale.</h3>
+                    <p className="text-gray-500 text-lg">GSTR-1 Reports, Multi-Currency, <br/>and export to anything.</p>
                   </div>
-                </div>
+                  <GlobeAltIcon className="w-20 h-20 text-gray-800 group-hover:text-gray-600 transition-colors duration-300" />
               </div>
+          </div>
 
-              <div className="absolute -left-10 bottom-20 p-4 bg-[#1a2341]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl animate-float hidden md:block" style={{ animationDelay: '2s' }}>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-500/20 rounded-lg"><UserGroupIcon className="w-6 h-6 text-purple-400" /></div>
-                  <div>
-                    <p className="text-xs text-slate-400">New Customers</p>
-                    <p className="text-lg font-bold text-white">+128</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        </div>
+      </section>
+
+      {/* 4. Pricing (Clean Dark) */}
+      <section id="pricing" className="py-32 relative z-10">
+        <div className="max-w-[980px] mx-auto px-6 text-center">
+          <h2 className="text-4xl font-bold mb-4 scroll-animate text-white">Simple Pricing.</h2>
+          <p className="text-gray-500 mb-16 scroll-animate">No hidden fees. Cancel anytime.</p>
+          
+          <div className="grid md:grid-cols-3 gap-6 text-left">
+             {/* Starter */}
+             <div className="p-8 bg-[#0a0a0a] rounded-3xl border border-[#222] scroll-animate hover:border-gray-600 transition-colors">
+                 <h3 className="text-xl font-semibold mb-2 text-white">Starter</h3>
+                 <p className="text-3xl font-bold mb-6 text-white">₹49<span className="text-base font-normal text-gray-500">/mo</span></p>
+                 <Link to="/signup" className="block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8">
+                     Start Free Trial
+                 </Link>
+                 <ul className="space-y-4 text-sm text-gray-400">
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> 1 User</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Basic Invoicing</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> 5 Clients</li>
+                 </ul>
+             </div>
+
+             {/* Growth - Highlighted */}
+             <div className="p-8 bg-[#111] border border-purple-500/30 rounded-3xl shadow-2xl shadow-purple-900/20 relative overflow-hidden scroll-animate transform md:-translate-y-4 scale-105 z-10">
+                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 to-purple-500"></div>
+                 <div className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-wider uppercase mb-2">Most Popular</div>
+                 <h3 className="text-2xl font-bold mb-2 text-white">Growth</h3>
+                 <p className="text-3xl font-bold mb-6 text-white">₹199<span className="text-base font-normal text-gray-400">/mo</span></p>
+                 <Link to="/signup" className="block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10">
+                     Get Started
+                 </Link>
+                 <ul className="space-y-4 text-sm text-gray-300">
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Unlimited Users</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Inventory Tracking</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> 50 Clients</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Financial Reports</li>
+                 </ul>
+             </div>
+
+             {/* Pro */}
+             <div className="p-8 bg-[#0a0a0a] rounded-3xl border border-[#222] scroll-animate hover:border-gray-600 transition-colors">
+                 <h3 className="text-xl font-semibold mb-2 text-white">Pro</h3>
+                 <p className="text-3xl font-bold mb-6 text-white">₹499<span className="text-base font-normal text-gray-500">/mo</span></p>
+                 <Link to="/signup" className="block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8">
+                     Contact Sales
+                 </Link>
+                 <ul className="space-y-4 text-sm text-gray-400">
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Needs Analysis</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Custom Branding</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> API Access</li>
+                 </ul>
+             </div>
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-24 bg-[#131b33]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 scroll-animate">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Leading Businesses Choose Cenvora</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">We don't just provide software; we provide a competitive advantage.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-colors duration-300 scroll-animate">
-              <div className="w-14 h-14 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-6">
-                <BoltIcon className="w-8 h-8 text-cyan-400" />
+      {/* 5. Clean Footer */}
+      <footer className="bg-black py-16 border-t border-white/5 relative z-10">
+        <div className="max-w-[980px] mx-auto px-6">
+           <div className="flex flex-col md:flex-row justify-between items-center mb-12">
+              <div className="text-2xl font-bold tracking-tight text-white mb-4 md:mb-0">Cenvora</div>
+              <div className="flex gap-8 text-sm text-gray-400">
+                 <a href="#" className="hover:text-white transition-colors">Twitter</a>
+                 <a href="#" className="hover:text-white transition-colors">GitHub</a>
+                 <a href="#" className="hover:text-white transition-colors">Discord</a>
               </div>
-              <h3 className="text-xl font-bold mb-3">Lightning Performance</h3>
-              <p className="text-slate-400 leading-relaxed">Built on cutting-edge tech, Cenvora loads instantly and handles thousands of transactions without breaking a sweat.</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/30 transition-colors duration-300 scroll-animate" style={{ transitionDelay: '100ms' }}>
-              <div className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6">
-                <ShieldCheckIcon className="w-8 h-8 text-purple-400" />
+           </div>
+           
+           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between text-xs text-gray-600 gap-4">
+              <p>&copy; {new Date().getFullYear()} Cenvora Inc. All rights reserved.</p>
+              <div className="flex gap-6">
+                 <a href="#" className="hover:text-gray-400">Privacy</a>
+                 <a href="#" className="hover:text-gray-400">Terms</a>
+                 <a href="#" className="hover:text-gray-400">Sitemap</a>
               </div>
-              <h3 className="text-xl font-bold mb-3">Unbreakable Security</h3>
-              <p className="text-slate-400 leading-relaxed">Enterprise-grade encryption and automated backups ensure your business data is safer than in a bank vault.</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition-colors duration-300 scroll-animate" style={{ transitionDelay: '200ms' }}>
-              <div className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
-                <ChartBarIcon className="w-8 h-8 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Actionable Insights</h3>
-              <p className="text-slate-400 leading-relaxed">Turn raw data into profit. Our AI-powered analytics help you spot trends and opportunities before your competitors.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section id="features" className="py-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-20 scroll-animate">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">Everything you need to <br /><span className="text-cyan-400">scale faster.</span></h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <div key={index} className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:-translate-y-2 scroll-animate" style={{ transitionDelay: `${index * 100}ms` }}>
-                <feature.icon className="w-10 h-10 text-cyan-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
-                <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
-                <p className="text-sm text-slate-400">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-24 bg-[#131b33]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 scroll-animate">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-slate-400">No hidden fees. Cancel anytime.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <div 
-                key={index} 
-                className={`relative p-8 rounded-3xl border ${plan.highlight ? 'bg-gradient-to-b from-cyan-900/20 to-[#1a2341] border-cyan-500/50 shadow-2xl shadow-cyan-500/10 scale-105 z-10' : 'bg-[#1a2341] border-white/10'} flex flex-col scroll-animate`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-cyan-500 text-white text-xs font-bold uppercase tracking-wider rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
-                <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
-                <div className="mb-8">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  <span className="text-slate-500">{plan.period}</span>
-                </div>
-                <ul className="space-y-4 mb-8 flex-1">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
-                      <CheckCircleIcon className={`w-5 h-5 ${plan.highlight ? 'text-cyan-400' : 'text-slate-500'}`} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link 
-                  to="/signup" 
-                  className={`w-full py-3 rounded-xl font-bold text-center transition-all duration-300 ${plan.highlight ? 'bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/25' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-                >
-                  {/* Choose {plan.name} */}
-                  {plan.name=="Starter" ? 'Start Trial' : 'Coming Soon'}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 scroll-animate">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Loved by Businesses</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-8 rounded-2xl bg-white/5 border border-white/10 scroll-animate" style={{ transitionDelay: `${i * 100}ms` }}>
-                <div className="flex gap-1 mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => <StarIcon key={star} className="w-5 h-5 text-yellow-400 fill-yellow-400" />)}
-                </div>
-                <p className="text-slate-300 mb-6 leading-relaxed">"Cenvora completely transformed how we manage our inventory. The insights are incredible and the interface is just beautiful."</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500"></div>
-                  <div>
-                    <p className="font-bold text-white">Sarah Johnson</p>
-                    <p className="text-xs text-slate-500">CEO, TechStart</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-24 bg-[#131b33]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 scroll-animate">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-          </div>
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <div key={index} className="rounded-xl bg-[#1a2341] border border-white/5 overflow-hidden scroll-animate">
-                <button 
-                  onClick={() => toggleFaq(index)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
-                >
-                  <span className="font-semibold text-white">{faq.question}</span>
-                  {activeFaq === index ? <ChevronUpIcon className="w-5 h-5 text-cyan-400" /> : <ChevronDownIcon className="w-5 h-5 text-slate-500" />}
-                </button>
-                {activeFaq === index && (
-                  <div className="px-6 pb-4 text-slate-400 animate-fade-in">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-700 opacity-20"></div>
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10 scroll-animate">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to elevate your business?</h2>
-          <p className="text-xl text-slate-300 mb-10">Join thousands of businesses using Cenvora to grow faster and smarter.</p>
-          <Link to="/signup" className="inline-block px-10 py-4 bg-white text-blue-900 font-bold text-lg rounded-xl shadow-2xl hover:scale-105 transition-transform duration-300">
-            Get Started for Free
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#0f1525] py-12 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">C</span>
-                </div>
-                <span className="text-xl font-bold text-white">Cenvora</span>
-              </div>
-              <p className="text-slate-500 text-sm max-w-xs">
-                The all-in-one business management platform designed for the modern era.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#features" className="hover:text-cyan-400">Features</a></li>
-                <li><a href="#pricing" className="hover:text-cyan-400">Pricing</a></li>
-                <li><Link to="/login" className="hover:text-cyan-400">Login</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#" className="hover:text-cyan-400">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-cyan-400">Terms of Service</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-white/5 text-center text-sm text-slate-600">
-            &copy; {new Date().getFullYear()} Cenvora. All rights reserved.
-          </div>
+           </div>
         </div>
       </footer>
     </div>

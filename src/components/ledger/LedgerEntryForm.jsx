@@ -6,6 +6,7 @@ import { updateLedgerEntry } from "../../api/ledger";
 import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 // Customer Autocomplete for ledger entry form
 function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) {
@@ -39,7 +40,6 @@ function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) 
     setInputValue(value);
     setFieldValue('customer_name', value);
     
-    // Only clear customer ID if user is actually typing (not just setting initial value)
     if (value !== initialCustomer) {
       setFieldValue('customer', '');
     }
@@ -56,34 +56,39 @@ function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) 
     }
   };
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+
   return (
     <div className="relative">
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        onFocus={() => {
-          if (filteredCustomers.length > 0 && inputValue.trim()) {
-            setShowDropdown(true);
-          }
-        }}
-        onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-        placeholder="Type to search customers..."
-        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-      />
+      <div className="relative">
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-500 pointer-events-none" />
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onFocus={() => {
+            if (filteredCustomers.length > 0 && inputValue.trim()) {
+              setShowDropdown(true);
+            }
+          }}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+          placeholder="Type to search customers..."
+          className={inputClass}
+        />
+      </div>
       
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#1a2341]/95 backdrop-filter backdrop-blur-20 border border-white/20 shadow-2xl max-h-60 rounded-md py-1 text-base ring-1 ring-white/20 overflow-auto focus:outline-none sm:text-sm">
+        <div className="absolute z-50 mt-1 w-full bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 shadow-2xl max-h-60 rounded-xl py-1 overflow-auto">
           {filteredCustomers.map((customer) => (
             <div
               key={customer.id}
-              className="px-3 py-2 hover:bg-white/20 cursor-pointer text-sm transition-colors"
+              className="px-4 py-2.5 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-bold text-gray-900 dark:text-white">{customer.name}</div>
-              <div className="text-cyan-600 dark:text-cyan-300 text-xs font-medium">
+              <div className="font-bold text-white">{customer.name}</div>
+              <div className="text-gray-400 text-xs mt-0.5">
                 {customer.email && `${customer.email}`}
-                {customer.phone && ` | ${customer.phone}`}
+                {customer.phone && ` • ${customer.phone}`}
               </div>
             </div>
           ))}
@@ -123,7 +128,6 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
   const queryClient = useQueryClient();
   const [customerName, setCustomerName] = useState("");
 
-  // Set customer name from entry data (customer object is already included in the response)
   useEffect(() => {
     if (entry?.customer?.name) {
       setCustomerName(entry.customer.name);
@@ -166,6 +170,9 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
     credit: entry?.credit || "",
   };
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+
   return (
     <Formik
       initialValues={initialValues}
@@ -174,117 +181,113 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
       enableReinitialize={true}
     >
       {({ values, setFieldValue, isSubmitting }) => (
-        <Form className="space-y-4">
+        <Form className="space-y-5">
           {/* Customer Selection */}
           <div>
-            <label htmlFor="customer" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
-              Customer *
-            </label>
+            <label className={labelClass}>Customer *</label>
             <LedgerCustomerAutocomplete 
               values={values} 
               setFieldValue={setFieldValue} 
               initialCustomer={customerName}
             />
             <Field name="customer" type="hidden" />
-            <ErrorMessage name="customer" component="div" className="mt-1 text-sm text-red-600" />
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
           </div>
 
-          {/* Date */}
-          <div>
-            <label htmlFor="date" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
-              Date *
-            </label>
-            <Field
-              name="date"
-              type="date"
-              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-            <ErrorMessage name="date" component="div" className="mt-1 text-sm text-red-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Date */}
+            <div>
+              <label className={labelClass}>Date *</label>
+              <Field
+                name="date"
+                type="date"
+                className={inputClass}
+              />
+              <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+            </div>
+
+            {/* Invoice (optional) */}
+            <div>
+              <label className={labelClass}>Invoice ID (Optional)</label>
+              <Field
+                name="invoice"
+                type="text"
+                className={inputClass}
+                placeholder="INV-..."
+              />
+              <ErrorMessage name="invoice" component="div" className="mt-1 text-xs text-red-400" />
+            </div>
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
-              Description *
-            </label>
+            <label className={labelClass}>Description *</label>
             <Field
               name="description"
               as="textarea"
               rows={2}
-              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-none"
-              placeholder="Enter transaction description"
+              className={inputClass}
+              placeholder="Enter transaction description..."
             />
-            <ErrorMessage name="description" component="div" className="mt-1 text-sm text-red-600" />
-          </div>
-
-          {/* Invoice (optional) */}
-          <div>
-            <label htmlFor="invoice" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
-              Invoice ID (optional)
-            </label>
-            <Field
-              name="invoice"
-              type="text"
-              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Enter invoice ID if applicable"
-            />
-            <ErrorMessage name="invoice" component="div" className="mt-1 text-sm text-red-600" />
+            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-red-400" />
           </div>
 
           {/* Debit and Credit */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5 p-4 bg-white/5 rounded-xl border border-white/10">
             <div>
-              <label htmlFor="debit" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
-                Debit Amount
-              </label>
-              <Field
-                name="debit"
-                type="number"
-                step="0.01"
-                min="0"
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="0.00"
-              />
-              <ErrorMessage name="debit" component="div" className="mt-1 text-sm text-red-600" />
+              <label className={labelClass}>Debit (Receivable)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                <Field
+                  name="debit"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={`${inputClass} pl-7`}
+                  placeholder="0.00"
+                />
+              </div>
+              <ErrorMessage name="debit" component="div" className="mt-1 text-xs text-red-400" />
             </div>
 
             <div>
-              <label htmlFor="credit" className="block text-sm font-bold text-white drop-shadow-lg mb-1">
-                Credit Amount
-              </label>
-              <Field
-                name="credit"
-                type="number"
-                step="0.01"
-                min="0"
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="0.00"
-              />
-              <ErrorMessage name="credit" component="div" className="mt-1 text-sm text-red-600" />
+              <label className={labelClass}>Credit (Received)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                <Field
+                  name="credit"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={`${inputClass} pl-7`}
+                  placeholder="0.00"
+                />
+              </div>
+              <ErrorMessage name="credit" component="div" className="mt-1 text-xs text-red-400" />
             </div>
           </div>
 
-          <div className="text-xs text-cyan-300 font-bold drop-shadow-lg">
-            * Note: Either debit or credit must be greater than 0. Both cannot be zero.
+          <div className="text-xs text-cyan-400/80 italic text-center">
+            * Either debit or credit must be greater than 0.
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || updateEntryMutation.isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20"
             >
               {isSubmitting || updateEntryMutation.isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>

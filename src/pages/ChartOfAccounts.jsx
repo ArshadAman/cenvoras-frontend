@@ -214,7 +214,7 @@ export default function ChartOfAccounts() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421] p-6">
+      <div className="page-bg min-h-screen p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-start mb-4">
@@ -230,7 +230,7 @@ export default function ChartOfAccounts() {
               <button
                 onClick={() => setupDefaultsMutation.mutate()}
                 disabled={setupDefaultsMutation.isLoading}
-                className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                className="btn-secondary flex items-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -242,7 +242,7 @@ export default function ChartOfAccounts() {
                   setEditingAccount(null);
                   setIsAccountFormOpen(true);
                 }}
-                className="bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] hover:from-[#b6e0f7] hover:to-[#eaf6fa] text-[#1a2341] px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg"
+                className="btn-primary flex items-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -259,18 +259,18 @@ export default function ChartOfAccounts() {
               return (
                 <div
                   key={type}
-                  className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-200 cursor-pointer transform hover:scale-105 shadow-lg"
+                  className={`bento-card p-4 hover:border-cyan-500/30 transition-all duration-200 cursor-pointer ${
+                    accountTypeFilter === type ? 'ring-2 ring-cyan-500 bg-white/5' : ''
+                  }`}
                   onClick={() => setAccountTypeFilter(accountTypeFilter === type ? '' : type)}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{count}</p>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+                      <p className="text-2xl font-bold text-white mt-1">{count}</p>
                     </div>
-                    <div className={`p-2 rounded-lg ${ACCOUNT_TYPE_COLORS[type]}`}>
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
+                    <div className={`p-2 rounded-lg bg-white/5 border border-white/10`}>
+                      <div className={`w-2 h-2 rounded-full ${ACCOUNT_TYPE_COLORS[type].split(' ')[0].replace('bg-', 'bg-')}`} />
                     </div>
                   </div>
                 </div>
@@ -280,11 +280,11 @@ export default function ChartOfAccounts() {
         </div>
 
         {/* Filters */}
-        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg p-6 mb-6">
+        <div className="bento-card p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-[#b6e0f7] mb-2">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
                 Search Accounts
               </label>
               <div className="relative">
@@ -293,9 +293,9 @@ export default function ChartOfAccounts() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by code, name..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                 />
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -303,13 +303,13 @@ export default function ChartOfAccounts() {
 
             {/* Account Type Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
                 Account Type
               </label>
               <select
                 value={accountTypeFilter}
                 onChange={(e) => setAccountTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
               >
                 <option value="">All Types</option>
                 {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
@@ -320,13 +320,13 @@ export default function ChartOfAccounts() {
 
             {/* Active Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
                 Status
               </label>
               <select
                 value={activeFilter}
                 onChange={(e) => setActiveFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
               >
                 <option value="all">All Accounts</option>
                 <option value="active">Active Only</option>
@@ -336,7 +336,7 @@ export default function ChartOfAccounts() {
 
             {/* Page Size */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
                 Items per Page
               </label>
               <select
@@ -345,7 +345,7 @@ export default function ChartOfAccounts() {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -389,15 +389,15 @@ export default function ChartOfAccounts() {
         )}
 
         {/* Accounts Table */}
-        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg overflow-hidden">
+        <div className="bento-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-white/10">
-              <thead className="bg-white/10">
+            <table className="min-w-full divide-y divide-white/5">
+              <thead className="bg-white/5">
                 <tr>
-                  <th scope="col" className="relative px-6 py-3">
+                  <th scope="col" className="relative px-6 py-4">
                     <input
                       type="checkbox"
-                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700"
+                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/20 bg-[#111] text-cyan-500 focus:ring-cyan-500/50"
                       checked={isAllCurrentPageSelected}
                       ref={(el) => {
                         if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -406,7 +406,7 @@ export default function ChartOfAccounts() {
                     />
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
                     onClick={() => handleSort('code')}
                   >
                     <div className="flex items-center space-x-1">
@@ -415,7 +415,7 @@ export default function ChartOfAccounts() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
                     onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center space-x-1">
@@ -424,7 +424,7 @@ export default function ChartOfAccounts() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
                     onClick={() => handleSort('account_type')}
                   >
                     <div className="flex items-center space-x-1">
@@ -432,96 +432,95 @@ export default function ChartOfAccounts() {
                       {getSortIcon('account_type')}
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Parent Account
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Balance
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-white/5">
                 {accounts.map((account) => (
-                  <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="relative px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <tr key={account.id} className="hover:bg-white/5 transition-colors">
+                    <td className="relative px-6 py-4 whitespace-nowrap text-sm">
                       <input
                         type="checkbox"
-                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700"
+                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/20 bg-[#111] text-cyan-500 focus:ring-cyan-500/50"
                         checked={selectedAccounts.includes(account.id)}
                         onChange={(e) => handleSelectAccount(account.id, e.target.checked)}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-white">
                         {account.code}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-white">
                         {account.name}
                       </div>
                       {account.description && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-gray-500 mt-1">
                           {account.description}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ACCOUNT_TYPE_COLORS[account.account_type]}`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${ACCOUNT_TYPE_COLORS[account.account_type]}`}>
                         {ACCOUNT_TYPE_LABELS[account.account_type]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
+                      <div className="text-sm text-gray-400">
                         {account.parent_account_name || '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        account.is_active 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                      }`}>
-                        {account.is_active ? 'Active' : 'Inactive'}
-                      </span>
+                      <div className="inline-flex items-center">
+                        <div className={`w-2 h-2 rounded-full mr-2 ${account.is_active ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                        <span className="text-sm text-white">
+                          {account.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-white">
                         {account.balance !== undefined ? `$${Number(account.balance).toLocaleString()}` : '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="flex items-center justify-end space-x-3">
                         <button
                           onClick={() => handleViewLedger(account)}
-                          className="text-green-600 hover:text-green-900 dark:hover:text-green-400 transition-colors"
+                          className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 hover:bg-cyan-500/10 rounded-lg"
                           title="View General Ledger"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </button>
                         <button
                           onClick={() => handleEdit(account)}
-                          className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 transition-colors"
+                          className="text-blue-400 hover:text-blue-300 transition-colors p-1 hover:bg-blue-500/10 rounded-lg"
                           title="Edit Account"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
                         <button
                           onClick={() => handleDelete(account)}
-                          className="text-red-600 hover:text-red-900 dark:hover:text-red-400 transition-colors"
+                          className="text-red-400 hover:text-red-300 transition-colors p-1 hover:bg-red-500/10 rounded-lg"
                           title="Delete Account"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
@@ -535,21 +534,23 @@ export default function ChartOfAccounts() {
 
           {/* No results */}
           {accounts.length === 0 && (
-            <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No accounts found</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-center py-20">
+              <div className="w-24 h-24 mx-auto mb-6 bg-white/5 rounded-full flex items-center justify-center">
+                <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">No accounts found</h3>
+              <p className="text-gray-400 max-w-sm mx-auto mb-8">
                 Get started by setting up default accounts or creating your first account manually.
               </p>
-              <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => setupDefaultsMutation.mutate()}
                   disabled={setupDefaultsMutation.isLoading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                   {setupDefaultsMutation.isLoading ? 'Setting up...' : 'Setup Defaults'}
@@ -559,9 +560,9 @@ export default function ChartOfAccounts() {
                     setEditingAccount(null);
                     setIsAccountFormOpen(true);
                   }}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="btn-primary"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add Account
@@ -572,26 +573,26 @@ export default function ChartOfAccounts() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-white dark:bg-gray-800 px-6 py-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="bg-white/5 px-6 py-4 border-t border-white/5">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalAccounts)} of {totalAccounts} accounts
+                <div className="text-sm text-gray-400">
+                  Showing <span className="text-white font-medium">{((currentPage - 1) * pageSize) + 1}</span> to <span className="text-white font-medium">{Math.min(currentPage * pageSize, totalAccounts)}</span> of <span className="text-white font-medium">{totalAccounts}</span> accounts
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setCurrentPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Previous
                   </button>
-                  <span className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <span className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
+                    className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Next
                   </button>
