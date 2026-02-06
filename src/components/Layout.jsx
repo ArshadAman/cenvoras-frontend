@@ -8,6 +8,7 @@ import {
   UsersIcon, 
   BookOpenIcon,
   UserIcon,
+  BanknotesIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -22,6 +23,7 @@ export default function Layout({ children, onLogout }) {
     { path: "/purchase", label: "Purchases", icon: ShoppingBagIcon },
     { path: "/inventory", label: "Inventory", icon: CubeIcon },
     { path: "/customers", label: "Customers", icon: UsersIcon },
+    { path: "/payments", label: "Payments", icon: BanknotesIcon },
     { path: "/ledger", label: "Ledger", icon: BookOpenIcon },
     { path: "/profile", label: "Profile", icon: UserIcon },
   ];

@@ -8,6 +8,7 @@ import Purchase from './pages/Purchase'
 import Sales from './pages/Sales'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
+import Payments from './pages/Payments'
 import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
 
@@ -58,6 +59,10 @@ function App() {
         <Route
           path="/customers"
           element={isAuthenticated ? <Customers /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/payments"
+          element={isAuthenticated ? <Payments /> : <Navigate to="/" replace />}
         />
         <Route
           path="/ledger"
