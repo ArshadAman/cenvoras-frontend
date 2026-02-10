@@ -17,7 +17,8 @@ export const createProduct = (data) => {
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
     price: data.price || data.unit_price,
-    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
+    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
+    meta: data.meta
   };
   return api.post("/inventory/add-product/", backendData).then(res => res.data);
 };
@@ -32,7 +33,8 @@ export const updateProduct = (id, data) => {
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
     price: data.price || data.unit_price,
-    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
+    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
+    meta: data.meta
   };
   return api.put(`/inventory/product/${id}/`, backendData).then(res => res.data);
 };

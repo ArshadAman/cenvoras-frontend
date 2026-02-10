@@ -301,6 +301,9 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                   Total Amount (With Tax)
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Items
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
@@ -363,8 +366,18 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                       
                       const totalWithTax = calculations.untaxed + calculations.taxAmount;
                       return Number(totalWithTax).toLocaleString();
+                    return Number(totalWithTax).toLocaleString();
                     })()}
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                   <span className={`px-2 py-1 rounded text-xs ${
+                      invoice.meta?.status === 'Approved' ? 'bg-green-500/20 text-green-400' : 
+                      invoice.meta?.status === 'Rejected' ? 'bg-red-500/20 text-red-400' : 
+                      'bg-yellow-500/20 text-yellow-400'
+                   }`}>
+                      {invoice.meta?.status || 'Pending'}
+                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                   {invoice.items?.length || 0} items

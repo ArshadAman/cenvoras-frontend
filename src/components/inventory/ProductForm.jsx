@@ -32,6 +32,13 @@ const productSchema = Yup.object().shape({
   low_stock_alert: Yup.number()
     .integer("Low stock alert must be a whole number")
     .min(0, "Low stock alert must be positive"),
+  meta: Yup.object().shape({
+    secondary_stock: Yup.number().nullable(),
+    mandi_tax: Yup.number().nullable(),
+    is_h1: Yup.boolean(),
+    is_narcotic: Yup.boolean(),
+    is_new_launch: Yup.boolean(),
+  }),
 });
 
 export default function ProductForm({ product, onClose }) {
@@ -73,6 +80,13 @@ export default function ProductForm({ product, onClose }) {
     price: product?.price || product?.purchase_price || product?.unit_price || "",
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
+    meta: {
+      secondary_stock: product?.meta?.secondary_stock || "",
+      mandi_tax: product?.meta?.mandi_tax || "",
+      is_h1: product?.meta?.is_h1 || false,
+      is_narcotic: product?.meta?.is_narcotic || false,
+      is_new_launch: product?.meta?.is_new_launch || false,
+    },
   };
 
   const handleSubmit = (values, { setSubmitting }) => {
@@ -85,6 +99,13 @@ export default function ProductForm({ product, onClose }) {
       price: values.price,
       stock: parseInt(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
+      meta: {
+        secondary_stock: values.meta.secondary_stock ? parseFloat(values.meta.secondary_stock) : null,
+        mandi_tax: values.meta.mandi_tax ? parseFloat(values.meta.mandi_tax) : null,
+        is_h1: values.meta.is_h1,
+        is_narcotic: values.meta.is_narcotic,
+        is_new_launch: values.meta.is_new_launch,
+      },
     };
 
     if (isEdit) {
@@ -239,6 +260,48 @@ export default function ProductForm({ product, onClose }) {
                   <p className="text-xs text-gray-500 mt-2">
                     Get notified when stock falls below this level.
                   </p>
+               </div>
+
+               {/* Section 5: Advanced Details (Sidecar) */}
+               <div className="pt-6 border-t border-white/10">
+                 <h3 className="text-sm font-bold text-white mb-4">Advanced Details</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <label className={labelClass}>Secondary Stock</label>
+                      <Field
+                        name="meta.secondary_stock"
+                        type="number"
+                        className={inputClass}
+                        placeholder="e.g. 50"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Mandi Tax (₹)</label>
+                      <Field
+                        name="meta.mandi_tax"
+                        type="number"
+                        className={inputClass}
+                        placeholder="0.00"
+                      />
+                    </div>
+                 </div>
+
+                 <div className="flex flex-wrap gap-6">
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <Field type="checkbox" name="meta.is_h1" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
+                      <span className="text-gray-300 group-hover:text-white transition-colors">H1 Drug</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <Field type="checkbox" name="meta.is_narcotic" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
+                      <span className="text-gray-300 group-hover:text-white transition-colors">Narcotic</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <Field type="checkbox" name="meta.is_new_launch" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
+                      <span className="text-gray-300 group-hover:text-white transition-colors">New Launch</span>
+                    </label>
+                 </div>
                </div>
 
               {/* Actions */}

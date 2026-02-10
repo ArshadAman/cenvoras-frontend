@@ -11,6 +11,8 @@ import Customers from './pages/Customers'
 import Payments from './pages/Payments'
 import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
+import SalesOrderList from './pages/SalesOrderList'
+import DeliveryChallanList from './pages/DeliveryChallanList'
 
 const getToken = () => !!localStorage.getItem('token')
 const getActiveSession = () => !!localStorage.getItem('activeSession')
@@ -51,6 +53,14 @@ function App() {
         <Route
           path="/sales"
           element={isAuthenticated ? <Sales /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/sales-orders"
+          element={isAuthenticated ? <SalesOrderList /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/delivery-challans"
+          element={isAuthenticated ? <DeliveryChallanList /> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory"

@@ -19,7 +19,9 @@ export default function Layout({ children, onLogout }) {
 
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon },
-    { path: "/sales", label: "Sales", icon: CurrencyRupeeIcon },
+    { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon },
+    { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon },
+    { path: "/delivery-challans", label: "Delivery Challans", icon: CubeIcon },
     { path: "/purchase", label: "Purchases", icon: ShoppingBagIcon },
     { path: "/inventory", label: "Inventory", icon: CubeIcon },
     { path: "/customers", label: "Customers", icon: UsersIcon },

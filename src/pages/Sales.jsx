@@ -6,10 +6,11 @@ import SalesDetailsModal from "../components/sales/SalesDetailsModal";
 import SalesDeleteDialog from "../components/sales/SalesDeleteDialog";
 import SalesUploadCsv from "../components/sales/SalesUploadCsv";
 import SalesSummary from "../components/sales/SalesSummary";
+import InvoicePrintSettings from "../components/invoice/InvoicePrintSettings";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
-import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { getUserProfile } from "../api/users";
 
 export default function Sales() {
@@ -18,6 +19,7 @@ export default function Sales() {
   const [showDetails, setShowDetails] = useState(null);
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user profile for invoice customization
   const { data: userProfile } = useQuery({
@@ -57,6 +59,12 @@ export default function Sales() {
             <p className="text-gray-400 text-sm">Create, manage and track your sales invoices.</p>
           </div>
           <div className="flex gap-3">
+             <button
+               onClick={() => setShowSettings(true)}
+               className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2"
+             >
+               <Cog6ToothIcon className="w-4 h-4 text-gray-400"/> Settings
+             </button>
              <button
                onClick={() => setShowUpload(true)}
                className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2"
@@ -122,6 +130,13 @@ export default function Sales() {
         <SalesUploadCsv
           isOpen={showUpload}
           onClose={() => setShowUpload(false)}
+        />
+      )}
+
+      {showSettings && (
+        <InvoicePrintSettings
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
         />
       )}
 
