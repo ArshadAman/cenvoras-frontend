@@ -38,7 +38,7 @@ export default function Layout({ children, onLogout }) {
     { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
     { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
     { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
-    { path: "/integrations", label: "Integrations", icon: Cog6ToothIcon, roles: ['admin', 'manager'] },
+    { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [] },
     { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
     { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
   ];

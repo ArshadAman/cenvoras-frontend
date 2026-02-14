@@ -140,9 +140,7 @@ function App() {
           path="/integrations"
           element={
             isAuthenticated ? (
-              <ProtectedRoute allowedRoles={['admin', 'manager']}>
                 <IntegrationsPage />
-              </ProtectedRoute>
             ) : <Navigate to="/" replace />
           }
         />

@@ -87,8 +87,8 @@ export default function IntegrationsPage() {
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Integrations</h1>
-        <p className="text-gray-500">Manage your external connections, notifications, and data tools.</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Business Tools</h1>
+        <p className="text-gray-500">Notifications, backups, API access, and more.</p>
       </div>
 
       {/* Tabs */}
