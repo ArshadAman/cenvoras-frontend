@@ -13,6 +13,18 @@ import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
 import SalesOrderList from './pages/SalesOrderList'
 import DeliveryChallanList from './pages/DeliveryChallanList'
+import BOMList from './pages/inventory/BOMList'
+import StockJournalList from './pages/inventory/StockJournalList'
+import PriceListList from './pages/inventory/PriceListList'
+import PriceListForm from './pages/inventory/PriceListForm'
+import ReportsDashboard from './pages/reports/ReportsDashboard'
+import StockValuation from './pages/reports/StockValuation'
+import ExpiryReport from './pages/reports/ExpiryReport'
+import ProfitLossReport from './pages/reports/ProfitLossReport'
+import AuditLogList from './pages/system/AuditLogList'
+import IntegrationsPage from './pages/system/IntegrationsPage'
+import ProtectedRoute from './components/ProtectedRoute'
+import AIChatWidget from './components/AIChatWidget'
 
 const getToken = () => !!localStorage.getItem('token')
 const getActiveSession = () => !!localStorage.getItem('activeSession')
@@ -67,8 +79,28 @@ function App() {
           element={isAuthenticated ? <Inventory /> : <Navigate to="/" replace />}
         />
         <Route
+          path="/boms"
+          element={isAuthenticated ? <BOMList /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/stock-journals"
+          element={isAuthenticated ? <StockJournalList /> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/customers"
           element={isAuthenticated ? <Customers /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/inventory/price-lists"
+          element={isAuthenticated ? <PriceListList /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/inventory/price-lists/new"
+          element={isAuthenticated ? <PriceListForm /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/inventory/price-lists/:id"
+          element={isAuthenticated ? <PriceListForm /> : <Navigate to="/" replace />}
         />
         <Route
           path="/payments"
@@ -77,6 +109,42 @@ function App() {
         <Route
           path="/ledger"
           element={isAuthenticated ? <Ledger /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports"
+          element={isAuthenticated ? <ReportsDashboard /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/stock-valuation"
+          element={isAuthenticated ? <StockValuation /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/expiry"
+          element={isAuthenticated ? <ExpiryReport /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/profit-loss"
+          element={isAuthenticated ? <ProfitLossReport /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/audit-logs"
+          element={
+            isAuthenticated ? (
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <AuditLogList />
+              </ProtectedRoute>
+            ) : <Navigate to="/" replace />
+          }
+        />
+        <Route
+          path="/integrations"
+          element={
+            isAuthenticated ? (
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <IntegrationsPage />
+              </ProtectedRoute>
+            ) : <Navigate to="/" replace />
+          }
         />
         <Route
           path="/profile"
@@ -90,6 +158,7 @@ function App() {
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />}
         />
       </Routes>
+      {isAuthenticated && <AIChatWidget />}
     </Router>
   )
 }

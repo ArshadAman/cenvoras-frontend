@@ -213,6 +213,12 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                 GSTIN
               </th>
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+                Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+                Credit Limit
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Created
               </th>
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
@@ -256,6 +262,20 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                   <td className="px-6 py-4">
                     <div className="text-sm text-white font-medium drop-shadow-lg">
                       {customer.gstin || 'N/A'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-cyan-300 font-medium drop-shadow-lg">
+                      {customer.meta?.party_category ? (
+                        <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30 uppercase">
+                          {customer.meta.party_category}
+                        </span>
+                      ) : '-'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-white font-medium drop-shadow-lg">
+                      {customer.meta?.credit_limit ? `₹${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -344,6 +364,18 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                     Number(customer.balance || 0) >= 0 ? 'text-green-400' : 'text-red-400'
                   }`}>
                     ₹{Number(customer.balance || 0).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Category:</span>
+                  <span className="text-sm text-cyan-300 uppercase">{customer.meta?.party_category || '-'}</span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Credit Limit:</span>
+                  <span className="text-sm text-white">
+                    {customer.meta?.credit_limit ? `₹${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
                   </span>
                 </div>
 

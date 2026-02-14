@@ -59,6 +59,9 @@ export const createStockAdjustment = (data) =>
 export const getWarehouses = () =>
   api.get("/inventory/warehouses/").then(res => res.data);
 
+export const getProductBatches = (params) =>
+  api.get("/inventory/batches/", { params }).then(res => res.data);
+
 export const getStockPoints = (params) =>
   api.get("/inventory/stock-points/", { params }).then(res => res.data);
 
@@ -92,3 +95,17 @@ export const getInventoryReport = (params) =>
 
 export const getStockValuation = () =>
   api.get("/inventory/stock-valuation/").then(res => res.data);
+
+// Price Lists
+export const getPriceLists = () => api.get("/inventory/price-lists/").then(res => res.data);
+export const createPriceList = (data) => api.post("/inventory/price-lists/", data).then(res => res.data);
+export const getPriceList = (id) => api.get(`/inventory/price-lists/${id}/`).then(res => res.data);
+export const updatePriceList = (id, data) => api.put(`/inventory/price-lists/${id}/`, data).then(res => res.data);
+export const deletePriceList = (id) => api.delete(`/inventory/price-lists/${id}/`).then(res => res.data);
+
+// Schemes
+export const getSchemes = () => api.get("/inventory/schemes/").then(res => res.data);
+export const createScheme = (data) => api.post("/inventory/schemes/", data).then(res => res.data);
+export const getScheme = (id) => api.get(`/inventory/schemes/${id}/`).then(res => res.data);
+export const updateScheme = (id, data) => api.put(`/inventory/schemes/${id}/`, data).then(res => res.data);
+export const deleteScheme = (id) => api.delete(`/inventory/schemes/${id}/`).then(res => res.data);

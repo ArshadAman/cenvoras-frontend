@@ -10,25 +10,50 @@ import {
   UserIcon,
   BanknotesIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  BeakerIcon,
+  ClipboardDocumentListIcon,
+  DocumentTextIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
+import { getUserRole } from "../utils/auth";
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const navItems = [
-    { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon },
-    { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon },
-    { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon },
-    { path: "/delivery-challans", label: "Delivery Challans", icon: CubeIcon },
-    { path: "/purchase", label: "Purchases", icon: ShoppingBagIcon },
-    { path: "/inventory", label: "Inventory", icon: CubeIcon },
-    { path: "/customers", label: "Customers", icon: UsersIcon },
-    { path: "/payments", label: "Payments", icon: BanknotesIcon },
-    { path: "/ledger", label: "Ledger", icon: BookOpenIcon },
-    { path: "/profile", label: "Profile", icon: UserIcon },
+  const role = getUserRole();
+
+  const allNavItems = [
+    { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon, roles: [] }, // All
+    { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
+    { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
+    { path: "/delivery-challans", label: "Delivery Challans", icon: CubeIcon, roles: [] },
+    { path: "/purchase", label: "Purchases", icon: ShoppingBagIcon, roles: [] },
+    { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
+    { path: "/boms", label: "Bill of Materials", icon: BeakerIcon, roles: [] },
+    { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
+    { path: "/customers", label: "Customers", icon: UsersIcon, roles: [] },
+    { path: "/inventory/price-lists", label: "Price Lists", icon: BanknotesIcon, roles: [] },
+    { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
+    { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
+    { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
+    { path: "/integrations", label: "Integrations", icon: Cog6ToothIcon, roles: ['admin', 'manager'] },
+    { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
+    { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
   ];
+
+  const navItems = allNavItems.filter(item => {
+    if (!item.roles) {
+        console.error("Item missing roles:", item);
+        return true;
+    }
+    if (item.roles.length === 0) return true;
+    return item.roles.includes(role);
+  });
+  
+  if (!role) console.log("Layout: No role found (User might be guest or token invalid)");
+
 
   return (
     <div className="flex min-h-screen bg-black text-white font-sans selection:bg-purple-500/30">

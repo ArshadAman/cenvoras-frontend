@@ -93,6 +93,15 @@ export default function Login({ onLogin }) {
                         if (token) {
                             localStorage.setItem('token', token);
                             localStorage.setItem('refresh', response.data.refresh);
+                            
+                            // Extract and store role for easy access
+                            try {
+                                const payload = JSON.parse(atob(token.split('.')[1]));
+                                localStorage.setItem('role', payload.role || 'admin'); // Default to admin if missing
+                            } catch (e) {
+                                console.error("Failed to parse token", e);
+                            }
+
                             if (onLogin) onLogin();
                         } else {
                             setFieldError('username', 'No token received');

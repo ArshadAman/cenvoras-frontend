@@ -21,6 +21,10 @@ const customerSchema = Yup.object().shape({
     .max(15, "GSTIN must be less than 15 characters"),
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
+  meta: Yup.object().shape({
+      credit_limit: Yup.number().min(0, "Must be positive"),
+      credit_days: Yup.number().min(0, "Must be positive"),
+  }),
 });
 
 export default function CustomerForm({ isOpen, onClose, editData = null }) {
@@ -71,6 +75,12 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
     gstin: editData?.gstin || "",
     state: editData?.state || "",
     address: editData?.address || "",
+    meta: {
+      credit_limit: editData?.meta?.credit_limit || 0,
+      credit_days: editData?.meta?.credit_days || 0,
+      party_category: editData?.meta?.party_category || "consumer",
+      gst_type: editData?.meta?.gst_type || "unregistered",
+    }
   };
 
   if (!isOpen) return null;
@@ -181,6 +191,61 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
                     placeholder="22AAAAA0000A1Z5"
                   />
                   <ErrorMessage name="gstin" component="div" className="mt-1 text-xs text-red-400" />
+                </div>
+
+                {/* GST Type */}
+                <div>
+                  <label htmlFor="meta.gst_type" className={labelClass}>GST Type</label>
+                  <Field
+                    as="select"
+                    id="meta.gst_type"
+                    name="meta.gst_type"
+                    className={inputClass}
+                  >
+                    <option value="unregistered">Unregistered</option>
+                    <option value="registered">Registered</option>
+                    <option value="composite">Composite</option>
+                  </Field>
+                </div>
+
+                {/* Party Category */}
+                <div>
+                  <label htmlFor="meta.party_category" className={labelClass}>Category</label>
+                  <Field
+                    as="select"
+                    id="meta.party_category"
+                    name="meta.party_category"
+                    className={inputClass}
+                  >
+                    <option value="consumer">End Consumer</option>
+                    <option value="retailer">Retailer</option>
+                    <option value="wholesaler">Wholesaler</option>
+                    <option value="distributor">Distributor</option>
+                  </Field>
+                </div>
+
+                {/* Credit Limit */}
+                <div>
+                  <label htmlFor="meta.credit_limit" className={labelClass}>Credit Limit (₹)</label>
+                  <Field
+                    id="meta.credit_limit"
+                    name="meta.credit_limit"
+                    type="number"
+                    className={inputClass}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Credit Days */}
+                <div>
+                  <label htmlFor="meta.credit_days" className={labelClass}>Credit Days</label>
+                  <Field
+                    id="meta.credit_days"
+                    name="meta.credit_days"
+                    type="number"
+                    className={inputClass}
+                    placeholder="0"
+                  />
                 </div>
 
                 {/* Address */}
