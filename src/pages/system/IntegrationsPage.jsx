@@ -6,8 +6,9 @@ import {
 } from '@heroicons/react/24/outline';
 import {
   getNotificationLogs, getApiKeys, createApiKey, deleteApiKey,
-  exportData, importData
+  exportData, importData, sendInvoiceNotification
 } from '../../api/integrations';
+import { toast } from 'react-toastify';
 
 export default function IntegrationsPage() {
   const queryClient = useQueryClient();
@@ -17,6 +18,8 @@ export default function IntegrationsPage() {
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
+  const [sendForm, setSendForm] = useState({ channel: 'email', recipient: '', subject: '', body: '' });
+  const [sending, setSending] = useState(false);
 
   const { data: logs } = useQuery({ queryKey: ['notification-logs'], queryFn: () => getNotificationLogs().then(r => r.data) });
   const { data: apiKeys } = useQuery({ queryKey: ['api-keys'], queryFn: () => getApiKeys().then(r => r.data) });
@@ -143,6 +146,74 @@ export default function IntegrationsPage() {
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
         <div className="space-y-6">
+          {/* Send Notification Form */}
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Send Notification</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-400 uppercase">Channel</label>
+                <select
+                  value={sendForm.channel}
+                  onChange={(e) => setSendForm(p => ({ ...p, channel: e.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-500/40"
+                >
+                  <option value="email" className="bg-[#111]">📧 Email</option>
+                  <option value="whatsapp" className="bg-[#111]">💬 WhatsApp</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-400 uppercase">Recipient</label>
+                <input
+                  type="text"
+                  value={sendForm.recipient}
+                  onChange={(e) => setSendForm(p => ({ ...p, recipient: e.target.value }))}
+                  placeholder={sendForm.channel === 'email' ? 'customer@example.com' : '919876543210'}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500/40"
+                />
+              </div>
+            </div>
+            {sendForm.channel === 'email' && (
+              <div className="space-y-2 mb-4">
+                <label className="text-xs font-medium text-gray-400 uppercase">Subject</label>
+                <input
+                  type="text"
+                  value={sendForm.subject}
+                  onChange={(e) => setSendForm(p => ({ ...p, subject: e.target.value }))}
+                  placeholder="Invoice #123 - Payment Reminder"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500/40"
+                />
+              </div>
+            )}
+            <div className="space-y-2 mb-4">
+              <label className="text-xs font-medium text-gray-400 uppercase">Message</label>
+              <textarea
+                value={sendForm.body}
+                onChange={(e) => setSendForm(p => ({ ...p, body: e.target.value }))}
+                rows={3}
+                placeholder="Type your message..."
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500/40 resize-none"
+              />
+            </div>
+            <button
+              onClick={async () => {
+                if (!sendForm.recipient || !sendForm.body) { toast.warning('Recipient and message are required'); return; }
+                setSending(true);
+                try {
+                  await sendInvoiceNotification(sendForm);
+                  toast.success(`${sendForm.channel === 'email' ? 'Email' : 'WhatsApp'} sent to ${sendForm.recipient}`);
+                  queryClient.invalidateQueries(['notification-logs']);
+                  setSendForm({ channel: sendForm.channel, recipient: '', subject: '', body: '' });
+                } catch (e) { toast.error('Failed to send notification'); }
+                setSending(false);
+              }}
+              disabled={sending || !sendForm.recipient || !sendForm.body}
+              className="px-6 py-2.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-xl font-medium hover:bg-cyan-500/20 transition-colors disabled:opacity-30 flex items-center gap-2"
+            >
+              {sending ? 'Sending...' : 'Send Notification'}
+            </button>
+          </div>
+
+          {/* Notification History */}
           <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
             <h2 className="text-lg font-semibold text-white mb-1">Notification History</h2>
             <p className="text-sm text-gray-500 mb-4">All emails and WhatsApp messages sent from the system.</p>

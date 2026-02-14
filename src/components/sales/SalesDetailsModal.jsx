@@ -11,7 +11,11 @@ import {
   ArrowDownTrayIcon, 
   PaintBrushIcon,
   Cog6ToothIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftIcon
 } from "@heroicons/react/24/outline";
+import { toast } from 'react-toastify';
+import { sendInvoiceNotification } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
 import { getActiveTemplate, amountInWords } from "../../utils/invoiceSettings";
@@ -146,6 +150,43 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
                 PDF
+              </button>
+
+              <button
+                onClick={async () => {
+                  const email = invoiceDetails?.customer_email || invoiceDetails?.customer_details?.email;
+                  if (!email) { toast.warning('No email found for this customer'); return; }
+                  try {
+                    await sendInvoiceNotification({
+                      channel: 'email', recipient: email,
+                      subject: `Invoice ${invoiceDetails.invoice_number} from ${businessInfo.business_name || 'Cenvora'}`,
+                      body: `Dear ${invoiceDetails.customer_name},\n\nYour invoice ${invoiceDetails.invoice_number} for ₹${invoiceDetails.total_amount} is ready.\n\nThank you for your business!`
+                    });
+                    toast.success(`Invoice sent to ${email}`);
+                  } catch (e) { toast.error('Failed to send email'); }
+                }}
+                className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <EnvelopeIcon className="w-4 h-4" />
+                Email
+              </button>
+
+              <button
+                onClick={async () => {
+                  const phone = invoiceDetails?.customer_phone || invoiceDetails?.customer_details?.phone;
+                  if (!phone) { toast.warning('No phone number found for this customer'); return; }
+                  try {
+                    await sendInvoiceNotification({
+                      channel: 'whatsapp', recipient: phone,
+                      body: `Hi ${invoiceDetails.customer_name}, your invoice ${invoiceDetails.invoice_number} for ₹${invoiceDetails.total_amount} is ready. Thank you!`
+                    });
+                    toast.success(`WhatsApp sent to ${phone}`);
+                  } catch (e) { toast.error('Failed to send WhatsApp'); }
+                }}
+                className="px-3 py-2 bg-green-600/20 text-green-300 hover:bg-green-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <ChatBubbleLeftIcon className="w-4 h-4" />
+                WhatsApp
               </button>
               
               <button
