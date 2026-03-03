@@ -492,7 +492,7 @@ export default function ChartOfAccounts() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
-                        {account.balance !== undefined ? `$${Number(account.balance).toLocaleString()}` : '-'}
+                        {account.balance !== undefined ? `₹${Number(account.balance).toLocaleString('en-IN')}` : '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

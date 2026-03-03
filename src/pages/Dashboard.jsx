@@ -101,19 +101,19 @@ export default function Dashboard({ onLogout }) {
   const cardData = [
     {
       label: 'Total Sales',
-      value: metrics?.total_sales ?? '--',
+      value: metrics?.total_sales != null ? `₹${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
       color: 'text-cyan-400'
     },
     {
       label: 'Total Purchases',
-      value: metrics?.total_purchases ?? '--',
+      value: metrics?.total_purchases != null ? `₹${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
       icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
       color: 'text-purple-400'
     },
     {
       label: 'Inventory Value',
-      value: metrics?.total_inventory_value ?? '--',
+      value: metrics?.total_inventory_value != null ? `₹${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
       icon: <CubeIcon className="w-6 h-6 text-blue-400" />,
       color: 'text-blue-400'
     },
