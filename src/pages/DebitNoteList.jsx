@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import Layout from "../components/Layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDebitNotes, deleteDebitNote } from "../api/gst";
-import { ArrowUturnRightIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowUturnRightIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

@@ -27,10 +27,10 @@ export const getProducts = () =>
 
 // Customer API endpoints for sales form
 export const getCustomers = () =>
-  api.get("/customers/").then(res => res.data);
+  api.get("/billing/customers/").then(res => res.data);
 
 export const createCustomer = (data) =>
-  api.post("/customers/", data).then(res => res.data);
+  api.post("/billing/customers/", data).then(res => res.data);
 
 export const updateCustomer = (id, data) =>
-  api.put(`/customers/${id}/`, data).then(res => res.data);
+  api.put(`/billing/customers/${id}/`, data).then(res => res.data);

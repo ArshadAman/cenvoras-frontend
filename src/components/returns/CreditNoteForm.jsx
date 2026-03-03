@@ -30,8 +30,12 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     enabled: !!selectedCustomer,
   });
 
+  // Check for paginated vs unpaginated results
+  const customerList = Array.isArray(customers) ? customers : customers?.results || [];
+  const invoiceList = Array.isArray(invoices) ? invoices : invoices?.results || [];
+
   // Selected Invoice Details
-  const selectedInvoice = invoices?.results?.find(inv => inv.id === selectedInvoiceId);
+  const selectedInvoice = invoiceList.find(inv => inv.id === selectedInvoiceId);
 
   useEffect(() => {
     if (selectedInvoice) {
@@ -126,7 +130,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     required
                   >
                     <option value="">Select Customer</option>
-                    {customers?.results?.map(c => (
+                    {customerList.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
@@ -141,7 +145,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     required
                   >
                     <option value="">Select Invoice</option>
-                    {invoices?.results?.map(inv => (
+                    {invoiceList.map(inv => (
                       <option key={inv.id} value={inv.id}>{inv.invoice_number} ({inv.invoice_date})</option>
                     ))}
                   </select>

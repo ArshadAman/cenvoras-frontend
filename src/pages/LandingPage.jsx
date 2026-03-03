@@ -130,9 +130,8 @@ export default function LandingPage() {
       {/* 1. Floating Pill Navbar */}
       <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
         <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
-          <Link to="/" className="text-lg font-bold tracking-tight text-white hover:opacity-80 transition-opacity flex items-center gap-2">
-            <img src="/cenvora-logo-background-removed.png" alt="Cenvora Logo" className="w-8 h-8 object-contain" />
-            Cenvora
+          <Link to="/" className="hover:opacity-80 transition-opacity flex items-center">
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
           </Link>
           
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
@@ -334,10 +333,9 @@ export default function LandingPage() {
       <footer className="bg-black py-16 border-t border-white/5 relative z-10">
         <div className="max-w-[980px] mx-auto px-6">
            <div className="flex flex-col md:flex-row justify-between items-center mb-12">
-              <div className="flex items-center gap-2 mb-4 md:mb-0">
-                  <img src="/cenvora-logo-background-removed.png" alt="Cenvora Logo" className="w-8 h-8 object-contain" />
-                  <div className="text-2xl font-bold tracking-tight text-white">Cenvora</div>
-              </div>
+              <Link to="/" className="flex items-center mb-4 md:mb-0 hover:opacity-80 transition-opacity">
+                  <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+              </Link>
               <div className="flex gap-8 text-sm text-gray-400">
                  <a href="#" className="hover:text-white transition-colors">Twitter</a>
                  <a href="#" className="hover:text-white transition-colors">GitHub</a>

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSuppliers } from "../../api/inventory"; // Assuming getSuppliers exists
-import { getPurchaseBills } from "../../api/purchase"; // Assuming getPurchaseBills exists
+
+import { getProducts } from "../../api/inventory";
 import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
@@ -10,38 +10,62 @@ import { toast } from "react-toastify";
 export default function DebitNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
-  const [selectedVendor, setSelectedVendor] = useState("");
-  const [selectedBillId, setSelectedBillId] = useState("");
+  const [vendorName, setVendorName] = useState("");
+  const [vendorGstin, setVendorGstin] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [returnQty, setReturnQty] = useState(1);
+  const [price, setPrice] = useState(0);
+
   const [reason, setReason] = useState("return");
   const [notes, setNotes] = useState("");
   const [returnItems, setReturnItems] = useState([]);
 
-  // Fetch Vendors
-  const { data: vendors } = useQuery({
-    queryKey: ["suppliers"],
-    queryFn: getSuppliers,
+  // Fetch Products instead of Bills
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
     enabled: isOpen && step === 1,
   });
 
-  // Fetch Bills for Vendor
-  const { data: bills } = useQuery({
-    queryKey: ["purchase-bills", selectedVendor],
-    queryFn: () => getPurchaseBills({ vendor: selectedVendor }),
-    enabled: !!selectedVendor,
-  });
+  const productList = Array.isArray(products) ? products : products?.results || [];
 
-  // Selected Bill Details
-  const selectedBill = bills?.results?.find(b => b.id === selectedBillId);
-
-  useEffect(() => {
-    if (selectedBill) {
-      setReturnItems(selectedBill.items.map(item => ({
-        ...item,
-        return_qty: 0,
-        original_qty: item.quantity, 
-      })));
+  const handleAddProduct = () => {
+    if (!selectedProductId) {
+      toast.error("Please select a product");
+      return;
     }
-  }, [selectedBill]);
+    const product = productList.find(p => p.id === selectedProductId);
+    if (!product) return;
+    
+    const existingIndex = returnItems.findIndex(item => item.product_id === product.id);
+    if (existingIndex >= 0) {
+      const newItems = [...returnItems];
+      newItems[existingIndex].return_qty += parseFloat(returnQty);
+      newItems[existingIndex].amount = newItems[existingIndex].price * newItems[existingIndex].return_qty;
+      setReturnItems(newItems);
+    } else {
+      const itemPrice = parseFloat(price) || parseFloat(product.price || 0);
+      setReturnItems([...returnItems, {
+        product_id: product.id,
+        product_name: product.name,
+        hsn_sac_code: product.hsn_sac_code,
+        unit: product.unit,
+        price: itemPrice,
+        return_qty: parseFloat(returnQty),
+        discount: 0,
+        tax: product.tax || 0,
+        amount: itemPrice * parseFloat(returnQty)
+      }]);
+    }
+    
+    setSelectedProductId("");
+    setReturnQty(1);
+    setPrice(0);
+  };
+
+  const handleRemoveProduct = (index) => {
+    setReturnItems(returnItems.filter((_, i) => i !== index));
+  };
 
   const createMutation = useMutation({
     mutationFn: createDebitNote,
@@ -59,32 +83,32 @@ export default function DebitNoteForm({ isOpen, onClose }) {
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
       .map(item => ({
-        product: item.product_id || item.product,
-        batch: item.batch_id || item.batch,
+        product: item.product_id,
+        batch: null, // Default batch to null as there's no original bill
         hsn_sac_code: item.hsn_sac_code,
         quantity: parseFloat(item.return_qty),
         unit: item.unit,
         price: parseFloat(item.price),
         discount: parseFloat(item.discount || 0),
         tax: parseFloat(item.tax || 0),
-        amount: (parseFloat(item.price) * parseFloat(item.return_qty))
+        amount: parseFloat(item.amount)
       }));
 
     if (itemsToReturn.length === 0) {
-      toast.error("Please select at least one item to return");
+      toast.error("Please add at least one product to return");
       return;
     }
 
     const payload = {
       date: new Date().toISOString().split('T')[0],
-      original_bill: selectedBillId,
-      vendor_name: selectedBill.vendor_name, // Assuming backend handles linking via bill ID or name
-      vendor_gstin: selectedBill.vendor_gstin,
+      original_bill: null,
+      vendor_name: vendorName,
+      vendor_gstin: vendorGstin,
       reason,
       notes,
       items: itemsToReturn,
       total_amount: itemsToReturn.reduce((sum, item) => sum + item.amount, 0),
-      warehouse: selectedBill.warehouse
+      warehouse: null
     };
 
     createMutation.mutate(payload);
@@ -92,8 +116,11 @@ export default function DebitNoteForm({ isOpen, onClose }) {
 
   const handleClose = () => {
     setStep(1);
-    setSelectedVendor("");
-    setSelectedBillId("");
+    setVendorName("");
+    setVendorGstin("");
+    setSelectedProductId("");
+    setReturnQty(1);
+    setPrice(0);
     setReturnItems([]);
     setNotes("");
     onClose();
@@ -115,36 +142,27 @@ export default function DebitNoteForm({ isOpen, onClose }) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Step 1: Select Vendor & Bill */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Vendor</label>
-                  <select 
-                    value={selectedVendor}
-                    onChange={(e) => { setSelectedVendor(e.target.value); setSelectedBillId(""); }}
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Vendor Name (Free Text)</label>
+                  <input
+                    type="text"
+                    value={vendorName}
+                    onChange={(e) => setVendorName(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    placeholder="Enter Vendor Name"
                     required
-                  >
-                    <option value="">Select Vendor</option>
-                    {vendors?.results?.map(v => (
-                      <option key={v.id} value={v.id}>{v.name}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Original Bill</label>
-                  <select 
-                    value={selectedBillId}
-                    onChange={(e) => setSelectedBillId(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                    disabled={!selectedVendor}
-                    required
-                  >
-                    <option value="">Select Bill</option>
-                    {bills?.results?.map(b => (
-                      <option key={b.id} value={b.id}>{b.bill_number} ({b.date})</option>
-                    ))}
-                  </select>
+                   <label className="block text-sm font-medium text-gray-400 mb-1">Vendor GSTIN (Optional)</label>
+                   <input
+                     type="text"
+                     value={vendorGstin}
+                     onChange={(e) => setVendorGstin(e.target.value)}
+                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                     placeholder="Enter GSTIN"
+                   />
                 </div>
               </div>
 
@@ -176,45 +194,98 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* Step 3: Items Table */}
-              {selectedBill && (
-                <div className="border border-white/10 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-white/5 text-gray-400">
-                      <tr>
-                        <th className="p-3">Product</th>
-                        <th className="p-3 text-right">Billed Qty</th>
-                        <th className="p-3 text-right">Price</th>
-                        <th className="p-3 text-right w-32">Return Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {returnItems.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="p-3 text-white">{item.product_name}</td>
-                          <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
-                          <td className="p-3 text-right text-gray-400">₹{item.price}</td>
-                          <td className="p-3">
-                            <input 
-                              type="number"
-                              min="0"
-                              max={item.original_qty}
-                              value={item.return_qty}
-                              onChange={(e) => {
-                                const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
-                                const newItems = [...returnItems];
-                                newItems[idx].return_qty = newQty;
-                                setReturnItems(newItems);
-                              }}
-                              className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
-                            />
-                          </td>
-                        </tr>
+              {/* Step 3: Add Items */}
+              <div className="border border-white/10 rounded-lg p-4 space-y-4">
+                <h4 className="text-sm font-medium text-gray-300">Return Items</h4>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-400 mb-1">Product</label>
+                    <select 
+                      value={selectedProductId}
+                      onChange={(e) => setSelectedProductId(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
+                    >
+                      <option value="">Select Product...</option>
+                      {productList.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
                       ))}
-                    </tbody>
-                  </table>
+                    </select>
+                  </div>
+                  <div className="w-24">
+                    <label className="block text-xs text-gray-400 mb-1">Price</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      step="0.01"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <div className="w-24">
+                    <label className="block text-xs text-gray-400 mb-1">Qty</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={returnQty}
+                      onChange={(e) => setReturnQty(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleAddProduct}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm transition-colors"
+                  >
+                    Add
+                  </button>
                 </div>
-              )}
+
+                {returnItems.length > 0 && (
+                  <div className="mt-4 border border-white/10 rounded-lg overflow-hidden">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-white/5 text-gray-400">
+                        <tr>
+                          <th className="p-3">Product</th>
+                          <th className="p-3 text-right">Price</th>
+                          <th className="p-3 text-right w-32">Return Qty</th>
+                          <th className="p-3 text-right w-24">Total</th>
+                          <th className="p-3 text-center w-12"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {returnItems.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="p-3 text-white">{item.product_name}</td>
+                            <td className="p-3 text-right text-gray-400">₹{item.price}</td>
+                            <td className="p-3">
+                              <input 
+                                type="number"
+                                min="1"
+                                value={item.return_qty}
+                                onChange={(e) => {
+                                  const newQty = Math.max(parseFloat(e.target.value) || 1, 1);
+                                  const newItems = [...returnItems];
+                                  newItems[idx].return_qty = newQty;
+                                  newItems[idx].amount = newItems[idx].price * newQty;
+                                  setReturnItems(newItems);
+                                }}
+                                className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
+                              />
+                            </td>
+                            <td className="p-3 text-right text-white">₹{item.amount.toFixed(2)}</td>
+                            <td className="p-3 text-center">
+                              <button type="button" onClick={() => handleRemoveProduct(idx)} className="text-red-400 hover:text-red-300">
+                                <XMarkIcon className="w-4 h-4 mx-auto" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
 
               <div className="flex justify-end gap-3 mt-6">
                 <button
@@ -226,7 +297,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={createMutation.isPending || !selectedBillId}
+                  disabled={createMutation.isPending || returnItems.length === 0 || !vendorName}
                   className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create Debit Note'}

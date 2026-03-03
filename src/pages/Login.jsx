@@ -32,10 +32,9 @@ export default function Login({ onLogin }) {
         </div>
 
         {/* Brand Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-            <img src="/cenvora-logo-background-removed.png" alt="Cenvora Logo" className="w-12 h-12 object-contain" />
-            <span className="text-2xl font-bold text-white tracking-tight">Cenvora</span>
-        </div>
+        <Link to="/" className="relative z-10 flex items-center hover:opacity-90 transition-opacity">
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-14 w-auto object-contain" />
+        </Link>
 
         {/* Testimonial / Value Prop */}
         <div className="relative z-10 max-w-lg">
@@ -64,9 +63,8 @@ export default function Login({ onLogin }) {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-[#0f172a] relative">
         {/* Mobile Navbar (Only visible on mobile) */}
         <nav className="absolute top-0 left-0 w-full p-6 lg:hidden flex justify-between items-center z-20">
-            <Link to="/" className="flex items-center gap-2">
-                <img src="/cenvora-logo-background-removed.png" alt="Cenvora Logo" className="w-8 h-8 object-contain" />
-                <span className="text-xl font-bold text-white tracking-tight">Cenvora</span>
+            <Link to="/" className="flex items-center">
+                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
             </Link>
         </nav>
 
