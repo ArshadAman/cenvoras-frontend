@@ -6,7 +6,8 @@ import ProductDetailsModal from "../components/inventory/ProductDetailsModal";
 import ProductDeleteDialog from "../components/inventory/ProductDeleteDialog";
 import StockAdjustmentModal from "../components/inventory/StockAdjustmentModal";
 import StockTransfer from "../components/inventory/StockTransfer";
-import { CubeIcon, PlusIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
+import BatchSplitModal from "../components/inventory/BatchSplitModal";
+import { CubeIcon, PlusIcon, ArrowsRightLeftIcon, ScissorsIcon } from '@heroicons/react/24/outline';
 
 export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);
@@ -15,6 +16,7 @@ export default function Inventory() {
   const [productToDelete, setProductToDelete] = useState(null);
   const [showStockAdjustment, setShowStockAdjustment] = useState(false);
   const [showStockTransfer, setShowStockTransfer] = useState(false);
+  const [showBatchSplit, setShowBatchSplit] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
   const handleAddProduct = () => {
@@ -46,6 +48,7 @@ export default function Inventory() {
     setShowProductDetails(false);
     setProductToDelete(null);
     setShowStockAdjustment(false);
+    setShowBatchSplit(false);
     setSelectedProduct(null);
     setEditingProduct(null);
   };
@@ -64,6 +67,13 @@ export default function Inventory() {
           </div>
           
           <div className="flex gap-3">
+            <button
+              onClick={() => setShowBatchSplit(true)}
+              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 text-gray-300 shadow-sm hover:bg-white/10 transition-colors flex items-center gap-2"
+            >
+              <ScissorsIcon className="h-4 w-4" />
+              <span>Split Batch</span>
+            </button>
             <button
               disabled
               className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 text-gray-500 shadow-sm cursor-not-allowed opacity-60 relative"
@@ -135,6 +145,12 @@ export default function Inventory() {
       {showStockTransfer && (
         <StockTransfer
           onClose={() => setShowStockTransfer(false)}
+        />
+      )}
+
+      {showBatchSplit && (
+        <BatchSplitModal
+          onClose={() => setShowBatchSplit(false)}
         />
       )}
     </Layout>

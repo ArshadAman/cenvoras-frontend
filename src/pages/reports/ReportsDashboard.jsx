@@ -5,7 +5,12 @@ import {
   ChartBarIcon, 
   PresentationChartLineIcon, 
   ClockIcon, 
-  DocumentTextIcon 
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  ReceiptPercentIcon,
+  ScaleIcon,
+  BanknotesIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline';
 
 export default function ReportsDashboard() {
@@ -27,6 +32,38 @@ export default function ReportsDashboard() {
       bg: "bg-green-500/10"
     },
     {
+      title: "P&L Statement",
+      description: "Full income statement — Revenue vs Expenses = Net Profit.",
+      icon: BanknotesIcon,
+      link: "/reports/profit-loss-statement",
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/10"
+    },
+    {
+      title: "Balance Sheet",
+      description: "Assets = Liabilities + Equity. Financial position at a point in time.",
+      icon: ScaleIcon,
+      link: "/reports/balance-sheet",
+      color: "text-indigo-400",
+      bg: "bg-indigo-500/10"
+    },
+    {
+      title: "Tax Register",
+      description: "Invoice-wise CGST/SGST/IGST breakup, HSN summary, and GSTR-1 export.",
+      icon: TableCellsIcon,
+      link: "/reports/tax-register",
+      color: "text-purple-400",
+      bg: "bg-purple-500/10"
+    },
+    {
+      title: "GST Compliance",
+      description: "HSN summary, GSTR-1 filing, E-Invoice, and E-Way Bill generation.",
+      icon: ReceiptPercentIcon,
+      link: "/gst",
+      color: "text-amber-400",
+      bg: "bg-amber-500/10"
+    },
+    {
       title: "Expiry Stock",
       description: "List of batches expiring soon or already expired.",
       icon: ClockIcon,
@@ -34,16 +71,22 @@ export default function ReportsDashboard() {
       color: "text-red-400",
       bg: "bg-red-500/10"
     },
-    // Future Reports
     {
-      title: "GSTR-1 Summary",
-      description: "Sales summary for GST filing (Coming Soon).",
+      title: "Shortage Management",
+      description: "Products below their low-stock alert threshold.",
+      icon: ExclamationTriangleIcon,
+      link: "/reports/shortage",
+      color: "text-orange-400",
+      bg: "bg-orange-500/10"
+    },
+    {
+      title: "Stock Ledger",
+      description: "Item-wise cardex showing chronological inbound/outbound transactions.",
       icon: DocumentTextIcon,
-      link: "#",
-      color: "text-gray-400",
-      bg: "bg-gray-500/10",
-      disabled: true
-    }
+      link: "/reports/stock-ledger",
+      color: "text-cyan-400",
+      bg: "bg-cyan-500/10"
+    },
   ];
 
   return (
@@ -56,10 +99,10 @@ export default function ReportsDashboard() {
           {reports.map((report, index) => (
             <Link 
               key={index} 
-              to={report.disabled ? '#' : report.link}
-              className={`bento-card p-6 flex items-start gap-4 transition-all duration-300 ${report.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] hover:bg-white/5'}`}
+              to={report.link}
+              className="bento-card p-6 flex items-start gap-4 transition-all duration-300 hover:scale-[1.02] hover:bg-white/5"
             >
-              <div className={`p-3 rounded-xl ${report.bg}`}>
+              <div className={`p-3 rounded-xl ${report.bg} shrink-0`}>
                 <report.icon className={`w-8 h-8 ${report.color}`} />
               </div>
               <div>

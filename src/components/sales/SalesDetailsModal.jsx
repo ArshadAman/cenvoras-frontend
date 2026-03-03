@@ -172,21 +172,17 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               </button>
 
               <button
-                onClick={async () => {
-                  const phone = invoiceDetails?.customer_phone || invoiceDetails?.customer_details?.phone;
-                  if (!phone) { toast.warning('No phone number found for this customer'); return; }
-                  try {
-                    await sendInvoiceNotification({
-                      channel: 'whatsapp', recipient: phone,
-                      body: `Hi ${invoiceDetails.customer_name}, your invoice ${invoiceDetails.invoice_number} for ₹${invoiceDetails.total_amount} is ready. Thank you!`
-                    });
-                    toast.success(`WhatsApp sent to ${phone}`);
-                  } catch (e) { toast.error('Failed to send WhatsApp'); }
-                }}
-                className="px-3 py-2 bg-green-600/20 text-green-300 hover:bg-green-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                onClick={(e) => { e.preventDefault(); toast.info('WhatsApp integration is coming soon!'); }}
+                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden"
               >
-                <ChatBubbleLeftIcon className="w-4 h-4" />
-                WhatsApp
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
+                <span className="opacity-90">WhatsApp</span>
+                
+                {/* Coming Soon Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[10px] uppercase tracking-wider text-green-400/90 rounded-lg border border-green-500/30">
+                  Coming Soon
+                </div>
               </button>
               
               <button

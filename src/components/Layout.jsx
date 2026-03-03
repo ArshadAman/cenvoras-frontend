@@ -14,7 +14,11 @@ import {
   BeakerIcon,
   ClipboardDocumentListIcon,
   DocumentTextIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
+  ReceiptPercentIcon,
+  BuildingLibraryIcon
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 
@@ -30,18 +34,24 @@ export default function Layout({ children, onLogout }) {
     { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
     { path: "/delivery-challans", label: "Delivery Challans", icon: CubeIcon, roles: [] },
     { path: "/purchase", label: "Purchases", icon: ShoppingBagIcon, roles: [] },
+    { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
+    { path: "/debit-notes", label: "Debit Notes", icon: ArrowUturnRightIcon, roles: [] },
     { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
     { path: "/boms", label: "Bill of Materials", icon: BeakerIcon, roles: [] },
     { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
+    { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [] },
     { path: "/customers", label: "Customers", icon: UsersIcon, roles: [] },
     { path: "/inventory/price-lists", label: "Price Lists", icon: BanknotesIcon, roles: [] },
     { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
+    { path: "/gst", label: "GST Compliance", icon: ReceiptPercentIcon, roles: [] },
     { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
     { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
     { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [] },
     { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
+    { path: "/bank-reconciliation", label: "Bank Reconciliation", icon: BuildingLibraryIcon, roles: [] },
     { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
   ];
+
 
   const navItems = allNavItems.filter(item => {
     if (!item.roles) {
@@ -66,7 +76,7 @@ export default function Layout({ children, onLogout }) {
         {/* Logo Area */}
         <div className="h-20 flex items-center px-6 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-purple-500 rounded-lg shadow-lg shadow-purple-500/20"></div>
+            <img src="/cenvora-logo-background-removed.png" alt="Cenvora Logo" className="w-8 h-8" />
             <span className="text-xl font-bold tracking-tight">Cenvora</span>
           </div>
         </div>
@@ -121,8 +131,8 @@ export default function Layout({ children, onLogout }) {
           </button>
           
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-tr from-cyan-400 to-purple-500 rounded-lg"></div>
-            <span className="text-lg font-bold">Cenvora</span>
+            <img src="/cenvora-logo-background-removed.png" alt="Cenvora Logo" className="w-8 h-8" />
+            <span className="text-xl font-bold tracking-tight">Cenvora</span>
           </div>
           
           <div className="w-10"></div> {/* Spacer */}

@@ -133,7 +133,10 @@ const PurchaseSchema = Yup.object().shape({
   due_date: Yup.string().nullable(),
   vendor_name: Yup.string().required().min(1).max(255),
   vendor_address: Yup.string().nullable(),
-  vendor_gstin: Yup.string().nullable().max(15),
+  vendor_gstin: Yup.string()
+    .nullable()
+    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format")
+    .max(15, "GSTIN must be less than 15 characters"),
   gst_treatment: Yup.string().nullable().max(50),
   journal: Yup.string().required().min(1).max(50),
   total_amount: Yup.number().required(),

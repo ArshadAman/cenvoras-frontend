@@ -59,6 +59,9 @@ export const createStockAdjustment = (data) =>
 export const getWarehouses = () =>
   api.get("/inventory/warehouses/").then(res => res.data);
 
+export const createWarehouse = (data) =>
+  api.post("/inventory/warehouses/", data).then(res => res.data);
+
 export const getProductBatches = (params) =>
   api.get("/inventory/batches/", { params }).then(res => res.data);
 

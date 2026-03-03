@@ -15,6 +15,9 @@ export default function ProfitLossReport() {
     queryFn: () => getProfitLoss(startDate, endDate),
   });
 
+  const results = data?.results || [];
+  const summary = data?.summary || {};
+
   return (
     <Layout>
       <div className="p-6 md:p-10 animate-fade-up">
@@ -45,16 +48,20 @@ export default function ProfitLossReport() {
                     />
                  </div>
                  
-                 {data && (
+                 {summary.total_revenue !== undefined && (
                     <div className="flex gap-4">
                         <div className="text-right px-4 border-r border-white/10">
-                            <p className="text-xs text-gray-400 uppercase font-bold">Total Revenue</p>
-                            <p className="text-xl font-bold text-white">₹{Number(data.total_revenue).toLocaleString('en-IN')}</p>
+                            <p className="text-xs text-gray-400 uppercase font-bold">Revenue</p>
+                            <p className="text-xl font-bold text-white">₹{Number(summary.total_revenue).toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="text-right px-4 border-r border-white/10">
+                            <p className="text-xs text-gray-400 uppercase font-bold">COGS</p>
+                            <p className="text-xl font-bold text-gray-400">₹{Number(summary.total_cost).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="text-right px-4">
-                            <p className="text-xs text-gray-400 uppercase font-bold">Total Profit</p>
-                            <p className={`text-xl font-bold ${data.total_profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                ₹{Number(data.total_profit).toLocaleString('en-IN')}
+                            <p className="text-xs text-gray-400 uppercase font-bold">Profit ({summary.overall_margin_pct}%)</p>
+                            <p className={`text-xl font-bold ${summary.total_profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                ₹{Number(summary.total_profit).toLocaleString('en-IN')}
                             </p>
                         </div>
                     </div>
@@ -78,19 +85,21 @@ export default function ProfitLossReport() {
               <tbody>
                 {isLoading ? (
                   <tr><td colSpan="6" className="p-8 text-center text-gray-500">Loading financial data...</td></tr>
-                ) : data?.items?.length === 0 ? (
+                ) : results.length === 0 ? (
                   <tr><td colSpan="6" className="p-8 text-center text-gray-500">No sales found in this period.</td></tr>
                 ) : (
-                  data?.items?.map((item, idx) => (
+                  results.map((item, idx) => (
                     <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="p-4 text-sm text-white font-medium">{item.name}</td>
-                      <td className="p-4 text-sm text-gray-300 text-right">{item.qty_sold}</td>
-                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.revenue).toFixed(2)}</td>
-                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.cogs).toFixed(2)}</td>
-                      <td className={`p-4 text-sm font-bold text-right ${item.gross_profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        ₹{Number(item.gross_profit).toFixed(2)}
+                      <td className="p-4 text-sm text-white font-medium">{item.product_name}</td>
+                      <td className="p-4 text-sm text-gray-300 text-right">{item.qty_sold} {item.unit}</td>
+                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.revenue).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.cost).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className={`p-4 text-sm font-bold text-right ${item.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        ₹{Number(item.profit).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                       </td>
-                      <td className="p-4 text-sm text-white text-right">{item.margin_percent}%</td>
+                      <td className={`p-4 text-sm font-medium text-right ${item.margin_pct >= 20 ? 'text-green-400' : item.margin_pct >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {item.margin_pct}%
+                      </td>
                     </tr>
                   ))
                 )}

@@ -18,6 +18,7 @@ const customerSchema = Yup.object().shape({
   phone: Yup.string()
     .max(20, "Phone number must be less than 20 characters"),
   gstin: Yup.string()
+    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format")
     .max(15, "GSTIN must be less than 15 characters"),
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
@@ -58,7 +59,10 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
   const handleSubmit = (values) => {
     // Clean up empty values
     const cleanValues = Object.fromEntries(
-      Object.entries(values).filter(([_, value]) => value && value.trim() !== "")
+      Object.entries(values).filter(([_, value]) => {
+        if (typeof value === 'string') return value.trim() !== "";
+        return value !== null && value !== undefined;
+      })
     );
 
     if (isEdit) {

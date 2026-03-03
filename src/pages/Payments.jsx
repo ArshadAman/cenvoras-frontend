@@ -113,7 +113,7 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
       />
       
       {/* Modal Content */}
-      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <BanknotesIcon className="w-6 h-6 text-green-400" />
@@ -134,9 +134,9 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
               onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
               className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
             >
-              <option value="">Select customer...</option>
+              <option value="" className="bg-gray-900 text-white">Select customer...</option>
               {customers?.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} className="bg-gray-900 text-white">
                   {c.name} {c.current_balance > 0 ? `(₹${c.current_balance} due)` : ''}
                 </option>
               ))}
