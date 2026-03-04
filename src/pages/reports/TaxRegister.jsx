@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getTaxRegister, getHSNSummary, getGSTR1Export, generateEInvoice, generateEWayBill } from "../../api/gst";
-import { ArrowDownTrayIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -59,6 +60,10 @@ export default function TaxRegister() {
   return (
     <Layout>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
+        <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
+          <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
+          <ChartBarIcon className="w-3.5 h-3.5" /> Back to Reports
+        </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-1">GST Tax Register</h1>
           <p className="text-gray-400 text-sm">Invoice-wise GST breakup, HSN summary, and GSTR-1 export.</p>

@@ -7,6 +7,8 @@ import {
   ArrowDownTrayIcon,
   QrCodeIcon,
   TruckIcon,
+  ArrowLeftIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 export default function GSTDashboard() {
@@ -56,6 +58,10 @@ export default function GSTDashboard() {
   return (
     <Layout>
       <div className="p-6 md:p-10 animate-fade-up">
+        <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group mb-6">
+          <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
+          <ChartBarIcon className="w-3.5 h-3.5" /> Back to Reports
+        </Link>
         <h1 className="text-3xl font-bold tracking-tight text-white mb-2">GST Compliance</h1>
         <p className="text-gray-400 mb-8">Manage GST returns, tax registers, e-invoicing, and e-way bills.</p>
 

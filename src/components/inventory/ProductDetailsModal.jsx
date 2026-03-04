@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getProduct } from "../../api/inventory";
+import { getProduct, getProductBatches } from "../../api/inventory";
 
 export default function ProductDetailsModal({ productId, onClose }) {
   const { data, isLoading } = useQuery({
@@ -9,7 +9,14 @@ export default function ProductDetailsModal({ productId, onClose }) {
     enabled: !!productId,
   });
 
+  const { data: batchesData, isLoading: isLoadingBatches } = useQuery({
+    queryKey: ["productBatches", productId],
+    queryFn: () => getProductBatches({ product: productId }),
+    enabled: !!productId,
+  });
+
   const product = data?.data || data?.result || data || {};
+  const batches = Array.isArray(batchesData) ? batchesData : batchesData?.results || [];
 
   if (!productId) return null;
 
@@ -198,6 +205,63 @@ export default function ProductDetailsModal({ productId, onClose }) {
                   </div>
                 </div>
               )}
+
+              {/* Batch History Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-700 mb-3 block">Batch History & Stock</h3>
+                {isLoadingBatches ? (
+                  <div className="bg-gray-50 p-4 rounded-lg flex justify-center">
+                    <div className="animate-pulse flex space-x-4">
+                      <div className="h-4 bg-gray-300 rounded w-24"></div>
+                    </div>
+                  </div>
+                ) : batches.length > 0 ? (
+                  <div className="overflow-x-auto bg-gray-50 rounded-lg p-4">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Batch No.</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stock</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">MRP</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cost</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sale</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Exp Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {batches.map((batch) => {
+                          const batchStock = batch.stock_points?.reduce((acc, sp) => acc + sp.quantity, 0) || 0;
+                          return (
+                            <tr key={batch.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-l-4 border-l-blue-500">
+                                {batch.batch_number}
+                                {batch.manufacturing_date && <span className="text-[10px] text-gray-400 block">Mfg: {batch.manufacturing_date}</span>}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-700">
+                                {batchStock}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">₹{parseFloat(batch.mrp || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">₹{parseFloat(batch.cost_price || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 font-semibold">₹{parseFloat(batch.sale_price || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                {batch.expiry_date ? (
+                                  <span className={new Date(batch.expiry_date) < new Date() ? 'text-red-500 font-bold' : ''}>
+                                    {batch.expiry_date}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-500 italic">
+                    No individual batches found for this product.
+                  </div>
+                )}
+              </div>
 
               {/* Footer */}
               <div className="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">

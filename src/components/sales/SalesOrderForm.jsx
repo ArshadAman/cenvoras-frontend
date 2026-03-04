@@ -127,15 +127,13 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       const filtered = customers.filter(customer =>
         customer.name.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredProducts(filtered);
+      setFilteredCustomers(filtered);
       setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
   };
 
-   // Simplified for brevity, assume similar logic to SalesForm
-   // implementation would go here... for now reusing input
     return (
      <div className="relative">
        <Field name="customer_name">
@@ -143,29 +141,66 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
            <div>
              <input
                {...field}
+               value={inputValue}
+               onChange={handleInputChange}
+               onKeyDown={(e) => {
+                 if (showDropdown) {
+                   const displayLimit = Math.min(filteredCustomers.length, 50);
+                   if (e.key === 'ArrowDown') {
+                     e.preventDefault();
+                     setSelectedIndex(prev => (prev < displayLimit - 1) ? prev + 1 : 0);
+                   } else if (e.key === 'ArrowUp') {
+                     e.preventDefault();
+                     setSelectedIndex(prev => (prev > 0) ? prev - 1 : displayLimit - 1);
+                   } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                     e.preventDefault();
+                     selectCustomer(filteredCustomers[selectedIndex]);
+                   } else if (e.key === 'Escape') {
+                     e.preventDefault();
+                     setShowDropdown(false);
+                     setSelectedIndex(-1);
+                   }
+                 }
+               }}
                placeholder="Customer name"
                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
-               list="customers-list"
+               autoComplete="off"
              />
-             <datalist id="customers-list">
-                 {customers.map(c => <option key={c.id} value={c.name} />)}
-             </datalist>
              {meta.touched && meta.error && (
                <div className="text-red-400 text-sm mt-1">{meta.error}</div>
              )}
            </div>
          )}
        </Field>
+       {showDropdown && (
+         <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+           {filteredCustomers.slice(0, 50).map((customer, index) => (
+             <div
+               key={customer.id}
+               className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+                 index === selectedIndex
+                   ? 'bg-purple-500/20 text-white' 
+                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
+               }`}
+               onClick={() => selectCustomer(customer)}
+             >
+               <div className="font-medium">{customer.name}</div>
+             </div>
+           ))}
+         </div>
+       )}
      </div>
    );
 }
 
 const SalesOrderSchema = Yup.object().shape({
+  customer: Yup.string().required("Please select a customer from the dropdown"),
   customer_name: Yup.string().required("Customer name is required"),
   order_number: Yup.string().required("Order number is required"),
   date: Yup.string().required("Date is required"),
   items: Yup.array().of(
     Yup.object().shape({
+      product_id: Yup.string().required("Please select a product from the dropdown"),
       product: Yup.string().required("Product is required"),
       quantity: Yup.number().required("Quantity is required").min(1),
       price: Yup.number().required("Price is required").min(0),
@@ -238,6 +273,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
         
         <Formik
           initialValues={{
+            customer: editData?.customer || "",
             customer_name: editData?.customer_name || "",
             order_number: editData?.order_number || `SO-${Date.now()}`,
             date: editData?.date || new Date().toISOString().split('T')[0],
@@ -265,7 +301,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
           onSubmit={async (values, { setSubmitting }) => {
             try {
                const processedItems = values.items.map(item => ({
-                  product: item.product_id || item.product, // UUID if selected or Name if new (backend handles name loopup?)
+                  product: item.product_id, // Must be UUID
                   quantity: Number(item.quantity),
                   price: Number(item.price),
                   amount: Number(item.amount),
@@ -274,6 +310,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
                const formData = {
+                   customer: values.customer,
                    customer_name: values.customer_name,
                    order_number: values.order_number,
                    date: values.date,

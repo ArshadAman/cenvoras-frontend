@@ -25,6 +25,10 @@ export const uploadPurchaseCsv = formData =>
 export const getProducts = () =>
   api.get("/inventory/products/").then(res => res.data);
 
+export const getVendorProducts = (vendorName) =>
+  api.get("/billing/vendor-products/", { params: { vendor_name: vendorName } }).then(res => res.data);
+  api.get("/inventory/products/").then(res => res.data);
+
 export const createProduct = (data) =>
   api.post("/inventory/add-product/", data).then(res => res.data);
 

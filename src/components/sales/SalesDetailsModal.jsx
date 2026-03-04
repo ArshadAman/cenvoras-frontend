@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoice } from "../../api/sales";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
@@ -10,20 +10,22 @@ import {
   PrinterIcon, 
   ArrowDownTrayIcon, 
   PaintBrushIcon,
-  Cog6ToothIcon,
   EnvelopeIcon,
-  ChatBubbleLeftIcon
+  ChatBubbleLeftIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from 'react-toastify';
-import { sendInvoiceNotification } from '../../api/integrations';
+import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
 import { getActiveTemplate, amountInWords } from "../../utils/invoiceSettings";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {} }) {
+  const queryClient = useQueryClient();
   const printRef = useRef();
   const [template, setTemplate] = useState(null);
   const [showDesigner, setShowDesigner] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Load active template
   useEffect(() => {
@@ -153,22 +155,40 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               </button>
 
               <button
+                disabled={sendingEmail}
                 onClick={async () => {
-                  const email = invoiceDetails?.customer_email || invoiceDetails?.customer_details?.email;
-                  if (!email) { toast.warning('No email found for this customer'); return; }
+                  const email =
+                    invoiceDetails?.customer_email ||
+                    invoiceDetails?.customer_details?.email ||
+                    invoiceDetails?.customer?.email;
+                  if (!email) {
+                    toast.warning('No email address found for this customer. Add one in Customers first.');
+                    return;
+                  }
+                  setSendingEmail(true);
                   try {
-                    await sendInvoiceNotification({
-                      channel: 'email', recipient: email,
-                      subject: `Invoice ${invoiceDetails.invoice_number} from ${businessInfo.business_name || 'Cenvora'}`,
-                      body: `Dear ${invoiceDetails.customer_name},\n\nYour invoice ${invoiceDetails.invoice_number} for ₹${invoiceDetails.total_amount} is ready.\n\nThank you for your business!`
-                    });
-                    toast.success(`Invoice sent to ${email}`);
-                  } catch (e) { toast.error('Failed to send email'); }
+                    const businessName = businessInfo.business_name || 'Cenvora';
+                    const subject = `Invoice ${invoiceDetails.invoice_number} from ${businessName}`;
+                    const body =
+                      `Dear ${invoiceDetails.customer_name},\n\n` +
+                      `Please find your invoice details below:\n\n` +
+                      `Invoice No: ${invoiceDetails.invoice_number}\n` +
+                      `Date: ${invoiceDetails.invoice_date}\n` +
+                      `Amount: ₹${invoiceDetails.total_amount}\n\n` +
+                      `Thank you for your business!\n— ${businessName}`;
+                    await sendCustomEmail({ recipient: email, subject, body });
+                    toast.success(`Invoice emailed to ${email}`);
+                    queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+                  } catch {
+                    toast.error('Failed to send email. Check your email configuration in Integrations settings.');
+                  }
+                  setSendingEmail(false);
                 }}
-                className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <EnvelopeIcon className="w-4 h-4" />
-                Email
+                {sendingEmail
+                  ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
+                  : <><EnvelopeIcon className="w-4 h-4" /> Email</>}
               </button>
 
               <button

@@ -6,7 +6,6 @@ import SalesDetailsModal from "../components/sales/SalesDetailsModal";
 import SalesDeleteDialog from "../components/sales/SalesDeleteDialog";
 import SalesUploadCsv from "../components/sales/SalesUploadCsv";
 import SalesSummary from "../components/sales/SalesSummary";
-import InvoicePrintSettings from "../components/invoice/InvoicePrintSettings";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
@@ -19,7 +18,7 @@ export default function Sales() {
   const [showDetails, setShowDetails] = useState(null);
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [invoicePrefix, setInvoicePrefix] = useState("INV-");
 
   // Fetch user profile for invoice customization
   const { data: userProfile } = useQuery({
@@ -58,13 +57,18 @@ export default function Sales() {
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Sales Management</h1>
             <p className="text-gray-400 text-sm">Create, manage and track your sales invoices.</p>
           </div>
-          <div className="flex gap-3">
-             <button
-               onClick={() => setShowSettings(true)}
-               className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2"
-             >
-               <Cog6ToothIcon className="w-4 h-4 text-gray-400"/> Settings
-             </button>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+             <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50">
+               <span className="text-xs text-gray-400 font-medium">PREFIX:</span>
+               <input 
+                 type="text" 
+                 value={invoicePrefix}
+                 onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase())}
+                 className="bg-transparent border-none text-white text-sm w-20 outline-none placeholder-gray-600 focus:ring-0 p-0"
+                 placeholder="INV-"
+                 maxLength={6}
+               />
+             </div>
              <button
                onClick={() => setShowUpload(true)}
                className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2"
@@ -106,6 +110,7 @@ export default function Sales() {
           isOpen={showForm} 
           onClose={handleCloseForm}
           editData={editInvoice}
+          invoicePrefix={invoicePrefix}
         />
       )}
 
@@ -133,12 +138,7 @@ export default function Sales() {
         />
       )}
 
-      {showSettings && (
-        <InvoicePrintSettings
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
+
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
     </Layout>

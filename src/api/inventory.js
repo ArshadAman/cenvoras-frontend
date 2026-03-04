@@ -12,6 +12,8 @@ export const createProduct = (data) => {
   const backendData = {
     name: data.name,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
+    description: data.description || null,
+    tax: data.tax ? parseFloat(data.tax) : 0,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
@@ -28,6 +30,8 @@ export const updateProduct = (id, data) => {
   const backendData = {
     name: data.name,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
+    description: data.description || null,
+    tax: data.tax ? parseFloat(data.tax) : 0,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,

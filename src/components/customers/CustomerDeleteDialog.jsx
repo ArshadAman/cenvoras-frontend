@@ -16,7 +16,7 @@ export default function CustomerDeleteDialog({ isOpen, onClose, customer }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete customer");
+      toast.error(error.response?.data?.message || error.message || "Failed to delete customer");
     },
   });
 
@@ -67,16 +67,16 @@ export default function CustomerDeleteDialog({ isOpen, onClose, customer }) {
           <button 
             className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" 
             onClick={onClose}
-            disabled={mutation.isLoading}
+            disabled={mutation.isPending}
           >
             Cancel
           </button>
           <button
             className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-lg shadow-red-900/30 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isLoading}
+            disabled={mutation.isPending}
           >
-            {mutation.isLoading ? (
+            {mutation.isPending ? (
                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
             ) : (
               <>

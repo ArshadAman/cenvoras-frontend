@@ -23,8 +23,6 @@ const customerSchema = Yup.object().shape({
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
   meta: Yup.object().shape({
-      credit_limit: Yup.number().min(0, "Must be positive"),
-      credit_days: Yup.number().min(0, "Must be positive"),
   }),
 });
 
@@ -56,7 +54,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
     },
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     // Clean up empty values
     const cleanValues = Object.fromEntries(
       Object.entries(values).filter(([_, value]) => {
@@ -65,10 +63,16 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
       })
     );
 
-    if (isEdit) {
-      updateMutation.mutate({ id: editData.id, data: cleanValues });
-    } else {
-      createMutation.mutate(cleanValues);
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({ id: editData.id, data: cleanValues });
+      } else {
+        await createMutation.mutateAsync(cleanValues);
+      }
+    } catch (e) {
+      // Error is handled in the mutation onError callback
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -80,8 +84,6 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
     state: editData?.state || "",
     address: editData?.address || "",
     meta: {
-      credit_limit: editData?.meta?.credit_limit || 0,
-      credit_days: editData?.meta?.credit_days || 0,
       party_category: editData?.meta?.party_category || "consumer",
       gst_type: editData?.meta?.gst_type || "unregistered",
     }
@@ -228,30 +230,6 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
                   </Field>
                 </div>
 
-                {/* Credit Limit */}
-                <div>
-                  <label htmlFor="meta.credit_limit" className={labelClass}>Credit Limit (₹)</label>
-                  <Field
-                    id="meta.credit_limit"
-                    name="meta.credit_limit"
-                    type="number"
-                    className={inputClass}
-                    placeholder="0"
-                  />
-                </div>
-
-                {/* Credit Days */}
-                <div>
-                  <label htmlFor="meta.credit_days" className={labelClass}>Credit Days</label>
-                  <Field
-                    id="meta.credit_days"
-                    name="meta.credit_days"
-                    type="number"
-                    className={inputClass}
-                    placeholder="0"
-                  />
-                </div>
-
                 {/* Address */}
                 <div className="md:col-span-2">
                   <label htmlFor="address" className={labelClass}>Address</label>
@@ -278,10 +256,10 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
+                  disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
                   className="btn-primary shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting || createMutation.isLoading || updateMutation.isLoading ? (
+                  {isSubmitting || createMutation.isPending || updateMutation.isPending ? (
                     <span className="flex items-center gap-2">
                       <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

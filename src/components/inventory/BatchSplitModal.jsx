@@ -9,6 +9,9 @@ export default function BatchSplitModal({ onClose }) {
   const [selectedBatch, setSelectedBatch] = useState('');
   const [newBatchNumber, setNewBatchNumber] = useState('');
   const [splitQuantity, setSplitQuantity] = useState('');
+  const [manufacturingDate, setManufacturingDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -45,6 +48,9 @@ export default function BatchSplitModal({ onClose }) {
       batch_id: selectedBatch,
       new_batch_number: newBatchNumber.trim(),
       split_quantity: parseInt(splitQuantity),
+      manufacturing_date: manufacturingDate || undefined,
+      expiry_date: expiryDate || undefined,
+      notes: notes || undefined,
     });
   };
 
@@ -90,7 +96,7 @@ export default function BatchSplitModal({ onClose }) {
               <option value="">Select a batch...</option>
               {batchList.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.product_name || 'Product'} — {b.batch_number} (Exp: {b.expiry_date || 'N/A'})
+                  {b.product_name} — {b.batch_number} | Available: {b.stock_points?.reduce((acc, sp) => acc + sp.quantity, 0) || 0} | Exp: {b.expiry_date || 'N/A'}
                 </option>
               ))}
             </select>
@@ -115,6 +121,38 @@ export default function BatchSplitModal({ onClose }) {
               value={splitQuantity}
               onChange={(e) => setSplitQuantity(e.target.value)}
               placeholder="Units to move to new batch"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 outline-none transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Mfg. Date <span className="text-gray-500 text-xs font-normal">(Optional)</span></label>
+              <input
+                type="date"
+                value={manufacturingDate}
+                onChange={(e) => setManufacturingDate(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Exp. Date <span className="text-gray-500 text-xs font-normal">(Optional)</span></label>
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Notes <span className="text-gray-500 text-xs font-normal">(Optional)</span></label>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Custom remarks for this batch"
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 outline-none transition-all"
             />
           </div>

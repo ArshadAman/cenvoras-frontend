@@ -10,6 +10,11 @@ const productSchema = Yup.object().shape({
   name: Yup.string()
     .required("Product name is required")
     .max(255, "Name must be 255 characters or less"),
+  description: Yup.string().nullable(),
+  tax: Yup.number()
+    .min(0, "Tax cannot be negative")
+    .max(100, "Tax cannot exceed 100%")
+    .nullable(),
   hsn_sac_code: Yup.string()
     .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
@@ -73,6 +78,8 @@ export default function ProductForm({ product, onClose }) {
 
   const initialValues = {
     name: product?.name || "",
+    description: product?.description || "",
+    tax: product?.tax || "",
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
     unit: product?.unit || "",
     secondary_unit: product?.secondary_unit || "",
@@ -92,6 +99,8 @@ export default function ProductForm({ product, onClose }) {
   const handleSubmit = (values, { setSubmitting }) => {
     const productData = {
       name: values.name,
+      description: values.description || null,
+      tax: values.tax ? parseFloat(values.tax) : 0,
       hsn_sac_code: values.hsn_sac_code || null,
       unit: values.unit,
       secondary_unit: values.secondary_unit || null,
@@ -173,6 +182,33 @@ export default function ProductForm({ product, onClose }) {
                     placeholder="e.g. 8518"
                   />
                   <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClass}>Description / Notes</label>
+                  <Field
+                    as="textarea"
+                    name="description"
+                    className={`${inputClass} resize-none h-[52px]`}
+                    placeholder="Optional description"
+                  />
+                  <ErrorMessage name="description" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>GST Tax Rate (%)</label>
+                  <Field
+                    name="tax"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    className={inputClass}
+                    placeholder="e.g. 18.00"
+                  />
+                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
               </div>
 

@@ -3,22 +3,26 @@ import { useQuery } from '@tanstack/react-query';
 import { getGeneralLedgerEntries } from '../../api/ledger';
 import Loader from '../Loader';
 import { format } from 'date-fns';
+import { createPortal } from 'react-dom';
 import { 
   ChevronUpIcon, 
   ChevronDownIcon, 
   ArrowsUpDownIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  XMarkIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { getAccounts } from '../../api/ledger';
 import { subDays } from 'date-fns';
 
-const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect }) => {
+const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, customerFilter = '' }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
+  const [viewEntry, setViewEntry] = useState(null);
   const [dateFilter, setDateFilter] = useState({
     startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd')
@@ -45,6 +49,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect }) =
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
       account: selectedAccount,
+      customer: customerFilter,
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -54,6 +59,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect }) =
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
       account: selectedAccount,
+      customer: customerFilter,
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -163,6 +169,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect }) =
   }
 
   return (
+    <>
     <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         {/* Filters Toolbar */}
@@ -315,15 +322,21 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect }) =
                         {entry.reference || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-white">
-                        <div className="max-w-xs truncate  drop-shadow-lg" title={entry.description}>
-                          {entry.description || 'General Ledger Entry'}
-                        </div>
-                        <div className="text-xs text-cyan-300 ">
-                          <span>Created: {formatDate(entry.created_at)}</span>
-                          {entry.entry_number && (
-                            <span className="ml-2">Entry #{entry.entry_number}</span>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => setViewEntry(entry)}
+                          className="text-left group"
+                          title="Click for full details"
+                        >
+                          <div className="max-w-xs truncate group-hover:text-cyan-300 transition-colors underline-offset-2 group-hover:underline drop-shadow-lg" title={entry.description}>
+                            {entry.description || 'General Ledger Entry'}
+                          </div>
+                          <div className="text-xs text-cyan-300">
+                            <span>Created: {formatDate(entry.created_at)}</span>
+                            {entry.entry_number && (
+                              <span className="ml-2">Entry #{entry.entry_number}</span>
+                            )}
+                          </div>
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         <div className={` drop-shadow-lg text-lg ${entry.debit > 0 ? 'text-red-300' : 'text-white'}`}>
@@ -576,7 +589,89 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect }) =
         )}
       </div>
     </div>
-  );
+
+    {/* Entry Detail Modal */}
+    {viewEntry && createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setViewEntry(null)} />
+        <div className="relative w-full max-w-lg bg-[#111] border border-white/10 rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/10 rounded-xl">
+                <DocumentTextIcon className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Entry Details</h2>
+                {viewEntry.entry_number && <p className="text-xs text-gray-400">Entry #{viewEntry.entry_number}</p>}
+              </div>
+            </div>
+            <button onClick={() => setViewEntry(null)} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Date</div>
+                <div className="text-white font-medium">{formatDate(viewEntry.date)}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Reference</div>
+                <div className="text-white font-medium">{viewEntry.reference || '—'}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 col-span-2">
+                <div className="text-xs text-gray-500 mb-1">Account</div>
+                <div className="text-white font-medium">{viewEntry.account_code} - {viewEntry.account_name}</div>
+                <div className="text-xs text-cyan-300 capitalize mt-0.5">{viewEntry.account_type}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 col-span-2">
+                <div className="text-xs text-gray-500 mb-1">Description</div>
+                <div className="text-white text-sm leading-relaxed">{viewEntry.description || 'General Ledger Entry'}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Debit</div>
+                <div className={`font-bold text-xl ${viewEntry.debit > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                  {viewEntry.debit > 0 ? formatCurrency(viewEntry.debit) : '—'}
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Credit</div>
+                <div className={`font-bold text-xl ${viewEntry.credit > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+                  {viewEntry.credit > 0 ? formatCurrency(viewEntry.credit) : '—'}
+                </div>
+              </div>
+            </div>
+
+            {/* Source Links */}
+            <div className="pt-2 border-t border-white/10">
+              <div className="text-xs text-gray-500 mb-2">Source Document</div>
+              <div className="flex flex-wrap gap-2">
+                {viewEntry.sales_invoice_number && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                    📄 Sales Invoice #{viewEntry.sales_invoice_number}
+                  </span>
+                )}
+                {viewEntry.purchase_bill_number && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    🧾 Purchase Bill #{viewEntry.purchase_bill_number}
+                  </span>
+                )}
+                {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                    📝 Manual Entry
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+  </>);
 };
 
 export default LedgerTable;

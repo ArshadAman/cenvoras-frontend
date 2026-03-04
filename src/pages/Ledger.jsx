@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-
 import { format, subDays } from 'date-fns';
 import LedgerSummary from '../components/ledger/LedgerSummary';
 import LedgerTable from '../components/ledger/LedgerTable';
@@ -14,9 +13,25 @@ import { bulkDeleteLedgerEntries, getAccounts } from '../api/ledger';
 import Layout from '../components/Layout';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon, UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const Ledger = () => {
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [selectedCustomerName, setSelectedCustomerName] = useState('');
+
+  // Fetch customers for the filter
+  const { data: customersData } = useQuery({
+    queryKey: ['customers'],
+    queryFn: getCustomers,
+  });
+  const customers = Array.isArray(customersData) ? customersData : customersData?.results || [];
+  const filteredCustomers = customers.filter(c => 
+    c.name.toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  const selectedCustomerData = customers.find(c => c.id === selectedCustomer);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -82,21 +97,81 @@ const Ledger = () => {
            </div>
            
            <div className="flex gap-3">
-             <button
-               className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm"
-             >
+             <button className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm flex items-center gap-2">
                <DocumentArrowUpIcon className="h-4 w-4" />
                <span>Export CSV</span>
              </button>
              <button
                onClick={() => setShowPaymentForm(true)}
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-green-500/20"
+               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-green-500/20 flex items-center gap-2"
              >
                <PlusIcon className="h-4 w-4" />
                <span>Record Payment</span>
              </button>
            </div>
         </div>
+
+        {/* Customer Selector */}
+        <div className="bento-card !p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <UsersIcon className="w-5 h-5 text-purple-400" />
+            <span className="text-sm font-semibold text-gray-300">Filter by Customer:</span>
+          </div>
+          <div className="relative flex-1 w-full md:max-w-sm">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search customer..."
+              value={selectedCustomerName || customerSearch}
+              onChange={(e) => {
+                setCustomerSearch(e.target.value);
+                setSelectedCustomer('');
+                setSelectedCustomerName('');
+                setShowCustomerDropdown(true);
+              }}
+              onFocus={() => setShowCustomerDropdown(true)}
+              className="w-full pl-9 pr-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+            />
+            {showCustomerDropdown && filteredCustomers.length > 0 && (
+              <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-52 overflow-y-auto">
+                {filteredCustomers.slice(0, 20).map(c => (
+                  <div
+                    key={c.id}
+                    className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/5 border-b border-white/5"
+                    onClick={() => {
+                      setSelectedCustomer(c.id);
+                      setSelectedCustomerName(c.name);
+                      setCustomerSearch('');
+                      setShowCustomerDropdown(false);
+                    }}
+                  >
+                    <span className="text-white font-medium">{c.name}</span>
+                    {c.current_balance > 0 && (
+                      <span className="ml-2 text-amber-400 text-xs">(₹{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {selectedCustomer && (
+            <button
+              onClick={() => { setSelectedCustomer(''); setSelectedCustomerName(''); setCustomerSearch(''); }}
+              className="text-xs text-gray-400 hover:text-white px-3 py-2 bg-white/5 rounded-lg border border-white/10"
+            >
+              Clear Filter
+            </button>
+          )}
+          {selectedCustomerData?.current_balance > 0 && (
+            <div className="ml-auto flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
+              <span className="text-xs text-amber-400 font-medium">Outstanding Balance:</span>
+              <span className="text-amber-300 font-bold text-lg">₹{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Summary Stats */}
+        <LedgerSummary customerFilter={selectedCustomer} />
 
         {/* Ledger Table Container */}
         <div className="bento-card !p-0 overflow-hidden">
@@ -110,6 +185,7 @@ const Ledger = () => {
             onDelete={handleDeleteEntry}
             selectedEntries={selectedEntries}
             onBulkSelect={handleBulkSelect}
+            customerFilter={selectedCustomer}
           />
         </div>
       </div>

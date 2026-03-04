@@ -65,7 +65,7 @@ export default function BOMList() {
                     boms.map((bom) => (
                     <tr key={bom.id} className="hover:bg-white/5 transition-colors group">
                         <td className="p-4 text-white font-medium">{bom.name}</td>
-                        <td className="p-4 text-gray-300">{bom.finished_good_name}</td>
+                        <td className="p-4 text-gray-300">{bom.finished_good_display || bom.finished_good_name}</td>
                         <td className="p-4 text-gray-400 text-sm">
                             {bom.components?.length || 0} items
                         </td>

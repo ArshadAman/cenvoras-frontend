@@ -175,10 +175,10 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           <div className="pt-4">
             <button
               type="submit"
-              disabled={changePasswordMutation.isLoading}
+              disabled={changePasswordMutation.isPending}
               className="btn-primary w-full shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {changePasswordMutation.isLoading ? 'Updating Password...' : 'Update Password'}
+              {changePasswordMutation.isPending ? 'Updating Password...' : 'Update Password'}
             </button>
           </div>
         </form>
@@ -486,7 +486,7 @@ const Profile = ({ onLogout }) => {
                             name="first_name"
                             value={formData.first_name}
                             onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            disabled={!isEditing || updateProfileMutation.isPending}
                             className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="Enter first name"
                           />
@@ -498,7 +498,7 @@ const Profile = ({ onLogout }) => {
                             name="last_name"
                             value={formData.last_name}
                             onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            disabled={!isEditing || updateProfileMutation.isPending}
                             className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="Enter last name"
                           />
@@ -520,7 +520,7 @@ const Profile = ({ onLogout }) => {
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            disabled={!isEditing || updateProfileMutation.isPending}
                             className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="name@example.com"
                           />
@@ -532,7 +532,7 @@ const Profile = ({ onLogout }) => {
                             name="phone"
                             value={formData.phone}
                             onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            disabled={!isEditing || updateProfileMutation.isPending}
                             className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                             placeholder="+91 98765 43210"
                           />
@@ -555,7 +555,7 @@ const Profile = ({ onLogout }) => {
                               name="business_name"
                               value={formData.business_name}
                               onChange={handleInputChange}
-                              disabled={!isEditing || updateProfileMutation.isLoading}
+                              disabled={!isEditing || updateProfileMutation.isPending}
                               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                               placeholder="Your Business Name"
                             />
@@ -567,7 +567,7 @@ const Profile = ({ onLogout }) => {
                               name="gstin"
                               value={formData.gstin}
                               onChange={handleInputChange}
-                              disabled={!isEditing || updateProfileMutation.isLoading}
+                              disabled={!isEditing || updateProfileMutation.isPending}
                               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                               placeholder="29ABCDE1234F1Z5"
                               maxLength={15}
@@ -580,7 +580,7 @@ const Profile = ({ onLogout }) => {
                             name="business_address"
                             value={formData.business_address}
                             onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isLoading}
+                            disabled={!isEditing || updateProfileMutation.isPending}
                             rows={3}
                             className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all resize-none disabled:opacity-50"
                             placeholder="Full business address"
@@ -601,10 +601,10 @@ const Profile = ({ onLogout }) => {
                         </button>
                         <button
                           type="submit"
-                          disabled={updateProfileMutation.isLoading}
+                          disabled={updateProfileMutation.isPending}
                           className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {updateProfileMutation.isLoading ? (
+                          {updateProfileMutation.isPending ? (
                             <span className="flex items-center">
                               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

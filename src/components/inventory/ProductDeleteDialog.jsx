@@ -16,9 +16,10 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
       onSuccess?.();
       onClose();
     },
-    onError: (error) => {
-      console.error("Failed to delete product:", error);
-      alert("Failed to delete product. Please try again.");
+    onError: (err) => {
+      console.error("Failed to delete product:", err);
+      const errorMessage = err.response?.data?.error || "Failed to delete product. Please try again.";
+      toast.error(errorMessage);
     },
   });
 

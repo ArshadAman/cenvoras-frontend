@@ -64,8 +64,8 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
       .map(item => ({
-        product: item.product_id || item.product, // Adjust based on API response structure
-        batch: item.batch_id || item.batch,
+        product: item.product.id || item.product, // Ensure it's the raw UUID string or object ID
+        batch: item.batch_id || item.batch || null,
         hsn_sac_code: item.hsn_sac_code,
         quantity: parseFloat(item.return_qty),
         unit: item.unit,
@@ -195,7 +195,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     <tbody className="divide-y divide-white/5">
                       {returnItems.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="p-3 text-white">{item.product_name}</td>
+                          <td className="p-3 text-white">{item.product_detail?.name || 'N/A'}</td>
                           <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
                           <td className="p-3 text-right text-gray-400">₹{item.price}</td>
                           <td className="p-3">

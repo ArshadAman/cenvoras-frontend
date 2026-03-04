@@ -56,9 +56,9 @@ export default function PurchaseDeleteDialog({ billId, onClose }) {
           <button
             className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-lg shadow-red-900/30 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isLoading}
+            disabled={mutation.isPending}
           >
-            {mutation.isLoading ? (
+            {mutation.isPending ? (
                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
             ) : (
               <>

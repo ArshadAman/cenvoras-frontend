@@ -15,7 +15,7 @@ import Payments from './pages/Payments'
 import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
 import SalesOrderList from './pages/SalesOrderList'
-import DeliveryChallanList from './pages/DeliveryChallanList'
+import ComingSoon from './pages/ComingSoon'
 import BOMList from './pages/inventory/BOMList'
 import StockJournalList from './pages/inventory/StockJournalList'
 import PriceListList from './pages/inventory/PriceListList'
@@ -91,7 +91,7 @@ function App() {
         />
         <Route
           path="/delivery-challans"
-          element={isAuthenticated ? <DeliveryChallanList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ComingSoon /> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory"
@@ -99,7 +99,7 @@ function App() {
         />
         <Route
           path="/boms"
-          element={isAuthenticated ? <BOMList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <Navigate to="/coming-soon" replace /> : <Navigate to="/" replace />}
         />
         <Route
           path="/stock-journals"
@@ -203,6 +203,10 @@ function App() {
                 <IntegrationsPage />
             ) : <Navigate to="/" replace />
           }
+        />
+        <Route
+          path="/coming-soon"
+          element={isAuthenticated ? <ComingSoon /> : <Navigate to="/" replace />}
         />
         <Route
           path="/profile"

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { getProducts } from "../../api/inventory";
+import { getProducts, getVendorProducts } from "../../api/purchase";
+import { getCustomers } from "../../api/customers";
 import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
@@ -20,11 +21,19 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   const [notes, setNotes] = useState("");
   const [returnItems, setReturnItems] = useState([]);
 
-  // Fetch Products instead of Bills
+  // Fetch Vendors for Autocomplete
+  const { data: vendorsResult } = useQuery({ 
+      queryKey: ["vendors"], 
+      queryFn: () => getCustomers({ search: "", ordering: "name" }),
+      staleTime: 5 * 60 * 1000, 
+  });
+  const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
+
+  // Fetch Products constrained by Vendor instead of all products
   const { data: products } = useQuery({
-    queryKey: ["products"],
-    queryFn: getProducts,
-    enabled: isOpen && step === 1,
+    queryKey: ["vendorProducts", vendorName],
+    queryFn: () => vendorName ? getVendorProducts(vendorName) : Promise.resolve([]),
+    enabled: isOpen && step === 1 && !!vendorName,
   });
 
   const productList = Array.isArray(products) ? products : products?.results || [];
@@ -142,20 +151,19 @@ export default function DebitNoteForm({ isOpen, onClose }) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Vendor Name (Free Text)</label>
-                  <input
-                    type="text"
-                    value={vendorName}
-                    onChange={(e) => setVendorName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                    placeholder="Enter Vendor Name"
-                    required
+              <div className="grid grid-cols-1 gap-4 relative">
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Vendor Name (Type to search)</label>
+                  <VendorAutocomplete 
+                     vendorName={vendorName} 
+                     setVendorName={setVendorName} 
+                     vendorGstin={vendorGstin}
+                     setVendorGstin={setVendorGstin}
+                     vendors={vendors} 
                   />
                 </div>
                 <div>
-                   <label className="block text-sm font-medium text-gray-400 mb-1">Vendor GSTIN (Optional)</label>
+                   <label className="block text-sm font-medium text-gray-400 mb-1">Vendor GSTIN (Auto-filled on selection)</label>
                    <input
                      type="text"
                      value={vendorGstin}
@@ -205,9 +213,9 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                       onChange={(e) => setSelectedProductId(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
                     >
-                      <option value="">Select Product...</option>
+                      <option value="">{vendorName ? "Select Product..." : "Please enter a Vendor first..."}</option>
                       {productList.map(p => (
-                        <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
+                        <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
                   </div>
@@ -308,5 +316,77 @@ export default function DebitNoteForm({ isOpen, onClose }) {
         </div>
       </Dialog>
     </Transition>
+  );
+}
+
+// Inline Vendor Autocomplete Component for DebitNoteForm (Simplified for raw State hooks)
+function VendorAutocomplete({ vendorName, setVendorName, vendorGstin, setVendorGstin, vendors }) {
+  const [filteredVendors, setFilteredVendors] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const selectVendor = (vendor) => {
+    setVendorName(vendor.name || "");
+    setVendorGstin(vendor.gstin || "");
+    setShowDropdown(false);
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setVendorName(value);
+
+    if (value.trim()) {
+      const filtered = vendors.filter(v =>
+        v.name?.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredVendors(filtered);
+      setShowDropdown(filtered.length > 0);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <input
+        value={vendorName}
+        onChange={handleInputChange}
+        onFocus={() => {
+          if (vendorName.trim()) {
+             const filtered = vendors.filter(v => v.name?.toLowerCase().includes(vendorName.toLowerCase()));
+             if (filtered.length > 0) {
+                setFilteredVendors(filtered);
+                setShowDropdown(true);
+             }
+          }
+        }}
+        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+        placeholder="Search for vendor..."
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500 transition-all"
+        autoComplete="off"
+        required
+      />
+      
+      {showDropdown && (
+        <div className="absolute z-50 bg-[#1a1a1a] border border-white/10 rounded-md shadow-2xl w-full max-h-48 overflow-y-auto mt-1">
+          {filteredVendors.slice(0, 50).map(vendor => (
+            <div
+              key={vendor.id}
+              className="px-3 py-3 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors"
+              onClick={() => selectVendor(vendor)}
+            >
+              <div className="font-bold text-cyan-400">{vendor.name}</div>
+              <div className="text-gray-500 text-xs mt-1 flex gap-3">
+                 {vendor.gstin && <span>GSTIN: {vendor.gstin}</span>}
+              </div>
+            </div>
+          ))}
+          {filteredVendors.length === 0 && (
+             <div className="px-3 py-3 text-sm text-gray-500 italic">
+                No saved vendors found. 
+             </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

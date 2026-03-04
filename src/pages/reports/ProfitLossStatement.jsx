@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { getProfitLossStatement } from "../../api/gst";
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 const today = new Date().toISOString().split('T')[0];
 const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
@@ -23,8 +24,12 @@ export default function ProfitLossStatement() {
   return (
     <Layout>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
+        <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
+          <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
+          <ChartBarIcon className="w-3.5 h-3.5" /> Back to Reports
+        </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Profit & Loss Statement</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Profit &amp; Loss Statement</h1>
           <p className="text-gray-400 text-sm">Income statement showing revenue, expenses, and net profit.</p>
         </div>
 

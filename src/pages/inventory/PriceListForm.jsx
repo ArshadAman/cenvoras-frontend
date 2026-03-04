@@ -151,10 +151,10 @@ export default function PriceListForm() {
                         <div className="flex justify-end pt-6 border-t border-white/10">
                             <button
                                 type="submit"
-                                disabled={mutation.isLoading}
+                                disabled={mutation.isPending}
                                 className="btn-primary shadow-lg shadow-green-500/20"
                             >
-                                {mutation.isLoading ? "Saving..." : "Save Price List"}
+                                {mutation.isPending ? "Saving..." : "Save Price List"}
                             </button>
                         </div>
                     </Form>

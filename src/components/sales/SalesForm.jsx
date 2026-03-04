@@ -27,7 +27,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.discount`, 0);
-    setFieldValue(`items.${idx}.tax`, 0);
+    setFieldValue(`items.${idx}.tax`, product.tax || 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
     setInputValue(product.name);
     setShowDropdown(false);
@@ -420,7 +420,7 @@ const SalesSchema = Yup.object().shape({
 
 const units = ["pcs", "kg", "ltr", "box", "meter"];
 
-export default function SalesForm({ isOpen, onClose, editData }) {
+export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "INV-" }) {
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -571,7 +571,8 @@ export default function SalesForm({ isOpen, onClose, editData }) {
           initialValues={{
             // Required fields
             customer_name: editData?.customer_name || "",
-            invoice_number: editData?.invoice_number || "",
+            // Auto-generate 6-digit invoice number if not editing
+            invoice_number: editData?.invoice_number || `${invoicePrefix}${Math.floor(100000 + Math.random() * 900000)}`,
             invoice_date: editData?.invoice_date || new Date().toISOString().split('T')[0],
             
             // Optional customer fields (for Customer record creation)
@@ -784,7 +785,11 @@ export default function SalesForm({ isOpen, onClose, editData }) {
                       <Field
                         name="invoice_number"
                         type="text"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        readOnly={!isEdit}
+                        className={`w-full border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all ${
+                          !isEdit ? "bg-[#1a1a1a] opacity-70 cursor-not-allowed" : "bg-[#111]"
+                        }`}
+                        title={!isEdit ? "Auto-generated based on your prefix settings" : ""}
                       />
                     </div>
 

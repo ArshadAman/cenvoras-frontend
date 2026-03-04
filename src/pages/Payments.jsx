@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -66,6 +67,7 @@ function PaymentCard({ payment }) {
 function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
   const [formData, setFormData] = useState({
     customer: '',
+    invoice: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
     mode: 'cash',
@@ -74,46 +76,125 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Search & Invoice Logic
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+
+  // Filter customers based on search
+  const filteredCustomers = customers.filter(c => 
+    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.id.slice(0, 8).toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  // Fetch invoices when customer changes
+  useEffect(() => {
+    if (formData.customer) {
+      fetchInvoices(formData.customer);
+    } else {
+      setInvoices([]);
+      setSelectedInvoice(null);
+      setFormData(prev => ({ ...prev, invoice: '', amount: '' }));
+    }
+  }, [formData.customer]);
+
+  const fetchInvoices = async (customerId) => {
+    setIsLoadingInvoices(true);
+    try {
+      const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
+      // Handle array or object results
+      const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+      setInvoices(data);
+    } catch (err) {
+      console.error("Failed to fetch invoices", err);
+    } finally {
+      setIsLoadingInvoices(false);
+    }
+  };
+
+  const handleSelectCustomer = (customer) => {
+    setFormData({ ...formData, customer: customer.id });
+    setCustomerSearch(customer.name);
+    setShowCustomerDropdown(false);
+  };
+
+  const handleSelectInvoice = (invoiceId) => {
+    const inv = invoices.find(i => i.id === invoiceId);
+    setSelectedInvoice(inv);
+    setFormData({ 
+      ...formData, 
+      invoice: invoiceId, 
+      amount: inv ? inv.total_amount : '' 
+    });
+  };
+
+  const calculateRemainingDue = () => {
+    if (!selectedInvoice) return null;
+    const paid = parseFloat(formData.amount) || 0;
+    return parseFloat(selectedInvoice.total_amount) - paid;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
     
+    let targetCustomerId = formData.customer;
+
     try {
+      // Handle manual entry for new customer if no UUID selected
+      if (!targetCustomerId && customerSearch.trim()) {
+        const custRes = await api.post('/billing/customers/', {
+          name: customerSearch.trim()
+        });
+        targetCustomerId = custRes.data.id;
+      }
+
+      if (!targetCustomerId) {
+        throw new Error("Please select or enter a customer name");
+      }
+
       await api.post('/billing/payments/', {
         ...formData,
+        customer: targetCustomerId,
         amount: parseFloat(formData.amount)
       });
+      
       onSuccess();
       onClose();
-      setFormData({
-        customer: '',
-        amount: '',
-        date: new Date().toISOString().split('T')[0],
-        mode: 'cash',
-        reference: '',
-        notes: ''
-      });
+      resetForm();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to record payment');
+      setError(err.response?.data?.detail || err.message || 'Failed to record payment');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      customer: '',
+      invoice: '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      mode: 'cash',
+      reference: '',
+      notes: ''
+    });
+    setCustomerSearch('');
+    setSelectedInvoice(null);
+    setInvoices([]);
+  };
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm" 
-        onClick={onClose} 
-      />
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       
-      {/* Modal Content */}
-      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <BanknotesIcon className="w-6 h-6 text-green-400" />
@@ -125,53 +206,115 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Customer Select */}
-          <div>
+          {/* Searchable Customer Selection */}
+          <div className="relative">
             <label className="block text-sm text-gray-400 mb-1">Customer *</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search name or ID, or type new..."
+                value={customerSearch}
+                onChange={(e) => {
+                  setCustomerSearch(e.target.value);
+                  setShowCustomerDropdown(true);
+                  if (formData.customer) setFormData({ ...formData, customer: '' });
+                }}
+                onFocus={() => setShowCustomerDropdown(true)}
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+              />
+              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+            </div>
+            
+            {showCustomerDropdown && customerSearch && (
+              <div className="absolute z-50 w-full mt-1 bg-[#111] border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => handleSelectCustomer(c)}
+                      className="w-full text-left p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                    >
+                      <div className="text-sm font-medium text-white">{c.name}</div>
+                      <div className="text-xs text-gray-500">
+                        ID: {c.id.slice(0, 8)} • Balance: ₹{parseFloat(c.current_balance).toLocaleString()}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-3 text-sm text-gray-500 italic">
+                    New customer will be created
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Optional Invoice Selection */}
+          <div className={`transition-all duration-300 ${formData.customer ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+            <label className="block text-sm text-gray-400 mb-1">Link to Invoice (Optional)</label>
             <select
-              required
-              value={formData.customer}
-              onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+              value={formData.invoice}
+              onChange={(e) => handleSelectInvoice(e.target.value)}
               className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+              disabled={isLoadingInvoices}
             >
-              <option value="" className="bg-gray-900 text-white">Select customer...</option>
-              {customers?.map((c) => (
-                <option key={c.id} value={c.id} className="bg-gray-900 text-white">
-                  {c.name} {c.current_balance > 0 ? `(₹${c.current_balance} due)` : ''}
+              <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
+              {invoices.map((inv) => (
+                <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
+                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - ₹{inv.total_amount}
                 </option>
               ))}
             </select>
           </div>
           
-          {/* Amount */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Amount *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Amount */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Amount Paid *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+                <input
+                  type="number"
+                  required
+                  min="0.01"
+                  step="0.01"
+                  placeholder="5,000"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  className="w-full p-3 pl-7 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            
+            {/* Date */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Date *</label>
               <input
-                type="number"
+                type="date"
                 required
-                min="1"
-                step="0.01"
-                placeholder="5,000"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="w-full p-3 pl-8 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
               />
             </div>
           </div>
-          
-          {/* Date */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Date *</label>
-            <input
-              type="date"
-              required
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </div>
+
+          {/* Info Fields (Non-gate/Display only) */}
+          {selectedInvoice && (
+            <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
+              <div>
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
+                <div className="text-base font-bold text-white">₹{parseFloat(selectedInvoice.total_amount).toLocaleString()}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
+                <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                  ₹{calculateRemainingDue().toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Payment Mode */}
           <div>
@@ -195,28 +338,28 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
             </div>
           </div>
           
-          {/* Reference */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Reference (Optional)</label>
-            <input
-              type="text"
-              placeholder="Cheque No / UPI Transaction ID"
-              value={formData.reference}
-              onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </div>
-          
-          {/* Notes */}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Notes (Optional)</label>
-            <textarea
-              placeholder="Any additional details..."
-              rows={2}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none resize-none"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Reference (Optional)</label>
+              <input
+                type="text"
+                placeholder="Cheque No / UPI Transaction ID"
+                value={formData.reference}
+                onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Notes (Optional)</label>
+              <textarea
+                placeholder="Any additional details..."
+                rows={1}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none resize-none"
+              />
+            </div>
           </div>
           
           {error && (
@@ -225,7 +368,6 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
             </div>
           )}
           
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -240,10 +382,7 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
               className="flex-1 py-3 bg-gradient-to-r from-green-500 to-cyan-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Recording...
-                </>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <CheckCircleIcon className="w-5 h-5" />
@@ -254,7 +393,8 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -267,16 +407,18 @@ export default function Payments({ onLogout }) {
   const [filterMode, setFilterMode] = useState('all');
   
   // Fetch payments
-  const { data: payments, isLoading } = useQuery({
+  const { data: paymentsData, isLoading } = useQuery({
     queryKey: ['payments'],
     queryFn: () => api.get('/billing/payments/').then(res => res.data)
   });
+  const payments = Array.isArray(paymentsData) ? paymentsData : (paymentsData?.results || []);
   
   // Fetch customers (for the form)
-  const { data: customers } = useQuery({
+  const { data: customersData } = useQuery({
     queryKey: ['customers'],
     queryFn: () => api.get('/billing/customers/').then(res => res.data)
   });
+  const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
   
   // Filter and search payments
   const filteredPayments = (payments || []).filter(p => {

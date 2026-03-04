@@ -41,7 +41,7 @@ const ScreenshotShowcase = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashbaord.png' },
+    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashboard.png' },
     { id: 'sales', label: 'Sales', icon: ShoppingCartIcon, image: '/sales.png' },
     { id: 'inventory', label: 'Inventory', icon: CubeIcon, image: '/inventory.png' },
   ];

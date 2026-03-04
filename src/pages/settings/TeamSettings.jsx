@@ -333,10 +333,10 @@ export default function TeamSettings() {
 
               <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Cancel</button>
-                <button type="submit" disabled={isEditing ? updateMutation.isLoading : createMutation.isLoading} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-purple-500 hover:bg-purple-600 text-white transition-colors disabled:opacity-50">
+                <button type="submit" disabled={isEditing ? updateMutation.isPending : createMutation.isPending} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-purple-500 hover:bg-purple-600 text-white transition-colors disabled:opacity-50">
                   {isEditing 
-                    ? (updateMutation.isLoading ? 'Saving...' : 'Save Changes')
-                    : (createMutation.isLoading ? 'Creating...' : 'Create Member')
+                    ? (updateMutation.isPending ? 'Saving...' : 'Save Changes')
+                    : (createMutation.isPending ? 'Creating...' : 'Create Member')
                   }
                 </button>
               </div>

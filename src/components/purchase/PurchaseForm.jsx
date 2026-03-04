@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/purchase";
+import { getCustomers } from "../../api/customers";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
@@ -126,6 +127,89 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
   );
 }
 
+// Vendor Autocomplete Component - Smart Feature
+function VendorAutocomplete({ values, setFieldValue, vendors }) {
+  const [filteredVendors, setFilteredVendors] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [inputValue, setInputValue] = useState(values.vendor_name || "");
+
+  const selectVendor = (vendor) => {
+    setFieldValue("vendor_name", vendor.name || "");
+    setFieldValue("vendor_address", vendor.address || "");
+    setFieldValue("vendor_gstin", vendor.gstin || "");
+    setFieldValue("gst_treatment", vendor.meta?.gst_type || "registered");
+    setInputValue(vendor.name || "");
+    setShowDropdown(false);
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputValue(value);
+    setFieldValue("vendor_name", value);
+
+    if (value.trim()) {
+      const filtered = vendors.filter(v =>
+        v.name?.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredVendors(filtered);
+      setShowDropdown(filtered.length > 0);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <Field name="vendor_name">
+        {({ field, meta }) => (
+          <div>
+            <input
+              {...field}
+              value={inputValue}
+              onChange={handleInputChange}
+              onFocus={() => {
+                if (inputValue.trim()) {
+                   const filtered = vendors.filter(v => v.name?.toLowerCase().includes(inputValue.toLowerCase()));
+                   if (filtered.length > 0) {
+                      setFilteredVendors(filtered);
+                      setShowDropdown(true);
+                   }
+                }
+              }}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+              placeholder="Enter vendor name to search or create new"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+              autoComplete="off"
+            />
+          </div>
+        )}
+      </Field>
+      {showDropdown && (
+        <div className="absolute z-10 bg-[#1a1a1a] border border-white/10 rounded-md shadow-lg w-full max-h-40 overflow-y-auto mt-1">
+          {filteredVendors.slice(0, 50).map(vendor => (
+            <div
+              key={vendor.id}
+              className="px-3 py-3 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors"
+              onClick={() => selectVendor(vendor)}
+            >
+              <div className="font-bold text-cyan-400">{vendor.name}</div>
+              <div className="text-gray-500 text-xs mt-1 flex gap-3">
+                 {vendor.gstin && <span>GSTIN: {vendor.gstin}</span>}
+                 {vendor.address && <span className="truncate max-w-[200px]">{vendor.address}</span>}
+              </div>
+            </div>
+          ))}
+          {filteredVendors.length === 0 && (
+             <div className="px-3 py-3 text-sm text-gray-500 italic">
+                No saved vendors found. A new one will be created.
+             </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const PurchaseSchema = Yup.object().shape({
   bill_number: Yup.string().required().min(1).max(100),
   bill_date: Yup.string().required("Bill date is required"),
@@ -163,6 +247,13 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
       staleTime: 5 * 60 * 1000, 
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
+
+  const { data: vendorsResult } = useQuery({ 
+      queryKey: ["vendors"], 
+      queryFn: () => getCustomers({ search: "", ordering: "name" }),
+      staleTime: 5 * 60 * 1000, 
+  });
+  const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
 
   // Keyboard Shortcuts Logic
   useEffect(() => {
@@ -456,11 +547,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                     <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                        Vendor Name *
                     </label>
-                    <Field
-                       name="vendor_name"
-                       placeholder="Enter vendor name"
-                       className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                    />
+                    <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
                     <ErrorMessage name="vendor_name" component="div" className="text-red-400 text-xs mt-1" />
                  </div>
                  

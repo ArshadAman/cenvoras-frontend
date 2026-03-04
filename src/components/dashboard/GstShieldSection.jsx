@@ -82,25 +82,6 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           </div>
         </div>
 
-        {/* GST Due Date */}
-        <div className={`flex items-center justify-between p-3 rounded-lg border ${
-          isDueSoon 
-            ? 'bg-red-500/10 border-red-500/30' 
-            : 'bg-white/5 border-white/10'
-        }`}>
-          <div className="flex items-center gap-3">
-            <CalendarDaysIcon className={`w-5 h-5 ${isDueSoon ? 'text-red-400' : 'text-gray-400'}`} />
-            <div>
-              <div className={`text-sm font-medium ${isDueSoon ? 'text-red-400' : 'text-white'}`}>
-                GSTR-3B Due
-              </div>
-              <div className="text-xs text-gray-500">{gst.next_due_date}</div>
-            </div>
-          </div>
-          <div className={`text-lg font-bold ${isDueSoon ? 'text-red-400' : 'text-cyan-400'}`}>
-            {daysUntilDue}d
-          </div>
-        </div>
 
         {/* GST Payable */}
         <div className="grid grid-cols-3 gap-3">

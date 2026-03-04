@@ -57,11 +57,8 @@ export default function Layout({ children, onLogout }) {
       title: "Inventory & Logistics",
       items: [
         { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
-        { path: "/delivery-challans", label: "Delivery Challans", icon: CubeIcon, roles: [] },
-        { path: "/boms", label: "Bill of Materials", icon: BeakerIcon, roles: [] },
         { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
         { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [] },
-        { path: "/inventory/price-lists", label: "Price Lists", icon: BanknotesIcon, roles: [] },
       ]
     },
     {
@@ -69,7 +66,6 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
         { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
-        { path: "/bank-reconciliation", label: "Bank Reconciliation", icon: BuildingLibraryIcon, roles: [] },
         { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
         { path: "/gst", label: "GST Compliance", icon: ReceiptPercentIcon, roles: [] },
       ]
@@ -132,8 +128,8 @@ export default function Layout({ children, onLogout }) {
           </Link>
         </div>
         
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
+        {/* Navigation — scrollable middle section */}
+        <nav className="flex-1 min-h-0 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
           {filteredGroups.map((group, groupIdx) => (
             <div key={groupIdx} className="space-y-1">
               {/* Category Header */}
@@ -153,7 +149,7 @@ export default function Layout({ children, onLogout }) {
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10' 
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-white-[0.03]'
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
                     }`}
                   >
                     <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
@@ -165,8 +161,25 @@ export default function Layout({ children, onLogout }) {
           ))}
         </nav>
         
-        {/* Logout Area */}
-        <div className="p-4 border-t border-white/5">
+        {/* Bottom section — always visible, never scrolls away */}
+        <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/5 space-y-2">
+          {/* Coming Soon Button */}
+          <Link
+            to="/coming-soon"
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+              location.pathname === '/coming-soon'
+                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+            }`}
+          >
+            <BeakerIcon className={`w-5 h-5 transition-colors duration-200 ${
+              location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'
+            }`} />
+            <span className="text-sm flex-1">Coming Soon</span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
+          </Link>
+
+          {/* Sign Out */}
           {onLogout && (
             <button
               onClick={onLogout}
@@ -228,7 +241,7 @@ export default function Layout({ children, onLogout }) {
               </button>
             </div>
             
-            <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto custom-scrollbar">
+            <nav className="flex-1 min-h-0 px-4 py-6 space-y-6 overflow-y-auto custom-scrollbar">
               {filteredGroups.map((group, groupIdx) => (
                 <div key={groupIdx} className="space-y-1">
                   <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-2">
@@ -257,14 +270,25 @@ export default function Layout({ children, onLogout }) {
                 </div>
               ))}
             </nav>
-            
-            <div className="p-4 border-t border-white/10">
-               {onLogout && (
+
+            {/* Bottom section — always pinned */}
+            <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
+              <Link
+                to="/coming-soon"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/coming-soon'
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                }`}
+              >
+                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <span className="text-sm flex-1">Coming Soon</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
+              </Link>
+              {onLogout && (
                 <button
-                  onClick={() => {
-                    onLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
+                  onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
                   className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
                 >
                   Sign Out
