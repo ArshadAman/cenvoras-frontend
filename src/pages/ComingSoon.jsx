@@ -111,7 +111,7 @@ export default function ComingSoon() {
           <p className="text-gray-400 text-sm mb-6">
             We prioritize features based on your feedback. Tell us what you need next!
           </p>
-          <button className="btn-primary" onClick={() => window.open('mailto:support@Cenvora.com')}>
+          <button className="btn-primary" onClick={() => window.open('mailto:cenvoras@gmail.com')}>
              Send Feedback
           </button>
         </div>
