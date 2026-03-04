@@ -111,12 +111,12 @@ export default function Login({ onLogin }) {
                     <Form className="mt-8 space-y-6">
                         <div className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Username</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Address</label>
                                 <Field
                                     type="text"
                                     name="username"
                                     className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                    placeholder="Enter your username"
+                                    placeholder="Enter your email address"
                                 />
                                 <ErrorMessage name="username" component="div" className="text-red-400 text-xs mt-1" />
                             </div>
