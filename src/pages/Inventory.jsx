@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Layout from "../components/Layout";
 import InventoryTable from "../components/inventory/InventoryTable";
 import ProductForm from "../components/inventory/ProductForm";
@@ -18,6 +19,16 @@ export default function Inventory() {
   const [showStockTransfer, setShowStockTransfer] = useState(false);
   const [showBatchSplit, setShowBatchSplit] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const addBarcode = params.get('addBarcode');
+    if (addBarcode) {
+      setEditingProduct({ barcode: addBarcode });
+      setShowProductForm(true);
+    }
+  }, [location]);
 
   const handleAddProduct = () => {
     setEditingProduct(null);

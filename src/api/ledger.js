@@ -190,6 +190,7 @@ export const getGeneralLedgerEntries = async (params = {}) => {
     if (params.page) queryString.append('page', params.page);
     if (params.page_size) queryString.append('page_size', params.page_size);
     if (params.ordering) queryString.append('ordering', params.ordering);
+    if (params.customer) queryString.append('customer', params.customer);
 
     const response = await api.get(`/ledger/general-ledger-entries/?${queryString}`);
     return response.data;
@@ -419,9 +420,14 @@ export const getClientLedger = async (params = {}) => {
 };
 
 // Get ledger statistics
-export const getLedgerStats = async () => {
+export const getLedgerStats = async (params = {}) => {
   try {
-    const response = await api.get('/ledger/accounts/stats/');
+    const queryString = new URLSearchParams();
+    if (params.customer) queryString.append('customer', params.customer);
+    if (params.date_from) queryString.append('date_from', params.date_from);
+    if (params.date_to) queryString.append('date_to', params.date_to);
+
+    const response = await api.get(`/ledger/accounts/stats/?${queryString}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching ledger stats:', error);
@@ -436,11 +442,12 @@ export const recordClientPayment = async (paymentData) => {
     const requestData = {
       customer: paymentData.customer,
       amount: parseFloat(paymentData.amount),
-      description: paymentData.description || "Payment received",
-      date: paymentData.date || new Date().toISOString().split('T')[0]
+      notes: paymentData.description || paymentData.notes || "Payment received",
+      date: paymentData.date || new Date().toISOString().split('T')[0],
+      reference: paymentData.reference || ""
     };
 
-    const response = await api.post('/ledger/accounts/payment/', requestData);
+    const response = await api.post('/billing/payments/', requestData);
     return response.data;
   } catch (error) {
     console.error('Error recording payment:', error);

@@ -88,6 +88,7 @@ export default function ProductForm({ product, onClose }) {
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
     meta: {
+      barcode: product?.barcode || product?.meta?.barcode || "",
       secondary_stock: product?.meta?.secondary_stock || "",
       mandi_tax: product?.meta?.mandi_tax || "",
       is_h1: product?.meta?.is_h1 || false,
@@ -109,6 +110,7 @@ export default function ProductForm({ product, onClose }) {
       stock: parseInt(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
       meta: {
+        barcode: values.meta.barcode || null,
         secondary_stock: values.meta.secondary_stock ? parseFloat(values.meta.secondary_stock) : null,
         mandi_tax: values.meta.mandi_tax ? parseFloat(values.meta.mandi_tax) : null,
         is_h1: values.meta.is_h1,

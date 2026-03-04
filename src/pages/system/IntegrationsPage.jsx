@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import {
   EnvelopeIcon, ChatBubbleLeftIcon, QrCodeIcon, CloudArrowDownIcon, CloudArrowUpIcon,
   KeyIcon, CheckCircleIcon, XCircleIcon, BellAlertIcon, CameraIcon,
   ArrowPathIcon, SparklesIcon, ShieldCheckIcon, ExclamationTriangleIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import {
   getNotificationLogs, sendCustomEmail, sendPaymentReminders,
@@ -221,56 +224,63 @@ function EmailTab() {
 
 // ─── Barcode Scanner Tab ───
 function BarcodeTab() {
+  const navigate = useNavigate();
   const [scanMode, setScanMode] = useState('manual'); // 'manual' | 'camera' | 'hardware'
   const [barcodeInput, setBarcodeInput] = useState('');
   const [scannedProduct, setScannedProduct] = useState(null);
+  const [notFoundBarcode, setNotFoundBarcode] = useState('');
   const [lookupError, setLookupError] = useState('');
-  const [cameraActive, setCameraActive] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const hardwareRef = useRef(null);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-    setCameraActive(false);
-  }, []);
-
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      setCameraActive(true);
-      toast.info('Camera started. Point at a barcode. Use hardware scanner or manual entry for reliable lookup.');
-    } catch (err) {
-      toast.error('Camera access denied. Please enable camera permissions.');
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => stopCamera();
-  }, [stopCamera]);
+  const scannerRef = useRef(null);
 
   const lookupProduct = async (code) => {
-    if (!code.trim()) return;
+    if (!code || !code.trim()) return;
     setIsLookingUp(true);
     setLookupError('');
     setScannedProduct(null);
+    setNotFoundBarcode('');
     try {
       const res = await lookupBarcode(code.trim());
       setScannedProduct(res.data);
       toast.success(`Found: ${res.data.name}`);
-    } catch {
-      setLookupError(`No product found with barcode: ${code}`);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setNotFoundBarcode(code);
+        setLookupError(`No product found with barcode: ${code}`);
+      } else {
+        setLookupError(`Error looking up barcode: ${code}`);
+      }
     }
     setIsLookingUp(false);
   };
+
+  useEffect(() => {
+    if (scanMode === 'camera') {
+      const scanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: { width: 250, height: 150 },
+        rememberLastUsedCamera: true,
+        supportedScanTypes: [0] // Html5QrcodeScanType.SCAN_TYPE_CAMERA
+      });
+      
+      scanner.render((decodedText) => {
+        setBarcodeInput(decodedText);
+        lookupProduct(decodedText);
+      }, (error) => {
+        // quiet fail on scan errors
+      });
+
+      scannerRef.current = scanner;
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(e => console.error(e));
+        scannerRef.current = null;
+      }
+    };
+  }, [scanMode]);
 
   // Hardware scanner support: listens for rapid keystrokes ending in Enter
   useEffect(() => {
@@ -310,7 +320,6 @@ function BarcodeTab() {
               key={mode.id}
               onClick={() => {
                 setScanMode(mode.id);
-                if (mode.id !== 'camera') stopCamera();
               }}
               className={`text-left p-4 rounded-xl border transition-all ${scanMode === mode.id ? 'border-purple-500/50 bg-purple-500/10' : 'border-white/10 bg-white/[0.03] hover:bg-white/5'}`}
             >
@@ -326,33 +335,9 @@ function BarcodeTab() {
       {scanMode === 'camera' && (
         <div className="bento-card p-6">
           <h3 className="text-white font-bold mb-3">Camera Scanner</h3>
-          <div className="relative bg-black rounded-2xl overflow-hidden mb-4" style={{ aspectRatio: '16/9', maxHeight: 320 }}>
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-            {!cameraActive && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80">
-                <CameraIcon className="w-12 h-12 text-gray-500" />
-                <p className="text-gray-400 text-sm">Camera not started</p>
-              </div>
-            )}
-            {cameraActive && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-32 border-2 border-purple-400/60 rounded-lg" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)' }} />
-              </div>
-            )}
-          </div>
-          <div className="flex gap-3">
-            {!cameraActive ? (
-              <button onClick={startCamera} className="flex items-center gap-2 px-5 py-2.5 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-xl font-semibold hover:bg-purple-500/20 transition-colors">
-                <CameraIcon className="w-4 h-4" /> Start Camera
-              </button>
-            ) : (
-              <button onClick={stopCamera} className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-300 rounded-xl font-semibold hover:bg-red-500/20 transition-colors">
-                Stop Camera
-              </button>
-            )}
-          </div>
+          <div id="reader" className="w-full bg-black rounded-2xl overflow-hidden mb-4 min-h-[300px]"></div>
           <div className="mt-4 p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl text-xs text-blue-300">
-            💡 For reliable scanning, connect an external barcode scanner gun in <strong>Hardware Scanner</strong> mode, which works with any USB/Bluetooth device without needing a camera.
+            💡 For reliable scanning, connect an external barcode scanner gun in <strong>Hardware Scanner</strong> mode.
           </div>
         </div>
       )}
@@ -407,8 +392,18 @@ function BarcodeTab() {
 
         {/* Result */}
         {lookupError && (
-          <div className="mt-4 p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-300 text-sm flex items-center gap-2">
-            <XCircleIcon className="w-5 h-5 shrink-0" /> {lookupError}
+          <div className="mt-4 p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-300 text-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <XCircleIcon className="w-5 h-5 shrink-0" /> {lookupError}
+            </div>
+            {notFoundBarcode && (
+              <button
+                onClick={() => navigate(`/inventory?addBarcode=${notFoundBarcode}`)}
+                className="px-4 py-2 bg-purple-500 border border-purple-400 text-white rounded-lg text-xs font-bold hover:bg-purple-600 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2"
+              >
+                <PlusIcon className="w-4 h-4" /> Add to Inventory
+              </button>
+            )}
           </div>
         )}
         {scannedProduct && (

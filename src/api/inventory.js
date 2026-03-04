@@ -5,7 +5,7 @@ export const getProducts = (params) =>
   api.get("/inventory/products/", { params }).then(res => res.data);
 
 export const getProduct = (id) =>
-  api.get(`/inventory/product/${id}/`).then(res => res.data);
+  api.get(`/inventory/products/${id}/`).then(res => res.data);
 
 export const createProduct = (data) => {
   // Map frontend fields to backend schema
@@ -22,7 +22,7 @@ export const createProduct = (data) => {
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     meta: data.meta
   };
-  return api.post("/inventory/add-product/", backendData).then(res => res.data);
+  return api.post("/inventory/products/", backendData).then(res => res.data);
 };
 
 export const updateProduct = (id, data) => {
@@ -40,11 +40,11 @@ export const updateProduct = (id, data) => {
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     meta: data.meta
   };
-  return api.put(`/inventory/product/${id}/`, backendData).then(res => res.data);
+  return api.put(`/inventory/products/${id}/`, backendData).then(res => res.data);
 };
 
 export const deleteProduct = (id) =>
-  api.delete(`/inventory/product/${id}/`).then(res => res.data);
+  api.delete(`/inventory/products/${id}/`).then(res => res.data);
 
 // Stock management endpoints
 export const getStockMovements = (params) =>
