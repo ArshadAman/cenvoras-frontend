@@ -64,7 +64,10 @@ api.interceptors.response.use(
       if (!refreshToken) {
         console.warn('No refresh token available, redirecting to login');
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        localStorage.removeItem('activeSession');
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+            window.location.href = '/login';
+        }
         return Promise.reject(error);
       }
 
@@ -81,7 +84,10 @@ api.interceptors.response.use(
         processQueue(err, null)
         localStorage.removeItem('token')
         localStorage.removeItem('refresh')
-        window.location.href = '/login'
+        localStorage.removeItem('activeSession')
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+            window.location.href = '/login'
+        }
         return Promise.reject(err)
       } finally {
         isRefreshing = false
