@@ -20,6 +20,7 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import { getUserProfile, updateUserProfile, changePassword } from '../api/users';
+import { getUserRole } from '../utils/auth';
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -200,8 +201,8 @@ const Profile = ({ onLogout }) => {
   });
 
   const queryClient = useQueryClient();
-
-  // Add theme CSS - REMOVED (Moved to index.css)
+  const role = getUserRole();
+  const isAdmin = role === 'admin';
 
   // Fetch user profile
   const { data: userProfile, isLoading, error } = useQuery({
@@ -387,16 +388,23 @@ const Profile = ({ onLogout }) => {
                     <h2 className="text-2xl font-bold text-white mb-1">
                       {userProfile?.profile?.first_name} {userProfile?.profile?.last_name}
                     </h2>
-                    <p className="text-cyan-400 font-medium mb-4">{userProfile?.profile?.business_name || 'Business Owner'}</p>
+                    <p className="text-cyan-400 font-medium mb-4">
+                      {isAdmin 
+                        ? (userProfile?.profile?.business_name || 'Business Owner') 
+                        : (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Team Member')
+                      }
+                    </p>
                     
-                    <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                      <ShieldCheckIcon className={`w-5 h-5 mr-2 ${
-                        userProfile?.profile?.subscription_status === 'trial' ? 'text-yellow-400' : 'text-green-400'
-                      }`} />
-                      <span className="text-white/90 font-medium">
-                        {userProfile?.profile?.subscription_status === 'trial' ? 'Trial Plan' : 'Premium Plan'}
-                      </span>
-                    </div>
+                    {isAdmin && (
+                      <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                        <ShieldCheckIcon className={`w-5 h-5 mr-2 ${
+                          (userProfile?.profile?.plan_name || '').includes('Starter') ? 'text-yellow-400' : 'text-green-400'
+                        }`} />
+                        <span className="text-white/90 font-medium">
+                          {userProfile?.profile?.plan_name || 'Loading Plan...'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -452,7 +460,7 @@ const Profile = ({ onLogout }) => {
                 <div className="bento-card p-8">
                   <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">Account Details</h3>
-                    {!isEditing && (
+                    {isAdmin && !isEditing && (
                       <button
                         onClick={() => setIsEditing(true)}
                         className="btn-secondary flex items-center gap-2"
@@ -582,7 +590,7 @@ const Profile = ({ onLogout }) => {
                     </div>
 
                     {/* Action Buttons */}
-                    {isEditing && (
+                    {isAdmin && isEditing && (
                       <div className="flex items-center justify-end space-x-4 pt-6 mt-8 border-t border-white/10">
                         <button
                           type="button"

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import { getUserProfile } from '../api/users';
 import { 
   ChartBarIcon, 
   CurrencyRupeeIcon, 
@@ -75,18 +77,39 @@ export default function Layout({ children, onLogout }) {
     {
       title: "System",
       items: [
+        { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
+        { path: "/settings/team", label: "Team Settings", icon: UsersIcon, roles: ['admin'] },
         { path: "/integrations", label: "Integrations", icon: Cog6ToothIcon, roles: [] },
         { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
       ]
     }
   ];
 
+  const { data: profileData } = useQuery({
+    queryKey: ['profile'],
+    queryFn: getUserProfile,
+    enabled: !!role // Only fetch if authenticated
+  });
+  
+  const permissions = profileData?.profile?.permissions || {};
 
-  // Filter structural groups by roles
+  // Filter structural groups by roles AND granular permissions
   const filteredGroups = navigationGroups.map(group => {
     const validItems = group.items.filter(item => {
-      if (!item.roles || item.roles.length === 0) return true;
-      return item.roles.includes(role);
+      // 1. Role Check
+      if (item.roles && item.roles.length > 0 && !item.roles.includes(role)) {
+        return false;
+      }
+      
+      // 2. Granular Permission Check (if manager)
+      if (role === 'manager') {
+        if (group.title === "Sales & Trade" && permissions.sales === 'none') return false;
+        if (group.title === "Purchasing" && permissions.purchases === 'none') return false;
+        if (group.title === "Inventory & Logistics" && permissions.inventory === 'none') return false;
+        if (group.title === "Financials" && permissions.financials === 'none') return false;
+      }
+      
+      return true;
     });
     return { ...group, items: validItems };
   }).filter(group => group.items.length > 0); // Hide empty groups

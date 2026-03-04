@@ -28,6 +28,7 @@ import AuditLogList from './pages/system/AuditLogList'
 import IntegrationsPage from './pages/system/IntegrationsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AIChatWidget from './components/AIChatWidget'
+import TeamSettings from './pages/settings/TeamSettings'
 
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
@@ -203,6 +204,16 @@ function App() {
             localStorage.removeItem('activeSession');
             setIsAuthenticated(false);
           }} /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/settings/team"
+          element={
+            isAuthenticated ? (
+              <ProtectedRoute allowedRoles={['admin']}>
+                <TeamSettings />
+              </ProtectedRoute>
+            ) : <Navigate to="/" replace />
+          }
         />
         <Route
           path="*"

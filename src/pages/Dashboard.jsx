@@ -63,6 +63,11 @@ export default function Dashboard({ onLogout }) {
     staleTime: 30000,
   });
 
+  const { data: profileData } = useQuery({
+    queryKey: ['profile'],
+    queryFn: () => api.get('/users/profile/').then(res => res.data),
+  });
+
   // Fetch Legacy Dashboard Data (old metrics)
   const { data: metrics, isLoading: loadingMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
@@ -140,7 +145,9 @@ export default function Dashboard({ onLogout }) {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
               <SparklesIcon className="w-8 h-8 text-cyan-400" />
-              Smart Dashboard
+              {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
+                ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
+                : 'Smart Dashboard'}
             </h1>
             <p className="text-gray-400 text-sm">Your intelligent business assistant</p>
           </div>
