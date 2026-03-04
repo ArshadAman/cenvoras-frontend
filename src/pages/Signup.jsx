@@ -13,6 +13,7 @@ const SignupSchema = Yup.object().shape({
   phone: Yup.string().required('Required'),
   business_name: Yup.string().nullable(),
   gstin: Yup.string().nullable(),
+  termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
 });
 
 export default function Signup() {
@@ -37,7 +38,7 @@ export default function Signup() {
 
         {/* Brand Logo */}
         <Link to="/" className="relative z-10 flex items-center hover:opacity-90 transition-opacity">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-14 w-auto object-contain" />
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain" />
         </Link>
 
         {/* Value Prop */}
@@ -56,7 +57,7 @@ export default function Signup() {
                 </li>
                 <li className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</div>
-                    24/7 Priority support
+                    GST-Ready Billing & Reports
                 </li>
             </ul>
         </div>
@@ -72,7 +73,7 @@ export default function Signup() {
         {/* Mobile Navbar */}
         <nav className="absolute top-0 left-0 w-full p-6 lg:hidden flex justify-between items-center z-20">
             <Link to="/" className="flex items-center">
-                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
             </Link>
         </nav>
 
@@ -80,7 +81,7 @@ export default function Signup() {
             <div className="text-center lg:text-left">
                 <h2 className="text-3xl font-bold text-white tracking-tight">Create your account</h2>
                 <p className="mt-2 text-slate-400">
-                    Start your 14-day free trial. No credit card required.
+                    Start your 30-day free trial. No credit card required.
                 </p>
             </div>
 
@@ -91,7 +92,8 @@ export default function Signup() {
                     confirm_password: '', 
                     phone: '', 
                     business_name: '', 
-                    gstin: '' 
+                    gstin: '',
+                    termsAccepted: false
                 }}
                 validationSchema={SignupSchema}
                 onSubmit={async (values, { setSubmitting, setFieldError }) => {
@@ -178,11 +180,18 @@ export default function Signup() {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3 mt-4">
-                            <input type="checkbox" className="mt-1 w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500" />
-                            <p className="text-sm text-slate-400">
-                                I agree to the <a href="#" className="text-cyan-400 hover:text-cyan-300">Terms of Service</a> and <a href="#" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</a>.
-                            </p>
+                        <div className="mt-4">
+                            <div className="flex items-start gap-3">
+                                <Field 
+                                    type="checkbox" 
+                                    name="termsAccepted"
+                                    className="mt-1 w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500" 
+                                />
+                                <p className="text-sm text-slate-400">
+                                    I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300" target="_blank">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300" target="_blank">Privacy Policy</Link>.
+                                </p>
+                            </div>
+                            <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />
                         </div>
 
                         <button

@@ -131,7 +131,7 @@ export default function LandingPage() {
       <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
         <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
           <Link to="/" className="hover:opacity-80 transition-opacity flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[160px] h-auto object-contain" />
           </Link>
           
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
@@ -199,7 +199,7 @@ export default function LandingPage() {
                       <ChartBarIcon className="w-5 h-5" /> inventory 2.0
                    </div>
                    <h3 className="text-4xl font-bold mb-4 text-white">Inventory that thinks.</h3>
-                   <p className="text-gray-400 max-w-md text-lg leading-relaxed">Stop guessing. We track every batch, every expiry, and every movement across all your warehouses in real-time. It’s like having a dedicated manager for every shelf.</p>
+                   <p className="text-gray-400 max-w-md text-lg leading-relaxed">Stop guessing. We track every batch and every movement across all your warehouses in real-time. It’s like having a dedicated manager for every shelf.</p>
                 </div>
                 
                 {/* Visual decoration */}
@@ -231,8 +231,8 @@ export default function LandingPage() {
                       <ShieldCheckIcon className="w-7 h-7" />
                    </div>
                    <div>
-                      <h3 className="text-2xl font-bold text-white mb-2">Fort Knox, Digital.</h3>
-                      <p className="text-gray-500 text-sm leading-relaxed">Your data is encrypted with AES-256 and backed up daily. Sleep soundly knowing your business is bulletproof.</p>
+                      <h3 className="text-2xl font-bold text-white mb-2">Bulletproof Access & Backups.</h3>
+                      <p className="text-gray-500 text-sm leading-relaxed">Granular Role-Based Access Control plus automated daily off-site backups (every 24 hrs) to keep your baseline secure.</p>
                    </div>
                 </div>
              </div>
@@ -264,8 +264,8 @@ export default function LandingPage() {
               </div>
               <div className="bento-card bg-[#0a0a0a] scroll-animate p-10 flex items-center justify-between group hover:bg-[#0f0f0f]">
                   <div>
-                    <h3 className="text-3xl font-bold mb-3 text-white">Global Scale.</h3>
-                    <p className="text-gray-500 text-lg">GSTR-1 Reports, Multi-Currency, <br/>and export to anything.</p>
+                    <h3 className="text-3xl font-bold mb-3 text-white">GST Ready.</h3>
+                    <p className="text-gray-500 text-lg">GSTR-1 Reports, Tax Registers, <br/>and Instant PDF Exports.</p>
                   </div>
                   <GlobeAltIcon className="w-20 h-20 text-gray-800 group-hover:text-gray-600 transition-colors duration-300" />
               </div>
@@ -289,9 +289,9 @@ export default function LandingPage() {
                      Start Free Trial
                  </Link>
                  <ul className="space-y-4 text-sm text-gray-400">
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> 1 User</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> 1 User (Owner)</li>
                      <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Basic Invoicing</li>
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> 5 Clients</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Unlimited Clients</li>
                  </ul>
              </div>
 
@@ -305,10 +305,10 @@ export default function LandingPage() {
                      Get Started
                  </Link>
                  <ul className="space-y-4 text-sm text-gray-300">
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Unlimited Users</li>
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Inventory Tracking</li>
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> 50 Clients</li>
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Financial Reports</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Up to 2 Additional Managers</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Smart Inventory Tracking</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Unlimited Clients</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Financial & GST Reports</li>
                  </ul>
              </div>
 
@@ -320,9 +320,9 @@ export default function LandingPage() {
                      Contact Sales
                  </Link>
                  <ul className="space-y-4 text-sm text-gray-400">
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Needs Analysis</li>
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Custom Branding</li>
-                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> API Access</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Up to 5 Managers</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Priority Support</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Setup Assistance</li>
                  </ul>
              </div>
           </div>
@@ -346,9 +346,9 @@ export default function LandingPage() {
            <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between text-xs text-gray-600 gap-4">
               <p>&copy; {new Date().getFullYear()} Cenvora Inc. All rights reserved.</p>
               <div className="flex gap-6">
-                 <a href="#" className="hover:text-gray-400">Privacy</a>
-                 <a href="#" className="hover:text-gray-400">Terms</a>
-                 <a href="#" className="hover:text-gray-400">Sitemap</a>
+                 <Link to="/privacy" className="hover:text-gray-400">Privacy</Link>
+                 <Link to="/terms" className="hover:text-gray-400">Terms</Link>
+                 <Link to="/sitemap" className="hover:text-gray-400">Sitemap</Link>
               </div>
            </div>
         </div>

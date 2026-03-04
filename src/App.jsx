@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import Sitemap from './pages/Sitemap'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
@@ -64,6 +67,9 @@ function App() {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />}
         />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/sitemap" element={<Sitemap />} />
         <Route
           path="/dashboard"
           element={isAuthenticated ? <Dashboard onLogout={() => {

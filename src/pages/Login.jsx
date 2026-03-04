@@ -33,7 +33,7 @@ export default function Login({ onLogin }) {
 
         {/* Brand Logo */}
         <Link to="/" className="relative z-10 flex items-center hover:opacity-90 transition-opacity">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-14 w-auto object-contain" />
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain" />
         </Link>
 
         {/* Testimonial / Value Prop */}
@@ -54,8 +54,8 @@ export default function Login({ onLogin }) {
 
         {/* Footer Links */}
         <div className="relative z-10 flex gap-6 text-sm text-slate-500">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export default function Login({ onLogin }) {
         {/* Mobile Navbar (Only visible on mobile) */}
         <nav className="absolute top-0 left-0 w-full p-6 lg:hidden flex justify-between items-center z-20">
             <Link to="/" className="flex items-center">
-                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
             </Link>
         </nav>
 

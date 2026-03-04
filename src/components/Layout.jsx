@@ -126,9 +126,9 @@ export default function Layout({ children, onLogout }) {
       <aside className="hidden md:flex flex-col w-72 glass-sidebar relative z-50 h-screen sticky top-0">
         
         {/* Logo Area */}
-        <div className="h-20 flex items-center px-6 border-b border-white/5">
+        <div className="h-24 flex items-center px-6 border-b border-white/5">
           <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
           </Link>
         </div>
         
@@ -194,7 +194,7 @@ export default function Layout({ children, onLogout }) {
           </button>
           
           <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
           </Link>
           
           <div className="w-10"></div> {/* Spacer */}
@@ -218,8 +218,8 @@ export default function Layout({ children, onLogout }) {
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="h-16 flex items-center justify-between px-6 border-b border-white/10">
-              <span className="text-xl font-bold">Menu</span>
+            <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
+              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-2 -mr-2 text-gray-400 hover:text-white"
