@@ -382,7 +382,7 @@ const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
   invoice_number: Yup.string().required("Invoice number is required").min(1).max(100),
-  warehouse: Yup.string().required("Warehouse is required"),
+  warehouse: Yup.string().nullable(),
   invoice_date: Yup.string().required("Invoice date is required"),
   
   // Optional fields for customer record creation
@@ -503,6 +503,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
     enabled: !!selectedWarehouseId
   });
+
+  // Sync warehouse selection from Formik values (used by render below)
+  // This replaces the illegal useEffect-inside-IIFE that was causing form refreshes
+  const warehouseSyncRef = React.useRef(selectedWarehouseId);
 
   // Auto-focus the first product field when form opens
   useEffect(() => {
@@ -805,19 +809,23 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                         Warehouse *
+                         Warehouse
                       </label>
                       <Field
                         name="warehouse"
                         as="select"
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFieldValue('warehouse', val);
+                          setSelectedWarehouseId(val);
+                        }}
                       >
                         <option value="">Select Warehouse</option>
                         {warehouses?.map(w => (
                            <option key={w.id} value={w.id}>{w.name}</option>
                         ))}
                       </Field>
-                      <ErrorMessage name="warehouse" component="div" className="text-red-400 text-xs mt-1" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
@@ -852,16 +860,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                         Customer Name *
                       </label>
-                      {/* Capture warehouse change */}
-                      {(() => {
-                           // A simple effect to sync warehouse state
-                           useEffect(() => {
-                             if (values.warehouse !== selectedWarehouseId) {
-                               setSelectedWarehouseId(values.warehouse);
-                             }
-                           }, [values.warehouse]);
-                           return null;
-                      })()}
+
                       <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
                       <ErrorMessage name="customer_name" component="div" className="text-red-400 text-sm mt-1" />
                     </div>

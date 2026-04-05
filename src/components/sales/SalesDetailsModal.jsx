@@ -26,6 +26,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   const [template, setTemplate] = useState(null);
   const [showDesigner, setShowDesigner] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailPromptOpen, setEmailPromptOpen] = useState(false);
+  const [manualEmail, setManualEmail] = useState('');
 
   // Load active template
   useEffect(() => {
@@ -103,10 +105,113 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
   };
 
+  // Send invoice email helper
+  const sendInvoiceEmail = async (email) => {
+    setSendingEmail(true);
+    try {
+      const businessName = businessInfo.business_name || 'Cenvora';
+      const subject = `Invoice ${invoiceDetails.invoice_number} from ${businessName}`;
+
+      // Build HTML-formatted invoice for email
+      const items = invoiceDetails.items || [];
+      let itemRows = items.map(item =>
+        `<tr>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${item.product_name || item.product?.name || '—'}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.price || 0).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.amount || 0).toFixed(2)}</td>
+        </tr>`
+      ).join('');
+
+      const body =
+        `<div style="font-family:Arial,sans-serif;max-width:600px;">` +
+        `<h2 style="color:#333;">Invoice from ${businessName}</h2>` +
+        `<table style="width:100%;margin:16px 0;">` +
+        `<tr><td style="color:#666;">Invoice No:</td><td><strong>${invoiceDetails.invoice_number}</strong></td></tr>` +
+        `<tr><td style="color:#666;">Date:</td><td>${invoiceDetails.invoice_date}</td></tr>` +
+        `<tr><td style="color:#666;">Customer:</td><td>${invoiceDetails.customer_name || 'N/A'}</td></tr>` +
+        `</table>` +
+        `<table style="width:100%;border-collapse:collapse;margin:16px 0;">` +
+        `<thead><tr style="background:#f5f5f5;">` +
+        `<th style="padding:8px;text-align:left;">Item</th>` +
+        `<th style="padding:8px;text-align:center;">Qty</th>` +
+        `<th style="padding:8px;text-align:right;">Price</th>` +
+        `<th style="padding:8px;text-align:right;">Amount</th>` +
+        `</tr></thead>` +
+        `<tbody>${itemRows}</tbody>` +
+        `<tfoot><tr style="background:#f5f5f5;font-weight:bold;">` +
+        `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
+        `<td style="padding:8px;text-align:right;">₹${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
+        `</tr></tfoot>` +
+        `</table>` +
+        `<p style="color:#666;">Thank you for your business!<br>— ${businessName}</p>` +
+        `</div>`;
+
+      await sendCustomEmail({ recipient: email, subject, body });
+      toast.success(`Invoice emailed to ${email}`);
+      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+      setEmailPromptOpen(false);
+      setManualEmail('');
+    } catch {
+      toast.error('Failed to send email. Check your email configuration in Business Tools.');
+    }
+    setSendingEmail(false);
+  };
+
+  // Handle email button click
+  const handleEmailClick = () => {
+    const email =
+      invoiceDetails?.customer_email ||
+      invoiceDetails?.customer_details?.email ||
+      invoiceDetails?.customer?.email;
+    if (!email) {
+      setEmailPromptOpen(true);
+      return;
+    }
+    sendInvoiceEmail(email);
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
     <>
+      {/* Email Prompt Modal */}
+      {emailPromptOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEmailPromptOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl p-6 animate-fade-up">
+            <h3 className="text-lg font-bold text-white mb-2">Enter Customer Email</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              No email is on file for this customer. Enter an email to send this invoice.
+            </p>
+            <input
+              type="email"
+              value={manualEmail}
+              onChange={(e) => setManualEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && manualEmail.includes('@') && sendInvoiceEmail(manualEmail)}
+              placeholder="customer@example.com"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-cyan-500/50 mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setEmailPromptOpen(false); setManualEmail(''); }}
+                className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => sendInvoiceEmail(manualEmail)}
+                disabled={!manualEmail.includes('@') || sendingEmail}
+                className="px-5 py-2 bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-lg text-sm font-semibold hover:bg-cyan-500/30 transition-colors disabled:opacity-40 flex items-center gap-2"
+              >
+                {sendingEmail ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</> : <><EnvelopeIcon className="w-4 h-4" /> Send Invoice</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Modal */}
       <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
         {/* Backdrop */}
@@ -156,34 +261,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
               <button
                 disabled={sendingEmail}
-                onClick={async () => {
-                  const email =
-                    invoiceDetails?.customer_email ||
-                    invoiceDetails?.customer_details?.email ||
-                    invoiceDetails?.customer?.email;
-                  if (!email) {
-                    toast.warning('No email address found for this customer. Add one in Customers first.');
-                    return;
-                  }
-                  setSendingEmail(true);
-                  try {
-                    const businessName = businessInfo.business_name || 'Cenvora';
-                    const subject = `Invoice ${invoiceDetails.invoice_number} from ${businessName}`;
-                    const body =
-                      `Dear ${invoiceDetails.customer_name},\n\n` +
-                      `Please find your invoice details below:\n\n` +
-                      `Invoice No: ${invoiceDetails.invoice_number}\n` +
-                      `Date: ${invoiceDetails.invoice_date}\n` +
-                      `Amount: ₹${invoiceDetails.total_amount}\n\n` +
-                      `Thank you for your business!\n— ${businessName}`;
-                    await sendCustomEmail({ recipient: email, subject, body });
-                    toast.success(`Invoice emailed to ${email}`);
-                    queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
-                  } catch {
-                    toast.error('Failed to send email. Check your email configuration in Integrations settings.');
-                  }
-                  setSendingEmail(false);
-                }}
+                onClick={handleEmailClick}
                 className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {sendingEmail

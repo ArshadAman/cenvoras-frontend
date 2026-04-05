@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts } from "../../api/inventory";
 import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
+import Pagination from "../common/Pagination";
 
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
   const [search, setSearch] = useState("");
@@ -44,7 +45,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   // Get the raw products array from API response
   const productsRaw = Array.isArray(data)
     ? data
-    : data?.data || data?.results || [];
+    : data?.results || data?.data || [];
+  const totalPages = data?.total_pages || 1;
+  const currentPage = data?.current_page || page;
 
   // Frontend search and filter
   const filteredProducts = productsRaw
@@ -300,6 +303,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Unit Price</th>
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Value</th>
               <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Status</th>
+              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Warranty</th>
               <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
             </tr>
           </thead>
@@ -365,6 +369,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.className}`}>
                           {stockStatus.text}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {(product.warranty_months && product.warranty_months > 0) ? (
+                          <span className="px-2 py-0.5 rounded text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+                            {product.warranty_months} mo
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 text-xs">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center space-x-1">
                         {/* View button removed */}
@@ -509,23 +522,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-end mt-4 gap-2">
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={page === 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          Prev
-        </button>
-        <span className="px-2 py-1 text-white drop-shadow-lg">{page}</span>
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={!data?.next && !data?.data?.next}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
-      </div>
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Advanced Filters Modal */}
       {showAdvancedFilters && (

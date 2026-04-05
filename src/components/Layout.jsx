@@ -20,7 +20,8 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   ReceiptPercentIcon,
-  BuildingLibraryIcon
+  BuildingLibraryIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 
@@ -43,7 +44,9 @@ export default function Layout({ children, onLogout }) {
         { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
         { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
         { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
+        { path: "/warranty", label: "Warranty", icon: ShieldCheckIcon, roles: [] },
         { path: "/customers", label: "Customers", icon: UsersIcon, roles: [] },
+        { path: "/vendors", label: "Vendors", icon: UsersIcon, roles: [] },
       ]
     },
     {
@@ -57,6 +60,7 @@ export default function Layout({ children, onLogout }) {
       title: "Inventory & Logistics",
       items: [
         { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
+        { path: "/batches", label: "Batches", icon: CubeIcon, roles: [] },
         { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
         { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [] },
       ]
@@ -75,7 +79,7 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
         { path: "/settings/team", label: "Team Settings", icon: UsersIcon, roles: ['admin'] },
-        { path: "/integrations", label: "Integrations", icon: Cog6ToothIcon, roles: [] },
+        { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [] },
         { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
       ]
     }

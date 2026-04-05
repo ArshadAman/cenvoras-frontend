@@ -64,7 +64,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
       .map(item => ({
-        product: item.product.id || item.product, // Ensure it's the raw UUID string or object ID
+        product: item.product_detail?.id || item.product_id || item.product, // Extract exact UUID
         batch: item.batch_id || item.batch || null,
         hsn_sac_code: item.hsn_sac_code,
         quantity: parseFloat(item.return_qty),

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesOrders, deleteSalesOrder, convertToInvoice } from "../../api/sales_order";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import Pagination from "../common/Pagination";
 
 export default function SalesOrderTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -18,7 +19,9 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
     return <div className="text-red-500 text-center p-4">Error loading orders</div>;
   }
 
-  const orders = Array.isArray(data) ? data : data?.data || data?.results || [];
+  const orders = Array.isArray(data) ? data : data?.results || data?.data || [];
+  const totalPages = data?.total_pages || 1;
+  const currentPage = data?.current_page || page;
 
   const handleConvert = async (orderId) => {
     if(!window.confirm("Convert this order to an Invoice?")) return;
@@ -33,7 +36,7 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
 
   const filteredOrders = orders.filter(order => 
     order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
-    order.customer_name?.toLowerCase().includes(search.toLowerCase())
+    (order.customer_display_name || order.customer_name || '')?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -65,11 +68,11 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                     <tr key={order.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-white font-medium">{order.order_number}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-400">{format(new Date(order.date), 'MMM dd, yyyy')}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-white">{order.customer_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-white">{order.customer_display_name || order.customer_name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-cyan-400 font-bold">₹{Number(order.total_amount).toLocaleString()}</td>
                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded text-xs ${order.status === 'Converted' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                {order.status || 'Pending'}
+                            <span className={`px-2 py-1 rounded text-xs ${order.stage === 'completed' ? 'bg-green-500/20 text-green-400' : order.stage === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                {order.stage || 'new'}
                             </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
@@ -85,6 +88,8 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
             </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

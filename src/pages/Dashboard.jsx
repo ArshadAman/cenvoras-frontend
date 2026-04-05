@@ -22,6 +22,7 @@ import WarningsSection from '../components/dashboard/WarningsSection'
 import InsightsSection from '../components/dashboard/InsightsSection'
 import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
+import ExpiryCard from '../components/dashboard/ExpiryCard'
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -185,7 +186,7 @@ export default function Dashboard({ onLogout }) {
         {/* 2. LEGACY OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
         <section>
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Overall Summary</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
@@ -202,6 +203,8 @@ export default function Dashboard({ onLogout }) {
                   </div>
               ))
             }
+            {/* Expiry Card */}
+            <ExpiryCard />
           </div>
         </section>
 

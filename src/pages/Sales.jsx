@@ -64,9 +64,9 @@ export default function Sales() {
                  type="text" 
                  value={invoicePrefix}
                  onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase())}
-                 className="bg-transparent border-none text-white text-sm w-20 outline-none placeholder-gray-600 focus:ring-0 p-0"
+                 className="bg-transparent border-none text-white text-sm w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
                  placeholder="INV-"
-                 maxLength={6}
+                 maxLength={10}
                />
              </div>
              <button

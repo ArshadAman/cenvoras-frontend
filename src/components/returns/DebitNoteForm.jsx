@@ -3,7 +3,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getProducts, getVendorProducts } from "../../api/purchase";
-import { getCustomers } from "../../api/customers";
+import { getVendors } from "../../api/vendors";
 import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
@@ -24,7 +24,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   // Fetch Vendors for Autocomplete
   const { data: vendorsResult } = useQuery({ 
       queryKey: ["vendors"], 
-      queryFn: () => getCustomers({ search: "", ordering: "name" }),
+      queryFn: () => getVendors({ search: "", ordering: "name" }),
       staleTime: 5 * 60 * 1000, 
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];

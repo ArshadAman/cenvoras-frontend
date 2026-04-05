@@ -37,7 +37,11 @@ const productSchema = Yup.object().shape({
   low_stock_alert: Yup.number()
     .integer("Low stock alert must be a whole number")
     .min(0, "Low stock alert must be positive"),
+  warranty_months: Yup.number()
+    .integer("Warranty must be a whole number")
+    .min(0, "Warranty must be positive"),
   meta: Yup.object().shape({
+    expiry_date: Yup.date().nullable().typeError("Invalid date"),
     secondary_stock: Yup.number().nullable(),
     mandi_tax: Yup.number().nullable(),
     is_h1: Yup.boolean(),
@@ -87,8 +91,10 @@ export default function ProductForm({ product, onClose }) {
     price: product?.price || product?.purchase_price || product?.unit_price || "",
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
+    warranty_months: product?.warranty_months || 0,
     meta: {
       barcode: product?.barcode || product?.meta?.barcode || "",
+      expiry_date: product?.meta?.expiry_date || "",
       secondary_stock: product?.meta?.secondary_stock || "",
       mandi_tax: product?.meta?.mandi_tax || "",
       is_h1: product?.meta?.is_h1 || false,
@@ -98,6 +104,21 @@ export default function ProductForm({ product, onClose }) {
   };
 
   const handleSubmit = (values, { setSubmitting }) => {
+    const metaData = {
+      is_h1: values.meta.is_h1,
+      is_narcotic: values.meta.is_narcotic,
+      is_new_launch: values.meta.is_new_launch,
+    };
+
+    if (values.meta.barcode?.trim()) metaData.barcode = values.meta.barcode;
+    if (values.meta.expiry_date) metaData.expiry_date = values.meta.expiry_date;
+    if (values.meta.secondary_stock !== "" && values.meta.secondary_stock !== null) {
+      metaData.secondary_stock = parseFloat(values.meta.secondary_stock);
+    }
+    if (values.meta.mandi_tax !== "" && values.meta.mandi_tax !== null) {
+      metaData.mandi_tax = parseFloat(values.meta.mandi_tax);
+    }
+
     const productData = {
       name: values.name,
       description: values.description || null,
@@ -109,14 +130,8 @@ export default function ProductForm({ product, onClose }) {
       price: values.price,
       stock: parseInt(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
-      meta: {
-        barcode: values.meta.barcode || null,
-        secondary_stock: values.meta.secondary_stock ? parseFloat(values.meta.secondary_stock) : null,
-        mandi_tax: values.meta.mandi_tax ? parseFloat(values.meta.mandi_tax) : null,
-        is_h1: values.meta.is_h1,
-        is_narcotic: values.meta.is_narcotic,
-        is_new_launch: values.meta.is_new_launch,
-      },
+      warranty_months: parseInt(values.warranty_months) || 0,
+      meta: metaData,
     };
 
     if (isEdit) {
@@ -214,6 +229,18 @@ export default function ProductForm({ product, onClose }) {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClass}>Expiry Date (Optional)</label>
+                  <Field
+                    name="meta.expiry_date"
+                    type="date"
+                    className={inputClass}
+                  />
+                  <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+              </div>
+
               {/* Section 2: Units */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -285,8 +312,9 @@ export default function ProductForm({ product, onClose }) {
                 </div>
               </div>
 
-               {/* Section 4: Alerts */}
-               <div>
+               {/* Section 4: Alerts & Warranty */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
                   <label className={labelClass}>Low Stock Alert</label>
                   <Field
                     name="low_stock_alert"
@@ -298,6 +326,20 @@ export default function ProductForm({ product, onClose }) {
                   <p className="text-xs text-gray-500 mt-2">
                     Get notified when stock falls below this level.
                   </p>
+                </div>
+                <div>
+                  <label className={labelClass}>Warranty (Months)</label>
+                  <Field
+                    name="warranty_months"
+                    type="number"
+                    min="0"
+                    className={inputClass}
+                    placeholder="e.g. 12"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Warranty duration from sale date. 0 = no warranty.
+                  </p>
+                </div>
                </div>
 
                {/* Section 5: Advanced Details (Sidecar) */}

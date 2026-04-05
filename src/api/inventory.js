@@ -20,6 +20,7 @@ export const createProduct = (data) => {
     conversion_factor: parseInt(data.conversion_factor || 1),
     price: data.price || data.unit_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
+    warranty_months: parseInt(data.warranty_months || 0),
     meta: data.meta
   };
   return api.post("/inventory/products/", backendData).then(res => res.data);
@@ -38,6 +39,7 @@ export const updateProduct = (id, data) => {
     conversion_factor: parseInt(data.conversion_factor || 1),
     price: data.price || data.unit_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
+    warranty_months: parseInt(data.warranty_months || 0),
     meta: data.meta
   };
   return api.put(`/inventory/products/${id}/`, backendData).then(res => res.data);

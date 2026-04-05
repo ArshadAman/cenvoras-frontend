@@ -11,6 +11,7 @@ import Purchase from './pages/Purchase'
 import Sales from './pages/Sales'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
+import Vendors from './pages/Vendors'
 import Payments from './pages/Payments'
 import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
@@ -18,6 +19,7 @@ import SalesOrderList from './pages/SalesOrderList'
 import ComingSoon from './pages/ComingSoon'
 import BOMList from './pages/inventory/BOMList'
 import StockJournalList from './pages/inventory/StockJournalList'
+import BatchListPage from './pages/inventory/BatchListPage'
 import PriceListList from './pages/inventory/PriceListList'
 import PriceListForm from './pages/inventory/PriceListForm'
 import WarehouseManagement from './pages/inventory/WarehouseManagement'
@@ -32,6 +34,7 @@ import IntegrationsPage from './pages/system/IntegrationsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AIChatWidget from './components/AIChatWidget'
 import TeamSettings from './pages/settings/TeamSettings'
+import Warranty from './pages/Warranty'
 
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
@@ -41,6 +44,8 @@ import DebitNoteList from './pages/DebitNoteList'
 import ProfitLossStatement from './pages/reports/ProfitLossStatement'
 import BalanceSheet from './pages/reports/BalanceSheet'
 import BankReconciliation from './pages/financial/BankReconciliation'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const getToken = () => !!localStorage.getItem('token')
 const getActiveSession = () => !!localStorage.getItem('activeSession')
@@ -51,6 +56,7 @@ function App() {
 
   return (
     <Router>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <Routes>
         <Route
           path="/"
@@ -110,8 +116,16 @@ function App() {
           element={isAuthenticated ? <WarehouseManagement /> : <Navigate to="/" replace />}
         />
         <Route
+          path="/batches"
+          element={isAuthenticated ? <BatchListPage /> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/customers"
           element={isAuthenticated ? <Customers /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/vendors"
+          element={isAuthenticated ? <Vendors /> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists"
@@ -185,6 +199,10 @@ function App() {
         <Route
           path="/bank-reconciliation"
           element={isAuthenticated ? <BankReconciliation /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/warranty"
+          element={isAuthenticated ? <Warranty /> : <Navigate to="/" replace />}
         />
         <Route
           path="/audit-logs"

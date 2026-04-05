@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/purchase";
-import { getCustomers } from "../../api/customers";
+import { getVendors } from "../../api/vendors";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
@@ -250,7 +250,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
 
   const { data: vendorsResult } = useQuery({ 
       queryKey: ["vendors"], 
-      queryFn: () => getCustomers({ search: "", ordering: "name" }),
+      queryFn: () => getVendors({ search: "", ordering: "name" }),
       staleTime: 5 * 60 * 1000, 
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];

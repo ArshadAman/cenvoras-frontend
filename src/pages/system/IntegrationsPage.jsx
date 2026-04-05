@@ -55,12 +55,28 @@ function EmailTab() {
   const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ['notification-logs'],
     queryFn: () => getNotificationLogs().then(r => r.data),
-    // Poll every 4 seconds to ensure status updates are reflected in the UI
     refetchInterval: 4000,
   });
 
+  // Fetch customers with emails for the restricted recipient picker
+  const { data: customerData } = useQuery({
+    queryKey: ['customers-for-email'],
+    queryFn: () => import('../../api/customers').then(mod => mod.getCustomers({ page_size: 200 })),
+  });
+  const customersRaw = customerData?.results || customerData || [];
+  const customersWithEmail = Array.isArray(customersRaw) ? customersRaw.filter(c => c.email) : [];
+
   const [form, setForm] = useState({ recipient: '', subject: '', body: '' });
   const [sending, setSending] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const filteredCustomers = customersWithEmail.filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.email?.toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  const selectedCustomer = customersWithEmail.find(c => c.email === form.recipient);
 
   const remindersMutation = useMutation({
     mutationFn: sendPaymentReminders,
@@ -78,6 +94,7 @@ function EmailTab() {
       await sendCustomEmail(form);
       toast.success(`Email queued to ${form.recipient}`);
       setForm({ recipient: '', subject: '', body: '' });
+      setCustomerSearch('');
       queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
     } catch { toast.error('Failed to send email'); }
     setSending(false);
@@ -116,19 +133,49 @@ function EmailTab() {
         </button>
       </div>
 
-      {/* Manual Email Send */}
+      {/* Manual Email Send — Customer-Only */}
       <div className="bento-card p-6">
-        <h3 className="text-white font-bold mb-4">Send Custom Email</h3>
+        <h3 className="text-white font-bold mb-1">Send Email to Customer</h3>
+        <p className="text-xs text-gray-500 mb-4">You can only send emails to registered customers with an email address on file.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="text-xs text-gray-400 block mb-1">Recipient Email</label>
+          <div className="relative">
+            <label className="text-xs text-gray-400 block mb-1">Customer</label>
             <input
-              type="email"
-              value={form.recipient}
-              onChange={e => setForm(p => ({ ...p, recipient: e.target.value }))}
-              placeholder="customer@example.com"
+              type="text"
+              value={selectedCustomer ? `${selectedCustomer.name} (${selectedCustomer.email})` : customerSearch}
+              onChange={(e) => {
+                setCustomerSearch(e.target.value);
+                setForm(p => ({ ...p, recipient: '' }));
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              placeholder="Type customer name or email..."
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500/50"
             />
+            {showDropdown && !form.recipient && (
+              <div className="absolute z-50 top-full mt-1 w-full max-h-48 overflow-y-auto bg-[#111] border border-white/10 rounded-xl shadow-xl">
+                {filteredCustomers.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-gray-500">
+                    {customersWithEmail.length === 0 ? 'No customers have email addresses' : 'No matching customers'}
+                  </div>
+                ) : (
+                  filteredCustomers.slice(0, 10).map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setForm(p => ({ ...p, recipient: c.email }));
+                        setCustomerSearch('');
+                        setShowDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0 transition-colors"
+                    >
+                      <div className="text-sm text-white font-medium">{c.name}</div>
+                      <div className="text-xs text-gray-400">{c.email}</div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="text-xs text-gray-400 block mb-1">Subject</label>
@@ -153,7 +200,7 @@ function EmailTab() {
         </div>
         <button
           onClick={handleSend}
-          disabled={sending}
+          disabled={sending || !form.recipient}
           className="flex items-center gap-2 px-6 py-2.5 bg-blue-500/10 border border-blue-500/20 text-blue-300 rounded-xl font-semibold hover:bg-blue-500/20 transition-colors disabled:opacity-40"
         >
           {sending ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</> : <><EnvelopeIcon className="w-4 h-4" /> Send Email</>}
