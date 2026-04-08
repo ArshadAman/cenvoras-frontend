@@ -1,7 +1,9 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteSalesInvoice } from "../../api/sales";
 import { toast } from "react-toastify";
+import { XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
   const queryClient = useQueryClient();
@@ -20,82 +22,93 @@ export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
 
   if (!isOpen || !invoice) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
-        <div className="flex items-center mb-4">
-          <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-red-600 dark:text-red-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
+  const totalAmount = Number(invoice.total_amount || 0);
+  const amountPaid = Number(invoice.amount_paid || 0);
+  const outstanding = Math.max(totalAmount - amountPaid, 0);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      
+      <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-red-900/30 animate-fade-up overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-white/10">
+           <h3 className="text-lg font-bold text-white flex items-center gap-2">
+             <TrashIcon className="w-5 h-5 text-red-500" />
+             Delete Sales Invoice
+           </h3>
+           <button
+             onClick={onClose}
+             className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+           >
+             <XMarkIcon className="w-5 h-5" />
+           </button>
         </div>
-        
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Delete Sales Invoice
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+
+        {/* Content */}
+        <div className="p-5">
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
             Are you sure you want to delete this sales invoice?
           </p>
           
           {/* Invoice Details */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6 text-left">
-            <div className="text-sm space-y-1">
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Invoice Number:</span>
-                <span className="text-gray-900 dark:text-white">{invoice.invoice_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Customer:</span>
-                <span className="text-gray-900 dark:text-white">{invoice.customer}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Amount:</span>
-                <span className="text-gray-900 dark:text-white font-semibold">₹{Number(invoice.total_amount).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-400">Date:</span>
-                <span className="text-gray-900 dark:text-white">
-                  {new Date(invoice.invoice_date).toLocaleDateString()}
-                </span>
-              </div>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-400">Invoice Number:</span>
+              <span className="text-white font-medium">{invoice.invoice_number}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Customer:</span>
+              <span className="text-white">{invoice.customer_name || invoice.customer}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Total:</span>
+              <span className="text-cyan-400 font-bold">₹{totalAmount.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Paid:</span>
+              <span className="text-green-400 font-bold">₹{amountPaid.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Outstanding:</span>
+              <span className="text-amber-400 font-bold">₹{outstanding.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Payment Status:</span>
+              <span className="text-white font-medium">{invoice.payment_status || 'pending'}</span>
             </div>
           </div>
           
-          <p className="text-xs text-red-600 dark:text-red-400 mb-6">
-            This action cannot be undone.
+          <p className="text-xs text-red-400 mt-4">
+            This action <span className="font-semibold">cannot be undone</span>.
           </p>
         </div>
 
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
+        {/* Actions */}
+        <div className="p-5 pt-0 flex justify-end gap-3">
+          <button 
+            className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium" 
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Cancel
           </button>
           <button
-            type="button"
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-lg shadow-red-900/30 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
             onClick={() => mutation.mutate()}
             disabled={mutation.isLoading}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {mutation.isLoading ? "Deleting..." : "Delete Invoice"}
+            {mutation.isLoading ? (
+               <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+            ) : (
+              <>
+                <TrashIcon className="w-4 h-4" />
+                Delete
+              </>
+            )}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -5,19 +5,26 @@ export const getProducts = (params) =>
   api.get("/inventory/products/", { params }).then(res => res.data);
 
 export const getProduct = (id) =>
-  api.get(`/inventory/product/${id}/`).then(res => res.data);
+  api.get(`/inventory/products/${id}/`).then(res => res.data);
 
 export const createProduct = (data) => {
   // Map frontend fields to backend schema
   const backendData = {
     name: data.name,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
+    description: data.description || null,
+    tax: data.tax ? parseFloat(data.tax) : 0,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
-    price: data.price || data.unit_price,
-    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
+    secondary_unit: data.secondary_unit || null,
+    conversion_factor: parseInt(data.conversion_factor || 1),
+    cost_price: data.cost_price ?? data.price ?? data.unit_price,
+    sale_price: data.sale_price === "" || data.sale_price === undefined ? null : data.sale_price,
+    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
+    warranty_months: parseInt(data.warranty_months || 0),
+    meta: data.meta
   };
-  return api.post("/inventory/add-product/", backendData).then(res => res.data);
+  return api.post("/inventory/products/", backendData).then(res => res.data);
 };
 
 export const updateProduct = (id, data) => {
@@ -25,29 +32,60 @@ export const updateProduct = (id, data) => {
   const backendData = {
     name: data.name,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
+    description: data.description || null,
+    tax: data.tax ? parseFloat(data.tax) : 0,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
-    price: data.price || data.unit_price,
-    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0)
+    secondary_unit: data.secondary_unit || null,
+    conversion_factor: parseInt(data.conversion_factor || 1),
+    cost_price: data.cost_price ?? data.price ?? data.unit_price,
+    sale_price: data.sale_price === "" || data.sale_price === undefined ? null : data.sale_price,
+    low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
+    warranty_months: parseInt(data.warranty_months || 0),
+    meta: data.meta
   };
-  return api.put(`/inventory/product/${id}/`, backendData).then(res => res.data);
+  return api.put(`/inventory/products/${id}/`, backendData).then(res => res.data);
 };
 
 export const deleteProduct = (id) =>
-  api.delete(`/inventory/product/${id}/`).then(res => res.data);
+  api.delete(`/inventory/products/${id}/`).then(res => res.data);
+
+export const downloadProductCsvTemplate = () =>
+  api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);
+
+export const bulkUploadProductsCsv = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('/inventory/products/bulk-upload/csv/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(res => res.data);
+};
 
 // Stock management endpoints
 export const getStockMovements = (params) =>
-  api.get("/inventory/stock-movements/", { params }).then(res => res.data);
+  api.get("/inventory/transfers/", { params }).then(res => res.data);
 
 export const createStockMovement = (data) =>
-  api.post("/inventory/stock-movements/", data).then(res => res.data);
+  api.post("/inventory/transfers/", data).then(res => res.data);
 
 export const getStockAdjustments = (params) =>
   api.get("/inventory/stock-adjustments/", { params }).then(res => res.data);
 
 export const createStockAdjustment = (data) =>
   api.post("/inventory/stock-adjustments/", data).then(res => res.data);
+
+// Warehouses and Stock Points
+export const getWarehouses = () =>
+  api.get("/inventory/warehouses/").then(res => res.data);
+
+export const createWarehouse = (data) =>
+  api.post("/inventory/warehouses/", data).then(res => res.data);
+
+export const getProductBatches = (params) =>
+  api.get("/inventory/batches/", { params }).then(res => res.data);
+
+export const getStockPoints = (params) =>
+  api.get("/inventory/stock-points/", { params }).then(res => res.data);
 
 // Categories and units
 export const getCategories = () =>
@@ -79,3 +117,17 @@ export const getInventoryReport = (params) =>
 
 export const getStockValuation = () =>
   api.get("/inventory/stock-valuation/").then(res => res.data);
+
+// Price Lists
+export const getPriceLists = () => api.get("/inventory/price-lists/").then(res => res.data);
+export const createPriceList = (data) => api.post("/inventory/price-lists/", data).then(res => res.data);
+export const getPriceList = (id) => api.get(`/inventory/price-lists/${id}/`).then(res => res.data);
+export const updatePriceList = (id, data) => api.put(`/inventory/price-lists/${id}/`, data).then(res => res.data);
+export const deletePriceList = (id) => api.delete(`/inventory/price-lists/${id}/`).then(res => res.data);
+
+// Schemes
+export const getSchemes = () => api.get("/inventory/schemes/").then(res => res.data);
+export const createScheme = (data) => api.post("/inventory/schemes/", data).then(res => res.data);
+export const getScheme = (id) => api.get(`/inventory/schemes/${id}/`).then(res => res.data);
+export const updateScheme = (id, data) => api.put(`/inventory/schemes/${id}/`, data).then(res => res.data);
+export const deleteScheme = (id) => api.delete(`/inventory/schemes/${id}/`).then(res => res.data);

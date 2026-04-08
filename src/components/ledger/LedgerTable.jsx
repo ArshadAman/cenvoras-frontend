@@ -3,12 +3,40 @@ import { useQuery } from '@tanstack/react-query';
 import { getGeneralLedgerEntries } from '../../api/ledger';
 import Loader from '../Loader';
 import { format } from 'date-fns';
+import { createPortal } from 'react-dom';
+import { 
+  ChevronUpIcon, 
+  ChevronDownIcon, 
+  ArrowsUpDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  XMarkIcon,
+  DocumentTextIcon,
+} from '@heroicons/react/24/outline';
+import { getAccounts } from '../../api/ledger';
+import { subDays } from 'date-fns';
 
-const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, selectedEntries = [], onBulkSelect }) => {
+const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, customerFilter = '' }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState('');
+  const [viewEntry, setViewEntry] = useState(null);
+  const [dateFilter, setDateFilter] = useState({
+    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd')
+  });
+  
   const itemsPerPage = 20;
+
+  // Fetch accounts for filter dropdown
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts', { search: '', page: 1, page_size: 1000 }],
+    queryFn: () => getAccounts({ search: '', page: 1, page_size: 1000 }),
+  });
+
+  const accounts = accountsData?.results || [];
 
   const {
     data: ledgerData,
@@ -20,7 +48,8 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
       description: searchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      account: accountFilter,
+      account: selectedAccount,
+      customer: customerFilter,
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -29,7 +58,8 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
       description: searchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      account: accountFilter,
+      account: selectedAccount,
+      customer: customerFilter,
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -76,9 +106,11 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
 
   const getSortIcon = (field) => {
     if (sortBy !== field) {
-      return '↕️';
+      return <ArrowsUpDownIcon className="w-4 h-4 text-gray-500 ml-1 inline" />;
     }
-    return sortOrder === 'asc' ? '↑' : '↓';
+    return sortOrder === 'asc' ? 
+      <ChevronUpIcon className="w-4 h-4 text-cyan-400 ml-1 inline" /> : 
+      <ChevronDownIcon className="w-4 h-4 text-cyan-400 ml-1 inline" />;
   };
 
   const formatCurrency = (amount) => {
@@ -104,7 +136,7 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-64 bento-card">
         <Loader />
       </div>
     );
@@ -112,67 +144,106 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+        <div className="flex flex-col items-center justify-center">
+          <div className="bg-red-500/20 p-3 rounded-full mb-3">
+            <svg className="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-              Error loading ledger entries
-            </h3>
-            <div className="mt-2 text-sm text-red-700 dark:text-red-300">
-              <p>{error?.message || 'Failed to fetch ledger data'}</p>
-            </div>
-            <div className="mt-4">
-              <button
-                onClick={() => refetch()}
-                className="bg-red-100 dark:bg-red-800 px-3 py-2 rounded-md text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
+          <h3 className="text-lg font-bold text-white mb-1">
+            Error loading entries
+          </h3>
+          <p className="text-sm text-red-300 mb-4">
+            {error?.message || 'Failed to fetch ledger data'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="btn-secondary text-sm"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
+    <>
     <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
       <div className="px-4 py-5 sm:p-6">
-        <div className="mb-4 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-white dark:text-white">
-            Ledger Entries
-          </h3>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Total: {totalCount} entries
-          </div>
+        {/* Filters Toolbar */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <input
+            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 min-w-[200px]"
+            placeholder="Search descriptions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <select
+            value={selectedAccount}
+            onChange={(e) => setSelectedAccount(e.target.value)}
+            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          >
+            <option value="" className="bg-[#1a2341] text-white">All Accounts</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id} className="bg-[#1a2341] text-white">
+                {account.code} - {account.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={dateFilter.startDate}
+            onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          />
+          <input
+            type="date"
+            value={dateFilter.endDate}
+            onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          />
+          <button
+            onClick={() => {
+               setSearchTerm('');
+               setSelectedAccount('');
+               setDateFilter({
+                 startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+                 endDate: format(new Date(), 'yyyy-MM-dd')
+               });
+            }}
+            className="px-3 py-1.5 bg-gray-500/30 text-white border border-gray-300/50 rounded hover:bg-gray-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
+          >
+            Clear Filters
+          </button>
         </div>
 
         {ledgerEntries.length === 0 ? (
-          <div className="text-center py-12">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No ledger entries</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              No entries found matching your criteria.
+          <div className="text-center py-20">
+            <div className="bg-white/5 p-4 rounded-full inline-block mb-4">
+               <svg className="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+               </svg>
+            </div>
+            <h3 className="mt-2 text-lg font-bold text-white">No ledger entries</h3>
+            <p className="mt-2 text-sm text-gray-400 max-w-sm mx-auto">
+              No entries found matching your criteria. Try adjusting your filters or record a new payment.
             </p>
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
+            {/* Table for desktop, Cards for mobile */}
+            <div className="hidden lg:block">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-white/5 border-b border-white/10">
                   <tr>
                     {onBulkSelect && (
-                      <th scope="col" className="relative px-6 py-3">
+                      <th scope="col" className="relative px-6 py-4">
                         <input
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10 backdrop-filter backdrop-blur-10"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10"
                           checked={isAllCurrentPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -183,42 +254,42 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                     )}
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
+                      className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('date')}
                     >
                       Date {getSortIcon('date')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
+                      className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('account_name')}
                     >
                       Account {getSortIcon('account_name')}
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                       Reference
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                       Description
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-right text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
+                      className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('debit')}
                     >
                       Debit {getSortIcon('debit')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-3 text-right text-xs font-black text-white uppercase tracking-wider cursor-pointer hover:bg-white/10 drop-shadow-lg"
+                      className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('credit')}
                     >
                       Credit {getSortIcon('credit')}
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                       Source
                     </th>
-                    <th scope="col" className="relative px-6 py-3">
+                    <th scope="col" className="relative px-6 py-4">
                       <span className="sr-only">Actions</span>
                     </th>
                   </tr>
@@ -251,15 +322,21 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                         {entry.reference || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-white">
-                        <div className="max-w-xs truncate  drop-shadow-lg" title={entry.description}>
-                          {entry.description || 'General Ledger Entry'}
-                        </div>
-                        <div className="text-xs text-cyan-300 ">
-                          <span>Created: {formatDate(entry.created_at)}</span>
-                          {entry.entry_number && (
-                            <span className="ml-2">Entry #{entry.entry_number}</span>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => setViewEntry(entry)}
+                          className="text-left group"
+                          title="Click for full details"
+                        >
+                          <div className="max-w-xs truncate group-hover:text-cyan-300 transition-colors underline-offset-2 group-hover:underline drop-shadow-lg" title={entry.description}>
+                            {entry.description || 'General Ledger Entry'}
+                          </div>
+                          <div className="text-xs text-cyan-300">
+                            <span>Created: {formatDate(entry.created_at)}</span>
+                            {entry.entry_number && (
+                              <span className="ml-2">Entry #{entry.entry_number}</span>
+                            )}
+                          </div>
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         <div className={` drop-shadow-lg text-lg ${entry.debit > 0 ? 'text-red-300' : 'text-white'}`}>
@@ -324,38 +401,136 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                   ))}
                 </tbody>
               </table>
+              </div>
+            </div>
+
+            {/* Mobile Card Layout */}
+            <div className="lg:hidden space-y-4">
+              {isLoading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
+                    <div className="h-4 bg-white/20 rounded mb-2"></div>
+                    <div className="h-3 bg-white/10 rounded mb-2"></div>
+                    <div className="h-3 bg-white/10 rounded w-3/4"></div>
+                  </div>
+                ))
+              ) : (
+                ledgerEntries.map((entry, index) => (
+                  <div key={entry.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+                    {/* Card Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedEntries.includes(entry.id)}
+                          onChange={(e) => {
+                            const newSelected = e.target.checked
+                              ? [...selectedEntries, entry.id]
+                              : selectedEntries.filter(id => id !== entry.id);
+                            onBulkSelect(newSelected);
+                          }}
+                          className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                        />
+                        <div>
+                          <div className="text-lg font-semibold text-white">
+                            {entry.customer_name || entry.customer?.name || 'N/A'}
+                          </div>
+                          <div className="text-sm text-white/70">
+                            {formatDate(entry.date)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-white/70">Account:</span>
+                        <span className="text-sm font-medium text-white">{entry.account_name || entry.account?.name || 'N/A'}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-white/70">Description:</span>
+                        <span className="text-sm text-white text-right">{entry.description || 'N/A'}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-white/70">Amount:</span>
+                        <span className={`text-lg font-semibold ${
+                          entry.entry_type === 'credit' ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {entry.entry_type === 'credit' ? '+' : '-'}₹{Number(entry.amount || 0).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-white/70">Balance:</span>
+                        <span className="text-sm font-medium text-[#7fd3f7]">
+                          ₹{Number(entry.running_balance || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Actions */}
+                    <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                      <button
+                        onClick={() => onEdit(entry)}
+                        className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(entry)}
+                        className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {/* No data message for mobile */}
+              {!isLoading && ledgerEntries.length === 0 && (
+                <div className="p-8 text-center text-white/80">
+                  <p>No ledger entries found.</p>
+                  <p className="text-sm mt-2">
+                    Click "Record Payment" to create your first ledger entry.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="backdrop-filter backdrop-blur-10 bg-white/5 px-4 py-3 flex items-center justify-between border-t border-white/10 sm:px-6">
+              <div className="bg-white/5 px-4 py-3 flex items-center justify-between border-t border-white/10 sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-md text-white bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10"
+                    className="relative inline-flex items-center px-4 py-2 border border-white/10 text-sm font-medium rounded-md text-gray-300 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-white/20 text-sm font-medium rounded-md text-white bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-white/10 text-sm font-medium rounded-md text-gray-300 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-white  drop-shadow-lg">
+                    <p className="text-sm text-gray-400">
                       Showing{' '}
-                      <span className="font-black text-cyan-300">{(currentPage - 1) * itemsPerPage + 1}</span>
+                      <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span>
                       {' '}to{' '}
-                      <span className="font-black text-cyan-300">
+                      <span className="font-bold text-white">
                         {Math.min(currentPage * itemsPerPage, totalCount)}
                       </span>
                       {' '}of{' '}
-                      <span className="font-black text-cyan-300">{totalCount}</span>
+                      <span className="font-bold text-white">{totalCount}</span>
                       {' '}results
                     </p>
                   </div>
@@ -364,12 +539,10 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-white/10 bg-white/5 text-sm font-medium text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="sr-only">Previous</span>
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                        <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                       </button>
                       
                       {[...Array(Math.min(5, totalPages))].map((_, index) => {
@@ -390,8 +563,8 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                             onClick={() => setCurrentPage(pageNum)}
                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                               currentPage === pageNum
-                                ? 'z-10 bg-indigo-50 dark:bg-indigo-900 border-indigo-500 dark:border-indigo-400 text-indigo-600 dark:text-indigo-200'
-                                : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                ? 'z-10 bg-indigo-500/20 border-indigo-500 text-indigo-300'
+                                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                             }`}
                           >
                             {pageNum}
@@ -402,12 +575,10 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-white/10 bg-white/5 text-sm font-medium text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="sr-only">Next</span>
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
+                        <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
                       </button>
                     </nav>
                   </div>
@@ -418,7 +589,89 @@ const LedgerTable = ({ searchTerm, dateFilter, accountFilter, onEdit, onDelete, 
         )}
       </div>
     </div>
-  );
+
+    {/* Entry Detail Modal */}
+    {viewEntry && createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setViewEntry(null)} />
+        <div className="relative w-full max-w-lg bg-[#111] border border-white/10 rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/10 rounded-xl">
+                <DocumentTextIcon className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Entry Details</h2>
+                {viewEntry.entry_number && <p className="text-xs text-gray-400">Entry #{viewEntry.entry_number}</p>}
+              </div>
+            </div>
+            <button onClick={() => setViewEntry(null)} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Date</div>
+                <div className="text-white font-medium">{formatDate(viewEntry.date)}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Reference</div>
+                <div className="text-white font-medium">{viewEntry.reference || '—'}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 col-span-2">
+                <div className="text-xs text-gray-500 mb-1">Account</div>
+                <div className="text-white font-medium">{viewEntry.account_code} - {viewEntry.account_name}</div>
+                <div className="text-xs text-cyan-300 capitalize mt-0.5">{viewEntry.account_type}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 col-span-2">
+                <div className="text-xs text-gray-500 mb-1">Description</div>
+                <div className="text-white text-sm leading-relaxed">{viewEntry.description || 'General Ledger Entry'}</div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Debit</div>
+                <div className={`font-bold text-xl ${viewEntry.debit > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                  {viewEntry.debit > 0 ? formatCurrency(viewEntry.debit) : '—'}
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3">
+                <div className="text-xs text-gray-500 mb-1">Credit</div>
+                <div className={`font-bold text-xl ${viewEntry.credit > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+                  {viewEntry.credit > 0 ? formatCurrency(viewEntry.credit) : '—'}
+                </div>
+              </div>
+            </div>
+
+            {/* Source Links */}
+            <div className="pt-2 border-t border-white/10">
+              <div className="text-xs text-gray-500 mb-2">Source Document</div>
+              <div className="flex flex-wrap gap-2">
+                {viewEntry.sales_invoice_number && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                    📄 Sales Invoice #{viewEntry.sales_invoice_number}
+                  </span>
+                )}
+                {viewEntry.purchase_bill_number && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    🧾 Purchase Bill #{viewEntry.purchase_bill_number}
+                  </span>
+                )}
+                {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                    📝 Manual Entry
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+  </>);
 };
 
 export default LedgerTable;

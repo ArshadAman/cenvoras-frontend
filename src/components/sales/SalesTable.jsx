@@ -12,6 +12,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   const [page, setPage] = useState(1);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "final", "draft"
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -23,20 +24,21 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["salesInvoices", search, ordering, page],
-    queryFn: () => getSalesInvoices({ search, ordering, page }),
+    queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
+    queryFn: () => getSalesInvoices({ search, ordering, page, status: statusFilterTab }),
   });
 
   if (error) {
     return (
-      <div className="p-4 text-red-600">
-        Error loading sales invoices: {error.message}
+      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+        <h3 className="text-lg font-bold text-white mb-1">Error loading invoices</h3>
+        <p className="text-sm text-red-300 mb-4">{error.message}</p>
         <button
           onClick={() => {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="ml-4 px-2 py-1 bg-red-500 text-white rounded text-xs"
+          className="btn-secondary text-sm"
         >
           Clear Auth & Re-login
         </button>
@@ -182,16 +184,26 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     window.URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
+  // Removed global isLoading return to avoid unmounting search bar
   return (
     <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
+      {/* Status Tabs */}
+      <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
+        {['all', 'final', 'draft'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setStatusFilterTab(tab)}
+            className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+              statusFilterTab === tab 
+              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
+              : 'text-gray-400 hover:text-white border border-transparent'
+            }`}
+          >
+            {tab}s
+          </button>
+        ))}
+      </div>
+
       {/* Header with Search and Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -273,94 +285,291 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
-              <th className="px-6 py-3 text-left rounded-l-lg">
-                <input
-                  type="checkbox"
-                  checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
-                />
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Invoice Details
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Customer
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg">
-                Items
-              </th>
-              <th className="px-6 py-3 text-left font-black text-white drop-shadow-lg rounded-r-lg">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300">
+      {/* Table for desktop, Cards for mobile */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border-separate border-spacing-y-2">
+            <thead>
+              <tr className="bg-white/5 border-b border-white/10">
+                <th className="px-6 py-4 text-left rounded-l-lg">
+                  <input
+                    type="checkbox"
+                    checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                  />
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Invoice Details
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Amount (Before Tax)
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Total Amount (With Tax)
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Items
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan="8" className="px-6 py-12 text-center">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredInvoices.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
+                  No invoices found matching your criteria.
+                </td>
+              </tr>
+            ) : (
+              filteredInvoices.map((invoice) => (
+              <tr key={invoice.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
                     onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white drop-shadow-lg">
+                  <div className="text-sm font-medium text-white">
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-sm text-white/70 drop-shadow-md">
+                  <div className="text-sm text-gray-400">
                     {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-white drop-shadow-lg">
+                  <div className="text-sm text-white">
                     {invoice.customer_name}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white drop-shadow-lg">
-                    ₹{Number(invoice.total_amount).toLocaleString()}
+                  <div className="text-sm font-medium text-white">
+                    ₹{(() => {
+                      // Calculate untaxed amount from items
+                      const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                        const quantity = parseFloat(item.quantity || 0);
+                        const price = parseFloat(item.price || 0);
+                        return sum + (quantity * price);
+                      }, 0) || 0;
+                      return Number(untaxedAmount).toLocaleString();
+                    })()}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70 drop-shadow-md">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-bold text-cyan-400">
+                    ₹{(() => {
+                      // Calculate total amount including tax
+                      const calculations = invoice.items?.reduce((acc, item) => {
+                        const quantity = parseFloat(item.quantity || 0);
+                        const price = parseFloat(item.price || 0);
+                        const tax = parseFloat(item.tax || 0);
+                        const subtotal = quantity * price;
+                        const taxAmount = (subtotal * tax) / 100;
+                        return {
+                          untaxed: acc.untaxed + subtotal,
+                          taxAmount: acc.taxAmount + taxAmount
+                        };
+                      }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
+                      
+                      const totalWithTax = calculations.untaxed + calculations.taxAmount;
+                      return Number(totalWithTax).toLocaleString();
+                    })()}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                   <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                      'bg-gray-500/20 text-gray-400'
+                   }`}>
+                      {invoice.status || 'final'}
+                   </span>
+                   <div className="mt-2">
+                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                      invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                      {invoice.payment_status || 'pending'}
+                    </span>
+                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                   {invoice.items?.length || 0} items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
                     <button
                       onClick={() => onView(invoice)}
-                      className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                      className="px-3 py-1 bg-white/5 text-gray-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
                     >
                       View
                     </button>
-                    {/* <button
+                    <button
                       onClick={() => onEdit(invoice)}
-                      className="px-3 py-1 bg-indigo-500/30 text-white border border-indigo-300/50 rounded hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                      className="px-3 py-1 bg-white/5 text-cyan-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
                     >
                       Edit
-                    </button> */}
+                    </button>
                     <button
                       onClick={() => onDelete(invoice)}
-                      className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                      className="px-3 py-1 bg-red-500/10 text-red-300 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors"
                     >
                       Delete
                     </button>
                   </div>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
+        </div>
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+          </div>
+        ) : filteredInvoices.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
+            No invoices found matching your criteria.
+          </div>
+        ) : (
+          filteredInvoices.map((invoice) => (
+          <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+            {/* Card Header */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={selectedInvoices.has(invoice.id)}
+                  onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
+                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                />
+                <div>
+                  <div className="text-lg font-semibold text-white">
+                    #{invoice.invoice_number}
+                  </div>
+                  <div className="text-sm text-white/70">
+                    {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Status:</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                      'bg-gray-500/20 text-gray-400'
+                   }`}>
+                      {invoice.status || 'final'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Payment:</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                  invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                  invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                  'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                  {invoice.payment_status || 'pending'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Customer:</span>
+                <span className="text-sm font-medium text-white">{invoice.customer_name}</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Amount (Before Tax):</span>
+                <span className="text-sm font-medium text-white">
+                  ₹{(() => {
+                    const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                      const quantity = parseFloat(item.quantity || 0);
+                      const price = parseFloat(item.price || 0);
+                      return sum + (quantity * price);
+                    }, 0) || 0;
+                    return Number(untaxedAmount).toLocaleString();
+                  })()}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Total (With Tax):</span>
+                <span className="text-lg font-semibold text-[#7fd3f7]">
+                  ₹{(() => {
+                    const calculations = invoice.items?.reduce((acc, item) => {
+                      const quantity = parseFloat(item.quantity || 0);
+                      const price = parseFloat(item.price || 0);
+                      const tax = parseFloat(item.tax || 0);
+                      const subtotal = quantity * price;
+                      const taxAmount = (subtotal * tax) / 100;
+                      return {
+                        untaxed: acc.untaxed + subtotal,
+                        taxAmount: acc.taxAmount + taxAmount
+                      };
+                    }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
+                    
+                    const totalWithTax = calculations.untaxed + calculations.taxAmount;
+                    return Number(totalWithTax).toLocaleString();
+                  })()}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Items:</span>
+                <span className="text-sm text-white">{invoice.items?.length || 0} items</span>
+              </div>
+            </div>
+
+            {/* Card Actions */}
+            <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+              <button
+                onClick={() => onView(invoice)}
+                className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+              >
+                View
+              </button>
+              <button
+                onClick={() => onEdit(invoice)}
+                className="flex-1 px-3 py-2 bg-cyan-500/30 text-white border border-cyan-300/50 rounded-lg hover:bg-cyan-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onDelete(invoice)}
+                className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )))}
       </div>
 
       {filteredInvoices.length === 0 && (

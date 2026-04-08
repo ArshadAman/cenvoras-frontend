@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { format, subDays } from 'date-fns';
 import LedgerSummary from '../components/ledger/LedgerSummary';
 import LedgerTable from '../components/ledger/LedgerTable';
@@ -12,29 +13,33 @@ import { bulkDeleteLedgerEntries, getAccounts } from '../api/ledger';
 import Layout from '../components/Layout';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { PlusIcon} from '@heroicons/react/24/outline';
+import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon, UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 const Ledger = () => {
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [selectedCustomerName, setSelectedCustomerName] = useState('');
+
+  // Fetch customers for the filter
+  const { data: customersData } = useQuery({
+    queryKey: ['customers'],
+    queryFn: getCustomers,
+  });
+  const customers = Array.isArray(customersData) ? customersData : customersData?.results || [];
+  const filteredCustomers = customers.filter(c => 
+    c.name.toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  const selectedCustomerData = customers.find(c => c.id === selectedCustomer);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [selectedEntries, setSelectedEntries] = useState([]);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAccount, setSelectedAccount] = useState('');
-  const [dateFilter, setDateFilter] = useState({
-    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd')
-  });
 
-  // Fetch accounts for filter dropdown
-  const { data: accountsData } = useQuery({
-    queryKey: ['accounts', { search: '', page: 1, page_size: 1000 }],
-    queryFn: () => getAccounts({ search: '', page: 1, page_size: 1000 }),
-  });
-
-  const accounts = accountsData?.results || [];
 
   const handlePaymentSuccess = () => {
     setShowPaymentForm(false);
@@ -60,14 +65,6 @@ const Ledger = () => {
     setSelectedEntry(null);
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedAccount('');
-    setDateFilter({
-      startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-      endDate: format(new Date(), 'yyyy-MM-dd')
-    });
-  };
 
   // Bulk selection handlers
   const handleBulkSelect = (entryIds) => {
@@ -84,268 +81,172 @@ const Ledger = () => {
     }
   };
 
+  const inputClass = "w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-medium";
+  const labelClass = "block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide";
+
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#1a2341] to-[#0d1421] p-6 space-y-8">
-        {/* Page Header */}
-        <header className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg">
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Client Ledger
-                </h1>
-                <p className="mt-1 text-sm text-[#b6e0f7]">
-                  Track client payments and account balances
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setShowPaymentForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] text-sm font-medium rounded-xl shadow-lg hover:from-[#b6e0f7] hover:to-[#eaf6fa] transform hover:scale-105 transition-all duration-200"
-                >
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  Record Payment
-                </button>
-              </div>
-            </div>
+      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+           <div>
+             <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
+                <BanknotesIcon className="w-8 h-8 text-green-400" />
+                Client Ledger
+             </h1>
+             <p className="text-gray-400 text-sm">Track client payments, debits, and account balances.</p>
+           </div>
+           
+           <div className="flex gap-3">
+             <button className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm flex items-center gap-2">
+               <DocumentArrowUpIcon className="h-4 w-4" />
+               <span>Export CSV</span>
+             </button>
+             <Link to="/payments"
+               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-green-500/20 flex items-center gap-2"
+             >
+               <PlusIcon className="h-4 w-4" />
+               <span>Record Payment</span>
+             </Link>
+           </div>
+        </div>
+
+        {/* Customer Selector */}
+        <div className="bento-card !p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <UsersIcon className="w-5 h-5 text-purple-400" />
+            <span className="text-sm font-semibold text-gray-300">Filter by Customer:</span>
           </div>
-        </header>
-
-        {/* Filters */}
-        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-white mb-4">
-              Filters
-            </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div>
-              <label htmlFor="search" className="block text-sm font-medium text-[#b6e0f7]">
-                Search
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-[#7fd3f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  id="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 backdrop-filter backdrop-blur-10 bg-white/10 border border-white/20 rounded-lg leading-5 text-white placeholder-[#b6e0f7] focus:outline-none focus:placeholder-white/50 focus:ring-2 focus:ring-[#7fd3f7] focus:border-[#7fd3f7] sm:text-sm"
-                  placeholder="Search descriptions..."
-                />
-              </div>
-            </div>
-
-            {/* Account Filter */}
-            <div>
-              <label htmlFor="account-filter" className="block text-sm font-medium text-[#b6e0f7]">
-                Account
-              </label>
-              <select
-                id="account-filter"
-                value={selectedAccount}
-                onChange={(e) => setSelectedAccount(e.target.value)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base backdrop-filter backdrop-blur-10 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] focus:border-[#7fd3f7] sm:text-sm"
-              >
-                <option value="">All Accounts</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.code} - {account.name}
-                  </option>
+          <div className="relative flex-1 w-full md:max-w-sm">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search customer..."
+              value={selectedCustomerName || customerSearch}
+              onChange={(e) => {
+                setCustomerSearch(e.target.value);
+                setSelectedCustomer('');
+                setSelectedCustomerName('');
+                setShowCustomerDropdown(true);
+              }}
+              onFocus={() => setShowCustomerDropdown(true)}
+              className="w-full pl-9 pr-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+            />
+            {showCustomerDropdown && filteredCustomers.length > 0 && (
+              <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-52 overflow-y-auto">
+                {filteredCustomers.slice(0, 20).map(c => (
+                  <div
+                    key={c.id}
+                    className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/5 border-b border-white/5"
+                    onClick={() => {
+                      setSelectedCustomer(c.id);
+                      setSelectedCustomerName(c.name);
+                      setCustomerSearch('');
+                      setShowCustomerDropdown(false);
+                    }}
+                  >
+                    <span className="text-white font-medium">{c.name}</span>
+                    {c.current_balance > 0 && (
+                      <span className="ml-2 text-amber-400 text-xs">(₹{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
+                    )}
+                  </div>
                 ))}
-              </select>
-            </div>
-
-            {/* Date From */}
-            <div>
-              <label htmlFor="date-from" className="block text-sm font-medium text-[#b6e0f7]">
-                From Date
-              </label>
-              <input
-                type="date"
-                id="date-from"
-                value={dateFilter.startDate}
-                onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-                className="mt-1 block w-full px-3 py-2 backdrop-filter backdrop-blur-10 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] focus:border-[#7fd3f7] sm:text-sm"
-              />
-            </div>
-
-            {/* Date To */}
-            <div>
-              <label htmlFor="date-to" className="block text-sm font-medium text-[#b6e0f7]">
-                To Date
-              </label>
-              <input
-                type="date"
-                id="date-to"
-                value={dateFilter.endDate}
-                onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-                className="mt-1 block w-full px-3 py-2 backdrop-filter backdrop-blur-10 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] focus:border-[#7fd3f7] sm:text-sm"
-              />
-            </div>
-          </div>
-          
-          {/* Clear Filters Button */}
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex items-center px-3 py-2 backdrop-filter backdrop-blur-10 bg-white/10 border border-white/20 rounded-lg text-sm leading-4 font-medium text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] transition-all duration-200"
-            >
-              <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Clear Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Dashboard
-      <LedgerSummary 
-        dateFilter={dateFilter}
-        customerFilter={selectedCustomer}
-      /> */}
-
-        {/* Bulk Actions Toolbar */}
-        {selectedEntries.length > 0 && (
-          <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg">
-            <div className="px-4 py-3 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-white">
-                    {selectedEntries.length} {selectedEntries.length === 1 ? 'entry' : 'entries'} selected
-                  </span>
-                </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={clearSelection}
-                  className="inline-flex items-center px-3 py-2 backdrop-filter backdrop-blur-10 bg-white/10 border border-white/20 rounded-lg text-sm leading-4 font-medium text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] transition-all duration-200"
-                >
-                  Clear Selection
-                </button>
-                <button
-                  onClick={handleBulkDelete}
-                  className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg text-sm leading-4 font-medium hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
-                >
-                  <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete Selected
-                </button>
               </div>
-            </div>
+            )}
           </div>
+          {selectedCustomer && (
+            <button
+              onClick={() => { setSelectedCustomer(''); setSelectedCustomerName(''); setCustomerSearch(''); }}
+              className="text-xs text-gray-400 hover:text-white px-3 py-2 bg-white/5 rounded-lg border border-white/10"
+            >
+              Clear Filter
+            </button>
+          )}
+          {selectedCustomerData?.current_balance > 0 && (
+            <div className="ml-auto flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
+              <span className="text-xs text-amber-400 font-medium">Outstanding Balance:</span>
+              <span className="text-amber-300 font-bold text-lg">₹{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Ledger Entries Section */}
-      <div className="mb-6">
-        {/* Ledger Table */}
-        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 rounded-2xl shadow-lg overflow-hidden">
+        {/* Summary Stats */}
+        <LedgerSummary customerFilter={selectedCustomer} />
+
+        {/* Ledger Table Container */}
+        <div className="bento-card !p-0 overflow-hidden">
+          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
+               Ledger Entries
+            </h2>
+          </div>
           <LedgerTable
-            searchTerm={searchTerm}
-            dateFilter={dateFilter}
-            accountFilter={selectedAccount}
             onEdit={handleEditEntry}
             onDelete={handleDeleteEntry}
             selectedEntries={selectedEntries}
             onBulkSelect={handleBulkSelect}
+            customerFilter={selectedCustomer}
           />
         </div>
       </div>
-      </div>
 
       {/* Payment Form Modal */}
-      {showPaymentForm && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-[#1a2341] opacity-90 backdrop-blur-md"></div>
-            </div>
-
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom backdrop-filter backdrop-blur-20 bg-gradient-to-br from-[#1a2341]/95 to-[#0d1421]/95 border border-[#7fd3f7]/30 rounded-2xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-              <div className="absolute top-0 right-0 pt-4 pr-4">
+      {showPaymentForm && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowPaymentForm(false)}></div>
+          
+          <div className="relative w-full max-w-lg bento-card !p-0 shadow-2xl shadow-green-900/20 animate-fade-up bg-[#111] border border-white/10">
+             <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+                <h3 className="text-xl font-bold text-white">Record Payment</h3>
                 <button
-                  type="button"
                   onClick={() => setShowPaymentForm(false)}
-                  className="backdrop-filter backdrop-blur-10 bg-white/10 rounded-lg text-[#b6e0f7] hover:text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] transition-all duration-200"
+                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 >
-                  <span className="sr-only">Close</span>
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XMarkIcon className="w-6 h-6" />
                 </button>
-              </div>
-
-              <div className="sm:flex sm:items-start">
-                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                  <h3 className="text-lg leading-6 font-medium text-white mb-4">
-                    Record Payment
-                  </h3>
-                  <PaymentForm
-                    onSuccess={handlePaymentSuccess}
-                    onCancel={() => setShowPaymentForm(false)}
-                  />
-                </div>
-              </div>
-            </div>
+             </div>
+             <div className="p-8">
+                <PaymentForm
+                  onSuccess={handlePaymentSuccess}
+                  onCancel={() => setShowPaymentForm(false)}
+                />
+             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Entry Modal */}
-      {showEditForm && selectedEntry && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-[#1a2341] opacity-90 backdrop-blur-md"></div>
-            </div>
-
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom backdrop-filter backdrop-blur-20 bg-gradient-to-br from-[#1a2341]/95 to-[#0d1421]/95 border border-[#7fd3f7]/30 rounded-2xl px-4 pt-5 pb-4 text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-              <div className="absolute top-0 right-0 pt-4 pr-4">
+      {showEditForm && selectedEntry && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => {setShowEditForm(false); setSelectedEntry(null);}}></div>
+          
+          <div className="relative w-full max-w-lg bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up bg-[#111] border border-white/10">
+             <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+                <h3 className="text-xl font-bold text-white">Edit Ledger Entry</h3>
                 <button
-                  type="button"
                   onClick={() => {
                     setShowEditForm(false);
                     setSelectedEntry(null);
                   }}
-                  className="backdrop-filter backdrop-blur-10 bg-white/10 rounded-lg text-[#b6e0f7] hover:text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7] transition-all duration-200"
+                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 >
-                  <span className="sr-only">Close</span>
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XMarkIcon className="w-6 h-6" />
                 </button>
-              </div>
-
-              <div className="sm:flex sm:items-start">
-                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                  <h3 className="text-lg leading-6 font-medium text-white mb-4">
-                    Edit Ledger Entry
-                  </h3>
-                  <LedgerEntryForm
-                    entry={selectedEntry}
-                    onSuccess={handleEditSuccess}
-                    onCancel={() => {
-                      setShowEditForm(false);
-                      setSelectedEntry(null);
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+             </div>
+             <div className="p-8">
+              <LedgerEntryForm
+                  entry={selectedEntry}
+                  onSuccess={handleEditSuccess}
+                  onCancel={() => {
+                    setShowEditForm(false);
+                    setSelectedEntry(null);
+                  }}
+                />
+             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Bulk Delete Modal */}
@@ -368,7 +269,7 @@ const Ledger = () => {
         entry={selectedEntry}
       />
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
     </Layout>
   );
 };

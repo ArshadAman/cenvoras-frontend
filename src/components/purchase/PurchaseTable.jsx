@@ -8,6 +8,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("-bill_date"); // default: newest first
   const [page, setPage] = useState(1);
+  const [limit] = useState(10); // Items per page
   const [selectedBills, setSelectedBills] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
@@ -23,11 +24,10 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["purchaseBills", search, ordering, page],
-    queryFn: () => getPurchaseBills({ search, ordering, page }),
+    queryKey: ["purchaseBills", page, limit],
+    queryFn: () => getPurchaseBills({ page, limit }),
+    keepPreviousData: true, // Smooth pagination transitions
   });
-
-  console.log("Purchase Bills API data:", data); // <
 
   if (error) {
     return (
@@ -338,9 +338,10 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
           </button>
         </div>
       </div>
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-separate border-spacing-y-2">
+      {/* Table for desktop, Cards for mobile */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
             <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
               <th className="text-left py-3 px-4 rounded-l-lg">
@@ -391,51 +392,34 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     <td className="py-3 px-4 text-white drop-shadow-lg">{bill.vendor_name}</td>
                     <td className="py-3 px-4">
                       {bill.items && bill.items.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {bill.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="bg-blue-500/30 border border-blue-300/50 rounded-lg px-3 py-2 flex flex-col min-w-[140px] shadow-sm backdrop-filter backdrop-blur-10"
-                            >
-                              <span className="font-medium text-white drop-shadow-lg truncate">
-                                {item.product || "Product"}
+                        <div className="flex items-center gap-2">
+                          {/* Show first 2 items as compact pills */}
+                          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                            {bill.items.slice(0, 2).map((item, idx) => (
+                              <span
+                                key={item.id || idx}
+                                className="inline-flex items-center px-2 py-1 bg-white/10 text-white/90 text-xs rounded-md border border-white/10 truncate max-w-[90px]"
+                                title={`${item.product || 'Product'} - Qty: ${item.quantity} × ₹${Number(item.price).toFixed(0)}`}
+                              >
+                                {(item.product || 'Product').length > 12 
+                                  ? (item.product || 'Product').slice(0, 12) + '...' 
+                                  : (item.product || 'Product')}
                               </span>
-                              <span className="text-xs text-white/80 drop-shadow-md mt-1">
-                                Qty:{" "}
-                                <span className="font-semibold">
-                                  {item.quantity}
-                                </span>{" "}
-                                {item.unit}
-                                {item.price !== undefined && (
-                                  <>
-                                    {" "}
-                                    &middot;{" "}
-                                    <span>
-                                      Price:{" "}
-                                      <span className="font-semibold">
-                                        {Number(item.price).toFixed(2)}
-                                      </span>
-                                    </span>
-                                  </>
-                                )}
-                                {item.amount !== undefined && (
-                                  <>
-                                    {" "}
-                                    &middot;{" "}
-                                    <span>
-                                      Amt:{" "}
-                                      <span className="font-semibold">
-                                        {Number(item.amount).toFixed(2)}
-                                      </span>
-                                    </span>
-                                  </>
-                                )}
-                              </span>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                          {/* Show count badge if more items */}
+                          {bill.items.length > 2 && (
+                            <span className="inline-flex items-center justify-center w-6 h-6 bg-purple-500/30 text-purple-300 text-xs font-semibold rounded-full border border-purple-400/30">
+                              +{bill.items.length - 2}
+                            </span>
+                          )}
+                          {/* Total items indicator */}
+                          <span className="text-[10px] text-gray-500 ml-1">
+                            ({bill.items.length} items)
+                          </span>
                         </div>
                       ) : (
-                        <span className="text-white/60 drop-shadow-md">No items</span>
+                        <span className="text-gray-500 text-xs italic">No items</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
@@ -468,6 +452,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                 ))}
           </tbody>
         </table>
+        </div>
 
         {/* No data message */}
         {!isLoading &&
@@ -484,23 +469,119 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
           </div>
         )}
       </div>
+
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
+              <div className="h-4 bg-white/20 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            </div>
+          ))
+        ) : (
+          filteredBills.map((bill) => (
+            <div key={bill.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+              {/* Card Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedBills.has(bill.id)}
+                    onChange={(e) => handleSelectBill(bill.id, e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                  />
+                  <div>
+                    <div className="text-lg font-semibold text-white">
+                      {bill.bill_number}
+                    </div>
+                    <div className="text-sm text-white/70">
+                      {format(new Date(bill.bill_date), 'MMM dd, yyyy')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Vendor:</span>
+                  <span className="text-sm font-medium text-white">{bill.vendor_name}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Items:</span>
+                  <span className="text-sm text-white">{bill.items?.length || 0} items</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Total Amount:</span>
+                  <span className="text-lg font-semibold text-[#7fd3f7]">
+                    ₹{Number(bill.total_amount || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card Actions */}
+              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                <button
+                  onClick={() => onView(bill)}
+                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => onEdit(bill)}
+                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDelete(bill)}
+                  className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* No data message for mobile */}
+        {!isLoading && filteredBills.length === 0 && (
+          <div className="p-8 text-center text-white/80">
+            <p>No purchase bills found.</p>
+            <p className="text-sm mt-2">
+              Click "New Purchase" to create your first purchase bill.
+            </p>
+          </div>
+        )}
+      </div>
       {/* Pagination */}
-      <div className="flex justify-end mt-4 gap-2">
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={page === 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          Prev
-        </button>
-        <span className="px-2 py-1 text-white drop-shadow-lg">{page}</span>
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={!data?.next && !data?.data?.next}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
+      <div className="flex justify-between items-center mt-4">
+        <span className="text-sm text-gray-400">
+          {data?.pagination ? `Showing ${((data.pagination.page - 1) * data.pagination.limit) + 1}-${Math.min(data.pagination.page * data.pagination.limit, data.pagination.total_count)} of ${data.pagination.total_count}` : ''}
+        </span>
+        <div className="flex gap-2 items-center">
+          <button
+            className="px-3 py-1.5 border border-white/20 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            disabled={!data?.pagination?.has_prev}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            ← Prev
+          </button>
+          <span className="px-3 py-1 text-white text-sm">
+            Page {data?.pagination?.page || page} of {data?.pagination?.total_pages || 1}
+          </span>
+          <button
+            className="px-3 py-1.5 border border-white/20 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            disabled={!data?.pagination?.has_next}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next →
+          </button>
+        </div>
       </div>
 
       {/* Advanced Filters Modal */}

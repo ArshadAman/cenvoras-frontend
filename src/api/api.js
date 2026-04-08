@@ -39,6 +39,12 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    
+    // Don't attempt to refresh if the error came from the login endpoint itself
+    if (originalRequest.url.includes('/login/')) {
+      return Promise.reject(error);
+    }
+
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
@@ -54,8 +60,20 @@ api.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
       const refreshToken = localStorage.getItem('refresh')
+      
+      if (!refreshToken) {
+        console.warn('No refresh token available, redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('activeSession');
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
       try {
-        const { data } = await axios.post('http://127.0.0.1:8000/api/users/token/refresh/', {
+        console.log('Attempting to refresh token...');
+        const { data } = await axios.post(`${BASE_URL}/users/token/refresh/`, {
           refresh: refreshToken,
         })
         localStorage.setItem('token', data.access)
@@ -66,7 +84,10 @@ api.interceptors.response.use(
         processQueue(err, null)
         localStorage.removeItem('token')
         localStorage.removeItem('refresh')
-        window.location.href = '/login'
+        localStorage.removeItem('activeSession')
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+            window.location.href = '/login'
+        }
         return Promise.reject(err)
       } finally {
         isRefreshing = false

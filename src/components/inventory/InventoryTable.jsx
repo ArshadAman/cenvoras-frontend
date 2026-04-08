@@ -1,7 +1,72 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts } from "../../api/inventory";
+import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts } from "../../api/inventory";
 import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
+import Pagination from "../common/Pagination";
+import { toast } from "react-toastify";
+
+const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
+
+const splitCsvLine = (line) => {
+  return line
+    .split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+    .map((cell) => cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+};
+
+const normalizeHeader = (header) =>
+  String(header || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+
+const validateCsvBeforeUpload = async (file) => {
+  const csvText = await file.text();
+  const rawLines = csvText.split(/\r?\n/).filter((line) => line.trim() !== "");
+
+  if (rawLines.length < 2) {
+    return { valid: false, message: "CSV must contain a header and at least one data row." };
+  }
+
+  const headers = splitCsvLine(rawLines[0]).map(normalizeHeader);
+  const missingHeaders = REQUIRED_CSV_COLUMNS.filter((key) => !headers.includes(key));
+  if (missingHeaders.length > 0) {
+    return {
+      valid: false,
+      message: `Missing required column(s): ${missingHeaders.join(", ")}`,
+    };
+  }
+
+  const indexByHeader = Object.fromEntries(headers.map((h, idx) => [h, idx]));
+  const invalidRows = [];
+
+  for (let i = 1; i < rawLines.length; i += 1) {
+    const values = splitCsvLine(rawLines[i]);
+    const rowNumber = i + 1;
+
+    const missingFields = REQUIRED_CSV_COLUMNS.filter((field) => {
+      const value = values[indexByHeader[field]];
+      return value == null || String(value).trim() === "";
+    });
+
+    if (missingFields.length > 0) {
+      invalidRows.push({ rowNumber, missingFields });
+    }
+  }
+
+  if (invalidRows.length > 0) {
+    const preview = invalidRows
+      .slice(0, 3)
+      .map((row) => `Row ${row.rowNumber}: ${row.missingFields.join(", ")}`)
+      .join(" | ");
+    return {
+      valid: false,
+      message: `CSV has missing required values. ${preview}${invalidRows.length > 3 ? " ..." : ""}`,
+    };
+  }
+
+  return { valid: true };
+};
 
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
   const [search, setSearch] = useState("");
@@ -11,6 +76,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
@@ -23,6 +89,69 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     queryKey: ["products", search, ordering, page],
     queryFn: () => getProducts({ search, ordering, page }),
   });
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await downloadProductCsvTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'product_bulk_template.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('Failed to download product template.');
+    }
+  };
+
+  const handleUploadCsv = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      toast.error('Please select a CSV file.');
+      event.target.value = '';
+      return;
+    }
+
+    const preValidation = await validateCsvBeforeUpload(file);
+    if (!preValidation.valid) {
+      toast.error(preValidation.message);
+      event.target.value = '';
+      return;
+    }
+
+    setIsUploadingCsv(true);
+    try {
+      const result = await bulkUploadProductsCsv(file);
+      const createdCount = Number(result?.created_count || 0);
+      const failedCount = Number(result?.failed_count || 0);
+
+      if (failedCount > 0) {
+        if (createdCount > 0) {
+          toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
+        } else {
+          toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
+        }
+      } else if (createdCount > 0) {
+        toast.success(`Bulk upload complete. Created: ${createdCount}`);
+      } else {
+        toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
+      }
+
+      window.location.reload();
+    } catch (err) {
+      const responseData = err?.response?.data;
+      if (responseData?.errors?.length) {
+        toast.error(`Upload finished with errors. Created: ${responseData.created_count || 0}, Failed: ${responseData.failed_count || 0}`);
+      } else {
+        toast.error(responseData?.error || 'Bulk upload failed.');
+      }
+    } finally {
+      setIsUploadingCsv(false);
+      event.target.value = '';
+    }
+  };
 
   if (error) {
     return (
@@ -44,18 +173,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   // Get the raw products array from API response
   const productsRaw = Array.isArray(data)
     ? data
-    : data?.data || data?.results || [];
+    : data?.results || data?.data || [];
+  const totalPages = data?.total_pages || 1;
+  const currentPage = data?.current_page || page;
 
-  // Frontend search and filter
+  // Backend handles search across all products; frontend applies additional filters only.
   const filteredProducts = productsRaw
     .filter(product => {
-      // Search by product name or description
-      const searchLower = search.toLowerCase();
-      const matchesSearch = product.name?.toLowerCase().includes(searchLower) ||
-        product.description?.toLowerCase().includes(searchLower);
-      
-
-      
       // Stock filter
       let matchesStock = true;
   const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
@@ -80,7 +204,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       // Price range filter
       let matchesPrice = true;
       if (advancedFilters.priceRange.min || advancedFilters.priceRange.max) {
-        const price = parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+      const price = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
         if (advancedFilters.priceRange.min) {
           matchesPrice = matchesPrice && price >= parseFloat(advancedFilters.priceRange.min);
         }
@@ -106,7 +230,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         matchesSupplier = product.supplier?.toLowerCase().includes(advancedFilters.supplier.toLowerCase());
       }
       
-      return matchesSearch && matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
+      return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
     })
     .sort((a, b) => {
       // Frontend ordering
@@ -114,8 +238,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
       if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
       if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
-      if (ordering === "unit_price") return parseFloat(a.unit_price || 0) - parseFloat(b.unit_price || 0);
-      if (ordering === "-unit_price") return parseFloat(b.unit_price || 0) - parseFloat(a.unit_price || 0);
+      if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
+      if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
 
       return 0;
     });
@@ -161,16 +285,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const selectedData = filteredProducts.filter(product => selectedProducts.has(product.id));
     const dataToExport = selectedData.length > 0 ? selectedData : filteredProducts;
     
-    const csvHeaders = ['Name', 'SKU', 'Category', 'Current Stock', 'Unit', 'Unit Price', 'Total Value', 'Supplier'];
+    const csvHeaders = ['Name', 'Current Stock', 'Unit', 'Cost Price', 'Sale Price', 'Total Value'];
     const csvData = dataToExport.map(product => [
       product.name,
-      product.sku,
-      product.category,
-      product.current_stock,
+      product.stock ?? product.current_stock,
       product.unit,
-      product.unit_price,
-      (parseFloat(product.current_stock || 0) * parseFloat(product.unit_price || 0)).toFixed(2),
-      product.supplier || ''
+      parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0).toFixed(2),
+      product.sale_price == null ? '' : parseFloat(product.sale_price).toFixed(2),
+      (parseFloat(product.stock ?? product.current_stock ?? 0) * parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0)).toFixed(2),
     ]);
     
     const csvContent = [csvHeaders, ...csvData].map(row => 
@@ -208,7 +330,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search by name or description"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
         <select
           value={ordering}
@@ -270,6 +395,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         
         <div className="flex gap-2">
           <button
+            onClick={handleDownloadTemplate}
+            className="px-3 py-1 bg-cyan-500/30 text-cyan-200 border border-cyan-300/50 rounded hover:bg-cyan-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+          >
+            Download Template
+          </button>
+          <label className={`px-3 py-1 border rounded transition text-sm backdrop-filter backdrop-blur-10 font-bold cursor-pointer ${isUploadingCsv ? 'bg-gray-600/30 text-gray-300 border-gray-400/40' : 'bg-blue-500/30 text-blue-200 border-blue-300/50 hover:bg-blue-400/40'}`}>
+            {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleUploadCsv}
+              disabled={isUploadingCsv}
+            />
+          </label>
+          <button
             onClick={exportToCSV}
             className="px-3 py-1 bg-green-500/30 text-green-200 border border-green-300/50 rounded hover:bg-green-400/40 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 font-bold"
           >
@@ -281,9 +422,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-separate border-spacing-y-2">
+      {/* Table for desktop, Cards for mobile */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
             <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
               <th className="text-left py-3 px-4 rounded-l-lg">
@@ -296,9 +438,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               </th>
               <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Product</th>
               <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Stock</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Unit Price</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Cost Price</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Sale Price</th>
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Value</th>
               <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Status</th>
+              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Warranty</th>
               <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
             </tr>
           </thead>
@@ -309,14 +453,16 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   .map((_, i) => (
                     <tr key={i}>
                       <td
-                        colSpan={7}
+                        colSpan={9}
                         className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
                       />
                     </tr>
                   ))
               : filteredProducts.map((product) => {
                   const stockStatus = getStockStatus(product);
-              const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+              const costPrice = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+              const salePrice = product.sale_price == null ? null : parseFloat(product.sale_price);
+              const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * costPrice;
                   
                   return (
                     <tr
@@ -352,7 +498,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                           )}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        ₹{parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0).toFixed(2)}
+                        ₹{costPrice.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
+                        {salePrice === null ? '-' : `₹${salePrice.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
                         ₹{totalValue.toLocaleString(undefined, {
@@ -364,6 +513,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.className}`}>
                           {stockStatus.text}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {(product.warranty_months && product.warranty_months > 0) ? (
+                          <span className="px-2 py-0.5 rounded text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+                            {product.warranty_months} mo
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 text-xs">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center space-x-1">
                         {/* View button removed */}
@@ -386,6 +544,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 })}
           </tbody>
         </table>
+        </div>
 
         {/* No data message */}
         {!isLoading &&
@@ -403,24 +562,126 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-end mt-4 gap-2">
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={page === 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          Prev
-        </button>
-        <span className="px-2 py-1 text-white drop-shadow-lg">{page}</span>
-        <button
-          className="px-2 py-1 border border-white/30 rounded bg-white/10 backdrop-filter backdrop-blur-10 text-white hover:bg-white/20 transition disabled:opacity-50 drop-shadow-lg"
-          disabled={!data?.next && !data?.data?.next}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-4">
+        {isLoading ? (
+          Array(3).fill(0).map((_, i) => (
+            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
+              <div className="h-4 bg-white/20 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded mb-2"></div>
+              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            </div>
+          ))
+        ) : (
+          filteredProducts.map((product) => (
+            <div key={product.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+              {(() => {
+                const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
+                const lowStockLevel = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
+                const costPrice = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+                const isLowStock = lowStockLevel > 0 && currentStock <= lowStockLevel;
+                return (
+                  <>
+              {/* Card Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.has(product.id)}
+                    onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                  />
+                  <div>
+                    <div className="text-lg font-semibold text-white">
+                      {product.name}
+                    </div>
+                    <div className="text-sm text-white/70">Unit: {product.unit || 'pcs'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Category:</span>
+                  <span className="text-sm font-medium text-white">{product.hsn_sac_code || 'N/A'}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Stock:</span>
+                  <span className={`text-sm font-medium ${
+                    isLowStock
+                      ? 'text-red-400' 
+                      : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
+                        ? 'text-yellow-400' 
+                        : 'text-green-400'
+                  }`}>
+                    {currentStock} {product.unit}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Cost Price:</span>
+                  <span className="text-lg font-semibold text-[#7fd3f7]">
+                    ₹{Number(costPrice || 0).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Sale Price:</span>
+                  <span className="text-sm font-medium text-white">
+                    {product.sale_price == null ? '-' : `₹${Number(product.sale_price).toLocaleString()}`}
+                  </span>
+                </div>
+
+                {isLowStock && (
+                  <div className="text-xs text-red-400 bg-red-500/20 px-2 py-1 rounded">
+                    Low Stock Alert
+                  </div>
+                )}
+              </div>
+
+              {/* Card Actions */}
+              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                <button
+                  onClick={() => onView(product)}
+                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  View
+                </button>
+                <button
+                  onClick={() => onStockAdjustment(product)}
+                  className="flex-1 px-3 py-2 bg-orange-500/30 text-white border border-orange-300/50 rounded-lg hover:bg-orange-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Adjust
+                </button>
+                <button
+                  onClick={() => onEdit(product)}
+                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                >
+                  Edit
+                </button>
+              </div>
+                  </>
+                );
+              })()}
+            </div>
+          ))
+        )}
+
+        {/* No data message for mobile */}
+        {!isLoading && filteredProducts.length === 0 && (
+          <div className="p-8 text-center text-white/80">
+            <p>No products found.</p>
+            <p className="text-sm mt-2">
+              Click "Add Product" to create your first inventory item.
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Pagination */}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Advanced Filters Modal */}
       {showAdvancedFilters && (

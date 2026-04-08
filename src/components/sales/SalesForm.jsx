@@ -1,30 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { createSalesInvoice, updateSalesInvoice, getProducts } from "../../api/sales";
+import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
+import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
+import { INDIAN_STATES } from "../../utils/constants"; // Added imports
 import { toast } from "react-toastify";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue }) {
-  const [products, setProducts] = useState([]);
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await getProducts();
-        const productList = Array.isArray(response) ? response : response.data || response.results || [];
-        setProducts(productList);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    };
-    fetchProducts();
-  }, []);
+    const query = (inputValue || "").trim().toLowerCase();
+    if (!query) {
+      setFilteredProducts([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const filtered = (products || []).filter((product) =>
+      (product?.name || "").toLowerCase().includes(query)
+    );
+    setFilteredProducts(filtered);
+    setShowDropdown(filtered.length > 0);
+  }, [inputValue, products]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
@@ -37,28 +42,28 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.discount`, 0);
-    setFieldValue(`items.${idx}.tax`, 0);
+    setFieldValue(`items.${idx}.tax`, product.tax || 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
     setInputValue(product.name);
     setShowDropdown(false);
+    setSelectedIndex(-1);
+    
+    // Trigger auto-add row functionality after product selection
+    if (onInputChange) {
+      onInputChange();
+    }
   };
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
+    if (onProductSearchChange) {
+      onProductSearchChange(value.trim());
+    }
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
-
-    if (value.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-      setShowDropdown(filtered.length > 0);
-    } else {
-      setShowDropdown(false);
-    }
+    setSelectedIndex(-1);
   };
 
   return (
@@ -70,60 +75,87 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
               {...field}
               value={inputValue}
               onChange={handleInputChange}
+              onFocus={() => {
+                if ((inputValue || "").trim() && filteredProducts.length > 0) {
+                  setShowDropdown(true);
+                }
+              }}
               placeholder="Product name"
-              className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
               autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === 'Tab' || (e.key === 'Enter' && !showDropdown)) {
+                  e.preventDefault();
+                  const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${idx}.quantity"]`);
+                  if (nextInput) nextInput.focus();
+                }
+                // Handle dropdown navigation
+                if (showDropdown && filteredProducts.length > 0) {
+                  const displayLimit = Math.min(filteredProducts.length, 50);
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => (prev < displayLimit - 1) ? prev + 1 : 0);
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : displayLimit - 1);
+                  } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    selectProduct(filteredProducts[selectedIndex]);
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setShowDropdown(false);
+                    setSelectedIndex(-1);
+                  }
+                }
+              }}
             />
             {meta.touched && meta.error && (
-              <div className="text-red-500 text-xs mt-1">{meta.error}</div>
+              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-10 bg-white border rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
-          {filteredProducts.map(product => (
+        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+          {filteredProducts.slice(0, 50).map((product, index) => (
             <div
               key={product.id}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+                index === selectedIndex 
+                  ? 'bg-cyan-500/20 text-white' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
               onClick={() => selectProduct(product)}
             >
               <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs">
+              <div className="text-gray-500 text-xs mt-0.5">
                 Unit: {product.unit} | Price: ₹{product.price}
               </div>
             </div>
           ))}
+          {filteredProducts.length > 50 && (
+             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+                Showing top 50 results...
+             </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// Customer Autocomplete Component
-function CustomerAutocomplete({ values, setFieldValue }) {
-  const [customers, setCustomers] = useState([]);
+// Customer Autocomplete Component  
+function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.customer_name || "");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
 
   // Sync inputValue with Formik values
   useEffect(() => {
     setInputValue(values.customer_name || "");
   }, [values.customer_name]);
-
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await getCustomers();
-        const customerList = Array.isArray(response) ? response : response.data || response.results || [];
-        setCustomers(customerList);
-      } catch (error) {
-        console.error('Error fetching customers:', error);
-      }
-    };
-    fetchCustomers();
-  }, []);
 
   const selectCustomer = (customer) => {
     // New API: set customer_name directly, optionally set email for Customer record creation
@@ -131,21 +163,26 @@ function CustomerAutocomplete({ values, setFieldValue }) {
     setFieldValue('customer_email', customer.email || '');
     setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
+    setFieldValue('customer_gstin', customer.gstin || '');
+    // Auto-fill delivery address same as customer address
+    setFieldValue('delivery_address', customer.address || '');
     setInputValue(customer.name);
     setShowDropdown(false);
+    setSelectedIndex(-1);
   };
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
     setFieldValue('customer_name', value);  // For manual entry, store the name
+    setSelectedIndex(-1);
 
     if (value.trim()) {
       const filtered = customers.filter(customer =>
         customer.name.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredCustomers(filtered);
-      setShowDropdown(filtered.length > 0);
+      setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
@@ -162,34 +199,192 @@ function CustomerAutocomplete({ values, setFieldValue }) {
               onChange={handleInputChange}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               onFocus={() => {
-                if (inputValue.trim() && filteredCustomers.length > 0) {
+                if (inputValue.trim()) {
                   setShowDropdown(true);
                 }
               }}
+              onKeyDown={(e) => {
+                if (showDropdown) {
+                  const displayLimit = Math.min(filteredCustomers.length, 50);
+                  const totalItems = displayLimit + (inputValue.trim() ? 1 : 0); // +1 for "Add New"
+                  
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => (prev < totalItems - 1) ? prev + 1 : 0);
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalItems - 1);
+                  } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    if (selectedIndex < displayLimit) {
+                      selectCustomer(filteredCustomers[selectedIndex]);
+                    } else {
+                      // "Add New Customer" option
+                      setShowNewCustomerModal(true);
+                       setShowDropdown(false);
+                    }
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setShowDropdown(false);
+                    setSelectedIndex(-1);
+                  }
+                }
+              }}
               placeholder="Customer name"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
             />
             {meta.touched && meta.error && (
-              <div className="text-red-500 text-sm mt-1">{meta.error}</div>
+              <div className="text-red-400 text-sm mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-10 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg w-full max-h-40 overflow-y-auto">
-          {filteredCustomers.map(customer => (
+        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+          {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
-              className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm"
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+                index === selectedIndex
+                  ? 'bg-cyan-500/20 text-white' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium text-gray-900 dark:text-white">{customer.name}</div>
-              <div className="text-gray-500 dark:text-gray-400 text-xs">
+              <div className="font-medium">{customer.name}</div>
+              <div className="text-gray-500 text-xs mt-0.5">
                 {customer.email && `${customer.email} | `}
                 {customer.address} {customer.gstin && `| GSTIN: ${customer.gstin}`}
               </div>
             </div>
           ))}
+          {filteredCustomers.length > 50 && (
+             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+                Showing top 50 results...
+             </div>
+          )}
+          {inputValue.trim() && (
+            <div
+              className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
+                selectedIndex === Math.min(filteredCustomers.length, 50)
+                  ? 'bg-cyan-500/20 text-white' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`}
+              onClick={() => {
+                setShowNewCustomerModal(true);
+                setShowDropdown(false);
+              }}
+            >
+              <div className="font-medium text-cyan-400 flex items-center gap-2">
+                <span>➕</span> Add New Customer: "{inputValue}"
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Add New Customer Modal */}
+      {showNewCustomerModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-blue-900/30 animate-fade-up overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <h3 className="text-lg font-bold text-white">Add New Customer</h3>
+              <button
+                type="button"
+                onClick={() => setShowNewCustomerModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Form */}
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Name *</label>
+                <input
+                  type="text"
+                  defaultValue={inputValue}
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  id="new-customer-name"
+                  placeholder="Customer name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
+                <input
+                  type="email"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  id="new-customer-email"
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
+                <input
+                  type="tel"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  id="new-customer-phone"
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Address</label>
+                <textarea
+                  rows={2}
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all resize-none"
+                  id="new-customer-address"
+                  placeholder="Full address"
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">GSTIN</label>
+                <input
+                  type="text"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  id="new-customer-gstin"
+                  placeholder="e.g., 29AAKCG6382L1ZU"
+                />
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="p-5 pt-0 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowNewCustomerModal(false)}
+                className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const name = document.getElementById('new-customer-name').value;
+                  const email = document.getElementById('new-customer-email').value;
+                  const phone = document.getElementById('new-customer-phone').value;
+                  const address = document.getElementById('new-customer-address').value;
+                  const gstin = document.getElementById('new-customer-gstin').value;
+                  
+                  setFieldValue('customer_name', name);
+                  setFieldValue('customer_email', email);
+                  setFieldValue('customer_phone', phone);
+                  setFieldValue('customer_address', address);
+                  setFieldValue('customer_gstin', gstin);
+                  setFieldValue('delivery_address', address);
+                  setInputValue(name);
+                  setShowNewCustomerModal(false);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-lg transition-all shadow-lg shadow-blue-900/30 text-sm font-medium"
+              >
+                Add Customer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -200,16 +395,18 @@ const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
   invoice_number: Yup.string().required("Invoice number is required").min(1).max(100),
+  warehouse: Yup.string().nullable(),
   invoice_date: Yup.string().required("Invoice date is required"),
   
   // Optional fields for customer record creation
   customer_email: Yup.string().email("Invalid email format").nullable(),
   customer_phone: Yup.string().nullable(),
   customer_address: Yup.string().nullable(),
+  customer_gstin: Yup.string().nullable(),
+  delivery_address: Yup.string().nullable(),
   
   // Optional invoice fields
   due_date: Yup.string().nullable(),
-  delivery_address: Yup.string().nullable(),
   gst_treatment: Yup.string().nullable(),
   journal: Yup.string().nullable(),
   total_amount: Yup.number().nullable(),
@@ -220,6 +417,7 @@ const SalesSchema = Yup.object().shape({
       // Required item fields
       product: Yup.string().required("Product is required").min(1),
       quantity: Yup.number().required("Quantity is required").min(1),
+      batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
       price: Yup.number().required("Price is required").min(0),
       amount: Yup.number().required("Amount is required").min(0),
       
@@ -234,9 +432,112 @@ const SalesSchema = Yup.object().shape({
 
 const units = ["pcs", "kg", "ltr", "box", "meter"];
 
-export default function SalesForm({ isOpen, onClose, editData }) {
+export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "INV-" }) {
+  // Keyboard Shortcuts Logic
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // F2 to Save
+      if (e.key === "F2") {
+        e.preventDefault();
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if(submitBtn) {
+            submitBtn.click();
+            toast.info("Saving Invoice (F2)...");
+        }
+      }
+      
+      // Esc to Close
+      if (e.key === "Escape") {
+        const isDropdownOpen = document.querySelector('.absolute.z-10'); // Basic check if any autocomplete is open
+        if (!isDropdownOpen) {
+             e.preventDefault();
+             onClose();
+        }
+      }
+
+      // Enter Navigation (Enter acts like Tab)
+      if (e.key === "Enter") {
+        const target = e.target;
+        // Only if it's an input or select, and NOT a button/textarea
+        if ((target.tagName === "INPUT" || target.tagName === "SELECT") && !target.dataset.noEnter) {
+          e.preventDefault();
+          const form = target.form;
+          if (form) {
+              const index = Array.prototype.indexOf.call(form, target);
+              // Find next navigable element
+              let nextIndex = index + 1;
+              let found = false;
+              while (form.elements[nextIndex]) {
+                 const next = form.elements[nextIndex];
+                 // Skip hidden, disabled, or readOnly that shouldn't be focused
+                 if (next.tagName !== "FIELDSET" && !next.hidden && !next.disabled && next.offsetParent !== null && next.tabIndex >= 0) {
+                     next.focus();
+                     found = true;
+                     break;
+                 }
+                 nextIndex++;
+              }
+              // If last element, maybe add row? For now just stop.
+          }
+        }
+      }
+    };
+
+    if (isOpen) {
+        window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
+  const formikRef = React.useRef(null);
+  const submitActionRef = React.useRef('final');
+  const [productSearch, setProductSearch] = useState("");
+  
+  const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
+  
+  
+  // Lifted state: Fetch products and customers once at top level
+  const { data: productsResult } = useQuery({ 
+      queryKey: ["products", productSearch], 
+      queryFn: () => getProducts({
+        ...(productSearch ? { search: productSearch } : {}),
+        ordering: "name",
+      }),
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+  const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
+
+  const { data: customersResult } = useQuery({ 
+      queryKey: ["customers"], 
+      queryFn: getCustomers,
+      staleTime: 5 * 60 * 1000, 
+  });
+  const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
+  
+  // State to track selected warehouse for stock filtering
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState(editData?.warehouse || "");
+
+  const { data: stockPointsResult } = useQuery({
+    queryKey: ["stockPoints", selectedWarehouseId],
+    queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
+    enabled: !!selectedWarehouseId
+  });
+  const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
+  
+
+  // Sync warehouse selection from Formik values (used by render below)
+  // This replaces the illegal useEffect-inside-IIFE that was causing form refreshes
+  const warehouseSyncRef = React.useRef(selectedWarehouseId);
+
+  // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
+  
+  const { data: nextInvData } = useQuery({
+    queryKey: ["nextInvoiceNumber"],
+    queryFn: () => getNextInvoiceNumber("INV-"),
+    enabled: !isEdit && isOpen
+  });
 
   const createMutation = useMutation({
     mutationFn: createSalesInvoice,
@@ -246,7 +547,11 @@ export default function SalesForm({ isOpen, onClose, editData }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create sales bill");
+      if (error.response?.status === 409) {
+          toast.error(error.response?.data?.error || "Invoice number already exists!");
+      } else {
+          toast.error(error.response?.data?.message || error.message || "Failed to create sales bill");
+      }
     },
   });
 
@@ -258,50 +563,91 @@ export default function SalesForm({ isOpen, onClose, editData }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update sales bill");
+      if (error.response?.status === 409) {
+          toast.error(error.response?.data?.error || "Invoice number already exists!");
+      } else {
+          toast.error(error.response?.data?.message || error.message || "Failed to update sales bill");
+      }
     },
   });
 
+  const handleBeforeClose = async () => {
+    if (formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
+      // Auto-save as draft if form is touched
+      submitActionRef.current = 'draft';
+      await formikRef.current.submitForm();
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 w-full max-w-4xl max-h-[95vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6 text-blue-700 dark:text-blue-400">
-          {isEdit ? "Edit Sales Bill" : "New Sales Bill"}
-        </h2>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleBeforeClose}></div>
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
+        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-1">
+              {isEdit ? "Edit Sales Invoice" : "New Sales Invoice"}
+            </h2>
+             <p className="text-xs text-gray-400 flex items-center gap-2">
+              <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
+              <span>•</span>
+              <span><kbd className="bg-white/10 px-1 rounded text-white">Esc</kbd> to close</span>
+            </p>
+          </div>
+          <button
+            onClick={handleBeforeClose}
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
         
         <Formik
+          innerRef={formikRef}
           initialValues={{
             // Required fields
             customer_name: editData?.customer_name || "",
-            invoice_number: editData?.invoice_number || "",
-            invoice_date: editData?.invoice_date || new Date().toISOString().split('T')[0],
+            // Use fetched next number or edit data
+            invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
+            invoice_date: editData?.invoice_date ? new Date(editData.invoice_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             
             // Optional customer fields (for Customer record creation)
             customer_email: editData?.customer_email || "",
             customer_phone: editData?.customer_phone || "",
             customer_address: editData?.customer_address || "",
+            customer_gstin: editData?.customer_gstin || "",
+            delivery_address: editData?.delivery_address || "",
             
             // Optional invoice fields
             due_date: editData?.due_date || "",
-            delivery_address: editData?.delivery_address || "",
             gst_treatment: editData?.gst_treatment || "registered",
+            place_of_supply: editData?.place_of_supply || "", // New field
+            warehouse: editData?.warehouse || "", // New field
             journal: editData?.journal || "Sales",
             total_amount: editData?.total_amount || null,
             
-            items: editData?.items?.map(item => ({
-              product: item.product || item.product_name || "",
-              product_id: item.product_id || null,
-              quantity: item.quantity || 1,
-              price: item.price || 0,
-              amount: item.amount || (item.quantity * item.price) || 0,
-              unit: item.unit || "pcs",
-              hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
-              discount: item.discount || 0,
-              tax: item.tax || 0,
-              isExistingProduct: !!(item.product_id),
-            })) || [{
+            items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
+              const qty = item.quantity || 1;
+              const price = item.price || 0;
+              const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
+              return {
+                product: item.product || item.product_name || "",
+                product_id: item.product_id || null,
+                quantity: qty,
+                price: price,
+                amount: itemAmount, // This should always be qty * price before tax/discount
+                unit: item.unit || "pcs",
+                hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
+                discount: item.discount || 0,
+                tax: item.tax || 0,
+                isExistingProduct: !!(item.product_id),
+              };
+            }) : [{
               product: "",
               product_id: null,
               quantity: 1,
@@ -314,96 +660,99 @@ export default function SalesForm({ isOpen, onClose, editData }) {
               isExistingProduct: false,
             }]
           }}
-          validationSchema={SalesSchema}
           enableReinitialize={true}
-          onSubmit={async (values, { setSubmitting, setFieldError }) => {
-            // Validate items
-            for (let i = 0; i < values.items.length; i++) {
-              const item = values.items[i];
-              if (!item.product || item.product.trim() === '') {
-                setFieldError(`items.${i}.product`, 'Product is required');
-                toast.error(`Product is required for item ${i + 1}`);
-                setSubmitting(false);
-                return;
-              }
-            }
+          onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
+            const isDraft = submitActionRef.current === "draft";
             
-            const validItems = values.items.filter(item => 
-              item.product && item.product.trim() !== ''
+            // Clean up empty product rows before processing/validation
+            const cleanedItems = values.items.filter(item => 
+              (item.product && item.product.trim() !== '') || item.product_id
             );
-            
-            if (validItems.length === 0) {
-              toast.error('At least one item with a valid product is required');
-              setSubmitting(false);
-              return;
+            const valuesToValidate = { ...values, items: cleanedItems };
+
+            // Drafts only require customer name
+            if (isDraft) {
+               if (!values.customer_name || values.customer_name.trim() === '') {
+                   setFieldError('customer_name', 'Customer name is required');
+                   toast.error('Customer name is required to save a draft');
+                   setSubmitting(false);
+                   return;
+               }
+            } else {
+                // Final Invoices require at least one item
+                if (cleanedItems.length === 0) {
+                   toast.error('At least one item is required to create an invoice');
+                   setSubmitting(false);
+                   return;
+                }
+                
+                // Perform validation manually for Final invoices using the cleaned items
+                try {
+                  await SalesSchema.validate(valuesToValidate, { abortEarly: false });
+                } catch (err) {
+                  const errors = {};
+                  err.inner?.forEach(e => {
+                    errors[e.path] = e.message;
+                  });
+                  setErrors(errors);
+                  
+                  // Show the first error in a toast for better UX
+                  if (err.inner?.length > 0) {
+                    toast.error(err.inner[0].message);
+                  }
+                  
+                  setSubmitting(false);
+                  return;
+                }
             }
             
             try {
-                            const processedItems = values.items.map(item => {
+              const processedItems = cleanedItems.map(item => {
                 const quantity = Number(item.quantity) || 1;
                 const price = Number(item.price) || 0;
-                const amount = Number(item.amount) || (quantity * price);
+                const discount = Number(item.discount) || 0;
+                const tax = Number(item.tax) || 0;
+                const baseAmount = quantity * price;
+                const discountAmount = (baseAmount * discount) / 100;
+                const taxableAmount = baseAmount - discountAmount;
+                const taxAmount = (taxableAmount * tax) / 100;
+                const amount = Number((taxableAmount + taxAmount).toFixed(2));
                 
                 return {
-                  product: item.product, // Use product field instead of product_name
+                  product: item.product_id || item.product, // Pass UUID if available, else name
                   quantity: quantity,
                   price: price,
-                  amount: amount, // Required field in new schema
+                  amount: amount,
                   unit: item.unit || null,
                   hsn_sac_code: item.hsn_sac_code || null,
-                  discount: Number(item.discount) || null,
-                  tax: Number(item.tax) || null,
+                  discount: discount,
+                  tax: tax,
                 };
               });
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
-              let formData;
+              const formData = {
+                customer_name: values.customer_name,
+                invoice_number: values.invoice_number,
+                invoice_date: values.invoice_date,
+                due_date: values.due_date || null,
+                delivery_address: values.delivery_address || null,
+                gst_treatment: values.gst_treatment || null,
+                place_of_supply: values.place_of_supply || null,
+                journal: values.journal || "Sales",
+                warehouse: values.warehouse || null,
+                status: isDraft ? 'draft' : 'final',
+                total_amount: totalAmount.toString(),
+                items: processedItems,
+                // Optional customer fields for new record creation
+                ...(values.customer_email && { customer_email: values.customer_email }),
+                ...(values.customer_phone && { customer_phone: values.customer_phone }),
+                ...(values.customer_address && { customer_address: values.customer_address }),
+                ...(values.customer_gstin && { customer_gstin: values.customer_gstin }),
+              };
 
-              if (isEdit) {
-                // Edit API expects different structure with UUIDs
-                formData = {
-                  customer: editData.customer || editData.customer_id, // Use original customer UUID
-                  invoice_number: values.invoice_number,
-                  invoice_date: values.invoice_date,
-                  due_date: values.due_date || null,
-                  delivery_address: values.delivery_address || null,
-                  gst_treatment: values.gst_treatment || null,
-                  journal: values.journal || "Sales",
-                  total_amount: totalAmount.toString(),
-                  created_by: editData.created_by, // Use original created_by UUID
-                  items: processedItems.map(item => ({
-                    product: item.product_id || item.product, // Use product UUID if available
-                    quantity: item.quantity,
-                    unit: item.unit || null,
-                    price: item.price.toString(),
-                    discount: item.discount ? item.discount.toString() : null,
-                    tax: item.tax ? item.tax.toString() : null,
-                    amount: item.amount.toString(),
-                  }))
-                };
-              } else {
-                // Create API expects customer_name structure
-                formData = {
-                  // Required fields
-                  customer_name: values.customer_name,
-                  invoice_number: values.invoice_number,
-                  invoice_date: values.invoice_date,
-                  items: processedItems,
-                  
-                  // Optional customer fields (for Customer record creation)
-                  ...(values.customer_email && { customer_email: values.customer_email }),
-                  ...(values.customer_phone && { customer_phone: values.customer_phone }),
-                  ...(values.customer_address && { customer_address: values.customer_address }),
-                  
-                  // Optional invoice fields
-                  ...(values.due_date && { due_date: values.due_date }),
-                  ...(values.delivery_address && { delivery_address: values.delivery_address }),
-                  ...(values.gst_treatment && { gst_treatment: values.gst_treatment }),
-                  ...(values.journal && { journal: values.journal }),
-                  ...(totalAmount && { total_amount: totalAmount }),
-                };
-              }
+              console.log("DEBUG: Submitting Sales Invoice:", formData);
 
               if (isEdit) {
                 updateMutation.mutate({ id: editData.id, data: formData });
@@ -417,7 +766,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
             setSubmitting(false);
           }}
         >
-          {({ values, setFieldValue, isSubmitting }) => {
+          {({ values, setFieldValue, isSubmitting, handleSubmit, setStatus }) => {
             // Calculate totals
             const subtotal = values.items.reduce((sum, item) => {
               const quantity = Number(item.quantity) || 0;
@@ -444,339 +793,523 @@ export default function SalesForm({ isOpen, onClose, editData }) {
             const grandTotal = subtotal - totalDiscount + totalTax;
 
             return (
-              <Form className="space-y-6">
-                {/* Header Info */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Invoice Number *
-                    </label>
-                    <Field
-                      name="invoice_number"
-                      type="text"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Invoice Date *
-                    </label>
-                    <Field
-                      name="invoice_date"
-                      type="date"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Due Date
-                    </label>
-                    <Field
-                      name="due_date"
-                      type="date"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </div>
+              <Form 
+                className="p-0"
+                onKeyDown={(e) => {
+                  // Handle global keyboard shortcuts
+                  if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Submit the form instead of saving HTML
+                    handleSubmit();
+                    return false;
+                  }
+                  if (e.key === 'Escape') {
+                    onClose();
+                  }
+                }}
+              >
+                <div className="p-8 space-y-8">
+                  {/* Header Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  
+                    {/* Customer Autocomplete */}
+                    <div className="relative">
+                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer *
+                      </label>
+                      <CustomerAutocomplete 
+                          values={values} 
+                          setFieldValue={setFieldValue} 
+                          customers={customers} 
+                      />
+                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
+                    </div>
 
-                {/* Customer Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Name *
-                    </label>
-                    <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
-                    <ErrorMessage name="customer_name" component="div" className="text-red-500 text-sm mt-1" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Email <span className="text-xs text-gray-500">(optional - creates customer record)</span>
-                    </label>
-                    <Field
-                      name="customer_email"
-                      type="email"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="customer@example.com"
-                    />
-                  </div>
-                </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Invoice Number *
+                      </label>
+                      <Field
+                        name="invoice_number"
+                        type="text"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="e.g. INV-ABCD-001"
+                      />
+                    </div>
 
-                {/* Additional Customer Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Phone
-                    </label>
-                    <Field
-                      name="customer_phone"
-                      type="tel"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="+91 9876543210"
-                    />
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Invoice Date *
+                      </label>
+                      <Field
+                        name="invoice_date"
+                        type="date"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                         Warehouse
+                      </label>
+                      <Field
+                        name="warehouse"
+                        as="select"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFieldValue('warehouse', val);
+                          setSelectedWarehouseId(val);
+                        }}
+                      >
+                        <option value="">Select Warehouse</option>
+                        {warehouses?.map(w => (
+                           <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                      </Field>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Place of Supply
+                      </label>
+                      <Field
+                        name="place_of_supply"
+                        as="select"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      >
+                        <option value="">Select State</option>
+                        {INDIAN_STATES.map(s => (
+                          <option key={s.code} value={s.code}>{s.name}</option>
+                        ))}
+                      </Field>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Due Date
+                      </label>
+                      <Field
+                        name="due_date"
+                        type="date"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Customer Address
-                    </label>
-                    <Field
-                      name="customer_address"
-                      as="textarea"
-                      rows="2"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="Customer's address"
-                    />
-                  </div>
-                </div>
 
-                {/* Address & Additional Fields */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Delivery Address
-                    </label>
-                    <Field
-                      name="delivery_address"
-                      as="textarea"
-                      rows="3"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="123 Delivery Address, City, State"
-                    />
-                  </div>
-                </div>
+                  {/* Customer Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Name *
+                      </label>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      GST Treatment
-                    </label>
-                    <Field
-                      name="gst_treatment"
-                      as="select"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    >
-                      <option value="registered">Registered</option>
-                      <option value="unregistered">Unregistered</option>
-                      <option value="export">Export</option>
-                    </Field>
+                      <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-sm mt-1" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Email <span className="text-gray-600">(creates customer record)</span>
+                      </label>
+                      <Field
+                        name="customer_email"
+                        type="email"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="customer@example.com"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Journal
-                    </label>
-                    <Field
-                      name="journal"
-                      type="text"
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
+
+                  {/* Additional Customer Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Phone
+                      </label>
+                      <Field
+                        name="customer_phone"
+                        type="tel"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="+91 9876543210"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Customer Address
+                      </label>
+                      <Field
+                        name="customer_address"
+                        as="textarea"
+                        rows="2"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="Customer's address"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address & Additional Fields */}
+                  <div className="grid grid-cols-1 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Delivery Address
+                      </label>
+                      <div className="mb-2">
+                        <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFieldValue('delivery_address', values.customer_address);
+                              }
+                            }}
+                            className="rounded border-white/10 bg-[#111] text-cyan-500 focus:ring-cyan-500"
+                          />
+                          Same as customer address
+                        </label>
+                      </div>
+                      <Field
+                        name="delivery_address"
+                        as="textarea"
+                        rows="3"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="123 Delivery Address, City, State"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        GST Treatment
+                      </label>
+                      <Field
+                        name="gst_treatment"
+                        as="select"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      >
+                        <option value="registered">Registered</option>
+                        <option value="unregistered">Unregistered</option>
+                        <option value="export">Export</option>
+                      </Field>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        Journal
+                      </label>
+                      <Field
+                        name="journal"
+                        type="text"
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Items */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Items</h3>
+                <div className="p-8 bg-[#151515] border-t border-b border-white/5">
+                  <h3 className="text-lg font-bold text-white mb-4">Items</h3>
                   <FieldArray name="items">
-                    {({ push, remove }) => (
-                      <div>
-                        {values.items.map((item, index) => (
-                          <div key={index} className="grid grid-cols-12 gap-2 items-start mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                            {/* Product Name */}
-                            <div className="col-span-3">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Product *</label>
-                              <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} />
-                            </div>
+                    {({ push, remove }) => {
+                      // Function to auto-add new row when user starts typing in the last row
+                      const handleAutoAddRow = (currentIndex) => {
+                        const isLastRow = currentIndex === values.items.length - 1;
+                        const currentItem = values.items[currentIndex];
+                        
+                        // Check if current row has meaningful data (product name or any other field)
+                        const hasData = currentItem?.product?.trim() || 
+                                       (currentItem?.quantity && currentItem.quantity > 1) || 
+                                       (currentItem?.price && currentItem.price > 0) || 
+                                       currentItem?.hsn_sac_code?.trim();
+                        
+                        if (isLastRow && hasData) {
+                          // Only add if there isn't already an empty row at the end
+                          const nextRowExists = values.items[currentIndex + 1];
+                          if (!nextRowExists) {
+                            // Add new empty row
+                            push({
+                              product_name: "",
+                              product_id: null,
+                              quantity: 1,
+                              free_quantity: 0,
+                              unit: "pcs", 
+                              price: 0,
+                              discount: 0,
+                              tax: 0,
+                              hsn_code: "",
+                              tax_rate: 0,
+                              amount: 0,
+                              isExistingProduct: false,
+                            });
+                          }
+                        }
+                      };
+
+                      return (
+                        <div className="space-y-4">
+                          {/* Desktop Header Row */}
+                          <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
+                             <div className="col-span-3">Product</div>
+                             <div className="col-span-2">Batch</div>
+                             <div className="col-span-1 text-center">Qty</div>
+                             <div className="col-span-1 text-center text-green-400">Free</div>
+                             <div className="col-span-1">Unit</div>
+                             <div className="col-span-1 text-right">Price</div>
+                             <div className="col-span-1 text-center">Disc/Tax%</div>
+                             <div className="col-span-1 text-right">Amount</div>
+                             <div className="col-span-1 text-center"></div>
+                          </div>
+
+                          {values.items.map((item, index) => {
+                             // Batches filtering logic
+                             const productBatches = stockPoints
+                               ?.filter(sp => sp.batch.product === item.product_id && sp.quantity > 0)
+                               ?.map(sp => ({
+                                 id: sp.batch.id, 
+                                 name: sp.batch.batch_number, 
+                                 expiry: sp.batch.expiry_date,
+                                 qty: sp.quantity
+                               })) || [];
+
+                             return (
+
+                          <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-[#111] border border-white/5 rounded-xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
                             
-                            {/* Quantity */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Qty *</label>
-                              <Field name={`items.${index}.quantity`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
+                            {/* Product (3 cols) */}
+                            <div className="md:col-span-3">
+                              <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Product</label>
+                              <div className="relative">
+                                  <ProductAutocomplete 
+                                      idx={index}
+                                      values={values}
+                                      setFieldValue={setFieldValue}
+                                      products={products}
+                                      onInputChange={() => handleAutoAddRow(index)}
+                                      onProductSearchChange={setProductSearch}
+                                  />
+                              </div>
+                            </div>
+
+                            {/* Batch (2 cols) */}
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Batch</label>
+                                <Field name={`items.${index}.batch`}>
+                                    {({ field }) => (
+                                    <select
+                                        {...field}
+                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 outline-none text-xs"
+                                        disabled={!item.product_id}
+                                    >
+                                        <option value="">Auto (FEFO)</option>
+                                        {productBatches.map(b => (
+                                        <option key={b.id} value={b.id}>
+                                            {b.name} ({b.qty})
+                                        </option>
+                                        ))}
+                                    </select>
+                                    )}
+                                </Field>
+                            </div>
+
+                            {/* Qty (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Qty</label>
+                                <Field
+                                    name={`items.${index}.quantity`}
                                     type="number"
-                                    min="0.01"
-                                    step="0.01"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    min="1"
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-center text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
                                     onChange={(e) => {
-                                      const quantity = e.target.value;
-                                      setFieldValue(`items.${index}.quantity`, quantity);
-                                      
-                                      // Calculate amount when both quantity and price exist
-                                      if (quantity && values.items[index]?.price) {
-                                        const price = parseFloat(values.items[index].price) || 0;
-                                        const amount = parseFloat(quantity) * price;
-                                        setFieldValue(`items.${index}.amount`, amount);
+                                      const qty = e.target.value;
+                                      setFieldValue(`items.${index}.quantity`, qty);
+                                      if (values.items[index]?.price) {
+                                         const price = parseFloat(values.items[index].price) || 0;
+                                         const amount = price * (parseFloat(qty) || 0);
+                                         setFieldValue(`items.${index}.amount`, amount);
                                       }
                                     }}
-                                  />
-                                )}
-                              </Field>
+                                />
                             </div>
-                            
-                            {/* Unit */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Unit</label>
-                              <Field
-                                name={`items.${index}.unit`}
-                                as="select"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              >
-                                {units.map(unit => (
-                                  <option key={unit} value={unit}>{unit}</option>
-                                ))}
-                              </Field>
-                            </div>
-                            
-                            {/* Price */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Price</label>
-                              <Field name={`items.${index}.price`}>
-                                {({ field }) => (
-                                  <input
-                                    {...field}
+
+                            {/* Free Qty (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-green-400">Free</label>
+                                <Field
+                                    name={`items.${index}.free_quantity`}
                                     type="number"
                                     min="0"
-                                    step="0.01"
-                                    className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                                    placeholder="0"
+                                    className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
+                                />
+                            </div>
+
+                            {/* Unit (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Unit</label>
+                                <Field name={`items.${index}.unit`}>
+                                    {({ field }) => (
+                                    <select {...field} className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs">
+                                        {units.map(u => <option key={u} value={u}>{u}</option>)}
+                                    </select>
+                                    )}
+                                </Field>
+                            </div>
+
+                            {/* Price (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Price</label>
+                                <Field
+                                    name={`items.${index}.price`}
+                                    type="number"
+                                    min="0"
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
                                     onChange={(e) => {
                                       const price = e.target.value;
                                       setFieldValue(`items.${index}.price`, price);
                                       
-                                      // Calculate amount when both price and quantity exist
                                       if (price && values.items[index]?.quantity) {
                                         const quantity = parseFloat(values.items[index].quantity) || 0;
                                         const amount = parseFloat(price) * quantity;
                                         setFieldValue(`items.${index}.amount`, amount);
                                       }
+                                      if (price && parseFloat(price) > 0) {
+                                        handleAutoAddRow(index);
+                                      }
                                     }}
-                                  />
-                                )}
-                              </Field>
+                                />
                             </div>
 
-                            {/* Amount */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Amount *</label>
-                              <Field
-                                name={`items.${index}.amount`}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm bg-gray-100 dark:bg-gray-500 dark:border-gray-400 dark:text-white"
-                                readOnly
-                              />
+                            {/* Disc/Tax (1 col) */}
+                            <div className="md:col-span-1 flex flex-col gap-2">
+                                <div className="flex items-center gap-1">
+                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
+                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Tax</label>
+                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
+                                </div>
                             </div>
-                            
-                            {/* Discount */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Disc %</label>
-                              <Field
-                                name={`items.${index}.discount`}
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
+
+                            {/* Amount (1 col) */}
+                            <div className="md:col-span-1">
+                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Amount</label>
+                                <div className="w-full px-2 py-3 text-right font-bold text-cyan-400 text-xs">
+                                    {item.amount?.toFixed(2) || "0.00"}
+                                </div>
                             </div>
-                            
-                            {/* Tax */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Tax %</label>
-                              <Field
-                                name={`items.${index}.tax`}
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
+
+                            {/* Remove (1 col) */}
+                            <div className="md:col-span-1 flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() => remove(index)}
+                                    disabled={values.items.length === 1}
+                                    className="text-gray-500 hover:text-red-400 transition-colors p-2 disabled:opacity-30 hover:bg-white/5 rounded-lg"
+                                    title="Remove Item"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
                             </div>
-                            
-                            {/* HSN/SAC */}
-                            <div className="col-span-1">
-                              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">HSN/SAC</label>
-                              <Field
-                                name={`items.${index}.hsn_sac_code`}
-                                type="text"
-                                className="w-full p-2 border rounded text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                              />
-                            </div>
-                            
-                            {/* Remove Button */}
-                            <div className="col-span-1 flex items-end">
-                              <button
-                                type="button"
-                                onClick={() => remove(index)}
-                                disabled={values.items.length === 1}
-                                className="w-full p-2 bg-red-500 text-white rounded text-sm hover:bg-red-600 disabled:opacity-50"
-                              >
-                                ✕
-                              </button>
-                            </div>
+
                           </div>
-                        ))}
+                          );
+                        })}
                         
-                        <button
-                          type="button"
-                          onClick={() => push({
-                            product_name: "",
-                            product_id: null,
-                            quantity: 1,
-                            unit: "pcs",
-                            price: 0,
-                            discount: 0,
-                            tax: 0,
-                            hsn_code: "",
-                            tax_rate: 0,
-                            amount: 0,
-                            isExistingProduct: false,
-                          })}
-                          className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                        >
-                          + Add Item
-                        </button>
-                      </div>
-                    )}
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => push({
+                              product_name: "",
+                              product_id: null,
+                              quantity: 1,
+                              unit: "pcs",
+                              price: 0,
+                              discount: 0,
+                              tax: 0,
+                              hsn_code: "",
+                              tax_rate: 0,
+                              amount: 0,
+                              isExistingProduct: false,
+                            })}
+                            className="btn-secondary text-sm flex items-center gap-2"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Item
+                          </button>
+                          <p className="text-xs text-gray-500">
+                            Pro Tip: Items are auto-added as you type.
+                          </p>
+                        </div>
+                        </div>
+                      );
+                    }}
                   </FieldArray>
                 </div>
 
                 {/* Totals */}
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>₹{subtotal.toFixed(2)}</span>
+                <div className="bg-[#111] border border-white/10 p-8 rounded-xl shadow-inner">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between text-gray-400">
+                      <span>Subtotal</span>
+                      <span className="text-white font-medium">₹{subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>Total Discount:</span>
+                    <div className="flex justify-between text-green-400">
+                      <span>Total Discount</span>
                       <span>-₹{totalDiscount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-red-600">
-                      <span>Total Tax:</span>
+                    <div className="flex justify-between text-red-400">
+                      <span>Total Tax</span>
                       <span>₹{totalTax.toFixed(2)}</span>
                     </div>
-                    <hr className="border-gray-300 dark:border-gray-600" />
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Grand Total:</span>
-                      <span>₹{grandTotal.toFixed(2)}</span>
+                    <div className="h-px bg-white/10 my-3"></div>
+                    <div className="flex justify-between font-bold text-xl">
+                      <span className="text-white">Grand Total</span>
+                      <span className="text-cyan-400">₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="text-right text-xs text-gray-500 mt-1 uppercase tracking-wide">
+                      {grandTotal > 0 ? "Amount Payble" : ""}
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-600">
+                <div className="p-8 bg-black/20 flex justify-end space-x-3 rounded-b-2xl items-center">
+                  <div className="text-gray-500 text-xs flex-1 mr-4">
+                    Closing modal automatically saves as draft. Or use Save Draft.
+                  </div>
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                    onClick={() => {
+                        submitActionRef.current = 'draft';
+                        handleSubmit();
+                    }}
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium border-dashed text-sm"
+                  >
+                    Save Draft
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                        handleBeforeClose();
+                    }}
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-xl transition-colors font-medium text-sm"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    onClick={() => { submitActionRef.current = 'final'; }}
+                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px]"
                   >
-                    {isSubmitting ? "Saving..." : isEdit ? "Update Bill" : "Create Bill"}
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                         Saving...
+                      </span>
+                    ) : (isEdit ? "Update Invoice" : "Create Invoice")}
                   </button>
                 </div>
               </Form>
@@ -784,6 +1317,7 @@ export default function SalesForm({ isOpen, onClose, editData }) {
           }}
         </Formik>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

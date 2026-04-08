@@ -1,12 +1,41 @@
-import React, { useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoice } from "../../api/sales";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { 
+  XMarkIcon, 
+  PrinterIcon, 
+  ArrowDownTrayIcon, 
+  PaintBrushIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import { toast } from 'react-toastify';
+import { sendCustomEmail } from '../../api/integrations';
+import InvoicePreview from "../invoice/InvoicePreview";
+import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
+import { getActiveTemplate, amountInWords } from "../../utils/invoiceSettings";
 
-export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
+export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {} }) {
+  const queryClient = useQueryClient();
   const printRef = useRef();
+  const [template, setTemplate] = useState(null);
+  const [showDesigner, setShowDesigner] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailPromptOpen, setEmailPromptOpen] = useState(false);
+  const [manualEmail, setManualEmail] = useState('');
+
+  // Load active template
+  useEffect(() => {
+    if (isOpen) {
+      const activeTemplate = getActiveTemplate();
+      setTemplate(activeTemplate);
+    }
+  }, [isOpen, showDesigner]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["sales-invoice", invoice?.id],
@@ -19,11 +48,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
   // Print functionality
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-    documentTitle: `Sales Invoice - ${invoiceDetails?.invoice_number || invoice?.id}`,
+    documentTitle: `Tax Invoice - ${invoiceDetails?.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
         size: A4;
-        margin: 20mm;
+        margin: 10mm;
       }
       @media print {
         body {
@@ -53,11 +82,10 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
+      const imgWidth = 210;
+      const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-
       let position = 0;
 
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
@@ -70,260 +98,238 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice }) {
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`sales-invoice-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
+      pdf.save(`invoice-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
     }
   };
 
+  // Send invoice email helper
+  const sendInvoiceEmail = async (email) => {
+    setSendingEmail(true);
+    try {
+      const businessName = businessInfo.business_name || 'Cenvora';
+      const subject = `Invoice ${invoiceDetails.invoice_number} from ${businessName}`;
+
+      // Build HTML-formatted invoice for email
+      const items = invoiceDetails.items || [];
+      let itemRows = items.map(item =>
+        `<tr>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${item.product_name || item.product?.name || '—'}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.price || 0).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.amount || 0).toFixed(2)}</td>
+        </tr>`
+      ).join('');
+
+      const body =
+        `<div style="font-family:Arial,sans-serif;max-width:600px;">` +
+        `<h2 style="color:#333;">Invoice from ${businessName}</h2>` +
+        `<table style="width:100%;margin:16px 0;">` +
+        `<tr><td style="color:#666;">Invoice No:</td><td><strong>${invoiceDetails.invoice_number}</strong></td></tr>` +
+        `<tr><td style="color:#666;">Date:</td><td>${invoiceDetails.invoice_date}</td></tr>` +
+        `<tr><td style="color:#666;">Customer:</td><td>${invoiceDetails.customer_name || 'N/A'}</td></tr>` +
+        `</table>` +
+        `<table style="width:100%;border-collapse:collapse;margin:16px 0;">` +
+        `<thead><tr style="background:#f5f5f5;">` +
+        `<th style="padding:8px;text-align:left;">Item</th>` +
+        `<th style="padding:8px;text-align:center;">Qty</th>` +
+        `<th style="padding:8px;text-align:right;">Price</th>` +
+        `<th style="padding:8px;text-align:right;">Amount</th>` +
+        `</tr></thead>` +
+        `<tbody>${itemRows}</tbody>` +
+        `<tfoot><tr style="background:#f5f5f5;font-weight:bold;">` +
+        `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
+        `<td style="padding:8px;text-align:right;">₹${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
+        `</tr></tfoot>` +
+        `</table>` +
+        `<p style="color:#666;">Thank you for your business!<br>— ${businessName}</p>` +
+        `</div>`;
+
+      await sendCustomEmail({ recipient: email, subject, body });
+      toast.success(`Invoice emailed to ${email}`);
+      queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
+      setEmailPromptOpen(false);
+      setManualEmail('');
+    } catch {
+      toast.error('Failed to send email. Check your email configuration in Business Tools.');
+    }
+    setSendingEmail(false);
+  };
+
+  // Handle email button click
+  const handleEmailClick = () => {
+    const email =
+      invoiceDetails?.customer_email ||
+      invoiceDetails?.customer_details?.email ||
+      invoiceDetails?.customer?.email;
+    if (!email) {
+      setEmailPromptOpen(true);
+      return;
+    }
+    sendInvoiceEmail(email);
+  };
+
   if (!isOpen) return null;
 
-  // Check if any items have HSN codes to conditionally show HSN column
-  const hasHsnCodes = invoiceDetails?.items?.some(item => 
-    item.hsn_sac_code || item.hsn_code
-  ) || false;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-4xl font-sans max-h-[90vh] overflow-y-auto">
-        {/* Action Buttons - Hidden during print */}
-        <div className="print-hidden flex justify-end gap-2 mb-4">
-          <button
-            onClick={handlePrint}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-            Print
-          </button>
-          <button
-            onClick={handleDownloadPDF}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Download PDF
-          </button>
-          <button
-            onClick={onClose}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Close
-          </button>
+  return createPortal(
+    <>
+      {/* Email Prompt Modal */}
+      {emailPromptOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEmailPromptOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl p-6 animate-fade-up">
+            <h3 className="text-lg font-bold text-white mb-2">Enter Customer Email</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              No email is on file for this customer. Enter an email to send this invoice.
+            </p>
+            <input
+              type="email"
+              value={manualEmail}
+              onChange={(e) => setManualEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && manualEmail.includes('@') && sendInvoiceEmail(manualEmail)}
+              placeholder="customer@example.com"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-cyan-500/50 mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setEmailPromptOpen(false); setManualEmail(''); }}
+                className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => sendInvoiceEmail(manualEmail)}
+                disabled={!manualEmail.includes('@') || sendingEmail}
+                className="px-5 py-2 bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-lg text-sm font-semibold hover:bg-cyan-500/30 transition-colors disabled:opacity-40 flex items-center gap-2"
+              >
+                {sendingEmail ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</> : <><EnvelopeIcon className="w-4 h-4" /> Send Invoice</>}
+              </button>
+            </div>
+          </div>
         </div>
+      )}
 
-        {/* Invoice Content - Will be printed */}
-        <div ref={printRef} className="bg-white p-8">
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading bill details...</p>
-            </div>
-          ) : (
+      {/* Main Modal */}
+      <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+          onClick={onClose}
+        />
+        
+        {/* Modal Content */}
+        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/50">
             <div>
-              {/* Header */}
-              <div className="text-center mb-8 border-b-2 border-blue-600 pb-6">
-                <h1 className="text-3xl font-bold text-blue-800 mb-2">SALES INVOICE</h1>
-                <p className="text-gray-600">Your Company Name</p>
-                <p className="text-sm text-gray-500">Your Company Address</p>
-              </div>
-
-              {/* Bill Info & Customer Info */}
-              <div className="grid grid-cols-2 gap-8 mb-8">
-                {/* Invoice Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
-                    Invoice Information
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Invoice Number:</span>
-                      <span className="font-bold">{invoiceDetails.invoice_number}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Invoice Date:</span>
-                      <span>{new Date(invoiceDetails.invoice_date).toLocaleDateString()}</span>
-                    </div>
-                    {invoiceDetails.due_date && (
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-600">Due Date:</span>
-                        <span>{new Date(invoiceDetails.due_date).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    {invoiceDetails.payment_terms && (
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-600">Payment Terms:</span>
-                        <span>{invoiceDetails.payment_terms}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Customer Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
-                    Bill To
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-bold text-gray-800">{invoiceDetails.customer_name}</span>
-                    </div>
-                    {invoiceDetails.customer_email && (
-                      <div className="text-gray-600">
-                        Email: {invoiceDetails.customer_email}
-                      </div>
-                    )}
-                    {invoiceDetails.customer_phone && (
-                      <div className="text-gray-600">
-                        Phone: {invoiceDetails.customer_phone}
-                      </div>
-                    )}
-                    {invoiceDetails.customer_address && (
-                      <div className="text-gray-600 whitespace-pre-line">
-                        {invoiceDetails.customer_address}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Delivery Information */}
-              {invoiceDetails.delivery_address && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-2">
-                    Delivery Information
-                  </h3>
-                  <div className="text-sm text-gray-600 whitespace-pre-line">
-                    {invoiceDetails.delivery_address}
-                  </div>
-                </div>
-              )}
-
-              {/* Items Table */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Items</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold">Product</th>
-                        {hasHsnCodes && (
-                          <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">HSN/SAC</th>
-                        )}
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Qty</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Unit</th>
-                        <th className="border border-gray-300 px-4 py-2 text-right text-sm font-semibold">Rate</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Disc %</th>
-                        <th className="border border-gray-300 px-4 py-2 text-center text-sm font-semibold">Tax %</th>
-                        <th className="border border-gray-300 px-4 py-2 text-right text-sm font-semibold">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoiceDetails.items?.map((item, index) => {
-                        const quantity = parseFloat(item.quantity || 0);
-                        const price = parseFloat(item.price || 0);
-                        const discount = parseFloat(item.discount || 0);
-                        const tax = parseFloat(item.tax || 0);
-                        const subtotal = quantity * price;
-                        const discountAmount = (subtotal * discount) / 100;
-                        const taxableAmount = subtotal - discountAmount;
-                        const taxAmount = (taxableAmount * tax) / 100;
-                        const totalAmount = taxableAmount + taxAmount;
-
-                        return (
-                          <tr key={index}>
-                            <td className="border border-gray-300 px-4 py-2 text-sm">
-                              {item.product_detail?.name || item.product_name || item.product}
-                            </td>
-                            {hasHsnCodes && (
-                              <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                                {item.hsn_sac_code || item.hsn_code || '-'}
-                              </td>
-                            )}
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {quantity}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {item.unit}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-right text-sm">
-                              ₹{price.toFixed(2)}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {discount}%
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-center text-sm">
-                              {tax}%
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2 text-right text-sm font-medium">
-                              ₹{totalAmount.toFixed(2)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Totals */}
-              <div className="grid grid-cols-2 gap-8">
-                <div></div> {/* Empty space */}
-                <div className="border-t border-gray-300 pt-4">
-                  <div className="space-y-2">
-                    {invoiceDetails.items && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span>Subtotal:</span>
-                          <span>₹{invoiceDetails.items.reduce((sum, item) => 
-                            sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0).toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm text-green-600">
-                          <span>Total Discount:</span>
-                          <span>-₹{invoiceDetails.items.reduce((sum, item) => {
-                            const subtotal = parseFloat(item.quantity || 0) * parseFloat(item.price || 0);
-                            const discount = parseFloat(item.discount || 0);
-                            return sum + ((subtotal * discount) / 100);
-                          }, 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-red-600">
-                          <span>Total Tax:</span>
-                          <span>₹{invoiceDetails.items.reduce((sum, item) => {
-                            const quantity = parseFloat(item.quantity || 0);
-                            const price = parseFloat(item.price || 0);
-                            const discount = parseFloat(item.discount || 0);
-                            const tax = parseFloat(item.tax || 0);
-                            const subtotal = quantity * price;
-                            const discountAmount = (subtotal * discount) / 100;
-                            const taxableAmount = subtotal - discountAmount;
-                            return sum + ((taxableAmount * tax) / 100);
-                          }, 0).toFixed(2)}</span>
-                        </div>
-                      </>
-                    )}
-                    <div className="border-t border-gray-400 pt-2">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Grand Total:</span>
-                        <span>₹{parseFloat(invoiceDetails.total_amount || 0).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-600">
-                <p>Thank you for your business!</p>
-                <p className="mt-2">This is a computer-generated invoice.</p>
-              </div>
+              <h2 className="text-lg font-bold text-white">Invoice Preview</h2>
+              <p className="text-xs text-gray-400">
+                {invoiceDetails.invoice_number || 'Loading...'}
+                {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
+              </p>
             </div>
-          )}
+            
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowDesigner(true)}
+                className="px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <PaintBrushIcon className="w-4 h-4" />
+                Customize
+              </button>
+              
+              <button
+                onClick={handlePrint}
+                className="px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <PrinterIcon className="w-4 h-4" />
+                Print
+              </button>
+              
+              <button
+                onClick={handleDownloadPDF}
+                className="px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <ArrowDownTrayIcon className="w-4 h-4" />
+                PDF
+              </button>
+
+              <button
+                disabled={sendingEmail}
+                onClick={handleEmailClick}
+                className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {sendingEmail
+                  ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
+                  : <><EnvelopeIcon className="w-4 h-4" /> Email</>}
+              </button>
+
+              <button
+                onClick={(e) => { e.preventDefault(); toast.info('WhatsApp integration is coming soon!'); }}
+                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
+                <span className="opacity-90">WhatsApp</span>
+                
+                {/* Coming Soon Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[10px] uppercase tracking-wider text-green-400/90 rounded-lg border border-green-500/30">
+                  Coming Soon
+                </div>
+              </button>
+              
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Invoice Content */}
+          <div className="flex-1 overflow-auto p-6 bg-gray-900/50 flex justify-center">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
+                <p className="text-gray-400">Loading invoice...</p>
+              </div>
+            ) : template ? (
+              <div className="shadow-2xl">
+                <InvoicePreview
+                  ref={printRef}
+                  invoice={invoiceDetails}
+                  template={template}
+                  businessInfo={businessInfo}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <p>No template loaded</p>
+                <button
+                  onClick={() => setShowDesigner(true)}
+                  className="mt-4 text-cyan-400 hover:text-cyan-300"
+                >
+                  Create a template
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Template Designer Modal */}
+      <InvoiceTemplateDesigner
+        isOpen={showDesigner}
+        onClose={() => setShowDesigner(false)}
+        businessInfo={businessInfo}
+      />
+    </>,
+    document.body
   );
 }

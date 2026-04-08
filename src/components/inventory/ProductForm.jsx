@@ -1,22 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createProduct, updateProduct } from "../../api/inventory";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { XMarkIcon } from '@heroicons/react/24/outline';
+
+const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
 
 const productSchema = Yup.object().shape({
   name: Yup.string()
     .required("Product name is required")
     .max(255, "Name must be 255 characters or less"),
+  description: Yup.string().nullable(),
+  tax: Yup.number()
+    .min(0, "Tax cannot be negative")
+    .max(100, "Tax cannot exceed 100%")
+    .nullable(),
   hsn_sac_code: Yup.string()
     .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
     .required("Unit is required")
-    .max(20, "Unit must be 20 characters or less"),
-  price: Yup.string()
-    .required("Price is required")
-    .matches(/^\d+(\.\d{1,2})?$/, "Price must be a valid decimal number"),
+    .oneOf(UNIT_OPTIONS, "Please select a valid unit"),
+  secondary_unit: Yup.string()
+    .max(20, "Secondary unit must be 20 characters or less")
+    .nullable(),
+  conversion_factor: Yup.number()
+    .integer("Conversion factor must be a whole number")
+    .min(1, "Conversion factor must be at least 1")
+    .nullable(),
+  cost_price: Yup.string()
+    .required("Cost price is required")
+    .matches(/^\d+(\.\d{1,2})?$/, "Cost price must be a valid decimal number"),
+  sale_price: Yup.string()
+    .nullable()
+    .test("is-decimal-or-empty", "Sale price must be a valid decimal number", (value) => {
+      if (value === null || value === undefined || value === "") return true;
+      return /^\d+(\.\d{1,2})?$/.test(value);
+    }),
   stock: Yup.number()
     .required("Stock is required")
     .integer("Stock must be a whole number")
@@ -24,13 +45,22 @@ const productSchema = Yup.object().shape({
   low_stock_alert: Yup.number()
     .integer("Low stock alert must be a whole number")
     .min(0, "Low stock alert must be positive"),
+  warranty_months: Yup.number()
+    .integer("Warranty must be a whole number")
+    .min(0, "Warranty must be positive"),
+  meta: Yup.object().shape({
+    expiry_date: Yup.date().nullable().typeError("Invalid date"),
+    secondary_stock: Yup.number().nullable(),
+    mandi_tax: Yup.number().nullable(),
+    is_h1: Yup.boolean(),
+    is_narcotic: Yup.boolean(),
+    is_new_launch: Yup.boolean(),
+  }),
 });
 
 export default function ProductForm({ product, onClose }) {
   const queryClient = useQueryClient();
   const isEdit = !!product;
-
-
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -60,21 +90,58 @@ export default function ProductForm({ product, onClose }) {
 
   const initialValues = {
     name: product?.name || "",
+    description: product?.description || "",
+    tax: product?.tax || "",
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
-    unit: product?.unit || "",
-    price: product?.price || product?.purchase_price || product?.unit_price || "",
+    unit: product?.unit || "pcs",
+    secondary_unit: product?.secondary_unit || "",
+    conversion_factor: product?.conversion_factor || 1,
+    cost_price: product?.cost_price || product?.price || product?.purchase_price || product?.unit_price || "",
+    sale_price: product?.sale_price ?? "",
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
+    warranty_months: product?.warranty_months || 0,
+    meta: {
+      barcode: product?.barcode || product?.meta?.barcode || "",
+      expiry_date: product?.meta?.expiry_date || "",
+      secondary_stock: product?.meta?.secondary_stock || "",
+      mandi_tax: product?.meta?.mandi_tax || "",
+      is_h1: product?.meta?.is_h1 || false,
+      is_narcotic: product?.meta?.is_narcotic || false,
+      is_new_launch: product?.meta?.is_new_launch || false,
+    },
   };
 
   const handleSubmit = (values, { setSubmitting }) => {
+    const metaData = {
+      is_h1: values.meta.is_h1,
+      is_narcotic: values.meta.is_narcotic,
+      is_new_launch: values.meta.is_new_launch,
+    };
+
+    if (values.meta.barcode?.trim()) metaData.barcode = values.meta.barcode;
+    if (values.meta.expiry_date) metaData.expiry_date = values.meta.expiry_date;
+    if (values.meta.secondary_stock !== "" && values.meta.secondary_stock !== null) {
+      metaData.secondary_stock = parseFloat(values.meta.secondary_stock);
+    }
+    if (values.meta.mandi_tax !== "" && values.meta.mandi_tax !== null) {
+      metaData.mandi_tax = parseFloat(values.meta.mandi_tax);
+    }
+
     const productData = {
       name: values.name,
+      description: values.description || null,
+      tax: values.tax ? parseFloat(values.tax) : 0,
       hsn_sac_code: values.hsn_sac_code || null,
       unit: values.unit,
-      price: values.price,
+      secondary_unit: values.secondary_unit || null,
+      conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
+      cost_price: values.cost_price,
+      sale_price: values.sale_price,
       stock: parseInt(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
+      warranty_months: parseInt(values.warranty_months) || 0,
+      meta: metaData,
     };
 
     if (isEdit) {
@@ -85,20 +152,30 @@ export default function ProductForm({ product, onClose }) {
     setSubmitting(false);
   };
 
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all";
+  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {isEdit ? "Edit Product" : "Add New Product"}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal Content */}
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+          <h2 className="text-xl font-bold text-white">
+            {isEdit ? "Edit Product" : "New Product"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -108,127 +185,242 @@ export default function ProductForm({ product, onClose }) {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting, values, setFieldValue }) => (
-            <Form className="space-y-6">
-              {/* Basic Information */}
+          {({ isSubmitting, values }) => (
+            <Form className="p-6 md:p-8 space-y-8">
+              {/* Section 1: Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Product Name *
-                  </label>
+                  <label className={labelClass}>Product Name *</label>
                   <Field
                     name="name"
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter product name"
+                    className={inputClass}
+                    placeholder="e.g. Wireless Headphones"
                   />
-                  <ErrorMessage name="name" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    HSN/SAC Code
-                  </label>
+                  <label className={labelClass}>HSN/SAC Code</label>
                   <Field
                     name="hsn_sac_code"
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter HSN or SAC code"
+                    className={inputClass}
+                    placeholder="e.g. 8518"
                   />
-                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
               </div>
 
-              {/* Unit */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Unit *
-                </label>
-                <Field
-                  name="unit"
-                  type="text"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., pcs, kg, liters, meters"
-                />
-                <ErrorMessage name="unit" component="div" className="text-red-500 text-xs mt-1" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClass}>Description / Notes</label>
+                  <Field
+                    as="textarea"
+                    name="description"
+                    className={`${inputClass} resize-none h-[52px]`}
+                    placeholder="Optional description"
+                  />
+                  <ErrorMessage name="description" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>GST Tax Rate (%)</label>
+                  <Field
+                    name="tax"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    className={inputClass}
+                    placeholder="e.g. 18.00"
+                  />
+                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
               </div>
 
-              {/* Pricing and Stock */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClass}>Expiry Date (Optional)</label>
+                  <Field
+                    name="meta.expiry_date"
+                    type="date"
+                    className={inputClass}
+                  />
+                  <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+              </div>
+
+              {/* Section 2: Units */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Price *
-                  </label>
-                  <Field
-                    name="price"
-                    type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="0.00"
-                  />
-                  <ErrorMessage name="price" component="div" className="text-red-500 text-xs mt-1" />
+                  <label className={labelClass}>Primary Unit *</label>
+                  <Field as="select" name="unit" className={inputClass}>
+                    {UNIT_OPTIONS.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Stock *
-                  </label>
+                  <label className={labelClass}>Secondary Unit</label>
+                  <Field
+                    name="secondary_unit"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. Box"
+                  />
+                  <ErrorMessage name="secondary_unit" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Conversion Factor</label>
+                  <Field
+                    name="conversion_factor"
+                    type="number"
+                    min="1"
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 3: Pricing & Stock */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className={labelClass}>Cost Price (₹) *</label>
+                  <Field
+                    name="cost_price"
+                    type="text"
+                    className={inputClass}
+                    placeholder="0.00"
+                  />
+                  <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Sale Price (₹)</label>
+                  <Field
+                    name="sale_price"
+                    type="text"
+                    className={inputClass}
+                    placeholder="Optional"
+                  />
+                  <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Opening Stock *</label>
                   <Field
                     name="stock"
                     type="number"
                     min="0"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={inputClass}
                     placeholder="0"
                   />
-                  <ErrorMessage name="stock" component="div" className="text-red-500 text-xs mt-1" />
+                  <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Stock Value
-                  </label>
-                  <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
-                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.price || 0)).toFixed(2)}
+                  <label className={labelClass}>Stock Value</label>
+                  <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
+                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
                   </div>
                 </div>
               </div>
 
-              {/* Low Stock Alert */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Low Stock Alert Level
-                </label>
-                <Field
-                  name="low_stock_alert"
-                  type="number"
-                  min="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter low stock alert threshold (0 to disable)"
-                />
-                <ErrorMessage name="low_stock_alert" component="div" className="text-red-500 text-xs mt-1" />
-                <p className="text-xs text-gray-500 mt-1">
-                  You'll receive alerts when stock falls below this level
-                </p>
-              </div>
+               {/* Section 4: Alerts & Warranty */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClass}>Low Stock Alert</label>
+                  <Field
+                    name="low_stock_alert"
+                    type="number"
+                    min="0"
+                    className={inputClass}
+                    placeholder="e.g. 10"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Get notified when stock falls below this level.
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass}>Warranty (Months)</label>
+                  <Field
+                    name="warranty_months"
+                    type="number"
+                    min="0"
+                    className={inputClass}
+                    placeholder="e.g. 12"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Warranty duration from sale date. 0 = no warranty.
+                  </p>
+                </div>
+               </div>
 
-              {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+               {/* Section 5: Advanced Details (Sidecar) */}
+               <div className="pt-6 border-t border-white/10">
+                 <h3 className="text-sm font-bold text-white mb-4">Advanced Details</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <label className={labelClass}>Secondary Stock</label>
+                      <Field
+                        name="meta.secondary_stock"
+                        type="number"
+                        className={inputClass}
+                        placeholder="e.g. 50"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Mandi Tax (₹)</label>
+                      <Field
+                        name="meta.mandi_tax"
+                        type="number"
+                        className={inputClass}
+                        placeholder="0.00"
+                      />
+                    </div>
+                 </div>
+
+                 <div className="flex flex-wrap gap-6">
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <Field type="checkbox" name="meta.is_h1" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
+                      <span className="text-gray-300 group-hover:text-white transition-colors">H1 Drug</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <Field type="checkbox" name="meta.is_narcotic" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
+                      <span className="text-gray-300 group-hover:text-white transition-colors">Narcotic</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <Field type="checkbox" name="meta.is_new_launch" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
+                      <span className="text-gray-300 group-hover:text-white transition-colors">New Launch</span>
+                    </label>
+                 </div>
+               </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2.5 text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="btn-primary shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting || createMutation.isLoading || updateMutation.isLoading
-                    ? "Saving..."
-                    : isEdit
-                    ? "Update Product"
-                    : "Create Product"}
+                  {isSubmitting ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
                 </button>
               </div>
             </Form>

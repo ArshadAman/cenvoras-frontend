@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import { getUserProfile } from '../api/users';
 import { 
   ChartBarIcon, 
   CurrencyRupeeIcon, 
@@ -7,212 +9,303 @@ import {
   CubeIcon, 
   UsersIcon, 
   BookOpenIcon,
+  UserIcon,
+  BanknotesIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  BeakerIcon,
+  ClipboardDocumentListIcon,
+  DocumentTextIcon,
+  Cog6ToothIcon,
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
+  ReceiptPercentIcon,
+  BuildingLibraryIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import { getUserRole } from "../utils/auth";
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Add theme CSS
-  useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      .glass-sidebar {
-        background: rgba(26, 35, 65, 0.95);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(127, 211, 247, 0.2);
-      }
-      
-      .glass-nav-item {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-      }
-      
-      .glass-nav-item:hover {
-        background: rgba(127, 211, 247, 0.1);
-        border-color: rgba(127, 211, 247, 0.3);
-        transform: translateX(5px);
-      }
-      
-      .glass-nav-item.active {
-        background: rgba(127, 211, 247, 0.2);
-        border-color: rgba(127, 211, 247, 0.4);
-        transform: translateX(8px);
-      }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        animation: gradient-shift 6s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      @keyframes gradient-shift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      if (document.head.contains(styleSheet)) {
-        document.head.removeChild(styleSheet);
-      }
-    };
-  }, []);
+  const role = getUserRole();
 
-  const navItems = [
-    { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon },
-    { path: "/sales", label: "Sales", icon: CurrencyRupeeIcon },
-    { path: "/purchase", label: "Purchases", icon: ShoppingBagIcon },
-    { path: "/inventory", label: "Inventory", icon: CubeIcon },
-    { path: "/customers", label: "Customers", icon: UsersIcon },
-    { path: "/ledger", label: "Ledger", icon: BookOpenIcon },
+  const navigationGroups = [
+    {
+      title: "Overview",
+      items: [
+        { path: "/dashboard", label: "Dashboard", icon: ChartBarIcon, roles: [] }
+      ]
+    },
+    {
+      title: "Sales & Trade",
+      items: [
+        { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
+        { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
+        { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
+        { path: "/warranty", label: "Warranty", icon: ShieldCheckIcon, roles: [] },
+        { path: "/customers", label: "Customers", icon: UsersIcon, roles: [] },
+        { path: "/vendors", label: "Vendors", icon: UsersIcon, roles: [] },
+      ]
+    },
+    {
+      title: "Purchasing",
+      items: [
+        { path: "/purchase", label: "Purchase Bills", icon: ShoppingBagIcon, roles: [] },
+        { path: "/debit-notes", label: "Debit Notes", icon: ArrowUturnRightIcon, roles: [] },
+      ]
+    },
+    {
+      title: "Inventory & Logistics",
+      items: [
+        { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
+        { path: "/batches", label: "Batches", icon: CubeIcon, roles: [] },
+        { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
+        { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [] },
+      ]
+    },
+    {
+      title: "Financials",
+      items: [
+        { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
+        { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
+        { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
+        { path: "/gst", label: "GST Compliance", icon: ReceiptPercentIcon, roles: [] },
+      ]
+    },
+    {
+      title: "System",
+      items: [
+        { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
+        { path: "/settings/team", label: "Team Settings", icon: UsersIcon, roles: ['admin'] },
+        { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [] },
+        { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
+      ]
+    }
   ];
 
+  const { data: profileData } = useQuery({
+    queryKey: ['profile'],
+    queryFn: getUserProfile,
+    enabled: !!role // Only fetch if authenticated
+  });
+  
+  const permissions = profileData?.profile?.permissions || {};
+
+  // Filter structural groups by roles AND granular permissions
+  const filteredGroups = navigationGroups.map(group => {
+    const validItems = group.items.filter(item => {
+      // 1. Role Check
+      if (item.roles && item.roles.length > 0 && !item.roles.includes(role)) {
+        return false;
+      }
+      
+      // 2. Granular Permission Check (if manager)
+      if (role === 'manager') {
+        if (group.title === "Sales & Trade" && permissions.sales === 'none') return false;
+        if (group.title === "Purchasing" && permissions.purchases === 'none') return false;
+        if (group.title === "Inventory & Logistics" && permissions.inventory === 'none') return false;
+        if (group.title === "Financials" && permissions.financials === 'none') return false;
+      }
+      
+      return true;
+    });
+    return { ...group, items: validItems };
+  }).filter(group => group.items.length > 0); // Hide empty groups
+  
+  if (!role) console.log("Layout: No role found (User might be guest or token invalid)");
+
+
   return (
-    <div className="flex min-h-screen" style={{background: 'linear-gradient(135deg, #1a2341 0%, #2d3561 50%, #1a2341 100%)'}}>
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
-          <div className="absolute bottom-20 right-10 w-16 h-16 bg-gradient-to-br from-[#b6e0f7]/15 to-[#eaf6fa]/15 rounded-full blur-lg"></div>
+    <div className="flex min-h-screen bg-black text-white font-sans selection:bg-purple-500/30">
+      {/* Background Texture Grid */}
+      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
+
+      {/* Sidebar - Desktop */}
+      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative z-50 h-screen sticky top-0">
+        
+        {/* Logo Area */}
+        <div className="h-24 flex items-center px-6 border-b border-white/5">
+          <Link to="/" className="flex items-center">
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
+          </Link>
         </div>
         
-        <div className="relative z-10 h-20 flex items-center justify-center border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">C</span>
+        {/* Navigation — scrollable middle section */}
+        <nav className="flex-1 min-h-0 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
+          {filteredGroups.map((group, groupIdx) => (
+            <div key={groupIdx} className="space-y-1">
+              {/* Category Header */}
+              <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-3">
+                {group.title}
+              </h3>
+              
+              {/* Category Items */}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
+                return (
+                  <Link 
+                    key={item.path}
+                    to={item.path} 
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10' 
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
-            <span className="gradient-text text-2xl font-extrabold tracking-tight">Cenvora</span>
-          </div>
-        </div>
-        
-        <nav className="flex-1 px-6 py-8 space-y-3 relative z-10">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <Link 
-                key={item.path}
-                to={item.path} 
-                className={`glass-nav-item flex items-center gap-4 px-4 py-3 rounded-2xl text-white font-medium ${
-                  isActive ? 'active' : ''
-                }`}
-              >
-                <Icon className="w-6 h-6 text-[#7fd3f7]" />
-                <span className={isActive ? 'text-[#7fd3f7]' : 'text-white'}>{item.label}</span>
-              </Link>
-            );
-          })}
+          ))}
         </nav>
         
-        {/* Logout button at bottom */}
-        <div className="px-6 pb-6 relative z-10">
+        {/* Bottom section — always visible, never scrolls away */}
+        <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/5 space-y-2">
+          {/* Coming Soon Button */}
+          <Link
+            to="/coming-soon"
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+              location.pathname === '/coming-soon'
+                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+            }`}
+          >
+            <BeakerIcon className={`w-5 h-5 transition-colors duration-200 ${
+              location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'
+            }`} />
+            <span className="text-sm flex-1">Coming Soon</span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
+          </Link>
+
+          {/* Sign Out */}
           {onLogout && (
             <button
               onClick={onLogout}
-              className="w-full px-4 py-3 bg-gradient-to-r from-[#ff6b6b] to-[#ffa8a8] text-white font-bold rounded-2xl hover:from-[#ff5252] hover:to-[#ff9999] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="w-full px-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2"
             >
-              Logout
+              Sign Out
             </button>
           )}
         </div>
       </aside>
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative">
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-20 bg-[#1a2341]/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6 h-16">
+        <header className="md:hidden sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 h-16">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors duration-300"
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             {isMobileMenuOpen ? (
-              <XMarkIcon className="w-6 h-6 text-[#7fd3f7]" />
+              <XMarkIcon className="w-6 h-6" />
             ) : (
-              <Bars3Icon className="w-6 h-6 text-[#7fd3f7]" />
+              <Bars3Icon className="w-6 h-6" />
             )}
           </button>
           
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
-            <span className="gradient-text text-xl font-bold">Cenvora</span>
-          </div>
+          <Link to="/" className="flex items-center">
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+          </Link>
           
-          <div className="w-10"> {/* Spacer for centering */}</div>
+          <div className="w-10"></div> {/* Spacer */}
         </header>
 
         {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm">
-            <div className="glass-sidebar w-72 h-full relative overflow-hidden">
-              {/* Background decoration */}
-              <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-[#7fd3f7]/10 to-[#b6e0f7]/10 rounded-full blur-xl"></div>
-                <div className="absolute bottom-20 right-10 w-16 h-16 bg-gradient-to-br from-[#b6e0f7]/15 to-[#eaf6fa]/15 rounded-full blur-lg"></div>
-              </div>
-              
-              <div className="relative z-10 h-20 flex items-center justify-center border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-lg">C</span>
-                  </div>
-                  <span className="gradient-text text-2xl font-extrabold tracking-tight">Cenvora</span>
+        <div 
+          className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
+            isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Mobile Sidebar */}
+          <div 
+            className={`absolute top-0 bottom-0 left-0 w-72 bg-[#111] border-r border-white/10 transform transition-transform duration-300 flex flex-col ${
+              isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
+              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 -mr-2 text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <nav className="flex-1 min-h-0 px-4 py-6 space-y-6 overflow-y-auto custom-scrollbar">
+              {filteredGroups.map((group, groupIdx) => (
+                <div key={groupIdx} className="space-y-1">
+                  <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-2">
+                    {group.title}
+                  </h3>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
+                    
+                    return (
+                      <Link 
+                        key={item.path}
+                        to={item.path} 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                           isActive 
+                             ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10' 
+                             : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                        <span className="text-sm">{item.label}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
-              </div>
-              
-              <nav className="flex-1 px-6 py-8 space-y-3 relative z-10">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  
-                  return (
-                    <Link 
-                      key={item.path}
-                      to={item.path} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`glass-nav-item flex items-center gap-4 px-4 py-3 rounded-2xl text-white font-medium ${
-                        isActive ? 'active' : ''
-                      }`}
-                    >
-                      <Icon className="w-6 h-6 text-[#7fd3f7]" />
-                      <span className={isActive ? 'text-[#7fd3f7]' : 'text-white'}>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-              
-              {/* Logout button at bottom */}
-              <div className="px-6 pb-6 relative z-10">
-                {onLogout && (
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-[#ff6b6b] to-[#ffa8a8] text-white font-bold rounded-2xl hover:from-[#ff5252] hover:to-[#ff9999] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                  >
-                    Logout
-                  </button>
-                )}
-              </div>
+              ))}
+            </nav>
+
+            {/* Bottom section — always pinned */}
+            <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
+              <Link
+                to="/coming-soon"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/coming-soon'
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                }`}
+              >
+                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <span className="text-sm flex-1">Coming Soon</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
+              </Link>
+              {onLogout && (
+                <button
+                  onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
+                  className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
+                >
+                  Sign Out
+                </button>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Page Content */}
-        {children}
+        <main className="flex-1 overflow-y-auto relative z-10">
+           {children}
+        </main>
       </div>
     </div>
   );

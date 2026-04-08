@@ -1,37 +1,58 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSalesInvoices } from "../../api/sales";
+import { getSalesAnalytics, getSalesInvoices } from "../../api/sales";
+import { 
+  CurrencyRupeeIcon, 
+  CalendarIcon, 
+  ChartBarIcon, 
+  ShoppingBagIcon,
+  ExclamationTriangleIcon 
+} from "@heroicons/react/24/outline";
 
 export default function SalesSummary() {
-  const { data, isLoading } = useQuery({
+  const [dateFilter, setDateFilter] = useState("today"); // "today", "month", "custom"
+  
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [customRange, setCustomRange] = useState({ start: todayStr, end: todayStr });
+
+  const getDates = () => {
+    if (dateFilter === "today") return { start_date: todayStr, end_date: todayStr };
+    if (dateFilter === "month") {
+      const d = new Date();
+      d.setDate(1);
+      return { start_date: d.toISOString().split('T')[0], end_date: todayStr };
+    }
+    if (dateFilter === "custom") {
+      return { start_date: customRange.start, end_date: customRange.end };
+    }
+    return {};
+  };
+
+  const dates = getDates();
+
+  const { data: analyticsRes, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["salesAnalytics", dates],
+    queryFn: () => getSalesAnalytics(dates),
+  });
+
+  const { data: invoicesData } = useQuery({
     queryKey: ["salesInvoices", "", "-invoice_date", 1],
     queryFn: () => getSalesInvoices({ search: "", ordering: "-invoice_date", page: 1 }),
   });
 
-  const invoices = Array.isArray(data) ? data : data?.data || data?.results || [];
+  const analytics = analyticsRes || {};
+  const invoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
 
-  // Calculate metrics
-  const totalInvoices = invoices.length;
-  const totalRevenue = invoices.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount || 0), 0);
-  const thisMonthInvoices = invoices.filter(invoice => {
-    const invoiceDate = new Date(invoice.invoice_date);
-    const now = new Date();
-    return invoiceDate.getMonth() === now.getMonth() && invoiceDate.getFullYear() === now.getFullYear();
-  });
-  const thisMonthRevenue = thisMonthInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount || 0), 0);
-
-  // Payment status functionality removed - not supported by backend
-
-  // Calculate overdue invoices (assuming 30 days payment terms)
+  // Calculate overdue invoices (using recent invoices as a simple check)
   const today = new Date();
   const overdueInvoices = invoices.filter(invoice => {
     const invoiceDate = new Date(invoice.invoice_date);
     const dueDate = new Date(invoiceDate.getTime() + (30 * 24 * 60 * 60 * 1000));
-    return dueDate < today;  // All invoices are considered pending
+    return dueDate < today && invoice.status !== 'draft';
   });
 
   // Top customers
-  const customerTotals = invoices.reduce((acc, invoice) => {
+  const customerTotals = invoices.filter(inv => inv.status !== 'draft').reduce((acc, invoice) => {
     const customer = invoice.customer_name || 'Unknown';
     acc[customer] = (acc[customer] || 0) + parseFloat(invoice.total_amount || 0);
     return acc;
@@ -41,146 +62,179 @@ export default function SalesSummary() {
     .sort(([,a], [,b]) => b - a)
     .slice(0, 3);
 
-  if (isLoading) {
+  const minDate = "2024-01-01"; 
+  const maxDate = todayStr;
+
+  if (analyticsLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-4">
         {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+          <div key={i} className="bento-card p-5 animate-pulse">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-white/10 rounded-xl"></div>
+              <div className="ml-4 flex-1 space-y-2">
+                <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                <div className="h-6 bg-white/10 rounded w-3/4"></div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
     );
   }
 
+  const selectedRevenue = analytics.total_revenue || 0;
+  const selectedCount = analytics.total_invoices || 0;
+  const overallMonthRevenue = analytics.this_month_revenue || 0;
+
+  const cardTitle = dateFilter === 'today' ? "Today's Sales" : dateFilter === 'month' ? "This Month's Sales" : "Custom Range Sales";
+
+  const summaryCards = [
+    {
+      label: cardTitle,
+      value: selectedCount,
+      subValue: `₹${selectedRevenue.toLocaleString()}`,
+      icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
+      color: 'cyan'
+    },
+    {
+      label: 'Overall This Month',
+      value: analytics.this_month_invoices || 0,
+      subValue: `₹${overallMonthRevenue.toLocaleString()}`,
+      icon: <CalendarIcon className="w-6 h-6 text-green-400" />,
+      color: 'green'
+    },
+    {
+      label: 'Avg. Invoice Value',
+      value: `₹${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
+      subValue: 'For selected period',
+      icon: <ChartBarIcon className="w-6 h-6 text-blue-400" />,
+      color: 'blue'
+    },
+    {
+      label: 'Active Invoices',
+      value: invoices.filter(inv => inv.status !== 'draft').length,
+      subValue: 'Based on recent activity',
+      icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
+      color: 'purple'
+    }
+  ];
+
   return (
-    <div className="space-y-6 mb-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Sales */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Sales</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totalInvoices}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                ₹{totalRevenue.toLocaleString()}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6 mb-8 mt-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#111] border border-white/10">
+         <div className="flex items-center gap-4">
+             <h3 className="text-white font-medium">Analytics Filter</h3>
+             <select 
+               className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+               value={dateFilter}
+               onChange={e => setDateFilter(e.target.value)}
+             >
+                <option value="today">Today</option>
+                <option value="month">This Month</option>
+                <option value="custom">Custom Date Range</option>
+             </select>
+         </div>
 
-        {/* This Month */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">This Month</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {thisMonthInvoices.length}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                ₹{thisMonthRevenue.toLocaleString()}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Average Invoice Value */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Invoice Value</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                ₹{totalInvoices > 0 ? (totalRevenue / totalInvoices).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Per invoice
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Items Sold */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Items Sold</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {invoices.reduce((sum, invoice) => sum + (invoice.items?.length || 0), 0)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Across all invoices
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            </div>
-          </div>
-        </div>
+         {dateFilter === "custom" && (
+             <div className="flex items-center gap-2">
+                <input 
+                  type="date"
+                  min={minDate}
+                  max={maxDate}
+                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  value={customRange.start}
+                  onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+                />
+                <span className="text-gray-500">to</span>
+                <input 
+                  type="date"
+                  min={customRange.start || minDate}
+                  max={maxDate}
+                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  value={customRange.end}
+                  onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+                />
+             </div>
+         )}
       </div>
 
-      {/* Top Customers */}
-      <div className="grid grid-cols-1 gap-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {summaryCards.map((card, i) => (
+          <div key={i} className="bento-card p-6 flex flex-col justify-between group hover:border-white/20 transition-colors">
+            <div className="flex justify-between items-start mb-4">
+               <div className={`p-3 rounded-xl bg-${card.color}-400/10 border border-${card.color}-400/20`}>
+                  {card.icon}
+               </div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white mb-1 tracking-tight">{card.value}</div>
+              <div className="text-sm font-medium text-cyan-300 mb-1">{card.subValue}</div>
+              <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">{card.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top Customers */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Customers</h3>
-          <div className="space-y-3">
+        <div className="lg:col-span-2 bento-card p-6">
+          <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-2">Top Customers</h3>
+          <div className="space-y-4">
             {topCustomers.length > 0 ? (
               topCustomers.map(([customer, amount], index) => (
-                <div key={customer} className="flex justify-between items-center">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-400'
+                <div key={customer} className="flex justify-between items-center p-3 rounded-lg hover:bg-white/5 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg ${
+                      index === 0 ? 'bg-yellow-500/80' : index === 1 ? 'bg-gray-400/80' : 'bg-orange-400/80'
                     }`}>
                       {index + 1}
                     </div>
-                    <span className="text-sm text-gray-900 dark:text-white truncate">{customer}</span>
+                    <div>
+                      <span className="text-sm font-medium text-white block">{customer}</span>
+                      <span className="text-xs text-gray-400">Customer</span>
+                    </div>
                   </div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="text-sm font-bold text-cyan-400">
                     ₹{amount.toLocaleString()}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No customers yet</p>
+              <div className="text-center py-8 text-gray-500">No customer data available</div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Overdue Invoices Alert */}
-      {overdueInvoices.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <p className="text-red-800 dark:text-red-200 font-medium">
-              {overdueInvoices.length} overdue invoice{overdueInvoices.length > 1 ? 's' : ''} requiring attention
-            </p>
-          </div>
+        {/* Overdue Alerts */}
+        <div className="bento-card p-6">
+           <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-2 flex items-center gap-2">
+             <ExclamationTriangleIcon className="w-5 h-5 text-red-400" /> Action Required
+           </h3>
+           
+           {overdueInvoices.length > 0 ? (
+             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+               <div className="flex items-start gap-3">
+                 <div className="flex-1">
+                   <p className="text-red-200 font-medium mb-1">Overdue Invoices</p>
+                   <p className="text-red-300/70 text-sm">
+                     You have <span className="font-bold text-white">{overdueInvoices.length}</span> invoices that are overdue.
+                   </p>
+                 </div>
+               </div>
+             </div>
+           ) : (
+             <div className="flex flex-col items-center justify-center h-48 text-center">
+                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-3">
+                  <CurrencyRupeeIcon className="w-6 h-6 text-green-400" />
+                </div>
+                <p className="text-white font-medium">All caught up!</p>
+                <p className="text-gray-400 text-sm mt-1">No overdue invoices found.</p>
+             </div>
+           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

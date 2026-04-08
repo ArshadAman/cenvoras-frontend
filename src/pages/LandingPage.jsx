@@ -1,600 +1,356 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { animate, createScope, spring, stagger } from 'animejs';
+import { 
+  ChartBarIcon, 
+  BoltIcon, 
+  ShieldCheckIcon, 
+  UserGroupIcon, 
+  ArrowRightIcon, 
+  CheckCircleIcon,
+  DevicePhoneMobileIcon,
+  GlobeAltIcon,
+  HomeIcon,
+  ShoppingCartIcon,
+  CubeIcon
+} from '@heroicons/react/24/outline';
 
-export default function LandingPage() {
-  const [activeSection, setActiveSection] = useState('home');
-  const root = useRef(null);
-  const scope = useRef(null);
-
-  // Add CSS animations
+// Hook for scroll animations
+const useScrollAnimation = () => {
   useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-      @keyframes floatUp {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-10px) rotate(5deg); }
-      }
-      
-      @keyframes gradient-shift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      
-      @keyframes particle-float {
-        0% { transform: translateY(100vh) translateX(-5px) rotate(0deg); opacity: 0; }
-        10% { opacity: 0.6; }
-        90% { opacity: 0.6; }
-        100% { transform: translateY(-100vh) translateX(5px) rotate(180deg); opacity: 0; }
-      }
-      
-      .floating-element {
-        animation: floatUp 12s infinite ease-in-out;
-      }
-      
-      .floating-element:nth-child(2) { animation-delay: -2s; }
-      .floating-element:nth-child(3) { animation-delay: -4s; }
-      .floating-element:nth-child(4) { animation-delay: -6s; }
-      .floating-element:nth-child(5) { animation-delay: -8s; }
-      
-      .gradient-text {
-        background: linear-gradient(-45deg, #7fd3f7, #b6e0f7, #eaf6fa, #7fd3f7);
-        background-size: 400% 400%;
-        animation: gradient-shift 8s ease infinite;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .particle {
-        animation: particle-float 15s infinite linear;
-      }
-      
-      .particle:nth-child(1) { animation-delay: -3s; }
-      .particle:nth-child(2) { animation-delay: -8s; }
-      .particle:nth-child(3) { animation-delay: -12s; }
-      
-      .scroll-smooth {
-        scroll-behavior: smooth;
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      scope.current = createScope({ root }).add(self => {
-        // Hero section animations
-        animate('.hero-brand', {
-          opacity: [0, 1],
-          scale: [0.5, 1],
-          duration: 800,
-          delay: 200,
-          easing: 'outCubic'
-        });
-
-        animate('.hero-title', {
-          opacity: [0, 1],
-          translateY: [30, 0],
-          duration: 600,
-          delay: 400,
-          easing: 'outCubic'
-        });
-
-        animate('.hero-subtitle', {
-          opacity: [0, 1],
-          translateY: [20, 0],
-          duration: 600,
-          delay: 600,
-          easing: 'outCubic'
-        });
-
-        animate('.hero-cta', {
-          opacity: [0, 1],
-          translateY: [30, 0],
-          scale: [0.9, 1],
-          delay: stagger(100, { start: 800 }),
-          duration: 500,
-          easing: 'outCubic'
-        });
-
-        // Feature cards animation
-        animate('.feature-card', {
-          opacity: [0, 1],
-          translateY: [40, 0],
-          scale: [0.9, 1],
-          delay: stagger(200, { start: 1000 }),
-          duration: 600,
-          easing: 'outCubic'
-        });
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fade-up');
+          entry.target.classList.remove('opacity-0', 'translate-y-8');
+          observer.unobserve(entry.target);
+        }
       });
-    }, 100);
+    }, { threshold: 0.1 });
 
-    return () => {
-      clearTimeout(timeoutId);
-      scope.current?.revert();
-    };
+    document.querySelectorAll('.scroll-animate').forEach((el) => {
+      el.classList.add('opacity-0', 'translate-y-8'); // Start hidden
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
   }, []);
+};
 
-  // Scroll to section
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(sectionId);
-    }
-  };
-
-  // All features from the app
-  const features = [
-    {
-      icon: '📊',
-      title: 'Sales Management',
-      description: 'Complete sales pipeline management with lead tracking, deal closure, and performance analytics.',
-      details: ['Lead management', 'Sales pipeline tracking', 'Revenue analytics', 'Customer insights']
-    },
-    {
-      icon: '📦',
-      title: 'Inventory Management', 
-      description: 'Real-time inventory tracking with automated stock alerts and product management.',
-      details: ['Stock level monitoring', 'Product categorization', 'Low stock alerts', 'Stock adjustments']
-    },
-    {
-      icon: '👥',
-      title: 'Customer Management',
-      description: 'Comprehensive customer database with detailed profiles and interaction history.',
-      details: ['Customer profiles', 'Contact management', 'Customer history', 'Relationship tracking']
-    },
-    {
-      icon: '💰',
-      title: 'Purchase Management',
-      description: 'Streamlined purchase processes with vendor management and purchase tracking.',
-      details: ['Purchase orders', 'Vendor management', 'Purchase analytics', 'Cost tracking']
-    },
-    {
-      icon: '📋',
-      title: 'General Ledger',
-      description: 'Complete accounting system with chart of accounts and financial reporting.',
-      details: ['Chart of accounts', 'Double-entry bookkeeping', 'Financial statements', 'Trial balance']
-    },
-    {
-      icon: '📈',
-      title: 'Analytics & Reports',
-      description: 'Powerful business intelligence with real-time dashboards and custom reports.',
-      details: ['Business dashboard', 'Custom reports', 'Performance metrics', 'Data visualization']
-    },
-    {
-      icon: '💳',
-      title: 'Payment Processing',
-      description: 'Integrated payment solutions with multiple payment methods and tracking.',
-      details: ['Payment tracking', 'Invoice management', 'Payment history', 'Outstanding balances']
-    },
-    {
-      icon: '🔄',
-      title: 'Bulk Operations',
-      description: 'Efficient bulk data management for large-scale operations and data imports.',
-      details: ['Bulk data entry', 'CSV imports', 'Mass updates', 'Data migration tools']
-    }
+// Screenshot Showcase Component
+const ScreenshotShowcase = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashboard.png' },
+    { id: 'sales', label: 'Sales', icon: ShoppingCartIcon, image: '/sales.png' },
+    { id: 'inventory', label: 'Inventory', icon: CubeIcon, image: '/inventory.png' },
   ];
 
   return (
-    <div ref={root} className="min-h-screen bg-gradient-to-br from-[#1a2341] via-[#2d3a5f] to-[#1a2341] relative overflow-hidden scroll-smooth">
-      
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
-          {/* Moving paths */}
-          <path d="M-200,100 Q200,50 600,100 Q1000,150 1600,100" stroke="url(#gradient1)" strokeWidth="2" fill="none" opacity="0.4" />
-          <path d="M-100,300 Q300,250 700,300 Q1100,350 1500,300" stroke="url(#gradient2)" strokeWidth="1.5" fill="none" opacity="0.3" />
-          <path d="M0,600 Q360,450 720,600 Q1080,750 1440,600" stroke="url(#gradient3)" strokeWidth="1" fill="none" opacity="0.3" />
-          
-          {/* Animated geometric patterns */}
-          <circle cx="200" cy="150" r="3" fill="#7fd3f7" opacity="0.8" className="floating-element">
-            <animate attributeName="r" values="2;5;2" dur="4s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="800" cy="300" r="4" fill="#b6e0f7" opacity="0.7" className="floating-element" />
-          <circle cx="1200" cy="500" r="2.5" fill="#eaf6fa" opacity="0.8" className="floating-element" />
-          
-          {/* Additional floating elements */}
-          <rect x="100" y="100" width="4" height="4" fill="#b6e0f7" opacity="0.5" className="floating-element" transform="rotate(45)">
-            <animateTransform attributeName="transform" type="rotate" values="0;360" dur="10s" repeatCount="indefinite" />
-          </rect>
-          
-          {/* Gradients */}
-          <defs>
-            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#7fd3f7" />
-              <stop offset="50%" stopColor="#b6e0f7" />
-              <stop offset="100%" stopColor="#eaf6fa" />
-            </linearGradient>
-            <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#b6e0f7" />
-              <stop offset="100%" stopColor="#7fd3f7" />
-            </linearGradient>
-            <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#eaf6fa" />
-              <stop offset="100%" stopColor="#b6e0f7" />
-            </linearGradient>
-          </defs>
-          
-          {/* Grid pattern */}
-          <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#7fd3f7" strokeWidth="0.5" opacity="0.1"/>
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#grid)" opacity="0.03" />
-        </svg>
-        
-        {/* Animated Particles */}
-        <div className="particle absolute left-10 w-1 h-1 bg-[#7fd3f7]/60 rounded-full"></div>
-        <div className="particle absolute left-20 w-2 h-2 bg-[#b6e0f7]/40 rounded-full"></div>
-        <div className="particle absolute right-16 w-1.5 h-1.5 bg-[#eaf6fa]/50 rounded-full"></div>
+    <div className="mt-24 opacity-0 animate-fade-up delay-300 relative">
+      {/* Tab Navigation */}
+      <div className="flex justify-center gap-2 mb-8">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+              activeTab === tab.id
+                ? 'bg-white text-black shadow-lg shadow-white/20'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Navigation */}
-      <nav className="relative z-20 flex justify-between items-center px-8 pt-8">
-        <div className="hero-brand flex items-center gap-3 group">
-          <div className="w-12 h-12 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-xl">C</span>
-          </div>
-          <span className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] bg-clip-text text-transparent">
-            Cenvora
-          </span>
+      {/* Screenshot Container */}
+      <div className="relative group perspective-[2000px]">
+        {/* Behind Glow */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 rounded-[2rem] blur-3xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+        
+        {/* Main Container */}
+        <div className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-w-6xl bg-[#0a0a0a] transform group-hover:translate-y-[-4px] transition-transform duration-700 ease-out">
+          <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent pointer-events-none z-10 mix-blend-overlay"></div>
+          
+          {/* Screenshots with transitions */}
+          {tabs.map((tab) => (
+            <img 
+              key={tab.id}
+              src={tab.image} 
+              alt={`Cenvora ${tab.label} Interface`} 
+              loading="lazy"
+              className={`w-full h-auto object-cover transition-opacity duration-500 ${
+                activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0'
+              }`}
+            />
+          ))}
         </div>
-        <div className="flex items-center gap-6">
-          <button 
-            onClick={() => scrollToSection('features')}
-            className={`text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group ${activeSection === 'features' ? 'text-[#b6e0f7]' : ''}`}
-          >
-            Features
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button 
-            onClick={() => scrollToSection('about')}
-            className={`text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group ${activeSection === 'about' ? 'text-[#b6e0f7]' : ''}`}
-          >
-            About
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button 
-            onClick={() => scrollToSection('contact')}
-            className={`text-[#7fd3f7] hover:text-[#b6e0f7] transition-colors duration-300 font-medium relative group ${activeSection === 'contact' ? 'text-[#b6e0f7]' : ''}`}
-          >
-            Contact
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <Link 
-            to="/login" 
-            className="px-6 py-2.5 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-semibold rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            Sign In
+      </div>
+
+      {/* Feature Pills */}
+      <div className="flex flex-wrap justify-center gap-3 mt-8">
+        {activeTab === 'dashboard' && (
+          <>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Real-time Analytics</span>
+            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">Live Charts</span>
+            <span className="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-xs font-medium">Quick Actions</span>
+          </>
+        )}
+        {activeTab === 'sales' && (
+          <>
+            <span className="px-4 py-1.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-full text-xs font-medium">One-Click Invoicing</span>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">GST Compliant</span>
+            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">PDF Export</span>
+          </>
+        )}
+        {activeTab === 'inventory' && (
+          <>
+            <span className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full text-xs font-medium">Batch Tracking</span>
+            <span className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full text-xs font-medium">Low Stock Alerts</span>
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Multi-Warehouse</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default function LandingPage() {
+  useScrollAnimation();
+
+  return (
+    <div className="font-sans text-white overflow-x-hidden bg-black selection:bg-purple-500/30">
+      
+      {/* Background Texture Grid */}
+      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
+
+      {/* 1. Floating Pill Navbar */}
+      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
+        <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
+          <Link to="/" className="hover:opacity-80 transition-opacity flex items-center">
+            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[160px] h-auto object-contain" />
           </Link>
+          
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <a href="#testimonials" className="hover:text-white transition-colors">Enterprise</a>
+          </div>
+
+          <div className="flex items-center gap-4">
+             <Link to="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Log In</Link>
+             <Link to="/signup" className="text-sm font-semibold bg-white text-black px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">
+              Get Started
+             </Link>
+          </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section id="home" className="relative z-20 min-h-screen flex items-center justify-center px-4 py-20">
-        <div className="text-center max-w-6xl">
-          <h1 className="hero-title gradient-text text-6xl lg:text-8xl font-extrabold mb-8 leading-tight">
-            Business Management
-            <br />
-            <span className="text-white">Simplified</span>
+      {/* 2. Hero Section */}
+      <section className="pt-40 pb-20 text-center relative overflow-hidden z-10">
+        {/* Background Ambient Glow */}
+        <div className="absolute top-0 inset-x-0 h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-transparent -z-10"></div>
+        
+        <div className="max-w-5xl mx-auto px-6 relative">
+          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-8 opacity-0 animate-fade-up tracking-wide">
+             <span className="animate-pulse mr-2">●</span> ENGINEERED FOR PERFECTION
+          </div>
+          
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-none">
+            Commerce, <br/>
+            Evolved.
           </h1>
-          <p className="hero-subtitle text-[#b6e0f7]/90 text-xl lg:text-2xl mb-12 max-w-4xl mx-auto leading-relaxed">
-            Streamline your operations with Cenvora - the all-in-one platform for sales, inventory, 
-            customer management, and financial tracking. Built for growing businesses.
+          <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-12 opacity-0 animate-fade-up delay-200 leading-relaxed font-light">
+            Forget clunky ERPs. Cenvora is the <span className="text-white font-medium">high-performance engine</span> your business deserves. Real-time inventory, instant billing, and insights that feel like clairvoyance.
           </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link 
-              to="/signup" 
-              className="hero-cta px-8 py-4 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-2xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 relative overflow-hidden group"
-            >
-              <span className="relative z-10">Start Free Trial</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0 animate-fade-up delay-300">
+            <Link to="/signup" className="btn-primary w-full sm:w-auto shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]">
+              Experience Cenvora
             </Link>
-            <button 
-              onClick={() => scrollToSection('features')}
-              className="hero-cta px-8 py-4 bg-white/10 backdrop-blur-xl border border-white/20 text-white font-bold text-lg rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
-            >
-              Explore Features
-            </button>
+            <a href="#demo" className="btn-secondary w-full sm:w-auto justify-center">
+              Watch the magic <ArrowRightIcon className="w-5 h-5"/>
+             </a>
           </div>
+
+          {/* Hero Screenshot Showcase */}
+          <ScreenshotShowcase />
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative z-20 py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
-              Complete Business Suite
-            </h2>
-            <p className="text-[#b6e0f7]/80 text-xl max-w-3xl mx-auto">
-              Everything you need to manage and grow your business, all in one integrated platform
-            </p>
+      {/* 3. Bento Grid Section */}
+      <section id="features" className="py-32 relative z-10">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="text-center mb-24 scroll-animate">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white tracking-tight">It’s not just software.<br/> It’s a superpower.</h2>
+            <p className="text-2xl text-gray-500 font-light max-w-2xl mx-auto">Every pixel designed to save you time and make you money.</p>
+          </div>
+
+          {/* Bento Grid layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[650px]">
+             
+             {/* Card 1: Inventory (Gradient) */}
+             <div className="bento-card col-span-1 md:col-span-2 row-span-2 scroll-animate flex flex-col justify-between group !p-0 bg-gradient-to-br from-[#101010] to-black overflow-hidden relative">
+                <div className="p-10 z-20 relative">
+                   <div className="flex items-center gap-2 mb-4 text-cyan-400 font-bold text-xs tracking-widest uppercase">
+                      <ChartBarIcon className="w-5 h-5" /> inventory 2.0
+                   </div>
+                   <h3 className="text-4xl font-bold mb-4 text-white">Inventory that thinks.</h3>
+                   <p className="text-gray-400 max-w-md text-lg leading-relaxed">Stop guessing. We track every batch and every movement across all your warehouses in real-time. It’s like having a dedicated manager for every shelf.</p>
+                </div>
+                
+                {/* Visual decoration */}
+                <div className="relative w-full h-80 mt-auto">
+                   <div className="absolute inset-x-12 -bottom-12 bg-[#0a0a0a] rounded-t-2xl border border-white/10 shadow-2xl h-full p-6 transform translate-y-8 group-hover:translate-y-4 transition-transform duration-700 ease-out">
+                      {/* Abstract UI Lines */}
+                      <div className="space-y-4 opacity-50 group-hover:opacity-100 transition-opacity duration-700">
+                         <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                            <div className="h-3 w-32 bg-gray-800 rounded-full"></div>
+                            <div className="h-3 w-12 bg-green-500/20 rounded-full"></div>
+                         </div>
+                         {[1,2,3].map(i => (
+                             <div key={i} className="h-10 w-full bg-white/5 rounded-xl border border-white/5 flex items-center px-4">
+                                <div className="h-2 w-full bg-gray-800/50 rounded-full"></div>
+                             </div>
+                         ))}
+                      </div>
+                   </div>
+                   {/* Glow effect */}
+                   <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-cyan-900/20 to-transparent pointer-events-none"></div>
+                </div>
+             </div>
+
+             {/* Card 2: Security */}
+             <div className="bento-card bg-[#0a0a0a] scroll-animate group border-green-900/20 hover:border-green-500/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-32 bg-green-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+                <div className="flex flex-col h-full justify-between relative z-10">
+                   <div className="w-14 h-14 bg-green-900/10 rounded-2xl flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform duration-300">
+                      <ShieldCheckIcon className="w-7 h-7" />
+                   </div>
+                   <div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Bulletproof Access & Backups.</h3>
+                      <p className="text-gray-500 text-sm leading-relaxed">Granular Role-Based Access Control plus automated daily off-site backups (every 24 hrs) to keep your baseline secure.</p>
+                   </div>
+                </div>
+             </div>
+
+             {/* Card 3: Mobile */}
+             <div className="bento-card bg-[#0a0a0a] scroll-animate group hover:border-blue-500/30 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-900/5 group-hover:to-blue-900/10 transition-colors"></div>
+                <div className="flex flex-col h-full justify-center items-center text-center relative z-10">
+                   <div className="relative mb-8">
+                      <div className="absolute inset-0 bg-blue-500/30 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <DevicePhoneMobileIcon className="relative w-16 h-16 text-blue-400 group-hover:-translate-y-2 transition-transform duration-300" />
+                   </div>
+                   <h3 className="text-xl font-bold mb-2 text-white">Your shop, anywhere.</h3>
+                   <p className="text-gray-500 text-sm px-4">Check sales from your couch. Or the beach. Works on any device, instantly.</p>
+                </div>
+             </div>
+
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="feature-card bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 hover:bg-white/15 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl group">
-                <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[#7fd3f7] transition-colors duration-300">
-                  {feature.title}
-                </h3>
-                <p className="text-[#b6e0f7]/80 mb-6 leading-relaxed">
-                  {feature.description}
-                </p>
-                <ul className="space-y-2">
-                  {feature.details.map((detail, i) => (
-                    <li key={i} className="text-[#eaf6fa]/70 text-sm flex items-center">
-                      <span className="w-1.5 h-1.5 bg-[#7fd3f7] rounded-full mr-3"></span>
-                      {detail}
-                    </li>
-                  ))}
-                </ul>
+          {/* Second Row of Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div className="bento-card bg-[#0a0a0a] scroll-animate flex items-center p-0 overflow-hidden relative group">
+                  <div className="p-10 w-2/3 relative z-10">
+                      <h3 className="text-3xl font-bold mb-3 text-white">Ludicrous Speed.</h3>
+                      <p className="text-gray-500 text-lg">Billing so fast, your customers won't have time to blink. Keyboard-first design for power users.</p>
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-purple-900/20 to-transparent"></div>
+                  <BoltIcon className="absolute -right-8 -bottom-8 w-48 h-48 text-purple-600/10 rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500" />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="relative z-20 py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-12 shadow-2xl">
-            <div className="text-center mb-12">
-              <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
-                About Cenvora
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-full mx-auto"></div>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h3 className="text-3xl font-bold text-white mb-6">
-                  Empowering Business Growth
-                </h3>
-                <p className="text-[#b6e0f7]/90 text-lg mb-6 leading-relaxed">
-                  Cenvora is designed to simplify complex business operations through intelligent automation 
-                  and intuitive design. We believe that powerful business tools should be accessible to 
-                  businesses of all sizes.
-                </p>
-                <p className="text-[#b6e0f7]/90 text-lg mb-8 leading-relaxed">
-                  Our comprehensive platform eliminates the need for multiple disconnected systems, 
-                  providing a unified solution that grows with your business.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">500+</div>
-                    <div className="text-[#b6e0f7]/70">Active Users</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">99.9%</div>
-                    <div className="text-[#b6e0f7]/70">Uptime</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">24/7</div>
-                    <div className="text-[#b6e0f7]/70">Support</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold gradient-text mb-2">8+</div>
-                    <div className="text-[#b6e0f7]/70">Core Features</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-8">
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                  <h4 className="text-xl font-bold text-[#7fd3f7] mb-3">🎯 Our Mission</h4>
-                  <p className="text-[#b6e0f7]/80">
-                    To democratize enterprise-level business management tools, making them accessible 
-                    and affordable for businesses of all sizes.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                  <h4 className="text-xl font-bold text-[#7fd3f7] mb-3">🚀 Our Vision</h4>
-                  <p className="text-[#b6e0f7]/80">
-                    To become the leading platform that empowers businesses to optimize their operations, 
-                    make data-driven decisions, and achieve sustainable growth.
-                  </p>
-                </div>
-                
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                  <h4 className="text-xl font-bold text-[#7fd3f7] mb-3">⭐ Our Values</h4>
-                  <p className="text-[#b6e0f7]/80">
-                    Innovation, reliability, and customer success drive everything we do. We're committed 
-                    to continuous improvement and exceptional user experience.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="relative z-20 py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="gradient-text text-5xl lg:text-6xl font-bold mb-6">
-              Get In Touch
-            </h2>
-            <p className="text-[#b6e0f7]/80 text-xl max-w-3xl mx-auto">
-              Ready to transform your business operations? We're here to help you get started.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-              <h3 className="text-3xl font-bold text-white mb-8">Send us a Message</h3>
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bento-card bg-[#0a0a0a] scroll-animate p-10 flex items-center justify-between group hover:bg-[#0f0f0f]">
                   <div>
-                    <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Name</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                      placeholder="Your Name"
-                    />
+                    <h3 className="text-3xl font-bold mb-3 text-white">GST Ready.</h3>
+                    <p className="text-gray-500 text-lg">GSTR-1 Reports, Tax Registers, <br/>and Instant PDF Exports.</p>
                   </div>
-                  <div>
-                    <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Email</label>
-                    <input
-                      type="email"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Subject</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                    placeholder="How can we help?"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#b6e0f7] text-sm font-semibold mb-2">Message</label>
-                  <textarea
-                    rows="5"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#7fd3f7]/50 focus:border-[#7fd3f7] transition-all duration-300"
-                    placeholder="Tell us about your business needs..."
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 px-6 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
-                >
-                  Send Message
-                </button>
-              </form>
-            </div>
-            
-            {/* Contact Information */}
-            <div className="space-y-8">
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-                <h3 className="text-2xl font-bold text-white mb-6">Contact Information</h3>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-xl flex items-center justify-center">
-                      <span className="text-[#1a2341] text-xl">📧</span>
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Email</div>
-                      <div className="text-[#b6e0f7]/80">support@cenvora.app</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-xl flex items-center justify-center">
-                      <span className="text-[#1a2341] text-xl">📞</span>
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Phone</div>
-                      <div className="text-[#b6e0f7]/80">+1 (555) 123-4567</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] rounded-xl flex items-center justify-center">
-                      <span className="text-[#1a2341] text-xl">🕒</span>
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Business Hours</div>
-                      <div className="text-[#b6e0f7]/80">Mon - Fri: 9AM - 6PM EST</div>
-                    </div>
-                  </div>
-                </div>
+                  <GlobeAltIcon className="w-20 h-20 text-gray-800 group-hover:text-gray-600 transition-colors duration-300" />
               </div>
-              
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-                <h3 className="text-2xl font-bold text-white mb-6">Get Started Today</h3>
-                <p className="text-[#b6e0f7]/80 mb-6">
-                  Ready to transform your business operations? Start your free trial and see the difference Cenvora can make.
-                </p>
-                <div className="space-y-4">
-                  <Link 
-                    to="/signup"
-                    className="block w-full py-3 px-6 bg-gradient-to-r from-[#7fd3f7] to-[#b6e0f7] text-[#1a2341] font-bold text-lg rounded-xl hover:from-[#6bc9f2] hover:to-[#a8d8f4] transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 text-center"
-                  >
-                    Start Free Trial
-                  </Link>
-                  <Link 
-                    to="/login"
-                    className="block w-full py-3 px-6 bg-white/10 border border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all duration-300 text-center"
-                  >
-                    Sign In
-                  </Link>
-                </div>
-              </div>
-            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 4. Pricing (Clean Dark) */}
+      <section id="pricing" className="py-32 relative z-10">
+        <div className="max-w-[980px] mx-auto px-6 text-center">
+          <h2 className="text-4xl font-bold mb-4 scroll-animate text-white">Simple Pricing.</h2>
+          <p className="text-gray-500 mb-16 scroll-animate">No hidden fees. Cancel anytime.</p>
+          
+          <div className="grid md:grid-cols-3 gap-6 text-left">
+             {/* Starter */}
+             <div className="p-8 bg-[#0a0a0a] rounded-3xl border border-[#222] scroll-animate hover:border-gray-600 transition-colors">
+                 <h3 className="text-xl font-semibold mb-2 text-white">Starter</h3>
+                 <p className="text-3xl font-bold mb-6 text-white">₹49<span className="text-base font-normal text-gray-500">/mo</span></p>
+                 <Link to="/signup" className="block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8">
+                     Start Free Trial
+                 </Link>
+                 <ul className="space-y-4 text-sm text-gray-400">
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> 1 User (Owner)</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Basic Invoicing</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Unlimited Clients</li>
+                 </ul>
+             </div>
+
+             {/* Growth - Highlighted */}
+             <div className="p-8 bg-[#111] border border-purple-500/30 rounded-3xl shadow-2xl shadow-purple-900/20 relative overflow-hidden scroll-animate transform md:-translate-y-4 scale-105 z-10">
+                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 to-purple-500"></div>
+                 <div className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-wider uppercase mb-2">Most Popular</div>
+                 <h3 className="text-2xl font-bold mb-2 text-white">Growth</h3>
+                 <p className="text-3xl font-bold mb-6 text-white">₹199<span className="text-base font-normal text-gray-400">/mo</span></p>
+                 <Link to="/signup" className="block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10">
+                     Get Started
+                 </Link>
+                 <ul className="space-y-4 text-sm text-gray-300">
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Up to 2 Additional Managers</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Smart Inventory Tracking</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Unlimited Clients</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-purple-400" /> Financial & GST Reports</li>
+                 </ul>
+             </div>
+
+             {/* Pro */}
+             <div className="p-8 bg-[#0a0a0a] rounded-3xl border border-[#222] scroll-animate hover:border-gray-600 transition-colors">
+                 <h3 className="text-xl font-semibold mb-2 text-white">Pro</h3>
+                 <p className="text-3xl font-bold mb-6 text-white">₹499<span className="text-base font-normal text-gray-500">/mo</span></p>
+                 <Link to="/signup" className="block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8">
+                     Contact Sales
+                 </Link>
+                 <ul className="space-y-4 text-sm text-gray-400">
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Up to 5 Managers</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Priority Support</li>
+                     <li className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> Setup Assistance</li>
+                 </ul>
+             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-20 py-12 px-4 border-t border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#7fd3f7] to-[#1a2341] rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold">C</span>
-                </div>
-                <span className="text-2xl font-bold gradient-text">Cenvora</span>
+      {/* 5. Clean Footer */}
+      <footer className="bg-black py-16 border-t border-white/5 relative z-10">
+        <div className="max-w-[980px] mx-auto px-6">
+           <div className="flex flex-col md:flex-row justify-between items-center mb-12">
+              <Link to="/" className="flex items-center mb-4 md:mb-0 hover:opacity-80 transition-opacity">
+                  <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+              </Link>
+              <div className="flex gap-8 text-sm text-gray-400">
+                 <a href="#" className="hover:text-white transition-colors">Twitter</a>
+                 <a href="#" className="hover:text-white transition-colors">GitHub</a>
+                 <a href="#" className="hover:text-white transition-colors">Discord</a>
               </div>
-              <p className="text-[#b6e0f7]/70 mb-4 max-w-md">
-                Empowering businesses with comprehensive management tools. Streamline your operations and accelerate growth.
-              </p>
-              <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-300 cursor-pointer">
-                  <span className="text-[#7fd3f7] text-sm">📘</span>
-                </div>
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-300 cursor-pointer">
-                  <span className="text-[#7fd3f7] text-sm">🐦</span>
-                </div>
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-300 cursor-pointer">
-                  <span className="text-[#7fd3f7] text-sm">💼</span>
-                </div>
+           </div>
+           
+           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between text-xs text-gray-600 gap-4">
+              <p>&copy; {new Date().getFullYear()} Cenvora Inc. All rights reserved.</p>
+              <div className="flex gap-6">
+                 <Link to="/privacy" className="hover:text-gray-400">Privacy</Link>
+                 <Link to="/terms" className="hover:text-gray-400">Terms</Link>
+                 <Link to="/sitemap" className="hover:text-gray-400">Sitemap</Link>
               </div>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-[#b6e0f7]/70">
-                <li><button onClick={() => scrollToSection('features')} className="hover:text-[#7fd3f7] transition-colors">Features</button></li>
-                <li><button onClick={() => scrollToSection('about')} className="hover:text-[#7fd3f7] transition-colors">About</button></li>
-                <li><button onClick={() => scrollToSection('contact')} className="hover:text-[#7fd3f7] transition-colors">Contact</button></li>
-                <li><Link to="/signup" className="hover:text-[#7fd3f7] transition-colors">Sign Up</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-[#b6e0f7]/70">
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-[#7fd3f7] transition-colors">Terms of Service</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-white/10 pt-8 text-center">
-            <p className="text-[#b6e0f7]/70">
-              © {new Date().getFullYear()} Cenvora. All rights reserved. Built with ❤️ for growing businesses.
-            </p>
-          </div>
+           </div>
         </div>
       </footer>
     </div>
