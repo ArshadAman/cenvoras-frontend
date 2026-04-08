@@ -5,6 +5,69 @@ import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 
+const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
+
+const splitCsvLine = (line) => {
+  return line
+    .split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+    .map((cell) => cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+};
+
+const normalizeHeader = (header) =>
+  String(header || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/-/g, "_");
+
+const validateCsvBeforeUpload = async (file) => {
+  const csvText = await file.text();
+  const rawLines = csvText.split(/\r?\n/).filter((line) => line.trim() !== "");
+
+  if (rawLines.length < 2) {
+    return { valid: false, message: "CSV must contain a header and at least one data row." };
+  }
+
+  const headers = splitCsvLine(rawLines[0]).map(normalizeHeader);
+  const missingHeaders = REQUIRED_CSV_COLUMNS.filter((key) => !headers.includes(key));
+  if (missingHeaders.length > 0) {
+    return {
+      valid: false,
+      message: `Missing required column(s): ${missingHeaders.join(", ")}`,
+    };
+  }
+
+  const indexByHeader = Object.fromEntries(headers.map((h, idx) => [h, idx]));
+  const invalidRows = [];
+
+  for (let i = 1; i < rawLines.length; i += 1) {
+    const values = splitCsvLine(rawLines[i]);
+    const rowNumber = i + 1;
+
+    const missingFields = REQUIRED_CSV_COLUMNS.filter((field) => {
+      const value = values[indexByHeader[field]];
+      return value == null || String(value).trim() === "";
+    });
+
+    if (missingFields.length > 0) {
+      invalidRows.push({ rowNumber, missingFields });
+    }
+  }
+
+  if (invalidRows.length > 0) {
+    const preview = invalidRows
+      .slice(0, 3)
+      .map((row) => `Row ${row.rowNumber}: ${row.missingFields.join(", ")}`)
+      .join(" | ");
+    return {
+      valid: false,
+      message: `CSV has missing required values. ${preview}${invalidRows.length > 3 ? " ..." : ""}`,
+    };
+  }
+
+  return { valid: true };
+};
+
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("name"); // default: alphabetical
@@ -44,6 +107,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const handleUploadCsv = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      toast.error('Please select a CSV file.');
+      event.target.value = '';
+      return;
+    }
+
+    const preValidation = await validateCsvBeforeUpload(file);
+    if (!preValidation.valid) {
+      toast.error(preValidation.message);
+      event.target.value = '';
+      return;
+    }
 
     setIsUploadingCsv(true);
     try {
