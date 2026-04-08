@@ -12,6 +12,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   const [page, setPage] = useState(1);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "final", "draft"
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -23,8 +24,8 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["salesInvoices", search, ordering, page],
-    queryFn: () => getSalesInvoices({ search, ordering, page }),
+    queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
+    queryFn: () => getSalesInvoices({ search, ordering, page, status: statusFilterTab }),
   });
 
   if (error) {
@@ -193,6 +194,23 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
   return (
     <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
+      {/* Status Tabs */}
+      <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
+        {['all', 'final', 'draft'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setStatusFilterTab(tab)}
+            className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+              statusFilterTab === tab 
+              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
+              : 'text-gray-400 hover:text-white border border-transparent'
+            }`}
+          >
+            {tab}s
+          </button>
+        ))}
+      </div>
+
       {/* Header with Search and Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -371,12 +389,12 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                   <span className={`px-2 py-1 rounded text-xs ${
-                      invoice.meta?.status === 'Approved' ? 'bg-green-500/20 text-green-400' : 
-                      invoice.meta?.status === 'Rejected' ? 'bg-red-500/20 text-red-400' : 
-                      'bg-yellow-500/20 text-yellow-400'
+                   <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                      'bg-gray-500/20 text-gray-400'
                    }`}>
-                      {invoice.meta?.status || 'Pending'}
+                      {invoice.status || 'final'}
                    </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
@@ -390,12 +408,12 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                     >
                       View
                     </button>
-                    {/* <button
+                    <button
                       onClick={() => onEdit(invoice)}
-                      className="px-3 py-1 bg-white/5 text-indigo-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
+                      className="px-3 py-1 bg-white/5 text-cyan-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
                     >
                       Edit
-                    </button> */}
+                    </button>
                     <button
                       onClick={() => onDelete(invoice)}
                       className="px-3 py-1 bg-red-500/10 text-red-300 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors"
@@ -437,6 +455,16 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
             {/* Card Content */}
             <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Status:</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                      'bg-gray-500/20 text-gray-400'
+                   }`}>
+                      {invoice.status || 'final'}
+                </span>
+              </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-white/70">Customer:</span>
                 <span className="text-sm font-medium text-white">{invoice.customer_name}</span>
@@ -491,6 +519,12 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                 className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
               >
                 View
+              </button>
+              <button
+                onClick={() => onEdit(invoice)}
+                className="flex-1 px-3 py-2 bg-cyan-500/30 text-white border border-cyan-300/50 rounded-lg hover:bg-cyan-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+              >
+                Edit
               </button>
               <button
                 onClick={() => onDelete(invoice)}
