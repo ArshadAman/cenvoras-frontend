@@ -144,7 +144,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
       // Handle array or object results
       const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
-      setInvoices(data);
+      const openInvoices = data.filter((inv) => {
+        const total = parseFloat(inv?.total_amount || 0);
+        const paid = parseFloat(inv?.amount_paid || 0);
+        return (total - paid) > 0;
+      });
+      setInvoices(openInvoices);
     } catch (err) {
       console.error("Failed to fetch invoices", err);
     } finally {
@@ -153,25 +158,34 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   };
 
   const handleSelectCustomer = (customer) => {
-    setFormData({ ...formData, customer: customer.id });
+    setFormData({ ...formData, customer: customer.id, invoice: '', amount: '' });
     setCustomerSearch(customer.name);
+    setSelectedInvoice(null);
     setShowCustomerDropdown(false);
+  };
+
+  const getInvoiceOutstanding = (invoice) => {
+    const total = parseFloat(invoice?.total_amount || 0);
+    const paid = parseFloat(invoice?.amount_paid || 0);
+    return Math.max(total - paid, 0);
   };
 
   const handleSelectInvoice = (invoiceId) => {
     const inv = invoices.find(i => i.id === invoiceId);
+    const outstanding = inv ? getInvoiceOutstanding(inv) : '';
     setSelectedInvoice(inv);
     setFormData({ 
       ...formData, 
       invoice: invoiceId, 
-      amount: inv ? inv.total_amount : '' 
+      amount: outstanding 
     });
   };
 
   const calculateRemainingDue = () => {
     if (!selectedInvoice) return null;
     const paid = parseFloat(formData.amount) || 0;
-    return parseFloat(selectedInvoice.total_amount) - paid;
+    const outstanding = getInvoiceOutstanding(selectedInvoice);
+    return outstanding - paid;
   };
 
   const handleSubmit = async (e) => {
@@ -309,7 +323,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
               <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
               {invoices.map((inv) => (
                 <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
-                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - ₹{inv.total_amount}
+                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{getInvoiceOutstanding(inv).toLocaleString('en-IN')}
                 </option>
               ))}
             </select>
@@ -352,12 +366,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
               <div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">₹{parseFloat(selectedInvoice.total_amount).toLocaleString()}</div>
+                <div className="text-base font-bold text-white">₹{getInvoiceOutstanding(selectedInvoice).toLocaleString('en-IN')}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
                 <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
-                  ₹{calculateRemainingDue().toLocaleString()}
+                  ₹{calculateRemainingDue().toLocaleString('en-IN')}
                 </div>
               </div>
             </div>
