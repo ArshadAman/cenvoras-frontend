@@ -48,7 +48,21 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     setIsUploadingCsv(true);
     try {
       const result = await bulkUploadProductsCsv(file);
-      toast.success(`Bulk upload complete. Created: ${result.created_count || 0}`);
+      const createdCount = Number(result?.created_count || 0);
+      const failedCount = Number(result?.failed_count || 0);
+
+      if (failedCount > 0) {
+        if (createdCount > 0) {
+          toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
+        } else {
+          toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
+        }
+      } else if (createdCount > 0) {
+        toast.success(`Bulk upload complete. Created: ${createdCount}`);
+      } else {
+        toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
+      }
+
       window.location.reload();
     } catch (err) {
       const responseData = err?.response?.data;
