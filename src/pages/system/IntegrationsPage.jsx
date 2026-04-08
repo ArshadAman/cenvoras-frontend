@@ -21,7 +21,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const TABS = [
   { id: 'email', label: '📧 Email', icon: EnvelopeIcon },
-  { id: 'barcode', label: '📷 Barcode Scanner', icon: QrCodeIcon },
   { id: 'backup', label: '💾 Data Backup', icon: CloudArrowDownIcon },
   { id: 'whatsapp', label: '💬 WhatsApp', icon: ChatBubbleLeftIcon, comingSoon: true },
   { id: 'apikeys', label: '🔑 API Keys', icon: KeyIcon, comingSoon: true },
@@ -684,7 +683,6 @@ export default function IntegrationsPage() {
 
         {/* Tab Content */}
         {activeTab === 'email' && <EmailTab />}
-        {activeTab === 'barcode' && <BarcodeTab />}
         {activeTab === 'backup' && <BackupTab />}
         {activeTab === 'whatsapp' && (
           <ComingSoonPlaceholder
