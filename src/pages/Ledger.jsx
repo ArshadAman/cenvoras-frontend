@@ -101,13 +101,12 @@ const Ledger = () => {
                <DocumentArrowUpIcon className="h-4 w-4" />
                <span>Export CSV</span>
              </button>
-             <button
-               onClick={() => setShowPaymentForm(true)}
+             <Link to="/payments"
                className="btn-primary text-sm py-2 px-4 shadow-lg shadow-green-500/20 flex items-center gap-2"
              >
                <PlusIcon className="h-4 w-4" />
                <span>Record Payment</span>
-             </button>
+             </Link>
            </div>
         </div>
 
