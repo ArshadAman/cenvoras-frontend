@@ -6,6 +6,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
+const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
+
 const productSchema = Yup.object().shape({
   name: Yup.string()
     .required("Product name is required")
@@ -19,7 +21,7 @@ const productSchema = Yup.object().shape({
     .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
     .required("Unit is required")
-    .max(20, "Unit must be 20 characters or less"),
+    .oneOf(UNIT_OPTIONS, "Please select a valid unit"),
   secondary_unit: Yup.string()
     .max(20, "Secondary unit must be 20 characters or less")
     .nullable(),
@@ -27,9 +29,15 @@ const productSchema = Yup.object().shape({
     .integer("Conversion factor must be a whole number")
     .min(1, "Conversion factor must be at least 1")
     .nullable(),
-  price: Yup.string()
-    .required("Price is required")
-    .matches(/^\d+(\.\d{1,2})?$/, "Price must be a valid decimal number"),
+  cost_price: Yup.string()
+    .required("Cost price is required")
+    .matches(/^\d+(\.\d{1,2})?$/, "Cost price must be a valid decimal number"),
+  sale_price: Yup.string()
+    .nullable()
+    .test("is-decimal-or-empty", "Sale price must be a valid decimal number", (value) => {
+      if (value === null || value === undefined || value === "") return true;
+      return /^\d+(\.\d{1,2})?$/.test(value);
+    }),
   stock: Yup.number()
     .required("Stock is required")
     .integer("Stock must be a whole number")
@@ -85,10 +93,11 @@ export default function ProductForm({ product, onClose }) {
     description: product?.description || "",
     tax: product?.tax || "",
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
-    unit: product?.unit || "",
+    unit: product?.unit || "pcs",
     secondary_unit: product?.secondary_unit || "",
     conversion_factor: product?.conversion_factor || 1,
-    price: product?.price || product?.purchase_price || product?.unit_price || "",
+    cost_price: product?.cost_price || product?.price || product?.purchase_price || product?.unit_price || "",
+    sale_price: product?.sale_price ?? "",
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
     warranty_months: product?.warranty_months || 0,
@@ -127,7 +136,8 @@ export default function ProductForm({ product, onClose }) {
       unit: values.unit,
       secondary_unit: values.secondary_unit || null,
       conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
-      price: values.price,
+      cost_price: values.cost_price,
+      sale_price: values.sale_price,
       stock: parseInt(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
       warranty_months: parseInt(values.warranty_months) || 0,
@@ -245,12 +255,13 @@ export default function ProductForm({ product, onClose }) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className={labelClass}>Primary Unit *</label>
-                  <Field
-                    name="unit"
-                    type="text"
-                    className={inputClass}
-                    placeholder="e.g. pcs"
-                  />
+                  <Field as="select" name="unit" className={inputClass}>
+                    {UNIT_OPTIONS.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </Field>
                   <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
@@ -282,14 +293,25 @@ export default function ProductForm({ product, onClose }) {
               {/* Section 3: Pricing & Stock */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className={labelClass}>Price (₹) *</label>
+                  <label className={labelClass}>Cost Price (₹) *</label>
                   <Field
-                    name="price"
+                    name="cost_price"
                     type="text"
                     className={inputClass}
                     placeholder="0.00"
                   />
-                  <ErrorMessage name="price" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Sale Price (₹)</label>
+                  <Field
+                    name="sale_price"
+                    type="text"
+                    className={inputClass}
+                    placeholder="Optional"
+                  />
+                  <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
@@ -307,7 +329,7 @@ export default function ProductForm({ product, onClose }) {
                 <div>
                   <label className={labelClass}>Stock Value</label>
                   <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.price || 0)).toFixed(2)}
+                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
                   </div>
                 </div>
               </div>

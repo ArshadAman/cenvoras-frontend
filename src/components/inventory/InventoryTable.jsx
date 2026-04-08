@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts } from "../../api/inventory";
+import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts } from "../../api/inventory";
 import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
 import Pagination from "../common/Pagination";
+import { toast } from "react-toastify";
 
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
   const [search, setSearch] = useState("");
@@ -12,6 +13,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
@@ -24,6 +26,42 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     queryKey: ["products", search, ordering, page],
     queryFn: () => getProducts({ search, ordering, page }),
   });
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await downloadProductCsvTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'product_bulk_template.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('Failed to download product template.');
+    }
+  };
+
+  const handleUploadCsv = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingCsv(true);
+    try {
+      const result = await bulkUploadProductsCsv(file);
+      toast.success(`Bulk upload complete. Created: ${result.created_count || 0}`);
+      window.location.reload();
+    } catch (err) {
+      const responseData = err?.response?.data;
+      if (responseData?.errors?.length) {
+        toast.error(`Upload finished with errors. Created: ${responseData.created_count || 0}, Failed: ${responseData.failed_count || 0}`);
+      } else {
+        toast.error(responseData?.error || 'Bulk upload failed.');
+      }
+    } finally {
+      setIsUploadingCsv(false);
+      event.target.value = '';
+    }
+  };
 
   if (error) {
     return (
@@ -83,7 +121,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       // Price range filter
       let matchesPrice = true;
       if (advancedFilters.priceRange.min || advancedFilters.priceRange.max) {
-        const price = parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+      const price = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
         if (advancedFilters.priceRange.min) {
           matchesPrice = matchesPrice && price >= parseFloat(advancedFilters.priceRange.min);
         }
@@ -117,8 +155,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
       if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
       if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
-      if (ordering === "unit_price") return parseFloat(a.unit_price || 0) - parseFloat(b.unit_price || 0);
-      if (ordering === "-unit_price") return parseFloat(b.unit_price || 0) - parseFloat(a.unit_price || 0);
+      if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
+      if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
 
       return 0;
     });
@@ -164,16 +202,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const selectedData = filteredProducts.filter(product => selectedProducts.has(product.id));
     const dataToExport = selectedData.length > 0 ? selectedData : filteredProducts;
     
-    const csvHeaders = ['Name', 'SKU', 'Category', 'Current Stock', 'Unit', 'Unit Price', 'Total Value', 'Supplier'];
+    const csvHeaders = ['Name', 'Current Stock', 'Unit', 'Cost Price', 'Sale Price', 'Total Value'];
     const csvData = dataToExport.map(product => [
       product.name,
-      product.sku,
-      product.category,
-      product.current_stock,
+      product.stock ?? product.current_stock,
       product.unit,
-      product.unit_price,
-      (parseFloat(product.current_stock || 0) * parseFloat(product.unit_price || 0)).toFixed(2),
-      product.supplier || ''
+      parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0).toFixed(2),
+      product.sale_price == null ? '' : parseFloat(product.sale_price).toFixed(2),
+      (parseFloat(product.stock ?? product.current_stock ?? 0) * parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0)).toFixed(2),
     ]);
     
     const csvContent = [csvHeaders, ...csvData].map(row => 
@@ -273,6 +309,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         
         <div className="flex gap-2">
           <button
+            onClick={handleDownloadTemplate}
+            className="px-3 py-1 bg-cyan-500/30 text-cyan-200 border border-cyan-300/50 rounded hover:bg-cyan-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+          >
+            Download Template
+          </button>
+          <label className={`px-3 py-1 border rounded transition text-sm backdrop-filter backdrop-blur-10 font-bold cursor-pointer ${isUploadingCsv ? 'bg-gray-600/30 text-gray-300 border-gray-400/40' : 'bg-blue-500/30 text-blue-200 border-blue-300/50 hover:bg-blue-400/40'}`}>
+            {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleUploadCsv}
+              disabled={isUploadingCsv}
+            />
+          </label>
+          <button
             onClick={exportToCSV}
             className="px-3 py-1 bg-green-500/30 text-green-200 border border-green-300/50 rounded hover:bg-green-400/40 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 font-bold"
           >
@@ -300,7 +352,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               </th>
               <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Product</th>
               <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Stock</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Unit Price</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Cost Price</th>
+              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Sale Price</th>
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Value</th>
               <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Status</th>
               <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Warranty</th>
@@ -314,14 +367,16 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   .map((_, i) => (
                     <tr key={i}>
                       <td
-                        colSpan={7}
+                        colSpan={9}
                         className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
                       />
                     </tr>
                   ))
               : filteredProducts.map((product) => {
                   const stockStatus = getStockStatus(product);
-              const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+              const costPrice = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+              const salePrice = product.sale_price == null ? null : parseFloat(product.sale_price);
+              const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * costPrice;
                   
                   return (
                     <tr
@@ -357,7 +412,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                           )}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        ₹{parseFloat(product.price ?? product.purchase_price ?? product.unit_price ?? 0).toFixed(2)}
+                        ₹{costPrice.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
+                        {salePrice === null ? '-' : `₹${salePrice.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
                         ₹{totalValue.toLocaleString(undefined, {
@@ -431,6 +489,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         ) : (
           filteredProducts.map((product) => (
             <div key={product.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+              {(() => {
+                const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
+                const lowStockLevel = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
+                const costPrice = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+                const isLowStock = lowStockLevel > 0 && currentStock <= lowStockLevel;
+                return (
+                  <>
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-3">
@@ -444,9 +509,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     <div className="text-lg font-semibold text-white">
                       {product.name}
                     </div>
-                    <div className="text-sm text-white/70">
-                      SKU: {product.sku}
-                    </div>
+                    <div className="text-sm text-white/70">Unit: {product.unit || 'pcs'}</div>
                   </div>
                 </div>
               </div>
@@ -455,30 +518,37 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Category:</span>
-                  <span className="text-sm font-medium text-white">{product.category || 'N/A'}</span>
+                  <span className="text-sm font-medium text-white">{product.hsn_sac_code || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Stock:</span>
                   <span className={`text-sm font-medium ${
-                    product.stock_quantity <= (product.reorder_level || 0) 
+                    isLowStock
                       ? 'text-red-400' 
-                      : product.stock_quantity <= (product.reorder_level || 0) * 2 
+                      : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
                         ? 'text-yellow-400' 
                         : 'text-green-400'
                   }`}>
-                    {product.stock_quantity} {product.unit}
+                    {currentStock} {product.unit}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Price:</span>
+                  <span className="text-sm text-white/70">Cost Price:</span>
                   <span className="text-lg font-semibold text-[#7fd3f7]">
-                    ₹{Number(product.price || 0).toLocaleString()}
+                    ₹{Number(costPrice || 0).toLocaleString()}
                   </span>
                 </div>
 
-                {product.stock_quantity <= (product.reorder_level || 0) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Sale Price:</span>
+                  <span className="text-sm font-medium text-white">
+                    {product.sale_price == null ? '-' : `₹${Number(product.sale_price).toLocaleString()}`}
+                  </span>
+                </div>
+
+                {isLowStock && (
                   <div className="text-xs text-red-400 bg-red-500/20 px-2 py-1 rounded">
                     Low Stock Alert
                   </div>
@@ -506,6 +576,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   Edit
                 </button>
               </div>
+                  </>
+                );
+              })()}
             </div>
           ))
         )}
