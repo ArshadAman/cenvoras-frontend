@@ -184,15 +184,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     window.URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64 bento-card">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
-      </div>
-    );
-  }
-
-  return (
+  // Removed global isLoading return to avoid unmounting search bar  return (
     <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
       {/* Status Tabs */}
       <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
