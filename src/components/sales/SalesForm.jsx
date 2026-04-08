@@ -478,6 +478,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   }, [isOpen, onClose]);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
+  const formikRef = React.useRef(null);
+  
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
   
@@ -562,11 +564,20 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     },
   });
 
+  const handleBeforeClose = async () => {
+    if (formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
+      // Auto-save as draft if form is touched
+      formikRef.current.setStatus({ action: 'draft' });
+      await formikRef.current.submitForm();
+    }
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleBeforeClose}></div>
       <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
         <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
           <div>
@@ -580,7 +591,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleBeforeClose}
             className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -590,6 +601,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
         </div>
         
         <Formik
+          innerRef={formikRef}
           initialValues={{
             // Required fields
             customer_name: editData?.customer_name || "",
@@ -637,110 +649,72 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
               isExistingProduct: false,
             }]
           }}
-          validationSchema={SalesSchema}
           enableReinitialize={true}
-          onSubmit={async (values, { setSubmitting, setFieldError, setStatus, status }) => {
+          onSubmit={async (values, { setSubmitting, setErrors, setFieldError, setStatus, status }) => {
             const isDraft = status?.action === "draft";
             
-            // Validate items if not saving draft
+            // Perform validation manually to allow drafts to bypass requirements
             if (!isDraft) {
-                for (let i = 0; i < values.items.length; i++) {
-                  const item = values.items[i];
-                  if (!item.product || item.product.trim() === '') {
-                    setFieldError(`items.${i}.product`, 'Product is required');
-                    toast.error(`Product is required for item ${i + 1}`);
-                    setSubmitting(false);
-                    return;
+                try {
+                  await SalesSchema.validate(values, { abortEarly: false });
+                } catch (err) {
+                  const errors = {};
+                  err.inner?.forEach(e => {
+                    errors[e.path] = e.message;
+                  });
+                  setErrors(errors);
+                  
+                  // Show the first error in a toast for better UX
+                  if (err.inner?.length > 0) {
+                    toast.error(err.inner[0].message);
                   }
-                }
-                
-                const validItems = values.items.filter(item => 
-                  item.product && item.product.trim() !== ''
-                );
-                
-                if (validItems.length === 0) {
-                  toast.error('At least one item with a valid product is required');
+                  
                   setSubmitting(false);
                   return;
-                }
-                
-                if (!values.customer_name || values.customer_name.trim() === '') {
-                   setFieldError('customer_name', 'Customer Name is required');
-                   toast.error('Customer name is required');
-                   setSubmitting(false);
-                   return;
                 }
             }
             
             try {
-                            const processedItems = values.items.map(item => {
+              const processedItems = values.items.map(item => {
                 const quantity = Number(item.quantity) || 1;
                 const price = Number(item.price) || 0;
                 const amount = Number(item.amount) || (quantity * price);
                 
                 return {
-                  product: item.product, // Use product field instead of product_name
+                  product: item.product_id || item.product, // Pass UUID if available, else name
                   quantity: quantity,
                   price: price,
-                  amount: amount, // Required field in new schema
+                  amount: amount,
                   unit: item.unit || null,
                   hsn_sac_code: item.hsn_sac_code || null,
-                  discount: Number(item.discount) || null,
-                  tax: Number(item.tax) || null,
+                  discount: Number(item.discount) || 0,
+                  tax: Number(item.tax) || 0,
                 };
               });
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
-              let formData;
+              const formData = {
+                customer_name: values.customer_name,
+                invoice_number: values.invoice_number,
+                invoice_date: values.invoice_date,
+                due_date: values.due_date || null,
+                delivery_address: values.delivery_address || null,
+                gst_treatment: values.gst_treatment || null,
+                place_of_supply: values.place_of_supply || null,
+                journal: values.journal || "Sales",
+                warehouse: values.warehouse || null,
+                status: isDraft ? 'draft' : 'final',
+                total_amount: totalAmount.toString(),
+                items: processedItems,
+                // Optional customer fields for new record creation
+                ...(values.customer_email && { customer_email: values.customer_email }),
+                ...(values.customer_phone && { customer_phone: values.customer_phone }),
+                ...(values.customer_address && { customer_address: values.customer_address }),
+                ...(values.customer_gstin && { customer_gstin: values.customer_gstin }),
+              };
 
-              if (isEdit) {
-                // Edit API expects different structure with UUIDs
-                formData = {
-                  customer: editData.customer || editData.customer_id, // Use original customer UUID
-                  customer_name: values.customer_name,
-                  invoice_number: values.invoice_number,
-                  invoice_date: values.invoice_date,
-                  due_date: values.due_date || null,
-                  delivery_address: values.delivery_address || null,
-                  gst_treatment: values.gst_treatment || null,
-                  journal: values.journal || "Sales",
-                  status: isDraft ? 'draft' : 'final',
-                  total_amount: totalAmount.toString(),
-                  created_by: editData.created_by, // Use original created_by UUID
-                  items: processedItems.map(item => ({
-                    product: item.product_id || item.product, // Use product UUID if available
-                    quantity: item.quantity,
-                    unit: item.unit || null,
-                    price: item.price.toString(),
-                    discount: item.discount ? item.discount.toString() : null,
-                    tax: item.tax ? item.tax.toString() : null,
-                    amount: item.amount.toString(),
-                  }))
-                };
-              } else {
-                // Create API expects customer_name structure
-                formData = {
-                  // Required fields
-                  customer_name: values.customer_name,
-                  invoice_number: values.invoice_number,
-                  invoice_date: values.invoice_date,
-                  items: processedItems,
-                  status: isDraft ? 'draft' : 'final',
-                  
-                  // Optional customer fields (for Customer record creation)
-                  ...(values.customer_email && { customer_email: values.customer_email }),
-                  ...(values.customer_phone && { customer_phone: values.customer_phone }),
-                  ...(values.customer_address && { customer_address: values.customer_address }),
-                  
-                  // Optional invoice fields
-                  ...(values.due_date && { due_date: values.due_date }),
-                  ...(values.delivery_address && { delivery_address: values.delivery_address }),
-                  ...(values.gst_treatment && { gst_treatment: values.gst_treatment }),
-                  ...(values.journal && { journal: values.journal }),
-                  ...(totalAmount && { total_amount: totalAmount }),
-                };
-              }
+              console.log("DEBUG: Submitting Sales Invoice:", formData);
 
               if (isEdit) {
                 updateMutation.mutate({ id: editData.id, data: formData });
@@ -1280,9 +1254,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <button
                     type="button"
                     onClick={() => {
-                        setStatus({ action: 'draft' });
-                        handleSubmit();
-                        onClose();
+                        handleBeforeClose();
                     }}
                     className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-xl transition-colors font-medium text-sm"
                   >
