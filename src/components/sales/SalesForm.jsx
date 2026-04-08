@@ -478,7 +478,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   }, [isOpen, onClose]);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
-  const { data: warehouses } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
+  
   
   // Lifted state: Fetch products and customers once at top level
   const { data: productsResult } = useQuery({ 
@@ -498,11 +500,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   // State to track selected warehouse for stock filtering
   const [selectedWarehouseId, setSelectedWarehouseId] = useState(editData?.warehouse || "");
 
-  const { data: stockPoints } = useQuery({
+  const { data: stockPointsResult } = useQuery({
     queryKey: ["stockPoints", selectedWarehouseId],
     queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
     enabled: !!selectedWarehouseId
   });
+  const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
+  
 
   // Sync warehouse selection from Formik values (used by render below)
   // This replaces the illegal useEffect-inside-IIFE that was causing form refreshes
