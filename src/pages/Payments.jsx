@@ -63,11 +63,19 @@ function PaymentCard({ payment, onEdit, onDelete }) {
         <div className="text-xs text-gray-500 mt-2 line-clamp-1">{payment.notes}</div>
       )}
       
-      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={() => onEdit(payment)} className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-colors" title="Edit Payment">
+      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 transition-opacity">
+        <button 
+          onClick={() => onEdit(payment)} 
+          className="p-2 bg-white/5 text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/20 rounded-lg transition-all border border-white/5" 
+          title="Edit Payment"
+        >
           <PencilSquareIcon className="w-4 h-4" />
         </button>
-        <button onClick={() => onDelete(payment)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete Payment">
+        <button 
+          onClick={() => onDelete(payment)} 
+          className="p-2 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all border border-white/5" 
+          title="Delete Payment"
+        >
           <TrashIcon className="w-4 h-4" />
         </button>
       </div>
