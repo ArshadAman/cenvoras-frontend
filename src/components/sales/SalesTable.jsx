@@ -184,7 +184,8 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     window.URL.revokeObjectURL(url);
   };
 
-  // Removed global isLoading return to avoid unmounting search bar  return (
+  // Removed global isLoading return to avoid unmounting search bar
+  return (
     <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
       {/* Status Tabs */}
       <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
@@ -322,7 +323,22 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
               </tr>
             </thead>
             <tbody>
-            {filteredInvoices.map((invoice) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan="8" className="px-6 py-12 text-center">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredInvoices.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
+                  No invoices found matching your criteria.
+                </td>
+              </tr>
+            ) : (
+              filteredInvoices.map((invoice) => (
               <tr key={invoice.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
@@ -376,7 +392,6 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                       
                       const totalWithTax = calculations.untaxed + calculations.taxAmount;
                       return Number(totalWithTax).toLocaleString();
-                    return Number(totalWithTax).toLocaleString();
                     })()}
                   </div>
                 </td>
@@ -415,7 +430,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                   </div>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
         </div>
@@ -423,7 +438,16 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
       {/* Mobile Card Layout */}
       <div className="lg:hidden space-y-4">
-        {filteredInvoices.map((invoice) => (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+          </div>
+        ) : filteredInvoices.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
+            No invoices found matching your criteria.
+          </div>
+        ) : (
+          filteredInvoices.map((invoice) => (
           <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
             {/* Card Header */}
             <div className="flex items-start justify-between mb-3">
@@ -526,7 +550,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
               </button>
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
       {filteredInvoices.length === 0 && (
