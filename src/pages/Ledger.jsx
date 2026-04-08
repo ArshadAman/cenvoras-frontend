@@ -14,6 +14,7 @@ import Layout from '../components/Layout';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon, UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 const Ledger = () => {
   const [selectedCustomer, setSelectedCustomer] = useState('');
