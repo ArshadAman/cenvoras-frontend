@@ -64,8 +64,12 @@ function App() {
         />
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={() => {
-            localStorage.setItem('activeSession', 'true');
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={(rememberMe) => {
+            if (rememberMe) {
+              localStorage.setItem('activeSession', 'true');
+            } else {
+              localStorage.removeItem('activeSession');
+            }
             setIsAuthenticated(true);
           }} />}
         />

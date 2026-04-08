@@ -188,7 +188,7 @@ export default function Signup() {
                                     className="mt-1 w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500" 
                                 />
                                 <p className="text-sm text-slate-400">
-                                    I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300" target="_blank">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300" target="_blank">Privacy Policy</Link>.
+                                    I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</Link>.
                                 </p>
                             </div>
                             <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />

@@ -77,12 +77,16 @@ export default function Login({ onLogin }) {
             </div>
 
             <Formik
-                initialValues={{ username: '', password: '' }}
+                initialValues={{ username: '', password: '', rememberMe: false }}
                 validationSchema={LoginSchema}
                 onSubmit={async (values, { setSubmitting, setFieldError }) => {
                     setLoading(true);
                     try {
-                        const response = await api.post('/users/login/', values);
+                        const payload = {
+                            username: values.username,
+                            password: values.password,
+                        };
+                        const response = await api.post('/users/login/', payload);
                         const token = response.data.token || response.data.access;
                         if (token) {
                             localStorage.setItem('token', token);
@@ -96,7 +100,7 @@ export default function Login({ onLogin }) {
                                 console.error("Failed to parse token", e);
                             }
 
-                            if (onLogin) onLogin();
+                            if (onLogin) onLogin(values.rememberMe);
                         } else {
                             setFieldError('username', 'No token received');
                         }
@@ -144,7 +148,7 @@ export default function Login({ onLogin }) {
 
                         <div className="flex items-center justify-between text-sm">
                             <label className="flex items-center gap-2 cursor-pointer group">
-                                <input type="checkbox" className="w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0" />
+                                <Field type="checkbox" name="rememberMe" className="w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0" />
                                 <span className="text-slate-400 group-hover:text-slate-300 transition-colors">Remember me</span>
                             </label>
                             <Link to="/forgot-password" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">Forgot password?</Link>
