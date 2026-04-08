@@ -653,10 +653,31 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError, setStatus, status }) => {
             const isDraft = status?.action === "draft";
             
-            // Perform validation manually to allow drafts to bypass requirements
-            if (!isDraft) {
+            // Clean up empty product rows before processing/validation
+            const cleanedItems = values.items.filter(item => 
+              (item.product && item.product.trim() !== '') || item.product_id
+            );
+            const valuesToValidate = { ...values, items: cleanedItems };
+
+            // Drafts only require customer name
+            if (isDraft) {
+               if (!values.customer_name || values.customer_name.trim() === '') {
+                   setFieldError('customer_name', 'Customer name is required');
+                   toast.error('Customer name is required to save a draft');
+                   setSubmitting(false);
+                   return;
+               }
+            } else {
+                // Final Invoices require at least one item
+                if (cleanedItems.length === 0) {
+                   toast.error('At least one item is required to create an invoice');
+                   setSubmitting(false);
+                   return;
+                }
+                
+                // Perform validation manually for Final invoices using the cleaned items
                 try {
-                  await SalesSchema.validate(values, { abortEarly: false });
+                  await SalesSchema.validate(valuesToValidate, { abortEarly: false });
                 } catch (err) {
                   const errors = {};
                   err.inner?.forEach(e => {
@@ -675,7 +696,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             }
             
             try {
-              const processedItems = values.items.map(item => {
+              const processedItems = cleanedItems.map(item => {
                 const quantity = Number(item.quantity) || 1;
                 const price = Number(item.price) || 0;
                 const amount = Number(item.amount) || (quantity * price);
