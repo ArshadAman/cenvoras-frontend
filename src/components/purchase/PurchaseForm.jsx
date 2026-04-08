@@ -453,7 +453,14 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               onClose();
             } catch (error) {
               console.error('Error saving purchase bill:', error);
-              toast.error(`Error saving purchase bill: ${error.message}`);
+              const details = error?.details;
+              if (details && typeof details === 'object') {
+                const firstField = Object.keys(details)[0];
+                const firstMessage = Array.isArray(details[firstField]) ? details[firstField][0] : details[firstField];
+                toast.error(`Error saving purchase bill: ${firstField} - ${firstMessage}`);
+              } else {
+                toast.error(`Error saving purchase bill: ${error.message}`);
+              }
             } finally {
               setSubmitting(false);
             }

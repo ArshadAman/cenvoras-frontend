@@ -8,6 +8,9 @@ export const getHSNSummary = (from, to, type = 'sales') =>
 export const getTaxRegister = (from, to, type = 'sales') =>
   api.get(`/billing/gst/tax-register/?from=${from}&to=${to}&type=${type}`).then(res => res.data);
 
+export const getTaxRegisterInvoiceDetail = (invoiceId, type = 'sales') =>
+  api.get(`/billing/gst/tax-register/${invoiceId}/?type=${type}`).then(res => res.data);
+
 export const getGSTR1Export = (from, to) =>
   api.get(`/billing/gst/gstr1-export/?from=${from}&to=${to}`).then(res => res.data);
 
@@ -50,6 +53,12 @@ export const getBalanceSheet = (asOf) => {
   const params = new URLSearchParams();
   if (asOf) params.append('as_of', asOf);
   return api.get(`/ledger/balance-sheet/?${params}`).then(res => res.data);
+};
+
+export const getBalanceSheetAccountDetail = (accountId, asOf) => {
+  const params = new URLSearchParams();
+  if (asOf) params.append('as_of', asOf);
+  return api.get(`/ledger/balance-sheet/account/${accountId}/?${params}`).then(res => res.data);
 };
 
 export const getCashbook = (from, to) => {

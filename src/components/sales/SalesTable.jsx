@@ -403,6 +403,15 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                    }`}>
                       {invoice.status || 'final'}
                    </span>
+                   <div className="mt-2">
+                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                      invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                      invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                      {invoice.payment_status || 'pending'}
+                    </span>
+                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                   {invoice.items?.length || 0} items
@@ -479,6 +488,16 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
                       'bg-gray-500/20 text-gray-400'
                    }`}>
                       {invoice.status || 'final'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-white/70">Payment:</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                  invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                  invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                  'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                  {invoice.payment_status || 'pending'}
                 </span>
               </div>
               <div className="flex justify-between items-center">

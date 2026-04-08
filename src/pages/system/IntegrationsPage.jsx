@@ -481,6 +481,7 @@ function BarcodeTab() {
 
 // ─── Backup Tab ───
 function BackupTab() {
+  const [backupFormat, setBackupFormat] = useState('json');
   const [exportResult, setExportResult] = useState(null);
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
@@ -490,16 +491,24 @@ function BackupTab() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const { data } = await exportData();
-      setExportResult(data);
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const { data } = await exportData(backupFormat);
+      const isCsv = backupFormat === 'csv';
+      let blob;
+      if (isCsv) {
+        blob = data;
+        setExportResult({ summary: null, format: 'csv' });
+      } else {
+        setExportResult(data);
+        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `cenvora-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `cenvora-backup-${new Date().toISOString().split('T')[0]}.${isCsv ? 'zip' : 'json'}`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('Backup downloaded successfully!');
+      toast.success(`${backupFormat.toUpperCase()} backup downloaded successfully!`);
     } catch { toast.error('Export failed. Please try again.'); }
     setExporting(false);
   };
@@ -508,14 +517,21 @@ function BackupTab() {
     if (!importFile) return;
     setImporting(true);
     try {
-      const text = await importFile.text();
-      const data = JSON.parse(text);
-      const { data: result } = await importData(data);
+      let result;
+      if (backupFormat === 'csv') {
+        const response = await importData(importFile, 'csv');
+        result = response.data;
+      } else {
+        const text = await importFile.text();
+        const data = JSON.parse(text);
+        const response = await importData(data, 'json');
+        result = response.data;
+      }
       setImportResult(result);
       toast.success('Data restored successfully!');
     } catch (err) {
       setImportResult({ error: err.message });
-      toast.error('Import failed. Check the backup file format.');
+      toast.error(`Import failed. Check the ${backupFormat.toUpperCase()} backup file format.`);
     }
     setImporting(false);
   };
@@ -530,9 +546,26 @@ function BackupTab() {
         <div>
           <h3 className="text-white font-bold mb-1">Complete System Backup</h3>
           <p className="text-sm text-gray-400">
-            Export a complete JSON backup of all your data — products, customers, invoices, payments.
+            Export a complete backup of all your data in JSON or CSV (separate module files in a ZIP).
             Store it securely and use it to restore your data on any Cenvora instance.
           </p>
+          <div className="mt-3 inline-flex bg-white/5 border border-white/10 rounded-lg p-1 gap-1">
+            {['json', 'csv'].map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() => {
+                  setBackupFormat(fmt);
+                  setImportFile(null);
+                  setImportResult(null);
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide ${
+                  backupFormat === fmt ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {fmt}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -545,7 +578,7 @@ function BackupTab() {
             </div>
             <div>
               <h3 className="text-white font-bold">Export & Download</h3>
-              <p className="text-sm text-gray-500">Full data backup as JSON</p>
+              <p className="text-sm text-gray-500">Full data backup as {backupFormat.toUpperCase()}</p>
             </div>
           </div>
           <div className="space-y-2 text-sm text-gray-400 mb-5">
@@ -562,7 +595,9 @@ function BackupTab() {
           </button>
           {exportResult && (
             <div className="mt-4 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-sm text-emerald-400">
-              ✅ {exportResult.summary?.total_products} products · {exportResult.summary?.total_customers} customers · {exportResult.summary?.total_invoices} invoices exported
+              {backupFormat === 'csv'
+                ? '✅ products.csv, customers.csv, invoices.csv, payments.csv exported in ZIP'
+                : `✅ ${exportResult.summary?.total_products} products · ${exportResult.summary?.total_customers} customers · ${exportResult.summary?.total_invoices} invoices exported`}
             </div>
           )}
         </div>
@@ -575,17 +610,19 @@ function BackupTab() {
             </div>
             <div>
               <h3 className="text-white font-bold">Restore from Backup</h3>
-              <p className="text-sm text-gray-500">Import a .json backup file</p>
+              <p className="text-sm text-gray-500">Import a {backupFormat === 'csv' ? '.zip' : '.json'} backup file</p>
             </div>
           </div>
           <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200">
             ⚠ Existing records will be updated by name. No data will be deleted before import.
           </div>
           <div className="mb-4">
-            <label className="block text-xs text-gray-400 mb-1">Select Backup File (.json)</label>
+            <label className="block text-xs text-gray-400 mb-1">
+              Select Backup File ({backupFormat === 'csv' ? '.zip' : '.json'})
+            </label>
             <input
               type="file"
-              accept=".json"
+              accept={backupFormat === 'csv' ? '.zip' : '.json'}
               onChange={e => { setImportFile(e.target.files?.[0]); setImportResult(null); }}
               className="w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:font-medium file:cursor-pointer"
             />
@@ -599,7 +636,9 @@ function BackupTab() {
           </button>
           {importResult && (
             <div className={`mt-4 p-3 rounded-xl text-sm ${importResult.error ? 'bg-red-500/5 border border-red-500/10 text-red-400' : 'bg-emerald-500/5 border border-emerald-500/10 text-emerald-400'}`}>
-              {importResult.error ? `❌ ${importResult.error}` : `✅ Restored: ${importResult.imported?.products} products, ${importResult.imported?.customers} customers`}
+              {importResult.error
+                ? `❌ ${importResult.error}`
+                : `✅ Restored: ${importResult.imported?.products || 0} products, ${importResult.imported?.customers || 0} customers, ${importResult.imported?.invoices || 0} invoices, ${importResult.imported?.payments || 0} payments`}
             </div>
           )}
         </div>

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { getTaxRegister, getHSNSummary, getGSTR1Export, generateEInvoice, generateEWayBill } from "../../api/gst";
+import { useQuery } from "@tanstack/react-query";
+import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail } from "../../api/gst";
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,6 +15,7 @@ export default function TaxRegister() {
   const [fromDate, setFromDate] = useState(monthStart);
   const [toDate, setToDate] = useState(today);
   const [reportType, setReportType] = useState('sales');
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // Tax Register
   const { data: registerData, isLoading: regLoading, refetch: refetchRegister } = useQuery({
@@ -56,6 +57,12 @@ export default function TaxRegister() {
   ];
 
   const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const { data: invoiceDetail, isLoading: invoiceDetailLoading } = useQuery({
+    queryKey: ["tax-register-detail", selectedInvoice?.id, reportType],
+    queryFn: () => getTaxRegisterInvoiceDetail(selectedInvoice.id, reportType),
+    enabled: Boolean(selectedInvoice?.id),
+  });
 
   return (
     <Layout>
@@ -143,7 +150,7 @@ export default function TaxRegister() {
                   ) : (
                     <>
                       {registerData.results.map((row, i) => (
-                        <tr key={i} className="hover:bg-white/5 transition-colors">
+                        <tr key={i} className="hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setSelectedInvoice(row)}>
                           <td className="p-4 text-white font-medium text-sm">{row.invoice_number}</td>
                           <td className="p-4 text-gray-300 text-sm">{row.date}</td>
                           <td className="p-4 text-gray-300 text-sm">{row.party_name}</td>
@@ -266,6 +273,104 @@ export default function TaxRegister() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {selectedInvoice && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-2xl border border-white/10 bg-[#0f1017]">
+              <div className="px-5 py-4 border-b border-white/10 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Invoice Tax Breakdown</h3>
+                  <p className="text-xs text-gray-400 mt-1">{selectedInvoice.invoice_number} • {selectedInvoice.date}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedInvoice(null)}
+                  className="px-3 py-1.5 text-sm rounded-lg border border-white/20 text-gray-300 hover:text-white hover:bg-white/5"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="overflow-auto max-h-[70vh]">
+                {invoiceDetailLoading ? (
+                  <div className="p-8 text-center text-gray-500">Loading invoice details...</div>
+                ) : !invoiceDetail ? (
+                  <div className="p-8 text-center text-gray-500">Unable to load invoice details.</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
+                      <div className="rounded-lg border border-white/10 p-2.5">
+                        <div className="text-[11px] text-gray-400">Taxable</div>
+                        <div className="text-sm text-white font-semibold mt-1">₹{fmt(invoiceDetail.totals?.taxable)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-2.5">
+                        <div className="text-[11px] text-gray-400">CGST</div>
+                        <div className="text-sm text-blue-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.cgst)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-2.5">
+                        <div className="text-[11px] text-gray-400">SGST</div>
+                        <div className="text-sm text-emerald-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.sgst)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-2.5">
+                        <div className="text-[11px] text-gray-400">IGST</div>
+                        <div className="text-sm text-violet-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.igst)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-2.5">
+                        <div className="text-[11px] text-gray-400">Tax</div>
+                        <div className="text-sm text-amber-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.tax)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-2.5">
+                        <div className="text-[11px] text-gray-400">Total</div>
+                        <div className="text-sm text-white font-semibold mt-1">₹{fmt(invoiceDetail.totals?.total_amount)}</div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-white/10 text-gray-400 text-xs uppercase bg-white/5">
+                            <th className="p-3 font-medium">Product</th>
+                            <th className="p-3 font-medium">HSN</th>
+                            <th className="p-3 font-medium text-right">Qty</th>
+                            <th className="p-3 font-medium text-right">Price</th>
+                            <th className="p-3 font-medium text-right">Taxable</th>
+                            <th className="p-3 font-medium text-right">CGST</th>
+                            <th className="p-3 font-medium text-right">SGST</th>
+                            <th className="p-3 font-medium text-right">IGST</th>
+                            <th className="p-3 font-medium text-right">Tax</th>
+                            <th className="p-3 font-medium text-right">Line Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {invoiceDetail.items?.length ? (
+                            invoiceDetail.items.map((item) => (
+                              <tr key={item.id} className="hover:bg-white/[0.03]">
+                                <td className="p-3 text-white text-sm">{item.product_name}</td>
+                                <td className="p-3 text-gray-400 text-xs font-mono">{item.hsn_code || '-'}</td>
+                                <td className="p-3 text-right text-gray-300 text-sm">{item.quantity} {item.unit || ''}</td>
+                                <td className="p-3 text-right text-gray-300 text-sm">₹{fmt(item.price)}</td>
+                                <td className="p-3 text-right text-gray-300 text-sm">₹{fmt(item.taxable_value)}</td>
+                                <td className="p-3 text-right text-blue-300 text-sm">₹{fmt(item.cgst)}</td>
+                                <td className="p-3 text-right text-emerald-300 text-sm">₹{fmt(item.sgst)}</td>
+                                <td className="p-3 text-right text-violet-300 text-sm">₹{fmt(item.igst)}</td>
+                                <td className="p-3 text-right text-amber-300 text-sm">₹{fmt(item.tax)}</td>
+                                <td className="p-3 text-right text-white text-sm font-semibold">₹{fmt(item.line_total)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="10" className="p-8 text-center text-gray-500">No line items found for this invoice.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

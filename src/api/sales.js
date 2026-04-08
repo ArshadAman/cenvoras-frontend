@@ -20,7 +20,12 @@ export const updateSalesInvoice = (id, data) =>
   api.put(`/billing/sales-invoices/${id}/edit/`, data).then(res => res.data);
 
 export const deleteSalesInvoice = id =>
-  api.delete(`/billing/sales-invoices/${id}/edit/`).then(res => res.data);
+  api.delete(`/billing/sales-invoices/${id}/edit/`)
+    .then(res => res.data)
+    .catch((error) => {
+      const message = error?.response?.data?.error || error?.response?.data?.message || 'Failed to delete sales invoice';
+      throw new Error(message);
+    });
 
 export const uploadSalesCsv = formData =>
   api.post("/billing/upload-sales-invoices-csv/", formData, {

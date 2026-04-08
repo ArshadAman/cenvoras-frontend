@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 import { useQuery } from "@tanstack/react-query";
-import { getBalanceSheet } from "../../api/gst";
+import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
 import {
   BuildingLibraryIcon,
   ScaleIcon,
@@ -69,7 +69,7 @@ function SubGroup({ label, items = [], total, color }) {
 }
 
 // Full section card (Assets / Liabilities / Equity)
-function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGroups }) {
+function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGroups, onRowClick }) {
   return (
     <div className="bento-card overflow-hidden">
       {/* Section Header */}
@@ -103,7 +103,12 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
       ) : (
         <div className="divide-y divide-white/5">
           {items.map((item, i) => (
-            <div key={i} className="flex justify-between items-center px-5 py-3 hover:bg-white/[0.02] transition-colors">
+            <button
+              key={i}
+              type="button"
+              onClick={() => onRowClick && onRowClick(item)}
+              className="w-full flex justify-between items-center px-5 py-3 hover:bg-white/[0.02] transition-colors text-left"
+            >
               <div>
                 <span className="text-white text-sm">{item.name}</span>
                 {item.code && (
@@ -111,7 +116,7 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
                 )}
               </div>
               <span className={`text-sm font-semibold ${color}`}>₹{fmt(item.amount)}</span>
-            </div>
+            </button>
           ))}
           {extra && (
             <div className="flex justify-between items-center px-5 py-3 bg-white/[0.02] border-t border-white/10">
@@ -129,6 +134,7 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
 
 export default function BalanceSheet() {
   const [asOf, setAsOf] = useState(today);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["balance-sheet", asOf],
@@ -137,6 +143,12 @@ export default function BalanceSheet() {
 
   const isBalanced = data?.is_balanced;
   const diff = data?.difference;
+
+  const { data: accountDetail, isLoading: accountDetailLoading } = useQuery({
+    queryKey: ["balance-sheet-account-detail", selectedAccount?.id, asOf],
+    queryFn: () => getBalanceSheetAccountDetail(selectedAccount.id, asOf),
+    enabled: Boolean(selectedAccount?.id),
+  });
 
   return (
     <Layout>
@@ -238,6 +250,7 @@ export default function BalanceSheet() {
               bg="bg-blue-500/5"
               items={data.assets?.items || []}
               total={data.assets?.total}
+              onRowClick={setSelectedAccount}
             />
 
             {/* Right: Liabilities + Equity stacked */}
@@ -249,6 +262,7 @@ export default function BalanceSheet() {
                 bg="bg-rose-500/5"
                 items={data.liabilities?.items || []}
                 total={data.liabilities?.total}
+                onRowClick={setSelectedAccount}
               />
               <Section
                 title="Equity"
@@ -261,7 +275,86 @@ export default function BalanceSheet() {
                   label: "Retained Earnings (Net Profit)",
                   amount: data.equity?.retained_earnings,
                 }}
+                onRowClick={setSelectedAccount}
               />
+            </div>
+          </div>
+        )}
+
+        {selectedAccount && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-[#0f1017]">
+              <div className="px-5 py-4 border-b border-white/10 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white">{selectedAccount.name}</h3>
+                  <p className="text-xs text-gray-400 mt-1">Ledger breakdown as of {asOf || "current"}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAccount(null)}
+                  className="px-3 py-1.5 text-sm rounded-lg border border-white/20 text-gray-300 hover:text-white hover:bg-white/5"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="overflow-auto max-h-[65vh]">
+                {accountDetailLoading ? (
+                  <div className="p-8 text-center text-gray-500">Loading account details...</div>
+                ) : !accountDetail ? (
+                  <div className="p-8 text-center text-gray-500">Unable to load account details.</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
+                      <div className="rounded-lg border border-white/10 p-3">
+                        <div className="text-xs text-gray-400">Total Debit</div>
+                        <div className="text-sm font-semibold text-white mt-1">₹{fmt(accountDetail.totals?.debit)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-3">
+                        <div className="text-xs text-gray-400">Total Credit</div>
+                        <div className="text-sm font-semibold text-white mt-1">₹{fmt(accountDetail.totals?.credit)}</div>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-3">
+                        <div className="text-xs text-gray-400">Net Balance</div>
+                        <div className="text-sm font-semibold text-emerald-400 mt-1">₹{fmt(accountDetail.totals?.net_balance)}</div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-white/10 text-gray-400 text-xs uppercase bg-white/5">
+                            <th className="p-3 font-medium">Date</th>
+                            <th className="p-3 font-medium">Description</th>
+                            <th className="p-3 font-medium">Reference</th>
+                            <th className="p-3 font-medium text-right">Debit</th>
+                            <th className="p-3 font-medium text-right">Credit</th>
+                            <th className="p-3 font-medium text-right">Running Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {accountDetail.entries?.length ? (
+                            accountDetail.entries.map((entry) => (
+                              <tr key={entry.id} className="hover:bg-white/[0.03]">
+                                <td className="p-3 text-gray-300 text-sm">{entry.date}</td>
+                                <td className="p-3 text-white text-sm">{entry.description}</td>
+                                <td className="p-3 text-gray-400 text-xs">{entry.reference || "-"}</td>
+                                <td className="p-3 text-right text-blue-300 text-sm">₹{fmt(entry.debit)}</td>
+                                <td className="p-3 text-right text-rose-300 text-sm">₹{fmt(entry.credit)}</td>
+                                <td className="p-3 text-right text-emerald-300 text-sm font-semibold">₹{fmt(entry.running_balance)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="6" className="p-8 text-center text-gray-500">No ledger entries for this account and date.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

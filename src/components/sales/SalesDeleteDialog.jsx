@@ -22,6 +22,10 @@ export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
 
   if (!isOpen || !invoice) return null;
 
+  const totalAmount = Number(invoice.total_amount || 0);
+  const amountPaid = Number(invoice.amount_paid || 0);
+  const outstanding = Math.max(totalAmount - amountPaid, 0);
+
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
@@ -58,8 +62,20 @@ export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
               <span className="text-white">{invoice.customer_name || invoice.customer}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Amount:</span>
-              <span className="text-cyan-400 font-bold">₹{Number(invoice.total_amount).toLocaleString()}</span>
+              <span className="text-gray-400">Total:</span>
+              <span className="text-cyan-400 font-bold">₹{totalAmount.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Paid:</span>
+              <span className="text-green-400 font-bold">₹{amountPaid.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Outstanding:</span>
+              <span className="text-amber-400 font-bold">₹{outstanding.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Payment Status:</span>
+              <span className="text-white font-medium">{invoice.payment_status || 'pending'}</span>
             </div>
           </div>
           

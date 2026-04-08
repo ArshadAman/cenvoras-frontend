@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 
 export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
   const queryClient = useQueryClient();
+  const isDebitEntry = Number(entry?.debit || 0) > 0;
 
   const deleteEntryMutation = useMutation({
     mutationFn: deleteLedgerEntry,
@@ -23,6 +24,10 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
   });
 
   const handleDelete = () => {
+    if (isDebitEntry) {
+      toast.error('Debit ledger entries cannot be deleted.');
+      return;
+    }
     if (entry?.id) {
       deleteEntryMutation.mutate(entry.id);
     }
@@ -125,6 +130,16 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
               </div>
             </div>
           </div>
+
+          <div className="mt-4 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs text-amber-200">
+            Deletion policy: debit entries are blocked; credit entries linked to bills are only deletable when bill status is pending.
+          </div>
+
+          {isDebitEntry && (
+            <div className="mt-3 p-3 rounded-lg border border-red-500/20 bg-red-500/5 text-xs text-red-300">
+              This entry has a debit amount and cannot be deleted.
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -140,8 +155,8 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
           <button
             type="button"
             onClick={handleDelete}
-            disabled={deleteEntryMutation.isLoading}
-            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-900/20"
+            disabled={deleteEntryMutation.isLoading || isDebitEntry}
+            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {deleteEntryMutation.isLoading ? (
               <span className="flex items-center gap-2">
