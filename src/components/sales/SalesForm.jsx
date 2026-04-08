@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -42,6 +42,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
+    if (onProductSearchChange) {
+      onProductSearchChange(value.trim());
+    }
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
@@ -394,7 +397,6 @@ const SalesSchema = Yup.object().shape({
   
   // Optional invoice fields
   due_date: Yup.string().nullable(),
-  delivery_address: Yup.string().nullable(),
   gst_treatment: Yup.string().nullable(),
   journal: Yup.string().nullable(),
   total_amount: Yup.number().nullable(),
@@ -480,6 +482,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const isEdit = !!editData;
   const formikRef = React.useRef(null);
   const submitActionRef = React.useRef('final');
+  const [productSearch, setProductSearch] = useState("");
   
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
@@ -487,8 +490,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   
   // Lifted state: Fetch products and customers once at top level
   const { data: productsResult } = useQuery({ 
-      queryKey: ["products"], 
-      queryFn: getProducts,
+      queryKey: ["products", productSearch], 
+      queryFn: () => getProducts({
+        ...(productSearch ? { search: productSearch } : {}),
+        ordering: "name",
+      }),
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
@@ -609,7 +615,6 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             
             // Optional invoice fields
             due_date: editData?.due_date || "",
-            delivery_address: editData?.delivery_address || "",
             gst_treatment: editData?.gst_treatment || "registered",
             place_of_supply: editData?.place_of_supply || "", // New field
             warehouse: editData?.warehouse || "", // New field
@@ -695,7 +700,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
               const processedItems = cleanedItems.map(item => {
                 const quantity = Number(item.quantity) || 1;
                 const price = Number(item.price) || 0;
-                const amount = Number(item.amount) || (quantity * price);
+                const discount = Number(item.discount) || 0;
+                const tax = Number(item.tax) || 0;
+                const baseAmount = quantity * price;
+                const discountAmount = (baseAmount * discount) / 100;
+                const taxableAmount = baseAmount - discountAmount;
+                const taxAmount = (taxableAmount * tax) / 100;
+                const amount = Number((taxableAmount + taxAmount).toFixed(2));
                 
                 return {
                   product: item.product_id || item.product, // Pass UUID if available, else name
@@ -704,8 +715,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   amount: amount,
                   unit: item.unit || null,
                   hsn_sac_code: item.hsn_sac_code || null,
-                  discount: Number(item.discount) || 0,
-                  tax: Number(item.tax) || 0,
+                  discount: discount,
+                  tax: tax,
                 };
               });
 
@@ -1061,6 +1072,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                       setFieldValue={setFieldValue}
                                       products={products}
                                       onInputChange={() => handleAutoAddRow(index)}
+                                      onProductSearchChange={setProductSearch}
                                   />
                               </div>
                             </div>

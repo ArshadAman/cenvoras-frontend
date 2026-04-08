@@ -33,8 +33,13 @@ export const uploadSalesCsv = formData =>
   }).then(res => res.data);
 
 // Product API endpoints for sales form (reuse from inventory)
-export const getProducts = () =>
-  api.get("/inventory/products/").then(res => res.data);
+export const getProducts = (params = {}) =>
+  api.get("/inventory/products/", {
+    params: {
+      page_size: 50,
+      ...params,
+    },
+  }).then(res => res.data);
 
 // Customer API endpoints for sales form
 export const getCustomers = () =>

@@ -177,16 +177,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
-  // Frontend search and filter
+  // Backend handles search across all products; frontend applies additional filters only.
   const filteredProducts = productsRaw
     .filter(product => {
-      // Search by product name or description
-      const searchLower = search.toLowerCase();
-      const matchesSearch = product.name?.toLowerCase().includes(searchLower) ||
-        product.description?.toLowerCase().includes(searchLower);
-      
-
-      
       // Stock filter
       let matchesStock = true;
   const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
@@ -237,7 +230,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         matchesSupplier = product.supplier?.toLowerCase().includes(advancedFilters.supplier.toLowerCase());
       }
       
-      return matchesSearch && matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
+      return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
     })
     .sort((a, b) => {
       // Frontend ordering
@@ -337,7 +330,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search by name or description"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
         <select
           value={ordering}
