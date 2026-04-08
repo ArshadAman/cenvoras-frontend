@@ -616,18 +616,23 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             journal: editData?.journal || "Sales",
             total_amount: editData?.total_amount || null,
             
-            items: editData?.items?.map(item => ({
-              product: item.product || item.product_name || "",
-              product_id: item.product_id || null,
-              quantity: item.quantity || 1,
-              price: item.price || 0,
-              amount: item.amount || (item.quantity * item.price) || 0,
-              unit: item.unit || "pcs",
-              hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
-              discount: item.discount || 0,
-              tax: item.tax || 0,
-              isExistingProduct: !!(item.product_id),
-            })) || [{
+            items: editData?.items?.map(item => {
+              const qty = item.quantity || 1;
+              const price = item.price || 0;
+              const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
+              return {
+                product: item.product || item.product_name || "",
+                product_id: item.product_id || null,
+                quantity: qty,
+                price: price,
+                amount: itemAmount, // This should always be qty * price before tax/discount
+                unit: item.unit || "pcs",
+                hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
+                discount: item.discount || 0,
+                tax: item.tax || 0,
+                isExistingProduct: !!(item.product_id),
+              };
+            }) || [{
               product: "",
               product_id: null,
               quantity: 1,
