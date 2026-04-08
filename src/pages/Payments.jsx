@@ -450,11 +450,14 @@ export default function Payments({ onLogout }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDueModalOpen, setIsDueModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all'); // 'all' or 'today'
+
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
@@ -499,7 +502,8 @@ export default function Payments({ onLogout }) {
     const matchesSearch = p.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           p.reference?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesMode = filterMode === 'all' || p.mode === filterMode;
-    return matchesSearch && matchesMode;
+    const matchesDate = dateFilter === 'all' || p.date === new Date().toISOString().split('T')[0];
+    return matchesSearch && matchesMode && matchesDate;
   });
   
   // Calculate stats
@@ -543,22 +547,41 @@ export default function Payments({ onLogout }) {
         
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bento-card !p-4">
-            <div className="text-xs text-gray-500 mb-1">Today's Collection</div>
+          <div 
+            onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
+            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'today' ? 'border-green-500/50 bg-green-500/5' : 'border-white/5 hover:border-white/20'}`}
+          >
+            <div className="flex justify-between items-start mb-1">
+              <div className="text-xs text-gray-500">Today's Collection</div>
+              {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />}
+            </div>
             <div className="text-2xl font-bold text-green-400">₹{todayTotal.toLocaleString('en-IN')}</div>
           </div>
-          <div className="bento-card !p-4">
+          <div className="bento-card !p-4 group">
             <div className="text-xs text-gray-500 mb-1">This Month</div>
             <div className="text-2xl font-bold text-white">₹{thisMonthTotal.toLocaleString('en-IN')}</div>
           </div>
-          <div className="bento-card !p-4">
+          <div 
+            onClick={() => {
+              setSearchQuery('');
+              setFilterMode('all');
+              setDateFilter('all');
+            }}
+            className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-white/20"
+          >
             <div className="text-xs text-gray-500 mb-1">Total Payments</div>
             <div className="text-2xl font-bold text-white">{payments?.length || 0}</div>
           </div>
-          <div className="bento-card !p-4">
-            <div className="text-xs text-gray-500 mb-1">Customers with Due</div>
+          <div 
+            onClick={() => setIsDueModalOpen(true)}
+            className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-amber-500/30 group"
+          >
+            <div className="flex justify-between items-start mb-1">
+              <div className="text-xs text-gray-500 group-hover:text-amber-400/80 transition-colors">Customers with Due</div>
+              <PlusIcon className="w-4 h-4 text-gray-600 group-hover:text-amber-400 transition-colors" />
+            </div>
             <div className="text-2xl font-bold text-amber-400">
-              {customers?.filter(c => c.current_balance > 0).length || 0}
+              {customers?.filter(c => parseFloat(c.current_balance) > 0).length || 0}
             </div>
           </div>
         </div>
@@ -695,6 +718,66 @@ export default function Payments({ onLogout }) {
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+        {/* Due Customers Modal */}
+        {isDueModalOpen && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsDueModalOpen(false)} />
+            <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[80vh] flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <UserIcon className="w-6 h-6 text-amber-400" />
+                  Customers with Due
+                </h2>
+                <button onClick={() => setIsDueModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                {customers?.filter(c => parseFloat(c.current_balance) > 0).length > 0 ? (
+                  customers
+                    .filter(c => parseFloat(c.current_balance) > 0)
+                    .sort((a, b) => b.current_balance - a.current_balance)
+                    .map(c => (
+                      <div 
+                        key={c.id} 
+                        className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center hover:bg-white/10 transition-all cursor-default group"
+                      >
+                        <div>
+                          <div className="text-white font-medium group-hover:text-amber-400 transition-colors">{c.name}</div>
+                          <div className="text-xs text-gray-500">ID: {c.id.slice(0, 8)}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-amber-500">₹{parseFloat(c.current_balance).toLocaleString()}</div>
+                          <button 
+                            onClick={() => {
+                              setIsDueModalOpen(false);
+                              setSearchQuery(c.name);
+                            }}
+                            className="text-[10px] text-cyan-400 uppercase tracking-wider font-bold hover:underline"
+                          >
+                            View History
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="text-center py-10 text-gray-500">No customers have outstanding balances.</div>
+                )}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-white/5">
+                <button
+                  onClick={() => setIsDueModalOpen(false)}
+                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>,
