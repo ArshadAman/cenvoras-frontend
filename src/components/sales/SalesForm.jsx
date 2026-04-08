@@ -16,6 +16,21 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
+  useEffect(() => {
+    const query = (inputValue || "").trim().toLowerCase();
+    if (!query) {
+      setFilteredProducts([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const filtered = (products || []).filter((product) =>
+      (product?.name || "").toLowerCase().includes(query)
+    );
+    setFilteredProducts(filtered);
+    setShowDropdown(filtered.length > 0);
+  }, [inputValue, products]);
+
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
@@ -49,16 +64,6 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
     setSelectedIndex(-1);
-
-    if (value.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-      setShowDropdown(filtered.length > 0);
-    } else {
-      setShowDropdown(false);
-    }
   };
 
   return (
@@ -70,6 +75,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               {...field}
               value={inputValue}
               onChange={handleInputChange}
+              onFocus={() => {
+                if ((inputValue || "").trim() && filteredProducts.length > 0) {
+                  setShowDropdown(true);
+                }
+              }}
               placeholder="Product name"
               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
               autoComplete="off"
