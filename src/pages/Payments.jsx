@@ -14,8 +14,11 @@ import {
   BuildingLibraryIcon,
   DocumentTextIcon,
   UserIcon,
-  CalendarIcon
+  CalendarIcon,
+  PencilSquareIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 import api from '../api/api';
 import Layout from '../components/Layout';
 
@@ -28,7 +31,7 @@ const PAYMENT_MODES = {
 };
 
 // Payment card component
-function PaymentCard({ payment }) {
+function PaymentCard({ payment, onEdit, onDelete }) {
   const mode = PAYMENT_MODES[payment.mode] || PAYMENT_MODES.cash;
   const ModeIcon = mode.icon;
   
@@ -59,12 +62,21 @@ function PaymentCard({ payment }) {
       {payment.notes && (
         <div className="text-xs text-gray-500 mt-2 line-clamp-1">{payment.notes}</div>
       )}
+      
+      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={() => onEdit(payment)} className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-colors" title="Edit Payment">
+          <PencilSquareIcon className="w-4 h-4" />
+        </button>
+        <button onClick={() => onDelete(payment)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete Payment">
+          <TrashIcon className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
 
-// Add Payment Modal
-function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
+// Payment Modal (Creates & Edits)
+function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const [formData, setFormData] = useState({
     customer: '',
     invoice: '',
@@ -83,6 +95,23 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && editData) {
+      setFormData({
+        customer: editData.customer || '',
+        invoice: editData.invoice || '',
+        amount: editData.amount || '',
+        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        mode: editData.mode || 'cash',
+        reference: editData.reference || '',
+        notes: editData.notes || ''
+      });
+      setCustomerSearch(editData.customer_name || '');
+    } else if (isOpen && !editData) {
+      resetForm();
+    }
+  }, [isOpen, editData]);
 
   // Filter customers based on search
   const filteredCustomers = customers.filter(c => 
@@ -157,15 +186,25 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
         throw new Error("Please select or enter a customer name");
       }
 
-      await api.post('/billing/payments/', {
-        ...formData,
-        customer: targetCustomerId,
-        amount: parseFloat(formData.amount)
-      });
+      if (editData) {
+        await api.put(`/billing/payments/${editData.id}/`, {
+          ...formData,
+          customer: targetCustomerId,
+          amount: parseFloat(formData.amount)
+        });
+        toast.success("Payment updated successfully");
+      } else {
+        await api.post('/billing/payments/', {
+          ...formData,
+          customer: targetCustomerId,
+          amount: parseFloat(formData.amount)
+        });
+        toast.success("Payment recorded successfully");
+      }
       
       onSuccess();
       onClose();
-      resetForm();
+      if (!editData) resetForm();
     } catch (err) {
       setError(err.response?.data?.detail || err.message || 'Failed to record payment');
     } finally {
@@ -198,7 +237,7 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <BanknotesIcon className="w-6 h-6 text-green-400" />
-            Record Payment
+            {editData ? "Edit Payment" : "Record Payment"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <XMarkIcon className="w-6 h-6" />
@@ -386,7 +425,7 @@ function AddPaymentModal({ isOpen, onClose, customers, onSuccess }) {
               ) : (
                 <>
                   <CheckCircleIcon className="w-5 h-5" />
-                  Record Payment
+                  {editData ? "Update Payment" : "Record Payment"}
                 </>
               )}
             </button>
@@ -403,8 +442,35 @@ export default function Payments({ onLogout }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      toast.success("Payment deleted successfully");
+      setIsDeleteModalOpen(false);
+      setPaymentToDelete(null);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.detail || "Failed to delete payment");
+    }
+  });
+
+  const handleEdit = (payment) => {
+    setSelectedPayment(payment);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (payment) => {
+    setPaymentToDelete(payment);
+    setIsDeleteModalOpen(true);
+  };
+  
   
   // Fetch payments
   const { data: paymentsData, isLoading } = useQuery({
@@ -456,7 +522,10 @@ export default function Payments({ onLogout }) {
           </div>
           
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setSelectedPayment(null);
+              setIsModalOpen(true);
+            }}
             className="btn-primary text-sm py-2.5 px-5 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
           >
             <PlusIcon className="w-5 h-5" />
@@ -547,7 +616,10 @@ export default function Payments({ onLogout }) {
                 : 'Start recording customer payments to track cash flow'}
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setSelectedPayment(null);
+                setIsModalOpen(true);
+              }}
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-cyan-500 text-white rounded-xl hover:opacity-90"
             >
               <PlusIcon className="w-5 h-5" />
@@ -557,18 +629,69 @@ export default function Payments({ onLogout }) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPayments.map((payment) => (
-              <PaymentCard key={payment.id} payment={payment} />
+              <PaymentCard 
+                key={payment.id} 
+                payment={payment} 
+                onEdit={handleEdit} 
+                onDelete={handleDelete} 
+              />
             ))}
           </div>
         )}
         
-        {/* Add Payment Modal */}
-        <AddPaymentModal
+        {/* Payment Modal */}
+        <PaymentModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedPayment(null);
+          }}
           customers={customers}
-          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['payments'] })}
+          editData={selectedPayment}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            setSelectedPayment(null);
+          }}
         />
+
+        {/* Delete Confirmation Modal */}
+        {isDeleteModalOpen && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
+            <div className="relative bg-[#0a0a0a] border border-red-500/20 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                  <TrashIcon className="w-6 h-6 text-red-500" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Delete Payment?</h3>
+                <p className="text-sm text-gray-400 mb-6">
+                  Are you sure you want to delete this payment of <span className="text-white font-medium">₹{paymentToDelete?.amount}</span> from <span className="text-white font-medium">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
+                </p>
+                <div className="flex w-full gap-3">
+                  <button
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10"
+                    disabled={deleteMutation.isPending}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => deleteMutation.mutate(paymentToDelete.id)}
+                    className="flex-1 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-colors font-medium border border-red-500/30 flex justify-center items-center"
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                    ) : (
+                      "Delete"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </Layout>
   );
