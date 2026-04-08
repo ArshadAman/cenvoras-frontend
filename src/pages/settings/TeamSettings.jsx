@@ -35,6 +35,10 @@ export default function TeamSettings() {
     queryFn: getTeamMembers
   });
 
+  const teamMembersList = Array.isArray(teamMembers)
+    ? teamMembers
+    : teamMembers?.results || teamMembers?.data || [];
+
   const createMutation = useMutation({
     mutationFn: createTeamMember,
     onSuccess: () => {
@@ -77,7 +81,7 @@ export default function TeamSettings() {
   const profile = profileData?.profile || {};
   
   // Read dynamic limits directly from plan 
-  const currentCount = Array.isArray(teamMembers) ? teamMembers.length : 0;
+  const currentCount = teamMembersList.length;
   const maxLimit = profile?.max_managers || 0;
   const planName = profile?.plan_name || 'Starter Plan';
   
@@ -190,7 +194,7 @@ export default function TeamSettings() {
               <tbody>
                 {isLoading ? (
                   <tr><td colSpan="5" className="p-8 text-center text-gray-500">Loading team...</td></tr>
-                ) : teamMembers?.length === 0 ? (
+                ) : teamMembersList.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="p-12 text-center">
                       <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -206,7 +210,7 @@ export default function TeamSettings() {
                     </td>
                   </tr>
                 ) : (
-                  teamMembers?.map((member) => (
+                  teamMembersList.map((member) => (
                     <tr key={member.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="p-4 text-sm font-medium text-white flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center border border-white/10">
@@ -221,7 +225,7 @@ export default function TeamSettings() {
                         </span>
                       </td>
                       <td className="p-4 text-sm text-gray-400">
-                        {new Date(member.date_joined).toLocaleDateString()}
+                        {member.date_joined ? new Date(member.date_joined).toLocaleDateString() : '-'}
                       </td>
                       <td className="p-4 text-right space-x-2">
                         <button

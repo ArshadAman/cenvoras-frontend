@@ -17,6 +17,17 @@ export default function AuditLogList() {
     queryFn: () => getAuditLogs(params),
   });
 
+  const logs = Array.isArray(data)
+    ? data
+    : data?.results || data?.data || [];
+
+  const formatTimestamp = (value) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return format(date, 'dd MMM yyyy HH:mm:ss');
+  };
+
   return (
     <Layout>
       <div className="p-6 md:p-10 animate-fade-up">
@@ -39,13 +50,13 @@ export default function AuditLogList() {
               <tbody>
                 {isLoading ? (
                   <tr><td colSpan="6" className="p-8 text-center text-gray-500">Loading logs...</td></tr>
-                ) : data?.length === 0 ? (
+                ) : logs.length === 0 ? (
                   <tr><td colSpan="6" className="p-8 text-center text-gray-500">No activity logged yet.</td></tr>
                 ) : (
-                  data?.map((log) => (
+                  logs.map((log) => (
                     <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="p-4 text-sm text-gray-400 whitespace-nowrap">
-                        {format(new Date(log.timestamp), 'dd MMM yyyy HH:mm:ss')}
+                        {formatTimestamp(log.timestamp)}
                       </td>
                       <td className="p-4 text-sm text-white flex items-center gap-2">
                         <UserIcon className="w-4 h-4 text-gray-500" />

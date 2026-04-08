@@ -631,7 +631,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             journal: editData?.journal || "Sales",
             total_amount: editData?.total_amount || null,
             
-            items: editData?.items?.map(item => {
+            items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
               const qty = item.quantity || 1;
               const price = item.price || 0;
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
@@ -647,7 +647,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 tax: item.tax || 0,
                 isExistingProduct: !!(item.product_id),
               };
-            }) || [{
+            }) : [{
               product: "",
               product_id: null,
               quantity: 1,
