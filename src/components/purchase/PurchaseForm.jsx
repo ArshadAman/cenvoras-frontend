@@ -238,7 +238,10 @@ const units = ["pcs", "kg", "ltr", "box", "meter"];
 
 export default function PurchaseForm({ bill, onClose, onSubmit }) {
   const isEdit = !!bill;
-  const { data: warehouses } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const warehouses = Array.isArray(warehousesResult)
+    ? warehousesResult
+    : warehousesResult?.data || warehousesResult?.results || [];
 
   // Lifted state: Fetch products once at top level
   const { data: productsResult } = useQuery({ 
@@ -466,7 +469,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             }
           }}
         >
-          {({ values, isSubmitting, setFieldValue, remove, push }) => {
+          {({ values, isSubmitting, setFieldValue }) => {
             const grandTotal = values.items.reduce((sum, item) => {
                 const quantity = Number(item.quantity) || 0;
                 const price = Number(item.purchase_price) || 0;
@@ -606,22 +609,6 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               <div className="p-8 bg-[#151515] border-t border-b border-white/5">
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-xl font-bold text-white">Items</h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      push({ 
-                        product_id: '', product_name: '', product: '',
-                        quantity: 1, free_quantity: 0, 
-                        unit: 'pcs', price: 0, 
-                        discount: 0, tax: 0, 
-                        batch_number: '', expiry_date: '' 
-                      });
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 text-cyan-400 rounded-lg hover:bg-cyan-500/20 text-xs font-bold uppercase tracking-wider transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                    Add Item
-                  </button>
                 </div>
                 
                 <FieldArray name="items">
