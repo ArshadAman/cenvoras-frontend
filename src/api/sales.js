@@ -4,6 +4,12 @@ import api from './api';
 export const getSalesInvoices = params =>
   api.get("/billing/sales-invoices/", { params }).then(res => res.data);
 
+export const getNextInvoiceNumber = (prefix = "INV-") =>
+  api.get(`/billing/sales-invoices/next-number/?prefix=${prefix}`).then(res => res.data);
+
+export const getSalesAnalytics = params =>
+  api.get("/billing/sales-invoices/analytics/", { params }).then(res => res.data);
+
 export const getSalesInvoice = id =>
   api.get(`/billing/sales-invoices/${id}/`).then(res => res.data);
 

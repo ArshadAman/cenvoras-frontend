@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSalesInvoices } from "../../api/sales";
+import { getSalesAnalytics, getSalesInvoices } from "../../api/sales";
 import { 
   CurrencyRupeeIcon, 
   CalendarIcon, 
@@ -10,35 +10,49 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function SalesSummary() {
-  const { data, isLoading } = useQuery({
+  const [dateFilter, setDateFilter] = useState("today"); // "today", "month", "custom"
+  
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [customRange, setCustomRange] = useState({ start: todayStr, end: todayStr });
+
+  const getDates = () => {
+    if (dateFilter === "today") return { start_date: todayStr, end_date: todayStr };
+    if (dateFilter === "month") {
+      const d = new Date();
+      d.setDate(1);
+      return { start_date: d.toISOString().split('T')[0], end_date: todayStr };
+    }
+    if (dateFilter === "custom") {
+      return { start_date: customRange.start, end_date: customRange.end };
+    }
+    return {};
+  };
+
+  const dates = getDates();
+
+  const { data: analyticsRes, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["salesAnalytics", dates],
+    queryFn: () => getSalesAnalytics(dates),
+  });
+
+  const { data: invoicesData } = useQuery({
     queryKey: ["salesInvoices", "", "-invoice_date", 1],
     queryFn: () => getSalesInvoices({ search: "", ordering: "-invoice_date", page: 1 }),
   });
 
-  const invoices = Array.isArray(data) ? data : data?.data || data?.results || [];
+  const analytics = analyticsRes || {};
+  const invoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
 
-  // Calculate metrics
-  const totalInvoices = invoices.length;
-  const totalRevenue = invoices.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount || 0), 0);
-  const thisMonthInvoices = invoices.filter(invoice => {
-    const invoiceDate = new Date(invoice.invoice_date);
-    const now = new Date();
-    return invoiceDate.getMonth() === now.getMonth() && invoiceDate.getFullYear() === now.getFullYear();
-  });
-  const thisMonthRevenue = thisMonthInvoices.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount || 0), 0);
-
-  // Payment status functionality removed - not supported by backend
-
-  // Calculate overdue invoices (assuming 30 days payment terms)
+  // Calculate overdue invoices (using recent invoices as a simple check)
   const today = new Date();
   const overdueInvoices = invoices.filter(invoice => {
     const invoiceDate = new Date(invoice.invoice_date);
     const dueDate = new Date(invoiceDate.getTime() + (30 * 24 * 60 * 60 * 1000));
-    return dueDate < today;  // All invoices are considered pending
+    return dueDate < today && invoice.status !== 'draft';
   });
 
   // Top customers
-  const customerTotals = invoices.reduce((acc, invoice) => {
+  const customerTotals = invoices.filter(inv => inv.status !== 'draft').reduce((acc, invoice) => {
     const customer = invoice.customer_name || 'Unknown';
     acc[customer] = (acc[customer] || 0) + parseFloat(invoice.total_amount || 0);
     return acc;
@@ -48,9 +62,12 @@ export default function SalesSummary() {
     .sort(([,a], [,b]) => b - a)
     .slice(0, 3);
 
-  if (isLoading) {
+  const minDate = "2024-01-01"; 
+  const maxDate = todayStr;
+
+  if (analyticsLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-4">
         {Array(4).fill(0).map((_, i) => (
           <div key={i} className="bento-card p-5 animate-pulse">
             <div className="flex items-center">
@@ -66,39 +83,82 @@ export default function SalesSummary() {
     );
   }
 
+  const selectedRevenue = analytics.total_revenue || 0;
+  const selectedCount = analytics.total_invoices || 0;
+  const overallMonthRevenue = analytics.this_month_revenue || 0;
+
+  const cardTitle = dateFilter === 'today' ? "Today's Sales" : dateFilter === 'month' ? "This Month's Sales" : "Custom Range Sales";
+
   const summaryCards = [
     {
-      label: 'Total Sales',
-      value: totalInvoices,
-      subValue: `₹${totalRevenue.toLocaleString()}`,
+      label: cardTitle,
+      value: selectedCount,
+      subValue: `₹${selectedRevenue.toLocaleString()}`,
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
       color: 'cyan'
     },
     {
-      label: 'This Month',
-      value: thisMonthInvoices.length,
-      subValue: `₹${thisMonthRevenue.toLocaleString()}`,
+      label: 'Overall This Month',
+      value: analytics.this_month_invoices || 0,
+      subValue: `₹${overallMonthRevenue.toLocaleString()}`,
       icon: <CalendarIcon className="w-6 h-6 text-green-400" />,
       color: 'green'
     },
     {
       label: 'Avg. Invoice Value',
-      value: `₹${totalInvoices > 0 ? (totalRevenue / totalInvoices).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
-      subValue: 'Per invoice',
+      value: `₹${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
+      subValue: 'For selected period',
       icon: <ChartBarIcon className="w-6 h-6 text-blue-400" />,
       color: 'blue'
     },
     {
-      label: 'Total Items Sold',
-      value: invoices.reduce((sum, invoice) => sum + (invoice.items?.length || 0), 0),
-      subValue: 'Across all invoices',
+      label: 'Active Invoices',
+      value: invoices.filter(inv => inv.status !== 'draft').length,
+      subValue: 'Based on recent activity',
       icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
       color: 'purple'
     }
   ];
 
   return (
-    <div className="space-y-6 mb-8">
+    <div className="space-y-6 mb-8 mt-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#111] border border-white/10">
+         <div className="flex items-center gap-4">
+             <h3 className="text-white font-medium">Analytics Filter</h3>
+             <select 
+               className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+               value={dateFilter}
+               onChange={e => setDateFilter(e.target.value)}
+             >
+                <option value="today">Today</option>
+                <option value="month">This Month</option>
+                <option value="custom">Custom Date Range</option>
+             </select>
+         </div>
+
+         {dateFilter === "custom" && (
+             <div className="flex items-center gap-2">
+                <input 
+                  type="date"
+                  min={minDate}
+                  max={maxDate}
+                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  value={customRange.start}
+                  onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+                />
+                <span className="text-gray-500">to</span>
+                <input 
+                  type="date"
+                  min={customRange.start || minDate}
+                  max={maxDate}
+                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  value={customRange.end}
+                  onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+                />
+             </div>
+         )}
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryCards.map((card, i) => (

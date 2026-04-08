@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { createSalesInvoice, updateSalesInvoice, getProducts } from "../../api/sales";
+import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
@@ -520,6 +520,12 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     }
   }, [isOpen]);
 
+  const { data: nextInvData } = useQuery({
+    queryKey: ["nextInvoiceNumber"],
+    queryFn: () => getNextInvoiceNumber("INV-"),
+    enabled: !isEdit && isOpen
+  });
+
   const createMutation = useMutation({
     mutationFn: createSalesInvoice,
     onSuccess: () => {
@@ -528,7 +534,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create sales bill");
+      if (error.response?.status === 409) {
+          toast.error(error.response?.data?.error || "Invoice number already exists!");
+      } else {
+          toast.error(error.response?.data?.message || error.message || "Failed to create sales bill");
+      }
     },
   });
 
@@ -540,7 +550,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update sales bill");
+      if (error.response?.status === 409) {
+          toast.error(error.response?.data?.error || "Invoice number already exists!");
+      } else {
+          toast.error(error.response?.data?.message || error.message || "Failed to update sales bill");
+      }
     },
   });
 
@@ -575,9 +589,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           initialValues={{
             // Required fields
             customer_name: editData?.customer_name || "",
-            // Auto-generate 6-digit invoice number if not editing
-            invoice_number: editData?.invoice_number || `${invoicePrefix}${Math.floor(100000 + Math.random() * 900000)}`,
-            invoice_date: editData?.invoice_date || new Date().toISOString().split('T')[0],
+            // Use fetched next number or edit data
+            invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
+            invoice_date: editData?.invoice_date ? new Date(editData.invoice_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             
             // Optional customer fields (for Customer record creation)
             customer_email: editData?.customer_email || "",
@@ -621,26 +635,37 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           }}
           validationSchema={SalesSchema}
           enableReinitialize={true}
-          onSubmit={async (values, { setSubmitting, setFieldError }) => {
-            // Validate items
-            for (let i = 0; i < values.items.length; i++) {
-              const item = values.items[i];
-              if (!item.product || item.product.trim() === '') {
-                setFieldError(`items.${i}.product`, 'Product is required');
-                toast.error(`Product is required for item ${i + 1}`);
-                setSubmitting(false);
-                return;
-              }
-            }
+          onSubmit={async (values, { setSubmitting, setFieldError, setStatus, status }) => {
+            const isDraft = status?.action === "draft";
             
-            const validItems = values.items.filter(item => 
-              item.product && item.product.trim() !== ''
-            );
-            
-            if (validItems.length === 0) {
-              toast.error('At least one item with a valid product is required');
-              setSubmitting(false);
-              return;
+            // Validate items if not saving draft
+            if (!isDraft) {
+                for (let i = 0; i < values.items.length; i++) {
+                  const item = values.items[i];
+                  if (!item.product || item.product.trim() === '') {
+                    setFieldError(`items.${i}.product`, 'Product is required');
+                    toast.error(`Product is required for item ${i + 1}`);
+                    setSubmitting(false);
+                    return;
+                  }
+                }
+                
+                const validItems = values.items.filter(item => 
+                  item.product && item.product.trim() !== ''
+                );
+                
+                if (validItems.length === 0) {
+                  toast.error('At least one item with a valid product is required');
+                  setSubmitting(false);
+                  return;
+                }
+                
+                if (!values.customer_name || values.customer_name.trim() === '') {
+                   setFieldError('customer_name', 'Customer Name is required');
+                   toast.error('Customer name is required');
+                   setSubmitting(false);
+                   return;
+                }
             }
             
             try {
@@ -669,12 +694,14 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 // Edit API expects different structure with UUIDs
                 formData = {
                   customer: editData.customer || editData.customer_id, // Use original customer UUID
+                  customer_name: values.customer_name,
                   invoice_number: values.invoice_number,
                   invoice_date: values.invoice_date,
                   due_date: values.due_date || null,
                   delivery_address: values.delivery_address || null,
                   gst_treatment: values.gst_treatment || null,
                   journal: values.journal || "Sales",
+                  status: isDraft ? 'draft' : 'final',
                   total_amount: totalAmount.toString(),
                   created_by: editData.created_by, // Use original created_by UUID
                   items: processedItems.map(item => ({
@@ -695,6 +722,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   invoice_number: values.invoice_number,
                   invoice_date: values.invoice_date,
                   items: processedItems,
+                  status: isDraft ? 'draft' : 'final',
                   
                   // Optional customer fields (for Customer record creation)
                   ...(values.customer_email && { customer_email: values.customer_email }),
@@ -722,7 +750,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             setSubmitting(false);
           }}
         >
-          {({ values, setFieldValue, isSubmitting, handleSubmit }) => {
+          {({ values, setFieldValue, isSubmitting, handleSubmit, setStatus }) => {
             // Calculate totals
             const subtotal = values.items.reduce((sum, item) => {
               const quantity = Number(item.quantity) || 0;
@@ -789,11 +817,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <Field
                         name="invoice_number"
                         type="text"
-                        readOnly={!isEdit}
-                        className={`w-full border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all ${
-                          !isEdit ? "bg-[#1a1a1a] opacity-70 cursor-not-allowed" : "bg-[#111]"
-                        }`}
-                        title={!isEdit ? "Auto-generated based on your prefix settings" : ""}
+                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        placeholder="e.g. INV-ABCD-001"
                       />
                     </div>
 
@@ -1233,17 +1258,36 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 </div>
 
                 {/* Actions */}
-                <div className="p-8 bg-black/20 flex justify-end space-x-3 rounded-b-2xl">
+                <div className="p-8 bg-black/20 flex justify-end space-x-3 rounded-b-2xl items-center">
+                  <div className="text-gray-500 text-xs flex-1 mr-4">
+                    Closing modal automatically saves as draft. Or use Save Draft.
+                  </div>
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
+                    onClick={() => {
+                        // Mark as draft submit
+                        setStatus({ action: 'draft' });
+                        handleSubmit();
+                    }}
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium border-dashed text-sm"
+                  >
+                    Save Draft
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                        setStatus({ action: 'draft' });
+                        handleSubmit();
+                        onClose();
+                    }}
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-xl transition-colors font-medium text-sm"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
+                    onClick={() => setStatus({ action: 'final' })}
                     className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px]"
                   >
                     {isSubmitting ? (
