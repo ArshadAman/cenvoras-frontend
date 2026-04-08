@@ -479,6 +479,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const formikRef = React.useRef(null);
+  const submitActionRef = React.useRef('final');
   
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
@@ -514,18 +515,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   // This replaces the illegal useEffect-inside-IIFE that was causing form refreshes
   const warehouseSyncRef = React.useRef(selectedWarehouseId);
 
-  // Auto-focus the first product field when form opens
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        const firstProductInput = document.querySelector('input[name="items.0.product"]');
-        if (firstProductInput) {
-          firstProductInput.focus();
-        }
-      }, 100);
-    }
-  }, [isOpen]);
-
+  // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
+  
   const { data: nextInvData } = useQuery({
     queryKey: ["nextInvoiceNumber"],
     queryFn: () => getNextInvoiceNumber("INV-"),
@@ -567,7 +558,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const handleBeforeClose = async () => {
     if (formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
       // Auto-save as draft if form is touched
-      formikRef.current.setStatus({ action: 'draft' });
+      submitActionRef.current = 'draft';
       await formikRef.current.submitForm();
     }
     onClose();
@@ -650,8 +641,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             }]
           }}
           enableReinitialize={true}
-          onSubmit={async (values, { setSubmitting, setErrors, setFieldError, setStatus, status }) => {
-            const isDraft = status?.action === "draft";
+          onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
+            const isDraft = submitActionRef.current === "draft";
             
             // Clean up empty product rows before processing/validation
             const cleanedItems = values.items.filter(item => 
@@ -1264,8 +1255,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <button
                     type="button"
                     onClick={() => {
-                        // Mark as draft submit
-                        setStatus({ action: 'draft' });
+                        submitActionRef.current = 'draft';
                         handleSubmit();
                     }}
                     className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium border-dashed text-sm"
@@ -1284,7 +1274,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    onClick={() => setStatus({ action: 'final' })}
+                    onClick={() => { submitActionRef.current = 'final'; }}
                     className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px]"
                   >
                     {isSubmitting ? (
