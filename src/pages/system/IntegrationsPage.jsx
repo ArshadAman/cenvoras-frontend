@@ -69,6 +69,7 @@ function EmailTab() {
   const [sending, setSending] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [lastReminderDispatch, setLastReminderDispatch] = useState(null);
 
   const filteredCustomers = customersWithEmail.filter(c =>
     c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
@@ -80,7 +81,16 @@ function EmailTab() {
   const remindersMutation = useMutation({
     mutationFn: sendPaymentReminders,
     onSuccess: (res) => {
-      toast.success(res.data?.message || 'Payment reminders queued!');
+      const payload = res?.data || {};
+      const queued = Number(payload.queued || 0);
+      const stagger = Number(payload.stagger_seconds || 0);
+      const dispatchWindow = Number(payload.dispatch_window_seconds || 0);
+      setLastReminderDispatch({ queued, stagger, dispatchWindow });
+      if (queued > 0 && stagger > 0) {
+        toast.success(`Queued ${queued} reminder(s) with ${stagger}s stagger (${dispatchWindow}s total dispatch window).`);
+      } else {
+        toast.success(payload.message || 'Payment reminders queued!');
+      }
       queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
     },
     onError: () => toast.error('Failed to queue payment reminders'),
@@ -130,6 +140,11 @@ function EmailTab() {
             <><BellAlertIcon className="w-4 h-4" /> Send Payment Reminders Now</>
           )}
         </button>
+        {lastReminderDispatch && (
+          <p className="mt-3 text-xs text-gray-400">
+            Last queue: {lastReminderDispatch.queued} reminder(s), {lastReminderDispatch.stagger}s stagger, {lastReminderDispatch.dispatchWindow}s dispatch window.
+          </p>
+        )}
       </div>
 
       {/* Manual Email Send — Customer-Only */}
