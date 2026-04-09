@@ -509,6 +509,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const formikRef = React.useRef(null);
   const submitActionRef = React.useRef('final');
   const [productSearch, setProductSearch] = useState("");
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
@@ -1062,15 +1063,41 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 <div className="p-8 bg-[#151515] border-t border-b border-white/5">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h3 className="text-lg font-bold text-white">Items</h3>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                      <button type="button" onClick={() => handleToggleItemSetting('show_item_description')} className={`px-2 py-1 rounded border ${itemSettings.show_item_description ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Description</button>
-                      <button type="button" onClick={() => handleToggleItemSetting('show_item_batch')} className={`px-2 py-1 rounded border ${itemSettings.show_item_batch ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Batch</button>
-                      <button type="button" onClick={() => handleToggleItemSetting('show_item_free_quantity')} className={`px-2 py-1 rounded border ${itemSettings.show_item_free_quantity ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Free Qty</button>
-                      <button type="button" onClick={() => handleToggleItemSetting('show_item_discount')} className={`px-2 py-1 rounded border ${itemSettings.show_item_discount ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Discount</button>
-                      <button type="button" onClick={() => handleToggleItemSetting('show_item_tax')} className={`px-2 py-1 rounded border ${itemSettings.show_item_tax ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Tax</button>
-                      <button type="button" onClick={() => handleToggleItemSetting('show_item_hsn')} className={`px-2 py-1 rounded border ${itemSettings.show_item_hsn ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>HSN</button>
-                      {itemSettings.show_item_batch && (
-                        <button type="button" onClick={() => handleToggleItemSetting('require_item_batch')} className={`px-2 py-1 rounded border ${itemSettings.require_item_batch ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Require Batch</button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowColumnPicker((prev) => !prev)}
+                        className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                      >
+                        Columns
+                      </button>
+
+                      {showColumnPicker && (
+                        <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
+                          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                          {[
+                            ["show_item_description", "Description"],
+                            ["show_item_hsn", "HSN/SAC"],
+                            ["show_item_batch", "Batch"],
+                            ["show_item_free_quantity", "Free Qty"],
+                            ["show_item_discount", "Discount"],
+                            ["show_item_tax", "Taxes"],
+                            ["require_item_batch", "Require Batch"],
+                          ].map(([key, label]) => {
+                            if (key === "require_item_batch" && !itemSettings.show_item_batch) return null;
+                            return (
+                              <label key={key} className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={!!itemSettings[key]}
+                                  onChange={() => handleToggleItemSetting(key)}
+                                  className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                                />
+                                <span>{label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1238,7 +1265,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                     name={`items.${index}.price`}
                                     type="number"
                                     min="0"
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-sm font-mono"
+                                  className="w-full min-w-[130px] bg-black/40 border border-white/10 rounded-lg px-3 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-base font-mono"
                                     onChange={(e) => {
                                       const price = e.target.value;
                                       setFieldValue(`items.${index}.price`, price);
@@ -1307,12 +1334,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             onClick={() => push({
                               product_name: "",
                               product_id: null,
+                              product_description: "",
                               quantity: 1,
+                              free_quantity: 0,
+                              batch: "",
                               unit: "pcs",
                               price: 0,
                               discount: 0,
                               tax: 0,
-                              hsn_code: "",
+                              hsn_sac_code: "",
                               tax_rate: 0,
                               amount: 0,
                               isExistingProduct: false,
