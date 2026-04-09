@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -115,7 +115,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
             )}
-            {!!values.items[idx]?.product_description && (
+            {showDescription && !!values.items[idx]?.product_description && (
               <small className="block mt-1 text-[11px] text-gray-500 leading-tight">
                 {values.items[idx].product_description}
               </small>
@@ -1063,6 +1063,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h3 className="text-lg font-bold text-white">Items</h3>
                     <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                      <button type="button" onClick={() => handleToggleItemSetting('show_item_description')} className={`px-2 py-1 rounded border ${itemSettings.show_item_description ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Description</button>
                       <button type="button" onClick={() => handleToggleItemSetting('show_item_batch')} className={`px-2 py-1 rounded border ${itemSettings.show_item_batch ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Batch</button>
                       <button type="button" onClick={() => handleToggleItemSetting('show_item_free_quantity')} className={`px-2 py-1 rounded border ${itemSettings.show_item_free_quantity ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Free Qty</button>
                       <button type="button" onClick={() => handleToggleItemSetting('show_item_discount')} className={`px-2 py-1 rounded border ${itemSettings.show_item_discount ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Discount</button>
@@ -1114,14 +1115,14 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       return (
                         <div className="space-y-4">
                           {/* Desktop Header Row */}
-                          <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
-                             <div className="col-span-3">Product</div>
-                              {itemSettings.show_item_batch && <div className="col-span-2">Batch</div>}
+                            <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
+                              <div className="col-span-2">Product</div>
+                              <div className={`col-span-2 ${itemSettings.show_item_batch ? '' : 'opacity-40'}`}>Batch</div>
                              <div className="col-span-1 text-center">Qty</div>
-                              {itemSettings.show_item_free_quantity && <div className="col-span-1 text-center text-green-400">Free</div>}
+                              <div className={`col-span-1 text-center text-green-400 ${itemSettings.show_item_free_quantity ? '' : 'opacity-40'}`}>Free</div>
                              <div className="col-span-1">Unit</div>
-                             <div className="col-span-1 text-right">Price</div>
-                              {(itemSettings.show_item_discount || itemSettings.show_item_tax) && <div className="col-span-1 text-center">Disc/Tax%</div>}
+                              <div className="col-span-2 text-right">Price</div>
+                              <div className={`col-span-1 text-center ${(itemSettings.show_item_discount || itemSettings.show_item_tax) ? '' : 'opacity-40'}`}>Disc/Tax%</div>
                              <div className="col-span-1 text-right">Amount</div>
                              <div className="col-span-1 text-center"></div>
                           </div>
@@ -1141,8 +1142,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
                           <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-[#111] border border-white/5 rounded-xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
                             
-                            {/* Product (3 cols) */}
-                            <div className="md:col-span-3">
+                            {/* Product (2 cols) */}
+                            <div className="md:col-span-2">
                               <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Product</label>
                               <div className="relative">
                                   <ProductAutocomplete 
@@ -1152,6 +1153,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                       products={products}
                                       onInputChange={() => handleAutoAddRow(index)}
                                       onProductSearchChange={setProductSearch}
+                                      showDescription={itemSettings.show_item_description}
                                   />
                               </div>
                               {itemSettings.show_item_hsn && (
@@ -1165,7 +1167,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             </div>
 
                             {/* Batch (2 cols) */}
-                            {itemSettings.show_item_batch && <div className="md:col-span-2">
+                            <div className={`md:col-span-2 ${itemSettings.show_item_batch ? '' : 'opacity-40 pointer-events-none'}`}>
                                 <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Batch</label>
                                 <Field name={`items.${index}.batch`}>
                                     {({ field }) => (
@@ -1183,7 +1185,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                     </select>
                                     )}
                                 </Field>
-                                </div>}
+                                </div>
 
                             {/* Qty (1 col) */}
                             <div className="md:col-span-1">
@@ -1206,7 +1208,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             </div>
 
                             {/* Free Qty (1 col) */}
-                            {itemSettings.show_item_free_quantity && <div className="md:col-span-1">
+                            <div className={`md:col-span-1 ${itemSettings.show_item_free_quantity ? '' : 'opacity-40 pointer-events-none'}`}>
                                 <label className="block text-xs font-medium mb-1 md:hidden text-green-400">Free</label>
                                 <Field
                                     name={`items.${index}.free_quantity`}
@@ -1215,7 +1217,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                     placeholder="0"
                                     className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
                                 />
-                                </div>}
+                            </div>
 
                             {/* Unit (1 col) */}
                             <div className="md:col-span-1">
@@ -1229,14 +1231,14 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                 </Field>
                             </div>
 
-                            {/* Price (1 col) */}
-                            <div className="md:col-span-1">
+                            {/* Price (2 cols) */}
+                            <div className="md:col-span-2">
                                 <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Price</label>
                                 <Field
                                     name={`items.${index}.price`}
                                     type="number"
                                     min="0"
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-sm font-mono"
                                     onChange={(e) => {
                                       const price = e.target.value;
                                       setFieldValue(`items.${index}.price`, price);
@@ -1254,8 +1256,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             </div>
 
                             {/* Disc/Tax (1 col) */}
-                            {(itemSettings.show_item_discount || itemSettings.show_item_tax) && (
-                              <div className="md:col-span-1 flex flex-col gap-2">
+                              <div className={`md:col-span-1 flex flex-col gap-2 ${(itemSettings.show_item_discount || itemSettings.show_item_tax) ? '' : 'opacity-40 pointer-events-none'}`}>
                                 {itemSettings.show_item_discount && (
                                   <div className="flex items-center gap-1">
                                     <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
@@ -1268,8 +1269,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                     <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
                                   </div>
                                 )}
+                                {!itemSettings.show_item_discount && !itemSettings.show_item_tax && (
+                                  <div className="text-center text-[10px] text-gray-500 py-1">Hidden</div>
+                                )}
                               </div>
-                            )}
 
                             {/* Amount (1 col) */}
                             <div className="md:col-span-1">
