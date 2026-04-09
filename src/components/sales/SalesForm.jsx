@@ -84,7 +84,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 }
               }}
               placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+              className="w-full bg-[#111] border border-white/10 rounded px-2 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-xs"
               autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === 'Tab' || (e.key === 'Enter' && !showDropdown)) {
@@ -629,10 +629,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleBeforeClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={handleBeforeClose}></div>
+      <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-white/10 bg-[#0c0c0e] overflow-hidden">
+        <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
               {isEdit ? "Edit Sales Invoice" : "New Sales Invoice"}
@@ -860,7 +860,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
             return (
               <Form 
-                className="p-0"
+                className="flex flex-col flex-1 overflow-hidden"
                 onKeyDown={(e) => {
                   // Handle global keyboard shortcuts
                   if (e.ctrlKey && e.key === 's') {
@@ -875,7 +875,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   }
                 }}
               >
-                <div className="p-8 space-y-8">
+                <div className="flex-1 overflow-y-auto p-0">
+                  <div className="p-6 sm:p-8 space-y-8">
                   {/* Header Info */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
   
@@ -1382,6 +1383,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                               amount: 0,
                               isExistingProduct: false,
                             })}
+                            type="button"
                             className="btn-secondary text-sm flex items-center gap-2"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -1449,10 +1451,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                     </div>
                   </div>
                 </div>
+                </div>{/* End flex-1 scrollable */}
 
                 {/* Actions */}
-                <div className="p-8 bg-black/20 flex justify-end space-x-3 rounded-b-2xl items-center">
-                  <div className="text-gray-500 text-xs flex-1 mr-4">
+                <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
+                  <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
                     Closing modal automatically saves as draft. Or use Save Draft.
                   </div>
                   <button
@@ -1461,7 +1464,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                         submitActionRef.current = 'draft';
                         handleSubmit();
                     }}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium border-dashed text-sm"
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
                   >
                     Save Draft
                   </button>
@@ -1470,7 +1473,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                     onClick={() => {
                         handleBeforeClose();
                     }}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-xl transition-colors font-medium text-sm"
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-[14px] transition-colors font-medium text-sm focus:ring-2 focus:ring-red-500/50 focus:outline-none"
                   >
                     Cancel
                   </button>
@@ -1478,7 +1481,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                     type="submit"
                     disabled={isSubmitting}
                     onClick={() => { submitActionRef.current = 'final'; }}
-                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px]"
+                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px] rounded-[14px] focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
