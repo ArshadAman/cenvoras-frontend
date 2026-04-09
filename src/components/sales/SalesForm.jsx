@@ -1140,193 +1140,218 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       };
 
                       return (
-                        <div className="space-y-4">
-                          {/* Desktop Header Row */}
-                            <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
-                              <div className="col-span-2">Product</div>
-                              <div className={`col-span-2 ${itemSettings.show_item_batch ? '' : 'opacity-40'}`}>Batch</div>
-                             <div className="col-span-1 text-center">Qty</div>
-                              <div className={`col-span-1 text-center text-green-400 ${itemSettings.show_item_free_quantity ? '' : 'opacity-40'}`}>Free</div>
-                             <div className="col-span-1">Unit</div>
-                              <div className="col-span-2 text-right">Price</div>
-                              <div className={`col-span-1 text-center ${(itemSettings.show_item_discount || itemSettings.show_item_tax) ? '' : 'opacity-40'}`}>Disc/Tax%</div>
-                             <div className="col-span-1 text-right">Amount</div>
-                             <div className="col-span-1 text-center"></div>
-                          </div>
+                        <div className="space-y-2">
+                          {(() => {
+                            const desktopColumns = [
+                              { key: "product", label: "Product", show: true, width: "minmax(260px,2.4fr)" },
+                              { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "minmax(120px,0.9fr)" },
+                              { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "minmax(150px,1fr)" },
+                              { key: "quantity", label: "Quantity", show: true, width: "90px" },
+                              { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "80px" },
+                              { key: "unit", label: "Unit", show: true, width: "80px" },
+                              { key: "price", label: "Price", show: true, width: "130px" },
+                              { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "85px" },
+                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "110px" },
+                              { key: "amount", label: "Amount", show: true, width: "140px" },
+                              { key: "action", label: "", show: true, width: "56px" },
+                            ].filter((col) => col.show);
 
-                          {values.items.map((item, index) => {
-                             // Batches filtering logic
-                             const productBatches = stockPoints
-                               ?.filter(sp => sp.batch.product === item.product_id && sp.quantity > 0)
-                               ?.map(sp => ({
-                                 id: sp.batch.id, 
-                                 name: sp.batch.batch_number, 
-                                 expiry: sp.batch.expiry_date,
-                                 qty: sp.quantity
-                               })) || [];
+                            const gridTemplateColumns = desktopColumns.map((col) => col.width).join(" ");
 
-                             return (
-
-                          <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-[#111] border border-white/5 rounded-xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
-                            
-                            {/* Product (2 cols) */}
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Product</label>
-                              <div className="relative">
-                                  <ProductAutocomplete 
-                                      idx={index}
-                                      values={values}
-                                      setFieldValue={setFieldValue}
-                                      products={products}
-                                      onInputChange={() => handleAutoAddRow(index)}
-                                      onProductSearchChange={setProductSearch}
-                                      showDescription={itemSettings.show_item_description}
-                                  />
-                              </div>
-                              {itemSettings.show_item_hsn && (
-                                <Field
-                                  name={`items.${index}.hsn_sac_code`}
-                                  type="text"
-                                  placeholder="HSN/SAC"
-                                  className="mt-2 w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-[11px] text-gray-300 focus:ring-1 focus:ring-cyan-500 outline-none"
-                                />
-                              )}
-                            </div>
-
-                            {/* Batch (2 cols) */}
-                            <div className={`md:col-span-2 ${itemSettings.show_item_batch ? '' : 'opacity-40 pointer-events-none'}`}>
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Batch</label>
-                                <Field name={`items.${index}.batch`}>
-                                    {({ field }) => (
-                                    <select
-                                        {...field}
-                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 outline-none text-xs"
-                                        disabled={!item.product_id}
+                            return (
+                              <>
+                                <div className="hidden md:grid items-center px-2 py-2 text-xs font-semibold text-gray-300 border-y border-white/10 bg-[#1b2030]" style={{ gridTemplateColumns }}>
+                                  {desktopColumns.map((col) => (
+                                    <div
+                                      key={col.key}
+                                      className={[
+                                        col.key === "amount" || col.key === "price" ? "text-right" : "",
+                                        col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
+                                      ].join(" ")}
                                     >
-                                        <option value="">Auto (FEFO)</option>
-                                        {productBatches.map(b => (
-                                        <option key={b.id} value={b.id}>
-                                            {b.name} ({b.qty})
-                                        </option>
-                                        ))}
-                                    </select>
-                                    )}
-                                </Field>
+                                      {col.label}
+                                    </div>
+                                  ))}
                                 </div>
 
-                            {/* Qty (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Qty</label>
-                                <Field
-                                    name={`items.${index}.quantity`}
-                                    type="number"
-                                    min="1"
-                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-center text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
-                                    onChange={(e) => {
-                                      const qty = e.target.value;
-                                      setFieldValue(`items.${index}.quantity`, qty);
-                                      if (values.items[index]?.price) {
-                                         const price = parseFloat(values.items[index].price) || 0;
-                                         const amount = price * (parseFloat(qty) || 0);
-                                         setFieldValue(`items.${index}.amount`, amount);
-                                      }
-                                    }}
-                                />
-                            </div>
+                                {values.items.map((item, index) => {
+                                  const productBatches = stockPoints
+                                    ?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)
+                                    ?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || [];
 
-                            {/* Free Qty (1 col) */}
-                            <div className={`md:col-span-1 ${itemSettings.show_item_free_quantity ? '' : 'opacity-40 pointer-events-none'}`}>
-                                <label className="block text-xs font-medium mb-1 md:hidden text-green-400">Free</label>
-                                <Field
-                                    name={`items.${index}.free_quantity`}
-                                    type="number"
-                                    min="0"
-                                    placeholder="0"
-                                    className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
-                                />
-                            </div>
+                                  return (
+                                    <div key={index} className="border-b border-white/10">
+                                      <div className="hidden md:grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns }}>
+                                        {desktopColumns.map((col) => {
+                                          if (col.key === "product") {
+                                            return (
+                                              <div key={col.key}>
+                                                <ProductAutocomplete
+                                                  idx={index}
+                                                  values={values}
+                                                  setFieldValue={setFieldValue}
+                                                  products={products}
+                                                  onInputChange={() => handleAutoAddRow(index)}
+                                                  onProductSearchChange={setProductSearch}
+                                                  showDescription={itemSettings.show_item_description}
+                                                />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Unit (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Unit</label>
-                                <Field name={`items.${index}.unit`}>
-                                    {({ field }) => (
-                                    <select {...field} className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs">
-                                        {units.map(u => <option key={u} value={u}>{u}</option>)}
-                                    </select>
-                                    )}
-                                </Field>
-                            </div>
+                                          if (col.key === "hsn") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Price (2 cols) */}
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Price</label>
-                                <Field
-                                    name={`items.${index}.price`}
-                                    type="number"
-                                    min="0"
-                                  className="w-full min-w-[130px] bg-black/40 border border-white/10 rounded-lg px-3 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-base font-mono"
-                                    onChange={(e) => {
-                                      const price = e.target.value;
-                                      setFieldValue(`items.${index}.price`, price);
-                                      
-                                      if (price && values.items[index]?.quantity) {
-                                        const quantity = parseFloat(values.items[index].quantity) || 0;
-                                        const amount = parseFloat(price) * quantity;
-                                        setFieldValue(`items.${index}.amount`, amount);
-                                      }
-                                      if (price && parseFloat(price) > 0) {
-                                        handleAutoAddRow(index);
-                                      }
-                                    }}
-                                />
-                            </div>
+                                          if (col.key === "batch") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.batch`}>
+                                                  {({ field }) => (
+                                                    <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" disabled={!item.product_id}>
+                                                      <option value="">Auto (FEFO)</option>
+                                                      {productBatches.map((b) => (
+                                                        <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
+                                                      ))}
+                                                    </select>
+                                                  )}
+                                                </Field>
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Disc/Tax (1 col) */}
-                              <div className={`md:col-span-1 flex flex-col gap-2 ${(itemSettings.show_item_discount || itemSettings.show_item_tax) ? '' : 'opacity-40 pointer-events-none'}`}>
-                                {itemSettings.show_item_discount && (
-                                  <div className="flex items-center gap-1">
-                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
-                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
-                                  </div>
-                                )}
-                                {itemSettings.show_item_tax && (
-                                  <div className="flex items-center gap-1">
-                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Tax</label>
-                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
-                                  </div>
-                                )}
-                                {!itemSettings.show_item_discount && !itemSettings.show_item_tax && (
-                                  <div className="text-center text-[10px] text-gray-500 py-1">Hidden</div>
-                                )}
-                              </div>
+                                          if (col.key === "quantity") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field
+                                                  name={`items.${index}.quantity`}
+                                                  type="number"
+                                                  min="1"
+                                                  className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                  onChange={(e) => {
+                                                    const qty = e.target.value;
+                                                    setFieldValue(`items.${index}.quantity`, qty);
+                                                    const price = parseFloat(values.items[index]?.price) || 0;
+                                                    setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
+                                                  }}
+                                                />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Amount (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Amount</label>
-                                <div className="w-full px-2 py-3 text-right font-bold text-cyan-400 text-xs">
-                                    {item.amount?.toFixed(2) || "0.00"}
-                                </div>
-                            </div>
+                                          if (col.key === "free") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-green-300" />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Remove (1 col) */}
-                            <div className="md:col-span-1 flex justify-center">
-                                <button
-                                    type="button"
-                                    onClick={() => remove(index)}
-                                    disabled={values.items.length === 1}
-                                    className="text-gray-500 hover:text-red-400 transition-colors p-2 disabled:opacity-30 hover:bg-white/5 rounded-lg"
-                                    title="Remove Item"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
+                                          if (col.key === "unit") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.unit`}>
+                                                  {({ field }) => (
+                                                    <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200">
+                                                      {units.map((u) => <option key={u} value={u}>{u}</option>)}
+                                                    </select>
+                                                  )}
+                                                </Field>
+                                              </div>
+                                            );
+                                          }
 
-                          </div>
-                          );
-                        })}
+                                          if (col.key === "price") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field
+                                                  name={`items.${index}.price`}
+                                                  type="number"
+                                                  min="0"
+                                                  className="w-full min-w-[130px] text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
+                                                  onChange={(e) => {
+                                                    const price = e.target.value;
+                                                    setFieldValue(`items.${index}.price`, price);
+                                                    const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                    setFieldValue(`items.${index}.amount`, (parseFloat(price) || 0) * qty);
+                                                    if (price && parseFloat(price) > 0) handleAutoAddRow(index);
+                                                  }}
+                                                />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "discount") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "tax") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.tax`} type="number" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "amount") {
+                                            return (
+                                              <div key={col.key} className="text-right px-1 py-2 font-semibold text-cyan-300 text-sm">
+                                                {item.amount?.toFixed(2) || "0.00"}
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "action") {
+                                            return (
+                                              <div key={col.key} className="flex justify-center">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => remove(index)}
+                                                  disabled={values.items.length === 1}
+                                                  className="text-gray-500 hover:text-red-400 transition-colors p-1.5 disabled:opacity-30"
+                                                  title="Remove Item"
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                  </svg>
+                                                </button>
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                        })}
+                                      </div>
+
+                                      {/* Mobile fallback */}
+                                      <div className="md:hidden grid grid-cols-2 gap-3 py-3">
+                                        <div className="col-span-2">
+                                          <label className="text-xs text-gray-400">Product</label>
+                                          <ProductAutocomplete
+                                            idx={index}
+                                            values={values}
+                                            setFieldValue={setFieldValue}
+                                            products={products}
+                                            onInputChange={() => handleAutoAddRow(index)}
+                                            onProductSearchChange={setProductSearch}
+                                            showDescription={itemSettings.show_item_description}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </>
+                            );
+                          })()}
                         
                         <div className="flex items-center justify-between">
                           <button
