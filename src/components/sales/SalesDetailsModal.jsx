@@ -18,7 +18,8 @@ import { toast } from 'react-toastify';
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
-import { getActiveTemplate, amountInWords } from "../../utils/invoiceSettings";
+import { getActiveTemplate } from "../../utils/invoiceSettings";
+import { getInvoiceSettings } from "../../api/invoice_settings";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {} }) {
   const queryClient = useQueryClient();
@@ -43,6 +44,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     enabled: !!invoice?.id,
   });
 
+  const { data: invoiceSettings } = useQuery({
+    queryKey: ["invoiceSettings"],
+    queryFn: getInvoiceSettings,
+    enabled: isOpen,
+  });
+
   const invoiceDetails = data?.data || data?.result || data || invoice || {};
 
   // Print functionality
@@ -52,7 +59,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     pageStyle: `
       @page {
         size: A4;
-        margin: 10mm;
+        margin: 4mm;
       }
       @media print {
         body {
@@ -306,6 +313,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   invoice={invoiceDetails}
                   template={template}
                   businessInfo={businessInfo}
+                  invoiceSettings={invoiceSettings || {}}
                 />
               </div>
             ) : (

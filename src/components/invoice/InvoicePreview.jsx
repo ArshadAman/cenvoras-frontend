@@ -8,6 +8,7 @@ const InvoicePreview = forwardRef(({
   invoice = {}, 
   template = {}, 
   businessInfo = {},
+  invoiceSettings = {},
   scale = 1,
   showWatermark = false,
 }, ref) => {
@@ -86,7 +87,13 @@ const InvoicePreview = forwardRef(({
   };
   
   // Get visible columns
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => invoiceSettings.show_item_discount !== false || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
   
   return (
     <div 
@@ -95,8 +102,7 @@ const InvoicePreview = forwardRef(({
       style={{
         ...paperStyle,
         width: '210mm',
-        minHeight: '297mm',
-        padding: '15mm',
+        padding: '8mm',
         boxSizing: 'border-box',
       }}
     >
@@ -108,7 +114,7 @@ const InvoicePreview = forwardRef(({
       )}
       
       {/* Header Section */}
-      <div className="flex justify-between items-start mb-8 pb-6" style={{ borderBottom: `2px solid ${colors.accent || '#0f3460'}` }}>
+      <div className="flex justify-between items-start mb-3 pb-2" style={{ borderBottom: `1px solid ${colors.accent || '#0f3460'}` }}>
         {/* Company Info - Left */}
         <div className="flex-1">
           {/* Logo */}
@@ -162,7 +168,7 @@ const InvoicePreview = forwardRef(({
       </div>
       
       {/* Invoice Title */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-3">
         <h2 
           className="font-bold tracking-wide"
           style={{ 
@@ -181,7 +187,7 @@ const InvoicePreview = forwardRef(({
       </div>
       
       {/* Invoice Details Row */}
-      <div className="flex justify-between mb-6 text-sm">
+      <div className="flex justify-between mb-3 text-sm">
         <div className="space-y-1">
           <div><span className="font-medium">Invoice #:</span> <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span></div>
           <div><span className="font-medium">Date:</span> {invoiceDate}</div>
@@ -205,7 +211,7 @@ const InvoicePreview = forwardRef(({
             overflow: 'hidden',
           }}
         >
-          <thead>
+          <thead style={{ display: 'table-header-group' }}>
             <tr style={tableHeaderStyle}>
               {visibleColumns.map(col => (
                 <th 
@@ -245,8 +251,10 @@ const InvoicePreview = forwardRef(({
                     switch(col.id) {
                       case 'serial': value = index + 1; break;
                       case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
+                      case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
                       case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;
                       case 'quantity': value = qty; break;
+                      case 'free_qty': value = item.free_quantity || 0; break;
                       case 'unit': value = item.unit || 'pcs'; break;
                       case 'price': value = `₹${price.toFixed(2)}`; break;
                       case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
@@ -258,13 +266,22 @@ const InvoicePreview = forwardRef(({
                     return (
                       <td 
                         key={col.id}
-                        className="px-3 py-2 border"
+                            className="px-2 py-1 border"
                         style={{ 
                           textAlign: col.align || 'left',
                           borderColor: colors.tableBorder,
                         }}
                       >
-                        {value}
+                            {col.id === 'description' ? (
+                              <div>
+                                <div>{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                                {invoiceSettings.show_item_description !== false && (item.product_detail?.description || item.product_description) ? (
+                                  <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666' }}>
+                                    {item.product_detail?.description || item.product_description}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : value}
                       </td>
                     );
                   })}
@@ -285,7 +302,7 @@ const InvoicePreview = forwardRef(({
       </div>
       
       {/* Bottom Section - Bank Details & Totals */}
-      <div className="flex justify-between gap-8 mb-6">
+      <div className="flex justify-between gap-6 mb-3">
         {/* Bank Details - Left */}
         {sections.showBankDetails && (
           <div className="flex-1">
@@ -361,7 +378,7 @@ const InvoicePreview = forwardRef(({
       </div>
       
       {/* Terms & Signature Row */}
-      <div className="flex justify-between gap-8 mt-8 pt-6" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
+      <div className="flex justify-between gap-6 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
         {/* Terms */}
         {sections.showTerms && content.termsAndConditions?.length > 0 && (
           <div className="flex-1">
