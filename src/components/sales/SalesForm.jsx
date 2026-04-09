@@ -510,6 +510,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const submitActionRef = React.useRef('final');
   const [productSearch, setProductSearch] = useState("");
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [roundOffApplied, setRoundOffApplied] = useState(false);
+
+  const computeRoundedTotal = (amount) => {
+    const integerPart = Math.floor(amount);
+    const fraction = amount - integerPart;
+    return fraction >= 0.5 ? Math.ceil(amount) : Math.floor(amount);
+  };
   
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
@@ -787,6 +794,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
               });
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
+              const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
 
               const formData = {
                 customer_name: values.customer_name,
@@ -799,7 +807,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : 'final',
-                total_amount: totalAmount.toString(),
+                total_amount: finalTotal.toString(),
                 items: processedItems,
                 // Optional customer fields for new record creation
                 ...(values.customer_email && { customer_email: values.customer_email }),
@@ -847,6 +855,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             }, 0);
 
             const grandTotal = subtotal - totalDiscount + totalTax;
+            const roundedGrandTotal = computeRoundedTotal(grandTotal);
+            const roundOffDelta = Number((roundedGrandTotal - grandTotal).toFixed(2));
 
             return (
               <Form 
@@ -1405,9 +1415,34 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <span>₹{totalTax.toFixed(2)}</span>
                     </div>
                     <div className="h-px bg-white/10 my-3"></div>
+                    {roundOffApplied && (
+                      <div className="flex justify-between text-amber-300">
+                        <span>Round Off</span>
+                        <span>{roundOffDelta >= 0 ? '+' : ''}₹{roundOffDelta.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-bold text-xl">
                       <span className="text-white">Grand Total</span>
-                      <span className="text-cyan-400">₹{grandTotal.toFixed(2)}</span>
+                      <span className="text-cyan-400">₹{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
+                    </div>
+                    <div className="text-right">
+                      {!roundOffApplied ? (
+                        <button
+                          type="button"
+                          onClick={() => setRoundOffApplied(true)}
+                          className="text-[11px] text-cyan-400 hover:text-cyan-300 underline"
+                        >
+                          Apply round off
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setRoundOffApplied(false)}
+                          className="text-[11px] text-gray-400 hover:text-white underline"
+                        >
+                          Revert round off
+                        </button>
+                      )}
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1 uppercase tracking-wide">
                       {grandTotal > 0 ? "Amount Payble" : ""}
