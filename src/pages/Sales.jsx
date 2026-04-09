@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import SalesTable from "../components/sales/SalesTable";
 import SalesForm from "../components/sales/SalesForm";
 import SalesDetailsModal from "../components/sales/SalesDetailsModal";
@@ -10,7 +10,14 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { getUserProfile } from "../api/users";
+import { getUserProfile, patchUserProfile } from "../api/users";
+
+const DEFAULT_INVOICE_PREFIX = "INV-";
+
+const normalizePrefix = (value) => {
+  const normalized = String(value || "").toUpperCase().trim();
+  return normalized || DEFAULT_INVOICE_PREFIX;
+};
 
 export default function Sales() {
   const [showForm, setShowForm] = useState(false);
@@ -18,13 +25,17 @@ export default function Sales() {
   const [showDetails, setShowDetails] = useState(null);
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
-  const [invoicePrefix, setInvoicePrefix] = useState("INV-");
+  const [invoicePrefix, setInvoicePrefix] = useState(DEFAULT_INVOICE_PREFIX);
 
   // Fetch user profile for invoice customization
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: getUserProfile,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const saveInvoicePrefixMutation = useMutation({
+    mutationFn: (prefix) => patchUserProfile({ invoice_prefix: prefix }),
   });
 
   // Extract business info from profile
@@ -47,6 +58,21 @@ export default function Sales() {
     setEditInvoice(null);
   };
 
+  useEffect(() => {
+    const dbPrefix = userProfile?.profile?.invoice_prefix;
+    if (dbPrefix) {
+      setInvoicePrefix(normalizePrefix(dbPrefix));
+    }
+  }, [userProfile?.profile?.invoice_prefix]);
+
+  const handlePrefixBlur = () => {
+    const normalized = normalizePrefix(invoicePrefix);
+    setInvoicePrefix(normalized);
+    if (normalized !== normalizePrefix(userProfile?.profile?.invoice_prefix || DEFAULT_INVOICE_PREFIX)) {
+      saveInvoicePrefixMutation.mutate(normalized);
+    }
+  };
+
   return (
     <Layout>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
@@ -63,7 +89,8 @@ export default function Sales() {
                <input 
                  type="text" 
                  value={invoicePrefix}
-                 onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase())}
+                 onChange={(e) => setInvoicePrefix(normalizePrefix(e.target.value))}
+                 onBlur={handlePrefixBlur}
                  className="bg-transparent border-none text-white text-sm w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
                  placeholder="INV-"
                  maxLength={10}
