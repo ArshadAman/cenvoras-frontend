@@ -29,7 +29,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       (product?.name || "").toLowerCase().includes(query)
     );
     setFilteredProducts(filtered);
-    // Don't auto-open dropdown here, rely on onChange and onFocus
+    setShowDropdown(filtered.length > 0);
   }, [inputValue, products]);
 
   const selectProduct = (product) => {
@@ -67,12 +67,6 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product_id`, null);
     setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
-    
-    if (value.trim()) {
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
-    }
   };
 
   return (
@@ -84,10 +78,6 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               {...field}
               value={inputValue}
               onChange={handleInputChange}
-              onBlur={(e) => {
-                field.onBlur(e);
-                setTimeout(() => setShowDropdown(false), 200);
-              }}
               onFocus={() => {
                 if ((inputValue || "").trim() && filteredProducts.length > 0) {
                   setShowDropdown(true);
@@ -143,10 +133,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                   ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent input from losing focus
-                selectProduct(product);
-              }}
+              onClick={() => selectProduct(product)}
             >
               <div className="font-medium">{product.name}</div>
               <div className="text-gray-500 text-xs mt-0.5">
@@ -270,10 +257,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent input from losing focus
-                selectCustomer(customer);
-              }}
+              onClick={() => selectCustomer(customer)}
             >
               <div className="font-medium">{customer.name}</div>
               <div className="text-gray-500 text-xs mt-0.5">
@@ -294,8 +278,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevent input from losing focus
+              onClick={() => {
                 setShowNewCustomerModal(true);
                 setShowDropdown(false);
               }}
@@ -812,10 +795,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
               const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
-              const roundOffDelta = roundOffApplied ? Number((finalTotal - totalAmount).toFixed(2)) : 0;
 
               const formData = {
-                round_off: roundOffDelta.toString(),
                 customer_name: values.customer_name,
                 invoice_number: values.invoice_number,
                 invoice_date: values.invoice_date,
