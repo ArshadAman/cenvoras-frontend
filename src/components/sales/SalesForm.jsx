@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
+import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
@@ -41,6 +42,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     const amount = quantity * (product.price ?? 0);
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.discount`, 0);
     setFieldValue(`items.${idx}.tax`, product.tax || 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
@@ -63,6 +65,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
+    setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
   };
 
@@ -111,6 +114,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             />
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+            )}
+            {!!values.items[idx]?.product_description && (
+              <small className="block mt-1 text-[11px] text-gray-500 leading-tight">
+                {values.items[idx].product_description}
+              </small>
             )}
           </div>
         )}
@@ -191,7 +199,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   return (
     <div className="relative">
       <Field name="customer_name">
-        {({ field, meta }) => (
+        {({ meta }) => (
           <div>
             <input
               name="customer_name"
@@ -432,6 +440,16 @@ const SalesSchema = Yup.object().shape({
 
 const units = ["pcs", "kg", "ltr", "box", "meter"];
 
+const DEFAULT_ITEM_SETTINGS = {
+  show_item_description: true,
+  show_item_hsn: true,
+  show_item_batch: true,
+  require_item_batch: false,
+  show_item_free_quantity: true,
+  show_item_discount: true,
+  show_item_tax: true,
+};
+
 export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "INV-" }) {
   // Keyboard Shortcuts Logic
   useEffect(() => {
@@ -466,13 +484,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
               const index = Array.prototype.indexOf.call(form, target);
               // Find next navigable element
               let nextIndex = index + 1;
-              let found = false;
               while (form.elements[nextIndex]) {
                  const next = form.elements[nextIndex];
                  // Skip hidden, disabled, or readOnly that shouldn't be focused
                  if (next.tagName !== "FIELDSET" && !next.hidden && !next.disabled && next.offsetParent !== null && next.tabIndex >= 0) {
                      next.focus();
-                     found = true;
                      break;
                  }
                  nextIndex++;
@@ -525,17 +541,39 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     enabled: !!selectedWarehouseId
   });
   const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
-  
 
-  // Sync warehouse selection from Formik values (used by render below)
-  // This replaces the illegal useEffect-inside-IIFE that was causing form refreshes
-  const warehouseSyncRef = React.useRef(selectedWarehouseId);
+  const { data: invoiceSettings } = useQuery({
+    queryKey: ["invoiceSettings"],
+    queryFn: getInvoiceSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const itemSettings = {
+    ...DEFAULT_ITEM_SETTINGS,
+    ...(invoiceSettings || {}),
+  };
+
+  const updateInvoiceSettingsMutation = useMutation({
+    mutationFn: updateInvoiceSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoiceSettings"] });
+    },
+  });
+
+  const handleToggleItemSetting = (key) => {
+    const nextValue = !itemSettings[key];
+    updateInvoiceSettingsMutation.mutate({
+      ...invoiceSettings,
+      [key]: nextValue,
+    });
+  };
+  
 
   // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
   
   const { data: nextInvData } = useQuery({
     queryKey: ["nextInvoiceNumber"],
-    queryFn: () => getNextInvoiceNumber("INV-"),
+    queryFn: () => getNextInvoiceNumber(invoicePrefix || "INV-"),
     enabled: !isEdit && isOpen
   });
 
@@ -638,7 +676,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
               return {
                 product: item.product || item.product_name || "",
                 product_id: item.product_id || null,
+                product_description: item.product_detail?.description || item.product_description || "",
                 quantity: qty,
+                free_quantity: item.free_quantity || 0,
+                batch: item.batch || "",
                 price: price,
                 amount: itemAmount, // This should always be qty * price before tax/discount
                 unit: item.unit || "pcs",
@@ -650,7 +691,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             }) : [{
               product: "",
               product_id: null,
+              product_description: "",
               quantity: 1,
+              free_quantity: 0,
+              batch: "",
               price: 0,
               amount: 0, // Required field
               unit: "pcs",
@@ -684,6 +728,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                    toast.error('At least one item is required to create an invoice');
                    setSubmitting(false);
                    return;
+                }
+
+                if (itemSettings.show_item_batch && itemSettings.require_item_batch) {
+                  const missingBatchRow = cleanedItems.findIndex((item) => !item.batch);
+                  if (missingBatchRow >= 0) {
+                    toast.error(`Batch is required for row ${missingBatchRow + 1}.`);
+                    setSubmitting(false);
+                    return;
+                  }
                 }
                 
                 // Perform validation manually for Final invoices using the cleaned items
@@ -721,12 +774,14 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 return {
                   product: item.product_id || item.product, // Pass UUID if available, else name
                   quantity: quantity,
+                  free_quantity: itemSettings.show_item_free_quantity ? (Number(item.free_quantity) || 0) : 0,
+                  ...(itemSettings.show_item_batch && item.batch ? { batch: item.batch } : {}),
                   price: price,
                   amount: amount,
                   unit: item.unit || null,
-                  hsn_sac_code: item.hsn_sac_code || null,
-                  discount: discount,
-                  tax: tax,
+                  hsn_sac_code: itemSettings.show_item_hsn ? (item.hsn_sac_code || null) : null,
+                  discount: itemSettings.show_item_discount ? discount : 0,
+                  tax: itemSettings.show_item_tax ? tax : 0,
                 };
               });
 
@@ -766,7 +821,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             setSubmitting(false);
           }}
         >
-          {({ values, setFieldValue, isSubmitting, handleSubmit, setStatus }) => {
+          {({ values, setFieldValue, isSubmitting, handleSubmit }) => {
             // Calculate totals
             const subtotal = values.items.reduce((sum, item) => {
               const quantity = Number(item.quantity) || 0;
@@ -1005,7 +1060,19 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
                 {/* Items */}
                 <div className="p-8 bg-[#151515] border-t border-b border-white/5">
-                  <h3 className="text-lg font-bold text-white mb-4">Items</h3>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h3 className="text-lg font-bold text-white">Items</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                      <button type="button" onClick={() => handleToggleItemSetting('show_item_batch')} className={`px-2 py-1 rounded border ${itemSettings.show_item_batch ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Batch</button>
+                      <button type="button" onClick={() => handleToggleItemSetting('show_item_free_quantity')} className={`px-2 py-1 rounded border ${itemSettings.show_item_free_quantity ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Free Qty</button>
+                      <button type="button" onClick={() => handleToggleItemSetting('show_item_discount')} className={`px-2 py-1 rounded border ${itemSettings.show_item_discount ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Discount</button>
+                      <button type="button" onClick={() => handleToggleItemSetting('show_item_tax')} className={`px-2 py-1 rounded border ${itemSettings.show_item_tax ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Tax</button>
+                      <button type="button" onClick={() => handleToggleItemSetting('show_item_hsn')} className={`px-2 py-1 rounded border ${itemSettings.show_item_hsn ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>HSN</button>
+                      {itemSettings.show_item_batch && (
+                        <button type="button" onClick={() => handleToggleItemSetting('require_item_batch')} className={`px-2 py-1 rounded border ${itemSettings.require_item_batch ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-white/5 border-white/10 text-gray-400'}`}>Require Batch</button>
+                      )}
+                    </div>
+                  </div>
                   <FieldArray name="items">
                     {({ push, remove }) => {
                       // Function to auto-add new row when user starts typing in the last row
@@ -1027,13 +1094,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             push({
                               product_name: "",
                               product_id: null,
+                              product_description: "",
                               quantity: 1,
                               free_quantity: 0,
+                              batch: "",
                               unit: "pcs", 
                               price: 0,
                               discount: 0,
                               tax: 0,
-                              hsn_code: "",
+                              hsn_sac_code: "",
                               tax_rate: 0,
                               amount: 0,
                               isExistingProduct: false,
@@ -1047,12 +1116,12 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                           {/* Desktop Header Row */}
                           <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
                              <div className="col-span-3">Product</div>
-                             <div className="col-span-2">Batch</div>
+                              {itemSettings.show_item_batch && <div className="col-span-2">Batch</div>}
                              <div className="col-span-1 text-center">Qty</div>
-                             <div className="col-span-1 text-center text-green-400">Free</div>
+                              {itemSettings.show_item_free_quantity && <div className="col-span-1 text-center text-green-400">Free</div>}
                              <div className="col-span-1">Unit</div>
                              <div className="col-span-1 text-right">Price</div>
-                             <div className="col-span-1 text-center">Disc/Tax%</div>
+                              {(itemSettings.show_item_discount || itemSettings.show_item_tax) && <div className="col-span-1 text-center">Disc/Tax%</div>}
                              <div className="col-span-1 text-right">Amount</div>
                              <div className="col-span-1 text-center"></div>
                           </div>
@@ -1085,10 +1154,18 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                       onProductSearchChange={setProductSearch}
                                   />
                               </div>
+                              {itemSettings.show_item_hsn && (
+                                <Field
+                                  name={`items.${index}.hsn_sac_code`}
+                                  type="text"
+                                  placeholder="HSN/SAC"
+                                  className="mt-2 w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-[11px] text-gray-300 focus:ring-1 focus:ring-cyan-500 outline-none"
+                                />
+                              )}
                             </div>
 
                             {/* Batch (2 cols) */}
-                            <div className="md:col-span-2">
+                            {itemSettings.show_item_batch && <div className="md:col-span-2">
                                 <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Batch</label>
                                 <Field name={`items.${index}.batch`}>
                                     {({ field }) => (
@@ -1106,7 +1183,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                     </select>
                                     )}
                                 </Field>
-                            </div>
+                                </div>}
 
                             {/* Qty (1 col) */}
                             <div className="md:col-span-1">
@@ -1129,7 +1206,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             </div>
 
                             {/* Free Qty (1 col) */}
-                            <div className="md:col-span-1">
+                            {itemSettings.show_item_free_quantity && <div className="md:col-span-1">
                                 <label className="block text-xs font-medium mb-1 md:hidden text-green-400">Free</label>
                                 <Field
                                     name={`items.${index}.free_quantity`}
@@ -1138,7 +1215,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                     placeholder="0"
                                     className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
                                 />
-                            </div>
+                                </div>}
 
                             {/* Unit (1 col) */}
                             <div className="md:col-span-1">
@@ -1177,16 +1254,22 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             </div>
 
                             {/* Disc/Tax (1 col) */}
-                            <div className="md:col-span-1 flex flex-col gap-2">
-                                <div className="flex items-center gap-1">
+                            {(itemSettings.show_item_discount || itemSettings.show_item_tax) && (
+                              <div className="md:col-span-1 flex flex-col gap-2">
+                                {itemSettings.show_item_discount && (
+                                  <div className="flex items-center gap-1">
                                     <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
                                     <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
-                                </div>
-                                <div className="flex items-center gap-1">
+                                  </div>
+                                )}
+                                {itemSettings.show_item_tax && (
+                                  <div className="flex items-center gap-1">
                                     <label className="text-[10px] text-gray-500 w-6 md:hidden">Tax</label>
                                     <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
-                                </div>
-                            </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* Amount (1 col) */}
                             <div className="md:col-span-1">

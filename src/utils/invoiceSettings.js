@@ -108,8 +108,10 @@ export const defaultInvoiceTemplate = {
   columns: [
     { id: 'serial', label: '#', width: '5%', show: true, align: 'center' },
     { id: 'description', label: 'Description', width: '35%', show: true, align: 'left' },
+    { id: 'batch', label: 'Batch', width: '10%', show: false, align: 'center' },
     { id: 'hsn', label: 'HSN/SAC', width: '10%', show: true, align: 'center' },
     { id: 'quantity', label: 'Qty', width: '8%', show: true, align: 'center' },
+    { id: 'free_qty', label: 'Free', width: '8%', show: false, align: 'center' },
     { id: 'unit', label: 'Unit', width: '7%', show: false, align: 'center' },
     { id: 'price', label: 'Rate', width: '12%', show: true, align: 'right' },
     { id: 'discount', label: 'Disc.', width: '8%', show: false, align: 'right' },
