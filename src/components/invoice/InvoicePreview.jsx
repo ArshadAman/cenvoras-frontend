@@ -57,7 +57,8 @@ const InvoicePreview = forwardRef(({
     return sum + ((qty * price * tax) / 100);
   }, 0);
   
-  const grandTotal = subtotal + taxTotal;
+  const roundOff = parseFloat(invoice.round_off || 0);
+  const grandTotal = subtotal + taxTotal + roundOff;
   
   // Dynamic styles
   const paperStyle = {
@@ -353,6 +354,16 @@ const InvoicePreview = forwardRef(({
                   ₹{taxTotal.toFixed(2)}
                 </td>
               </tr>
+              {roundOff !== 0 && (
+                <tr>
+                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                    Round Off
+                  </td>
+                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
+                    ₹{roundOff.toFixed(2)}
+                  </td>
+                </tr>
+              )}
               <tr style={totalRowStyle}>
                 <td className="px-3 py-3 border font-bold">
                   TOTAL
