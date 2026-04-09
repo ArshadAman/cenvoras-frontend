@@ -93,7 +93,7 @@ const SelectableNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
   );
 };
 
-export default function TemplateEditor() {
+export default function TemplateEditor({ isOpen, onClose }) {
   const [nodes, setNodes] = useState([
     { id: '1', type: 'text', text: 'INVOICE', x: 50, y: 50, fontSize: 30, fill: '#000000' },
     { id: '2', type: 'text', text: '{{company_name}}', x: 50, y: 100, fontSize: 16, fill: '#333333' },
@@ -135,8 +135,14 @@ export default function TemplateEditor() {
     alert("Template saved!");
   };
 
+    if (!isOpen) return null;
+
   return (
-    <div className="flex h-screen bg-[#0c0c0e] text-white">
+    <div className="fixed inset-0 z-[9999] flex h-screen bg-[#0c0c0e] text-white">
+      {/* Close button */}
+      <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500/40">
+        X
+      </button>
       {/* Sidebar Tooling */}
       <div className="w-64 bg-[#111] border-r border-white/10 p-6 flex flex-col gap-4">
         <h2 className="text-xl font-bold mb-4 border-b border-white/10 pb-4">Blocks</h2>

@@ -17,7 +17,7 @@ import {
 import { toast } from 'react-toastify';
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
-import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
+import TemplateEditor from "../invoice/TemplateEditor";
 import { getActiveTemplate } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
 
@@ -332,7 +332,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       </div>
 
       {/* Template Designer Modal */}
-      <InvoiceTemplateDesigner
+      <TemplateEditor
         isOpen={showDesigner}
         onClose={() => setShowDesigner(false)}
         businessInfo={businessInfo}
