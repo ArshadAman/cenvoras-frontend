@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts } from "../../api/inventory";
 import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
@@ -69,6 +69,7 @@ const validateCsvBeforeUpload = async (file) => {
 };
 
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("name"); // default: alphabetical
   const [page, setPage] = useState(1);
@@ -85,9 +86,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     outOfStock: false,
   });
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["products", search, ordering, page],
     queryFn: () => getProducts({ search, ordering, page }),
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
   });
 
   const handleDownloadTemplate = async () => {
@@ -176,78 +190,92 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   }
 
   // Get the raw products array from API response
-  const productsRaw = Array.isArray(data)
-    ? data
-    : data?.results || data?.data || [];
+  const productsRaw = useMemo(
+    () => (Array.isArray(data) ? data : data?.results || data?.data || []),
+    [data]
+  );
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
   // Backend handles search across all products; frontend applies additional filters only.
-  const filteredProducts = productsRaw
-    .filter(product => {
-      // Stock filter
-      let matchesStock = true;
-  const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
-  const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
-      
-      if (stockFilter === "in-stock") {
-        matchesStock = currentStock > 0;
-      } else if (stockFilter === "out-of-stock") {
-        matchesStock = currentStock === 0;
-      } else if (stockFilter === "low-stock") {
-        matchesStock = currentStock > 0 && currentStock <= minStock;
-      }
-      
-      // Advanced filters
-      if (advancedFilters.lowStock) {
-        matchesStock = matchesStock && currentStock <= minStock;
-      }
-      if (advancedFilters.outOfStock) {
-        matchesStock = matchesStock && currentStock === 0;
-      }
-      
-      // Price range filter
-      let matchesPrice = true;
-      if (advancedFilters.priceRange.min || advancedFilters.priceRange.max) {
-      const price = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
-        if (advancedFilters.priceRange.min) {
-          matchesPrice = matchesPrice && price >= parseFloat(advancedFilters.priceRange.min);
-        }
-        if (advancedFilters.priceRange.max) {
-          matchesPrice = matchesPrice && price <= parseFloat(advancedFilters.priceRange.max);
-        }
-      }
-      
-      // Stock range filter
-      let matchesStockRange = true;
-      if (advancedFilters.stockRange.min || advancedFilters.stockRange.max) {
-        if (advancedFilters.stockRange.min) {
-          matchesStockRange = matchesStockRange && currentStock >= parseFloat(advancedFilters.stockRange.min);
-        }
-        if (advancedFilters.stockRange.max) {
-          matchesStockRange = matchesStockRange && currentStock <= parseFloat(advancedFilters.stockRange.max);
-        }
-      }
-      
-      // Supplier filter
-      let matchesSupplier = true;
-      if (advancedFilters.supplier) {
-        matchesSupplier = product.supplier?.toLowerCase().includes(advancedFilters.supplier.toLowerCase());
-      }
-      
-      return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
-    })
-    .sort((a, b) => {
-      // Frontend ordering
-      if (ordering === "name") return (a.name || "").localeCompare(b.name || "");
-      if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
-      if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
-      if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
-      if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
-      if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
+  const filteredProducts = useMemo(() => {
+    const minPrice = advancedFilters.priceRange.min === "" ? null : parseFloat(advancedFilters.priceRange.min);
+    const maxPrice = advancedFilters.priceRange.max === "" ? null : parseFloat(advancedFilters.priceRange.max);
+    const minStockRange = advancedFilters.stockRange.min === "" ? null : parseFloat(advancedFilters.stockRange.min);
+    const maxStockRange = advancedFilters.stockRange.max === "" ? null : parseFloat(advancedFilters.stockRange.max);
+    const supplierQuery = String(advancedFilters.supplier || "").toLowerCase();
 
-      return 0;
-    });
+    return productsRaw
+      .filter((product) => {
+        let matchesStock = true;
+        const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
+        const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
+
+        if (stockFilter === "in-stock") {
+          matchesStock = currentStock > 0;
+        } else if (stockFilter === "out-of-stock") {
+          matchesStock = currentStock === 0;
+        } else if (stockFilter === "low-stock") {
+          matchesStock = currentStock > 0 && currentStock <= minStock;
+        }
+
+        if (advancedFilters.lowStock) {
+          matchesStock = matchesStock && currentStock <= minStock;
+        }
+        if (advancedFilters.outOfStock) {
+          matchesStock = matchesStock && currentStock === 0;
+        }
+
+        let matchesPrice = true;
+        if (minPrice !== null || maxPrice !== null) {
+          const price = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+          if (minPrice !== null) {
+            matchesPrice = matchesPrice && price >= minPrice;
+          }
+          if (maxPrice !== null) {
+            matchesPrice = matchesPrice && price <= maxPrice;
+          }
+        }
+
+        let matchesStockRange = true;
+        if (minStockRange !== null || maxStockRange !== null) {
+          if (minStockRange !== null) {
+            matchesStockRange = matchesStockRange && currentStock >= minStockRange;
+          }
+          if (maxStockRange !== null) {
+            matchesStockRange = matchesStockRange && currentStock <= maxStockRange;
+          }
+        }
+
+        let matchesSupplier = true;
+        if (supplierQuery) {
+          matchesSupplier = String(product.supplier || "").toLowerCase().includes(supplierQuery);
+        }
+
+        return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
+      })
+      .sort((a, b) => {
+        if (ordering === "name") return (a.name || "").localeCompare(b.name || "");
+        if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
+        if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
+        if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
+        if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
+        if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
+
+        return 0;
+      });
+  }, [
+    advancedFilters.lowStock,
+    advancedFilters.outOfStock,
+    advancedFilters.priceRange.max,
+    advancedFilters.priceRange.min,
+    advancedFilters.stockRange.max,
+    advancedFilters.stockRange.min,
+    advancedFilters.supplier,
+    ordering,
+    productsRaw,
+    stockFilter,
+  ]);
 
   // Bulk operations functions
   const handleSelectAll = (checked) => {
@@ -339,10 +367,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <input
           className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search by name or description"
-          value={search}
+          value={searchInput}
           onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
+            setSearchInput(e.target.value);
           }}
         />
         <select
