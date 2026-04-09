@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts } from "../../api/inventory";
+import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts } from "../../api/inventory";
 import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
@@ -85,7 +85,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     outOfStock: false,
   });
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["products", search, ordering, page],
     queryFn: () => getProducts({ search, ordering, page }),
   });
@@ -124,22 +124,27 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     setIsUploadingCsv(true);
     try {
       const result = await bulkUploadProductsCsv(file);
-      const createdCount = Number(result?.created_count || 0);
-      const failedCount = Number(result?.failed_count || 0);
-
-      if (failedCount > 0) {
-        if (createdCount > 0) {
-          toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
-        } else {
-          toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
-        }
-      } else if (createdCount > 0) {
-        toast.success(`Bulk upload complete. Created: ${createdCount}`);
+      
+      if (result?.message) {
+        toast.info(result.message);
       } else {
-        toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
+        const createdCount = Number(result?.created_count || 0);
+        const failedCount = Number(result?.failed_count || 0);
+
+        if (failedCount > 0) {
+          if (createdCount > 0) {
+            toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
+          } else {
+            toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
+          }
+        } else if (createdCount > 0) {
+          toast.success(`Bulk upload complete. Created: ${createdCount}`);
+        } else {
+          toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
+        }
       }
 
-      window.location.reload();
+      refetch();
     } catch (err) {
       const responseData = err?.response?.data;
       if (responseData?.errors?.length) {
@@ -268,14 +273,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     
     const confirmed = window.confirm(`Are you sure you want to delete ${selectedProducts.size} products?`);
     if (confirmed) {
+      // Show loading toast
+      const toastId = toast.loading(`Deleting ${selectedProducts.size} products...`);
       try {
-        for (const productId of selectedProducts) {
-          await onDelete(productId);
-        }
+        const productIds = Array.from(selectedProducts);
+        const result = await bulkDeleteProducts(productIds);
+        
         setSelectedProducts(new Set());
         setShowBulkActions(false);
+        toast.update(toastId, { render: result.message || `Successfully deleted products.`, type: "success", isLoading: false, autoClose: 3000 });
+        
+        refetch();
       } catch (error) {
-        alert('Error deleting some products. Please try again.');
+        toast.update(toastId, { render: error?.response?.data?.error || `Failed to delete products.`, type: "error", isLoading: false, autoClose: 3000 });
       }
     }
   };

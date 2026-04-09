@@ -50,6 +50,9 @@ export const updateProduct = (id, data) => {
 export const deleteProduct = (id) =>
   api.delete(`/inventory/products/${id}/`).then(res => res.data);
 
+export const bulkDeleteProducts = (ids) =>
+  api.post('/inventory/products/bulk-delete/', { ids }).then(res => res.data);
+
 export const downloadProductCsvTemplate = () =>
   api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);
 
