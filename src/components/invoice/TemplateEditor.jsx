@@ -33,9 +33,10 @@ const SelectableNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
               y: e.target.y(),
             });
           }}
-          onTransformEnd={() => {
+          onTransformEnd={(e) => {
             const node = shapeRef.current;
             const scaleX = node.scaleX();
+            const scaleY = node.scaleY();
             node.scaleX(1);
             node.scaleY(1);
             onChange({
@@ -63,7 +64,7 @@ const SelectableNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
               y: e.target.y(),
             });
           }}
-          onTransformEnd={() => {
+          onTransformEnd={(e) => {
             const node = shapeRef.current;
             const scaleX = node.scaleX();
             const scaleY = node.scaleY();
