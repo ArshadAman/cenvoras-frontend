@@ -48,11 +48,10 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 const getToken = () => !!localStorage.getItem('token')
-const getActiveSession = () => !!localStorage.getItem('activeSession')
 
 function App() {
-  // Only auto-authenticate if there's both a token AND an active session
-  const [isAuthenticated, setIsAuthenticated] = useState(getToken() && getActiveSession())
+  // Persist login across refresh as long as a token exists.
+  const [isAuthenticated, setIsAuthenticated] = useState(getToken())
 
   return (
     <Router>
@@ -65,11 +64,7 @@ function App() {
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={(rememberMe) => {
-            if (rememberMe) {
-              localStorage.setItem('activeSession', 'true');
-            } else {
-              localStorage.removeItem('activeSession');
-            }
+            void rememberMe;
             setIsAuthenticated(true);
           }} />}
         />
@@ -83,6 +78,9 @@ function App() {
         <Route
           path="/dashboard"
           element={isAuthenticated ? <Dashboard onLogout={() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('role');
             localStorage.removeItem('activeSession');
             setIsAuthenticated(false);
           }} /> : <Navigate to="/" replace />}
@@ -233,6 +231,9 @@ function App() {
         <Route
           path="/profile"
           element={isAuthenticated ? <Profile onLogout={() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('role');
             localStorage.removeItem('activeSession');
             setIsAuthenticated(false);
           }} /> : <Navigate to="/" replace />}
