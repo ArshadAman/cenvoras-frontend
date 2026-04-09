@@ -99,7 +99,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       a.download = 'product_bulk_template.csv';
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       toast.error('Failed to download product template.');
     }
   };
