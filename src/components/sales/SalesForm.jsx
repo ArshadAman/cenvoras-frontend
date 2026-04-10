@@ -962,14 +962,6 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                     </div>
                   </div>
 
-                  {/* Customer Info */}
-                  <div className="grid grid-cols-1 gap-6">
-                    <div>
-                      <CustomerAutocomplete values={values} setFieldValue={setFieldValue} customers={customers} />
-                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-sm mt-1" />
-                    </div>
-                  </div>
-
                   {/* Address & Additional Fields */}
                   <div className="grid grid-cols-1 gap-6">
                     <div>
