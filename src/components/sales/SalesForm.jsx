@@ -963,52 +963,14 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   </div>
 
                   {/* Customer Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                         Customer Name *
                       </label>
 
-                      <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+                      <CustomerAutocomplete values={values} setFieldValue={setFieldValue} customers={customers} />
                       <ErrorMessage name="customer_name" component="div" className="text-red-400 text-sm mt-1" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Email <span className="text-gray-600">(creates customer record)</span>
-                      </label>
-                      <Field
-                        name="customer_email"
-                        type="email"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="customer@example.com"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Additional Customer Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Phone
-                      </label>
-                      <Field
-                        name="customer_phone"
-                        type="tel"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="+91 9876543210"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Address
-                      </label>
-                      <Field
-                        name="customer_address"
-                        as="textarea"
-                        rows="2"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="Customer's address"
-                      />
                     </div>
                   </div>
 
@@ -1018,53 +980,12 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                         Delivery Address
                       </label>
-                      <div className="mb-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFieldValue('delivery_address', values.customer_address);
-                              }
-                            }}
-                            className="rounded border-white/10 bg-[#111] text-cyan-500 focus:ring-cyan-500"
-                          />
-                          Same as customer address
-                        </label>
-                      </div>
                       <Field
                         name="delivery_address"
                         as="textarea"
                         rows="3"
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                         placeholder="123 Delivery Address, City, State"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        GST Treatment
-                      </label>
-                      <Field
-                        name="gst_treatment"
-                        as="select"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                      >
-                        <option value="registered">Registered</option>
-                        <option value="unregistered">Unregistered</option>
-                        <option value="export">Export</option>
-                      </Field>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Journal
-                      </label>
-                      <Field
-                        name="journal"
-                        type="text"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                       />
                     </div>
                   </div>
