@@ -104,10 +104,21 @@ export default function Layout({ children, onLogout }) {
   const permissions = profileData?.profile?.permissions || {};
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
+  const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
+  const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
+
+  const isAllowedFreeRoute = (path) => {
+    return path.startsWith('/sales') || path.startsWith('/customers') || path.startsWith('/profile');
+  };
 
   // Filter structural groups by roles AND granular permissions
   const filteredGroups = navigationGroups.map(group => {
     const validItems = group.items.filter(item => {
+      // 0. Free plan hard gate: only Sales Invoices, Customers, and Profile routes are accessible.
+      if (isFreePlan && !isAllowedFreeRoute(item.path)) {
+        return false;
+      }
+
       // 1. Role Check
       if (item.roles && item.roles.length > 0 && !item.roles.includes(role)) {
         return false;
@@ -361,7 +372,38 @@ export default function Layout({ children, onLogout }) {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto relative z-10">
-           {children}
+          {isFreePlan && !isAllowedFreeRoute(location.pathname) ? (
+            <div className="p-6 md:p-10">
+              <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+                <h2 className="text-2xl font-bold text-white mb-2">This section is locked on Free</h2>
+                <p className="text-sm text-gray-300 mb-4">
+                  Your Free plan can access only Sales Invoices, Customers, and Profile. Upgrade to unlock dashboard, inventory, reports, integrations, and advanced features.
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    to="/sales"
+                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors text-sm font-medium"
+                  >
+                    Go to Sales Invoices
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setUpgradeModal({
+                      open: true,
+                      featureName: 'Premium Modules',
+                      description: 'Upgrade to Pro or Business to unlock dashboard, reports, integrations, and advanced operations.',
+                      targetPlanName: 'Pro',
+                    })}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 transition-all text-sm font-semibold"
+                  >
+                    Upgrade Plan
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
 
