@@ -208,6 +208,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         throw new Error("Please select or enter a customer name");
       }
 
+      // Invoice is required to update payment status
+      if (!formData.invoice) {
+        throw new Error("Please select an invoice to record payment against");
+      }
+
       if (editData) {
         await api.put(`/billing/payments/${editData.id}/`, {
           ...formData,

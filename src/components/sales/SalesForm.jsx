@@ -16,6 +16,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     const query = (inputValue || "").trim().toLowerCase();
@@ -29,8 +30,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       (product?.name || "").toLowerCase().includes(query)
     );
     setFilteredProducts(filtered);
-    setShowDropdown(filtered.length > 0);
-  }, [inputValue, products]);
+    setShowDropdown(isFocused && filtered.length > 0);
+  }, [inputValue, products, isFocused]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
@@ -67,6 +68,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product_id`, null);
     setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
+    if (!value.trim()) {
+      setShowDropdown(false);
+    }
   };
 
   return (
@@ -79,9 +83,14 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               value={inputValue}
               onChange={handleInputChange}
               onFocus={() => {
+                setIsFocused(true);
                 if ((inputValue || "").trim() && filteredProducts.length > 0) {
                   setShowDropdown(true);
                 }
+              }}
+              onBlur={() => {
+                setIsFocused(false);
+                setTimeout(() => setShowDropdown(false), 100);
               }}
               placeholder="Product name"
               className="w-full bg-[#111] border border-white/10 rounded px-2 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-xs"
@@ -512,6 +521,12 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const existingRoundOff = Number(editData?.round_off || 0);
+    setRoundOffApplied(existingRoundOff !== 0);
+  }, [isOpen, editData?.id, editData?.round_off]);
+
   const computeRoundedTotal = (amount) => {
     const integerPart = Math.floor(amount);
     const fraction = amount - integerPart;
@@ -619,9 +634,19 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
   const handleBeforeClose = async () => {
     if (formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
-      // Auto-save as draft if form is touched
-      submitActionRef.current = 'draft';
-      await formikRef.current.submitForm();
+      const values = formikRef.current.values || {};
+      const cleanedItems = (values.items || []).filter((item) =>
+        (item?.product && item.product.trim() !== '') || item?.product_id
+      );
+
+      const hasCustomerName = !!(values.customer_name && values.customer_name.trim());
+      const hasAtLeastOneItem = cleanedItems.length > 0;
+
+      // Only auto-save draft on close when minimum draft payload is available.
+      if (hasCustomerName && hasAtLeastOneItem) {
+        submitActionRef.current = 'draft';
+        await formikRef.current.submitForm();
+      }
     }
     onClose();
   };
@@ -795,6 +820,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
               const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
+              const roundOffValue = roundOffApplied
+                ? Number((finalTotal - totalAmount).toFixed(2))
+                : 0;
 
               const formData = {
                 customer_name: values.customer_name,
@@ -808,6 +836,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : 'final',
                 total_amount: finalTotal.toString(),
+                round_off: roundOffValue.toString(),
                 items: processedItems,
                 // Optional customer fields for new record creation
                 ...(values.customer_email && { customer_email: values.customer_email }),
@@ -1063,46 +1092,50 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                         <div className="space-y-2">
                           {(() => {
                             const desktopColumns = [
-                              { key: "product", label: "Product", show: true, width: "minmax(260px,2.4fr)" },
-                              { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "minmax(120px,0.9fr)" },
-                              { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "minmax(150px,1fr)" },
-                              { key: "quantity", label: "Quantity", show: true, width: "90px" },
-                              { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "80px" },
-                              { key: "unit", label: "Unit", show: true, width: "80px" },
-                              { key: "price", label: "Price", show: true, width: "130px" },
-                              { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "85px" },
-                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "110px" },
-                              { key: "amount", label: "Amount", show: true, width: "140px" },
-                              { key: "action", label: "", show: true, width: "56px" },
+                              { key: "product", label: "Product", show: true, width: "320px" },
+                              { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "120px" },
+                              { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px" },
+                              { key: "quantity", label: "Quantity", show: true, width: "80px" },
+                              { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "70px" },
+                              { key: "unit", label: "Unit", show: true, width: "70px" },
+                              { key: "price", label: "Price", show: true, width: "110px" },
+                              { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px" },
+                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px" },
+                              { key: "amount", label: "Amount", show: true, width: "130px" },
+                              { key: "action", label: "", show: true, width: "44px" },
                             ].filter((col) => col.show);
 
                             const gridTemplateColumns = desktopColumns.map((col) => col.width).join(" ");
+                            const totalMinWidth = desktopColumns.reduce((sum, col) => sum + Number.parseInt(col.width, 10), 0);
 
                             return (
                               <>
-                                <div className="hidden md:grid items-center px-2 py-2 text-xs font-semibold text-gray-300 border-y border-white/10 bg-[#1b2030]" style={{ gridTemplateColumns }}>
-                                  {desktopColumns.map((col) => (
-                                    <div
-                                      key={col.key}
-                                      className={[
-                                        col.key === "amount" || col.key === "price" ? "text-right" : "",
-                                        col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
-                                      ].join(" ")}
-                                    >
-                                      {col.label}
-                                    </div>
-                                  ))}
+                                <div className="hidden md:block overflow-x-auto border-y border-white/10 bg-[#1b2030]">
+                                  <div className="grid items-center px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px` }}>
+                                    {desktopColumns.map((col) => (
+                                      <div
+                                        key={col.key}
+                                        className={[
+                                          col.key === "amount" || col.key === "price" ? "text-right" : "",
+                                          col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
+                                        ].join(" ")}
+                                      >
+                                        {col.label}
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
 
-                                {values.items.map((item, index) => {
-                                  const productBatches = stockPoints
-                                    ?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)
-                                    ?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || [];
+                                <div className="hidden md:block overflow-x-auto">
+                                  {values.items.map((item, index) => {
+                                    const productBatches = stockPoints
+                                      ?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)
+                                      ?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || [];
 
-                                  return (
-                                    <div key={index} className="border-b border-white/10">
-                                      <div className="hidden md:grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns }}>
-                                        {desktopColumns.map((col) => {
+                                    return (
+                                      <div key={index} className="border-b border-white/10">
+                                        <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px` }}>
+                                          {desktopColumns.map((col) => {
                                           if (col.key === "product") {
                                             return (
                                               <div key={col.key}>
@@ -1192,7 +1225,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                                   name={`items.${index}.price`}
                                                   type="number"
                                                   min="0"
-                                                  className="w-full min-w-[130px] text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
+                                                  className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
                                                   onChange={(e) => {
                                                     const price = e.target.value;
                                                     setFieldValue(`items.${index}.price`, price);
@@ -1248,11 +1281,18 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                           }
 
                                           return null;
-                                        })}
-                                      </div>
+                                          })}
+                                        </div>
 
-                                      {/* Mobile fallback */}
-                                      <div className="md:hidden grid grid-cols-2 gap-3 py-3">
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="md:hidden space-y-3">
+                                  {values.items.map((item, index) => (
+                                    <div key={`mobile-${index}`} className="border-b border-white/10 pb-3">
+                                      <div className="grid grid-cols-2 gap-3 py-3">
                                         <div className="col-span-2">
                                           <label className="text-xs text-gray-400">Product</label>
                                           <ProductAutocomplete
@@ -1267,8 +1307,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                         </div>
                                       </div>
                                     </div>
-                                  );
-                                })}
+                                  ))}
+                                </div>
                               </>
                             );
                           })()}
