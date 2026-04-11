@@ -266,7 +266,7 @@ const InvoicePreview = forwardRef(({
             letterSpacing: '1px',
           }}
         >
-          {(content.invoiceTitle || 'PROFORMA INVOICE').replace('TAX INVOICE', 'Proforma Invoice')}- {String(invoiceNumber).split('-').slice(-1)[0] || invoiceNumber}
+          {content.invoiceTitle || 'TAX INVOICE'}
         </h2>
         {content.invoiceSubtitle && (
           <p className="text-sm mt-1" style={{ color: colors.lightText }}>

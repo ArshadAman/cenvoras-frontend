@@ -1092,26 +1092,26 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                         <div className="space-y-2">
                           {(() => {
                             const desktopColumns = [
-                              { key: "product", label: "Product", show: true, width: "320px" },
-                              { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "120px" },
-                              { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px" },
-                              { key: "quantity", label: "Quantity", show: true, width: "80px" },
-                              { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "70px" },
-                              { key: "unit", label: "Unit", show: true, width: "70px" },
-                              { key: "price", label: "Price", show: true, width: "110px" },
-                              { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px" },
-                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px" },
-                              { key: "amount", label: "Amount", show: true, width: "130px" },
-                              { key: "action", label: "", show: true, width: "44px" },
+                              { key: "product", label: "Product", show: true, width: "minmax(340px, 1fr)", minWidth: 340 },
+                              { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "120px", minWidth: 120 },
+                              { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px", minWidth: 140 },
+                              { key: "quantity", label: "Quantity", show: true, width: "80px", minWidth: 80 },
+                              { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "70px", minWidth: 70 },
+                              { key: "unit", label: "Unit", show: true, width: "70px", minWidth: 70 },
+                              { key: "price", label: "Price", show: true, width: "110px", minWidth: 110 },
+                              { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
+                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
+                              { key: "amount", label: "Amount", show: true, width: "130px", minWidth: 130 },
+                              { key: "action", label: "", show: true, width: "44px", minWidth: 44 },
                             ].filter((col) => col.show);
 
                             const gridTemplateColumns = desktopColumns.map((col) => col.width).join(" ");
-                            const totalMinWidth = desktopColumns.reduce((sum, col) => sum + Number.parseInt(col.width, 10), 0);
+                            const totalMinWidth = desktopColumns.reduce((sum, col) => sum + (col.minWidth || 0), 0);
 
                             return (
                               <>
                                 <div className="hidden md:block overflow-x-auto border-y border-white/10 bg-[#1b2030]">
-                                  <div className="grid items-center px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px` }}>
+                                  <div className="grid items-center px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
                                         key={col.key}
@@ -1134,7 +1134,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
                                     return (
                                       <div key={index} className="border-b border-white/10">
-                                        <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px` }}>
+                                        <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                           {desktopColumns.map((col) => {
                                           if (col.key === "product") {
                                             return (
