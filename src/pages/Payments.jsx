@@ -163,15 +163,15 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   // Fetch invoices when customer changes
   useEffect(() => {
     if (formData.customer) {
-      fetchInvoices(formData.customer);
+      fetchInvoices(formData.customer, formData.invoice || editData?.invoice || null);
     } else {
       setInvoices([]);
       setSelectedInvoice(null);
       setFormData(prev => ({ ...prev, invoice: '', amount: '' }));
     }
-  }, [formData.customer]);
+  }, [formData.customer, formData.invoice, editData?.invoice]);
 
-  const fetchInvoices = async (customerId) => {
+  const fetchInvoices = async (customerId, currentInvoiceId = null) => {
     setIsLoadingInvoices(true);
     try {
       const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
@@ -182,7 +182,22 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         const paid = parseFloat(inv?.amount_paid || 0);
         return (total - paid) > 0;
       });
-      setInvoices(openInvoices);
+
+      let invoiceOptions = openInvoices;
+      if (currentInvoiceId) {
+        const linkedInvoice = data.find((inv) => String(inv.id) === String(currentInvoiceId));
+        const alreadyIncluded = openInvoices.some((inv) => String(inv.id) === String(currentInvoiceId));
+        if (linkedInvoice && !alreadyIncluded) {
+          invoiceOptions = [linkedInvoice, ...openInvoices];
+        }
+      }
+
+      setInvoices(invoiceOptions);
+
+      if (currentInvoiceId) {
+        const current = invoiceOptions.find((inv) => String(inv.id) === String(currentInvoiceId));
+        setSelectedInvoice(current || null);
+      }
     } catch (err) {
       console.error("Failed to fetch invoices", err);
     } finally {
