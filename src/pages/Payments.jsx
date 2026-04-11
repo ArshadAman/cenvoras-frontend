@@ -104,6 +104,39 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
+  const extractApiErrorMessage = (err) => {
+    const data = err?.response?.data;
+
+    if (!data) {
+      return err?.message || 'Failed to record payment';
+    }
+
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (typeof data?.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+
+    if (Array.isArray(data?.amount) && data.amount.length > 0) {
+      return String(data.amount[0]);
+    }
+
+    const firstField = Object.keys(data)[0];
+    if (firstField) {
+      const fieldError = data[firstField];
+      if (Array.isArray(fieldError) && fieldError.length > 0) {
+        return String(fieldError[0]);
+      }
+      if (typeof fieldError === 'string' && fieldError.trim()) {
+        return fieldError;
+      }
+    }
+
+    return err?.message || 'Failed to record payment';
+  };
+
   useEffect(() => {
     if (isOpen && editData) {
       setFormData({
@@ -233,7 +266,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       onClose();
       if (!editData) resetForm();
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Failed to record payment');
+      setError(extractApiErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
