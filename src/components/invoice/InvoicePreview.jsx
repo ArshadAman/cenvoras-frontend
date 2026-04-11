@@ -46,6 +46,7 @@ const InvoicePreview = forwardRef(({
   const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
   const challanNumber = invoice.challan_number || '';
   const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
+  const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const hasSeparateShipping = shippingAddress && shippingAddress.trim() !== billingAddress.trim();
   const customerAddress = billingAddress;
   
@@ -64,6 +65,7 @@ const InvoicePreview = forwardRef(({
   }, 0);
   
   const grandTotal = subtotal + taxTotal;
+  const finalTotal = grandTotal + roundOff;
   
   // Dynamic styles
   const paperStyle = {
@@ -288,9 +290,6 @@ const InvoicePreview = forwardRef(({
           {challanNumber && <div><span className="font-medium">Challan:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
         </div>
         <div className="text-right space-y-1">
-          {sections.showPONumber && poNumber && (
-            <div><span className="font-medium">PO #:</span> {poNumber}</div>
-          )}
           {sections.showDueDate && dueDate && (
             <div><span className="font-medium">Due Date:</span> {dueDate}</div>
           )}
@@ -459,12 +458,22 @@ const InvoicePreview = forwardRef(({
                   ₹{taxTotal.toFixed(2)}
                 </td>
               </tr>
+              {roundOff !== 0 && (
+                <tr>
+                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                    Round Off
+                  </td>
+                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
+                    {roundOff >= 0 ? '+' : ''}₹{roundOff.toFixed(2)}
+                  </td>
+                </tr>
+              )}
               <tr style={totalRowStyle}>
                 <td className="px-3 py-3 border font-bold">
-                  Total
+                  Grand Total
                 </td>
                 <td className="px-3 py-3 border text-right font-bold text-lg">
-                  ₹{grandTotal.toFixed(2)}
+                  ₹{finalTotal.toFixed(2)}
                 </td>
               </tr>
             </tbody>
@@ -476,7 +485,7 @@ const InvoicePreview = forwardRef(({
               <span className="font-medium">Total amount in words:</span>
               <br />
               <span className="font-semibold" style={{ color: colors.text }}>
-                {amountInWords(grandTotal)}
+                {amountInWords(finalTotal)}
               </span>
             </div>
           )}
