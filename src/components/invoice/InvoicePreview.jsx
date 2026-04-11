@@ -284,8 +284,8 @@ const InvoicePreview = forwardRef(({
         <div className="space-y-1">
           <div><span className="font-medium">Invoice #:</span> <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span></div>
           <div><span className="font-medium">Date:</span> {invoiceDate}</div>
-          {poNumber && <div><span className="font-medium">PO No.:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
-          {challanNumber && <div><span className="font-medium">Challan No.:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
+          {poNumber && <div><span className="font-medium">PO:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
+          {challanNumber && <div><span className="font-medium">Challan:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
         </div>
         <div className="text-right space-y-1">
           {sections.showPONumber && poNumber && (
