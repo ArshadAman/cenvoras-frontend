@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
@@ -17,6 +17,22 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
+  const wrapperRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState(null);
+
+  const updateDropdownPosition = () => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: `${rect.bottom + 6}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      zIndex: 9999,
+    });
+  };
 
   useEffect(() => {
     const query = (inputValue || "").trim().toLowerCase();
@@ -32,6 +48,21 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFilteredProducts(filtered);
     setShowDropdown(isFocused && filtered.length > 0);
   }, [inputValue, products, isFocused]);
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    updateDropdownPosition();
+
+    const handleReposition = () => updateDropdownPosition();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [showDropdown, inputValue, filteredProducts.length]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
@@ -74,7 +105,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   };
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
@@ -132,31 +163,35 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
           </div>
         )}
       </Field>
-      {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
-          {filteredProducts.slice(0, 50).map((product, index) => (
-            <div
-              key={product.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
-                index === selectedIndex 
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
-              }`}
-              onClick={() => selectProduct(product)}
-            >
-              <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
-                Unit: {product.unit} | Price: ₹{product.price}
+        {showDropdown && dropdownStyle && typeof document !== "undefined" && createPortal(
+          <div
+            style={dropdownStyle}
+            className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
+          >
+            {filteredProducts.slice(0, 50).map((product, index) => (
+              <div
+                key={product.id}
+                className={`cursor-pointer border-b border-white/5 px-4 py-3 text-sm transition-colors last:border-0 ${
+                  index === selectedIndex
+                    ? 'bg-cyan-500/20 text-white'
+                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                }`}
+                onClick={() => selectProduct(product)}
+              >
+                <div className="font-medium">{product.name}</div>
+                <div className="mt-0.5 text-xs text-gray-500">
+                  Unit: {product.unit} | Price: ₹{product.price}
+                </div>
               </div>
-            </div>
-          ))}
-          {filteredProducts.length > 50 && (
-             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+            ))}
+            {filteredProducts.length > 50 && (
+              <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
                 Showing top 50 results...
-             </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -1372,7 +1407,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             );
                           })()}
                         
-                        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] md:flex-row md:items-center md:justify-between">
+                        <div className="mt-4 flex justify-start">
                           <button
                             type="button"
                             onClick={() => push({
@@ -1391,17 +1426,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                               amount: 0,
                               isExistingProduct: false,
                             })}
-                            className="btn-secondary flex w-full items-center justify-center gap-2 text-sm md:w-auto md:justify-start"
+                            className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                             Add Item
                           </button>
-                          <div className="inline-flex w-full items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/5 px-3 py-2 text-xs text-gray-300 md:ml-auto md:w-auto md:max-w-md">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_0_4px_rgba(34,211,238,0.12)]" />
-                            <span className="leading-5">Auto-add is enabled while you type.</span>
-                          </div>
                         </div>
                         </div>
                       );
