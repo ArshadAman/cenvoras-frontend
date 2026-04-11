@@ -106,17 +106,17 @@ export const defaultInvoiceTemplate = {
   
   // Table Column Configuration
   columns: [
-    { id: 'serial', label: '#', width: '5%', show: true, align: 'center' },
-    { id: 'description', label: 'Description', width: '35%', show: true, align: 'left' },
+    { id: 'serial', label: 'S. No', width: '6%', show: true, align: 'center' },
+    { id: 'description', label: 'Description', width: '25%', show: true, align: 'left' },
     { id: 'batch', label: 'Batch', width: '10%', show: false, align: 'center' },
-    { id: 'hsn', label: 'HSN/SAC', width: '10%', show: true, align: 'center' },
-    { id: 'quantity', label: 'Qty', width: '8%', show: true, align: 'center' },
-    { id: 'free_qty', label: 'Free', width: '8%', show: false, align: 'center' },
-    { id: 'unit', label: 'Unit', width: '7%', show: false, align: 'center' },
-    { id: 'price', label: 'Rate', width: '12%', show: true, align: 'right' },
-    { id: 'discount', label: 'Disc.', width: '8%', show: false, align: 'right' },
-    { id: 'tax', label: 'Tax', width: '10%', show: true, align: 'center' },
-    { id: 'amount', label: 'Amount', width: '12%', show: true, align: 'right' },
+    { id: 'hsn', label: 'HSNC', width: '12%', show: true, align: 'center' },
+    { id: 'quantity', label: 'QTY', width: '7%', show: true, align: 'center' },
+    { id: 'free_qty', label: 'Free', width: '7%', show: false, align: 'center' },
+    { id: 'unit', label: 'Unit', width: '8%', show: false, align: 'center' },
+    { id: 'price', label: 'UNIT PRICE', width: '14%', show: true, align: 'right' },
+    { id: 'discount', label: 'Disc.', width: '9%', show: false, align: 'right' },
+    { id: 'tax', label: 'TAX', width: '9%', show: true, align: 'center' },
+    { id: 'amount', label: 'AMOUNT', width: '18%', show: true, align: 'right' },
   ],
   
   // Styles

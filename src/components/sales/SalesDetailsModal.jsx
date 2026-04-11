@@ -59,9 +59,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     pageStyle: `
       @page {
         size: A4;
-        margin: 4mm;
+        margin: 0;
       }
       @media print {
+        html, body {
+          width: 210mm;
+          height: 297mm;
+          margin: 0;
+          padding: 0;
+        }
         body {
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
@@ -90,7 +96,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const imgWidth = 210;
-      const pageHeight = 295;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
