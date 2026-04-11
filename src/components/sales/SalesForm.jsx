@@ -176,7 +176,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     ? 'bg-cyan-500/20 text-white'
                     : 'text-gray-300 hover:bg-white/5 hover:text-white'
                 }`}
-                onClick={() => selectProduct(product)}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  selectProduct(product);
+                }}
               >
                 <div className="font-medium">{product.name}</div>
                 <div className="mt-0.5 text-xs text-gray-500">
