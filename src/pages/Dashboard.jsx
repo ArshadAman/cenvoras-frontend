@@ -23,6 +23,7 @@ import InsightsSection from '../components/dashboard/InsightsSection'
 import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
+import { getSubscriptionEntitlements } from '../api/subscription'
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -68,6 +69,12 @@ export default function Dashboard({ onLogout }) {
   const { data: profileData } = useQuery({
     queryKey: ['profile'],
     queryFn: () => api.get('/users/profile/').then(res => res.data),
+  });
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription-entitlements'],
+    queryFn: getSubscriptionEntitlements,
+    staleTime: 60_000,
   });
 
   // Fetch Legacy Dashboard Data (old metrics)
@@ -188,6 +195,13 @@ export default function Dashboard({ onLogout }) {
 
   const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
   const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
+  const entitlements = subscriptionData?.data || {};
+  const can = entitlements.can || {};
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Free';
+  const mlDataWithEntitlements = React.useMemo(() => ({
+    ...mlData,
+    can,
+  }), [mlData, can]);
 
   return (
     <Layout onLogout={onLogout}>
@@ -203,6 +217,10 @@ export default function Dashboard({ onLogout }) {
                 : 'Smart Dashboard'}
             </h1>
             <p className="text-gray-400 text-sm">Your intelligent business assistant</p>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300">
+              <span className="text-cyan-400 font-semibold">{currentPlanName}</span>
+              <span className="text-gray-500">plan active</span>
+            </div>
           </div>
           
           <div className="flex gap-3">
@@ -279,7 +297,7 @@ export default function Dashboard({ onLogout }) {
 
         {/* 4. ML PREDICTIONS - Sales Forecast & Restock */}
         <MLPredictionsSection 
-          data={mlData} 
+          data={mlDataWithEntitlements} 
           isLoading={loadingML}
           onViewAllProducts={() => navigate('/inventory')}
         />
