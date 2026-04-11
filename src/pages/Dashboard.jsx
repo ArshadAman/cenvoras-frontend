@@ -12,7 +12,7 @@ import {
   BanknotesIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
 import api from '../api/api'
 import Layout from '../components/Layout'
 
@@ -43,6 +43,7 @@ export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [activeStockIndex, setActiveStockIndex] = React.useState(null);
 
   // Refresh ALL dashboard data
   const handleRefreshAll = async () => {
@@ -88,6 +89,12 @@ export default function Dashboard({ onLogout }) {
   const { data: lowStock } = useQuery({
     queryKey: ['low-stock'],
     queryFn: () => api.get('/analytics/inventory-summary/').then(res => res.data)
+  });
+
+  const { data: stockPointsRaw } = useQuery({
+    queryKey: ['stock-points-dashboard'],
+    queryFn: () => api.get('/inventory/stock-points/').then(res => res.data),
+    staleTime: 30000,
   });
 
   // Fetch ML Predictions
@@ -136,6 +143,51 @@ export default function Dashboard({ onLogout }) {
       color: metrics?.gst_payable < 0 ? 'text-green-400' : 'text-yellow-400'
     },
   ];
+
+  const formatINR = (value) => `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+
+  const salesChartData = React.useMemo(() => {
+    const raw = metrics?.sales_vs_purchases || [];
+    return raw.map((row) => ({
+      name: row?.name || '-',
+      Sales: Number(row?.Sales || 0),
+      Purchases: Number(row?.Purchases || 0),
+    }));
+  }, [metrics?.sales_vs_purchases]);
+
+  const stockSplitData = React.useMemo(() => {
+    const stockPoints = Array.isArray(stockPointsRaw)
+      ? stockPointsRaw
+      : stockPointsRaw?.data || stockPointsRaw?.results || [];
+
+    // Use stock points as source of truth because product.stock can be stale with multi-batch/multi-warehouse inventory.
+    if (stockPoints.length > 0) {
+      const merged = stockPoints.reduce((acc, item) => {
+        const key = item?.product_name || 'Unknown';
+        const quantity = Number(item?.quantity || 0);
+        if (!acc[key]) {
+          acc[key] = { name: key, value: 0 };
+        }
+        acc[key].value += quantity;
+        return acc;
+      }, {});
+
+      return Object.values(merged)
+        .filter((item) => item.value > 0)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 7);
+    }
+
+    const fallbackProducts = lowStock?.products || [];
+    return fallbackProducts
+      .map((p) => ({ name: p?.name || 'Unknown', value: Number(p?.stock || 0) }))
+      .filter((p) => p.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 7);
+  }, [stockPointsRaw, lowStock]);
+
+  const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
 
   return (
     <Layout onLogout={onLogout}>
@@ -243,16 +295,42 @@ export default function Dashboard({ onLogout }) {
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metrics?.sales_vs_purchases || []}>
-                  <XAxis dataKey="name" stroke="#333" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#333" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                  <Tooltip 
-                    contentStyle={{ background: '#000', border: '1px solid #333', borderRadius: '12px', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
+                <LineChart data={salesChartData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    width={86}
+                    tickFormatter={(value) => formatINR(value)}
                   />
-                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} iconType="circle" />
-                  <Line type="monotone" dataKey="Sales" stroke="#22d3ee" strokeWidth={2} dot={false} activeDot={{r: 6}} />
-                  <Line type="monotone" dataKey="Purchases" stroke="#a855f7" strokeWidth={2} dot={false} activeDot={{r: 6}} />
+                  <Tooltip 
+                    contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
+                    labelStyle={{ color: '#fff', fontWeight: 600 }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                    formatter={(value, key) => [formatINR(value), key]}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px', color: '#d1d5db' }} iconType="circle" />
+                  <Line
+                    type="monotone"
+                    dataKey="Sales"
+                    stroke="#22d3ee"
+                    strokeWidth={3}
+                    connectNulls
+                    dot={{ r: 3, fill: '#22d3ee', strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: '#22d3ee', stroke: '#fff', strokeWidth: 1 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Purchases"
+                    stroke="#a855f7"
+                    strokeWidth={3}
+                    connectNulls
+                    dot={{ r: 3, fill: '#a855f7', strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: '#a855f7', stroke: '#fff', strokeWidth: 1 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -267,31 +345,39 @@ export default function Dashboard({ onLogout }) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={(lowStock?.products || [])
-                      .filter(p => p.stock > 0)
-                      .slice(0, 5)
-                      .map(p => ({ name: p.name, value: p.stock }))}
+                    data={stockSplitData}
                     innerRadius={50}
-                    outerRadius={70}
+                    outerRadius={76}
                     paddingAngle={3}
                     dataKey="value"
+                    nameKey="name"
+                    onMouseEnter={(_, index) => setActiveStockIndex(index)}
+                    onMouseLeave={() => setActiveStockIndex(null)}
                     label={({ name, percent }) => 
-                      percent > 0.05 
+                      percent > 0.06 
                         ? `${name.slice(0, 8)}${name.length > 8 ? '...' : ''} ${(percent * 100).toFixed(0)}%`
                         : ''
                     }
                     labelLine={false}
                   >
-                    {(lowStock?.products || [])
-                      .filter(p => p.stock > 0)
-                      .slice(0, 5)
-                      .map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={['#22d3ee', '#a855f7', '#3b82f6', '#f43f5e', '#10b981'][index % 5]} stroke="rgba(0,0,0,0)" />
+                    {stockSplitData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={stockColors[index % stockColors.length]}
+                        stroke={index === activeStockIndex ? '#ffffff' : 'rgba(0,0,0,0)'}
+                        strokeWidth={index === activeStockIndex ? 1.4 : 0}
+                      />
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ background: '#000', border: '1px solid #333', borderRadius: '12px', color: '#fff' }}
-                    formatter={(value, name) => [`${value} units`, name]}
+                    contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
+                    labelStyle={{ color: '#fff', fontWeight: 600 }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                    formatter={(value, name) => {
+                      const qty = Number(value || 0);
+                      const pct = stockTotal > 0 ? ((qty / stockTotal) * 100).toFixed(1) : '0.0';
+                      return [`${qty.toLocaleString('en-IN')} units (${pct}%)`, name || 'Product'];
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>

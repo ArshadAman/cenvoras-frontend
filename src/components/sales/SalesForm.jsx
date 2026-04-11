@@ -1021,12 +1021,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO No.</label>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO</label>
                           <Field
                             name="po_number"
-                            type="text"
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                            placeholder="Enter PO number"
+                            as="textarea"
+                            rows="1"
+                            className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            placeholder="Enter PO"
                           />
                         </div>
                         <div>
@@ -1044,12 +1045,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Delivery Challan</div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan No.</label>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan</label>
                           <Field
                             name="challan_number"
-                            type="text"
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                            placeholder="Enter challan number"
+                            as="textarea"
+                            rows="1"
+                            className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            placeholder="Enter challan details"
                           />
                         </div>
                         <div>
