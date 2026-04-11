@@ -1217,7 +1217,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             return (
                               <>
                                 <div className="hidden md:block overflow-x-auto border-y border-white/10 bg-[#1b2030]">
-                                  <div className="grid items-center px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                  <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
                                         key={col.key}
