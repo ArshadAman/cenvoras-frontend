@@ -1372,7 +1372,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             );
                           })()}
                         
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <button
                             type="button"
                             onClick={() => push({
@@ -1398,7 +1398,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             </svg>
                             Add Item
                           </button>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-400 md:text-right md:max-w-xs md:ml-auto">
                             Pro Tip: Items are auto-added as you type.
                           </p>
                         </div>
