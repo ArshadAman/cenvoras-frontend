@@ -521,6 +521,12 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const existingRoundOff = Number(editData?.round_off || 0);
+    setRoundOffApplied(existingRoundOff !== 0);
+  }, [isOpen, editData?.id, editData?.round_off]);
+
   const computeRoundedTotal = (amount) => {
     const integerPart = Math.floor(amount);
     const fraction = amount - integerPart;
@@ -814,6 +820,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
               const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
+              const roundOffValue = roundOffApplied
+                ? Number((finalTotal - totalAmount).toFixed(2))
+                : 0;
 
               const formData = {
                 customer_name: values.customer_name,
@@ -827,6 +836,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : 'final',
                 total_amount: finalTotal.toString(),
+                round_off: roundOffValue.toString(),
                 items: processedItems,
                 // Optional customer fields for new record creation
                 ...(values.customer_email && { customer_email: values.customer_email }),
