@@ -108,7 +108,19 @@ export default function Layout({ children, onLogout }) {
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
 
   const isAllowedFreeRoute = (path) => {
-    return path.startsWith('/sales') || path.startsWith('/customers') || path.startsWith('/profile');
+    const route = (path || '').toLowerCase();
+
+    // Free plan access policy:
+    // - Allow Sales Invoices (not Sales Orders)
+    // - Allow Customers
+    // - Allow Profile
+    // - Allow Payments
+    if (route.startsWith('/sales-orders')) return false;
+    if (route === '/sales' || route.startsWith('/sales/')) return true;
+    if (route.startsWith('/customers')) return true;
+    if (route.startsWith('/profile')) return true;
+    if (route.startsWith('/payments')) return true;
+    return false;
   };
 
   // Filter structural groups by roles AND granular permissions
