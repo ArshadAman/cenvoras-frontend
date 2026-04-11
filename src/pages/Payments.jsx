@@ -259,9 +259,14 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       const paymentPayload = {
         ...formData,
         customer: targetCustomerId,
-        invoice: formData.invoice || null,
         amount: parseFloat(formData.amount)
       };
+
+      if (formData.invoice) {
+        paymentPayload.invoice = formData.invoice;
+      } else {
+        delete paymentPayload.invoice;
+      }
 
       if (editData) {
         await api.put(`/billing/payments/${editData.id}/`, paymentPayload);
