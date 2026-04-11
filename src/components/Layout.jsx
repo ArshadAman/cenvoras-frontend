@@ -104,7 +104,9 @@ export default function Layout({ children, onLogout }) {
   const permissions = profileData?.profile?.permissions || {};
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Free';
   const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
+  const isVipAccess = String(currentPlanName).toLowerCase().includes('vip');
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
 
   const isAllowedFreeRoute = (path) => {
@@ -157,9 +159,21 @@ export default function Layout({ children, onLogout }) {
         
         {/* Logo Area */}
         <div className="h-24 flex items-center px-6 border-b border-white/5">
-          <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
-          </Link>
+          <div className="flex items-center justify-between w-full gap-2">
+            <Link to="/" className="flex items-center">
+              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
+            </Link>
+            <span
+              className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
+                isVipAccess
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                  : 'bg-white/10 text-gray-300 border-white/10'
+              }`}
+              title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+            >
+              {isVipAccess ? 'VIP Access' : `${currentPlanName} Plan`}
+            </span>
+          </div>
         </div>
         
         {/* Navigation — scrollable middle section */}
@@ -267,7 +281,16 @@ export default function Layout({ children, onLogout }) {
             <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
           </Link>
           
-          <div className="w-10"></div> {/* Spacer */}
+          <span
+            className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
+              isVipAccess
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                : 'bg-white/10 text-gray-300 border-white/10'
+            }`}
+            title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+          >
+            {isVipAccess ? 'VIP' : currentPlanName}
+          </span>
         </header>
 
         {/* Mobile Menu Overlay */}
