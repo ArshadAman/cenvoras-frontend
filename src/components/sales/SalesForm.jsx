@@ -696,6 +696,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             
             // Optional invoice fields
             due_date: editData?.due_date || "",
+            po_number: editData?.po_number || "",
+            po_date: editData?.po_date || "",
+            challan_number: editData?.challan_number || "",
+            challan_date: editData?.challan_date || "",
             gst_treatment: editData?.gst_treatment || "registered",
             place_of_supply: editData?.place_of_supply || "", // New field
             warehouse: editData?.warehouse || "", // New field
@@ -829,6 +833,10 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 invoice_number: values.invoice_number,
                 invoice_date: values.invoice_date,
                 due_date: values.due_date || null,
+                po_number: values.po_number || null,
+                po_date: values.po_date || null,
+                challan_number: values.challan_number || null,
+                challan_date: values.challan_date || null,
                 delivery_address: values.delivery_address || null,
                 gst_treatment: values.gst_treatment || null,
                 place_of_supply: values.place_of_supply || null,
@@ -995,15 +1003,64 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <div className="grid grid-cols-1 gap-6">
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Delivery Address
+                        Shipping Address
                       </label>
                       <Field
                         name="delivery_address"
                         as="textarea"
                         rows="3"
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="123 Delivery Address, City, State"
+                        placeholder="123 Shipping Address, City, State"
                       />
+                    </div>
+                  </div>
+
+                  {/* Optional PO / Challan */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO No.</label>
+                          <Field
+                            name="po_number"
+                            type="text"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            placeholder="Enter PO number"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
+                          <Field
+                            name="po_date"
+                            type="date"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Delivery Challan</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan No.</label>
+                          <Field
+                            name="challan_number"
+                            type="text"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            placeholder="Enter challan number"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan Date</label>
+                          <Field
+                            name="challan_date"
+                            type="date"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
