@@ -241,24 +241,18 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         throw new Error("Please select or enter a customer name");
       }
 
-      // Invoice is required to update payment status
-      if (!formData.invoice) {
-        throw new Error("Please select an invoice to record payment against");
-      }
+      const paymentPayload = {
+        ...formData,
+        customer: targetCustomerId,
+        invoice: formData.invoice || null,
+        amount: parseFloat(formData.amount)
+      };
 
       if (editData) {
-        await api.put(`/billing/payments/${editData.id}/`, {
-          ...formData,
-          customer: targetCustomerId,
-          amount: parseFloat(formData.amount)
-        });
+        await api.put(`/billing/payments/${editData.id}/`, paymentPayload);
         toast.success("Payment updated successfully");
       } else {
-        await api.post('/billing/payments/', {
-          ...formData,
-          customer: targetCustomerId,
-          amount: parseFloat(formData.amount)
-        });
+        await api.post('/billing/payments/', paymentPayload);
         toast.success("Payment recorded successfully");
       }
       
