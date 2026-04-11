@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { getUserProfile } from '../api/users';
+import { getSubscriptionEntitlements } from '../api/subscription';
+import UpgradePromptModal from './subscription/UpgradePromptModal';
 import { 
   ChartBarIcon, 
   CurrencyRupeeIcon, 
@@ -28,6 +30,7 @@ import { getUserRole } from "../utils/auth";
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, featureName: '', description: '', targetPlanName: 'Pro' });
 
   const role = getUserRole();
 
@@ -62,7 +65,7 @@ export default function Layout({ children, onLogout }) {
         { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
         { path: "/batches", label: "Batches", icon: CubeIcon, roles: [] },
         { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
-        { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [] },
+        { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [], featureKey: 'warehouse', upgradePlan: 'Business', upgradeText: 'Warehouses are available on the Business plan.' },
       ]
     },
     {
@@ -79,7 +82,7 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
         { path: "/settings/team", label: "Team Settings", icon: UsersIcon, roles: ['admin'] },
-        { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [] },
+        { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [], featureKey: 'integrations', upgradePlan: 'Pro', upgradeText: 'Business tools and integrations unlock on Pro.' },
         { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
       ]
     }
@@ -90,8 +93,17 @@ export default function Layout({ children, onLogout }) {
     queryFn: getUserProfile,
     enabled: !!role // Only fetch if authenticated
   });
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription-entitlements'],
+    queryFn: getSubscriptionEntitlements,
+    enabled: !!role,
+    staleTime: 60_000,
+  });
   
   const permissions = profileData?.profile?.permissions || {};
+  const entitlements = subscriptionData?.data || {};
+  const can = entitlements.can || {};
 
   // Filter structural groups by roles AND granular permissions
   const filteredGroups = navigationGroups.map(group => {
@@ -123,7 +135,7 @@ export default function Layout({ children, onLogout }) {
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-72 glass-sidebar relative z-50 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-72 glass-sidebar z-50 h-screen sticky top-0">
         
         {/* Logo Area */}
         <div className="h-24 flex items-center px-6 border-b border-white/5">
@@ -145,16 +157,39 @@ export default function Layout({ children, onLogout }) {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
+                const isLocked = item.featureKey && can[item.featureKey] === false;
+
+                const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                }`;
                 
+                if (isLocked) {
+                  return (
+                    <button
+                      key={item.path}
+                      type="button"
+                      onClick={() => setUpgradeModal({
+                        open: true,
+                        featureName: item.label,
+                        description: item.upgradeText || `${item.label} is not available on your current plan.`,
+                        targetPlanName: item.upgradePlan || 'Pro',
+                      })}
+                      className={`${baseClass} w-full text-left`}
+                    >
+                      <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                      <span className="text-sm flex-1">{item.label}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">Locked</span>
+                    </button>
+                  );
+                }
+
                 return (
                   <Link 
                     key={item.path}
                     to={item.path} 
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10' 
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-                    }`}
+                    className={baseClass}
                   >
                     <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
                     <span className="text-sm">{item.label}</span>
@@ -254,17 +289,39 @@ export default function Layout({ children, onLogout }) {
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
+                    const isLocked = item.featureKey && can[item.featureKey] === false;
+                    const baseClass = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    }`;
                     
+                    if (isLocked) {
+                      return (
+                        <button
+                          key={item.path}
+                          type="button"
+                          onClick={() => setUpgradeModal({
+                            open: true,
+                            featureName: item.label,
+                            description: item.upgradeText || `${item.label} is not available on your current plan.`,
+                            targetPlanName: item.upgradePlan || 'Pro',
+                          })}
+                          className={`${baseClass} w-full text-left`}
+                        >
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                          <span className="text-sm flex-1">{item.label}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">Locked</span>
+                        </button>
+                      );
+                    }
+
                     return (
                       <Link 
                         key={item.path}
                         to={item.path} 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                           isActive 
-                             ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10' 
-                             : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                        }`}
+                        className={baseClass}
                       >
                         <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
                         <span className="text-sm">{item.label}</span>
@@ -307,6 +364,15 @@ export default function Layout({ children, onLogout }) {
            {children}
         </main>
       </div>
+
+      <UpgradePromptModal
+        isOpen={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false, featureName: '', description: '', targetPlanName: 'Pro' })}
+        title="Upgrade required"
+        featureName={upgradeModal.featureName}
+        targetPlanName={upgradeModal.targetPlanName}
+        description={upgradeModal.description}
+      />
     </div>
   );
 }
