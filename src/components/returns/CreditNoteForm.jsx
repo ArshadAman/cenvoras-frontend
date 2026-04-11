@@ -33,6 +33,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   // Check for paginated vs unpaginated results
   const customerList = Array.isArray(customers) ? customers : customers?.results || [];
   const invoiceList = Array.isArray(invoices) ? invoices : invoices?.results || [];
+  const filteredInvoiceList = invoiceList.filter(inv =>
+    inv.invoice_number?.toLowerCase().includes(selectedInvoiceId.toLowerCase()) ||
+    inv.invoice_number || inv.invoice_date
+  );
 
   // Selected Invoice Details
   const selectedInvoice = invoiceList.find(inv => inv.id === selectedInvoiceId);
@@ -137,18 +141,37 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Original Invoice</label>
-                  <select 
-                    value={selectedInvoiceId}
-                    onChange={(e) => setSelectedInvoiceId(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                    disabled={!selectedCustomer}
-                    required
-                  >
-                    <option value="">Select Invoice</option>
-                    {invoiceList.map(inv => (
-                      <option key={inv.id} value={inv.id}>{inv.invoice_number} ({inv.invoice_date})</option>
-                    ))}
-                  </select>
+                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
+                    <div className="px-3 py-2 border-b border-white/10 text-xs text-gray-500">
+                      Select an invoice below. The list scrolls inside this box.
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {selectedCustomer ? (
+                        filteredInvoiceList.length > 0 ? (
+                          filteredInvoiceList.map((inv) => {
+                            const isSelected = selectedInvoiceId === inv.id;
+                            return (
+                              <button
+                                key={inv.id}
+                                type="button"
+                                onClick={() => setSelectedInvoiceId(inv.id)}
+                                className={`w-full text-left px-3 py-2 border-b border-white/5 last:border-0 transition-colors ${isSelected ? 'bg-purple-500/20 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="font-medium">{inv.invoice_number}</span>
+                                  <span className="text-xs text-gray-500">{inv.invoice_date}</span>
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="px-3 py-4 text-sm text-gray-500">No invoices found for this customer.</div>
+                        )
+                      ) : (
+                        <div className="px-3 py-4 text-sm text-gray-500">Select a customer first.</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

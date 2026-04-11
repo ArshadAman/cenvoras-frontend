@@ -36,12 +36,18 @@ const InvoicePreview = forwardRef(({
   // Invoice data
   const items = invoice.items || [];
   const customerName = invoice.customer_name || 'Customer Name';
-  const customerAddress = invoice.customer_address || invoice.delivery_address || '';
+  const billingAddress = invoice.customer_address || '';
+  const shippingAddress = invoice.delivery_address || invoice.shipping_address || '';
   const customerGST = invoice.customer_gstin || invoice.gstin || '';
   const invoiceNumber = invoice.invoice_number || 'INV-0001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('en-IN') : '';
   const poNumber = invoice.po_number || '';
+  const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
+  const challanNumber = invoice.challan_number || '';
+  const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
+  const hasSeparateShipping = shippingAddress && shippingAddress.trim() !== billingAddress.trim();
+  const customerAddress = billingAddress;
   
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
@@ -82,8 +88,8 @@ const InvoicePreview = forwardRef(({
   };
   
   const totalRowStyle = {
-    backgroundColor: colors.totalRow || '#1a1a2e',
-    color: colors.totalText || '#ffffff',
+    backgroundColor: '#e5e7eb',
+    color: '#111827',
   };
   
   // Get visible columns
@@ -178,29 +184,27 @@ const InvoicePreview = forwardRef(({
 
       {/* Address Section */}
       <div className="flex justify-between items-start mb-5 gap-8">
-        {/* Shipping Info - Left */}
-        <div className="flex-1">
-          <div className="font-semibold mb-1" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
-            Shipping Address
+        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
+          <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+            Billing Address
           </div>
           <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
-            <div className="font-medium">{invoice.shipping_address_line1 || customerAddress?.split('\n')?.[0] || ''}</div>
-            {invoice.shipping_address_line2 && <div>{invoice.shipping_address_line2}</div>}
-            {invoice.shipping_contact && <div>{invoice.shipping_contact}</div>}
-            <div className="whitespace-pre-line">{customerAddress}</div>
-          </div>
-        </div>
-
-        {/* Bill To - Right */}
-        <div className="flex-1 text-left">
-          <div className="font-medium text-base mb-1" style={{ color: colors.primary }}>
-            {customerName}
-          </div>
-          <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
-            {customerAddress && <p className="whitespace-pre-line">{customerAddress}</p>}
+            <div className="font-medium">{customerName}</div>
+            {billingAddress && <p className="whitespace-pre-line">{billingAddress}</p>}
             {customerGST && <p className="font-medium">GSTIN: {customerGST}</p>}
           </div>
         </div>
+
+        {hasSeparateShipping ? (
+          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
+            <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+              Shipping Address
+            </div>
+            <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
+              <div className="whitespace-pre-line">{shippingAddress}</div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Legacy Header Hidden For New A4 Layout */}
@@ -280,6 +284,8 @@ const InvoicePreview = forwardRef(({
         <div className="space-y-1">
           <div><span className="font-medium">Invoice #:</span> <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span></div>
           <div><span className="font-medium">Date:</span> {invoiceDate}</div>
+          {poNumber && <div><span className="font-medium">PO No.:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
+          {challanNumber && <div><span className="font-medium">Challan No.:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
         </div>
         <div className="text-right space-y-1">
           {sections.showPONumber && poNumber && (
