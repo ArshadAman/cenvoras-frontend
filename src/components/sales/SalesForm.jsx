@@ -1372,7 +1372,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             );
                           })()}
                         
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] md:flex-row md:items-center md:justify-between">
                           <button
                             type="button"
                             onClick={() => push({
@@ -1391,16 +1391,17 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                               amount: 0,
                               isExistingProduct: false,
                             })}
-                            className="btn-secondary text-sm flex items-center gap-2"
+                            className="btn-secondary flex w-full items-center justify-center gap-2 text-sm md:w-auto md:justify-start"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                             Add Item
                           </button>
-                          <p className="text-xs text-gray-400 md:text-right md:max-w-xs md:ml-auto">
-                            Pro Tip: Items are auto-added as you type.
-                          </p>
+                          <div className="inline-flex w-full items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/5 px-3 py-2 text-xs text-gray-300 md:ml-auto md:w-auto md:max-w-md">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_0_4px_rgba(34,211,238,0.12)]" />
+                            <span className="leading-5">Auto-add is enabled while you type.</span>
+                          </div>
                         </div>
                         </div>
                       );
