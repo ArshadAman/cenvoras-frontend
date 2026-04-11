@@ -114,11 +114,6 @@ export default function Layout({ children, onLogout }) {
   // Filter structural groups by roles AND granular permissions
   const filteredGroups = navigationGroups.map(group => {
     const validItems = group.items.filter(item => {
-      // 0. Free plan hard gate: only Sales Invoices, Customers, and Profile routes are accessible.
-      if (isFreePlan && !isAllowedFreeRoute(item.path)) {
-        return false;
-      }
-
       // 1. Role Check
       if (item.roles && item.roles.length > 0 && !item.roles.includes(role)) {
         return false;
@@ -168,7 +163,7 @@ export default function Layout({ children, onLogout }) {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
-                const isLocked = item.featureKey && can[item.featureKey] === false;
+                const isLocked = (isFreePlan && !isAllowedFreeRoute(item.path)) || (item.featureKey && can[item.featureKey] === false);
 
                 const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                   isActive
@@ -184,7 +179,7 @@ export default function Layout({ children, onLogout }) {
                       onClick={() => setUpgradeModal({
                         open: true,
                         featureName: item.label,
-                        description: item.upgradeText || `${item.label} is not available on your current plan.`,
+                        description: item.upgradeText || `${item.label} is locked on your current plan.`,
                         targetPlanName: item.upgradePlan || 'Pro',
                       })}
                       className={`${baseClass} w-full text-left`}
@@ -300,7 +295,7 @@ export default function Layout({ children, onLogout }) {
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
-                    const isLocked = item.featureKey && can[item.featureKey] === false;
+                    const isLocked = (isFreePlan && !isAllowedFreeRoute(item.path)) || (item.featureKey && can[item.featureKey] === false);
                     const baseClass = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
@@ -315,7 +310,7 @@ export default function Layout({ children, onLogout }) {
                           onClick={() => setUpgradeModal({
                             open: true,
                             featureName: item.label,
-                            description: item.upgradeText || `${item.label} is not available on your current plan.`,
+                            description: item.upgradeText || `${item.label} is locked on your current plan.`,
                             targetPlanName: item.upgradePlan || 'Pro',
                           })}
                           className={`${baseClass} w-full text-left`}
