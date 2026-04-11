@@ -46,7 +46,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       (product?.name || "").toLowerCase().includes(query)
     );
     setFilteredProducts(filtered);
-    setShowDropdown(isFocused && filtered.length > 0);
+
+    if (!isFocused) {
+      setShowDropdown(false);
+    }
   }, [inputValue, products, isFocused]);
 
   useEffect(() => {
@@ -101,6 +104,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setSelectedIndex(-1);
     if (!value.trim()) {
       setShowDropdown(false);
+      return;
+    }
+
+    if (isFocused) {
+      setShowDropdown(true);
     }
   };
 
@@ -163,7 +171,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
           </div>
         )}
       </Field>
-        {showDropdown && dropdownStyle && typeof document !== "undefined" && createPortal(
+        {showDropdown && filteredProducts.length > 0 && dropdownStyle && typeof document !== "undefined" && createPortal(
           <div
             style={dropdownStyle}
             className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
