@@ -37,6 +37,7 @@ const InvoicePreview = forwardRef(({
   const items = invoice.items || [];
   const customerName = invoice.customer_name || 'Customer Name';
   const billingAddress = invoice.customer_address || '';
+  const shippingAddress = invoice.delivery_address || invoice.shipping_address || '';
   const customerGST = invoice.customer_gstin || invoice.gstin || '';
   const invoiceNumber = invoice.invoice_number || 'INV-0001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
@@ -47,6 +48,9 @@ const InvoicePreview = forwardRef(({
   const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const customerAddress = billingAddress;
+  const hasSeparateShipping = Boolean(
+    shippingAddress && shippingAddress.trim() !== billingAddress.trim()
+  );
   
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
@@ -194,6 +198,17 @@ const InvoicePreview = forwardRef(({
             {customerGST && <p className="font-medium">GSTIN: {customerGST}</p>}
           </div>
         </div>
+
+        {hasSeparateShipping ? (
+          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
+            <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+              Shipping Address
+            </div>
+            <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
+              <div className="whitespace-pre-line">{shippingAddress}</div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Legacy Header Hidden For New A4 Layout */}
