@@ -36,8 +36,8 @@ const InvoicePreview = forwardRef(({
   // Invoice data
   const items = invoice.items || [];
   const customerName = invoice.customer_name || 'Customer Name';
-  const billingAddress = invoice.customer_address || '';
-  const shippingAddress = invoice.delivery_address || invoice.shipping_address || '';
+  const billingAddress = invoice.customer_address || invoice.customer?.address || invoice.customer_details?.address || '';
+  const shippingAddress = invoice.delivery_address || invoice.shipping_address || invoice.customer?.delivery_address || invoice.customer_details?.delivery_address || '';
   const customerGST = invoice.customer_gstin || invoice.gstin || '';
   const invoiceNumber = invoice.invoice_number || 'INV-0001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
