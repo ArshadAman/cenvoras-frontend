@@ -197,7 +197,9 @@ const Profile = ({ onLogout }) => {
     phone: '',
     business_name: '',
     business_address: '',
-    gstin: ''
+    gstin: '',
+    gem_id: '',
+    dl_number: ''
   });
 
   const queryClient = useQueryClient();
@@ -222,7 +224,9 @@ const Profile = ({ onLogout }) => {
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
-        gstin: profile.gstin || ''
+          gstin: profile.gstin || '',
+          gem_id: profile.gem_id || '',
+          dl_number: profile.dl_number || ''
       }));
     }
   }, [userProfile]);
@@ -294,7 +298,9 @@ const Profile = ({ onLogout }) => {
       phone: formData.phone,
       business_name: formData.business_name,
       business_address: formData.business_address,
-      gstin: formData.gstin
+      gstin: formData.gstin,
+      gem_id: formData.gem_id,
+      dl_number: formData.dl_number
     };
 
     updateProfileMutation.mutate(updateData);
@@ -312,7 +318,9 @@ const Profile = ({ onLogout }) => {
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
-        gstin: profile.gstin || ''
+        gstin: profile.gstin || '',
+        gem_id: profile.gem_id || '',
+        dl_number: profile.dl_number || ''
       });
     }
   };
@@ -571,6 +579,32 @@ const Profile = ({ onLogout }) => {
                               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
                               placeholder="29ABCDE1234F1Z5"
                               maxLength={15}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">GEM ID</label>
+                            <input
+                              type="text"
+                              name="gem_id"
+                              value={formData.gem_id}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isPending}
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
+                              placeholder="Enter GEM ID"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">DL Number</label>
+                            <input
+                              type="text"
+                              name="dl_number"
+                              value={formData.dl_number}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isPending}
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
+                              placeholder="Enter DL number"
                             />
                           </div>
                         </div>
