@@ -36,7 +36,7 @@ export const uploadSalesCsv = formData =>
 export const getProducts = (params = {}) =>
   api.get("/inventory/products/", {
     params: {
-      page_size: 50,
+      page_size: 1000,
       ...params,
     },
   }).then(res => res.data);

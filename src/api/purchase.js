@@ -39,7 +39,7 @@ export const uploadPurchaseCsv = formData =>
 
 // Product API endpoints for purchase form
 export const getProducts = () =>
-  api.get("/inventory/products/").then(res => res.data);
+  api.get("/inventory/products/", { params: { page_size: 1000 } }).then(res => res.data);
 
 export const getVendorProducts = (vendorName) =>
   api.get("/billing/vendor-products/", { params: { vendor_name: vendorName } }).then(res => res.data);

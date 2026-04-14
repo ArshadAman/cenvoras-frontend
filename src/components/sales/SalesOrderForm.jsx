@@ -76,7 +76,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       </Field>
       {showDropdown && (
         <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
-          {filteredProducts.slice(0, 50).map((product, index) => (
+          {filteredProducts.map((product, index) => (
             <div
               key={product.id}
               className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${

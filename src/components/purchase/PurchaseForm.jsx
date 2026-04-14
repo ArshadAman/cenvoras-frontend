@@ -104,7 +104,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
       </Field>
       {showDropdown && (
         <div className="absolute z-10 bg-[#1a1a1a] border border-white/10 rounded-md shadow-lg w-full max-h-40 overflow-y-auto mt-1">
-          {filteredProducts.slice(0, 50).map(product => (
+          {filteredProducts.map(product => (
             <div
               key={product.id}
               className="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0"
