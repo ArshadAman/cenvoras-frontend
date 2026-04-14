@@ -511,7 +511,15 @@ const DEFAULT_ITEM_SETTINGS = {
   show_item_tax: true,
 };
 
-export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "INV-" }) {
+export default function SalesForm({
+  isOpen,
+  onClose,
+  editData,
+  invoicePrefix = "INV-",
+  documentType = "invoice",
+  forceDraft = false,
+}) {
+  const isQuotation = documentType === "quotation";
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -521,7 +529,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
         const submitBtn = document.querySelector('button[type="submit"]');
         if(submitBtn) {
             submitBtn.click();
-            toast.info("Saving Invoice (F2)...");
+            toast.info(`Saving ${isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
         }
       }
       
@@ -568,7 +576,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const formikRef = React.useRef(null);
-  const submitActionRef = React.useRef('final');
+  const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [productSearch, setProductSearch] = useState("");
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
@@ -656,14 +664,18 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     mutationFn: createSalesInvoice,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-      toast.success("Sales bill created successfully!");
+      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       onClose();
     },
     onError: (error) => {
       if (error.response?.status === 409) {
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(error.response?.data?.message || error.message || "Failed to create sales bill");
+          toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            `Failed to create ${isQuotation ? 'quotation' : 'sales bill'}`
+          );
       }
     },
   });
@@ -672,14 +684,18 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     mutationFn: ({ id, data }) => updateSalesInvoice(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-      toast.success("Sales bill updated successfully!");
+      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       onClose();
     },
     onError: (error) => {
       if (error.response?.status === 409) {
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(error.response?.data?.message || error.message || "Failed to update sales bill");
+          toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            `Failed to update ${isQuotation ? 'quotation' : 'sales bill'}`
+          );
       }
     },
   });
@@ -712,7 +728,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
         <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
-              {isEdit ? "Edit Sales Invoice" : "New Sales Invoice"}
+              {isEdit
+                ? `Edit ${isQuotation ? 'Quotation' : 'Sales Invoice'}`
+                : `New ${isQuotation ? 'Quotation' : 'Sales Invoice'}`}
             </h2>
              <p className="text-xs text-gray-400 flex items-center gap-2">
               <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
@@ -795,7 +813,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           }}
           enableReinitialize={true}
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
-            const isDraft = submitActionRef.current === "draft";
+            const isDraft = forceDraft || submitActionRef.current === "draft";
             
             // Clean up empty product rows before processing/validation
             const cleanedItems = values.items.filter(item => 
@@ -1513,18 +1531,22 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 {/* Actions */}
                 <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
                   <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
-                    Closing modal automatically saves as draft. Or use Save Draft.
+                    {isQuotation
+                      ? "Closing modal automatically saves as quotation draft."
+                      : "Closing modal automatically saves as draft. Or use Save Draft."}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                        submitActionRef.current = 'draft';
-                        handleSubmit();
-                    }}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
-                  >
-                    Save Draft
-                  </button>
+                  {!forceDraft && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                          submitActionRef.current = 'draft';
+                          handleSubmit();
+                      }}
+                      className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
+                    >
+                      Save Draft
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -1537,7 +1559,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    onClick={() => { submitActionRef.current = 'final'; }}
+                    onClick={() => {
+                      submitActionRef.current = forceDraft ? 'draft' : 'final';
+                    }}
                     className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px] rounded-[14px] focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
                   >
                     {isSubmitting ? (
@@ -1545,7 +1569,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                          Saving...
                       </span>
-                    ) : (isEdit ? "Update Invoice" : "Create Invoice")}
+                    ) : forceDraft
+                      ? (isEdit ? "Update Quotation" : "Save Quotation")
+                      : (isEdit ? "Update Invoice" : "Create Invoice")}
                   </button>
                 </div>
               </Form>

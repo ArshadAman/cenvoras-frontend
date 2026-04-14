@@ -18,7 +18,8 @@ const normalizePrefix = (value) => {
   return String(value ?? "").toUpperCase();
 };
 
-export default function Sales() {
+export default function Sales({ documentType = "invoice" }) {
+  const isQuotation = documentType === "quotation";
   const [showForm, setShowForm] = useState(false);
   const [editInvoice, setEditInvoice] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
@@ -79,8 +80,14 @@ export default function Sales() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Sales Management</h1>
-            <p className="text-gray-400 text-sm">Create, manage and track your sales invoices.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
+              {isQuotation ? "Quotation Management" : "Sales Management"}
+            </h1>
+            <p className="text-gray-400 text-sm">
+              {isQuotation
+                ? "Create and manage customer quotations using the same invoice workflow."
+                : "Create, manage and track your sales invoices."}
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50">
@@ -105,23 +112,28 @@ export default function Sales() {
                onClick={() => setShowForm(true)}
                className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
              >
-               <PlusIcon className="w-4 h-4"/> New Sale
+               <PlusIcon className="w-4 h-4"/> {isQuotation ? "New Quotation" : "New Sale"}
              </button>
           </div>
         </div>
 
         {/* Sales Summary */}
-        <SalesSummary />
+        {!isQuotation && <SalesSummary />}
 
         {/* Sales Table */}
         <div className="bento-card p-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-white mb-1">Sales Invoices</h2>
-              <p className="text-xs text-gray-400">Manage all your sales transactions</p>
+              <p className="text-xs text-gray-400">
+                {isQuotation ? "Manage all your quotations" : "Manage all your sales transactions"}
+              </p>
             </div>
           </div>
           <SalesTable
+            initialStatusFilter={isQuotation ? "draft" : "final"}
+            hideStatusTabs={isQuotation}
+            documentType={documentType}
             onEdit={handleEdit}
             onView={(invoice) => setShowDetails(invoice)}
             onDelete={(invoice) => setDeleteInvoice(invoice)}
@@ -137,6 +149,8 @@ export default function Sales() {
           onClose={handleCloseForm}
           editData={editInvoice}
           invoicePrefix={invoicePrefix}
+          documentType={documentType}
+          forceDraft={isQuotation}
         />
       )}
 

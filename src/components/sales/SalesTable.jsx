@@ -5,15 +5,23 @@ import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { useEffect } from "react";
 
-export default function SalesTable({ onEdit, onView, onDelete }) {
+export default function SalesTable({
+  onEdit,
+  onView,
+  onDelete,
+  initialStatusFilter = "all",
+  hideStatusTabs = false,
+  documentType = "invoice",
+}) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("-invoice_date"); // default: newest first
   const [page, setPage] = useState(1);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "final", "draft"
+  const [statusFilterTab, setStatusFilterTab] = useState(initialStatusFilter); // "all", "final", "draft"
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -25,6 +33,13 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     hasOverdue: false,
   });
 
+  useEffect(() => {
+    setStatusFilterTab(initialStatusFilter);
+  }, [initialStatusFilter]);
+
+  const docLabel = documentType === "quotation" ? "quotation" : "invoice";
+  const docLabelPlural = documentType === "quotation" ? "quotations" : "invoices";
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
     queryFn: () => getSalesInvoices({ search, ordering, page, status: statusFilterTab }),
@@ -33,7 +48,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   if (error) {
     return (
       <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-        <h3 className="text-lg font-bold text-white mb-1">Error loading invoices</h3>
+        <h3 className="text-lg font-bold text-white mb-1">Error loading {docLabelPlural}</h3>
         <p className="text-sm text-red-300 mb-4">{error.message}</p>
         <button
           onClick={() => {
@@ -221,21 +236,23 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   return (
     <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
       {/* Status Tabs */}
-      <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
-        {['all', 'final', 'draft'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setStatusFilterTab(tab)}
-            className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
-              statusFilterTab === tab 
-              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
-              : 'text-gray-400 hover:text-white border border-transparent'
-            }`}
-          >
-            {tab}s
-          </button>
-        ))}
-      </div>
+      {!hideStatusTabs && (
+        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
+          {['all', 'final', 'draft'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setStatusFilterTab(tab)}
+              className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+                statusFilterTab === tab 
+                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
+                : 'text-gray-400 hover:text-white border border-transparent'
+              }`}
+            >
+              {tab}s
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Header with Search and Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -243,7 +260,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
           <div className="relative flex-1 sm:flex-initial">
             <input
               type="text"
-              placeholder="Search bills..."
+              placeholder={`Search ${docLabelPlural}...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 pr-4 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 w-full sm:w-64"
@@ -307,7 +324,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
         <div className="mb-4 p-4 bg-blue-500/20 backdrop-filter backdrop-blur-10 rounded-lg border border-blue-300/50">
           <div className="flex items-center justify-between">
             <span className="text-white font-medium drop-shadow-lg">
-              {selectedInvoices.size} invoices selected
+              {selectedInvoices.size} {docLabelPlural} selected
             </span>
             <div className="flex gap-2">
               <button

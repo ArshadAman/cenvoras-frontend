@@ -94,6 +94,10 @@ function App() {
           element={isAuthenticated ? <Sales /> : <Navigate to="/" replace />}
         />
         <Route
+          path="/quotations"
+          element={isAuthenticated ? <Sales documentType="quotation" /> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/sales-orders"
           element={isAuthenticated ? <SalesOrderList /> : <Navigate to="/" replace />}
         />

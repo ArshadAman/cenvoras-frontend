@@ -45,6 +45,7 @@ export default function Layout({ children, onLogout }) {
       title: "Sales & Trade",
       items: [
         { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
+        { path: "/quotations", label: "Quotations", icon: DocumentTextIcon, roles: [] },
         { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
         { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
         { path: "/warranty", label: "Warranty", icon: ShieldCheckIcon, roles: [] },
@@ -119,6 +120,7 @@ export default function Layout({ children, onLogout }) {
     // - Allow Payments
     if (route.startsWith('/sales-orders')) return false;
     if (route === '/sales' || route.startsWith('/sales/')) return true;
+    if (route === '/quotations' || route.startsWith('/quotations/')) return true;
     if (route.startsWith('/customers')) return true;
     if (route.startsWith('/profile')) return true;
     if (route.startsWith('/payments')) return true;
