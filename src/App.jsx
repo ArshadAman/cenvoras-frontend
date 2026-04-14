@@ -55,7 +55,7 @@ function App() {
 
   return (
     <Router>
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
       <Routes>
         <Route
           path="/"

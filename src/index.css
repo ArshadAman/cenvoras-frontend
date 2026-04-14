@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --toastify-z-index: 2147483647;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -31,8 +35,14 @@
     color: #ffffff;
   }
 
-  .Toastify__toast-container {
-    z-index: 12000 !important;
+  .Toastify__toast-container,
+  .Toastify__toast-container--top-right,
+  .Toastify__toast-container--top-left,
+  .Toastify__toast-container--top-center,
+  .Toastify__toast-container--bottom-right,
+  .Toastify__toast-container--bottom-left,
+  .Toastify__toast-container--bottom-center {
+    z-index: 2147483647 !important;
   }
 }
 
