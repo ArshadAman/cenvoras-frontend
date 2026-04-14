@@ -28,15 +28,16 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 antialiased">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto antialiased">
       {/* Heavy blur backdrop a la Apple */}
       <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-xl transition-opacity duration-300"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xl transition-opacity duration-300"
         onClick={onClose} 
       />
       
-      {/* Modal Container */}
-      <div className="relative w-full max-w-3xl flex flex-col max-h-[85vh] bg-[#1c1c1e] bg-opacity-[0.98] border border-white/10 rounded-[28px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+        {/* Modal Container */}
+        <div className="relative w-full max-w-3xl flex flex-col h-[75vh] min-h-[500px] max-h-[1000px] bg-[#1c1c1e] bg-opacity-[0.98] border border-white/10 rounded-[28px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
         
         {/* Header */}
         <div className="flex-shrink-0 px-8 py-6 border-b border-white/10 flex items-center justify-between">
@@ -134,6 +135,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
           </div>
         </div>
       </div>
+     </div>
     </div>
   );
 }
