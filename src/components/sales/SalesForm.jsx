@@ -468,6 +468,11 @@ const SalesSchema = Yup.object().shape({
   customer_address: Yup.string().nullable(),
   customer_gstin: Yup.string().nullable(),
   delivery_address: Yup.string().nullable(),
+  due_date: Yup.string().nullable().test(
+    'not-past-date',
+    'Due date cannot be in the past',
+    (value) => !value || value >= new Date().toISOString().split('T')[0]
+  ),
   
   // Optional invoice fields
   due_date: Yup.string().nullable(),
@@ -642,8 +647,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
   
   const { data: nextInvData } = useQuery({
-    queryKey: ["nextInvoiceNumber"],
-    queryFn: () => getNextInvoiceNumber(invoicePrefix || "INV-"),
+    queryKey: ["nextInvoiceNumber", invoicePrefix],
+    queryFn: () => getNextInvoiceNumber(invoicePrefix ?? ""),
     enabled: !isEdit && isOpen
   });
 
@@ -1041,6 +1046,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <Field
                         name="due_date"
                         type="date"
+                        min={new Date().toISOString().split('T')[0]}
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                       />
                     </div>

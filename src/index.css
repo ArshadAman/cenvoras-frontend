@@ -18,6 +18,18 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif; /* Stylish, premium heading font */
   }
+
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  select {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: #111111;
+    color: #ffffff;
+  }
 }
 
 @layer components {

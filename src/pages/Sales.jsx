@@ -15,8 +15,7 @@ import { getUserProfile, patchUserProfile } from "../api/users";
 const DEFAULT_INVOICE_PREFIX = "INV-";
 
 const normalizePrefix = (value) => {
-  const normalized = String(value || "").toUpperCase().trim();
-  return normalized || DEFAULT_INVOICE_PREFIX;
+  return String(value ?? "").toUpperCase();
 };
 
 export default function Sales() {
@@ -60,7 +59,7 @@ export default function Sales() {
 
   useEffect(() => {
     const dbPrefix = userProfile?.profile?.invoice_prefix;
-    if (dbPrefix) {
+    if (dbPrefix !== undefined && dbPrefix !== null) {
       setInvoicePrefix(normalizePrefix(dbPrefix));
     }
   }, [userProfile?.profile?.invoice_prefix]);

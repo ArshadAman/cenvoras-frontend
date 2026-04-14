@@ -23,7 +23,7 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
   });
 
   const handleFileSelect = (selectedFile) => {
-    if (selectedFile && selectedFile.type === 'text/csv') {
+    if (selectedFile && (/\.csv$/i.test(selectedFile.name) || selectedFile.type === 'text/csv' || selectedFile.type === 'application/vnd.ms-excel')) {
       setFile(selectedFile);
     } else {
       toast.error('Please select a valid CSV file');
@@ -84,7 +84,6 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
       '123 Main St, City, State',
       '22AAAAA0000A1Z5',
       'Net 30',
-      'pending',
       'Sample Product',
       '10',
       'pcs',

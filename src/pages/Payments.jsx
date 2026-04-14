@@ -522,7 +522,7 @@ export default function Payments({ onLogout }) {
   const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all'); // 'all' or 'today'
+  const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'month'
 
 
   const deleteMutation = useMutation({
@@ -568,7 +568,11 @@ export default function Payments({ onLogout }) {
     const matchesSearch = p.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           p.reference?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesMode = filterMode === 'all' || p.mode === filterMode;
-    const matchesDate = dateFilter === 'all' || p.date === new Date().toISOString().split('T')[0];
+    const paymentDate = new Date(p.date);
+    const now = new Date();
+    const matchesDate = dateFilter === 'all' ||
+      (dateFilter === 'today' && p.date === new Date().toISOString().split('T')[0]) ||
+      (dateFilter === 'month' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear());
     return matchesSearch && matchesMode && matchesDate;
   });
   
@@ -584,6 +588,9 @@ export default function Payments({ onLogout }) {
       return paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
     })
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+  const totalCollection = (payments || [])
+    .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
   
   return (
     <Layout onLogout={onLogout}>
@@ -623,20 +630,22 @@ export default function Payments({ onLogout }) {
             </div>
             <div className="text-2xl font-bold text-green-400">₹{todayTotal.toLocaleString('en-IN')}</div>
           </div>
-          <div className="bento-card !p-4 group">
-            <div className="text-xs text-gray-500 mb-1">This Month</div>
-            <div className="text-2xl font-bold text-white">₹{thisMonthTotal.toLocaleString('en-IN')}</div>
+          <div
+            onClick={() => setDateFilter(dateFilter === 'month' ? 'all' : 'month')}
+            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'month' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/5 hover:border-white/20'}`}
+          >
+            <div className="flex justify-between items-start mb-1">
+              <div className="text-xs text-gray-500">Monthly Collection</div>
+              {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
+            </div>
+            <div className="text-2xl font-bold text-cyan-400">₹{thisMonthTotal.toLocaleString('en-IN')}</div>
           </div>
           <div 
-            onClick={() => {
-              setSearchQuery('');
-              setFilterMode('all');
-              setDateFilter('all');
-            }}
-            className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-white/20"
+            onClick={() => setDateFilter('all')}
+            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'all' ? 'border-white/20 bg-white/5' : 'border-white/5 hover:border-white/20'}`}
           >
-            <div className="text-xs text-gray-500 mb-1">Total Payments</div>
-            <div className="text-2xl font-bold text-white">{payments?.length || 0}</div>
+            <div className="text-xs text-gray-500 mb-1">Total Collection Till Date</div>
+            <div className="text-2xl font-bold text-white">₹{totalCollection.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setIsDueModalOpen(true)}

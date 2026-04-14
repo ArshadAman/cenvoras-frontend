@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCustomers, deleteCustomer } from "../../api/customers";
 import { format } from "date-fns";
@@ -7,14 +7,20 @@ import { toast } from "react-toastify";
 export default function CustomerTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [ordering, setOrdering] = useState("-created_at"); // default: newest first
   const [page, setPage] = useState(1);
   const [selectedCustomers, setSelectedCustomers] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["customers", search, ordering, page],
-    queryFn: () => getCustomers({ search, ordering, page }),
+    queryKey: ["customers", debouncedSearch, ordering, page],
+    queryFn: () => getCustomers({ search: debouncedSearch, ordering, page }),
     keepPreviousData: true,
   });
 
@@ -73,6 +79,8 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
   };
 
   // Export functions
+  const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+
   const exportToCSV = () => {
     const selectedData = customers.filter(customer => selectedCustomers.has(customer.id));
     const csvContent = [
@@ -85,7 +93,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
         customer.address || '',
         format(new Date(customer.created_at), 'yyyy-MM-dd HH:mm')
       ])
-    ].map(row => row.join(',')).join('\n');
+    ].map(row => row.map(csvEscape).join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -147,7 +155,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
             />
             
             <select
-              className="px-3 py-2 border border-white/30 rounded-md bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+              className="px-3 py-2 border border-white/30 rounded-md bg-[#111] backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
               value={ordering}
               onChange={(e) => {
                 setOrdering(e.target.value);

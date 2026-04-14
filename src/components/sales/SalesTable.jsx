@@ -97,9 +97,9 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
       let matchesOverdue = true;
       if (advancedFilters.hasOverdue) {
         const today = new Date();
-        const invoiceDate = new Date(invoice.invoice_date);
-        const dueDate = new Date(invoiceDate.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days default
-        matchesOverdue = dueDate < today;
+        const dueDateValue = invoice.due_date || invoice.invoice_date;
+        const dueDate = new Date(dueDateValue);
+        matchesOverdue = !Number.isNaN(dueDate.getTime()) && dueDate < today;
       }
       
       return matchesSearch && matchesDate && matchesAmount && matchesCustomer && matchesOverdue;
@@ -232,7 +232,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
           <select
             value={ordering}
             onChange={(e) => setOrdering(e.target.value)}
-            className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10 text-white text-sm"
+              className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-[#111] backdrop-filter backdrop-blur-10 text-white text-sm"
           >
             <option value="-invoice_date" className="bg-[#1a2341] text-white">Newest First</option>
             <option value="invoice_date" className="bg-[#1a2341] text-white">Oldest First</option>

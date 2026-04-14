@@ -46,9 +46,9 @@ export default function SalesSummary() {
   // Calculate overdue invoices (using recent invoices as a simple check)
   const today = new Date();
   const overdueInvoices = invoices.filter(invoice => {
-    const invoiceDate = new Date(invoice.invoice_date);
-    const dueDate = new Date(invoiceDate.getTime() + (30 * 24 * 60 * 60 * 1000));
-    return dueDate < today && invoice.status !== 'draft';
+    const dueDateValue = invoice.due_date || invoice.invoice_date;
+    const dueDate = new Date(dueDateValue);
+    return !Number.isNaN(dueDate.getTime()) && dueDate < today && invoice.status !== 'draft';
   });
 
   // Top customers
@@ -126,7 +126,7 @@ export default function SalesSummary() {
          <div className="flex items-center gap-4">
              <h3 className="text-white font-medium">Analytics Filter</h3>
              <select 
-               className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+               className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
                value={dateFilter}
                onChange={e => setDateFilter(e.target.value)}
              >
@@ -142,7 +142,7 @@ export default function SalesSummary() {
                   type="date"
                   min={minDate}
                   max={maxDate}
-                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
                   value={customRange.start}
                   onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
                 />
@@ -151,7 +151,7 @@ export default function SalesSummary() {
                   type="date"
                   min={customRange.start || minDate}
                   max={maxDate}
-                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
                   value={customRange.end}
                   onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
                 />
