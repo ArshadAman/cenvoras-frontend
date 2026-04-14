@@ -299,12 +299,12 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-white/10 bg-[#0c0c0e] overflow-hidden">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+        <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
               {isEdit ? "Edit Purchase Bill" : "New Purchase Bill"}
@@ -481,10 +481,11 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             }, 0);
 
             return (
-            <Form className="p-0">
+            <Form className="flex flex-col flex-1 overflow-hidden">
               
               {/* Form Content */}
-              <div className="p-8 space-y-8">
+              <div className="flex-1 overflow-y-auto p-0">
+                <div className="p-6 sm:p-8 space-y-8">
                 
                 {/* Bill Details */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -606,7 +607,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               </div> {/* End of p-8 space-y-8 div */}
 
               {/* Items Section */}
-              <div className="p-8 bg-[#151515] border-t border-b border-white/5">
+              <div className="bg-[#111] border-t border-b border-white/5 px-6 py-6 sm:px-8 sm:py-8">
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-xl font-bold text-white">Items</h3>
                 </div>
@@ -672,7 +673,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               </div>
 
                {/* Totals */}
-               <div className="bg-[#111] border border-white/10 p-6 rounded-xl shadow-inner mt-4">
+               <div className="bg-[#111] border border-white/10 p-6 rounded-xl shadow-inner mt-6">
                    <div className="space-y-3 text-sm">
                        <div className="flex justify-between font-bold text-xl">
                           <span className="text-white">Grand Total</span>
@@ -682,7 +683,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                </div>
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-6 border-t border-white/10">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-white/10 px-6 pb-6 sm:px-8 sm:pb-8">
                 <button
                   type="button"
                   onClick={onClose}
@@ -704,6 +705,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 </button>
               </div>
 
+                </div>
+              </div>
             </Form>
           )} }
         </Formik>
@@ -724,7 +727,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
   const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
 
   return (
-     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-[#111] border border-white/5 rounded-xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-white/[0.03] border border-white/5 rounded-2xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
       
       {/* Product (3 cols) */}
       <div className="md:col-span-3">
@@ -735,7 +738,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
                 <input 
                    {...field} 
                    placeholder="HSN/SAC" 
-                   className="w-full mt-1 bg-[#1a1a1a] border border-white/5 rounded px-2 py-2 text-gray-400 text-[10px] focus:border-cyan-500/50 outline-none" 
+                   className="w-full mt-1 bg-[#161616] border border-white/5 rounded-lg px-3 py-2 text-gray-300 text-[11px] focus:border-cyan-500/50 outline-none" 
                 />
              )}
          </Field>
@@ -747,7 +750,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
             <label className="block text-[10px] text-gray-500 mb-1 md:hidden">Batch</label>
             <Field name={`items.${idx}.batch_number`}>
               {({ field }) => (
-                <input {...field} placeholder="Batch No" className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white text-xs focus:border-cyan-500 outline-none" />
+                <input {...field} placeholder="Batch No" className="w-full bg-[#161616] border border-white/10 rounded-lg px-3 py-3 text-white text-xs focus:border-cyan-500 outline-none" />
               )}
             </Field>
           </div>
@@ -755,7 +758,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
              <label className="block text-[10px] text-gray-500 mb-1 md:hidden">Expiry</label>
              <Field name={`items.${idx}.expiry_date`}>
                {({ field }) => (
-                 <input {...field} type="date" className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white text-xs focus:border-cyan-500 outline-none" />
+                 <input {...field} type="date" className="w-full bg-[#161616] border border-white/10 rounded-lg px-3 py-3 text-white text-xs focus:border-cyan-500 outline-none" />
                )}
              </Field>
           </div>
@@ -768,7 +771,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
              name={`items.${idx}.quantity`}
              type="number"
              min="1"
-             className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-center text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
+             className="w-full bg-[#161616] border border-white/10 rounded-lg px-3 py-3 text-center text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
          />
       </div>
 
@@ -780,7 +783,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
               type="number"
               min="0"
               placeholder="0"
-              className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
+              className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-3 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
           />
       </div>
 
@@ -789,7 +792,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
           <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Unit</label>
           <Field name={`items.${idx}.unit`}>
               {({ field }) => (
-              <select {...field} className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs">
+              <select {...field} className="w-full bg-[#161616] border border-white/10 rounded-lg px-3 py-3 text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs">
                   {units.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
               )}
@@ -804,7 +807,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
               type="number"
               min="0"
               step="0.01"
-              className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
+              className="w-full bg-[#161616] border border-white/10 rounded-lg px-3 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
           />
       </div>
 
@@ -812,11 +815,11 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
       <div className="md:col-span-1 space-y-2">
          <div className="flex items-center gap-1">
              <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
-             <Field name={`items.${idx}.discount`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
+             <Field name={`items.${idx}.discount`} type="number" className="w-full bg-[#161616] border border-white/10 rounded px-2 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
          </div>
          <div className="flex items-center gap-1">
              <label className="text-[10px] text-gray-500 w-6 md:hidden">Tax</label>
-             <Field name={`items.${idx}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
+             <Field name={`items.${idx}.tax`} type="number" className="w-full bg-[#161616] border border-white/10 rounded px-2 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
          </div>
       </div>
 
