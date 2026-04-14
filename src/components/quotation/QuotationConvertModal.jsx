@@ -30,7 +30,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 md:p-4">
       <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-950 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
+      <div className="relative w-[min(96vw,1100px)] md:w-[min(92vw,1100px)] overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-950 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
         <div className="bg-gradient-to-r from-cyan-600/20 to-slate-900/40 px-5 py-4 md:px-6 border-b border-white/10 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-white text-base md:text-lg font-semibold">Convert Quotation to Sales Order</h3>
