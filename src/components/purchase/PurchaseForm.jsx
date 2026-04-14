@@ -706,9 +706,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               </div>
 
                 </div>
-              </div>
             </Form>
-          )} }
+            )}}
         </Formik>
       </div>
     </div>,
