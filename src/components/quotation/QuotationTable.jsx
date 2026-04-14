@@ -108,7 +108,7 @@ export default function QuotationTable({ onEdit }) {
                     <button onClick={() => setQuotationStatus(q, 'approved')} className="text-green-400 hover:text-green-300">Approve</button>
                     <button onClick={() => setQuotationStatus(q, 'rejected')} className="text-amber-400 hover:text-amber-300">Reject</button>
                     {(q.status === 'approved' || q.status === 'partially_converted') && (
-                      <button onClick={() => setConvertTarget(q)} className="text-purple-400 hover:text-purple-300">Convert</button>
+                      <button onClick={() => setConvertTarget(q)} className="text-cyan-300 hover:text-cyan-200">Convert</button>
                     )}
                     <button
                       onClick={() => {
