@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoices, deleteSalesInvoice } from "../../api/sales";
+import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv } from "../../api/sales";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 export default function SalesTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "final", "draft"
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     dateRange: { start: "", end: "" },
     amountRange: { min: "", max: "" },
@@ -158,30 +160,39 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
   };
 
   // Export functions
-  const exportToCSV = () => {
-    const selectedData = filteredInvoices.filter(invoice => selectedInvoices.has(invoice.id));
-    const dataToExport = selectedData.length > 0 ? selectedData : filteredInvoices;
-    
-    const csvHeaders = ['Invoice Number', 'Date', 'Customer', 'Total Amount', 'Items Count'];
-    const csvData = dataToExport.map(invoice => [
-      invoice.invoice_number,
-      invoice.invoice_date,
-      invoice.customer_name,
-      invoice.total_amount,
-      invoice.items?.length || 0
-    ]);
-    
-    const csvContent = [csvHeaders, ...csvData].map(row => 
-      row.map(cell => `"${cell}"`).join(',')
-    ).join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sales-invoices-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const exportToCSV = async () => {
+    const selectedIds = Array.from(selectedInvoices);
+    const params = {
+      search,
+      ordering,
+      status: statusFilterTab,
+      date_start: advancedFilters.dateRange.start || dateFilter.start || undefined,
+      date_end: advancedFilters.dateRange.end || dateFilter.end || undefined,
+      amount_min: advancedFilters.amountRange.min || undefined,
+      amount_max: advancedFilters.amountRange.max || undefined,
+      customer: advancedFilters.customer || undefined,
+      has_overdue: advancedFilters.hasOverdue ? 'true' : undefined,
+      selected_ids: selectedIds.length > 0 ? selectedIds.join(',') : undefined,
+    };
+
+    try {
+      setIsExporting(true);
+      const blob = await exportSalesInvoicesCsv(params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sales-invoices-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Sales CSV exported successfully.');
+    } catch (error) {
+      console.error('CSV export error:', error);
+      toast.error('Unable to export sales CSV.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Removed global isLoading return to avoid unmounting search bar
@@ -229,6 +240,15 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={exportToCSV}
+            disabled={isExporting}
+            className="inline-flex items-center gap-2 px-3 py-2 border border-emerald-300/40 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4" />
+            {isExporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+
           <select
             value={ordering}
             onChange={(e) => setOrdering(e.target.value)}

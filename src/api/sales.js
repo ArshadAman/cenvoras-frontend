@@ -32,6 +32,12 @@ export const uploadSalesCsv = formData =>
     headers: { "Content-Type": "multipart/form-data" },
   }).then(res => res.data);
 
+export const exportSalesInvoicesCsv = params =>
+  api.get("/billing/sales-invoices/export-csv/", {
+    params,
+    responseType: "blob",
+  }).then(res => res.data);
+
 // Product API endpoints for sales form (reuse from inventory)
 export const getProducts = (params = {}) =>
   api.get("/inventory/products/", {
