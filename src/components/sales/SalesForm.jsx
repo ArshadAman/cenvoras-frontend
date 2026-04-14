@@ -475,7 +475,6 @@ const SalesSchema = Yup.object().shape({
   ),
   
   // Optional invoice fields
-  due_date: Yup.string().nullable(),
   gst_treatment: Yup.string().nullable(),
   journal: Yup.string().nullable(),
   total_amount: Yup.number().nullable(),
@@ -518,6 +517,10 @@ export default function SalesForm({
   invoicePrefix = "INV-",
   documentType = "invoice",
   forceDraft = false,
+  createDocument = createSalesInvoice,
+  updateDocument = updateSalesInvoice,
+  getNextNumber = getNextInvoiceNumber,
+  finalSubmitStatus = 'final',
 }) {
   const isQuotation = documentType === "quotation";
   // Keyboard Shortcuts Logic
@@ -656,14 +659,15 @@ export default function SalesForm({
   
   const { data: nextInvData } = useQuery({
     queryKey: ["nextInvoiceNumber", invoicePrefix],
-    queryFn: () => getNextInvoiceNumber(invoicePrefix ?? ""),
+    queryFn: () => getNextNumber(invoicePrefix ?? ""),
     enabled: !isEdit && isOpen
   });
 
   const createMutation = useMutation({
-    mutationFn: createSalesInvoice,
+    mutationFn: createDocument,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       onClose();
     },
@@ -681,9 +685,10 @@ export default function SalesForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateSalesInvoice(id, data),
+    mutationFn: ({ id, data }) => updateDocument(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       onClose();
     },
@@ -912,7 +917,7 @@ export default function SalesForm({
                 place_of_supply: values.place_of_supply || null,
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
-                status: isDraft ? 'draft' : 'final',
+                status: isDraft ? 'draft' : finalSubmitStatus,
                 total_amount: finalTotal.toString(),
                 round_off: roundOffValue.toString(),
                 items: processedItems,
@@ -1002,7 +1007,7 @@ export default function SalesForm({
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Invoice Number *
+                        {isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                       </label>
                       <Field
                         name="invoice_number"
@@ -1014,7 +1019,7 @@ export default function SalesForm({
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Invoice Date *
+                        {isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                       </label>
                       <Field
                         name="invoice_date"

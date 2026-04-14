@@ -9,6 +9,7 @@ import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
 import Sales from './pages/Sales'
+import Quotations from './pages/Quotations'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
 import Vendors from './pages/Vendors'
@@ -95,7 +96,7 @@ function App() {
         />
         <Route
           path="/quotations"
-          element={isAuthenticated ? <Sales documentType="quotation" /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <Quotations /> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales-orders"
