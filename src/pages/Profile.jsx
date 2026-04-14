@@ -468,7 +468,7 @@ const Profile = ({ onLogout }) => {
                 <div className="bento-card p-8">
                   <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">Account Details</h3>
-                    {isAdmin && !isEditing && (
+                    {!isEditing && (
                       <button
                         onClick={() => setIsEditing(true)}
                         className="btn-secondary flex items-center gap-2"
@@ -624,7 +624,7 @@ const Profile = ({ onLogout }) => {
                     </div>
 
                     {/* Action Buttons */}
-                    {isAdmin && isEditing && (
+                    {isEditing && (
                       <div className="flex items-center justify-end space-x-4 pt-6 mt-8 border-t border-white/10">
                         <button
                           type="button"
