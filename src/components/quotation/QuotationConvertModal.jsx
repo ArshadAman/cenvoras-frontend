@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function QuotationConvertModal({ isOpen, quotation, onClose, onConfirm, isSubmitting }) {
   const [selected, setSelected] = useState(new Set());
@@ -27,7 +28,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
     .filter((item) => selected.has(item.id))
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] overflow-y-auto antialiased">
       {/* Heavy blur backdrop a la Apple */}
       <div 
@@ -136,6 +137,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
         </div>
       </div>
      </div>
-    </div>
+    </div>,
+    document.body
   );
 }
