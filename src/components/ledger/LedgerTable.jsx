@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getGeneralLedgerEntries } from '../../api/ledger';
 import Loader from '../Loader';
@@ -21,6 +21,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
   const [viewEntry, setViewEntry] = useState(null);
   const [dateFilter, setDateFilter] = useState({
@@ -38,6 +39,25 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
 
   const accounts = accountsData?.results || [];
 
+  const receivableAccount = accounts.find(
+    (account) => account.code === '1200' || /accounts?\s+receivable/i.test(account.name || '')
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (!selectedAccount && receivableAccount?.id) {
+      setSelectedAccount(receivableAccount.id);
+    }
+  }, [selectedAccount, receivableAccount]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedAccount, dateFilter.startDate, dateFilter.endDate, customerFilter]);
+
   const {
     data: ledgerData,
     isLoading,
@@ -45,7 +65,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
     refetch
   } = useQuery({
     queryKey: ['generalLedgerEntries', {
-      description: searchTerm,
+      description: debouncedSearchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
       account: selectedAccount,
@@ -55,7 +75,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
     }],
     queryFn: () => getGeneralLedgerEntries({
-      description: searchTerm,
+      description: debouncedSearchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
       account: selectedAccount,
@@ -207,7 +227,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
           <button
             onClick={() => {
                setSearchTerm('');
-               setSelectedAccount('');
+               setSelectedAccount(receivableAccount?.id || '');
                setDateFilter({
                  startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
                  endDate: format(new Date(), 'yyyy-MM-dd')
