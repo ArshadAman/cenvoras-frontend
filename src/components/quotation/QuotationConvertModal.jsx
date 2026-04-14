@@ -28,75 +28,90 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 md:p-4">
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-[min(96vw,1100px)] md:w-[min(92vw,1100px)] overflow-hidden rounded-2xl border border-cyan-400/20 bg-slate-950 shadow-[0_30px_80px_rgba(0,0,0,0.65)]">
-        <div className="bg-gradient-to-r from-cyan-600/20 to-slate-900/40 px-5 py-4 md:px-6 border-b border-white/10 flex items-center justify-between gap-3">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative w-full max-w-4xl flex flex-col max-h-[90vh] bg-slate-950 border border-cyan-500/20 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex-shrink-0 bg-gradient-to-r from-slate-900 to-slate-950 px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <div>
-            <h3 className="text-white text-base md:text-lg font-semibold">Convert Quotation to Sales Order</h3>
-            <p className="text-xs md:text-sm text-gray-300">
-              Quotation <span className="text-cyan-300 font-medium">{quotation.quotation_number}</span>
-            </p>
+            <h3 className="text-white text-lg font-semibold tracking-tight">Convert to Sales Order</h3>
+            <p className="text-sm text-cyan-400 mt-1 font-medium">Ref: {quotation.quotation_number}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-300 hover:text-white rounded-md border border-white/10 px-3 py-1.5 text-sm transition"
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
           >
-            Close
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <div className="p-5 md:p-6 space-y-4 max-h-[65vh] md:max-h-[70vh] overflow-y-auto">
+        {/* Body (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <p className="text-sm text-gray-300">
-            Select approved line items to create a Sales Order.
+            Select the approved items from this quotation that you want to convert into a new Sales Order.
           </p>
 
           {approvedItems.length === 0 ? (
-            <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-red-200 text-sm">
-              No approved items are available for conversion.
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 text-sm">
+              No pending approved items available for conversion.
             </div>
           ) : (
             <div className="space-y-3">
               {approvedItems.map((item) => (
                 <label
                   key={item.id}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-white/12 bg-white/[0.04] px-3 py-3.5 hover:border-cyan-300/40 hover:bg-cyan-500/[0.05] transition"
+                  className="flex items-start gap-4 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 hover:border-cyan-500/30 transition-all cursor-pointer"
                 >
-                  <div className="flex items-start gap-3 min-w-0">
+                  <div className="pt-0.5">
                     <input
                       type="checkbox"
                       checked={selected.has(item.id)}
                       onChange={() => toggle(item.id)}
-                      className="mt-1 h-4 w-4 rounded border-white/30 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
+                      className="w-5 h-5 rounded border-gray-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900"
                     />
-                    <div className="min-w-0">
-                      <p className="text-white text-sm font-medium break-words">{item.product_name}</p>
-                      <p className="text-xs text-gray-300 mt-1">
-                        Qty: {item.quantity} | Price: Rs {Number(item.price || 0).toFixed(2)} | Amount: Rs {Number(item.amount || 0).toFixed(2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-4">
+                      <p className="text-white font-medium text-base truncate">{item.product_name}</p>
+                      <p className="text-cyan-400 font-semibold whitespace-nowrap">
+                        Rs {Number(item.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
+                    <div className="mt-2 flex items-center gap-4 text-sm text-gray-400">
+                      <span><span className="text-gray-500">Qty:</span> {item.quantity} {item.unit || ''}</span>
+                      <span><span className="text-gray-500">Rate:</span> Rs {Number(item.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
                   </div>
-                  {item.converted_to_order && <span className="text-[10px] text-green-400">Converted</span>}
                 </label>
               ))}
             </div>
           )}
         </div>
 
-        <div className="px-5 md:px-6 py-4 border-t border-white/10 bg-slate-900/50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <p className="text-xs md:text-sm text-gray-300">
-            Selected: <span className="text-white font-medium">{selectedIds.length}</span> item(s)
-            {' '}• Total: <span className="text-cyan-300 font-medium">Rs {selectedAmount.toFixed(2)}</span>
-          </p>
-          <div className="flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-gray-200 border border-white/15 rounded-lg hover:bg-white/5 transition">Cancel</button>
-          <button
-            onClick={() => onConfirm(selectedIds)}
-            disabled={isSubmitting || selectedIds.length === 0}
-            className="px-4 py-2 bg-cyan-400 text-slate-950 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-300 transition"
-          >
-            {isSubmitting ? 'Converting...' : 'Convert Selected Items'}
-          </button>
+        {/* Footer */}
+        <div className="flex-shrink-0 bg-slate-900/50 px-6 py-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-gray-400">Selected <span className="text-white font-medium">{selectedIds.length}</span> item(s)</span>
+            <span className="w-1 h-1 rounded-full bg-gray-600"></span>
+            <span className="text-gray-400">Total: <span className="text-cyan-400 font-bold text-lg">Rs {selectedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
+          </div>
+          <div className="flex w-full sm:w-auto items-center gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 sm:flex-none px-6 py-2.5 text-gray-300 font-medium hover:text-white hover:bg-white/5 rounded-xl border border-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm(selectedIds)}
+              disabled={isSubmitting || selectedIds.length === 0}
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-cyan-500 text-slate-950 font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+            >
+              {isSubmitting ? 'Converting...' : 'Create Sales Order'}
+            </button>
           </div>
         </div>
       </div>
