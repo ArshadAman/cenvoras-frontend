@@ -524,11 +524,20 @@ export default function Payments({ onLogout }) {
   const [filterMode, setFilterMode] = useState('all');
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'month'
 
+  const invalidatePaymentRelatedQueries = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['payments'] }),
+    queryClient.invalidateQueries({ queryKey: ['customers'] }),
+    queryClient.invalidateQueries({ queryKey: ['generalLedgerEntries'] }),
+    queryClient.invalidateQueries({ queryKey: ['ledgerStats'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] }),
+    queryClient.invalidateQueries({ queryKey: ['smart-dashboard'] }),
+  ]);
+
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+    onSuccess: async () => {
+      await invalidatePaymentRelatedQueries();
       toast.success("Payment deleted successfully");
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
@@ -755,7 +764,7 @@ export default function Payments({ onLogout }) {
           customers={customers}
           editData={selectedPayment}
           onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            invalidatePaymentRelatedQueries();
             setSelectedPayment(null);
           }}
         />
