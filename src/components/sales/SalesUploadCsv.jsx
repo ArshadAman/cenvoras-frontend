@@ -12,7 +12,7 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
   const uploadMutation = useMutation({
     mutationFn: uploadSalesCsv,
     onSuccess: (data) => {
-      toast.success(`Successfully uploaded ${data?.created_count || 0} sales bills!`);
+      toast.success(data?.message || 'Sales CSV import queued in the background.');
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       onClose();
       setFile(null);

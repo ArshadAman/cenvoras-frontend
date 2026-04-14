@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv } from "../../api/sales";
+import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesCsvJobStatus, downloadSalesCsv } from "../../api/sales";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
@@ -159,6 +159,20 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
     }
   };
 
+  const waitForSalesCsvJob = async (taskId) => {
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      const statusData = await getSalesCsvJobStatus(taskId);
+      if (statusData.state === 'SUCCESS') {
+        return statusData;
+      }
+      if (statusData.state === 'FAILURE') {
+        throw new Error(statusData.error || 'Failed to generate CSV');
+      }
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+    throw new Error('CSV export is taking too long. Please try again later.');
+  };
+
   // Export functions
   const exportToCSV = async () => {
     const selectedIds = Array.from(selectedInvoices);
@@ -177,7 +191,15 @@ export default function SalesTable({ onEdit, onView, onDelete }) {
 
     try {
       setIsExporting(true);
-      const blob = await exportSalesInvoicesCsv(params);
+      const queued = await exportSalesInvoicesCsv(params);
+      const taskId = queued?.task_id;
+      if (!taskId) {
+        throw new Error('Unable to start CSV export.');
+      }
+
+      toast.info('Sales CSV export queued. Preparing download...');
+      await waitForSalesCsvJob(taskId);
+      const blob = await downloadSalesCsv(taskId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
