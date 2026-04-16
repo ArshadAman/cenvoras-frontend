@@ -106,8 +106,12 @@ export default function QuotationTable({ onEdit, onView }) {
                   <td className="px-4 py-3 flex items-center gap-3 text-xs">
                     <button onClick={() => onView?.(q)} className="text-indigo-300 hover:text-indigo-200">View</button>
                     <button onClick={() => onEdit(q)} className="text-cyan-400 hover:text-cyan-300">Edit</button>
-                    <button onClick={() => setQuotationStatus(q, 'approved')} className="text-green-400 hover:text-green-300">Approve</button>
-                    <button onClick={() => setQuotationStatus(q, 'rejected')} className="text-amber-400 hover:text-amber-300">Reject</button>
+                    {(q.status === 'draft' || q.status === 'pending') && (
+                      <button onClick={() => setQuotationStatus(q, 'approved')} className="text-green-400 hover:text-green-300">Approve</button>
+                    )}
+                    {(q.status === 'draft' || q.status === 'pending' || q.status === 'approved' || q.status === 'partially_converted') && (
+                      <button onClick={() => setQuotationStatus(q, 'rejected')} className="text-amber-400 hover:text-amber-300">Reject</button>
+                    )}
                     {(q.status === 'approved' || q.status === 'partially_converted') && (
                       <button onClick={() => setConvertTarget(q)} className="text-cyan-300 hover:text-cyan-200">Convert</button>
                     )}
