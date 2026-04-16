@@ -1,13 +1,36 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import Layout from '../components/Layout';
 import SalesForm from '../components/sales/SalesForm';
+import SalesDetailsModal from '../components/sales/SalesDetailsModal';
 import QuotationTable from '../components/quotation/QuotationTable';
 import { createQuotation, getNextQuotationNumber, updateQuotation } from '../api/quotation';
+import { getUserProfile } from '../api/users';
 
 export default function Quotations() {
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [viewData, setViewData] = useState(null);
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const businessInfo = userProfile?.profile
+    ? {
+        business_name: userProfile.profile.business_name,
+        business_address: userProfile.profile.business_address,
+        phone: userProfile.profile.phone,
+        email: userProfile.profile.email,
+        gstin: userProfile.profile.gstin,
+        gem_id: userProfile.profile.gem_id,
+        dl_number: userProfile.profile.dl_number,
+        gin_number: userProfile.profile.gin_number,
+      }
+    : {};
 
   return (
     <Layout>
@@ -34,6 +57,7 @@ export default function Quotations() {
               setEditData(q);
               setShowForm(true);
             }}
+            onView={(q) => setViewData(q)}
           />
         </div>
       </div>
@@ -54,6 +78,14 @@ export default function Quotations() {
           finalSubmitStatus="pending"
         />
       )}
+
+      <SalesDetailsModal
+        isOpen={!!viewData}
+        onClose={() => setViewData(null)}
+        invoice={viewData}
+        businessInfo={businessInfo}
+        documentType="quotation"
+      />
     </Layout>
   );
 }
