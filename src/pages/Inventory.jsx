@@ -66,52 +66,56 @@ export default function Inventory() {
 
   return (
     <Layout>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-               <CubeIcon className="w-8 h-8 text-cyan-400" />
-               Product Inventory
-            </h1>
-            <p className="text-gray-400 text-sm">Manage stock, pricing, and variants.</p>
-          </div>
-          
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowBatchSplit(true)}
-              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 text-gray-300 shadow-sm hover:bg-white/10 transition-colors flex items-center gap-2"
-            >
-              <ScissorsIcon className="h-4 w-4" />
-              <span>Split Batch</span>
-            </button>
-            <button
-              disabled
-              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 text-gray-500 shadow-sm cursor-not-allowed opacity-60 relative"
-            >
-              <ArrowsRightLeftIcon className="h-4 w-4" />
-              <span>Transfer Stock</span>
-              <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full">
-                Soon
-              </span>
-            </button>
-            <button
-              onClick={handleAddProduct}
-              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
-            >
-              <PlusIcon className="h-4 w-4" />
-              <span>Add Product</span>
-            </button>
-          </div>
+      <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
+        <div className="pointer-events-none absolute inset-0 opacity-80">
+          <div className="absolute -top-10 left-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute top-40 right-6 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
         </div>
 
-        {/* Inventory Table Container */}
-        <div className="bento-card !p-0 overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
-               All Products
-            </h2>
-             {/* We can add filters here later if needed */}
+        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80 mb-2">Inventory Control</p>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white mb-2 flex items-center gap-3">
+                <CubeIcon className="w-9 h-9 text-cyan-300" />
+                Product Inventory
+              </h1>
+              <p className="text-white/65 text-sm">Manage stock, pricing, variants, and batch workflows with focused operational controls.</p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setShowBatchSplit(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm font-medium text-white/85 transition hover:bg-white/10"
+              >
+                <ScissorsIcon className="h-4 w-4" />
+                Split Batch
+              </button>
+              <button
+                disabled
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-500 cursor-not-allowed opacity-70 relative"
+              >
+                <ArrowsRightLeftIcon className="h-4 w-4" />
+                Transfer Stock
+                <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full">
+                  Soon
+                </span>
+              </button>
+              <button
+                onClick={handleAddProduct}
+                className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Add Product
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
+          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">All Products</h2>
+            <span className="text-xs text-gray-400">Monitor stock, price, and batch health in real time</span>
           </div>
           <InventoryTable
             onEdit={handleEditProduct}
@@ -119,7 +123,7 @@ export default function Inventory() {
             onDelete={handleDeleteProduct}
             onStockAdjustment={handleStockAdjustment}
           />
-        </div>
+        </section>
       </div>
 
       {/* Modals */}

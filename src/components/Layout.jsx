@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { getUserProfile } from '../api/users';
@@ -31,6 +31,19 @@ export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, featureName: '', description: '', targetPlanName: 'Pro' });
+  const mainContentRef = useRef(null);
+
+  const scrollContentToTop = useCallback(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollContentToTop();
+  }, [location.pathname, scrollContentToTop]);
 
   const role = getUserRole();
 
@@ -223,6 +236,7 @@ export default function Layout({ children, onLogout }) {
                   <Link 
                     key={item.path}
                     to={item.path} 
+                    onClick={scrollContentToTop}
                     className={baseClass}
                   >
                     <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
@@ -239,6 +253,7 @@ export default function Layout({ children, onLogout }) {
           {/* Coming Soon Button */}
           <Link
             to="/coming-soon"
+            onClick={scrollContentToTop}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
               location.pathname === '/coming-soon'
                 ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
@@ -363,7 +378,10 @@ export default function Layout({ children, onLogout }) {
                       <Link 
                         key={item.path}
                         to={item.path} 
-                        onClick={() => setIsMobileMenuOpen(false)}
+                        onClick={() => {
+                          scrollContentToTop();
+                          setIsMobileMenuOpen(false);
+                        }}
                         className={baseClass}
                       >
                         <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
@@ -379,7 +397,10 @@ export default function Layout({ children, onLogout }) {
             <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
               <Link
                 to="/coming-soon"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  scrollContentToTop();
+                  setIsMobileMenuOpen(false);
+                }}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/coming-soon'
                     ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
@@ -403,7 +424,7 @@ export default function Layout({ children, onLogout }) {
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto relative z-10">
+        <main ref={mainContentRef} className="flex-1 overflow-y-auto relative z-10">
           {isFreePlan && !isAllowedFreeRoute(location.pathname) ? (
             <div className="p-6 md:p-10">
               <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
