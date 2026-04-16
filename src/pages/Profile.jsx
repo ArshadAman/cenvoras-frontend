@@ -356,305 +356,257 @@ const Profile = ({ onLogout }) => {
     );
   }
 
+  const fullName = `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || 'Your Name';
+  const initials = fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'U';
+  const memberDays = userProfile?.account_stats?.days_since_signup || 0;
+  const trialDays = userProfile?.account_stats?.trial_days_remaining ?? '-';
+  const totalInvoices = userProfile?.account_stats?.total_invoices ?? 0;
+  const roleLabel = isAdmin
+    ? (userProfile?.profile?.business_name || 'Business Owner')
+    : (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Team Member');
+
   return (
     <Layout onLogout={onLogout}>
-      <div className="page-bg">
-        <div className="container mx-auto px-4 py-8 lg:py-12">
-          <div className="max-w-7xl mx-auto">
-            
-            {/* Page Header */}
-            <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <h1 className="text-4xl font-bold gradient-text mb-2">Profile Settings</h1>
-                <p className="text-white/60 text-lg">Manage your personal information and account preferences</p>
-              </div>
-              
-              <button
-                onClick={() => setIsPasswordModalOpen(true)}
-                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-xl border border-white/10 transition-all duration-300 flex items-center whitespace-nowrap"
-              >
-                <KeyIcon className="w-4 h-4 mr-2 text-cyan-400" />
-                Change Password
-              </button>
-            </div>
+      <div className="page-bg relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 opacity-70">
+          <div className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute right-0 top-52 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
+        </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Left Column: Profile Summary & Stats */}
-              <div className="space-y-8">
-                {/* Profile Summary Card */}
-                <div className="bento-card p-8 text-center relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-full h-32 bg-white/5 opacity-50"></div>
-                  
-                  <div className="relative z-10 mt-4">
-                    <div className="w-32 h-32 mx-auto mb-6 rounded-full p-1 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 ring-1 ring-white/10 shadow-2xl">
-                      <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center overflow-hidden">
-                        <UserIcon className="w-16 h-16 text-gray-400 group-hover:text-white transition-colors duration-300" />
-                      </div>
-                    </div>
-                    
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                      {userProfile?.profile?.first_name} {userProfile?.profile?.last_name}
-                    </h2>
-                    <p className="text-cyan-400 font-medium mb-4">
-                      {isAdmin 
-                        ? (userProfile?.profile?.business_name || 'Business Owner') 
-                        : (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Team Member')
-                      }
-                    </p>
-                    
+        <div className="container relative z-10 mx-auto px-4 py-8 lg:py-12">
+          <div className="mx-auto max-w-7xl space-y-7">
+            <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-8">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/30 to-blue-500/20 ring-1 ring-white/20 md:h-20 md:w-20">
+                    <span className="text-2xl font-semibold tracking-wide text-white md:text-3xl">{initials}</span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80">Profile Workspace</p>
+                    <h1 className="mt-1 text-3xl font-semibold text-white md:text-4xl">{fullName}</h1>
+                    <p className="mt-2 text-sm text-white/65">{roleLabel}</p>
                     {isAdmin && (
-                      <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                        <ShieldCheckIcon className={`w-5 h-5 mr-2 ${
-                          (userProfile?.profile?.plan_name || '').includes('Starter') ? 'text-yellow-400' : 'text-green-400'
-                        }`} />
-                        <span className="text-white/90 font-medium">
-                          {userProfile?.profile?.plan_name || 'Loading Plan...'}
-                        </span>
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/85">
+                        <ShieldCheckIcon className={`h-4 w-4 ${(userProfile?.profile?.plan_name || '').includes('Starter') ? 'text-amber-300' : 'text-emerald-300'}`} />
+                        {userProfile?.profile?.plan_name || 'Plan'}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Account Stats */}
-                {userProfile?.account_stats && (
-                  <div className="bento-card p-6">
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-                      <ChartBarIcon className="w-5 h-5 mr-2 text-cyan-400" />
-                      Account Overview
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="stat-card bg-[#111] border border-white/5 p-4 flex items-center justify-between rounded-xl hover:bg-white/5 transition-colors">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mr-4 border border-blue-500/20">
-                            <CalendarIcon className="w-5 h-5 text-blue-400" />
-                          </div>
-                          <div>
-                            <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Member Since</p>
-                            <p className="text-white font-bold mt-0.5">{userProfile.account_stats.days_since_signup} days ago</p>
-                          </div>
-                        </div>
-                      </div>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setIsPasswordModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm font-medium text-white/90 transition hover:border-white/30 hover:bg-white/10"
+                  >
+                    <KeyIcon className="h-4 w-4 text-cyan-300" />
+                    Change Password
+                  </button>
+                  {!isEditing && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                    >
+                      <SparklesIcon className="h-4 w-4" />
+                      Edit Profile
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
 
-                      <div className="stat-card bg-[#111] border border-white/5 p-4 flex items-center justify-between rounded-xl hover:bg-white/5 transition-colors">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center mr-4 border border-green-500/20">
-                            <SparklesIcon className="w-5 h-5 text-green-400" />
-                          </div>
-                          <div>
-                            <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Trial Status</p>
-                            <p className="text-white font-bold mt-0.5">{userProfile.account_stats.trial_days_remaining} days left</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="stat-card bg-[#111] border border-white/5 p-4 flex items-center justify-between rounded-xl hover:bg-white/5 transition-colors">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mr-4 border border-purple-500/20">
-                            <DocumentTextIcon className="w-5 h-5 text-purple-400" />
-                          </div>
-                          <div>
-                            <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Total Invoices</p>
-                            <p className="text-white font-bold mt-0.5">{userProfile.account_stats.total_invoices} generated</p>
-                          </div>
-                        </div>
-                      </div>
+            <div className="grid grid-cols-1 gap-7 xl:grid-cols-12">
+              <aside className="space-y-6 xl:col-span-4">
+                <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
+                  <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-white">
+                    <ChartBarIcon className="h-5 w-5 text-cyan-300" />
+                    Account Signals
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Member Since</p>
+                      <p className="mt-1 text-lg font-semibold text-white">{memberDays} days</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Trial Status</p>
+                      <p className="mt-1 text-lg font-semibold text-white">{trialDays} days left</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Invoices Generated</p>
+                      <p className="mt-1 text-lg font-semibold text-white">{totalInvoices}</p>
                     </div>
                   </div>
-                )}
-              </div>
+                </section>
 
-              <div className="lg:col-span-2">
-                <div className="bento-card p-8">
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-xl font-bold text-white">Account Details</h3>
-                    {!isEditing && (
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="btn-secondary flex items-center gap-2"
-                      >
-                        <SparklesIcon className="w-4 h-4 text-cyan-400" />
-                        Edit Profile
-                      </button>
-                    )}
+                <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
+                  <h3 className="mb-4 text-base font-semibold text-white">Identity Snapshot</h3>
+                  <div className="space-y-3 text-sm text-white/75">
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                      <EnvelopeIcon className="h-4 w-4 text-cyan-300" />
+                      <span className="truncate">{formData.email || 'No email added'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                      <PhoneIcon className="h-4 w-4 text-cyan-300" />
+                      <span>{formData.phone || 'No phone added'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                      <BuildingOfficeIcon className="h-4 w-4 text-cyan-300" />
+                      <span className="truncate">{formData.business_name || 'No business name'}</span>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                      <MapPinIcon className="mt-0.5 h-4 w-4 text-cyan-300" />
+                      <span className="line-clamp-3">{formData.business_address || 'No address added'}</span>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+
+              <section className="xl:col-span-8">
+                <div className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl md:p-8">
+                  <div className="mb-8 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-white">Account Details</h2>
+                      <p className="mt-1 text-sm text-white/55">Refined profile controls for daily operations and billing identity.</p>
+                    </div>
                   </div>
 
-                  <form id="profile-form" onSubmit={handleSubmit} className="space-y-8">
-                    {/* Personal Info Section */}
-                    <div className="space-y-6">
-                      <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center border-b border-white/5 pb-2">
-                        <UserIcon className="w-4 h-4 mr-2" />
+                  <form id="profile-form" onSubmit={handleSubmit} className="space-y-7">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                        <UserIcon className="h-4 w-4" />
                         Personal Information
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">First Name</label>
-                          <input
-                            type="text"
-                            name="first_name"
-                            value={formData.first_name}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                            placeholder="Enter first name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Last Name</label>
-                          <input
-                            type="text"
-                            name="last_name"
-                            value={formData.last_name}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                            placeholder="Enter last name"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <input
+                          type="text"
+                          name="first_name"
+                          value={formData.first_name}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="First name"
+                        />
+                        <input
+                          type="text"
+                          name="last_name"
+                          value={formData.last_name}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="Last name"
+                        />
                       </div>
                     </div>
 
-                    {/* Contact Info Section */}
-                    <div className="space-y-6">
-                      <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center border-b border-white/5 pb-2">
-                        <EnvelopeIcon className="w-4 h-4 mr-2" />
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                        <EnvelopeIcon className="h-4 w-4" />
                         Contact Details
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Email Address</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                            placeholder="name@example.com"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Phone Number</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                            placeholder="+91 98765 43210"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="name@example.com"
+                        />
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="Phone number"
+                        />
                       </div>
                     </div>
 
-                    {/* Business Info Section */}
-                    <div className="space-y-6">
-                      <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center border-b border-white/5 pb-2">
-                        <BuildingOfficeIcon className="w-4 h-4 mr-2" />
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                        <BuildingOfficeIcon className="h-4 w-4" />
                         Business Information
                       </h4>
-                      <div className="grid grid-cols-1 gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Business Name</label>
-                            <input
-                              type="text"
-                              name="business_name"
-                              value={formData.business_name}
-                              onChange={handleInputChange}
-                              disabled={!isEditing || updateProfileMutation.isPending}
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                              placeholder="Your Business Name"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">GSTIN</label>
-                            <input
-                              type="text"
-                              name="gstin"
-                              value={formData.gstin}
-                              onChange={handleInputChange}
-                              disabled={!isEditing || updateProfileMutation.isPending}
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                              placeholder="29ABCDE1234F1Z5"
-                              maxLength={15}
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">GEM ID</label>
-                            <input
-                              type="text"
-                              name="gem_id"
-                              value={formData.gem_id}
-                              onChange={handleInputChange}
-                              disabled={!isEditing || updateProfileMutation.isPending}
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                              placeholder="Enter GEM ID"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">DL Number</label>
-                            <input
-                              type="text"
-                              name="dl_number"
-                              value={formData.dl_number}
-                              onChange={handleInputChange}
-                              disabled={!isEditing || updateProfileMutation.isPending}
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all disabled:opacity-50"
-                              placeholder="Enter DL number"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Business Address</label>
-                          <textarea
-                            name="business_address"
-                            value={formData.business_address}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            rows={3}
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all resize-none disabled:opacity-50"
-                            placeholder="Full business address"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <input
+                          type="text"
+                          name="business_name"
+                          value={formData.business_name}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="Business name"
+                        />
+                        <input
+                          type="text"
+                          name="gstin"
+                          value={formData.gstin}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="GSTIN"
+                          maxLength={15}
+                        />
+                        <input
+                          type="text"
+                          name="gem_id"
+                          value={formData.gem_id}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="GEM ID"
+                        />
+                        <input
+                          type="text"
+                          name="dl_number"
+                          value={formData.dl_number}
+                          onChange={handleInputChange}
+                          disabled={!isEditing || updateProfileMutation.isPending}
+                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          placeholder="DL Number"
+                        />
                       </div>
+                      <textarea
+                        name="business_address"
+                        value={formData.business_address}
+                        onChange={handleInputChange}
+                        disabled={!isEditing || updateProfileMutation.isPending}
+                        rows={4}
+                        className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                        placeholder="Business address"
+                      />
                     </div>
 
-                    {/* Action Buttons */}
                     {isEditing && (
-                      <div className="flex items-center justify-end space-x-4 pt-6 mt-8 border-t border-white/10">
+                      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-white/10 pt-6">
                         <button
                           type="button"
                           onClick={handleCancel}
-                          className="px-6 py-3 rounded-xl text-gray-400 font-medium hover:text-white hover:bg-white/5 transition-all duration-300"
+                          className="rounded-xl border border-white/20 px-5 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={updateProfileMutation.isPending}
-                          className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {updateProfileMutation.isPending ? (
-                            <span className="flex items-center">
-                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Saving...
-                            </span>
-                          ) : (
-                            'Save Changes'
-                          )}
+                          {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                         </button>
                       </div>
                     )}
                   </form>
                 </div>
-              </div>
+              </section>
             </div>
           </div>
         </div>
