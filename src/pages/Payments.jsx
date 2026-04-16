@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -160,6 +160,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     c.id.slice(0, 8).toLowerCase().includes(customerSearch.toLowerCase())
   );
 
+  const selectedCustomer = customers.find(c => String(c.id) === String(formData.customer));
+
   // Fetch invoices when customer changes
   useEffect(() => {
     if (formData.customer) {
@@ -218,9 +220,37 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     return Math.max(total - paid, 0);
   };
 
+  const adjustedOutstandingByInvoice = useMemo(() => {
+    if (!invoices.length) return {};
+
+    const customerBalance = Math.max(parseFloat(selectedCustomer?.current_balance || 0), 0);
+    const totalInvoiceOutstanding = invoices.reduce((sum, inv) => sum + getInvoiceOutstanding(inv), 0);
+    let unappliedCredit = Math.max(totalInvoiceOutstanding - customerBalance, 0);
+
+    const sortedInvoices = [...invoices].sort((a, b) => new Date(a.invoice_date) - new Date(b.invoice_date));
+    const map = {};
+
+    sortedInvoices.forEach((inv) => {
+      const rawOutstanding = getInvoiceOutstanding(inv);
+      const adjustedOutstanding = Math.max(rawOutstanding - unappliedCredit, 0);
+      map[inv.id] = adjustedOutstanding;
+      unappliedCredit = Math.max(unappliedCredit - rawOutstanding, 0);
+    });
+
+    return map;
+  }, [invoices, selectedCustomer]);
+
+  const getAdjustedInvoiceOutstanding = (invoice) => {
+    const adjusted = adjustedOutstandingByInvoice[invoice?.id];
+    if (typeof adjusted === 'number') {
+      return adjusted;
+    }
+    return getInvoiceOutstanding(invoice);
+  };
+
   const handleSelectInvoice = (invoiceId) => {
     const inv = invoices.find(i => i.id === invoiceId);
-    const outstanding = inv ? getInvoiceOutstanding(inv) : '';
+    const outstanding = inv ? getAdjustedInvoiceOutstanding(inv) : '';
     setSelectedInvoice(inv);
     setFormData({ 
       ...formData, 
@@ -232,7 +262,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const calculateRemainingDue = () => {
     if (!selectedInvoice) return null;
     const paid = parseFloat(formData.amount) || 0;
-    const outstanding = getInvoiceOutstanding(selectedInvoice);
+    const outstanding = getAdjustedInvoiceOutstanding(selectedInvoice);
     return outstanding - paid;
   };
 
@@ -375,7 +405,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
               <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
               {invoices.map((inv) => (
                 <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
-                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{getInvoiceOutstanding(inv).toLocaleString('en-IN')}
+                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{getAdjustedInvoiceOutstanding(inv).toLocaleString('en-IN')}
                 </option>
               ))}
             </select>
@@ -418,7 +448,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
               <div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">₹{getInvoiceOutstanding(selectedInvoice).toLocaleString('en-IN')}</div>
+                <div className="text-base font-bold text-white">₹{getAdjustedInvoiceOutstanding(selectedInvoice).toLocaleString('en-IN')}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
