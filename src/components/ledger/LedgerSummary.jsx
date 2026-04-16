@@ -93,7 +93,12 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     recent_transactions: 0,
     average_payment: 0,
     largest_payment: 0,
-    outstanding_balance: 0
+    outstanding_balance: 0,
+    overdue_invoices_count: 0,
+    overdue_amount: 0,
+    unapplied_credits: 0,
+    unmapped_outstanding: 0,
+    reconciliation_gap: 0
   };
 
   const summaryCards = [
@@ -140,9 +145,24 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
       description: 'Total amount pending from customers'
     },
     {
+      name: 'Overdue Amount',
+      value: formatCurrency(stats.overdue_amount),
+      description: `${stats.overdue_invoices_count || 0} overdue invoices`
+    },
+    {
+      name: 'Unapplied Credits',
+      value: formatCurrency(stats.unapplied_credits),
+      description: 'Payments recorded without invoice linkage'
+    },
+    {
       name: 'Recent Transactions',
       value: stats.recent_transactions?.toString() || '0',
       description: 'Transactions in the last 30 days'
+    },
+    {
+      name: 'Reconciliation Gap',
+      value: formatCurrency(stats.reconciliation_gap),
+      description: 'Customer balance minus invoice outstanding'
     }
   ];
 
@@ -172,7 +192,7 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
         <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
           Additional Insights
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {additionalStats.map((stat) => (
             <div key={stat.name} className="text-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
               <div className="text-2xl font-bold text-white mb-1">

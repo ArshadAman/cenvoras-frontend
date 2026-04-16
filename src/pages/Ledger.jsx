@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { format, subDays } from 'date-fns';
 import LedgerSummary from '../components/ledger/LedgerSummary';
 import LedgerTable from '../components/ledger/LedgerTable';
 import PaymentForm from '../components/ledger/PaymentForm';
@@ -9,7 +8,7 @@ import LedgerDeleteDialog from '../components/ledger/LedgerDeleteDialog';
 import BulkDeleteModal from '../components/BulkDeleteModal';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api/customers';
-import { bulkDeleteLedgerEntries, getAccounts } from '../api/ledger';
+import { bulkDeleteLedgerEntries, getOverdueInvoices, getCustomerBalanceReconciliation } from '../api/ledger';
 import Layout from '../components/Layout';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -33,6 +32,22 @@ const Ledger = () => {
   );
 
   const selectedCustomerData = customers.find(c => c.id === selectedCustomer);
+
+  const { data: overdueData, isLoading: isOverdueLoading } = useQuery({
+    queryKey: ['overdueInvoices', selectedCustomer],
+    queryFn: () => getOverdueInvoices({ customer: selectedCustomer || undefined }),
+  });
+
+  const { data: reconciliationData, isLoading: isReconciliationLoading } = useQuery({
+    queryKey: ['customerBalanceReconciliation', selectedCustomer],
+    queryFn: () => getCustomerBalanceReconciliation({ customer: selectedCustomer || undefined }),
+  });
+
+  const overdueInvoices = overdueData?.results || [];
+  const reconciliationRows = reconciliationData?.results || [];
+  const topMismatches = reconciliationRows
+    .filter((row) => Math.abs(parseFloat(row.difference || 0)) >= 0.01)
+    .slice(0, 5);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -172,6 +187,68 @@ const Ledger = () => {
 
         {/* Summary Stats */}
         <LedgerSummary customerFilter={selectedCustomer} />
+
+        {/* Overdue and Reconciliation Visibility */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bento-card !p-0 overflow-hidden">
+            <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Overdue Invoices</h2>
+              <span className="text-xs text-amber-300">{overdueData?.count || 0} items</span>
+            </div>
+            <div className="p-4 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+              {isOverdueLoading ? (
+                <p className="text-sm text-gray-400">Loading overdue invoices...</p>
+              ) : overdueInvoices.length === 0 ? (
+                <p className="text-sm text-gray-400">No overdue invoices found for current filters.</p>
+              ) : (
+                overdueInvoices.slice(0, 8).map((invoice) => (
+                  <div key={invoice.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{invoice.invoice_number}</p>
+                        <p className="text-xs text-gray-400">{invoice.customer_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-amber-300">₹{parseFloat(invoice.outstanding_amount || 0).toLocaleString('en-IN')}</p>
+                        <p className="text-xs text-gray-500">{invoice.days_overdue} days overdue</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bento-card !p-0 overflow-hidden">
+            <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Balance Reconciliation</h2>
+              <span className="text-xs text-cyan-300">Top mismatches</span>
+            </div>
+            <div className="p-4 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+              {isReconciliationLoading ? (
+                <p className="text-sm text-gray-400">Loading reconciliation gaps...</p>
+              ) : topMismatches.length === 0 ? (
+                <p className="text-sm text-gray-400">No balance mismatch found. Customer balances match invoice outstanding.</p>
+              ) : (
+                topMismatches.map((row) => (
+                  <div key={row.customer_id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-white truncate">{row.customer_name}</p>
+                      <p className={`text-sm font-semibold ${parseFloat(row.difference) < 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                        ₹{Math.abs(parseFloat(row.difference || 0)).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {parseFloat(row.difference) < 0
+                        ? 'Unmapped outstanding on customer balance'
+                        : 'Likely unapplied credits from unlinked payments'}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Ledger Table Container */}
         <div className="bento-card !p-0 overflow-hidden">
