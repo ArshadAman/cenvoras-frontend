@@ -581,8 +581,17 @@ export default function SalesForm({
   const formikRef = React.useRef(null);
   const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [productSearch, setProductSearch] = useState("");
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductSearch((productSearch || "").trim());
+    }, 220);
+
+    return () => clearTimeout(timer);
+  }, [productSearch]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -602,11 +611,12 @@ export default function SalesForm({
   
   // Lifted state: Fetch products and customers once at top level
   const { data: productsResult } = useQuery({ 
-      queryKey: ["products", productSearch], 
+      queryKey: ["products", debouncedProductSearch], 
       queryFn: () => getProducts({
-        ...(productSearch ? { search: productSearch } : {}),
+        ...(debouncedProductSearch ? { search: debouncedProductSearch } : {}),
         ordering: "name",
       }),
+      enabled: isOpen && debouncedProductSearch.length >= 2,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
