@@ -19,7 +19,7 @@ import {
   XMarkIcon,
   KeyIcon
 } from '@heroicons/react/24/outline';
-import { getUserProfile, updateUserProfile, changePassword } from '../api/users';
+import { getUserProfile, patchUserProfile, changePassword } from '../api/users';
 import {
   getSubscriptionEntitlements,
   getPlanCatalog,
@@ -290,7 +290,7 @@ const Profile = ({ onLogout }) => {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: updateUserProfile,
+    mutationFn: patchUserProfile,
     onSuccess: async (data) => {
       // Refetch the profile data to ensure we have the latest
       await queryClient.invalidateQueries(['userProfile']);
@@ -303,11 +303,14 @@ const Profile = ({ onLogout }) => {
       // Handle different types of errors
       if (error.response?.data) {
         const errorData = error.response.data;
+        const fieldErrors = errorData?.errors && typeof errorData.errors === 'object'
+          ? errorData.errors
+          : (typeof errorData === 'object' && !errorData.detail && !errorData.message ? errorData : null);
         
         // Check for field-specific errors
-        if (typeof errorData === 'object' && !errorData.detail && !errorData.message) {
+        if (fieldErrors) {
           // Display field-specific errors
-          Object.entries(errorData).forEach(([field, messages]) => {
+          Object.entries(fieldErrors).forEach(([field, messages]) => {
             if (Array.isArray(messages)) {
               messages.forEach(msg => toast.error(`${field}: ${msg}`));
             } else {
