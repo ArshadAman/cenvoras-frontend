@@ -27,6 +27,7 @@ import {
   schedulePlanChange,
   createPlanPaymentOrder,
   confirmPlanPayment,
+  getLatestPaymentStatus,
 } from '../api/subscription';
 import { getUserRole } from '../utils/auth';
 
@@ -257,6 +258,12 @@ const Profile = ({ onLogout }) => {
     staleTime: 60_000,
   });
 
+  const { data: latestPaymentStatusData } = useQuery({
+    queryKey: ['subscription-latest-payment-status'],
+    queryFn: getLatestPaymentStatus,
+    staleTime: 30_000,
+  });
+
   // Update form data when user profile is loaded
   useEffect(() => {
     if (userProfile && userProfile.profile) {
@@ -435,6 +442,7 @@ const Profile = ({ onLogout }) => {
       await queryClient.invalidateQueries(['subscription-entitlements']);
       await queryClient.invalidateQueries(['profile']);
       await queryClient.invalidateQueries(['userProfile']);
+      await queryClient.invalidateQueries(['subscription-latest-payment-status']);
     } catch (actionError) {
       const msg = actionError?.response?.data?.error || actionError?.message || 'Plan change failed.';
       toast.error(msg);
@@ -495,6 +503,7 @@ const Profile = ({ onLogout }) => {
   const isVipAccess = subscriptionData?.data?.is_vip || false;
   const isFreeOrStarter = entitlementPlanCode === 'free' || entitlementPlanCode === 'starter';
   const quote = planQuoteData?.data;
+  const latestPayment = latestPaymentStatusData?.data || null;
   const planCatalog = planCatalogData?.data || [];
   const paidPlanOptions = planCatalog
     .filter((plan) => ['pro', 'business'].includes(String(plan.code || '').toLowerCase()))
@@ -533,6 +542,13 @@ const Profile = ({ onLogout }) => {
     expiryLabel = 'Unavailable';
     expirySubLabel = 'Expiry date will appear once billing cycle is active.';
   }
+
+  const paymentStatusLabel = String(latestPayment?.status || '').toLowerCase();
+  const paymentStatusTone = paymentStatusLabel === 'success'
+    ? 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10'
+    : paymentStatusLabel === 'failed'
+      ? 'text-rose-300 border-rose-500/40 bg-rose-500/10'
+      : 'text-amber-200 border-amber-500/40 bg-amber-500/10';
 
   const roleLabel = isAdmin
     ? (userProfile?.profile?.business_name || 'Business Owner')
@@ -709,6 +725,30 @@ const Profile = ({ onLogout }) => {
                     </div>
                   </div>
                 </section>
+
+                {latestPayment && (
+                  <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
+                    <h3 className="mb-4 text-base font-semibold text-white">Last Payment Status</h3>
+                    <div className="space-y-3 text-sm text-white/75">
+                      <div className={`rounded-xl border px-3 py-2 ${paymentStatusTone}`}>
+                        <p className="text-xs uppercase tracking-[0.16em]">Status</p>
+                        <p className="mt-1 text-sm font-semibold uppercase">{latestPayment.status}</p>
+                      </div>
+                      <p><span className="text-white/55">Order:</span> {latestPayment.order_id}</p>
+                      <p><span className="text-white/55">Plan:</span> {latestPayment.plan_name}</p>
+                      <p><span className="text-white/55">Amount:</span> INR {latestPayment.amount}</p>
+                      {!!latestPayment.failure_reason && (
+                        <p><span className="text-white/55">Reason:</span> {latestPayment.failure_reason}</p>
+                      )}
+                      {!!latestPayment.created_at && (
+                        <p><span className="text-white/55">Created:</span> {new Date(latestPayment.created_at).toLocaleString()}</p>
+                      )}
+                      {!!latestPayment.paid_at && (
+                        <p><span className="text-white/55">Confirmed:</span> {new Date(latestPayment.paid_at).toLocaleString()}</p>
+                      )}
+                    </div>
+                  </section>
+                )}
               </aside>
 
               <section className="xl:col-span-8">

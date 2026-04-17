@@ -18,6 +18,9 @@ export const createPlanPaymentOrder = (planCode) =>
 export const confirmPlanPayment = (orderId) =>
   api.post('/subscription/payments/confirm/', { order_id: orderId }).then((res) => res.data);
 
+export const getLatestPaymentStatus = () =>
+  api.get('/subscription/payments/latest-status/').then((res) => res.data);
+
 export default {
   getSubscriptionEntitlements,
   getPlanCatalog,
@@ -25,4 +28,5 @@ export default {
   schedulePlanChange,
   createPlanPaymentOrder,
   confirmPlanPayment,
+  getLatestPaymentStatus,
 };
