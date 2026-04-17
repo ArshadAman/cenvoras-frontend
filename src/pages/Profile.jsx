@@ -20,6 +20,7 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import { getUserProfile, updateUserProfile, changePassword } from '../api/users';
+import { getSubscriptionEntitlements } from '../api/subscription';
 import { getUserRole } from '../utils/auth';
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
@@ -212,6 +213,12 @@ const Profile = ({ onLogout }) => {
     queryFn: getUserProfile
   });
 
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription-entitlements'],
+    queryFn: getSubscriptionEntitlements,
+    staleTime: 60_000,
+  });
+
   // Update form data when user profile is loaded
   useEffect(() => {
     if (userProfile && userProfile.profile) {
@@ -366,6 +373,35 @@ const Profile = ({ onLogout }) => {
   const memberDays = userProfile?.account_stats?.days_since_signup || 0;
   const trialDays = userProfile?.account_stats?.trial_days_remaining ?? '-';
   const totalInvoices = userProfile?.account_stats?.total_invoices ?? 0;
+  const entitlementPlan = subscriptionData?.data?.plan || {};
+  const entitlementPlanName = entitlementPlan?.name || userProfile?.profile?.plan_name || 'Free';
+  const entitlementPlanCode = String(entitlementPlan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
+  const entitlementExpiry = entitlementPlan?.current_period_end ? new Date(entitlementPlan.current_period_end) : null;
+  const hasEntitlementExpiry = entitlementExpiry && !Number.isNaN(entitlementExpiry.getTime());
+  const expiryDaysLeft = hasEntitlementExpiry
+    ? Math.ceil((entitlementExpiry.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+    : null;
+  const isVipAccess = entitlementPlanName.toLowerCase().includes('vip');
+  const isFreeOrStarter = entitlementPlanCode === 'free' || entitlementPlanCode === 'starter';
+
+  let expiryLabel = 'Not applicable';
+  let expirySubLabel = 'Upgrade to Pro or Business for renewable billing.';
+  if (isVipAccess) {
+    expiryLabel = 'Lifetime';
+    expirySubLabel = 'VIP access does not expire.';
+  } else if (hasEntitlementExpiry) {
+    if (expiryDaysLeft < 0) {
+      expiryLabel = 'Expired';
+      expirySubLabel = `Expired on ${entitlementExpiry.toLocaleDateString()}`;
+    } else {
+      expiryLabel = `${expiryDaysLeft} day${expiryDaysLeft === 1 ? '' : 's'} left`;
+      expirySubLabel = `Renews/expires on ${entitlementExpiry.toLocaleDateString()}`;
+    }
+  } else if (!isFreeOrStarter) {
+    expiryLabel = 'Unavailable';
+    expirySubLabel = 'Expiry date will appear once billing cycle is active.';
+  }
+
   const roleLabel = isAdmin
     ? (userProfile?.profile?.business_name || 'Business Owner')
     : (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Team Member');
@@ -436,6 +472,11 @@ const Profile = ({ onLogout }) => {
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Trial Status</p>
                       <p className="mt-1 text-lg font-semibold text-white">{trialDays} days left</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Plan Expiry</p>
+                      <p className="mt-1 text-lg font-semibold text-white">{expiryLabel}</p>
+                      <p className="mt-1 text-xs text-white/55">{expirySubLabel}</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Invoices Generated</p>
