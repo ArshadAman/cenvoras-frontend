@@ -120,6 +120,7 @@ export default function Layout({ children, onLogout }) {
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
   const pendingPlanName = entitlements.plan?.pending_plan_name || '';
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
+  const nextPlanCode = (entitlements.plan?.next_plan_code || '').toLowerCase();
   const currentPeriodEnd = entitlements.plan?.current_period_end;
 
   const resolvePlanCode = (planNameOrCode) => {
@@ -137,7 +138,7 @@ export default function Layout({ children, onLogout }) {
   const showExpiredBanner = !isVipAccess && !isFreePlan && Number.isFinite(daysRemaining) && daysRemaining < 0;
   const queuedDate = pendingPlanStartsAt ? new Date(pendingPlanStartsAt) : null;
   const hasQueuedDate = queuedDate && !Number.isNaN(queuedDate.getTime());
-  const showQueuedBanner = !isVipAccess && !!pendingPlanName && hasQueuedDate;
+  const showQueuedBanner = !isVipAccess && nextPlanCode === 'free' && hasQueuedDate;
 
   const isAllowedFreeRoute = (path) => {
     const route = (path || '').toLowerCase();
@@ -448,9 +449,9 @@ export default function Layout({ children, onLogout }) {
                   <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/15 via-sky-500/10 to-blue-500/15 p-4 md:p-5">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Renewal Scheduled</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Downgrade Scheduled</p>
                         <p className="mt-1 text-sm text-gray-100">
-                          Your {pendingPlanName} plan will activate on {queuedDate.toLocaleDateString()} after the current cycle ends.
+                          Your account will move to Free on {queuedDate.toLocaleDateString()} after the current cycle ends.
                         </p>
                       </div>
                     </div>
