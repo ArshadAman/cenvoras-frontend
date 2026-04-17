@@ -1,6 +1,31 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { toast } from 'react-toastify';
 import { LockClosedIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { createPlanPaymentOrder, confirmPlanPayment } from '../../api/subscription';
+
+const loadCashfreeSdk = () => {
+  if (window.Cashfree) {
+    return Promise.resolve(window.Cashfree);
+  }
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector('script[data-cashfree-sdk="true"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(window.Cashfree));
+      existingScript.addEventListener('error', () => reject(new Error('Failed to load Cashfree SDK')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    script.dataset.cashfreeSdk = 'true';
+    script.onload = () => resolve(window.Cashfree);
+    script.onerror = () => reject(new Error('Failed to load Cashfree SDK'));
+    document.body.appendChild(script);
+  });
+};
 
 export default function UpgradePromptModal({
   isOpen,
@@ -9,8 +34,53 @@ export default function UpgradePromptModal({
   featureName = 'this feature',
   currentPlanName = 'Free',
   targetPlanName = 'Pro',
+  targetPlanCode = 'pro',
   description = '',
+  ctaLabel = '',
+  subtitle = '',
 }) {
+  const [isPaying, setIsPaying] = React.useState(false);
+
+  const handlePayAndUpgrade = async () => {
+    try {
+      setIsPaying(true);
+
+      const orderRes = await createPlanPaymentOrder(targetPlanCode);
+      const order = orderRes?.data || {};
+
+      if (!order.payment_session_id || !order.order_id) {
+        throw new Error('Missing payment session details from server.');
+      }
+
+      const CashfreeConstructor = await loadCashfreeSdk();
+      if (!CashfreeConstructor) {
+        throw new Error('Cashfree checkout unavailable.');
+      }
+
+      const mode = (import.meta.env.VITE_CASHFREE_ENV || 'sandbox').toLowerCase() === 'production' ? 'production' : 'sandbox';
+      const cashfree = CashfreeConstructor({ mode });
+
+      await cashfree.checkout({
+        paymentSessionId: order.payment_session_id,
+        redirectTarget: '_modal',
+      });
+
+      const confirmRes = await confirmPlanPayment(order.order_id);
+      if (!confirmRes?.success) {
+        throw new Error('Payment not confirmed yet. Please wait a moment and retry.');
+      }
+
+      toast.success(`Plan upgraded to ${targetPlanName}.`);
+      onClose();
+      window.location.reload();
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || 'Upgrade payment failed.';
+      toast.error(message);
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -25,7 +95,7 @@ export default function UpgradePromptModal({
             <div>
               <h3 className="text-xl font-bold text-white">{title}</h3>
               <p className="mt-1 text-sm text-gray-400">
-                {featureName} is not included in your current {currentPlanName} plan.
+                {subtitle || `${featureName} is not included in your current ${currentPlanName} plan.`}
               </p>
             </div>
           </div>
@@ -47,16 +117,18 @@ export default function UpgradePromptModal({
             <div className="text-sm text-gray-300 space-y-1">
               <div>• Your current data stays intact.</div>
               <div>• You can upgrade without losing invoices, customers, or reports.</div>
-              <div>• Contact the team to move to {targetPlanName}.</div>
+              <div>• Complete one-time payment to activate {targetPlanName}.</div>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <a
-              href="mailto:cenvoras@gmail.com?subject=Plan%20upgrade%20request"
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-400 transition-all"
+            <button
+              type="button"
+              disabled={isPaying}
+              onClick={handlePayAndUpgrade}
+              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Contact Support
-            </a>
+              {isPaying ? 'Processing...' : (ctaLabel || `Pay & Upgrade to ${targetPlanName}`)}
+            </button>
             <button
               type="button"
               onClick={onClose}
