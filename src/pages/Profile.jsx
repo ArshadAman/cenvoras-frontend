@@ -487,7 +487,7 @@ const Profile = ({ onLogout }) => {
   const expiryDaysLeft = hasEntitlementExpiry
     ? Math.ceil((entitlementExpiry.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
     : null;
-  const isVipAccess = entitlementPlanName.toLowerCase().includes('vip');
+  const isVipAccess = subscriptionData?.data?.is_vip || false;
   const isFreeOrStarter = entitlementPlanCode === 'free' || entitlementPlanCode === 'starter';
   const quote = planQuoteData?.data;
   const planCatalog = planCatalogData?.data || [];
@@ -618,57 +618,66 @@ const Profile = ({ onLogout }) => {
                     Plan Management
                   </h3>
                   <div className="space-y-4">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Current Plan</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{entitlementPlanName}</p>
-                    </div>
-
-                    {isAdmin ? (
-                      <>
-                        <div>
-                          <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Choose Plan</label>
-                          <select
-                            value={selectedTargetPlanCode}
-                            onChange={(e) => setSelectedTargetPlanCode(e.target.value)}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
-                            disabled={isPlanActionLoading}
-                          >
-                            {availablePlanOptions.map((planOption) => (
-                              <option key={planOption.code} value={planOption.code}>
-                                {planOption.name} {planOption.code !== 'free' ? `(INR ${planOption.monthlyPrice}/month)` : ''}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                          <p className="text-sm text-white/85">
-                            {quoteLoading ? 'Loading quote...' : (quote?.summary || 'Choose a plan to see exact billing behavior.')}
-                          </p>
-                          {!!quote?.effective_at && (
-                            <p className="mt-2 text-xs text-white/55">Effective on {new Date(quote.effective_at).toLocaleDateString()}</p>
-                          )}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handlePlanAction}
-                          disabled={
-                            isPlanActionLoading ||
-                            quoteLoading ||
-                            !quote ||
-                            quote?.action === 'already_free' ||
-                            (selectedTargetPlanCode === entitlementPlanCode && !quote?.payment_required)
-                          }
-                          className="w-full rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isPlanActionLoading ? 'Processing...' : planActionLabel}
-                        </button>
-                      </>
+                    {isVipAccess ? (
+                      <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+                        <p className="text-sm font-semibold text-amber-300">✦ VIP Customer</p>
+                        <p className="mt-2 text-xs text-white/70">You have VIP access. Plan management is not available for VIP customers. Contact support for any changes.</p>
+                      </div>
                     ) : (
-                      <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
-                        Only tenant admin can change billing plans.
-                      </p>
+                      <>
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Current Plan</p>
+                          <p className="mt-1 text-lg font-semibold text-white">{entitlementPlanName}</p>
+                        </div>
+
+                        {isAdmin ? (
+                          <>
+                            <div>
+                              <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Choose Plan</label>
+                              <select
+                                value={selectedTargetPlanCode}
+                                onChange={(e) => setSelectedTargetPlanCode(e.target.value)}
+                                className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
+                                disabled={isPlanActionLoading}
+                              >
+                                {availablePlanOptions.map((planOption) => (
+                                  <option key={planOption.code} value={planOption.code}>
+                                    {planOption.name} {planOption.code !== 'free' ? `(INR ${planOption.monthlyPrice}/month)` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                              <p className="text-sm text-white/85">
+                                {quoteLoading ? 'Loading quote...' : (quote?.summary || 'Choose a plan to see exact billing behavior.')}
+                              </p>
+                              {!!quote?.effective_at && (
+                                <p className="mt-2 text-xs text-white/55">Effective on {new Date(quote.effective_at).toLocaleDateString()}</p>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handlePlanAction}
+                              disabled={
+                                isPlanActionLoading ||
+                                quoteLoading ||
+                                !quote ||
+                                quote?.action === 'already_free' ||
+                                (selectedTargetPlanCode === entitlementPlanCode && !quote?.payment_required)
+                              }
+                              className="w-full rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isPlanActionLoading ? 'Processing...' : planActionLabel}
+                            </button>
+                          </>
+                        ) : (
+                          <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
+                            Only tenant admin can change billing plans.
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </section>
