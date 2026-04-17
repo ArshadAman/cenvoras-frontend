@@ -20,8 +20,38 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import { getUserProfile, updateUserProfile, changePassword } from '../api/users';
-import { getSubscriptionEntitlements } from '../api/subscription';
+import {
+  getSubscriptionEntitlements,
+  getPlanCatalog,
+  getPlanChangeQuote,
+  schedulePlanChange,
+  createPlanPaymentOrder,
+  confirmPlanPayment,
+} from '../api/subscription';
 import { getUserRole } from '../utils/auth';
+
+const loadCashfreeSdk = () => {
+  if (window.Cashfree) {
+    return Promise.resolve(window.Cashfree);
+  }
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector('script[data-cashfree-sdk="true"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(window.Cashfree));
+      existingScript.addEventListener('error', () => reject(new Error('Failed to load Cashfree SDK')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    script.dataset.cashfreeSdk = 'true';
+    script.onload = () => resolve(window.Cashfree);
+    script.onerror = () => reject(new Error('Failed to load Cashfree SDK'));
+    document.body.appendChild(script);
+  });
+};
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -202,6 +232,8 @@ const Profile = ({ onLogout }) => {
     gem_id: '',
     dl_number: ''
   });
+  const [selectedTargetPlanCode, setSelectedTargetPlanCode] = useState('free');
+  const [isPlanActionLoading, setIsPlanActionLoading] = useState(false);
 
   const queryClient = useQueryClient();
   const role = getUserRole();
@@ -216,6 +248,12 @@ const Profile = ({ onLogout }) => {
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription-entitlements'],
     queryFn: getSubscriptionEntitlements,
+    staleTime: 60_000,
+  });
+
+  const { data: planCatalogData } = useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: getPlanCatalog,
     staleTime: 60_000,
   });
 
@@ -237,6 +275,11 @@ const Profile = ({ onLogout }) => {
       }));
     }
   }, [userProfile]);
+
+  useEffect(() => {
+    const currentCode = String(subscriptionData?.data?.plan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
+    setSelectedTargetPlanCode(currentCode);
+  }, [subscriptionData?.data?.plan?.code, userProfile?.profile?.plan_code]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -275,6 +318,13 @@ const Profile = ({ onLogout }) => {
         toast.error('Network error. Please check your connection and try again.');
       }
     }
+  });
+
+  const { data: planQuoteData, isFetching: quoteLoading } = useQuery({
+    queryKey: ['plan-change-quote', selectedTargetPlanCode],
+    queryFn: () => getPlanChangeQuote(selectedTargetPlanCode),
+    enabled: isAdmin && !!selectedTargetPlanCode,
+    staleTime: 30_000,
   });
 
   const handleInputChange = (e) => {
@@ -332,6 +382,62 @@ const Profile = ({ onLogout }) => {
     }
   };
 
+  const handlePlanAction = async () => {
+    const quote = planQuoteData?.data;
+    if (!quote) {
+      toast.error('Unable to load plan quote right now.');
+      return;
+    }
+
+    try {
+      setIsPlanActionLoading(true);
+
+      if (quote.payment_required) {
+        const orderRes = await createPlanPaymentOrder(selectedTargetPlanCode);
+        const order = orderRes?.data || {};
+
+        if (!order.payment_session_id || !order.order_id) {
+          throw new Error('Missing payment session details from server.');
+        }
+
+        const CashfreeConstructor = await loadCashfreeSdk();
+        if (!CashfreeConstructor) {
+          throw new Error('Cashfree checkout unavailable.');
+        }
+
+        const mode = (import.meta.env.VITE_CASHFREE_ENV || 'sandbox').toLowerCase() === 'production' ? 'production' : 'sandbox';
+        const cashfree = CashfreeConstructor({ mode });
+
+        await cashfree.checkout({
+          paymentSessionId: order.payment_session_id,
+          redirectTarget: '_modal',
+        });
+
+        const confirmRes = await confirmPlanPayment(order.order_id);
+        if (!confirmRes?.success) {
+          throw new Error('Payment not confirmed yet. Please retry in a moment.');
+        }
+
+        toast.success('Plan updated successfully.');
+      } else {
+        const scheduleRes = await schedulePlanChange(selectedTargetPlanCode);
+        if (!scheduleRes?.success) {
+          throw new Error('Unable to schedule plan change.');
+        }
+        toast.success(scheduleRes?.data?.message || 'Next plan has been scheduled.');
+      }
+
+      await queryClient.invalidateQueries(['subscription-entitlements']);
+      await queryClient.invalidateQueries(['profile']);
+      await queryClient.invalidateQueries(['userProfile']);
+    } catch (actionError) {
+      const msg = actionError?.response?.data?.error || actionError?.message || 'Plan change failed.';
+      toast.error(msg);
+    } finally {
+      setIsPlanActionLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout onLogout={onLogout}>
@@ -383,6 +489,27 @@ const Profile = ({ onLogout }) => {
     : null;
   const isVipAccess = entitlementPlanName.toLowerCase().includes('vip');
   const isFreeOrStarter = entitlementPlanCode === 'free' || entitlementPlanCode === 'starter';
+  const quote = planQuoteData?.data;
+  const planCatalog = planCatalogData?.data || [];
+  const paidPlanOptions = planCatalog
+    .filter((plan) => ['pro', 'business'].includes(String(plan.code || '').toLowerCase()))
+    .map((plan) => ({
+      code: String(plan.code || '').toLowerCase(),
+      name: plan.name,
+      monthlyPrice: plan.monthly_price,
+    }));
+  const availablePlanOptions = [{ code: 'free', name: 'Free', monthlyPrice: '0.00' }, ...paidPlanOptions];
+
+  let planActionLabel = 'Apply Plan Change';
+  if (quote?.payment_required) {
+    planActionLabel = `Pay INR ${quote.amount} and Continue`;
+  } else if (quote?.action === 'schedule_free') {
+    planActionLabel = 'Move to Free After Expiry';
+  } else if (quote?.action === 'schedule_plan') {
+    planActionLabel = 'Set as Next Plan';
+  } else if (quote?.action === 'already_free') {
+    planActionLabel = 'Already on Free';
+  }
 
   let expiryLabel = 'Not applicable';
   let expirySubLabel = 'Upgrade to Pro or Business for renewable billing.';
@@ -482,6 +609,67 @@ const Profile = ({ onLogout }) => {
                       <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Invoices Generated</p>
                       <p className="mt-1 text-lg font-semibold text-white">{totalInvoices}</p>
                     </div>
+                  </div>
+                </section>
+
+                <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
+                  <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-white">
+                    <CalendarIcon className="h-5 w-5 text-cyan-300" />
+                    Plan Management
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Current Plan</p>
+                      <p className="mt-1 text-lg font-semibold text-white">{entitlementPlanName}</p>
+                    </div>
+
+                    {isAdmin ? (
+                      <>
+                        <div>
+                          <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Choose Plan</label>
+                          <select
+                            value={selectedTargetPlanCode}
+                            onChange={(e) => setSelectedTargetPlanCode(e.target.value)}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
+                            disabled={isPlanActionLoading}
+                          >
+                            {availablePlanOptions.map((planOption) => (
+                              <option key={planOption.code} value={planOption.code}>
+                                {planOption.name} {planOption.code !== 'free' ? `(INR ${planOption.monthlyPrice}/month)` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                          <p className="text-sm text-white/85">
+                            {quoteLoading ? 'Loading quote...' : (quote?.summary || 'Choose a plan to see exact billing behavior.')}
+                          </p>
+                          {!!quote?.effective_at && (
+                            <p className="mt-2 text-xs text-white/55">Effective on {new Date(quote.effective_at).toLocaleDateString()}</p>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handlePlanAction}
+                          disabled={
+                            isPlanActionLoading ||
+                            quoteLoading ||
+                            !quote ||
+                            quote?.action === 'already_free' ||
+                            (selectedTargetPlanCode === entitlementPlanCode && !quote?.payment_required)
+                          }
+                          className="w-full rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isPlanActionLoading ? 'Processing...' : planActionLabel}
+                        </button>
+                      </>
+                    ) : (
+                      <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
+                        Only tenant admin can change billing plans.
+                      </p>
+                    )}
                   </div>
                 </section>
 
