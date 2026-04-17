@@ -389,6 +389,11 @@ const Profile = ({ onLogout }) => {
       return;
     }
 
+    if (quote.action === 'unsupported_paid_schedule') {
+      toast.info('Paid plan changes cannot be scheduled without payment. Choose Free at expiry, then activate desired plan with payment.');
+      return;
+    }
+
     try {
       setIsPlanActionLoading(true);
 
@@ -505,8 +510,8 @@ const Profile = ({ onLogout }) => {
     planActionLabel = `Pay INR ${quote.amount} and Continue`;
   } else if (quote?.action === 'schedule_free') {
     planActionLabel = 'Move to Free After Expiry';
-  } else if (quote?.action === 'schedule_plan') {
-    planActionLabel = 'Set as Next Plan';
+  } else if (quote?.action === 'unsupported_paid_schedule') {
+    planActionLabel = 'Paid Downgrade Requires Payment Later';
   } else if (quote?.action === 'already_free') {
     planActionLabel = 'Already on Free';
   }
@@ -665,6 +670,7 @@ const Profile = ({ onLogout }) => {
                                 quoteLoading ||
                                 !quote ||
                                 quote?.action === 'already_free' ||
+                                quote?.action === 'unsupported_paid_schedule' ||
                                 (selectedTargetPlanCode === entitlementPlanCode && !quote?.payment_required)
                               }
                               className="w-full rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
