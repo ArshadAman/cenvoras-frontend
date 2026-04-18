@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import Layout from '../components/Layout';
@@ -236,6 +236,8 @@ const Profile = ({ onLogout }) => {
   });
   const [selectedTargetPlanCode, setSelectedTargetPlanCode] = useState('free');
   const [isPlanActionLoading, setIsPlanActionLoading] = useState(false);
+  const paymentWatchIntervalRef = useRef(null);
+  const paymentWatchTimeoutRef = useRef(null);
 
   const queryClient = useQueryClient();
   const role = getUserRole();
@@ -338,6 +340,77 @@ const Profile = ({ onLogout }) => {
     enabled: isAdmin && !!selectedTargetPlanCode,
     staleTime: 30_000,
   });
+
+  const clearPaymentWatcher = () => {
+    if (paymentWatchIntervalRef.current) {
+      clearInterval(paymentWatchIntervalRef.current);
+      paymentWatchIntervalRef.current = null;
+    }
+    if (paymentWatchTimeoutRef.current) {
+      clearTimeout(paymentWatchTimeoutRef.current);
+      paymentWatchTimeoutRef.current = null;
+    }
+  };
+
+  const startBackgroundPaymentWatcher = (orderId) => {
+    clearPaymentWatcher();
+
+    const poll = async () => {
+      try {
+        const latest = await getLatestPaymentStatus();
+        const latestData = latest?.data;
+        if (!latestData || latestData.order_id !== orderId) {
+          return;
+        }
+
+        const state = String(latestData.status || '').toLowerCase();
+        if (state === 'success') {
+          clearPaymentWatcher();
+          toast.success('Payment confirmed. Refreshing your profile...');
+          await queryClient.invalidateQueries(['subscription-entitlements']);
+          await queryClient.invalidateQueries(['profile']);
+          await queryClient.invalidateQueries(['userProfile']);
+          await queryClient.invalidateQueries(['subscription-latest-payment-status']);
+          window.location.reload();
+          return;
+        }
+
+        if (state === 'failed') {
+          clearPaymentWatcher();
+          toast.error('Payment failed. Please retry.');
+        }
+      } catch (_err) {
+        // Keep polling; transient failures should not break watcher.
+      }
+    };
+
+    paymentWatchIntervalRef.current = setInterval(poll, 5000);
+    paymentWatchTimeoutRef.current = setTimeout(() => {
+      clearPaymentWatcher();
+    }, 10 * 60 * 1000);
+
+    poll();
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order_id');
+    if (!orderId) {
+      return undefined;
+    }
+
+    startBackgroundPaymentWatcher(orderId);
+
+    // Clean URL to avoid repeated watcher startup on future renders.
+    params.delete('order_id');
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, '', nextUrl);
+
+    return () => {
+      clearPaymentWatcher();
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -444,12 +517,37 @@ const Profile = ({ onLogout }) => {
           redirectTarget: '_modal',
         });
 
-        const confirmRes = await confirmPlanPayment(order.order_id);
-        if (!confirmRes?.success) {
-          throw new Error('Payment not confirmed yet. Please retry in a moment.');
+        let confirmed = false;
+        let lastStatus = '';
+
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          const confirmRes = await confirmPlanPayment(order.order_id);
+          if (confirmRes?.success) {
+            confirmed = true;
+            break;
+          }
+
+          lastStatus = String(confirmRes?.data?.status || '').toLowerCase();
+          if (lastStatus === 'failed') {
+            throw new Error(confirmRes?.data?.message || 'Payment failed.');
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 3000));
         }
 
-        toast.success('Plan updated successfully.');
+        if (!confirmed) {
+          toast.info('Payment is still processing. We will auto-refresh this page once it is confirmed.');
+          startBackgroundPaymentWatcher(order.order_id);
+          await queryClient.invalidateQueries(['subscription-latest-payment-status']);
+        } else {
+          toast.success('Plan updated successfully. Refreshing your profile...');
+          await queryClient.invalidateQueries(['subscription-entitlements']);
+          await queryClient.invalidateQueries(['profile']);
+          await queryClient.invalidateQueries(['userProfile']);
+          await queryClient.invalidateQueries(['subscription-latest-payment-status']);
+          window.location.reload();
+          return;
+        }
       } else {
         const scheduleRes = await schedulePlanChange(selectedTargetPlanCode);
         if (!scheduleRes?.success) {
@@ -572,6 +670,7 @@ const Profile = ({ onLogout }) => {
   const roleLabel = isAdmin
     ? (userProfile?.profile?.business_name || 'Business Owner')
     : (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Team Member');
+
   const originalEmail = String(userProfile?.profile?.email || '').trim().toLowerCase();
   const updatedEmail = String(formData.email || '').trim().toLowerCase();
   const emailChanged = !!updatedEmail && updatedEmail !== originalEmail;
