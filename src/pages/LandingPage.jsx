@@ -141,7 +141,7 @@ export default function LandingPage() {
       name: 'Pro',
       price: '₹1,999',
       period: '/mo',
-      cta: 'Get Pro',
+      cta: 'Start Free, Upgrade later',
       ctaStyle: 'block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10',
       description: 'For growing shops that need more control',
       highlight: 'Most Popular',
@@ -156,7 +156,7 @@ export default function LandingPage() {
       name: 'Business',
       price: '₹2,499',
       period: '/mo',
-      cta: 'Talk to Sales',
+      cta: 'Start Free, Upgrade later',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
       description: 'For larger teams and multi-location operations',
       features: [
