@@ -131,10 +131,10 @@ export default function LandingPage() {
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
       description: 'For small teams getting started',
       features: [
-        '1 owner account',
-        'Basic billing',
-        'Up to 50 invoices per month',
-        'Basic customer records',
+        'Sales invoices',
+        'Customer management',
+        'Payments tracking',
+        'Profile and setup tools',
       ],
     },
     {
@@ -147,10 +147,10 @@ export default function LandingPage() {
       description: 'For growing shops that need more control',
       highlight: 'Most Popular',
       features: [
-        'Up to 2 managers',
-        'Inventory tracking',
-        'Reports and GST tools',
-        'Integrations access',
+        'Everything in Free',
+        'Inventory module',
+        'Dashboard analytics',
+        'Integrations and advanced reports',
       ],
     },
     {
@@ -162,23 +162,31 @@ export default function LandingPage() {
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
       description: 'For larger teams and multi-location operations',
       features: [
-        'Up to 5 managers',
-        'Advanced reports',
-        'Integrations and priority support',
-        'Gemini AI business assistant',
+        'Everything in Pro',
+        'Warehouses and multi-location inventory',
+        'ML forecasts and restock predictions',
+        'Gemini AI business assistant + priority support',
       ],
     },
   ];
 
   const comparisonRows = [
-    { label: 'Owner account', free: '1', pro: '1', business: '1' },
-    { label: 'Managers', free: '0', pro: 'Up to 2', business: 'Up to 5' },
-    { label: 'Invoices/month', free: 'Up to 50', pro: 'Unlimited', business: 'Unlimited' },
-    { label: 'Inventory tracking', free: 'Basic', pro: 'Advanced', business: 'Advanced' },
-    { label: 'GST & reports', free: 'Basic', pro: 'Included', business: 'Included' },
-    { label: 'Integrations', free: 'No', pro: 'Yes', business: 'Yes' },
-    { label: 'Gemini AI chat', free: 'No', pro: 'No', business: 'Yes' },
-    { label: 'Priority support', free: 'No', pro: 'No', business: 'Yes' },
+    {
+      label: 'Access scope (backend enforced)',
+      free: 'Sales Invoices, Customers, Payments, Profile',
+      pro: 'All Free routes + broader module access',
+      business: 'All routes available',
+    },
+    { label: 'Dashboard analytics', free: 'Locked', pro: 'Included', business: 'Included' },
+    { label: 'Inventory module', free: 'Locked', pro: 'Included', business: 'Included' },
+    { label: 'Advanced reports API', free: 'Locked', pro: 'Included', business: 'Included' },
+    { label: 'Integrations', free: 'Locked', pro: 'Included', business: 'Included' },
+    { label: 'Team management', free: 'Locked', pro: 'Included', business: 'Included' },
+    { label: 'Warehouses', free: 'Locked', pro: 'Locked', business: 'Included' },
+    { label: 'ML forecast and restock', free: 'Locked', pro: 'Locked', business: 'Included' },
+    { label: 'Item-wise P&L / Stock ledger / Shortage', free: 'Locked', pro: 'Locked', business: 'Included' },
+    { label: 'Gemini AI chat', free: 'Locked', pro: 'Locked', business: 'Included' },
+    { label: 'Priority support', free: 'Locked', pro: 'Locked', business: 'Included' },
   ];
 
   return (
@@ -369,7 +377,8 @@ export default function LandingPage() {
 
           <div className="mt-10 rounded-3xl border border-white/10 bg-[#0a0a0a] p-6 md:p-8 text-left scroll-animate">
             <h3 className="text-2xl font-bold text-white mb-2">Plan comparison</h3>
-            <p className="text-sm text-gray-400 mb-6">See exactly what you get in Free, Pro, and Business.</p>
+            <p className="text-sm text-gray-400 mb-2">See exactly what you get in Free, Pro, and Business.</p>
+            <p className="text-xs text-gray-500 mb-6">This table is aligned to the current access-control rules used by the app and backend entitlement checks.</p>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
