@@ -3,6 +3,7 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
+import { createProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
@@ -11,7 +12,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -71,10 +72,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
-    setFieldValue(`items.${idx}.price`, product.price ?? 0);
+    const roundedPrice = Math.round(Number(product.price ?? 0) || 0);
+    setFieldValue(`items.${idx}.price`, roundedPrice);
     // Calculate amount automatically
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * (product.price ?? 0);
+    const amount = quantity * roundedPrice;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.product_description`, product.description || "");
@@ -200,6 +202,19 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
                 Showing top 50 results...
               </div>
+            )}
+            {inputValue.trim() && filteredProducts.length === 0 && onCreateNewProduct && (
+              <button
+                type="button"
+                className="w-full border-t border-white/5 px-4 py-3 text-left text-sm text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onCreateNewProduct(inputValue.trim(), idx);
+                }}
+              >
+                + Add to inventory: "{inputValue.trim()}"
+              </button>
             )}
           </div>,
           document.body
@@ -486,7 +501,7 @@ const SalesSchema = Yup.object().shape({
       product: Yup.string().required("Product is required").min(1),
       quantity: Yup.number().required("Quantity is required").min(1),
       batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
-      price: Yup.number().required("Price is required").min(0),
+      price: Yup.number().required("Price is required").integer("Price should be a whole number").min(0),
       amount: Yup.number().required("Amount is required").min(0),
       
       // Optional item fields
@@ -584,6 +599,7 @@ export default function SalesForm({
   const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
+  const [productCreationState, setProductCreationState] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -662,6 +678,60 @@ export default function SalesForm({
       ...invoiceSettings,
       [key]: nextValue,
     });
+  };
+
+  const handleCreateInventoryProduct = (productName, idx) => {
+    setProductCreationState({
+      idx,
+      name: productName,
+      sale_price: "",
+      unit: "pcs",
+      tax: "0",
+      hsn_sac_code: "",
+      description: "",
+    });
+  };
+
+  const handleSaveInventoryProduct = async () => {
+    if (!productCreationState) return;
+
+    try {
+      const salePrice = Math.round(Number(productCreationState.sale_price || 0) || 0);
+      const createdProduct = await createProduct({
+        name: productCreationState.name,
+        sale_price: salePrice,
+        cost_price: salePrice,
+        unit: productCreationState.unit || "pcs",
+        tax: Number(productCreationState.tax || 0),
+        hsn_sac_code: productCreationState.hsn_sac_code || null,
+        description: productCreationState.description || null,
+        stock: 0,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      if (formikRef.current && typeof productCreationState.idx === 'number') {
+        const itemPath = `items.${productCreationState.idx}`;
+        const quantity = Number(formikRef.current.values?.items?.[productCreationState.idx]?.quantity || 1);
+        const normalizedPrice = Math.round(Number(createdProduct.sale_price ?? salePrice) || 0);
+
+        formikRef.current.setFieldValue(`${itemPath}.product`, createdProduct.name);
+        formikRef.current.setFieldValue(`${itemPath}.product_id`, createdProduct.id);
+        formikRef.current.setFieldValue(`${itemPath}.unit`, createdProduct.unit || productCreationState.unit || 'pcs');
+        formikRef.current.setFieldValue(`${itemPath}.price`, normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.amount`, quantity * normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, createdProduct.hsn_sac_code || productCreationState.hsn_sac_code || "");
+        formikRef.current.setFieldValue(`${itemPath}.product_description`, createdProduct.description || productCreationState.description || "");
+        formikRef.current.setFieldValue(`${itemPath}.discount`, 0);
+        formikRef.current.setFieldValue(`${itemPath}.tax`, Number(createdProduct.tax ?? productCreationState.tax ?? 0));
+        formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
+      }
+
+      toast.success(`Added ${createdProduct.name} to inventory.`);
+      setProductCreationState(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Failed to create inventory item");
+    }
   };
   
 
@@ -793,7 +863,7 @@ export default function SalesForm({
             
             items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
               const qty = item.quantity || 1;
-              const price = item.price || 0;
+              const price = Math.round(Number(item.price || 0) || 0);
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
               return {
                 product: item.product || item.product_name || "",
@@ -884,7 +954,7 @@ export default function SalesForm({
             try {
               const processedItems = cleanedItems.map(item => {
                 const quantity = Number(item.quantity) || 1;
-                const price = Number(item.price) || 0;
+                const price = Math.round(Number(item.price) || 0);
                 const discount = Number(item.discount) || 0;
                 const tax = Number(item.tax) || 0;
                 const baseAmount = quantity * price;
@@ -1013,6 +1083,14 @@ export default function SalesForm({
                           customers={customers} 
                       />
                       <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
+                      {isQuotation && (values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
+                        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-gray-300 space-y-1">
+                          {values.customer_address && <div><span className="text-gray-500">Address:</span> {values.customer_address}</div>}
+                          {values.customer_phone && <div><span className="text-gray-500">Phone:</span> {values.customer_phone}</div>}
+                          {values.customer_email && <div><span className="text-gray-500">Email:</span> {values.customer_email}</div>}
+                          {values.customer_gstin && <div><span className="text-gray-500">GSTIN:</span> {values.customer_gstin}</div>}
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -1102,6 +1180,7 @@ export default function SalesForm({
                   </div>
 
                   {/* Optional PO / Challan */}
+                  {!isQuotation && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
@@ -1151,6 +1230,7 @@ export default function SalesForm({
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Items */}
@@ -1292,6 +1372,7 @@ export default function SalesForm({
                                                   onInputChange={() => handleAutoAddRow(index)}
                                                   onProductSearchChange={setProductSearch}
                                                   showDescription={itemSettings.show_item_description}
+                                                  onCreateNewProduct={handleCreateInventoryProduct}
                                                 />
                                               </div>
                                             );
@@ -1333,7 +1414,7 @@ export default function SalesForm({
                                                   onChange={(e) => {
                                                     const qty = e.target.value;
                                                     setFieldValue(`items.${index}.quantity`, qty);
-                                                    const price = parseFloat(values.items[index]?.price) || 0;
+                                                    const price = Math.round(Number(values.items[index]?.price) || 0);
                                                     setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
                                                   }}
                                                 />
@@ -1370,13 +1451,15 @@ export default function SalesForm({
                                                   name={`items.${index}.price`}
                                                   type="number"
                                                   min="0"
+                                                  step="1"
                                                   className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
                                                   onChange={(e) => {
                                                     const price = e.target.value;
                                                     setFieldValue(`items.${index}.price`, price);
                                                     const qty = parseFloat(values.items[index]?.quantity) || 0;
-                                                    setFieldValue(`items.${index}.amount`, (parseFloat(price) || 0) * qty);
-                                                    if (price && parseFloat(price) > 0) handleAutoAddRow(index);
+                                                    const roundedPrice = Math.round(Number(price) || 0);
+                                                    setFieldValue(`items.${index}.amount`, roundedPrice * qty);
+                                                    if (price && Number(price) > 0) handleAutoAddRow(index);
                                                   }}
                                                 />
                                               </div>
@@ -1448,6 +1531,7 @@ export default function SalesForm({
                                             onInputChange={() => handleAutoAddRow(index)}
                                             onProductSearchChange={setProductSearch}
                                             showDescription={itemSettings.show_item_description}
+                                            onCreateNewProduct={handleCreateInventoryProduct}
                                           />
                                         </div>
                                       </div>
@@ -1595,6 +1679,89 @@ export default function SalesForm({
             );
           }}
         </Formik>
+
+        {productCreationState && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setProductCreationState(null)}></div>
+            <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-6 shadow-2xl shadow-cyan-950/40 animate-fade-up">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Add Inventory Item</h3>
+                  <p className="mt-1 text-xs text-gray-400">Create the product first, then it will be inserted into this quotation row.</p>
+                </div>
+                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300 hover:text-white">
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Product Name</label>
+                  <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Sale Price</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={productCreationState.sale_price}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, sale_price: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Whole number"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Unit</label>
+                  <input
+                    value={productCreationState.unit}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, unit: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="pcs"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={productCreationState.tax}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC</label>
+                  <input
+                    value={productCreationState.hsn_sac_code}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, hsn_sac_code: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Description</label>
+                  <textarea
+                    rows={3}
+                    value={productCreationState.description}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, description: e.target.value }))}
+                    className="w-full resize-none rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Optional product description"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 hover:text-white">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleSaveInventoryProduct} className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-400">
+                  Create Product
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
