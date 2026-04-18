@@ -226,6 +226,7 @@ const Profile = ({ onLogout }) => {
     first_name: '',
     last_name: '',
     email: '',
+    current_password: '',
     phone: '',
     business_name: '',
     business_address: '',
@@ -273,6 +274,7 @@ const Profile = ({ onLogout }) => {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: profile.email || '',
+        current_password: '',
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
@@ -357,6 +359,15 @@ const Profile = ({ onLogout }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Submitting profile update...', formData);
+    const originalEmail = String(userProfile?.profile?.email || '').trim().toLowerCase();
+    const updatedEmail = String(formData.email || '').trim().toLowerCase();
+    const isEmailChanged = !!updatedEmail && updatedEmail !== originalEmail;
+
+    if (isEmailChanged && !String(formData.current_password || '').trim()) {
+      toast.error('Current password is required to change email');
+      return;
+    }
+
     // Prepare data for submission
     const updateData = {
       first_name: formData.first_name,
@@ -370,6 +381,10 @@ const Profile = ({ onLogout }) => {
       dl_number: formData.dl_number
     };
 
+    if (isEmailChanged) {
+      updateData.current_password = formData.current_password;
+    }
+
     updateProfileMutation.mutate(updateData);
   };
 
@@ -382,6 +397,7 @@ const Profile = ({ onLogout }) => {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: profile.email || '',
+        current_password: '',
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
@@ -556,6 +572,9 @@ const Profile = ({ onLogout }) => {
   const roleLabel = isAdmin
     ? (userProfile?.profile?.business_name || 'Business Owner')
     : (role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Team Member');
+  const originalEmail = String(userProfile?.profile?.email || '').trim().toLowerCase();
+  const updatedEmail = String(formData.email || '').trim().toLowerCase();
+  const emailChanged = !!updatedEmail && updatedEmail !== originalEmail;
 
   return (
     <Layout onLogout={onLogout}>
@@ -816,6 +835,22 @@ const Profile = ({ onLogout }) => {
                           placeholder="Phone number"
                         />
                       </div>
+                      {isEditing && emailChanged && (
+                        <div className="mt-4">
+                          <label className="mb-2 block text-xs uppercase tracking-[0.16em] text-amber-300/80">
+                            Confirm Current Password (required for email change)
+                          </label>
+                          <input
+                            type="password"
+                            name="current_password"
+                            value={formData.current_password}
+                            onChange={handleInputChange}
+                            disabled={updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-amber-400/40 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-300/70 focus:outline-none disabled:opacity-60"
+                            placeholder="Enter current password"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
