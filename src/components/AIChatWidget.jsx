@@ -17,10 +17,6 @@ export default function AIChatWidget() {
   const planCode = String(entitlements?.plan?.code || '').toLowerCase();
   const canUseGemini = Boolean(entitlements?.can?.ai_copilot) || planCode === 'business';
 
-  if (!canUseGemini) {
-    return null;
-  }
-
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "Hi! I'm your business assistant. Try asking:\n• \"What is my top product?\"\n• \"Sales today?\"\n• \"Low stock items?\"" }
@@ -32,6 +28,10 @@ export default function AIChatWidget() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  if (!canUseGemini) {
+    return null;
+  }
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
