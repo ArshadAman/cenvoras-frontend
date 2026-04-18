@@ -1,9 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ChatBubbleLeftRightIcon, XMarkIcon, PaperAirplaneIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import { askAI } from '../api/ai';
+import { getSubscriptionEntitlements } from '../api/subscription';
 
 export default function AIChatWidget() {
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription-entitlements'],
+    queryFn: getSubscriptionEntitlements,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const entitlements = subscriptionData?.data || {};
+  const planCode = String(entitlements?.plan?.code || '').toLowerCase();
+  const canUseGemini = Boolean(entitlements?.can?.ai_copilot) || planCode === 'business';
+
+  if (!canUseGemini) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "Hi! I'm your business assistant. Try asking:\n• \"What is my top product?\"\n• \"Sales today?\"\n• \"Low stock items?\"" }

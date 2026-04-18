@@ -134,6 +134,7 @@ export default function LandingPage() {
         '1 owner account',
         'Basic billing',
         'Up to 50 invoices per month',
+        'Basic customer records',
       ],
     },
     {
@@ -149,6 +150,7 @@ export default function LandingPage() {
         'Up to 2 managers',
         'Inventory tracking',
         'Reports and GST tools',
+        'Integrations access',
       ],
     },
     {
@@ -163,8 +165,20 @@ export default function LandingPage() {
         'Up to 5 managers',
         'Advanced reports',
         'Integrations and priority support',
+        'Gemini AI business assistant',
       ],
     },
+  ];
+
+  const comparisonRows = [
+    { label: 'Owner account', free: '1', pro: '1', business: '1' },
+    { label: 'Managers', free: '0', pro: 'Up to 2', business: 'Up to 5' },
+    { label: 'Invoices/month', free: 'Up to 50', pro: 'Unlimited', business: 'Unlimited' },
+    { label: 'Inventory tracking', free: 'Basic', pro: 'Advanced', business: 'Advanced' },
+    { label: 'GST & reports', free: 'Basic', pro: 'Included', business: 'Included' },
+    { label: 'Integrations', free: 'No', pro: 'Yes', business: 'Yes' },
+    { label: 'Gemini AI chat', free: 'No', pro: 'No', business: 'Yes' },
+    { label: 'Priority support', free: 'No', pro: 'No', business: 'Yes' },
   ];
 
   return (
@@ -351,6 +365,33 @@ export default function LandingPage() {
                  </ul>
              </div>
              ))}
+          </div>
+
+          <div className="mt-10 rounded-3xl border border-white/10 bg-[#0a0a0a] p-6 md:p-8 text-left scroll-animate">
+            <h3 className="text-2xl font-bold text-white mb-2">Plan comparison</h3>
+            <p className="text-sm text-gray-400 mb-6">See exactly what you get in Free, Pro, and Business.</p>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400">
+                    <th className="py-3 pr-4 text-left font-medium">Feature</th>
+                    <th className="py-3 px-4 text-left font-medium">Free</th>
+                    <th className="py-3 px-4 text-left font-medium">Pro</th>
+                    <th className="py-3 pl-4 text-left font-medium">Business</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonRows.map((row) => (
+                    <tr key={row.label} className="border-b border-white/5 last:border-b-0">
+                      <td className="py-3 pr-4 text-white">{row.label}</td>
+                      <td className="py-3 px-4 text-gray-300">{row.free}</td>
+                      <td className="py-3 px-4 text-gray-300">{row.pro}</td>
+                      <td className="py-3 pl-4 text-gray-300">{row.business}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

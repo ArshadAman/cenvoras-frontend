@@ -24,6 +24,7 @@ import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
+import { getGSTR1Export } from '../api/gst'
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -117,6 +118,26 @@ export default function Dashboard({ onLogout }) {
     if (action === 'purchase') navigate('/purchase');
   };
 
+  const handleDownloadReportForCA = async () => {
+    const today = new Date();
+    const toDate = today.toISOString().split('T')[0];
+    const fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+    try {
+      const gstr1Data = await getGSTR1Export(fromDate, toDate);
+      const blob = new Blob([JSON.stringify(gstr1Data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GSTR1_${gstr1Data?.fp || `${fromDate}_to_${toDate}`}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download GSTR-1 report for CA:', error);
+      navigate('/reports/tax-register?tab=gstr1');
+    }
+  };
+
   // Legacy card data
   const cardData = [
     {
@@ -154,11 +175,11 @@ export default function Dashboard({ onLogout }) {
   const formatINR = (value) => `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
   const salesChartData = React.useMemo(() => {
-    const raw = metrics?.sales_vs_purchases || [];
+    const raw = Array.isArray(metrics?.sales_vs_purchases) ? metrics.sales_vs_purchases : [];
     return raw.map((row) => ({
-      name: row?.name || '-',
-      Sales: Number(row?.Sales || 0),
-      Purchases: Number(row?.Purchases || 0),
+      name: row?.name || row?.month || '-',
+      Sales: Number(row?.Sales ?? row?.sales ?? 0),
+      Purchases: Number(row?.Purchases ?? row?.purchases ?? 0),
     }));
   }, [metrics?.sales_vs_purchases]);
 
@@ -292,6 +313,7 @@ export default function Dashboard({ onLogout }) {
           <GstShieldSection 
             data={smartData?.gst_shield} 
             isLoading={loadingSmart} 
+            onDownloadReport={handleDownloadReportForCA}
           />
         </div>
 
