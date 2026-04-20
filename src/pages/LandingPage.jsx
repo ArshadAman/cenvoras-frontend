@@ -170,25 +170,6 @@ export default function LandingPage() {
     },
   ];
 
-  const comparisonRows = [
-    {
-      label: 'Access scope (backend enforced)',
-      free: 'Sales Invoices, Customers, Payments, Profile',
-      pro: 'All Free routes + broader module access',
-      business: 'All routes available',
-    },
-    { label: 'Dashboard analytics', free: 'Locked', pro: 'Included', business: 'Included' },
-    { label: 'Inventory module', free: 'Locked', pro: 'Included', business: 'Included' },
-    { label: 'Advanced reports API', free: 'Locked', pro: 'Included', business: 'Included' },
-    { label: 'Integrations', free: 'Locked', pro: 'Included', business: 'Included' },
-    { label: 'Team management', free: 'Locked', pro: 'Included', business: 'Included' },
-    { label: 'Warehouses', free: 'Locked', pro: 'Locked', business: 'Included' },
-    { label: 'ML forecast and restock', free: 'Locked', pro: 'Locked', business: 'Included' },
-    { label: 'Item-wise P&L / Stock ledger / Shortage', free: 'Locked', pro: 'Locked', business: 'Included' },
-    { label: 'Gemini AI chat', free: 'Locked', pro: 'Locked', business: 'Included' },
-    { label: 'Priority support', free: 'Locked', pro: 'Locked', business: 'Included' },
-  ];
-
   return (
     <div className="font-sans text-white overflow-x-hidden bg-black selection:bg-purple-500/30">
       
@@ -376,33 +357,6 @@ export default function LandingPage() {
              ))}
           </div>
 
-          <div className="mt-10 rounded-3xl border border-white/10 bg-[#0a0a0a] p-6 md:p-8 text-left scroll-animate">
-            <h3 className="text-2xl font-bold text-white mb-2">Plan comparison</h3>
-            <p className="text-sm text-gray-400 mb-2">See exactly what you get in Free, Pro, and Business.</p>
-            <p className="text-xs text-gray-500 mb-6">This table is aligned to the current access-control rules used by the app and backend entitlement checks.</p>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-gray-400">
-                    <th className="py-3 pr-4 text-left font-medium">Feature</th>
-                    <th className="py-3 px-4 text-left font-medium">Free</th>
-                    <th className="py-3 px-4 text-left font-medium">Pro</th>
-                    <th className="py-3 pl-4 text-left font-medium">Business</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonRows.map((row) => (
-                    <tr key={row.label} className="border-b border-white/5 last:border-b-0">
-                      <td className="py-3 pr-4 text-white">{row.label}</td>
-                      <td className="py-3 px-4 text-gray-300">{row.free}</td>
-                      <td className="py-3 px-4 text-gray-300">{row.pro}</td>
-                      <td className="py-3 pl-4 text-gray-300">{row.business}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       </section>
 
