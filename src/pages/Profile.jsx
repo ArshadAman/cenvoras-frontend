@@ -660,6 +660,15 @@ const Profile = ({ onLogout }) => {
     expirySubLabel = 'Expiry date will appear once billing cycle is active.';
   }
 
+  let profileExpiryBadge = null;
+  if (isVipAccess) {
+    profileExpiryBadge = 'Lifetime';
+  } else if (hasEntitlementExpiry) {
+    profileExpiryBadge = expiryDaysLeft < 0
+      ? 'Expired'
+      : `${expiryDaysLeft}d left`;
+  }
+
   const paymentStatusLabel = String(latestPayment?.status || '').toLowerCase();
   const paymentStatusTone = paymentStatusLabel === 'success'
     ? 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10'
@@ -689,8 +698,13 @@ const Profile = ({ onLogout }) => {
             <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/30 to-blue-500/20 ring-1 ring-white/20 md:h-20 md:w-20">
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/30 to-blue-500/20 ring-1 ring-white/20 md:h-20 md:w-20">
                     <span className="text-2xl font-semibold tracking-wide text-white md:text-3xl">{initials}</span>
+                    {profileExpiryBadge && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-cyan-200">
+                        {profileExpiryBadge}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80">Profile Workspace</p>
