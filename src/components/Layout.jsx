@@ -23,7 +23,8 @@ import {
   ArrowUturnRightIcon,
   ReceiptPercentIcon,
   BuildingLibraryIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 
@@ -270,6 +271,20 @@ export default function Layout({ children, onLogout }) {
         
         {/* Bottom section — always visible, never scrolls away */}
         <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/5 space-y-2">
+          <Link
+            to="/contact"
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+              location.pathname === '/contact'
+                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+            }`}
+          >
+            <ChatBubbleLeftRightIcon className={`w-5 h-5 transition-colors duration-200 ${
+              location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'
+            }`} />
+            <span className="text-sm flex-1">Contact Us</span>
+          </Link>
+
           {/* Coming Soon Button */}
           <Link
             to="/coming-soon"
@@ -415,6 +430,19 @@ export default function Layout({ children, onLogout }) {
 
             {/* Bottom section — always pinned */}
             <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
+              <Link
+                to="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/contact'
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                }`}
+              >
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <span className="text-sm flex-1">Contact Us</span>
+              </Link>
+
               <Link
                 to="/coming-soon"
                 onClick={() => setIsMobileMenuOpen(false)}
