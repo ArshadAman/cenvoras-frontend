@@ -701,7 +701,7 @@ const Profile = ({ onLogout }) => {
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/30 to-blue-500/20 ring-1 ring-white/20 md:h-20 md:w-20">
                     <span className="text-2xl font-semibold tracking-wide text-white md:text-3xl">{initials}</span>
                     {profileExpiryBadge && (
-                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-cyan-200">
+                      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-300/40 bg-slate-900 px-3 py-1 text-xs font-bold text-cyan-100 shadow-lg shadow-black/50">
                         {profileExpiryBadge}
                       </span>
                     )}
