@@ -6,6 +6,7 @@ import { getCustomers } from "../../api/customers";
 import { createProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
+import { getSubscriptionEntitlements } from "../../api/subscription";
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
@@ -620,8 +621,21 @@ export default function SalesForm({
     const fraction = amount - integerPart;
     return fraction >= 0.5 ? Math.ceil(amount) : Math.floor(amount);
   };
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-entitlements"],
+    queryFn: getSubscriptionEntitlements,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+  const entitlements = subscriptionData?.data || {};
+  const canAccessInventory = Boolean(entitlements?.can?.inventory_core);
   
-  const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const { data: warehousesResult } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: getWarehouses,
+    enabled: isOpen && canAccessInventory,
+  });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
   
   
@@ -632,7 +646,7 @@ export default function SalesForm({
         ...(debouncedProductSearch ? { search: debouncedProductSearch } : {}),
         ordering: "name",
       }),
-      enabled: isOpen && debouncedProductSearch.length >= 2,
+      enabled: isOpen && canAccessInventory && debouncedProductSearch.length >= 2,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
@@ -650,7 +664,7 @@ export default function SalesForm({
   const { data: stockPointsResult } = useQuery({
     queryKey: ["stockPoints", selectedWarehouseId],
     queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
-    enabled: !!selectedWarehouseId
+    enabled: canAccessInventory && !!selectedWarehouseId
   });
   const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
 
@@ -681,6 +695,11 @@ export default function SalesForm({
   };
 
   const handleCreateInventoryProduct = (productName, idx) => {
+    if (!canAccessInventory) {
+      toast.info("Inventory is locked on your current plan. Enter item details manually to create this sales bill.");
+      return;
+    }
+
     setProductCreationState({
       idx,
       name: productName,
@@ -1275,6 +1294,11 @@ export default function SalesForm({
                       )}
                     </div>
                   </div>
+                  {!canAccessInventory && (
+                    <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                      Inventory browsing is locked on your plan. You can still create this sales bill by typing item name, quantity, and price manually.
+                    </div>
+                  )}
                   <FieldArray name="items">
                     {({ push, remove }) => {
                       // Function to auto-add new row when user starts typing in the last row
@@ -1372,7 +1396,7 @@ export default function SalesForm({
                                                   onInputChange={() => handleAutoAddRow(index)}
                                                   onProductSearchChange={setProductSearch}
                                                   showDescription={itemSettings.show_item_description}
-                                                  onCreateNewProduct={handleCreateInventoryProduct}
+                                                  onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                 />
                                               </div>
                                             );
@@ -1531,7 +1555,7 @@ export default function SalesForm({
                                             onInputChange={() => handleAutoAddRow(index)}
                                             onProductSearchChange={setProductSearch}
                                             showDescription={itemSettings.show_item_description}
-                                            onCreateNewProduct={handleCreateInventoryProduct}
+                                            onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                           />
                                         </div>
                                       </div>
