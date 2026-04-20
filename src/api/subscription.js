@@ -12,8 +12,11 @@ export const getPlanChangeQuote = (targetPlanCode) =>
 export const schedulePlanChange = (targetPlanCode) =>
   api.post('/subscription/plan-change/schedule/', { target_plan_code: targetPlanCode }).then((res) => res.data);
 
-export const createPlanPaymentOrder = (planCode) =>
-  api.post('/subscription/payments/create-order/', { plan_code: planCode }).then((res) => res.data);
+export const createPlanPaymentOrder = (planCode, options = {}) =>
+  api.post('/subscription/payments/create-order/', {
+    plan_code: planCode,
+    force_new_order: !!options.forceNewOrder,
+  }).then((res) => res.data);
 
 export const confirmPlanPayment = (orderId) =>
   api.post('/subscription/payments/confirm/', { order_id: orderId }).then((res) => res.data);

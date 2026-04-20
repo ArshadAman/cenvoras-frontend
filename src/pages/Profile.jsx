@@ -497,31 +497,52 @@ const Profile = ({ onLogout }) => {
       setIsPlanActionLoading(true);
 
       if (quote.payment_required) {
+        const openCashfreeCheckout = async (order, allowRetry = true) => {
+          if (!order.payment_session_id || !order.order_id) {
+            throw new Error('Missing payment session details from server.');
+          }
+
+          const CashfreeConstructor = await loadCashfreeSdk();
+          if (!CashfreeConstructor) {
+            throw new Error('Cashfree checkout unavailable.');
+          }
+
+          const mode = String(order.cashfree_env || import.meta.env.VITE_CASHFREE_ENV || 'sandbox').toLowerCase() === 'production'
+            ? 'production'
+            : 'sandbox';
+          const cashfree = CashfreeConstructor({ mode });
+
+          try {
+            await cashfree.checkout({
+              paymentSessionId: order.payment_session_id,
+              redirectTarget: '_modal',
+            });
+          } catch (checkoutError) {
+            const code = String(checkoutError?.code || '').toLowerCase();
+            const message = String(checkoutError?.message || '').toLowerCase();
+            const isInvalidSession = code === 'payment_session_id_invalid' || message.includes('payment_session_id');
+
+            if (allowRetry && isInvalidSession) {
+              const freshOrderRes = await createPlanPaymentOrder(selectedTargetPlanCode, { forceNewOrder: true });
+              const freshOrder = freshOrderRes?.data || {};
+              return openCashfreeCheckout(freshOrder, false);
+            }
+
+            throw checkoutError;
+          }
+
+          return order;
+        };
+
         const orderRes = await createPlanPaymentOrder(selectedTargetPlanCode);
         const order = orderRes?.data || {};
-
-        if (!order.payment_session_id || !order.order_id) {
-          throw new Error('Missing payment session details from server.');
-        }
-
-        const CashfreeConstructor = await loadCashfreeSdk();
-        if (!CashfreeConstructor) {
-          throw new Error('Cashfree checkout unavailable.');
-        }
-
-        const mode = (import.meta.env.VITE_CASHFREE_ENV || 'sandbox').toLowerCase() === 'production' ? 'production' : 'sandbox';
-        const cashfree = CashfreeConstructor({ mode });
-
-        await cashfree.checkout({
-          paymentSessionId: order.payment_session_id,
-          redirectTarget: '_modal',
-        });
+        const activeOrder = await openCashfreeCheckout(order, true);
 
         let confirmed = false;
         let lastStatus = '';
 
         for (let attempt = 0; attempt < 8; attempt += 1) {
-          const confirmRes = await confirmPlanPayment(order.order_id);
+          const confirmRes = await confirmPlanPayment(activeOrder.order_id);
           if (confirmRes?.success) {
             confirmed = true;
             break;
@@ -537,7 +558,7 @@ const Profile = ({ onLogout }) => {
 
         if (!confirmed) {
           toast.info('Payment is still processing. We will auto-refresh this page once it is confirmed.');
-          startBackgroundPaymentWatcher(order.order_id);
+          startBackgroundPaymentWatcher(activeOrder.order_id);
           await queryClient.invalidateQueries(['subscription-latest-payment-status']);
         } else {
           toast.success('Plan updated successfully. Refreshing your profile...');
