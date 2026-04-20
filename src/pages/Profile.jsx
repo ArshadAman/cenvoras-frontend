@@ -614,11 +614,12 @@ const Profile = ({ onLogout }) => {
   const entitlementPlanCode = String(entitlementPlan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
   const entitlementExpiry = entitlementPlan?.current_period_end ? new Date(entitlementPlan.current_period_end) : null;
   const hasEntitlementExpiry = entitlementExpiry && !Number.isNaN(entitlementExpiry.getTime());
+  const isVipAccess = subscriptionData?.data?.is_vip || false;
+  const isFreeOrStarter = entitlementPlanCode === 'free' || entitlementPlanCode === 'starter';
+  const shouldShowPaidExpiry = hasEntitlementExpiry && !isFreeOrStarter && !isVipAccess;
   const expiryDaysLeft = hasEntitlementExpiry
     ? Math.ceil((entitlementExpiry.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
     : null;
-  const isVipAccess = subscriptionData?.data?.is_vip || false;
-  const isFreeOrStarter = entitlementPlanCode === 'free' || entitlementPlanCode === 'starter';
   const quote = planQuoteData?.data;
   const latestPayment = latestPaymentStatusData?.data || null;
   const planCatalog = planCatalogData?.data || [];
@@ -647,7 +648,7 @@ const Profile = ({ onLogout }) => {
   if (isVipAccess) {
     expiryLabel = 'Lifetime';
     expirySubLabel = 'VIP access does not expire.';
-  } else if (hasEntitlementExpiry) {
+  } else if (shouldShowPaidExpiry) {
     if (expiryDaysLeft < 0) {
       expiryLabel = 'Expired';
       expirySubLabel = `Expired on ${entitlementExpiry.toLocaleDateString()}`;
@@ -663,7 +664,7 @@ const Profile = ({ onLogout }) => {
   let profileExpiryBadge = null;
   if (isVipAccess) {
     profileExpiryBadge = 'Lifetime';
-  } else if (hasEntitlementExpiry) {
+  } else if (shouldShowPaidExpiry) {
     profileExpiryBadge = expiryDaysLeft < 0
       ? 'Expired'
       : `${expiryDaysLeft}d left`;
