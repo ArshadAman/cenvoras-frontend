@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   CurrencyRupeeIcon, 
@@ -148,7 +148,12 @@ export default function PulseSection({ data, isLoading }) {
     );
   }
 
-  const pulse = data || {};
+  const lastGoodPulseRef = useRef({});
+  const hasPulseData = !!(data && Object.keys(data).length > 0);
+  if (hasPulseData) {
+    lastGoodPulseRef.current = data;
+  }
+  const pulse = hasPulseData ? data : lastGoodPulseRef.current;
   const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
   const liveReceivables = customers.reduce((sum, customer) => {
     const balance = parseFloat(customer?.current_balance || 0);
@@ -156,7 +161,7 @@ export default function PulseSection({ data, isLoading }) {
   }, 0);
 
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '₹0';
+    if (value === undefined || value === null) return '--';
     return `₹${Math.abs(value).toLocaleString('en-IN')}`;
   };
 

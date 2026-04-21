@@ -49,32 +49,22 @@ export default function Dashboard({ onLogout }) {
 
   // Refresh ALL dashboard data
   const handleRefreshAll = async () => {
-    const dashboardQueryKeys = [
-      ['smart-dashboard'],
-      ['dashboard-metrics'],
-      ['recent-sales'],
-      ['recent-purchases'],
-      ['low-stock'],
-      ['stock-points-dashboard'],
-      ['ml-predictions'],
-      ['customers'],
-      ['customers-with-balance'],
-      ['profile'],
-      ['subscription-entitlements'],
-    ];
-
     setIsRefreshing(true);
     try {
       await Promise.all(
-        dashboardQueryKeys.map((queryKey) =>
-          queryClient.invalidateQueries({ queryKey })
-        )
-      );
-
-      await Promise.all(
-        dashboardQueryKeys.map((queryKey) =>
-          queryClient.refetchQueries({ queryKey, type: 'all' })
-        )
+        [
+          refetchSmart(),
+          refetchMetrics(),
+          refetchSales(),
+          refetchPurchases(),
+          refetchLowStock(),
+          refetchStockPoints(),
+          refetchML(),
+          queryClient.invalidateQueries({ queryKey: ['customers'] }),
+          queryClient.invalidateQueries({ queryKey: ['customers-with-balance'] }),
+          queryClient.invalidateQueries({ queryKey: ['profile'] }),
+          queryClient.invalidateQueries({ queryKey: ['subscription-entitlements'] }),
+        ]
       );
     } finally {
       setIsRefreshing(false);
@@ -82,7 +72,7 @@ export default function Dashboard({ onLogout }) {
   };
 
   // Fetch Smart Dashboard Data (new)
-  const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch } = useQuery({
+  const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch: refetchSmart } = useQuery({
     queryKey: ['smart-dashboard'],
     queryFn: () => api.get('/analytics/smart-dashboard/').then(res => res.data),
     refetchInterval: 60000,
@@ -101,34 +91,34 @@ export default function Dashboard({ onLogout }) {
   });
 
   // Fetch Legacy Dashboard Data (old metrics)
-  const { data: metrics, isLoading: loadingMetrics } = useQuery({
+  const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
     queryFn: () => api.get('/analytics/dashboard/').then(res => res.data)
   });
   
-  const { data: sales, isLoading: loadingSales } = useQuery({
+  const { data: sales, isLoading: loadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['recent-sales'],
     queryFn: () => api.get('/billing/sales-invoices/?ordering=-invoice_date&limit=5').then(res => res.data)
   });
   
-  const { data: purchases, isLoading: loadingPurchases } = useQuery({
+  const { data: purchases, isLoading: loadingPurchases, refetch: refetchPurchases } = useQuery({
     queryKey: ['recent-purchases'],
     queryFn: () => api.get('/billing/purchase-bills/?ordering=-bill_date&limit=5').then(res => res.data)
   });
   
-  const { data: lowStock } = useQuery({
+  const { data: lowStock, refetch: refetchLowStock } = useQuery({
     queryKey: ['low-stock'],
     queryFn: () => api.get('/analytics/inventory-summary/').then(res => res.data)
   });
 
-  const { data: stockPointsRaw } = useQuery({
+  const { data: stockPointsRaw, refetch: refetchStockPoints } = useQuery({
     queryKey: ['stock-points-dashboard'],
     queryFn: () => api.get('/inventory/stock-points/').then(res => res.data),
     staleTime: 30000,
   });
 
   // Fetch ML Predictions
-  const { data: mlData, isLoading: loadingML } = useQuery({
+  const { data: mlData, isLoading: loadingML, refetch: refetchML } = useQuery({
     queryKey: ['ml-predictions'],
     queryFn: () => api.get('/analytics/ml-predictions/').then(res => res.data),
     staleTime: 60000, // Cache for 1 minute
