@@ -11,6 +11,11 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [limit] = useState(10); // Items per page
   const [selectedBills, setSelectedBills] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+
+  const canEditBill = (bill) => String(bill?.payment_status || 'pending').toLowerCase() === 'pending';
+  const editBillTitle = (bill) => canEditBill(bill)
+    ? 'Edit bill'
+    : 'Only pending bills can be edited.';
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -436,8 +441,19 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         View
                       </button>
                       <button
-                        className="px-3 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                        onClick={() => onEdit(bill)}
+                        type="button"
+                        className={`px-3 py-1 rounded transition backdrop-filter backdrop-blur-10 drop-shadow-lg border ${
+                          canEditBill(bill)
+                            ? 'bg-green-500/30 text-white border-green-300/50 hover:bg-green-500/50'
+                            : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                        }`}
+                        onClick={() => {
+                          if (canEditBill(bill)) {
+                            onEdit(bill);
+                          }
+                        }}
+                        disabled={!canEditBill(bill)}
+                        title={editBillTitle(bill)}
                       >
                         Edit
                       </button>
@@ -532,8 +548,19 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                   View
                 </button>
                 <button
-                  onClick={() => onEdit(bill)}
-                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  type="button"
+                  onClick={() => {
+                    if (canEditBill(bill)) {
+                      onEdit(bill);
+                    }
+                  }}
+                  disabled={!canEditBill(bill)}
+                  title={editBillTitle(bill)}
+                  className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
+                    canEditBill(bill)
+                      ? 'bg-indigo-500/30 text-white border-indigo-300/50 hover:bg-indigo-500/50'
+                      : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                  }`}
                 >
                   Edit
                 </button>
