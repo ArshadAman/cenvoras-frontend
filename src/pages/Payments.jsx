@@ -22,6 +22,17 @@ import { toast } from 'react-toastify';
 import api from '../api/api';
 import Layout from '../components/Layout';
 
+const roundTo3 = (value) => {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return 0;
+  return Math.round((num + Number.EPSILON) * 1000) / 1000;
+};
+
+const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 3,
+});
+
 // Payment mode icons and colors
 const PAYMENT_MODES = {
   cash: { label: 'Cash', icon: CurrencyRupeeIcon, color: 'text-green-400', bg: 'bg-green-500/10' },
@@ -48,7 +59,7 @@ function PaymentCard({ payment, onEdit, onDelete }) {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-green-400">₹{parseFloat(payment.amount).toLocaleString('en-IN')}</div>
+          <div className="text-lg font-bold text-green-400">₹{formatAmount(payment.amount)}</div>
           <div className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       </div>
@@ -180,9 +191,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       // Handle array or object results
       const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
       const openInvoices = data.filter((inv) => {
-        const total = parseFloat(inv?.total_amount || 0);
-        const paid = parseFloat(inv?.amount_paid || 0);
-        return (total - paid) > 0;
+        if (inv?.status === 'draft') return false;
+        const outstanding = roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0));
+        return outstanding > 0;
       });
 
       let invoiceOptions = openInvoices;
@@ -215,55 +226,27 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   };
 
   const getInvoiceOutstanding = (invoice) => {
-    const total = parseFloat(invoice?.total_amount || 0);
-    const paid = parseFloat(invoice?.amount_paid || 0);
-    return Math.max(total - paid, 0);
-  };
-
-  const adjustedOutstandingByInvoice = useMemo(() => {
-    if (!invoices.length) return {};
-
-    const customerBalance = Math.max(parseFloat(selectedCustomer?.current_balance || 0), 0);
-    const totalInvoiceOutstanding = invoices.reduce((sum, inv) => sum + getInvoiceOutstanding(inv), 0);
-    let unappliedCredit = Math.max(totalInvoiceOutstanding - customerBalance, 0);
-
-    const sortedInvoices = [...invoices].sort((a, b) => new Date(a.invoice_date) - new Date(b.invoice_date));
-    const map = {};
-
-    sortedInvoices.forEach((inv) => {
-      const rawOutstanding = getInvoiceOutstanding(inv);
-      const adjustedOutstanding = Math.max(rawOutstanding - unappliedCredit, 0);
-      map[inv.id] = adjustedOutstanding;
-      unappliedCredit = Math.max(unappliedCredit - rawOutstanding, 0);
-    });
-
-    return map;
-  }, [invoices, selectedCustomer]);
-
-  const getAdjustedInvoiceOutstanding = (invoice) => {
-    const adjusted = adjustedOutstandingByInvoice[invoice?.id];
-    if (typeof adjusted === 'number') {
-      return adjusted;
-    }
-    return getInvoiceOutstanding(invoice);
+    const total = roundTo3(invoice?.total_amount || 0);
+    const paid = roundTo3(invoice?.amount_paid || 0);
+    return roundTo3(Math.max(total - paid, 0));
   };
 
   const handleSelectInvoice = (invoiceId) => {
     const inv = invoices.find(i => i.id === invoiceId);
-    const outstanding = inv ? getAdjustedInvoiceOutstanding(inv) : '';
+    const outstanding = inv ? getInvoiceOutstanding(inv) : '';
     setSelectedInvoice(inv);
     setFormData({ 
       ...formData, 
       invoice: invoiceId, 
-      amount: outstanding 
+      amount: roundTo3(outstanding)
     });
   };
 
   const calculateRemainingDue = () => {
     if (!selectedInvoice) return null;
-    const paid = parseFloat(formData.amount) || 0;
-    const outstanding = getAdjustedInvoiceOutstanding(selectedInvoice);
-    return outstanding - paid;
+    const paid = roundTo3(formData.amount || 0);
+    const outstanding = getInvoiceOutstanding(selectedInvoice);
+    return roundTo3(outstanding - paid);
   };
 
   const handleSubmit = async (e) => {
@@ -289,7 +272,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       const paymentPayload = {
         ...formData,
         customer: targetCustomerId,
-        amount: parseFloat(formData.amount)
+        amount: roundTo3(formData.amount)
       };
 
       if (formData.invoice) {
@@ -380,7 +363,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                     >
                       <div className="text-sm font-medium text-white">{c.name}</div>
                       <div className="text-xs text-gray-500">
-                        ID: {c.id.slice(0, 8)} • Balance: ₹{parseFloat(c.current_balance).toLocaleString()}
+                        ID: {c.id.slice(0, 8)} • Balance: ₹{formatAmount(c.current_balance)}
                       </div>
                     </button>
                   ))
@@ -405,7 +388,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
               <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
               {invoices.map((inv) => (
                 <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
-                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{getAdjustedInvoiceOutstanding(inv).toLocaleString('en-IN')}
+                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{formatAmount(getInvoiceOutstanding(inv))}
                 </option>
               ))}
             </select>
@@ -421,7 +404,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   type="number"
                   required
                   min="0.01"
-                  step="0.01"
+                  step="0.001"
                   placeholder="5,000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -448,12 +431,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
               <div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">₹{getAdjustedInvoiceOutstanding(selectedInvoice).toLocaleString('en-IN')}</div>
+                <div className="text-base font-bold text-white">₹{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
                 <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
-                  ₹{calculateRemainingDue().toLocaleString('en-IN')}
+                  ₹{formatAmount(calculateRemainingDue())}
                 </div>
               </div>
             </div>
