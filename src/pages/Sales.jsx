@@ -6,7 +6,6 @@ import SalesDetailsModal from "../components/sales/SalesDetailsModal";
 import SalesDeleteDialog from "../components/sales/SalesDeleteDialog";
 import SalesUploadCsv from "../components/sales/SalesUploadCsv";
 import SalesSummary from "../components/sales/SalesSummary";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Layout from "../components/Layout";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
@@ -177,10 +176,6 @@ export default function Sales({ documentType = "invoice" }) {
           onClose={() => setShowUpload(false)}
         />
       )}
-
-
-
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
     </Layout>
   );
 }
