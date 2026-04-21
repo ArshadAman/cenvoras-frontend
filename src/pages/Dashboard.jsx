@@ -49,14 +49,36 @@ export default function Dashboard({ onLogout }) {
 
   // Refresh ALL dashboard data
   const handleRefreshAll = async () => {
+    const dashboardQueryKeys = [
+      ['smart-dashboard'],
+      ['dashboard-metrics'],
+      ['recent-sales'],
+      ['recent-purchases'],
+      ['low-stock'],
+      ['stock-points-dashboard'],
+      ['ml-predictions'],
+      ['customers'],
+      ['customers-with-balance'],
+      ['profile'],
+      ['subscription-entitlements'],
+    ];
+
     setIsRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ['smart-dashboard'] });
-    await queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
-    await queryClient.invalidateQueries({ queryKey: ['recent-sales'] });
-    await queryClient.invalidateQueries({ queryKey: ['recent-purchases'] });
-    await queryClient.invalidateQueries({ queryKey: ['low-stock'] });
-    await queryClient.invalidateQueries({ queryKey: ['ml-predictions'] });
-    setIsRefreshing(false);
+    try {
+      await Promise.all(
+        dashboardQueryKeys.map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey })
+        )
+      );
+
+      await Promise.all(
+        dashboardQueryKeys.map((queryKey) =>
+          queryClient.refetchQueries({ queryKey, type: 'all' })
+        )
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Fetch Smart Dashboard Data (new)
@@ -247,7 +269,7 @@ export default function Dashboard({ onLogout }) {
           <div className="flex gap-3">
             <button 
               onClick={handleRefreshAll}
-              disabled={isRefreshing || loadingSmart}
+              disabled={isRefreshing}
               className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white disabled:opacity-50 flex items-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />

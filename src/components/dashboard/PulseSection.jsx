@@ -21,7 +21,7 @@ function UdhaarModal({ isOpen, onClose }) {
   const [search, setSearch] = useState('');
   
   const { data: customersData, isLoading } = useQuery({
-    queryKey: ['customers-with-balance'],
+    queryKey: ['customers'],
     queryFn: () => api.get('/billing/customers/').then(res => res.data),
     enabled: isOpen
   });
@@ -128,6 +128,11 @@ function UdhaarModal({ isOpen, onClose }) {
  */
 export default function PulseSection({ data, isLoading }) {
   const [isUdhaarModalOpen, setIsUdhaarModalOpen] = useState(false);
+  const { data: customersData } = useQuery({
+    queryKey: ['customers'],
+    queryFn: () => api.get('/billing/customers/').then(res => res.data),
+    staleTime: 0,
+  });
 
   if (isLoading) {
     return (
@@ -144,6 +149,11 @@ export default function PulseSection({ data, isLoading }) {
   }
 
   const pulse = data || {};
+  const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
+  const liveReceivables = customers.reduce((sum, customer) => {
+    const balance = parseFloat(customer?.current_balance || 0);
+    return balance > 0 ? sum + balance : sum;
+  }, 0);
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null) return '₹0';
@@ -177,7 +187,7 @@ export default function PulseSection({ data, isLoading }) {
     },
     {
       label: 'Udhaar Status',
-      value: formatCurrency(pulse.total_receivables),
+      value: formatCurrency(liveReceivables || pulse.total_receivables),
       subtitle: (
         <div className="flex justify-between items-center w-full">
           <span>G: {formatCurrency(pulse.udhaar_given_today)} | C: {formatCurrency(pulse.udhaar_collected_today)}</span>
