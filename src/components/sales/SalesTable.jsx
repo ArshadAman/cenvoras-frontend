@@ -39,6 +39,14 @@ export default function SalesTable({
 
   const docLabel = documentType === "quotation" ? "quotation" : "invoice";
   const docLabelPlural = documentType === "quotation" ? "quotations" : "invoices";
+  const getDeleteTooltip = (invoice) => {
+    const paymentStatus = String(invoice?.payment_status || 'pending').toLowerCase();
+    return paymentStatus === 'pending'
+      ? 'Delete invoice'
+      : 'Only pending invoices can be deleted.';
+  };
+
+  const canDeleteInvoice = (invoice) => String(invoice?.payment_status || 'pending').toLowerCase() === 'pending';
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
@@ -490,8 +498,20 @@ export default function SalesTable({
                       Edit
                     </button>
                     <button
-                      onClick={() => onDelete(invoice)}
-                      className="px-3 py-1 bg-red-500/10 text-red-300 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors"
+                      type="button"
+                      onClick={() => {
+                        if (canDeleteInvoice(invoice)) {
+                          onDelete(invoice);
+                        }
+                      }}
+                      disabled={!canDeleteInvoice(invoice)}
+                      title={getDeleteTooltip(invoice)}
+                      aria-disabled={!canDeleteInvoice(invoice)}
+                      className={`px-3 py-1 border rounded transition-colors ${
+                        canDeleteInvoice(invoice)
+                          ? 'bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20'
+                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                      }`}
                     >
                       Delete
                     </button>
@@ -621,8 +641,20 @@ export default function SalesTable({
                 Edit
               </button>
               <button
-                onClick={() => onDelete(invoice)}
-                className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                type="button"
+                onClick={() => {
+                  if (canDeleteInvoice(invoice)) {
+                    onDelete(invoice);
+                  }
+                }}
+                disabled={!canDeleteInvoice(invoice)}
+                title={getDeleteTooltip(invoice)}
+                aria-disabled={!canDeleteInvoice(invoice)}
+                className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
+                  canDeleteInvoice(invoice)
+                    ? 'bg-red-500/30 text-white border-red-300/50 hover:bg-red-500/50'
+                    : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                }`}
               >
                 Delete
               </button>

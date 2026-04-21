@@ -260,10 +260,10 @@ export default function Dashboard({ onLogout }) {
               <PlusIcon className="w-4 h-4"/> New Sale
             </button>
             <button 
-              onClick={() => handleQuickAction('purchase')} 
+              onClick={() => handleQuickAction('sale')} 
               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
             >
-              <PlusIcon className="w-4 h-4"/> New Purchase
+              <PlusIcon className="w-4 h-4"/> Record Sales
             </button>
           </div>
         </div>
