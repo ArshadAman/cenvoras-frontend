@@ -629,7 +629,9 @@ export default function SalesForm({
     staleTime: 5 * 60 * 1000,
   });
   const entitlements = subscriptionData?.data || {};
-  const canAccessInventory = Boolean(entitlements?.can?.inventory_core);
+  const currentPlanCode = String(entitlements?.plan?.code || entitlements?.plan_code || "starter").toLowerCase();
+  const isStarterPlan = currentPlanCode === "starter" || currentPlanCode === "free";
+  const canAccessInventory = Boolean(entitlements?.can?.inventory);
   
   const { data: warehousesResult } = useQuery({
     queryKey: ["warehouses"],
@@ -696,7 +698,7 @@ export default function SalesForm({
 
   const handleCreateInventoryProduct = (productName, idx) => {
     if (!canAccessInventory) {
-      toast.info("Inventory is locked on your current plan. Enter item details manually to create this sales bill.");
+      toast.info("Inventory browsing is locked on Starter. Enter item details manually to create this sales bill.");
       return;
     }
 
@@ -1294,9 +1296,9 @@ export default function SalesForm({
                       )}
                     </div>
                   </div>
-                  {!canAccessInventory && (
+                  {!canAccessInventory && isStarterPlan && (
                     <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
-                      Inventory browsing is locked on your plan. You can still create this sales bill by typing item name, quantity, and price manually.
+                      Inventory browsing is locked on Starter. You can still create this sales bill by typing item name, quantity, and price manually.
                     </div>
                   )}
                   <FieldArray name="items">
