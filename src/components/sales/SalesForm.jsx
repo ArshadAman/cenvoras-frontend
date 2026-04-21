@@ -769,6 +769,9 @@ export default function SalesForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       onClose();
     },
@@ -790,6 +793,9 @@ export default function SalesForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       onClose();
     },
