@@ -7,6 +7,7 @@ import TermsOfService from './pages/TermsOfService'
 import Sitemap from './pages/Sitemap'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
 import Sales from './pages/Sales'
@@ -73,6 +74,10 @@ function App() {
         <Route
           path="/signup"
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />}
+        />
+        <Route
+          path="/forgot-password"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />}
         />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/contact" element={<ContactUs />} />

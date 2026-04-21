@@ -18,7 +18,9 @@ const SignupSchema = Yup.object().shape({
 
 export default function Signup() {
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+    const [otpRequested, setOtpRequested] = useState(false);
+    const [pendingEmail, setPendingEmail] = useState('');
+    const [signupMessage, setSignupMessage] = useState('');
   const navigate = useNavigate();
 
   return (
@@ -93,19 +95,49 @@ export default function Signup() {
                     phone: '', 
                     business_name: '', 
                     gstin: '',
+                    otp: '',
                     termsAccepted: false
                 }}
                 validationSchema={SignupSchema}
                 onSubmit={async (values, { setSubmitting, setFieldError }) => {
                     setLoading(true);
                     try {
-                        const response = await api.post('/users/signup/', values);
-                        if (response.status === 201) {
-                            navigate('/login');
+                        if (!otpRequested) {
+                            const payload = {
+                                email: values.email,
+                                password: values.password,
+                                confirm_password: values.confirm_password,
+                                phone: values.phone,
+                                business_name: values.business_name,
+                                gstin: values.gstin,
+                            };
+                            const response = await api.post('/users/signup/', payload);
+                            if (response?.data?.otp_required) {
+                                setOtpRequested(true);
+                                setPendingEmail(values.email);
+                                setSignupMessage('OTP sent to your email. Enter it below to complete signup.');
+                            }
+                        } else {
+                            const response = await api.post('/users/signup/', {
+                                email: pendingEmail || values.email,
+                                otp: values.otp,
+                            });
+                            if (response.status === 201) {
+                                navigate('/login');
+                            }
                         }
                     } catch (error) {
-                        console.error("Signup error:", error);
-                        // Handle generic errors here
+                        const backendErrors = error?.response?.data?.errors;
+                        const backendError = error?.response?.data?.error;
+                        if (backendErrors) {
+                            Object.entries(backendErrors).forEach(([key, val]) => {
+                                setFieldError(key, Array.isArray(val) ? val[0] : String(val));
+                            });
+                        } else if (backendError) {
+                            setFieldError(otpRequested ? 'otp' : 'email', backendError);
+                        } else {
+                            setFieldError('email', 'Signup failed. Please try again.');
+                        }
                     }
                     setLoading(false);
                     setSubmitting(false);
@@ -113,6 +145,23 @@ export default function Signup() {
             >
                 {({ isSubmitting }) => (
                     <Form className="mt-8 space-y-5">
+                        {signupMessage ? (
+                            <div className="text-sm text-cyan-300">{signupMessage}</div>
+                        ) : null}
+
+                        {otpRequested ? (
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Signup OTP</label>
+                            <Field
+                                type="text"
+                                name="otp"
+                                className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                placeholder="Enter 6-digit OTP"
+                            />
+                            <ErrorMessage name="otp" component="div" className="text-red-400 text-xs mt-1" />
+                            <p className="text-xs text-slate-400 mt-2">Sent to: {pendingEmail || 'your email'}</p>
+                          </div>
+                        ) : (
                         <div className="grid grid-cols-1 gap-5">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
@@ -179,8 +228,9 @@ export default function Signup() {
                                 />
                             </div>
                         </div>
+                        )}
 
-                        <div className="mt-4">
+                        {!otpRequested && <div className="mt-4">
                             <div className="flex items-start gap-3">
                                 <Field 
                                     type="checkbox" 
@@ -192,14 +242,14 @@ export default function Signup() {
                                 </p>
                             </div>
                             <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />
-                        </div>
+                        </div>}
 
                         <button
                             type="submit"
                             disabled={isSubmitting}
                             className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                         >
-                            {isSubmitting ? 'Creating account...' : 'Create Account'}
+                            {isSubmitting ? (otpRequested ? 'Verifying OTP...' : 'Sending OTP...') : (otpRequested ? 'Verify OTP & Create Account' : 'Continue with OTP')}
                             {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
                         </button>
                     </Form>
