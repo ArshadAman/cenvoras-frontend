@@ -6,6 +6,7 @@ import {
   ArrowTopRightOnSquareIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
+import PublicNavbar from '../components/PublicNavbar';
 
 export default function ContactUs() {
   useEffect(() => {
@@ -21,17 +22,13 @@ export default function ContactUs() {
         <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl"></div>
       </div>
 
-      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
-        <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
-          <Link to="/" className="hover:opacity-80 transition-opacity flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[160px] h-auto object-contain" />
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Log In</Link>
-            <Link to="/signup" className="text-sm font-semibold bg-white text-black px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">Get Started</Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNavbar
+        links={[
+          { label: 'Home', href: '/' },
+          { label: 'Privacy', href: '/privacy' },
+          { label: 'Terms', href: '/terms' },
+        ]}
+      />
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 pb-20 pt-40">
         <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#101826] via-[#0f0f14] to-[#1a0f24] p-8 md:p-12 shadow-2xl shadow-black/40">

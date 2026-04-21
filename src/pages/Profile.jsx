@@ -289,7 +289,7 @@ const Profile = ({ onLogout }) => {
 
   useEffect(() => {
     const currentCode = String(subscriptionData?.data?.plan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
-    setSelectedTargetPlanCode(currentCode);
+    setSelectedTargetPlanCode(currentCode === 'starter' ? 'free' : currentCode);
   }, [subscriptionData?.data?.plan?.code, userProfile?.profile?.plan_code]);
 
   // Update profile mutation
@@ -489,7 +489,7 @@ const Profile = ({ onLogout }) => {
     }
 
     if (quote.action === 'unsupported_paid_schedule') {
-      toast.info('Paid plan changes cannot be scheduled without payment. Choose Free at expiry, then activate desired plan with payment.');
+      toast.info('Paid plan changes cannot be scheduled without payment. Choose Starter at expiry, then activate desired plan with payment.');
       return;
     }
 
@@ -631,8 +631,8 @@ const Profile = ({ onLogout }) => {
   const trialDays = userProfile?.account_stats?.trial_days_remaining ?? '-';
   const totalInvoices = userProfile?.account_stats?.total_invoices ?? 0;
   const entitlementPlan = subscriptionData?.data?.plan || {};
-  const entitlementPlanName = entitlementPlan?.name || userProfile?.profile?.plan_name || 'Free';
-  const entitlementPlanCode = String(entitlementPlan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
+  const entitlementPlanName = entitlementPlan?.name || userProfile?.profile?.plan_name || 'Starter';
+  const entitlementPlanCode = String(entitlementPlan?.code || userProfile?.profile?.plan_code || 'starter').toLowerCase();
   const entitlementExpiry = entitlementPlan?.current_period_end ? new Date(entitlementPlan.current_period_end) : null;
   const hasEntitlementExpiry = entitlementExpiry && !Number.isNaN(entitlementExpiry.getTime());
   const isVipAccess = subscriptionData?.data?.is_vip || false;
@@ -651,17 +651,17 @@ const Profile = ({ onLogout }) => {
       name: plan.name,
       monthlyPrice: plan.monthly_price,
     }));
-  const availablePlanOptions = [{ code: 'free', name: 'Free', monthlyPrice: '0.00' }, ...paidPlanOptions];
+  const availablePlanOptions = [{ code: 'free', name: 'Starter', monthlyPrice: '899.00' }, ...paidPlanOptions];
 
   let planActionLabel = 'Apply Plan Change';
   if (quote?.payment_required) {
     planActionLabel = `Pay INR ${quote.amount} and Continue`;
   } else if (quote?.action === 'schedule_free') {
-    planActionLabel = 'Move to Free After Expiry';
+    planActionLabel = 'Move to Starter After Expiry';
   } else if (quote?.action === 'unsupported_paid_schedule') {
     planActionLabel = 'Paid Downgrade Requires Payment Later';
   } else if (quote?.action === 'already_free') {
-    planActionLabel = 'Already on Free';
+    planActionLabel = 'Already on Starter';
   }
 
   let expiryLabel = 'Not applicable';

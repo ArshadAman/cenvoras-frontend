@@ -115,7 +115,7 @@ export default function Layout({ children, onLogout }) {
   const permissions = profileData?.profile?.permissions || {};
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
-  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Free';
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
   const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
   const isVipAccess = String(currentPlanName).toLowerCase().includes('vip');
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
@@ -139,7 +139,7 @@ export default function Layout({ children, onLogout }) {
   const showExpiredBanner = !isVipAccess && !isFreePlan && Number.isFinite(daysRemaining) && daysRemaining < 0;
   const queuedDate = pendingPlanStartsAt ? new Date(pendingPlanStartsAt) : null;
   const hasQueuedDate = queuedDate && !Number.isNaN(queuedDate.getTime());
-  const showQueuedBanner = !isVipAccess && nextPlanCode === 'free' && hasQueuedDate;
+  const showQueuedBanner = !isVipAccess && ['free', 'starter'].includes(nextPlanCode) && hasQueuedDate;
 
   const isAllowedFreeRoute = (path) => {
     const route = (path || '').toLowerCase();

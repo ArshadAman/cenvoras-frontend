@@ -13,6 +13,7 @@ import {
   ShoppingCartIcon,
   CubeIcon
 } from '@heroicons/react/24/outline';
+import PublicNavbar from '../components/PublicNavbar';
 
 // Hook for scroll animations
 const useScrollAnimation = () => {
@@ -123,13 +124,14 @@ export default function LandingPage() {
 
   const planCards = [
     {
-      code: 'free',
-      name: 'Free',
-      price: '₹0',
+      code: 'starter',
+      name: 'Starter',
+      price: '₹899',
       period: '/mo',
-      cta: 'Start Free',
+      trialDays: 14,
+      cta: 'Start 14-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
-      description: 'For small teams getting started',
+      description: 'For small teams getting started with billing and customer work',
       features: [
         'Sales invoices',
         'Customer management',
@@ -140,14 +142,15 @@ export default function LandingPage() {
     {
       code: 'pro',
       name: 'Pro',
-      price: '₹1,999',
+      price: '₹1,899',
       period: '/mo',
-      cta: 'Start Free, Upgrade later',
+      trialDays: 7,
+      cta: 'Start 7-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10',
       description: 'For growing shops that need more control',
       highlight: 'Most Popular',
       features: [
-        'Everything in Free',
+        'Everything in Starter',
         'Inventory module',
         'Dashboard analytics',
         'Integrations and advanced reports',
@@ -158,7 +161,8 @@ export default function LandingPage() {
       name: 'Business',
       price: '₹2,499',
       period: '/mo',
-      cta: 'Start Free, Upgrade later',
+      trialDays: 7,
+      cta: 'Start 7-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
       description: 'For larger teams and multi-location operations',
       features: [
@@ -177,27 +181,13 @@ export default function LandingPage() {
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* 1. Floating Pill Navbar */}
-      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
-        <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
-          <Link to="/" className="hover:opacity-80 transition-opacity flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[160px] h-auto object-contain" />
-          </Link>
-          
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Business</a>
-            <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-             <Link to="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Log In</Link>
-             <Link to="/signup" className="text-sm font-semibold bg-white text-black px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">
-              Get Started
-             </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNavbar
+        links={[
+          { label: 'Features', href: '#features' },
+          { label: 'Pricing', href: '#pricing' },
+          { label: 'Contact', href: '/contact' },
+        ]}
+      />
 
       {/* 2. Hero Section */}
       <section className="pt-40 pb-20 text-center relative overflow-hidden z-10">
@@ -344,7 +334,8 @@ export default function LandingPage() {
                  ) : null}
                  <h3 className="text-xl font-semibold mb-2 text-white">{plan.name}</h3>
                  <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
-                 <p className="text-3xl font-bold mb-6 text-white">{plan.price}<span className="text-base font-normal text-gray-500">{plan.period}</span></p>
+                 <p className="text-3xl font-bold mb-2 text-white">{plan.price}<span className="text-base font-normal text-gray-500">{plan.period}</span></p>
+                 <p className="mb-6 text-xs uppercase tracking-wider text-gray-500">Trial: {plan.trialDays} days</p>
                  <Link to="/signup" className={plan.ctaStyle}>
                      {plan.cta}
                  </Link>
@@ -367,10 +358,9 @@ export default function LandingPage() {
               <Link to="/" className="flex items-center mb-4 md:mb-0 hover:opacity-80 transition-opacity">
                   <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
               </Link>
-              <div className="flex gap-8 text-sm text-gray-400">
-                 <a href="#" className="hover:text-white transition-colors">Twitter</a>
-                 <a href="#" className="hover:text-white transition-colors">GitHub</a>
-                 <a href="#" className="hover:text-white transition-colors">Discord</a>
+                <div className="flex gap-8 text-sm text-gray-400">
+                  <a href="https://www.instagram.com/cenvora.app/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Instagram</a>
+                  <a href="https://www.facebook.com/cenvora.app/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Facebook</a>
               </div>
            </div>
            

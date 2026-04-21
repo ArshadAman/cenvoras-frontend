@@ -218,7 +218,7 @@ export default function Dashboard({ onLogout }) {
   const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
-  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Free';
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
   const mlDataWithEntitlements = React.useMemo(() => ({
     ...mlData,
     can,
