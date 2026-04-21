@@ -267,6 +267,13 @@ const Profile = ({ onLogout }) => {
     staleTime: 30_000,
   });
 
+  const planRank = (code) => {
+    const normalizedCode = String(code || '').toLowerCase();
+    if (normalizedCode === 'business') return 2;
+    if (normalizedCode === 'pro') return 1;
+    return 0;
+  };
+
   // Update form data when user profile is loaded
   useEffect(() => {
     if (userProfile && userProfile.profile) {
@@ -488,8 +495,8 @@ const Profile = ({ onLogout }) => {
       return;
     }
 
-    if (quote.action === 'unsupported_paid_schedule') {
-      toast.info('Paid plan changes cannot be scheduled without payment. Choose Starter at expiry, then activate desired plan with payment.');
+    if (quote.action === 'unsupported_paid_schedule' || quote.action === 'downgrade_not_allowed') {
+      toast.info('Downgrades are not available from profile. Renew the current plan or upgrade instead.');
       return;
     }
 
@@ -644,24 +651,21 @@ const Profile = ({ onLogout }) => {
   const quote = planQuoteData?.data;
   const latestPayment = latestPaymentStatusData?.data || null;
   const planCatalog = planCatalogData?.data || [];
-  const paidPlanOptions = planCatalog
-    .filter((plan) => ['pro', 'business'].includes(String(plan.code || '').toLowerCase()))
+  const currentPlanRank = planRank(entitlementPlanCode);
+  const availablePlanOptions = planCatalog
     .map((plan) => ({
       code: String(plan.code || '').toLowerCase(),
       name: plan.name,
       monthlyPrice: plan.monthly_price,
-    }));
-  const availablePlanOptions = [{ code: 'free', name: 'Starter', monthlyPrice: '899.00' }, ...paidPlanOptions];
+    }))
+    .filter((plan) => planRank(plan.code) >= currentPlanRank)
+    .sort((left, right) => planRank(left.code) - planRank(right.code));
 
   let planActionLabel = 'Apply Plan Change';
   if (quote?.payment_required) {
     planActionLabel = `Pay INR ${quote.amount} and Continue`;
-  } else if (quote?.action === 'schedule_free') {
-    planActionLabel = 'Move to Starter After Expiry';
   } else if (quote?.action === 'unsupported_paid_schedule') {
-    planActionLabel = 'Paid Downgrade Requires Payment Later';
-  } else if (quote?.action === 'already_free') {
-    planActionLabel = 'Already on Starter';
+    planActionLabel = 'Downgrade Not Available';
   }
 
   let expiryLabel = 'Not applicable';
@@ -842,7 +846,7 @@ const Profile = ({ onLogout }) => {
                                 isPlanActionLoading ||
                                 quoteLoading ||
                                 !quote ||
-                                quote?.action === 'already_free' ||
+                                quote?.action === 'downgrade_not_allowed' ||
                                 quote?.action === 'unsupported_paid_schedule' ||
                                 (selectedTargetPlanCode === entitlementPlanCode && !quote?.payment_required)
                               }

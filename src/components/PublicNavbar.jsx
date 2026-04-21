@@ -45,16 +45,16 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 py-4 ${className}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 py-2 ${className}`}>
         <div className="w-full max-w-7xl">
-          <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-black/40 via-black/50 to-black/40 px-6 py-4 backdrop-blur-md border border-white/10 shadow-lg transition-all duration-300">
+          <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-black/40 via-black/50 to-black/40 px-6 py-2.5 backdrop-blur-md border border-white/10 shadow-lg transition-all duration-300">
             {/* Logo */}
             <Link to="/" className="flex items-center transition-all duration-300 hover:opacity-90 active:scale-95">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-auto w-[120px] object-contain sm:w-[140px]" />
+              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-auto w-[110px] object-contain sm:w-[130px]" />
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden items-center gap-8 text-sm md:flex">
+            <div className="hidden items-center gap-6 text-sm md:flex">
               {links.map((item, idx) => (
                 <div key={idx} className="relative group">
                   {renderLink(item, 'font-medium text-gray-300 transition-all duration-300 hover:text-white relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-gradient-to-r after:from-blue-400 after:to-blue-600 after:transition-all after:duration-300 group-hover:after:w-full')}
@@ -66,10 +66,10 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
             <div className="hidden items-center gap-3 md:flex">
               {authLinks ? (
                 <>
-                  <Link to="/login" className="px-6 py-2 text-sm font-semibold text-gray-300 transition-all duration-300 hover:text-white rounded-lg hover:bg-white/5">
+                  <Link to="/login" className="px-5 py-2 text-sm font-semibold text-gray-300 transition-all duration-300 hover:text-white rounded-lg hover:bg-white/5">
                     Log In
                   </Link>
-                  <Link to="/signup" className="px-6 py-2 text-sm font-bold text-black bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 active:scale-95">
+                  <Link to="/signup" className="px-5 py-2 text-sm font-bold text-black bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 active:scale-95">
                     Get Started
                   </Link>
                 </>
@@ -77,16 +77,16 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
             </div>
 
             {/* Mobile Menu Button & Sign Up */}
-            <div className="flex items-center gap-3 md:hidden">
+            <div className="flex items-center gap-2 md:hidden">
               {authLinks ? (
-                <Link to="/signup" className="px-4 py-2 text-xs font-bold text-black bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-300 active:scale-95">
+                <Link to="/signup" className="px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-300 active:scale-95">
                   Sign Up
                 </Link>
               ) : null}
               <button
                 type="button"
                 onClick={() => setMenuOpen((open) => !open)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition-all duration-300 hover:bg-white/20 active:scale-95"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition-all duration-300 hover:bg-white/20 active:scale-95"
                 aria-label="Toggle navigation menu"
                 aria-expanded={menuOpen}
               >
