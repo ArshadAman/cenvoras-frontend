@@ -128,13 +128,15 @@ function UdhaarModal({ isOpen, onClose }) {
  */
 export default function PulseSection({ data, isLoading }) {
   const [isUdhaarModalOpen, setIsUdhaarModalOpen] = useState(false);
+  const lastGoodPulseRef = useRef({});
+
   const { data: customersData } = useQuery({
     queryKey: ['customers'],
     queryFn: () => api.get('/billing/customers/').then(res => res.data),
     staleTime: 0,
   });
 
-  if (isLoading) {
+  if (isLoading && !Object.keys(lastGoodPulseRef.current).length) {
     return (
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
@@ -148,7 +150,6 @@ export default function PulseSection({ data, isLoading }) {
     );
   }
 
-  const lastGoodPulseRef = useRef({});
   const hasPulseData = !!(data && Object.keys(data).length > 0);
   if (hasPulseData) {
     lastGoodPulseRef.current = data;
