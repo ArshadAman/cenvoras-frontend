@@ -74,7 +74,7 @@ export default function Dashboard({ onLogout }) {
   // Fetch Smart Dashboard Data (new)
   const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch: refetchSmart } = useQuery({
     queryKey: ['smart-dashboard'],
-    queryFn: () => api.get('/analytics/smart-dashboard/').then(res => res.data),
+    queryFn: () => api.get('/analytics/smart-dashboard/?refresh=true').then(res => res.data),
     refetchInterval: 60000,
     staleTime: 30000,
   });
@@ -93,7 +93,7 @@ export default function Dashboard({ onLogout }) {
   // Fetch Legacy Dashboard Data (old metrics)
   const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
-    queryFn: () => api.get('/analytics/dashboard/').then(res => res.data)
+    queryFn: () => api.get('/analytics/dashboard/?refresh=true').then(res => res.data)
   });
   
   const { data: sales, isLoading: loadingSales, refetch: refetchSales } = useQuery({
