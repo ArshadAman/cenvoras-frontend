@@ -467,6 +467,7 @@ export const recordClientPayment = async (paymentData) => {
   try {
     const requestData = {
       customer: paymentData.customer,
+      invoice: paymentData.invoice || undefined,
       amount: parseFloat(paymentData.amount),
       notes: paymentData.description || paymentData.notes || "Payment received",
       date: paymentData.date || new Date().toISOString().split('T')[0],

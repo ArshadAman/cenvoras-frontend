@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesCsvJobStatus, downloadSalesCsv } from "../../api/sales";
 import { format } from "date-fns";
@@ -6,6 +7,7 @@ import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
+import PaymentForm from "../ledger/PaymentForm";
 
 export default function SalesTable({
   onEdit,
@@ -25,6 +27,7 @@ export default function SalesTable({
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [paymentInvoice, setPaymentInvoice] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState({
     dateRange: { start: "", end: "" },
     amountRange: { min: "", max: "" },
@@ -51,6 +54,17 @@ export default function SalesTable({
   };
 
   const canDeleteInvoice = (invoice) => String(invoice?.payment_status || 'pending').toLowerCase() === 'pending';
+  const canRecordPayment = (invoice) => {
+    const paymentStatus = String(invoice?.payment_status || 'pending').toLowerCase();
+    return invoice?.status === 'final' && ['pending', 'partial_paid'].includes(paymentStatus);
+  };
+
+  const openPaymentForInvoice = (invoice) => {
+    if (!canRecordPayment(invoice)) return;
+    setPaymentInvoice(invoice);
+  };
+
+  const closePaymentModal = () => setPaymentInvoice(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
@@ -488,7 +502,7 @@ export default function SalesTable({
                   {invoice.items?.length || 0} items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => onView(invoice)}
                       className="px-3 py-1 bg-white/5 text-gray-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
@@ -512,6 +526,22 @@ export default function SalesTable({
                       }`}
                     >
                       Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openPaymentForInvoice(invoice)}
+                      disabled={!canRecordPayment(invoice)}
+                      title={canRecordPayment(invoice)
+                        ? 'Record payment for this invoice'
+                        : 'Available only for final invoices with pending or partial payment status.'}
+                      aria-disabled={!canRecordPayment(invoice)}
+                      className={`px-3 py-1 border rounded transition-colors ${
+                        canRecordPayment(invoice)
+                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20'
+                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                      }`}
+                    >
+                      Record Payment
                     </button>
                     <button
                       type="button"
@@ -670,6 +700,22 @@ export default function SalesTable({
               </button>
               <button
                 type="button"
+                onClick={() => openPaymentForInvoice(invoice)}
+                disabled={!canRecordPayment(invoice)}
+                title={canRecordPayment(invoice)
+                  ? 'Record payment for this invoice'
+                  : 'Available only for final invoices with pending or partial payment status.'}
+                aria-disabled={!canRecordPayment(invoice)}
+                className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
+                  canRecordPayment(invoice)
+                    ? 'bg-emerald-500/30 text-white border-emerald-300/50 hover:bg-emerald-500/50'
+                    : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                }`}
+              >
+                Pay
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   if (canDeleteInvoice(invoice)) {
                     onDelete(invoice);
@@ -711,6 +757,31 @@ export default function SalesTable({
             Get started by creating a new sales bill.
           </p>
         </div>
+      )}
+
+      {paymentInvoice && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={closePaymentModal} />
+          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Record Payment</h2>
+                <p className="text-xs text-gray-400 mt-1">Invoice #{paymentInvoice.invoice_number}</p>
+              </div>
+              <button onClick={closePaymentModal} className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <PaymentForm
+              initialInvoice={paymentInvoice}
+              onSuccess={closePaymentModal}
+              onCancel={closePaymentModal}
+            />
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

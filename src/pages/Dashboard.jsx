@@ -76,7 +76,9 @@ export default function Dashboard({ onLogout }) {
     queryKey: ['smart-dashboard'],
     queryFn: () => api.get('/analytics/smart-dashboard/?refresh=true').then(res => res.data),
     refetchInterval: 60000,
-    staleTime: 30000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 
   const { data: profileData } = useQuery({
