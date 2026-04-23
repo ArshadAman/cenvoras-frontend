@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSalesAnalytics, getSalesInvoices } from "../../api/sales";
+import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
   CurrencyRupeeIcon, 
   CalendarIcon, 
@@ -40,16 +40,18 @@ export default function SalesSummary() {
     queryFn: () => getSalesInvoices({ search: "", ordering: "-invoice_date", page: 1 }),
   });
 
+  const { data: overdueReport } = useQuery({
+    queryKey: ["overdueSalesInvoicesSummary"],
+    queryFn: () => getOverdueSalesInvoices({}),
+  });
+
   const analytics = analyticsRes || {};
   const invoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
 
-  // Calculate overdue invoices (using recent invoices as a simple check)
   const today = new Date();
-  const overdueInvoices = invoices.filter(invoice => {
-    const dueDateValue = invoice.due_date || invoice.invoice_date;
-    const dueDate = new Date(dueDateValue);
-    return !Number.isNaN(dueDate.getTime()) && dueDate < today && invoice.status !== 'draft';
-  });
+  const overdueInvoices = overdueReport?.results || [];
+  const overdueCount = overdueReport?.count ?? overdueInvoices.length;
+  const overduePreview = overdueInvoices.slice(0, 4);
 
   // Top customers
   const customerTotals = invoices.filter(inv => inv.status !== 'draft').reduce((acc, invoice) => {
@@ -213,14 +215,28 @@ export default function SalesSummary() {
              <ExclamationTriangleIcon className="w-5 h-5 text-red-400" /> Action Required
            </h3>
            
-           {overdueInvoices.length > 0 ? (
+           {overdueCount > 0 ? (
              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
                <div className="flex items-start gap-3">
                  <div className="flex-1">
                    <p className="text-red-200 font-medium mb-1">Overdue Invoices</p>
                    <p className="text-red-300/70 text-sm">
-                     You have <span className="font-bold text-white">{overdueInvoices.length}</span> invoices that are overdue.
+                     You have <span className="font-bold text-white">{overdueCount}</span> invoices that are overdue.
                    </p>
+                    {overduePreview.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {overduePreview.map((invoice) => (
+                          <div key={invoice.id} className="rounded-lg border border-red-400/20 bg-black/20 px-3 py-2">
+                            <p className="text-xs font-semibold text-white">{invoice.invoice_number || 'Invoice'}</p>
+                            <p className="text-xs text-red-200/90">{invoice.customer_name || 'Unknown Customer'} • {invoice.days_overdue} days overdue</p>
+                            <p className="text-xs text-red-300/90">Outstanding: ₹{Number(invoice.outstanding_amount || 0).toLocaleString()}</p>
+                          </div>
+                        ))}
+                        {overdueCount > overduePreview.length && (
+                          <p className="text-[11px] text-red-300/80">+{overdueCount - overduePreview.length} more overdue invoices</p>
+                        )}
+                      </div>
+                    )}
                  </div>
                </div>
              </div>

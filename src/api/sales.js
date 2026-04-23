@@ -10,6 +10,9 @@ export const getNextInvoiceNumber = (prefix = "INV-") =>
 export const getSalesAnalytics = params =>
   api.get("/billing/sales-invoices/analytics/", { params }).then(res => res.data);
 
+export const getOverdueSalesInvoices = params =>
+  api.get("/billing/reports/overdue-bills/", { params }).then(res => res.data);
+
 export const getSalesInvoice = id =>
   api.get(`/billing/sales-invoices/${id}/`).then(res => res.data);
 
