@@ -180,7 +180,7 @@ export default function PulseSection({ data, isLoading }) {
     {
       label: 'Cash / Bank',
       value: formatCurrency((pulse.cash_in_hand || 0) + (pulse.bank_collections || 0)),
-      subtitle: `Cash: ${formatCurrency(pulse.cash_in_hand)} | UPI: ${formatCurrency(pulse.bank_collections)}`,
+      subtitle: 'Net liquid balance (all-time, adjusted by purchase payments)',
       icon: BanknotesIcon,
       color: 'green',
     },
