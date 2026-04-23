@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../utils/invoiceSettings';
+import { amountInWords } from '../../../utils/invoiceSettings';
 
 // Beautiful Invoice Preview Component
 // Renders invoice based on template settings with dynamic styling
