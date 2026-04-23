@@ -108,6 +108,12 @@ const paymentSchema = Yup.object().shape({
 export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null, initialCustomer = null }) {
   const queryClient = useQueryClient();
 
+  const roundTo3 = (value) => Math.round((Number(value) || 0) * 1000) / 1000;
+  const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 3,
+  });
+
   const resolvedCustomer = initialCustomer || initialInvoice?.customer_details || initialInvoice?.customer || null;
   const invoiceOutstanding = initialInvoice
     ? roundTo3(Math.max(roundTo3(initialInvoice.total_amount || 0) - roundTo3(initialInvoice.amount_paid || 0), 0))
