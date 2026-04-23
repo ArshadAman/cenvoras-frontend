@@ -11,8 +11,15 @@ import {
 
 export default function SalesSummary() {
   const [dateFilter, setDateFilter] = useState("today"); // "today", "month", "custom"
-  
-  const todayStr = new Date().toISOString().split('T')[0];
+
+  const formatLocalDate = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const todayStr = formatLocalDate(new Date());
   const [customRange, setCustomRange] = useState({ start: todayStr, end: todayStr });
 
   const getDates = () => {
@@ -20,7 +27,7 @@ export default function SalesSummary() {
     if (dateFilter === "month") {
       const d = new Date();
       d.setDate(1);
-      return { start_date: d.toISOString().split('T')[0], end_date: todayStr };
+      return { start_date: formatLocalDate(d), end_date: todayStr };
     }
     if (dateFilter === "custom") {
       return { start_date: customRange.start, end_date: customRange.end };
@@ -42,7 +49,7 @@ export default function SalesSummary() {
 
   const { data: overdueReport } = useQuery({
     queryKey: ["overdueSalesInvoicesSummary"],
-    queryFn: () => getOverdueSalesInvoices({}),
+    queryFn: () => getOverdueSalesInvoices({ refresh: "true" }),
   });
 
   const analytics = analyticsRes || {};
