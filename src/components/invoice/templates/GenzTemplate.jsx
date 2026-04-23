@@ -75,7 +75,7 @@ const GenzTemplate = forwardRef(({
             <thead style={{ backgroundColor: '#f8fafc' }}>
               <tr>
                 {visibleColumns.map(col => (
-                  <th key={col.id} className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-widest">{col.label}</th>
+                  <th key={col.id} className="px-6 py-2 text-xs font-bold text-gray-600 uppercase tracking-widest">{col.label}</th>
                 ))}
               </tr>
             </thead>
@@ -85,13 +85,13 @@ const GenzTemplate = forwardRef(({
                   {visibleColumns.map(col => {
                     let val = '';
                     if(col.id==='serial') val = idx+1;
-                    else if(col.id==='description') val = <div className="py-2"><p className="font-bold text-gray-900 text-base">{item.product_name || item.product}</p><p className="text-xs text-gray-400 mt-1">{item.hsn_sac_code ? `HSN: ${item.hsn_sac_code}` : ''}</p></div>;
+                    else if(col.id==='description') val = <div className="py-1"><p className="font-bold text-gray-900 text-base">{item.product_name || item.product}</p><p className="text-xs text-gray-400 mt-0.5">{item.hsn_sac_code ? `HSN: ${item.hsn_sac_code}` : ''}</p></div>;
                     else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-3 py-1 rounded-full">{item.quantity}</span>;
                     else if(col.id==='price') val = `₹${parseFloat(item.price||0).toLocaleString('en-IN')}`;
                     else if(col.id==='tax') val = `${item.tax||0}%`;
                     else if(col.id==='amount') val = <span className="font-bold">₹${(item.quantity * item.price).toLocaleString('en-IN')}</span>;
                     else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                    return <td key={col.id} className="px-6 py-4 align-middle text-gray-800">{val}</td>;
+                    return <td key={col.id} className="px-6 py-1.5 align-middle text-gray-800">{val}</td>;
                   })}
                 </tr>
               ))}
@@ -132,6 +132,10 @@ const GenzTemplate = forwardRef(({
                )}
             </div>
           </div>
+        </div>
+        
+        <div className="mt-8 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
+          This is a computer generated digital invoice and does not require a signature.
         </div>
       </div>
       

@@ -97,7 +97,7 @@ const ProfessionalTemplate = forwardRef(({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {items.map((item, idx) => (
-            <tr key={idx} className="h-12 hover:bg-gray-50 transition-colors">
+            <tr key={idx} className="h-auto hover:bg-gray-50 transition-colors">
               {visibleColumns.map(col => {
                 let val = '';
                 if(col.id==='serial') val = idx+1;
@@ -107,7 +107,7 @@ const ProfessionalTemplate = forwardRef(({
                 else if(col.id==='tax') val = `${item.tax||0}%`;
                 else if(col.id==='amount') val = `₹${(item.quantity * item.price).toFixed(2)}`;
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="px-2 font-medium text-gray-800">{val}</td>;
+                return <td key={col.id} className="px-2 py-1.5 font-medium text-gray-800">{val}</td>;
               })}
             </tr>
           ))}
@@ -166,6 +166,10 @@ const ProfessionalTemplate = forwardRef(({
             </div>
           )}
         </div>
+      </div>
+      
+      <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-500">
+        This is a computer generated digital invoice and does not require a signature.
       </div>
     </div>
   );

@@ -77,7 +77,7 @@ const BillShipTemplate = forwardRef(({
 
       <table className="w-full text-center mb-6">
         <thead>
-          <tr className="border-y border-gray-400 bg-gray-50 h-10">
+          <tr className="border-y border-gray-400 bg-gray-50 h-8">
             {visibleColumns.map(col => (
               <th key={col.id} className="px-2 text-xs font-bold uppercase tracking-widest border-r border-gray-300 last:border-0 text-gray-600">{col.label}</th>
             ))}
@@ -95,7 +95,7 @@ const BillShipTemplate = forwardRef(({
               else if(col.id==='tax') val = `${item.tax||0}%`;
               else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
               else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-              return <td key={col.id} className="px-2 border-r border-gray-200 last:border-0 align-middle py-1">{val}</td>;
+              return <td key={col.id} className="px-2 border-r border-gray-200 last:border-0 align-middle py-0.5">{val}</td>;
             })}
             </tr>
           ))}
@@ -160,6 +160,10 @@ const BillShipTemplate = forwardRef(({
              </div>
            )}
         </div>
+      </div>
+      
+      <div className="mt-6 text-center text-[10px] text-gray-500 font-medium">
+        This is a computer generated digital invoice and does not require a signature.
       </div>
     </div>
   );

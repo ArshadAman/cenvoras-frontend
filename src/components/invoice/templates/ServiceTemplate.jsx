@@ -79,7 +79,7 @@ const ServiceTemplate = forwardRef(({
         <thead>
           <tr className="border-y-2 border-gray-900 font-bold bg-white">
             {visibleColumns.map(col => (
-              <th key={col.id} className="py-2 text-sm text-gray-900">{col.label}</th>
+              <th key={col.id} className="py-1 text-sm text-gray-900">{col.label}</th>
             ))}
           </tr>
         </thead>
@@ -95,7 +95,7 @@ const ServiceTemplate = forwardRef(({
                 else if(col.id==='tax') val = `${item.tax||0}%`;
                 else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="py-3 text-sm align-top">{val}</td>;
+                return <td key={col.id} className="py-1 text-sm align-middle">{val}</td>;
               })}
             </tr>
           ))}
@@ -152,6 +152,10 @@ const ServiceTemplate = forwardRef(({
            </ol>
          </div>
       )}
+      
+      <div className="w-full text-center mt-6 text-[10px] text-gray-500 font-medium">
+        This is a computer generated digital invoice and does not require a signature.
+      </div>
     </div>
   );
 });

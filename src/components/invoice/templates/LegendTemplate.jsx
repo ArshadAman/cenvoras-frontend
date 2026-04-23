@@ -32,7 +32,7 @@ const LegendTemplate = forwardRef(({
       style={{
         width: '210mm', minHeight: '297mm', padding: '10mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#000000',
-        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 9}px`,
+        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left',
       }}
     >
@@ -103,11 +103,11 @@ const LegendTemplate = forwardRef(({
                 else if(col.id==='tax') val = `${item.tax||0}%`;
                 else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="p-2 border-r border-gray-200">{val}</td>;
+                return <td key={col.id} className="py-1 px-2 border-r border-gray-200">{val}</td>;
               })}
               </tr>
             ))}
-            <tr className="font-bold h-10 align-middle">
+            <tr className="font-bold h-8 align-middle">
               <td colSpan={visibleColumns.length - 2} className="text-left px-2 border-r border-gray-200">
                 Total items: {items.length}
               </td>
@@ -170,7 +170,9 @@ const LegendTemplate = forwardRef(({
              )}
           </div>
         </div>
-
+      </div>
+      <div className="text-center w-full mt-3 font-medium text-[10px] text-gray-500">
+        This is a computer generated digital invoice and does not require a signature.
       </div>
     </div>
   );
