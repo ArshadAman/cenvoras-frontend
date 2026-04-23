@@ -47,6 +47,7 @@ import DebitNoteList from './pages/DebitNoteList'
 import ProfitLossStatement from './pages/reports/ProfitLossStatement'
 import BalanceSheet from './pages/reports/BalanceSheet'
 import BankReconciliation from './pages/financial/BankReconciliation'
+import ManualJournal from './pages/financial/ManualJournal'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -213,6 +214,10 @@ function App() {
         <Route
           path="/bank-reconciliation"
           element={isAuthenticated ? <BankReconciliation /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/ledger/manual-journal"
+          element={isAuthenticated ? <ManualJournal /> : <Navigate to="/" replace />}
         />
         <Route
           path="/warranty"
