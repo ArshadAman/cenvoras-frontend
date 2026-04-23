@@ -149,7 +149,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [templates, setTemplates] = useState([]);
   const [activeTemplateId, setActiveTemplateId] = useState(null);
   const [currentTemplate, setCurrentTemplate] = useState(defaultInvoiceTemplate);
-  const [activeTab, setActiveTab] = useState('branding');
+  const [activeTab, setActiveTab] = useState('layout');
   const [previewScale, setPreviewScale] = useState(0.6);
   const [hasChanges, setHasChanges] = useState(false);
   const [showTemplateList, setShowTemplateList] = useState(false);

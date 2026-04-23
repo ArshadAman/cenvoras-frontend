@@ -221,7 +221,17 @@ export const getInvoiceTemplates = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Auto-inject missing templates from presets (to handle app updates)
+      const existingIds = new Set(parsed.map(t => t.id));
+      const missingPresets = templatePresets.filter(p => !existingIds.has(p.id));
+      
+      if (missingPresets.length > 0) {
+        const merged = [...parsed, ...missingPresets];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      }
+      return parsed;
     }
     // Return default presets if nothing stored
     return templatePresets;
