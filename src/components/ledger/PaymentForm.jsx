@@ -203,7 +203,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
           <div>
             <label className={labelClass}>Payment Amount *</label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+              <span className="absolute left-3 top-2.5 text-gray-500">₹</span>
               <Field
                 id="amount"
                 name="amount"

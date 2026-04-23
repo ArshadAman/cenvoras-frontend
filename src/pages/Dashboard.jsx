@@ -269,12 +269,6 @@ export default function Dashboard({ onLogout }) {
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-            >
-              <PlusIcon className="w-4 h-4"/> New Sale
-            </button>
-            <button 
-              onClick={() => handleQuickAction('sale')} 
               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
             >
               <PlusIcon className="w-4 h-4"/> Record Sales
