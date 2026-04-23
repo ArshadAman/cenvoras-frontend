@@ -179,8 +179,8 @@ export default function PulseSection({ data, isLoading }) {
     },
     {
       label: 'Cash / Bank',
-      value: formatCurrency((pulse.cash_in_hand || 0) + (pulse.bank_collections || 0)),
-      subtitle: 'Net liquid balance (all-time, adjusted by purchase payments)',
+      value: formatCurrency(pulse.cash_in_hand || 0),
+      subtitle: `Total: ${formatCurrency(pulse.total_liquid_balance || 0)} | Bank/UPI Today: ${formatCurrency(pulse.bank_collections || 0)}`,
       icon: BanknotesIcon,
       color: 'green',
     },
