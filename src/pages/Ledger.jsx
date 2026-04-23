@@ -112,7 +112,13 @@ const Ledger = () => {
              <p className="text-gray-400 text-sm">Track client payments, debits, and account balances.</p>
            </div>
            
-           <div className="flex gap-3">
+           <div className="flex flex-wrap gap-3">
+             <Link to="/ledger/manual-journal"
+               className="btn-secondary text-sm py-2 px-4 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 text-indigo-300 flex items-center gap-2"
+             >
+               <PlusIcon className="h-4 w-4" />
+               <span>Manual Journal Entry</span>
+             </Link>
              <button className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm flex items-center gap-2">
                <DocumentArrowUpIcon className="h-4 w-4" />
                <span>Export CSV</span>

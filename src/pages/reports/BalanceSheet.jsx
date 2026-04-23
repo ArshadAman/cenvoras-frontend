@@ -207,11 +207,16 @@ export default function BalanceSheet() {
               <div className={`text-lg font-bold ${isBalanced ? "text-emerald-400" : "text-rose-400"}`}>
                 {isBalanced ? "✓ Balanced" : "⚠ Unbalanced"}
               </div>
-              <div className="text-sm text-gray-400 mt-0.5">
+              <div className="text-sm text-gray-400 mt-0.5 mb-2">
                 {isBalanced
                   ? "Assets equal Liabilities + Equity. Your books are in order."
                   : `Difference of ₹${fmt(diff)} detected. Review your ledger entries for missing transactions.`}
               </div>
+              {!isBalanced && (
+                <Link to="/ledger/manual-journal" className="inline-block px-4 py-1.5 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-semibold rounded-lg border border-rose-500/30 transition-colors">
+                  Create Adjusting Journal Entry
+                </Link>
+              )}
             </div>
             {/* Mini Equation */}
             <div className="flex items-center gap-3 text-center shrink-0 bg-white/5 rounded-xl px-5 py-3 border border-white/10">
