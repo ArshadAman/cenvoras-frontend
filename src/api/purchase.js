@@ -32,9 +32,10 @@ export const updatePurchaseBill = (id, data) =>
 export const deletePurchaseBill = id =>
   api.delete(`/billing/purchase-bills/${id}/edit/`).then(res => res.data);
 
-export const uploadPurchaseCsv = formData =>
+export const uploadPurchaseCsv = (formData, options = {}) =>
   api.post("/billing/upload-purchase-bills-csv/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 
 // Product API endpoints for purchase form

@@ -3,22 +3,26 @@ import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadSalesCsv } from "../../api/sales";
 import { toast } from "react-toastify";
+import InlineProgressBar from "../common/InlineProgressBar";
 
 export default function SalesUploadCsv({ isOpen, onClose }) {
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
-    mutationFn: uploadSalesCsv,
+    mutationFn: ({ formData, options }) => uploadSalesCsv(formData, options),
     onSuccess: (data) => {
       toast.success(data?.message || 'Sales CSV import queued in the background.');
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       onClose();
       setFile(null);
+      setUploadProgress(0);
     },
     onError: (error) => {
       toast.error(error.message || "Failed to upload CSV file");
+      setUploadProgress(0);
     },
   });
 
@@ -55,7 +59,17 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
 
     const formData = new FormData();
     formData.append('file', file);
-    uploadMutation.mutate(formData);
+    setUploadProgress(0);
+    uploadMutation.mutate({
+      formData,
+      options: {
+        onUploadProgress: (event) => {
+          const total = Number(event?.total || 0);
+          if (!total) return;
+          setUploadProgress((Number(event.loaded || 0) / total) * 100);
+        },
+      },
+    });
   };
 
   const downloadTemplate = () => {
@@ -204,6 +218,12 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
         </div>
 
         {/* Action Buttons */}
+        {uploadMutation.isPending && uploadProgress > 0 && (
+          <div className="mt-4">
+            <InlineProgressBar value={uploadProgress} label="Uploading sales CSV" />
+          </div>
+        )}
+
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
@@ -213,10 +233,10 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!file || uploadMutation.isLoading}
+            disabled={!file || uploadMutation.isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {uploadMutation.isLoading ? "Uploading..." : "Upload CSV"}
+            {uploadMutation.isPending ? "Uploading..." : "Upload CSV"}
           </button>
         </div>
       </div>

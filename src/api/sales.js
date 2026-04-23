@@ -30,9 +30,10 @@ export const deleteSalesInvoice = id =>
       throw new Error(message);
     });
 
-export const uploadSalesCsv = formData =>
+export const uploadSalesCsv = (formData, options = {}) =>
   api.post("/billing/upload-sales-invoices-csv/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 
 export const exportSalesInvoicesCsv = params =>

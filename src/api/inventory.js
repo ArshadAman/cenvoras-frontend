@@ -56,11 +56,12 @@ export const bulkDeleteProducts = (ids) =>
 export const downloadProductCsvTemplate = () =>
   api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);
 
-export const bulkUploadProductsCsv = (file) => {
+export const bulkUploadProductsCsv = (file, options = {}) => {
   const formData = new FormData();
   formData.append('file', file);
   return api.post('/inventory/products/bulk-upload/csv/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 };
 

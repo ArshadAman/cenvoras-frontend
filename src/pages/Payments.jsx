@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useLoadingPolicy } from '../hooks/useLoadingPolicy';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -549,13 +550,41 @@ export default function Payments({ onLogout }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['payments'] });
+      const previousPayments = queryClient.getQueryData(['payments']);
+
+      queryClient.setQueryData(['payments'], (old) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          return old.filter((payment) => payment.id !== id);
+        }
+
+        if (Array.isArray(old.results)) {
+          return {
+            ...old,
+            results: old.results.filter((payment) => payment.id !== id),
+            count: Math.max(Number(old.count || 0) - 1, 0),
+          };
+        }
+
+        return old;
+      });
+
+      setIsDeleteModalOpen(false);
+      setPaymentToDelete(null);
+      return { previousPayments };
+    },
     onSuccess: async () => {
       await invalidatePaymentRelatedQueries();
       toast.success("Payment deleted successfully");
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
     },
-    onError: (err) => {
+    onError: (err, _id, context) => {
+      if (context?.previousPayments) {
+        queryClient.setQueryData(['payments'], context.previousPayments);
+      }
       toast.error(err.response?.data?.detail || "Failed to delete payment");
     }
   });
@@ -584,6 +613,7 @@ export default function Payments({ onLogout }) {
     queryFn: () => api.get('/billing/customers/').then(res => res.data)
   });
   const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
+  const loadingPolicy = useLoadingPolicy(isLoading);
   
   // Filter and search payments
   const filteredPayments = (payments || []).filter(p => {
@@ -720,7 +750,7 @@ export default function Payments({ onLogout }) {
         </div>
         
         {/* Payments List */}
-        {isLoading ? (
+        {loadingPolicy.visible ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array(6).fill(0).map((_, i) => (
               <div key={i} className="bento-card !p-4 animate-pulse">

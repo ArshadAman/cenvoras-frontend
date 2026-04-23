@@ -15,6 +15,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { getAccounts } from '../../api/ledger';
 import { subDays } from 'date-fns';
+import { useLoadingPolicy } from '../../hooks/useLoadingPolicy';
+import TableSkeleton from '../common/TableSkeleton';
 
 const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, customerFilter = '' }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,6 +91,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const ledgerEntries = ledgerData?.entries || [];
   const totalCount = ledgerData?.count || 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const loadingPolicy = useLoadingPolicy(isLoading);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -154,10 +157,16 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
     }
   };
 
-  if (isLoading) {
+  if (loadingPolicy.visible) {
     return (
-      <div className="flex justify-center items-center h-64 bento-card">
-        <Loader />
+      <div className="bento-card p-4">
+        {loadingPolicy.shouldShowProgress ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader />
+          </div>
+        ) : (
+          <TableSkeleton rows={8} columns={7} />
+        )}
       </div>
     );
   }
