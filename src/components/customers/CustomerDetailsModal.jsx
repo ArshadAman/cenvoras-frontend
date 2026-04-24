@@ -19,7 +19,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Customer Details - ${customerDetails?.name || customer?.id}`,
     pageStyle: `
       @page {

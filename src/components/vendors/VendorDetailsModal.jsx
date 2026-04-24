@@ -19,7 +19,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Vendor Details - ${vendorDetails?.name || vendor?.id}`,
     pageStyle: `
       @page {

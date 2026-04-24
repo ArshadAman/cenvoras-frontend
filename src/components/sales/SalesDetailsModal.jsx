@@ -66,7 +66,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `${isQuotation ? "Performa Invoice" : "Tax Invoice"} - ${invoiceDetails?.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {

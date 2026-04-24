@@ -19,8 +19,8 @@ export default function BarcodeGenerator() {
     const activeProduct = products?.find(p => p.id === selectedProduct);
 
     const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: `Barcodes-${activeProduct?.name || 'Labels'}`,
+        contentRef: printRef,
+        documentTitle: `Barcodes_${format(new Date(), 'yyyy-MM-dd')}`,
     });
 
     return (

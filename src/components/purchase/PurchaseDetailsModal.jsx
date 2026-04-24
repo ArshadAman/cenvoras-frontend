@@ -20,7 +20,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Purchase Bill - ${bill?.bill_number || billId}`,
     pageStyle: `
       @page {
