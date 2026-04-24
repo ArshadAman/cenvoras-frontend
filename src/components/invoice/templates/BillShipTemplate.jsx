@@ -24,6 +24,9 @@ const BillShipTemplate = forwardRef(({
   const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
   const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
 
+  const planCode = businessInfo.plan_code || 'free';
+  const showWatermarkFooter = planCode !== 'business';
+
   const primaryColor = colors.primary || '#facc15'; // yellow theme border
   const visibleColumns = columns.filter(col => col.show !== false);
 
@@ -161,10 +164,16 @@ const BillShipTemplate = forwardRef(({
            )}
         </div>
       </div>
-      
       <div className="mt-6 text-center text-[10px] text-gray-500 font-medium">
         This is a computer generated digital invoice and does not require a signature.
       </div>
+      
+      {showWatermarkFooter && (
+        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+          Made with Cenvora: built for Indian Businesses<br />
+          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+        </div>
+      )}
     </div>
   );
 });
