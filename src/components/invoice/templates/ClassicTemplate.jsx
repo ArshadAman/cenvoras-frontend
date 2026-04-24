@@ -546,6 +546,7 @@ const InvoicePreview = forwardRef(({
           }}
         >
           {content.footerNote}
+        </div>
       )}
       
       <div className="mt-4 pt-2 text-center text-[10px] text-gray-500 font-medium">

@@ -325,14 +325,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="shadow-2xl">
-                <InvoicePreview
-                  ref={printRef}
-                  invoice={invoiceDetails}
-                  template={previewTemplate}
-                  businessInfo={businessInfo}
-                  invoiceSettings={invoiceSettings || {}}
-                />
+              <div className="shadow-2xl" ref={printRef}>
+                <div className="w-full h-full bg-white">
+                  <InvoicePreview
+                    invoice={invoiceDetails}
+                    template={previewTemplate}
+                    businessInfo={businessInfo}
+                    invoiceSettings={invoiceSettings || {}}
+                  />
+                </div>
               </div>
             ) : (
               <div className="text-center py-20 text-gray-400">
