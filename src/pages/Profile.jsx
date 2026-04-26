@@ -893,7 +893,7 @@ const Profile = ({ onLogout }) => {
                               >
                                 {availablePlanOptions.map((planOption) => (
                                   <option key={planOption.code} value={planOption.code}>
-                                    {planOption.name} {planOption.code !== 'free' ? `(INR ${formatINR(planOption.monthlyPrice)}/month)` : '(INR 0)'}
+                                    {planOption.name} {planOption.code !== 'free' && planOption.code !== 'starter' ? `(INR ${formatINR(planOption.monthlyPrice)}/month)` : '(INR 0)'}
                                   </option>
                                 ))}
                               </select>
@@ -926,14 +926,41 @@ const Profile = ({ onLogout }) => {
                             )}
 
                             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                              <p className="text-sm text-white/85">
-                                {quoteLoading ? 'Loading quote...' : (quote?.summary || 'Choose a plan to see exact billing behavior.')}
-                              </p>
-                              {!!quote?.duration_days && (
-                                <p className="mt-2 text-xs text-white/55">Adds exactly {quote.duration_days} days.</p>
-                              )}
-                              {!!quote?.effective_at && (
-                                <p className="mt-2 text-xs text-white/55">Effective on {new Date(quote.effective_at).toLocaleDateString()}</p>
+                              {quoteLoading ? (
+                                <p className="text-sm text-white/85">Loading quote...</p>
+                              ) : quote ? (
+                                <div className="space-y-3">
+                                  <p className="text-sm font-medium text-white/90">{quote.summary}</p>
+                                  
+                                  {Number(quote.credit || 0) > 0 && (
+                                    <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
+                                      <div className="flex justify-between text-xs text-white/60">
+                                        <span>New Plan ({quote.billing_cycle})</span>
+                                        <span>INR {formatINR(quote.new_plan_full_price)}</span>
+                                      </div>
+                                      <div className="flex justify-between text-xs text-emerald-400/90 font-medium">
+                                        <span>Credit for {quote.days_remaining} unused day(s)</span>
+                                        <span>- INR {formatINR(quote.credit)}</span>
+                                      </div>
+                                      <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-bold text-cyan-300">
+                                        <span>Amount to Pay</span>
+                                        <span>INR {formatINR(quote.amount)}</span>
+                                      </div>
+                                      <p className="mt-2 text-[10px] italic text-white/40">
+                                        Based on {quote.days_used} day(s) used at INR {formatINR(quote.current_daily_rate)}/day.
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {!Number(quote.credit || 0) && !!quote.effective_at && (
+                                    <p className="mt-2 text-xs text-white/55">
+                                      Effective on {new Date(quote.effective_at).toLocaleDateString()}
+                                      {quote.action === 'renewal' && " (appends to current period)"}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-white/85">Choose a plan to see exact billing behavior.</p>
                               )}
                             </div>
 
