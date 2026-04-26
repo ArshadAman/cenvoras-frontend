@@ -946,7 +946,7 @@ const Profile = ({ onLogout }) => {
                                     )}
 
                                     <div className="flex justify-between text-xs text-white/80 font-medium border-t border-white/5 pt-1">
-                                      <span>Discounted Price</span>
+                                      <span>Discounted Plan Price</span>
                                       <span>INR {formatINR(quote.new_plan_full_price)}</span>
                                     </div>
 
@@ -958,7 +958,7 @@ const Profile = ({ onLogout }) => {
                                     )}
                                     
                                     <div className="flex justify-between border-t border-white/10 pt-2 text-sm font-bold text-cyan-300">
-                                      <span>Final Price to Pay</span>
+                                      <span>Total Final Payment</span>
                                       <span>INR {formatINR(quote.amount)}</span>
                                     </div>
                                     
