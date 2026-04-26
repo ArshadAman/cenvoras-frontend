@@ -930,27 +930,44 @@ const Profile = ({ onLogout }) => {
                                 <p className="text-sm text-white/85">Loading quote...</p>
                               ) : quote ? (
                                 <div className="space-y-3">
-                                  <p className="text-sm font-medium text-white/90">{quote.summary}</p>
+                                  {!!quote.summary && <p className="text-sm font-medium text-white/90">{quote.summary}</p>}
                                   
-                                  {Number(quote.credit || 0) > 0 && (
-                                    <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
-                                      <div className="flex justify-between text-xs text-white/60">
-                                        <span>New Plan ({quote.billing_cycle})</span>
-                                        <span>INR {formatINR(quote.new_plan_full_price)}</span>
+                                  <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
+                                    <div className="flex justify-between text-xs text-white/60">
+                                      <span>Base Price ({selectedBillingCycle})</span>
+                                      <span>INR {formatINR(quote.base_price_before_discount)}</span>
+                                    </div>
+                                    
+                                    {Number(quote.base_price_before_discount) > Number(quote.new_plan_full_price) && (
+                                      <div className="flex justify-between text-xs text-emerald-400/80">
+                                        <span>Plan Discount ({selectedBillingCycle})</span>
+                                        <span>- INR {formatINR(Number(quote.base_price_before_discount) - Number(quote.new_plan_full_price))}</span>
                                       </div>
-                                      <div className="flex justify-between text-xs text-emerald-400/90 font-medium">
-                                        <span>Credit for {quote.days_remaining} unused day(s)</span>
+                                    )}
+
+                                    <div className="flex justify-between text-xs text-white/80 font-medium border-t border-white/5 pt-1">
+                                      <span>New Plan Total</span>
+                                      <span>INR {formatINR(quote.new_plan_full_price)}</span>
+                                    </div>
+
+                                    {Number(quote.credit || 0) > 0 && (
+                                      <div className="flex justify-between text-xs text-cyan-400/90 italic">
+                                        <span>Unused credit ({quote.days_remaining} days)</span>
                                         <span>- INR {formatINR(quote.credit)}</span>
                                       </div>
-                                      <div className="flex justify-between border-t border-white/5 pt-2 text-sm font-bold text-cyan-300">
-                                        <span>Amount to Pay</span>
-                                        <span>INR {formatINR(quote.amount)}</span>
-                                      </div>
-                                      <p className="mt-2 text-[10px] italic text-white/40">
-                                        Based on {quote.days_used} day(s) used at INR {formatINR(quote.current_daily_rate)}/day.
-                                      </p>
+                                    )}
+                                    
+                                    <div className="flex justify-between border-t border-white/10 pt-2 text-sm font-bold text-cyan-300">
+                                      <span>Total Amount to Pay</span>
+                                      <span>INR {formatINR(quote.amount)}</span>
                                     </div>
-                                  )}
+                                    
+                                    {Number(quote.credit || 0) > 0 && (
+                                      <p className="mt-2 text-[10px] italic text-white/40">
+                                        Credit based on {quote.days_used} day(s) used at INR {formatINR(quote.current_daily_rate)}/day.
+                                      </p>
+                                    )}
+                                  </div>
 
                                   {!Number(quote.credit || 0) && !!quote.effective_at && (
                                     <p className="mt-2 text-xs text-white/55">

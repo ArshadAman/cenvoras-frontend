@@ -179,7 +179,7 @@ export default function LandingPage() {
       code: 'business',
       name: 'Business',
       monthlyPrice: 1999,
-      originalMonthlyPrice: 2599,
+      originalMonthlyPrice: 1999,
       trialDays: 14,
       cta: 'Start 14-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
