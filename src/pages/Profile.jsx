@@ -56,9 +56,21 @@ const loadCashfreeSdk = () => {
 
 const BILLING_CYCLE_OPTIONS = [
   { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly', discount: '15% off' },
+  { value: 'quarterly', label: 'Quarterly', discount: '15% off, 3 months' },
   { value: 'yearly', label: 'Yearly', discount: '30% off' },
 ];
+
+const CYCLE_MULTIPLIERS = {
+  monthly: 1,
+  quarterly: 3,
+  yearly: 12,
+};
+
+const CYCLE_DISCOUNTS = {
+  monthly: 0,
+  quarterly: 0.15,
+  yearly: 0.30,
+};
 
 const formatINR = (value) => {
   const amount = Number(value || 0);
@@ -66,6 +78,26 @@ const formatINR = (value) => {
     minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     maximumFractionDigits: 2,
   });
+};
+
+const cyclePriceForPlan = (plan, cycle) => {
+  const rawPrice = Number(plan?.[`${cycle}Price`] || 0);
+  if (rawPrice > 0 || cycle === 'monthly') {
+    return rawPrice;
+  }
+
+  const monthlyPrice = Number(plan?.monthlyPrice || 0);
+  return monthlyPrice * (CYCLE_MULTIPLIERS[cycle] || 1) * (1 - (CYCLE_DISCOUNTS[cycle] || 0));
+};
+
+const originalCyclePriceForPlan = (plan, cycle) => {
+  const rawPrice = Number(plan?.[`original${cycle.charAt(0).toUpperCase()}${cycle.slice(1)}Price`] || 0);
+  if (rawPrice > 0 || cycle === 'monthly') {
+    return rawPrice;
+  }
+
+  const originalMonthly = Number(plan?.originalMonthlyPrice || plan?.monthlyPrice || 0);
+  return originalMonthly * (CYCLE_MULTIPLIERS[cycle] || 1);
 };
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
@@ -688,12 +720,8 @@ const Profile = ({ onLogout }) => {
     .sort((left, right) => planRank(left.code) - planRank(right.code));
   const selectedPlanOption = availablePlanOptions.find((plan) => plan.code === selectedTargetPlanCode);
   const selectedPlanIsPaid = selectedTargetPlanCode !== 'free' && selectedTargetPlanCode !== 'starter';
-  const selectedCyclePrice = selectedPlanOption
-    ? selectedPlanOption[`${selectedBillingCycle}Price`]
-    : null;
-  const selectedCycleOriginalPrice = selectedPlanOption
-    ? selectedPlanOption[`original${selectedBillingCycle.charAt(0).toUpperCase()}${selectedBillingCycle.slice(1)}Price`]
-    : null;
+  const selectedCyclePrice = selectedPlanOption ? cyclePriceForPlan(selectedPlanOption, selectedBillingCycle) : null;
+  const selectedCycleOriginalPrice = selectedPlanOption ? originalCyclePriceForPlan(selectedPlanOption, selectedBillingCycle) : null;
   const selectedCycleHasDiscount = Number(selectedCycleOriginalPrice || 0) > Number(selectedCyclePrice || 0);
 
   let planActionLabel = 'Apply Plan Change';

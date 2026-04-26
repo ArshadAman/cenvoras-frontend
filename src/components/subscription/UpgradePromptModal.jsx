@@ -7,9 +7,21 @@ import { createPlanPaymentOrder, confirmPlanPayment, getPlanCatalog } from '../.
 
 const BILLING_CYCLES = [
   { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly', discount: '15% off' },
+  { value: 'quarterly', label: 'Quarterly', discount: '15% off, 3 months' },
   { value: 'yearly', label: 'Yearly', discount: '30% off' },
 ];
+
+const CYCLE_MULTIPLIERS = {
+  monthly: 1,
+  quarterly: 3,
+  yearly: 12,
+};
+
+const CYCLE_DISCOUNTS = {
+  monthly: 0,
+  quarterly: 0.15,
+  yearly: 0.30,
+};
 
 const normalizePlanCode = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
@@ -24,6 +36,26 @@ const formatAmount = (value) => {
     minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     maximumFractionDigits: 2,
   });
+};
+
+const cyclePriceForPlan = (plan, cycle) => {
+  const rawPrice = Number(plan?.[`${cycle}_price`] || 0);
+  if (rawPrice > 0 || cycle === 'monthly') {
+    return rawPrice;
+  }
+
+  const monthlyPrice = Number(plan?.monthly_price || 0);
+  return monthlyPrice * (CYCLE_MULTIPLIERS[cycle] || 1) * (1 - (CYCLE_DISCOUNTS[cycle] || 0));
+};
+
+const originalCyclePriceForPlan = (plan, cycle) => {
+  const rawPrice = Number(plan?.[`original_${cycle}_price`] || 0);
+  if (rawPrice > 0 || cycle === 'monthly') {
+    return rawPrice;
+  }
+
+  const originalMonthly = Number(plan?.original_monthly_price || plan?.monthly_price || 0);
+  return originalMonthly * (CYCLE_MULTIPLIERS[cycle] || 1);
 };
 
 const loadCashfreeSdk = () => {
@@ -78,8 +110,8 @@ export default function UpgradePromptModal({
   const targetPlan = (planCatalogData?.data || []).find(
     (plan) => String(plan.code || '').toLowerCase() === resolvedTargetPlanCode
   );
-  const cyclePrice = targetPlan?.[`${billingCycle}_price`];
-  const originalCyclePrice = targetPlan?.[`original_${billingCycle}_price`];
+  const cyclePrice = cyclePriceForPlan(targetPlan, billingCycle);
+  const originalCyclePrice = originalCyclePriceForPlan(targetPlan, billingCycle);
   const hasOriginalPrice = Number(originalCyclePrice || 0) > Number(cyclePrice || 0);
 
   React.useEffect(() => {

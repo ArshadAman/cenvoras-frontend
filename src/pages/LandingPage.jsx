@@ -119,19 +119,38 @@ const ScreenshotShowcase = () => {
   );
 };
 
+const BILLING_CYCLES = [
+  { code: 'monthly', label: 'Monthly', multiplier: 1, discount: 0, duration: 'month', badge: 'Pay monthly' },
+  { code: 'quarterly', label: 'Quarterly', multiplier: 3, discount: 0.15, duration: '3 months', badge: '15% off' },
+  { code: 'yearly', label: 'Yearly', multiplier: 12, discount: 0.30, duration: 'year', badge: '30% off' },
+];
+
+const formatINR = (value) => {
+  const amount = Number(value || 0);
+  return amount.toLocaleString('en-IN', {
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const getCyclePrice = (monthlyPrice, cycle) => monthlyPrice * cycle.multiplier * (1 - cycle.discount);
+const getOriginalCyclePrice = (originalMonthlyPrice, cycle) => originalMonthlyPrice * cycle.multiplier;
+
 export default function LandingPage() {
   useScrollAnimation();
+  const [billingCycle, setBillingCycle] = useState('monthly');
+  const selectedCycle = BILLING_CYCLES.find((cycle) => cycle.code === billingCycle) || BILLING_CYCLES[0];
 
   const planCards = [
     {
       code: 'starter',
       name: 'Starter',
-      price: '₹899',
-      period: '/mo',
-      trialDays: 14,
-      cta: 'Start 14-Day Trial',
+      monthlyPrice: 0,
+      originalMonthlyPrice: 0,
+      cta: 'Get Started Free',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
       description: 'For small teams getting started with billing and customer work',
+      billingText: 'Free forever',
       features: [
         'Sales invoices',
         'Customer management',
@@ -142,8 +161,8 @@ export default function LandingPage() {
     {
       code: 'pro',
       name: 'Pro',
-      price: '₹1,899',
-      period: '/mo',
+      monthlyPrice: 1599,
+      originalMonthlyPrice: 1899,
       trialDays: 14,
       cta: 'Start 14-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10',
@@ -159,8 +178,8 @@ export default function LandingPage() {
     {
       code: 'business',
       name: 'Business',
-      price: '₹2,499',
-      period: '/mo',
+      monthlyPrice: 1999,
+      originalMonthlyPrice: 2599,
       trialDays: 14,
       cta: 'Start 14-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
@@ -319,9 +338,43 @@ export default function LandingPage() {
         <div className="max-w-[980px] mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold mb-4 scroll-animate text-white">Simple pricing.</h2>
           <p className="text-gray-500 mb-16 scroll-animate">Choose the plan that fits your business.</p>
+
+          <div className="mb-10 grid gap-3 text-left sm:grid-cols-3">
+            {BILLING_CYCLES.map((cycle) => {
+              const isActive = selectedCycle.code === cycle.code;
+              return (
+                <button
+                  key={cycle.code}
+                  type="button"
+                  onClick={() => setBillingCycle(cycle.code)}
+                  className={`rounded-2xl border p-4 transition-colors ${
+                    isActive
+                      ? 'border-cyan-400/50 bg-cyan-400/10 text-white'
+                      : 'border-white/10 bg-white/[0.03] text-gray-400 hover:border-white/25 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold">{cycle.label}</span>
+                    <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-cyan-400 text-black' : 'bg-white/10 text-gray-300'}`}>
+                      {cycle.badge}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {cycle.code === 'monthly' ? '30-day billing' : `${cycle.duration} billing`}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
           
           <div className="grid md:grid-cols-3 gap-6 text-left">
-             {planCards.map((plan) => (
+             {planCards.map((plan) => {
+               const isFree = plan.monthlyPrice === 0;
+               const amount = isFree ? 0 : getCyclePrice(plan.monthlyPrice, selectedCycle);
+               const originalAmount = isFree ? 0 : getOriginalCyclePrice(plan.originalMonthlyPrice, selectedCycle);
+               const showOriginal = originalAmount > amount;
+
+               return (
                <div
                  key={plan.code}
                  className={`p-8 bg-[#0a0a0a] rounded-3xl border scroll-animate transition-colors ${plan.code === 'pro' ? 'border-purple-500/30 shadow-2xl shadow-purple-900/20 relative overflow-hidden transform md:-translate-y-4 scale-105 z-10' : 'border-[#222] hover:border-gray-600'}`}
@@ -334,8 +387,17 @@ export default function LandingPage() {
                  ) : null}
                  <h3 className="text-xl font-semibold mb-2 text-white">{plan.name}</h3>
                  <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
-                 <p className="text-3xl font-bold mb-2 text-white">{plan.price}<span className="text-base font-normal text-gray-500">{plan.period}</span></p>
-                 <p className="mb-6 text-xs uppercase tracking-wider text-gray-500">Trial: {plan.trialDays} days</p>
+                 <div className="mb-2 flex items-end gap-2">
+                   <p className="text-3xl font-bold text-white">₹{formatINR(amount)}</p>
+                   <span className="pb-1 text-base font-normal text-gray-500">/{isFree ? 'forever' : selectedCycle.duration}</span>
+                 </div>
+                 {showOriginal ? (
+                   <p className="mb-2 text-sm text-gray-500">
+                     <span className="line-through">₹{formatINR(originalAmount)}</span>
+                     <span className="ml-2 text-emerald-300">{selectedCycle.discount ? `${Math.round(selectedCycle.discount * 100)}% off` : 'Discounted'}</span>
+                   </p>
+                 ) : null}
+                 <p className="mb-6 text-xs uppercase tracking-wider text-gray-500">{plan.billingText || `Trial: ${plan.trialDays} days`}</p>
                  <Link to="/signup" className={plan.ctaStyle}>
                      {plan.cta}
                  </Link>
@@ -345,7 +407,7 @@ export default function LandingPage() {
                      ))}
                  </ul>
              </div>
-             ))}
+             )})}
           </div>
 
         </div>
