@@ -121,7 +121,7 @@ export default function Layout({ children, onLogout }) {
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
   const pendingPlanName = entitlements.plan?.pending_plan_name || '';
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
-  const nextPlanCode = (entitlements.plan?.next_plan_code || '').toLowerCase();
+  const nextPlanCode = (entitlements.plan?.pending_plan_code || entitlements.plan?.next_plan_code || '').toLowerCase();
   const currentPeriodEnd = entitlements.plan?.current_period_end;
 
   const resolvePlanCode = (planNameOrCode) => {

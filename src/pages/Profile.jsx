@@ -54,6 +54,20 @@ const loadCashfreeSdk = () => {
   });
 };
 
+const BILLING_CYCLE_OPTIONS = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly', discount: '15% off' },
+  { value: 'yearly', label: 'Yearly', discount: '30% off' },
+];
+
+const formatINR = (value) => {
+  const amount = Number(value || 0);
+  return amount.toLocaleString('en-IN', {
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -235,6 +249,7 @@ const Profile = ({ onLogout }) => {
     dl_number: ''
   });
   const [selectedTargetPlanCode, setSelectedTargetPlanCode] = useState('free');
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState('monthly');
   const [isPlanActionLoading, setIsPlanActionLoading] = useState(false);
   const paymentWatchIntervalRef = useRef(null);
   const paymentWatchTimeoutRef = useRef(null);
@@ -297,7 +312,10 @@ const Profile = ({ onLogout }) => {
   useEffect(() => {
     const currentCode = String(subscriptionData?.data?.plan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
     setSelectedTargetPlanCode(currentCode === 'starter' ? 'free' : currentCode);
-  }, [subscriptionData?.data?.plan?.code, userProfile?.profile?.plan_code]);
+    const currentCycle = String(subscriptionData?.data?.plan?.current_billing_cycle || 'monthly').toLowerCase();
+    const validCycle = BILLING_CYCLE_OPTIONS.some((cycle) => cycle.value === currentCycle) ? currentCycle : 'monthly';
+    setSelectedBillingCycle(currentCode === 'free' || currentCode === 'starter' ? 'monthly' : validCycle);
+  }, [subscriptionData?.data?.plan?.code, subscriptionData?.data?.plan?.current_billing_cycle, userProfile?.profile?.plan_code]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -342,8 +360,8 @@ const Profile = ({ onLogout }) => {
   });
 
   const { data: planQuoteData, isFetching: quoteLoading } = useQuery({
-    queryKey: ['plan-change-quote', selectedTargetPlanCode],
-    queryFn: () => getPlanChangeQuote(selectedTargetPlanCode),
+    queryKey: ['plan-change-quote', selectedTargetPlanCode, selectedBillingCycle],
+    queryFn: () => getPlanChangeQuote(selectedTargetPlanCode, selectedBillingCycle),
     enabled: isAdmin && !!selectedTargetPlanCode,
     staleTime: 30_000,
   });
@@ -530,7 +548,10 @@ const Profile = ({ onLogout }) => {
             const isInvalidSession = code === 'payment_session_id_invalid' || message.includes('payment_session_id');
 
             if (allowRetry && isInvalidSession) {
-              const freshOrderRes = await createPlanPaymentOrder(selectedTargetPlanCode, { forceNewOrder: true });
+              const freshOrderRes = await createPlanPaymentOrder(selectedTargetPlanCode, {
+                billingCycle: selectedBillingCycle,
+                forceNewOrder: true,
+              });
               const freshOrder = freshOrderRes?.data || {};
               return openCashfreeCheckout(freshOrder, false);
             }
@@ -541,9 +562,9 @@ const Profile = ({ onLogout }) => {
           return order;
         };
 
-        const orderRes = await createPlanPaymentOrder(selectedTargetPlanCode);
+        const orderRes = await createPlanPaymentOrder(selectedTargetPlanCode, { billingCycle: selectedBillingCycle });
         const order = orderRes?.data || {};
-        const activeOrder = await openCashfreeCheckout(order, true);
+        const activeOrder = order.skip_checkout ? order : await openCashfreeCheckout(order, true);
 
         let confirmed = false;
         let lastStatus = '';
@@ -577,7 +598,7 @@ const Profile = ({ onLogout }) => {
           return;
         }
       } else {
-        const scheduleRes = await schedulePlanChange(selectedTargetPlanCode);
+        const scheduleRes = await schedulePlanChange(selectedTargetPlanCode, selectedBillingCycle);
         if (!scheduleRes?.success) {
           throw new Error('Unable to schedule plan change.');
         }
@@ -657,13 +678,27 @@ const Profile = ({ onLogout }) => {
       code: String(plan.code || '').toLowerCase(),
       name: plan.name,
       monthlyPrice: plan.monthly_price,
+      quarterlyPrice: plan.quarterly_price,
+      yearlyPrice: plan.yearly_price,
+      originalMonthlyPrice: plan.original_monthly_price,
+      originalQuarterlyPrice: plan.original_quarterly_price,
+      originalYearlyPrice: plan.original_yearly_price,
     }))
     .filter((plan) => planRank(plan.code) >= currentPlanRank)
     .sort((left, right) => planRank(left.code) - planRank(right.code));
+  const selectedPlanOption = availablePlanOptions.find((plan) => plan.code === selectedTargetPlanCode);
+  const selectedPlanIsPaid = selectedTargetPlanCode !== 'free' && selectedTargetPlanCode !== 'starter';
+  const selectedCyclePrice = selectedPlanOption
+    ? selectedPlanOption[`${selectedBillingCycle}Price`]
+    : null;
+  const selectedCycleOriginalPrice = selectedPlanOption
+    ? selectedPlanOption[`original${selectedBillingCycle.charAt(0).toUpperCase()}${selectedBillingCycle.slice(1)}Price`]
+    : null;
+  const selectedCycleHasDiscount = Number(selectedCycleOriginalPrice || 0) > Number(selectedCyclePrice || 0);
 
   let planActionLabel = 'Apply Plan Change';
   if (quote?.payment_required) {
-    planActionLabel = `Pay INR ${quote.amount} and Continue`;
+    planActionLabel = `Pay INR ${formatINR(quote.amount)} and Continue`;
   } else if (quote?.action === 'unsupported_paid_schedule') {
     planActionLabel = 'Downgrade Not Available';
   }
@@ -818,22 +853,57 @@ const Profile = ({ onLogout }) => {
                               <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Choose Plan</label>
                               <select
                                 value={selectedTargetPlanCode}
-                                onChange={(e) => setSelectedTargetPlanCode(e.target.value)}
+                                onChange={(e) => {
+                                  const nextPlanCode = e.target.value;
+                                  setSelectedTargetPlanCode(nextPlanCode);
+                                  if (nextPlanCode === 'free' || nextPlanCode === 'starter') {
+                                    setSelectedBillingCycle('monthly');
+                                  }
+                                }}
                                 className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
                                 disabled={isPlanActionLoading}
                               >
                                 {availablePlanOptions.map((planOption) => (
                                   <option key={planOption.code} value={planOption.code}>
-                                    {planOption.name} {planOption.code !== 'free' ? `(INR ${planOption.monthlyPrice}/month)` : ''}
+                                    {planOption.name} {planOption.code !== 'free' ? `(INR ${formatINR(planOption.monthlyPrice)}/month)` : '(INR 0)'}
                                   </option>
                                 ))}
                               </select>
                             </div>
 
+                            {selectedPlanIsPaid && (
+                              <div>
+                                <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Billing Cycle</label>
+                                <select
+                                  value={selectedBillingCycle}
+                                  onChange={(e) => setSelectedBillingCycle(e.target.value)}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
+                                  disabled={isPlanActionLoading}
+                                >
+                                  {BILLING_CYCLE_OPTIONS.map((cycle) => (
+                                    <option key={cycle.value} value={cycle.value}>
+                                      {cycle.label}{cycle.discount ? ` (${cycle.discount})` : ''}
+                                    </option>
+                                  ))}
+                                </select>
+                                {!!selectedCyclePrice && (
+                                  <p className="mt-2 text-xs text-white/60">
+                                    INR {formatINR(selectedCyclePrice)}
+                                    {selectedCycleHasDiscount && (
+                                      <span className="ml-2 line-through">INR {formatINR(selectedCycleOriginalPrice)}</span>
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
                             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                               <p className="text-sm text-white/85">
                                 {quoteLoading ? 'Loading quote...' : (quote?.summary || 'Choose a plan to see exact billing behavior.')}
                               </p>
+                              {!!quote?.duration_days && (
+                                <p className="mt-2 text-xs text-white/55">Adds exactly {quote.duration_days} days.</p>
+                              )}
                               {!!quote?.effective_at && (
                                 <p className="mt-2 text-xs text-white/55">Effective on {new Date(quote.effective_at).toLocaleDateString()}</p>
                               )}
