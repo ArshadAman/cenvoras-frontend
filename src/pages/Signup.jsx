@@ -5,6 +5,50 @@ import api from '../api/api.js';
 import Loader from '../components/Loader';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import Select from 'react-select';
+import { indianStates, citiesByState } from '../utils/indiaData';
+
+const customSelectStyles = {
+    control: (provided, state) => ({
+        ...provided,
+        backgroundColor: '#1e293b',
+        borderColor: state.isFocused ? '#06b6d4' : '#334155',
+        borderRadius: '0.75rem',
+        padding: '2px',
+        color: 'white',
+        boxShadow: state.isFocused ? '0 0 0 1px #06b6d4' : 'none',
+        '&:hover': {
+            borderColor: '#334155'
+        }
+    }),
+    menu: (provided) => ({
+        ...provided,
+        backgroundColor: '#1e293b',
+        border: '1px solid #334155',
+        borderRadius: '0.75rem',
+        zIndex: 50
+    }),
+    option: (provided, state) => ({
+        ...provided,
+        backgroundColor: state.isSelected ? '#06b6d4' : state.isFocused ? '#334155' : 'transparent',
+        color: 'white',
+        '&:active': {
+            backgroundColor: '#06b6d4'
+        }
+    }),
+    singleValue: (provided) => ({
+        ...provided,
+        color: 'white'
+    }),
+    input: (provided) => ({
+        ...provided,
+        color: 'white'
+    }),
+    placeholder: (provided) => ({
+        ...provided,
+        color: '#64748b'
+    })
+};
 
 const SignupSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Required'),
@@ -13,6 +57,8 @@ const SignupSchema = Yup.object().shape({
   phone: Yup.string().required('Required'),
   business_name: Yup.string().nullable(),
   gstin: Yup.string().nullable(),
+  state: Yup.string().nullable(),
+  city: Yup.string().nullable(),
   termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
 });
 
@@ -95,6 +141,8 @@ export default function Signup() {
                     phone: '', 
                     business_name: '', 
                     gstin: '',
+                    state: '',
+                    city: '',
                     otp: '',
                     termsAccepted: false
                 }}
@@ -110,6 +158,8 @@ export default function Signup() {
                                 phone: values.phone,
                                 business_name: values.business_name,
                                 gstin: values.gstin,
+                                state: values.state,
+                                city: values.city,
                             };
                             const response = await api.post('/users/signup/', payload);
                             if (response?.data?.otp_required) {
@@ -143,7 +193,7 @@ export default function Signup() {
                     setSubmitting(false);
                 }}
             >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, setFieldValue, values }) => (
                     <Form className="mt-8 space-y-5">
                         {signupMessage ? (
                             <div className="text-sm text-cyan-300">{signupMessage}</div>
@@ -226,6 +276,38 @@ export default function Signup() {
                                     className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                     placeholder="22AAAAA0000A1Z5"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">State</label>
+                                    <Select
+                                        options={indianStates}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                        placeholder="Select State"
+                                        styles={customSelectStyles}
+                                        onChange={(option) => {
+                                            setFieldValue('state', option.value);
+                                            setFieldValue('city', ''); // Reset city when state changes
+                                        }}
+                                    />
+                                    <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
+                                    <Select
+                                        options={(citiesByState[values.state] || []).map(city => ({ value: city, label: city }))}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                        placeholder="Select City"
+                                        styles={customSelectStyles}
+                                        isDisabled={!values.state}
+                                        onChange={(option) => setFieldValue('city', option.value)}
+                                        value={values.city ? { value: values.city, label: values.city } : null}
+                                    />
+                                    <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
+                                </div>
                             </div>
                         </div>
                         )}

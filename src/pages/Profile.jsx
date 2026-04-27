@@ -19,6 +19,8 @@ import {
   XMarkIcon,
   KeyIcon
 } from '@heroicons/react/24/outline';
+import Select from 'react-select';
+import { indianStates, citiesByState } from '../utils/indiaData';
 import { getUserProfile, patchUserProfile, changePassword } from '../api/users';
 import {
   getSubscriptionEntitlements,
@@ -98,6 +100,48 @@ const originalCyclePriceForPlan = (plan, cycle) => {
 
   const originalMonthly = Number(plan?.originalMonthlyPrice || plan?.monthlyPrice || 0);
   return originalMonthly * (CYCLE_MULTIPLIERS[cycle] || 1);
+};
+
+const customSelectStyles = {
+    control: (provided, state) => ({
+        ...provided,
+        backgroundColor: '#0f1014',
+        borderColor: state.isFocused ? '#67e8f9' : 'rgba(255, 255, 255, 0.1)',
+        borderRadius: '0.75rem',
+        padding: '2px',
+        color: 'white',
+        boxShadow: state.isFocused ? '0 0 0 1px #67e8f9' : 'none',
+        '&:hover': {
+            borderColor: 'rgba(255, 255, 255, 0.2)'
+        }
+    }),
+    menu: (provided) => ({
+        ...provided,
+        backgroundColor: '#0f1014',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: '0.75rem',
+        zIndex: 50
+    }),
+    option: (provided, state) => ({
+        ...provided,
+        backgroundColor: state.isSelected ? '#22d3ee' : state.isFocused ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+        color: state.isSelected ? '#0f172a' : 'white',
+        '&:active': {
+            backgroundColor: '#22d3ee'
+        }
+    }),
+    singleValue: (provided) => ({
+        ...provided,
+        color: 'white'
+    }),
+    input: (provided) => ({
+        ...provided,
+        color: 'white'
+    }),
+    placeholder: (provided) => ({
+        ...provided,
+        color: 'rgba(255, 255, 255, 0.3)'
+    })
 };
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
@@ -278,7 +322,9 @@ const Profile = ({ onLogout }) => {
     business_address: '',
     gstin: '',
     gem_id: '',
-    dl_number: ''
+    dl_number: '',
+    state: '',
+    city: ''
   });
   const [selectedTargetPlanCode, setSelectedTargetPlanCode] = useState('free');
   const [selectedBillingCycle, setSelectedBillingCycle] = useState('monthly');
@@ -336,7 +382,9 @@ const Profile = ({ onLogout }) => {
         business_address: profile.business_address || '',
           gstin: profile.gstin || '',
           gem_id: profile.gem_id || '',
-          dl_number: profile.dl_number || ''
+          dl_number: profile.dl_number || '',
+          state: profile.state || '',
+          city: profile.city || ''
       }));
     }
   }, [userProfile]);
@@ -508,7 +556,9 @@ const Profile = ({ onLogout }) => {
       business_address: formData.business_address,
       gstin: formData.gstin,
       gem_id: formData.gem_id,
-      dl_number: formData.dl_number
+      dl_number: formData.dl_number,
+      state: formData.state,
+      city: formData.city
     };
 
     if (isEmailChanged) {
@@ -533,7 +583,9 @@ const Profile = ({ onLogout }) => {
         business_address: profile.business_address || '',
         gstin: profile.gstin || '',
         gem_id: profile.gem_id || '',
-        dl_number: profile.dl_number || ''
+        dl_number: profile.dl_number || '',
+        state: profile.state || '',
+        city: profile.city || ''
       });
     }
   };
@@ -1024,7 +1076,14 @@ const Profile = ({ onLogout }) => {
                     </div>
                     <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
                       <MapPinIcon className="mt-0.5 h-4 w-4 text-cyan-300" />
-                      <span className="line-clamp-3">{formData.business_address || 'No address added'}</span>
+                      <div>
+                        <p className="line-clamp-2">{formData.business_address || 'No address added'}</p>
+                        {(formData.city || formData.state) && (
+                          <p className="mt-1 text-xs text-white/50">
+                            {[formData.city, indianStates.find(s => s.value === formData.state)?.label].filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -1177,6 +1236,28 @@ const Profile = ({ onLogout }) => {
                           className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
                           placeholder="DL Number"
                         />
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">State</label>
+                          <Select
+                            options={indianStates}
+                            value={indianStates.find(s => s.value === formData.state) || null}
+                            onChange={(option) => setFormData(prev => ({ ...prev, state: option.value, city: '' }))}
+                            isDisabled={!isEditing || updateProfileMutation.isPending}
+                            styles={customSelectStyles}
+                            placeholder="Select State"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">City</label>
+                          <Select
+                            options={(citiesByState[formData.state] || []).map(c => ({ value: c, label: c }))}
+                            value={formData.city ? { value: formData.city, label: formData.city } : null}
+                            onChange={(option) => setFormData(prev => ({ ...prev, city: option.value }))}
+                            isDisabled={!isEditing || !formData.state || updateProfileMutation.isPending}
+                            styles={customSelectStyles}
+                            placeholder="Select City"
+                          />
+                        </div>
                       </div>
                       <textarea
                         name="business_address"
