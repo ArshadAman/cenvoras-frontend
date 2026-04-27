@@ -78,12 +78,30 @@ const ServiceTemplate = forwardRef(({
         </div>
       </div>
 
-      <table className="w-full text-left mb-6">
+      <table className="w-full text-left mb-6 table-fixed">
         <thead>
           <tr className="border-y-2 border-gray-900 font-bold bg-white">
-            {visibleColumns.map(col => (
-              <th key={col.id} className="py-1 text-sm text-gray-900">{col.label}</th>
-            ))}
+            {visibleColumns.map(col => {
+              let width = 'auto';
+              if (col.id === 'serial') width = '40px';
+              else if (col.id === 'quantity') width = '60px';
+              else if (col.id === 'price') width = '100px';
+              else if (col.id === 'tax') width = '80px';
+              else if (col.id === 'amount') width = '110px';
+              else if (col.id === 'hsn') width = '100px';
+              
+              return (
+                <th 
+                  key={col.id} 
+                  className={`py-2 px-3 text-sm text-gray-900 ${
+                    ['quantity', 'price', 'amount', 'tax'].includes(col.id) ? 'text-right' : ''
+                  }`}
+                  style={{ width }}
+                >
+                  {col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -91,14 +109,23 @@ const ServiceTemplate = forwardRef(({
             <tr key={idx} className="border-b border-gray-200">
               {visibleColumns.map(col => {
                 let val = '';
+                let isNumeric = false;
                 if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = <span className="font-semibold">{item.product_name || item.product}</span>;
-                else if(col.id==='quantity') val = item.quantity;
-                else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
-                else if(col.id==='tax') val = `${item.tax||0}%`;
-                else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
+                else if(col.id==='description') val = <div className="py-2"><span className="font-semibold text-gray-900">{item.product_name || item.product}</span></div>;
+                else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
+                else if(col.id==='price') { val = `₹${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
+                else if(col.id==='tax') { val = `${item.tax||0}%`; isNumeric = true; }
+                else if(col.id==='amount') { val = `₹${(item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="py-1 text-sm align-middle">{val}</td>;
+                
+                return (
+                  <td 
+                    key={col.id} 
+                    className={`py-1 px-3 text-sm align-top ${isNumeric ? 'text-right' : ''}`}
+                  >
+                    {val}
+                  </td>
+                );
               })}
             </tr>
           ))}
