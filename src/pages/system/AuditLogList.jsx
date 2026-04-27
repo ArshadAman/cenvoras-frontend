@@ -37,9 +37,9 @@ export default function AuditLogList() {
           {Object.entries(log.changes).map(([field, delta]) => (
             <div key={field} className="flex flex-wrap items-center gap-1.5 leading-tight">
               <span className="text-white/80 font-medium px-1.5 py-0.5 rounded bg-white/5 border border-white/10">{field}</span>
-              <span className="text-red-400 line-through decoration-red-400/50">{String(delta.old || 'null')}</span>
+              <span className="text-red-400 line-through decoration-red-400/50">{String(delta?.old ?? 'null')}</span>
               <span className="text-gray-500">→</span>
-              <span className="text-emerald-400 font-medium">{String(delta.new || 'null')}</span>
+              <span className="text-emerald-400 font-medium">{String(delta?.new ?? delta ?? 'null')}</span>
             </div>
           ))}
         </div>
