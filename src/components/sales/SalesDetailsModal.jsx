@@ -97,11 +97,23 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
     try {
       const element = printRef.current;
+      
+      // Scroll to top to ensure clean capture
+      window.scrollTo(0, 0);
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('[data-print-target]');
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.width = '210mm'; // Ensure standard width
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -113,10 +125,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       let heightLeft = imgHeight;
       let position = 0;
 
+      // First page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      // Subsequent pages
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
@@ -126,7 +140,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       pdf.save(`${isQuotation ? "performa-invoice" : "invoice"}-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      toast.error('Error generating PDF. Please try again.');
     }
   };
 
@@ -325,7 +339,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="shadow-2xl" ref={printRef}>
+              <div className="shadow-2xl" ref={printRef} data-print-target>
                 <div className="w-full h-full bg-white">
                   <InvoicePreview
                     invoice={invoiceDetails}

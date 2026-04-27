@@ -354,7 +354,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `inventory-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `inventory-${new Date().toLocaleDateString('sv-SE')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };

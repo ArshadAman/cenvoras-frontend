@@ -109,7 +109,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
     }
 
     const payload = {
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       original_bill: null,
       vendor_name: vendorName,
       vendor_gstin: vendorGstin,

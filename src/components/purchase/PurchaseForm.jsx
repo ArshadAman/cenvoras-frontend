@@ -328,7 +328,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
         <Formik
           initialValues={{
             bill_number: bill?.bill_number || "",
-            bill_date: bill?.bill_date || new Date().toISOString().split('T')[0],
+            bill_date: bill?.bill_date || new Date().toLocaleDateString('sv-SE'),
             due_date: bill?.due_date || "",
             warehouse: bill?.warehouse || "",
             vendor_name: bill?.vendor_name || "",

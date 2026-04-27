@@ -244,7 +244,7 @@ export default function SalesTable({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sales-invoices-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();

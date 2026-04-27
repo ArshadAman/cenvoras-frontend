@@ -519,7 +519,7 @@ function BackupTab() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `cenvora-backup-${new Date().toISOString().split('T')[0]}.${isCsv ? 'zip' : 'json'}`;
+      a.download = `cenvora-backup-${new Date().toLocaleDateString('sv-SE')}.${isCsv ? 'zip' : 'json'}`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`${backupFormat.toUpperCase()} backup downloaded successfully!`);

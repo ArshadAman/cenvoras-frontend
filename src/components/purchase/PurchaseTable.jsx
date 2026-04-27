@@ -188,7 +188,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `purchase-bills-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `purchase-bills-${new Date().toLocaleDateString('sv-SE')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -238,7 +238,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `purchase-bills-detailed-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `purchase-bills-detailed-${new Date().toLocaleDateString('sv-SE')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };

@@ -11,7 +11,7 @@ const createManualJournalEntry = (data) => api.post('/ledger/create-journal-entr
 
 export default function ManualJournal() {
   const navigate = useNavigate();
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(new Date().toLocaleDateString('sv-SE'));
   const [description, setDescription] = useState('');
   const [reference, setReference] = useState('');
   const [entries, setEntries] = useState([

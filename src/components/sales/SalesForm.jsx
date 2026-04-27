@@ -487,7 +487,7 @@ const SalesSchema = Yup.object().shape({
   due_date: Yup.string().nullable().test(
     'not-past-date',
     'Due date cannot be in the past',
-    (value) => !value || value >= new Date().toISOString().split('T')[0]
+    (value) => !value || value >= new Date().toLocaleDateString('sv-SE')
   ),
   
   // Optional invoice fields
@@ -867,7 +867,9 @@ export default function SalesForm({
             customer_name: editData?.customer_name || "",
             // Use fetched next number or edit data
             invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
-            invoice_date: editData?.invoice_date ? new Date(editData.invoice_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            invoice_date: editData?.invoice_date 
+              ? new Date(editData.invoice_date).toISOString().split('T')[0] 
+              : new Date().toLocaleDateString('sv-SE'),
             
             // Optional customer fields (for Customer record creation)
             customer_email: editData?.customer_email || "",
@@ -1184,7 +1186,7 @@ export default function SalesForm({
                       <Field
                         name="due_date"
                         type="date"
-                        min={new Date().toISOString().split('T')[0]}
+                        min={new Date().toLocaleDateString('sv-SE')}
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                       />
                     </div>

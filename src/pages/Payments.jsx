@@ -101,7 +101,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     customer: '',
     invoice: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toLocaleDateString('sv-SE'),
     mode: 'cash',
     reference: '',
     notes: ''
@@ -155,7 +155,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         customer: editData.customer || '',
         invoice: editData.invoice || '',
         amount: editData.amount || '',
-        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toLocaleDateString('sv-SE'),
         mode: editData.mode || 'cash',
         reference: editData.reference || '',
         notes: editData.notes || ''
@@ -305,7 +305,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       customer: '',
       invoice: '',
       amount: '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       mode: 'cash',
       reference: '',
       notes: ''
@@ -623,14 +623,14 @@ export default function Payments({ onLogout }) {
     const paymentDate = new Date(p.date);
     const now = new Date();
     const matchesDate = dateFilter === 'all' ||
-      (dateFilter === 'today' && p.date === new Date().toISOString().split('T')[0]) ||
+      (dateFilter === 'today' && p.date === new Date().toLocaleDateString('sv-SE')) ||
       (dateFilter === 'month' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear());
     return matchesSearch && matchesMode && matchesDate;
   });
   
   // Calculate stats
   const todayTotal = (payments || [])
-    .filter(p => p.date === new Date().toISOString().split('T')[0])
+    .filter(p => p.date === new Date().toLocaleDateString('sv-SE'))
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
   
   const thisMonthTotal = (payments || [])

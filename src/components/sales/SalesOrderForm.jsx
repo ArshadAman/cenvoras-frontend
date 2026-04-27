@@ -408,7 +408,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             customer_email: editData?.customer_email || "",
             customer_phone: editData?.customer_phone || "",
             order_number: editData?.order_number || `SO-${Date.now()}`,
-            date: editData?.date || new Date().toISOString().split('T')[0],
+            date: editData?.date || new Date().toLocaleDateString('sv-SE'),
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({

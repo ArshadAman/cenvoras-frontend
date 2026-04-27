@@ -470,7 +470,7 @@ export const recordClientPayment = async (paymentData) => {
       invoice: paymentData.invoice || undefined,
       amount: parseFloat(paymentData.amount),
       notes: paymentData.description || paymentData.notes || "Payment received",
-      date: paymentData.date || new Date().toISOString().split('T')[0],
+      date: paymentData.date || new Date().toLocaleDateString('sv-SE'),
       reference: paymentData.reference || ""
     };
 
