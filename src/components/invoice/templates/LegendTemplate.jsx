@@ -27,6 +27,7 @@ const LegendTemplate = forwardRef(({
 
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
+  const borderColor = colors.tableBorder || '#e2e8f0';
 
   return (
     <div 
