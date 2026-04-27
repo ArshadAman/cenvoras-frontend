@@ -28,6 +28,16 @@ const ServiceTemplate = forwardRef(({
 
   const primaryColor = colors.primary || '#174A82';
 
+  const preferredWidths = {
+    serial: '6%',
+    description: 'auto',
+    hsn: '12%',
+    quantity: '8%',
+    price: '15%',
+    tax: '10%',
+    amount: '18%',
+  };
+
   const visibleColumns = columns.filter(col => col.show !== false);
 
   return (
@@ -36,95 +46,90 @@ const ServiceTemplate = forwardRef(({
       style={{
         width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
-        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
+        fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif', fontSize: `${typography.bodySize || 10}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left',
-        border: `3px solid ${primaryColor}`, borderRadius: '4px' // Outer border for service style
+        border: `3px solid ${primaryColor}`, borderRadius: '8px'
       }}
     >
       <div className="flex justify-between items-start mb-6">
         <div>
           {sections.showLogo && template.branding?.logo && (
-             <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 40 }} className="mb-2" />
+             <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 50 }} className="mb-4" />
           )}
-          <h1 className="font-bold text-lg mb-1" style={{ color: primaryColor }}>{companyName}</h1>
-          {sections.showGST && businessInfo.gstin && <p className="font-semibold text-xs">GSTIN: {businessInfo.gstin}</p>}
-          <p className="whitespace-pre-line text-gray-700 text-xs mt-1" style={{ maxWidth: '250px' }}>{companyAddress}</p>
+          <h1 className="font-bold text-2xl mb-1 uppercase tracking-tight" style={{ color: primaryColor }}>{companyName}</h1>
+          {sections.showGST && businessInfo.gstin && <p className="font-bold text-[10px] text-gray-700">GSTIN: {businessInfo.gstin}</p>}
+          <p className="whitespace-pre-line text-gray-600 text-[11px] mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
           {(businessInfo.phone || businessInfo.email) && (
-            <p className="text-gray-700 text-xs mt-1">
-              {businessInfo.phone ? `Mobile: ${businessInfo.phone}` : ''}
-              {businessInfo.email ? `\nEmail: ${businessInfo.email}` : ''}
+            <p className="text-gray-600 text-[11px] mt-1 font-medium">
+              {businessInfo.phone ? `Mobile: +91 ${businessInfo.phone}` : ''}
+              {businessInfo.email ? ` | Email: ${businessInfo.email}` : ''}
             </p>
           )}
         </div>
         <div className="text-right">
-          <h2 className="text-2xl font-bold tracking-wide" style={{ color: primaryColor }}>
+          <h2 className="text-3xl font-black tracking-tighter mb-1" style={{ color: primaryColor }}>
             {content.invoiceTitle || 'TAX INVOICE'}
           </h2>
-          <p className="text-gray-600 font-semibold mt-1">Invoice #: {invoiceNumber}</p>
+          <p className="text-gray-900 font-bold text-sm">Invoice #: {invoiceNumber}</p>
         </div>
       </div>
 
-      <div className="flex mb-6 border-t-2 border-b-2 py-4" style={{ borderColor: '#e5e7eb' }}>
+      <div className="flex mb-8 border-y-2 py-6" style={{ borderColor: '#f3f4f6' }}>
         <div className="w-1/2">
-          <h3 className="font-bold text-gray-900 mb-1">Bill To:</h3>
-          <p className="font-bold text-sm text-gray-900">{customerName}</p>
-          <p className="whitespace-pre-line text-gray-700 mt-1">{billingAddress}</p>
-          {invoice.customer_gstin && <p className="text-xs font-semibold mt-1">GSTIN: {invoice.customer_gstin}</p>}
+          <h3 className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-2">Bill To:</h3>
+          <p className="font-bold text-lg text-gray-900 leading-none mb-1">{customerName}</p>
+          <p className="whitespace-pre-line text-gray-600 text-sm leading-relaxed">{billingAddress}</p>
+          {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">GSTIN: {invoice.customer_gstin}</p>}
         </div>
-        <div className="w-1/2 space-y-2 text-sm pl-8">
-          <div className="flex"><span className="w-32 font-bold text-gray-900">Invoice Date:</span> <span className="text-gray-700">{invoiceDate}</span></div>
-          {invoice.due_date && <div className="flex"><span className="w-32 font-bold text-gray-900">Due Date:</span> <span className="text-gray-700">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
-          {invoice.po_number && <div className="flex"><span className="w-32 font-bold text-gray-900">PO Number:</span> <span className="text-gray-700">{invoice.po_number}</span></div>}
+        <div className="w-1/2 space-y-2 text-sm pl-12 border-l border-gray-100">
+          <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Invoice Date:</span> <span className="font-semibold text-gray-900">{invoiceDate}</span></div>
+          {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
+          {invoice.po_number && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">PO Number:</span> <span className="font-semibold text-gray-900">{invoice.po_number}</span></div>}
         </div>
       </div>
 
-      <table className="w-full text-left mb-6 table-fixed">
+      <table className="w-full text-left mb-8 border-collapse">
         <thead>
-          <tr className="border-y-2 border-gray-900 font-bold bg-white">
-            {visibleColumns.map(col => {
-              let width = 'auto';
-              if (col.id === 'serial') width = '40px';
-              else if (col.id === 'quantity') width = '60px';
-              else if (col.id === 'price') width = '100px';
-              else if (col.id === 'tax') width = '80px';
-              else if (col.id === 'amount') width = '110px';
-              else if (col.id === 'hsn') width = '100px';
-              
-              return (
-                <th 
-                  key={col.id} 
-                  className={`py-2 px-3 text-sm text-gray-900 ${
-                    ['quantity', 'price', 'amount', 'tax'].includes(col.id) ? 'text-right' : ''
-                  }`}
-                  style={{ width }}
-                >
-                  {col.label}
-                </th>
-              );
-            })}
+          <tr className="border-b-2 border-gray-900">
+            {visibleColumns.map(col => (
+              <th 
+                key={col.id} 
+                className={`py-3 px-2 text-[11px] font-black text-gray-900 uppercase tracking-widest ${
+                  ['quantity', 'price', 'amount', 'tax'].includes(col.id) ? 'text-right' : ''
+                }`}
+                style={{ width: preferredWidths[col.id] || '10%' }}
+              >
+                {col.id === 'serial' ? 'S. No' : col.label}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {items.map((item, idx) => (
-            <tr key={idx} className="border-b border-gray-200">
+            <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
               {visibleColumns.map(col => {
                 let val = '';
                 let isNumeric = false;
                 if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = <div className="py-2"><span className="font-semibold text-gray-900">{item.product_name || item.product}</span></div>;
+                else if(col.id==='description') val = (
+                  <div className="py-3">
+                    <div className="font-bold text-gray-900 text-sm">{item.product_name || item.product}</div>
+                    {item.description && <div className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{item.description}</div>}
+                  </div>
+                );
+                else if(col.id==='hsn') val = item.hsn_sac_code || item.hsn_code || '-';
                 else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
                 else if(col.id==='price') { val = `₹${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                 else if(col.id==='tax') { val = `${item.tax||0}%`; isNumeric = true; }
-                else if(col.id==='amount') { val = `₹${(item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
-                else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+                else if(col.id==='amount') { val = `₹${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                 
                 return (
-                  <td 
+                  <th 
                     key={col.id} 
-                    className={`py-1 px-3 text-sm align-top ${isNumeric ? 'text-right' : ''}`}
+                    className={`py-3 px-2 text-[12px] font-medium text-gray-700 ${isNumeric ? 'text-right' : ''}`}
                   >
                     {val}
-                  </td>
+                  </th>
                 );
               })}
             </tr>
