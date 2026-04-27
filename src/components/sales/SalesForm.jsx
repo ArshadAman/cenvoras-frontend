@@ -73,7 +73,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
-    const roundedPrice = Math.round(Number(product.price ?? 0) || 0);
+    const roundedPrice = Math.round(Number(product.sale_price ?? product.price ?? 0) || 0);
     setFieldValue(`items.${idx}.price`, roundedPrice);
     // Calculate amount automatically
     const quantity = values.items[idx]?.quantity || 1;
@@ -195,7 +195,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               >
                 <div className="font-medium">{product.name}</div>
                 <div className="mt-0.5 text-xs text-gray-500">
-                  Unit: {product.unit} | Price: ₹{product.price}
+                  Unit: {product.unit} | Price: ₹{product.sale_price ?? product.price}
                 </div>
               </div>
             ))}
