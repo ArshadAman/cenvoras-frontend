@@ -213,7 +213,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 const PurchaseSchema = Yup.object().shape({
   bill_number: Yup.string().required().min(1).max(100),
   bill_date: Yup.string().required("Bill date is required"),
-  warehouse: Yup.string().required("Warehouse is required"),
+  warehouse: Yup.string().nullable(),
   due_date: Yup.string().nullable(),
   vendor_name: Yup.string().required().min(1).max(255),
   vendor_address: Yup.string().nullable(),
@@ -513,7 +513,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                     Warehouse *
+                     Warehouse
                    </label>
                    <Field
                      name="warehouse"
