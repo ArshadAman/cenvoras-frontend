@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
+import { getTaxType } from '../../../utils/taxUtils';
 
 // Service Template (LTIMindtree Style)
 const ServiceTemplate = forwardRef(({ 
@@ -22,6 +23,9 @@ const ServiceTemplate = forwardRef(({
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
   const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
   const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+
+  const taxType = getTaxType(invoice, businessInfo);
+  const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
@@ -161,7 +165,14 @@ const ServiceTemplate = forwardRef(({
           <table className="w-full text-sm text-right">
             <tbody>
               <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-              <tr><td className="py-1 font-semibold text-gray-700">GST Total</td><td className="py-1">₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+              {isIGST ? (
+                <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+              ) : (
+                <>
+                  <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                  <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                </>
+              )}
               {invoice.round_off ? <tr><td className="py-1 font-semibold text-gray-700">Round Off</td><td className="py-1">₹{parseFloat(invoice.round_off).toFixed(2)}</td></tr> : null}
               <tr className="border-t-2 border-b-2 border-gray-900 text-base">
                 <td className="py-2 font-bold text-gray-900">Total</td>

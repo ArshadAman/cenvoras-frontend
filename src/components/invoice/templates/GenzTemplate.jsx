@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
+import { getTaxType } from '../../../utils/taxUtils';
 
 // GenZ Template (Google Style)
 const GenzTemplate = forwardRef(({ 
@@ -23,6 +24,9 @@ const GenzTemplate = forwardRef(({
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
   const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
   const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+
+  const taxType = getTaxType(invoice, businessInfo);
+  const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
@@ -118,10 +122,23 @@ const GenzTemplate = forwardRef(({
                  <span>Subtotal</span>
                  <span>₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                </div>
-               <div className="flex justify-between mb-4 text-gray-600 font-medium pb-4 border-b border-gray-200">
-                 <span>Taxes (GST)</span>
-                 <span>₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-               </div>
+               {isIGST ? (
+                 <div className="flex justify-between mb-4 text-gray-600 font-medium pb-4 border-b border-gray-200">
+                   <span>IGST</span>
+                   <span>₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                 </div>
+               ) : (
+                 <>
+                   <div className="flex justify-between mb-2 text-gray-600 font-medium">
+                     <span>CGST</span>
+                     <span>₹{(taxTotal / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                   </div>
+                   <div className="flex justify-between mb-4 text-gray-600 font-medium pb-4 border-b border-gray-200">
+                     <span>SGST</span>
+                     <span>₹{(taxTotal / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                   </div>
+                 </>
+               )}
                <div className="flex justify-between items-center text-xl">
                  <span className="font-extrabold text-gray-900">Total Due</span>
                  <span style={{ color: primaryColor }} className="font-black text-2xl">

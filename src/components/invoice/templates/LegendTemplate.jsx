@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
+import { getTaxType } from '../../../utils/taxUtils';
 
 // Legend Template (ITC Style)
 const LegendTemplate = forwardRef(({ 
@@ -22,6 +23,9 @@ const LegendTemplate = forwardRef(({
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
   const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
   const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+
+  const taxType = getTaxType(invoice, businessInfo);
+  const isIGST = taxType === 'igst';
 
   const visibleColumns = columns.filter(col => col.show !== false);
 
@@ -157,7 +161,14 @@ const LegendTemplate = forwardRef(({
              <table className="w-full text-right p-3 block text-sm">
                <tbody className="w-full block">
                  <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">Taxable Amount</td><td>₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                 <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">GST Total</td><td>₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                 {isIGST ? (
+                   <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">IGST</td><td>₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                 ) : (
+                   <>
+                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">CGST</td><td>₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">SGST</td><td>₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                   </>
+                 )}
                  <tr className="w-full flex justify-between px-3 py-2 border-t-2 border-b-2 bg-gray-100" style={{ borderColor }}>
                    <td className="font-bold text-lg">Total Amount</td>
                    <td className="font-bold text-lg">₹{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>

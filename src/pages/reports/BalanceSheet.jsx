@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
+import { repairRoundOffEntries } from "../../api/ledger";
+import toast from "react-hot-toast";
 import {
   BuildingLibraryIcon,
   ScaleIcon,
@@ -13,6 +15,7 @@ import {
   ChartBarIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 
 const today = new Date().toISOString().split("T")[0];
@@ -135,10 +138,20 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
 export default function BalanceSheet() {
   const [asOf, setAsOf] = useState(today);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["balance-sheet", asOf],
     queryFn: () => getBalanceSheet(asOf),
+  });
+
+  const repairMutation = useMutation({
+    mutationFn: repairRoundOffEntries,
+    onSuccess: (d) => {
+      toast.success(d.message || "Round-off entries repaired.");
+      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
+    },
+    onError: () => toast.error("Failed to repair round-off entries."),
   });
 
   const isBalanced = data?.is_balanced;
@@ -213,9 +226,20 @@ export default function BalanceSheet() {
                   : `Difference of ₹${fmt(diff)} detected. Review your ledger entries for missing transactions.`}
               </div>
               {!isBalanced && (
-                <Link to="/ledger/manual-journal" className="inline-block px-4 py-1.5 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-semibold rounded-lg border border-rose-500/30 transition-colors">
-                  Create Adjusting Journal Entry
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => repairMutation.mutate()}
+                    disabled={repairMutation.isPending}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-semibold rounded-lg border border-amber-500/30 transition-colors disabled:opacity-50"
+                  >
+                    <WrenchScrewdriverIcon className="w-3.5 h-3.5" />
+                    {repairMutation.isPending ? "Repairing..." : "Fix Round-Off Entries"}
+                  </button>
+                  <Link to="/ledger/manual-journal" className="inline-block px-4 py-1.5 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-semibold rounded-lg border border-rose-500/30 transition-colors">
+                    Create Adjusting Journal Entry
+                  </Link>
+                </div>
               )}
             </div>
             {/* Mini Equation */}
