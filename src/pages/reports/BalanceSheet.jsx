@@ -4,7 +4,7 @@ import Layout from "../../components/Layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
 import { repairRoundOffEntries } from "../../api/ledger";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import {
   BuildingLibraryIcon,
   ScaleIcon,
