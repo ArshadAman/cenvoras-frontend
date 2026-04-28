@@ -37,7 +37,7 @@ export default function Sales({ documentType = "invoice" }) {
     mutationFn: (prefix) => patchUserProfile({ invoice_prefix: prefix }),
   });
 
-  // Extract business info from profile
+  // # Extract business info from profile
   const businessInfo = userProfile?.profile ? {
     business_name: userProfile.profile.business_name,
     business_address: userProfile.profile.business_address,
@@ -45,6 +45,7 @@ export default function Sales({ documentType = "invoice" }) {
     email: userProfile.profile.email,
     gstin: userProfile.profile.gstin,
     gem_id: userProfile.profile.gem_id,
+    state: userProfile.profile.state,
   } : {};
 
   const handleEdit = (invoice) => {

@@ -7,7 +7,9 @@ import { createProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
+import { getUserProfile } from "../../api/users";
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
+import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
@@ -676,6 +678,14 @@ export default function SalesForm({
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: userProfileData } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+    enabled: isOpen,
+  });
+  const sellerState = userProfileData?.profile?.state || userProfileData?.state || null;
+
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,
     ...(invoiceSettings || {}),
@@ -1078,6 +1088,13 @@ export default function SalesForm({
             const grandTotal = subtotal - totalDiscount + totalTax;
             const roundedGrandTotal = computeRoundedTotal(grandTotal);
             const roundOffDelta = Number((roundedGrandTotal - grandTotal).toFixed(2));
+
+            // Determine IGST vs CGST/SGST
+            const taxType = getTaxType(
+              { place_of_supply: values.place_of_supply },
+              { state: sellerState }
+            );
+            const isIGST = taxType === 'igst';
 
             return (
               <Form 
@@ -1624,6 +1641,23 @@ export default function SalesForm({
                       <span>Total Tax</span>
                       <span>₹{totalTax.toFixed(2)}</span>
                     </div>
+                    {isIGST ? (
+                      <div className="flex justify-between text-orange-400 text-xs pl-2">
+                        <span>↳ IGST</span>
+                        <span>₹{totalTax.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between text-orange-400 text-xs pl-2">
+                          <span>↳ CGST</span>
+                          <span>₹{(totalTax / 2).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-orange-400 text-xs pl-2">
+                          <span>↳ SGST</span>
+                          <span>₹{(totalTax / 2).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="h-px bg-white/10 my-3"></div>
                     {roundOffApplied && (
                       <div className="flex justify-between text-amber-300">

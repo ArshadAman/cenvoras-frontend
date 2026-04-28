@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
+import { getTaxType } from '../../../utils/taxUtils';
 
 // Bill To - Ship To Template (Flipkart Style)
 const BillShipTemplate = forwardRef(({ 
@@ -23,6 +24,9 @@ const BillShipTemplate = forwardRef(({
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
   const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
   const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+
+  const taxType = getTaxType(invoice, businessInfo);
+  const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
@@ -141,10 +145,23 @@ const BillShipTemplate = forwardRef(({
                <span>Taxable Amount</span>
                <span className="font-bold text-gray-900">₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
              </div>
-             <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
-               <span>CGST/SGST/IGST</span>
-               <span className="font-bold text-gray-900">₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
-             </div>
+             {isIGST ? (
+               <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                 <span>IGST</span>
+                 <span className="font-bold text-gray-900">₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               </div>
+             ) : (
+               <>
+                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                   <span>CGST</span>
+                   <span className="font-bold text-gray-900">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 </div>
+                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                   <span>SGST</span>
+                   <span className="font-bold text-gray-900">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 </div>
+               </>
+             )}
              <div className="flex justify-between text-lg font-bold text-gray-900 py-3 border-t-2 border-b-2 border-gray-800 mt-2">
                <span>Grand Total</span>
                <span>₹{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>

@@ -57,7 +57,7 @@ const SignupSchema = Yup.object().shape({
   phone: Yup.string().required('Required'),
   business_name: Yup.string().nullable(),
   gstin: Yup.string().nullable(),
-  state: Yup.string().nullable(),
+  state: Yup.string().required('State is required'),
   city: Yup.string().nullable(),
   termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
 });
@@ -280,7 +280,7 @@ export default function Signup() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">State</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
                                     <Select
                                         options={indianStates}
                                         className="react-select-container"

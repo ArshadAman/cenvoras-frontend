@@ -481,3 +481,13 @@ export const recordClientPayment = async (paymentData) => {
     throw createUserFriendlyError(error, 'Failed to record payment. Please check your input and try again.');
   }
 };
+
+// Repair missing round-off journal entries for invoices/bills
+export const repairRoundOffEntries = async () => {
+  try {
+    const response = await api.post('/ledger/repair-round-off/');
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to repair round-off entries.');
+  }
+};

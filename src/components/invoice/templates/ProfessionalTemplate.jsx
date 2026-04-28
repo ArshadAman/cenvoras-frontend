@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
+import { getTaxType } from '../../../utils/taxUtils';
 
 // Professional Template (Marico Style)
 const ProfessionalTemplate = forwardRef(({ 
@@ -27,6 +28,9 @@ const ProfessionalTemplate = forwardRef(({
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
   const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
   const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+
+  const taxType = getTaxType(invoice, businessInfo);
+  const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
@@ -146,10 +150,23 @@ const ProfessionalTemplate = forwardRef(({
               <span className="text-gray-600">Subtotal</span>
               <span className="font-bold">₹{subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
-              <span className="text-gray-600">Tax</span>
-              <span className="font-bold">₹{taxTotal.toFixed(2)}</span>
-            </div>
+            {isIGST ? (
+              <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                <span className="text-gray-600">IGST</span>
+                <span className="font-bold">₹{taxTotal.toFixed(2)}</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                  <span className="text-gray-600">CGST</span>
+                  <span className="font-bold">₹{(taxTotal / 2).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                  <span className="text-gray-600">SGST</span>
+                  <span className="font-bold">₹{(taxTotal / 2).toFixed(2)}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between p-4 bg-gray-50 text-base">
               <span className="font-bold text-gray-900">Total</span>
               <span className="font-bold text-indigo-600">₹{finalTotal.toFixed(2)}</span>

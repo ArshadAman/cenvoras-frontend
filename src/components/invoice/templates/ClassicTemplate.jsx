@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
+import { getTaxType, splitTax } from '../../../utils/taxUtils';
 
 // Beautiful Invoice Preview Component
 // Renders invoice based on template settings with dynamic styling
@@ -53,6 +54,10 @@ const InvoicePreview = forwardRef(({
   const hasSeparateShipping = Boolean(
     shippingAddress && shippingAddress.trim() !== billingAddress.trim()
   );
+  
+  // Tax type determination
+  const taxType = getTaxType(invoice, businessInfo);
+  const isIGST = taxType === 'igst';
   
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
@@ -461,14 +466,23 @@ const InvoicePreview = forwardRef(({
                   ₹{subtotal.toFixed(2)}
                 </td>
               </tr>
-              <tr>
-                <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
-                  IGST
-                </td>
-                <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                  ₹{taxTotal.toFixed(2)}
-                </td>
-              </tr>
+              {isIGST ? (
+                <tr>
+                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
+                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>₹{taxTotal.toFixed(2)}</td>
+                </tr>
+              ) : (
+                <>
+                  <tr>
+                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
+                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>₹{(taxTotal / 2).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
+                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>₹{(taxTotal / 2).toFixed(2)}</td>
+                  </tr>
+                </>
+              )}
               {roundOff !== 0 && (
                 <tr>
                   <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
