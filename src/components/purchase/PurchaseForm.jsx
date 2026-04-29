@@ -95,7 +95,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Product name"
-              className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10 text-xs font-bold"
+              className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
             />
           </div>
@@ -177,7 +177,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
               }}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               placeholder="Enter vendor name to search or create new"
-              className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10 text-xs font-bold"
+              className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
             />
           </div>
@@ -767,7 +767,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
             <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Batch Number</label>
             <Field name={`items.${idx}.batch_number`}>
               {({ field }) => (
-                <input {...field} placeholder="BATCH NO" className="w-full bg-white/2 border border-white/5 rounded-xl px-3 py-2 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none placeholder:text-gray-700" />
+                <input {...field} placeholder="BATCH NO" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-3 py-2 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none placeholder:text-gray-700" />
               )}
             </Field>
           </div>
@@ -775,7 +775,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
              <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Expiry Date</label>
              <Field name={`items.${idx}.expiry_date`}>
                {({ field }) => (
-                 <input {...field} type="date" className="w-full bg-white/2 border border-white/5 rounded-xl px-3 py-1.5 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none [color-scheme:dark]" />
+                 <input {...field} type="date" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-3 py-1.5 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none [color-scheme:dark]" />
                )}
              </Field>
           </div>
@@ -789,7 +789,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
                  name={`items.${idx}.quantity`}
                  type="number"
                  min="1"
-                 className="w-full bg-white/2 border border-white/10 rounded-xl px-1 py-3 text-center text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
+                 className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
              />
           </div>
           <div className="space-y-1.5">
@@ -806,7 +806,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
               <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Unit</label>
               <Field name={`items.${idx}.unit`}>
                   {({ field }) => (
-                  <select {...field} className="w-full h-[42px] bg-white/2 border border-white/10 rounded-xl px-1 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase appearance-none text-center">
+                  <select {...field} className="w-full h-[42px] bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase appearance-none text-center">
                       {units.map(u => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
                   </select>
                   )}
@@ -823,16 +823,16 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
                   type="number"
                   min="0"
                   step="0.01"
-                  className="w-full bg-white/2 border border-white/10 rounded-xl px-3 py-3 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
+                  className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-3 py-3 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
               />
           </div>
           <div className="col-span-3 space-y-1.5">
               <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Disc%</label>
-              <Field name={`items.${idx}.discount`} type="number" className="w-full bg-white/2 border border-white/5 rounded-xl px-1 py-3 text-center text-gray-500 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+              <Field name={`items.${idx}.discount`} type="number" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
           </div>
           <div className="col-span-3 space-y-1.5">
               <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Tax%</label>
-              <Field name={`items.${idx}.tax`} type="number" className="w-full bg-white/2 border border-white/5 rounded-xl px-1 py-3 text-center text-gray-500 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+              <Field name={`items.${idx}.tax`} type="number" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
           </div>
       </div>
 
