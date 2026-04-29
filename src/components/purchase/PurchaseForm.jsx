@@ -6,7 +6,7 @@ import { getVendors } from "../../api/vendors";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -237,6 +237,7 @@ const PurchaseSchema = Yup.object().shape({
 const units = ["pcs", "kg", "ltr", "box", "meter"];
 
 export default function PurchaseForm({ bill, onClose, onSubmit }) {
+  const queryClient = useQueryClient();
   const isEdit = !!bill;
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult)
@@ -453,6 +454,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 toast.success("Purchase bill created successfully!");
               }
               
+              queryClient.invalidateQueries({ queryKey: ["purchase-bills"] });
               onClose();
             } catch (error) {
               console.error('Error saving purchase bill:', error);
