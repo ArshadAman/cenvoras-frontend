@@ -35,6 +35,7 @@ import StockLedgerReport from './pages/reports/StockLedgerReport'
 import AuditLogList from './pages/system/AuditLogList'
 import IntegrationsPage from './pages/system/IntegrationsPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import ModuleProtectedRoute from './components/ModuleProtectedRoute'
 import AIChatWidget from './components/AIChatWidget'
 import TeamSettings from './pages/settings/TeamSettings'
 import Warranty from './pages/Warranty'
@@ -96,19 +97,19 @@ function App() {
         />
         <Route
           path="/purchase"
-          element={isAuthenticated ? <Purchase /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><Purchase /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales"
-          element={isAuthenticated ? <Sales /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Sales /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/quotations"
-          element={isAuthenticated ? <Quotations /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Quotations /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales-orders"
-          element={isAuthenticated ? <SalesOrderList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><SalesOrderList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/delivery-challans"
@@ -116,7 +117,7 @@ function App() {
         />
         <Route
           path="/inventory"
-          element={isAuthenticated ? <Inventory /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><Inventory /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/boms"
@@ -124,35 +125,35 @@ function App() {
         />
         <Route
           path="/stock-journals"
-          element={isAuthenticated ? <StockJournalList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><StockJournalList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/warehouses"
-          element={isAuthenticated ? <WarehouseManagement /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><WarehouseManagement /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/batches"
-          element={isAuthenticated ? <BatchListPage /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><BatchListPage /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/customers"
-          element={isAuthenticated ? <Customers /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Customers /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/vendors"
-          element={isAuthenticated ? <Vendors /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><Vendors /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists"
-          element={isAuthenticated ? <PriceListList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><PriceListList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists/new"
-          element={isAuthenticated ? <PriceListForm /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><PriceListForm /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists/:id"
-          element={isAuthenticated ? <PriceListForm /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><PriceListForm /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/payments"
@@ -197,11 +198,11 @@ function App() {
         />
         <Route
           path="/credit-notes"
-          element={isAuthenticated ? <CreditNoteList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><CreditNoteList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/debit-notes"
-          element={isAuthenticated ? <DebitNoteList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><DebitNoteList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/profit-loss-statement"
@@ -221,7 +222,7 @@ function App() {
         />
         <Route
           path="/warranty"
-          element={isAuthenticated ? <Warranty /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Warranty /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/audit-logs"
