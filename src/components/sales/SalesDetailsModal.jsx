@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoice } from "../../api/sales";
+import { getQuotation } from "../../api/quotation";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -21,7 +22,7 @@ import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
 import { getActiveTemplate } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
 
-export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {} }) {
+export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
   const printRef = useRef();
   const [template, setTemplate] = useState(null);
@@ -38,10 +39,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
   }, [isOpen, showDesigner]);
 
+  const isQuotation = documentType === "quotation";
+
   const { data, isLoading } = useQuery({
-    queryKey: ["sales-invoice", invoice?.id],
-    queryFn: () => getSalesInvoice(invoice?.id),
-    enabled: !!invoice?.id,
+    queryKey: [isQuotation ? "quotation" : "sales-invoice", invoice?.id],
+    queryFn: () => (isQuotation ? getQuotation(invoice?.id) : getSalesInvoice(invoice?.id)),
+    enabled: isOpen && !!invoice?.id,
   });
 
   const { data: invoiceSettings } = useQuery({
@@ -51,11 +54,20 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   });
 
   const invoiceDetails = data?.data || data?.result || data || invoice || {};
+  const previewTemplate = isQuotation
+    ? {
+        ...template,
+        content: {
+          ...(template?.content || {}),
+          invoiceTitle: "PERFORMA INVOICE",
+        },
+      }
+    : template;
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `Tax Invoice - ${invoiceDetails?.invoice_number || invoice?.id}`,
+    contentRef: printRef,
+    documentTitle: `${isQuotation ? "Performa Invoice" : "Tax Invoice"} - ${invoiceDetails?.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
         size: A4;
@@ -85,11 +97,23 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
     try {
       const element = printRef.current;
+      
+      // Scroll to top to ensure clean capture
+      window.scrollTo(0, 0);
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('[data-print-target]');
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.width = '210mm'; // Ensure standard width
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -101,20 +125,22 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       let heightLeft = imgHeight;
       let position = 0;
 
+      // First page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      // Subsequent pages
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`invoice-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
+      pdf.save(`${isQuotation ? "performa-invoice" : "invoice"}-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      toast.error('Error generating PDF. Please try again.');
     }
   };
 
@@ -239,7 +265,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/50">
             <div>
-              <h2 className="text-lg font-bold text-white">Invoice Preview</h2>
+              <h2 className="text-lg font-bold text-white">{isQuotation ? "Performa Invoice Preview" : "Invoice Preview"}</h2>
               <p className="text-xs text-gray-400">
                 {invoiceDetails.invoice_number || 'Loading...'}
                 {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
@@ -310,17 +336,18 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
-                <p className="text-gray-400">Loading invoice...</p>
+                <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
-            ) : template ? (
-              <div className="shadow-2xl">
-                <InvoicePreview
-                  ref={printRef}
-                  invoice={invoiceDetails}
-                  template={template}
-                  businessInfo={businessInfo}
-                  invoiceSettings={invoiceSettings || {}}
-                />
+            ) : previewTemplate ? (
+              <div className="shadow-2xl" ref={printRef} data-print-target>
+                <div className="w-full h-full bg-white">
+                  <InvoicePreview
+                    invoice={invoiceDetails}
+                    template={previewTemplate}
+                    businessInfo={businessInfo}
+                    invoiceSettings={invoiceSettings || {}}
+                  />
+                </div>
               </div>
             ) : (
               <div className="text-center py-20 text-gray-400">

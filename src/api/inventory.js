@@ -18,8 +18,8 @@ export const createProduct = (data) => {
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
-    cost_price: data.cost_price ?? data.price ?? data.unit_price,
-    sale_price: data.sale_price === "" || data.sale_price === undefined ? null : data.sale_price,
+    cost_price: data.cost_price === "" || data.cost_price === undefined ? null : (data.cost_price ?? data.price ?? data.unit_price),
+    sale_price: data.sale_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     warranty_months: parseInt(data.warranty_months || 0),
     meta: data.meta
@@ -38,8 +38,8 @@ export const updateProduct = (id, data) => {
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
-    cost_price: data.cost_price ?? data.price ?? data.unit_price,
-    sale_price: data.sale_price === "" || data.sale_price === undefined ? null : data.sale_price,
+    cost_price: data.cost_price === "" || data.cost_price === undefined ? null : (data.cost_price ?? data.price ?? data.unit_price),
+    sale_price: data.sale_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     warranty_months: parseInt(data.warranty_months || 0),
     meta: data.meta
@@ -56,11 +56,12 @@ export const bulkDeleteProducts = (ids) =>
 export const downloadProductCsvTemplate = () =>
   api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);
 
-export const bulkUploadProductsCsv = (file) => {
+export const bulkUploadProductsCsv = (file, options = {}) => {
   const formData = new FormData();
   formData.append('file', file);
   return api.post('/inventory/products/bulk-upload/csv/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 };
 

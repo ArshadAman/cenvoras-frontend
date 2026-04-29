@@ -174,6 +174,7 @@ export default function ReportsDashboard() {
           title="Business feature"
           featureName={upgradeModal.featureName}
           targetPlanName={upgradeModal.targetPlanName}
+          targetPlanCode="business"
           description={upgradeModal.description}
         />
       </div>

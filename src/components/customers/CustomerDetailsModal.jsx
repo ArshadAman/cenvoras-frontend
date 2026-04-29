@@ -19,7 +19,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Customer Details - ${customerDetails?.name || customer?.id}`,
     pageStyle: `
       @page {
@@ -44,26 +44,39 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
 
     try {
       const element = printRef.current;
+      
+      // Scroll to top for clean capture
+      window.scrollTo(0, 0);
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('[data-print-target]');
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
+      
       const imgWidth = 210;
-      const pageHeight = 295;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-
       let position = 0;
 
+      // First page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      // Subsequent pages
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
@@ -118,7 +131,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
         </div>
 
         {/* Content */}
-        <div ref={printRef} className="px-6 py-4">
+        <div ref={printRef} data-print-target className="px-6 py-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>

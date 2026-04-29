@@ -37,9 +37,6 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
   const handleDownload = () => {
     if (onDownloadReport) {
       onDownloadReport();
-    } else {
-      // Fallback: open GSTR1 report in new tab
-      window.open('/api/analytics/gstr1-report/?export=csv', '_blank');
     }
   };
 

@@ -2,9 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --toastify-z-index: 2147483647;
+}
+
 @layer base {
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -17,6 +21,28 @@
   
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif; /* Stylish, premium heading font */
+  }
+
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  select {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: #111111;
+    color: #ffffff;
+  }
+
+  .Toastify__toast-container,
+  .Toastify__toast-container--top-right,
+  .Toastify__toast-container--top-left,
+  .Toastify__toast-container--top-center,
+  .Toastify__toast-container--bottom-right,
+  .Toastify__toast-container--bottom-left,
+  .Toastify__toast-container--bottom-center {
+    z-index: 2147483647 !important;
   }
 }
 
@@ -165,5 +191,32 @@
     background-position: right 1rem center;
     background-size: 1.25rem;
     padding-right: 2.5rem;
+  }
+
+  /* Minimal neutral scrollbar for app containers */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.28);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.45);
+    background-clip: padding-box;
   }
 }

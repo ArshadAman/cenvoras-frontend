@@ -17,7 +17,7 @@ import UpgradePromptModal from '../subscription/UpgradePromptModal';
  * Shows: Sales Forecast (7-day) and Restock Predictions
  */
 export default function MLPredictionsSection({ data, isLoading, onViewAllProducts }) {
-  const [upgradeModal, setUpgradeModal] = React.useState({ open: false, featureName: '', targetPlanName: 'Business', description: '' });
+  const [upgradeModal, setUpgradeModal] = React.useState({ open: false, featureName: '', targetPlanName: 'Business', targetPlanCode: 'business', description: '' });
 
   if (isLoading) {
     return (
@@ -56,7 +56,13 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   const isRestockLocked = data?.can?.restock === false;
 
   const promptUpgrade = (featureName, description, targetPlanName = 'Business') => {
-    setUpgradeModal({ open: true, featureName, description, targetPlanName });
+    setUpgradeModal({
+      open: true,
+      featureName,
+      description,
+      targetPlanName,
+      targetPlanCode: String(targetPlanName).toLowerCase() === 'business' ? 'business' : 'pro',
+    });
   };
 
   const urgencyColors = {
@@ -279,10 +285,11 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
 
         <UpgradePromptModal
           isOpen={upgradeModal.open}
-          onClose={() => setUpgradeModal({ open: false, featureName: '', targetPlanName: 'Business', description: '' })}
+          onClose={() => setUpgradeModal({ open: false, featureName: '', targetPlanName: 'Business', targetPlanCode: 'business', description: '' })}
           title="Upgrade to unlock"
           featureName={upgradeModal.featureName}
           targetPlanName={upgradeModal.targetPlanName}
+          targetPlanCode={upgradeModal.targetPlanCode}
           description={upgradeModal.description}
         />
       </div>

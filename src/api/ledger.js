@@ -435,15 +435,42 @@ export const getLedgerStats = async (params = {}) => {
   }
 };
 
+export const getOverdueInvoices = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams();
+    if (params.customer) queryString.append('customer', params.customer);
+
+    const response = await api.get(`/billing/reports/overdue-bills/?${queryString}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching overdue invoices:', error);
+    throw createUserFriendlyError(error, 'Failed to load overdue invoices. Please try again.');
+  }
+};
+
+export const getCustomerBalanceReconciliation = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams();
+    if (params.customer) queryString.append('customer', params.customer);
+
+    const response = await api.get(`/billing/reports/customer-balance-reconciliation/?${queryString}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching customer balance reconciliation:', error);
+    throw createUserFriendlyError(error, 'Failed to load reconciliation report. Please try again.');
+  }
+};
+
 // Record a client payment (deprecated - should use proper double-entry ledger entries)
 export const recordClientPayment = async (paymentData) => {
   console.warn('recordClientPayment is deprecated. Use proper ledger entry creation instead.');
   try {
     const requestData = {
       customer: paymentData.customer,
+      invoice: paymentData.invoice || undefined,
       amount: parseFloat(paymentData.amount),
       notes: paymentData.description || paymentData.notes || "Payment received",
-      date: paymentData.date || new Date().toISOString().split('T')[0],
+      date: paymentData.date || new Date().toLocaleDateString('sv-SE'),
       reference: paymentData.reference || ""
     };
 
@@ -452,5 +479,15 @@ export const recordClientPayment = async (paymentData) => {
   } catch (error) {
     console.error('Error recording payment:', error);
     throw createUserFriendlyError(error, 'Failed to record payment. Please check your input and try again.');
+  }
+};
+
+// Repair missing round-off journal entries for invoices/bills
+export const repairRoundOffEntries = async () => {
+  try {
+    const response = await api.post('/ledger/repair-round-off/');
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to repair round-off entries.');
   }
 };

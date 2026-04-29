@@ -20,7 +20,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Purchase Bill - ${bill?.bill_number || billId}`,
     pageStyle: `
       @page {
@@ -52,8 +52,9 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
     try {
       const element = printRef.current;
-      // Temporarily switch to light mode for PDF generation
-      const wasDark = element.classList.contains('text-white');
+      
+      // Scroll to top for clean capture
+      window.scrollTo(0, 0);
       
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -66,9 +67,10 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
              if(clonedElement) {
                 clonedElement.style.backgroundColor = 'white';
                 clonedElement.style.color = 'black';
-                // You might need to target specific children to invert colors back to black if they are white
+                clonedElement.style.height = 'auto';
+                clonedElement.style.overflow = 'visible';
+                
                  clonedElement.querySelectorAll('*').forEach(el => {
-                     // Reset text colors that might be white classes
                      el.style.color = 'inherit';
                  });
              }
@@ -79,16 +81,17 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
+      const pageHeight = 297; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-
       let position = 0;
 
+      // First page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      // Subsequent pages
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);

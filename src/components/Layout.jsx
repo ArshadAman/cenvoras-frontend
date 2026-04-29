@@ -23,14 +23,24 @@ import {
   ArrowUturnRightIcon,
   ReceiptPercentIcon,
   BuildingLibraryIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [upgradeModal, setUpgradeModal] = useState({ open: false, featureName: '', description: '', targetPlanName: 'Pro' });
+  const [upgradeModal, setUpgradeModal] = useState({
+    open: false,
+    title: 'Upgrade required',
+    featureName: '',
+    description: '',
+    targetPlanName: 'Pro',
+    targetPlanCode: 'pro',
+    ctaLabel: '',
+    subtitle: '',
+  });
 
   const role = getUserRole();
 
@@ -45,6 +55,7 @@ export default function Layout({ children, onLogout }) {
       title: "Sales & Trade",
       items: [
         { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
+        { path: "/quotations", label: "Quotations", icon: DocumentTextIcon, roles: [], upgradePlan: 'Pro', upgradeText: 'Quotations are available on Pro and above.' },
         { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
         { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
         { path: "/warranty", label: "Warranty", icon: ShieldCheckIcon, roles: [] },
@@ -104,6 +115,47 @@ export default function Layout({ children, onLogout }) {
   const permissions = profileData?.profile?.permissions || {};
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
+  const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
+  const isVipAccess = String(currentPlanName).toLowerCase().includes('vip');
+  const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
+  const pendingPlanName = entitlements.plan?.pending_plan_name || '';
+  const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
+  const nextPlanCode = (entitlements.plan?.pending_plan_code || entitlements.plan?.next_plan_code || '').toLowerCase();
+  const currentPeriodEnd = entitlements.plan?.current_period_end;
+
+  const resolvePlanCode = (planNameOrCode) => {
+    const value = String(planNameOrCode || '').toLowerCase();
+    if (value === 'business') return 'business';
+    if (value === 'pro') return 'pro';
+    return 'pro';
+  };
+
+  const expiryDate = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  const hasValidExpiryDate = expiryDate && !Number.isNaN(expiryDate.getTime());
+  const msInDay = 24 * 60 * 60 * 1000;
+  const daysRemaining = hasValidExpiryDate ? Math.ceil((expiryDate.getTime() - Date.now()) / msInDay) : null;
+  const showExpiringBanner = !isVipAccess && !isFreePlan && Number.isFinite(daysRemaining) && daysRemaining >= 0 && daysRemaining <= 5;
+  const showExpiredBanner = !isVipAccess && !isFreePlan && Number.isFinite(daysRemaining) && daysRemaining < 0;
+  const queuedDate = pendingPlanStartsAt ? new Date(pendingPlanStartsAt) : null;
+  const hasQueuedDate = queuedDate && !Number.isNaN(queuedDate.getTime());
+  const showQueuedBanner = !isVipAccess && ['free', 'starter'].includes(nextPlanCode) && hasQueuedDate;
+
+  const isAllowedFreeRoute = (path) => {
+    const route = (path || '').toLowerCase();
+
+    // Free plan access policy:
+    // - Allow Sales Invoices only (quotations and sales orders are locked)
+    // - Allow Customers
+    // - Allow Profile
+    // - Allow Payments
+    if (route.startsWith('/sales-orders')) return false;
+    if (route === '/sales' || route.startsWith('/sales/')) return true;
+    if (route.startsWith('/customers')) return true;
+    if (route.startsWith('/profile')) return true;
+    if (route.startsWith('/payments')) return true;
+    return false;
+  };
 
   // Filter structural groups by roles AND granular permissions
   const filteredGroups = navigationGroups.map(group => {
@@ -139,9 +191,21 @@ export default function Layout({ children, onLogout }) {
         
         {/* Logo Area */}
         <div className="h-24 flex items-center px-6 border-b border-white/5">
-          <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
-          </Link>
+          <div className="flex items-center justify-between w-full gap-2">
+            <Link to="/" className="flex items-center">
+              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
+            </Link>
+            <span
+              className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
+                isVipAccess
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                  : 'bg-white/10 text-gray-300 border-white/10'
+              }`}
+              title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+            >
+              {isVipAccess ? 'VIP Access' : `${currentPlanName} Plan`}
+            </span>
+          </div>
         </div>
         
         {/* Navigation — scrollable middle section */}
@@ -157,7 +221,7 @@ export default function Layout({ children, onLogout }) {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
-                const isLocked = item.featureKey && can[item.featureKey] === false;
+                const isLocked = (isFreePlan && !isAllowedFreeRoute(item.path)) || (item.featureKey && can[item.featureKey] === false);
 
                 const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                   isActive
@@ -172,9 +236,13 @@ export default function Layout({ children, onLogout }) {
                       type="button"
                       onClick={() => setUpgradeModal({
                         open: true,
+                        title: 'Upgrade required',
                         featureName: item.label,
-                        description: item.upgradeText || `${item.label} is not available on your current plan.`,
+                        description: item.upgradeText || `${item.label} is locked on your current plan.`,
                         targetPlanName: item.upgradePlan || 'Pro',
+                        targetPlanCode: resolvePlanCode(item.upgradePlan),
+                        ctaLabel: '',
+                        subtitle: '',
                       })}
                       className={`${baseClass} w-full text-left`}
                     >
@@ -202,6 +270,20 @@ export default function Layout({ children, onLogout }) {
         
         {/* Bottom section — always visible, never scrolls away */}
         <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/5 space-y-2">
+          <Link
+            to="/contact"
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+              location.pathname === '/contact'
+                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+            }`}
+          >
+            <ChatBubbleLeftRightIcon className={`w-5 h-5 transition-colors duration-200 ${
+              location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'
+            }`} />
+            <span className="text-sm flex-1">Contact Us</span>
+          </Link>
+
           {/* Coming Soon Button */}
           <Link
             to="/coming-soon"
@@ -249,7 +331,16 @@ export default function Layout({ children, onLogout }) {
             <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
           </Link>
           
-          <div className="w-10"></div> {/* Spacer */}
+          <span
+            className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
+              isVipAccess
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                : 'bg-white/10 text-gray-300 border-white/10'
+            }`}
+            title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+          >
+            {isVipAccess ? 'VIP' : currentPlanName}
+          </span>
         </header>
 
         {/* Mobile Menu Overlay */}
@@ -289,7 +380,7 @@ export default function Layout({ children, onLogout }) {
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
-                    const isLocked = item.featureKey && can[item.featureKey] === false;
+                    const isLocked = (isFreePlan && !isAllowedFreeRoute(item.path)) || (item.featureKey && can[item.featureKey] === false);
                     const baseClass = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
@@ -303,9 +394,13 @@ export default function Layout({ children, onLogout }) {
                           type="button"
                           onClick={() => setUpgradeModal({
                             open: true,
+                            title: 'Upgrade required',
                             featureName: item.label,
-                            description: item.upgradeText || `${item.label} is not available on your current plan.`,
+                            description: item.upgradeText || `${item.label} is locked on your current plan.`,
                             targetPlanName: item.upgradePlan || 'Pro',
+                            targetPlanCode: resolvePlanCode(item.upgradePlan),
+                            ctaLabel: '',
+                            subtitle: '',
                           })}
                           className={`${baseClass} w-full text-left`}
                         >
@@ -335,6 +430,19 @@ export default function Layout({ children, onLogout }) {
             {/* Bottom section — always pinned */}
             <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
               <Link
+                to="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/contact'
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                }`}
+              >
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <span className="text-sm flex-1">Contact Us</span>
+              </Link>
+
+              <Link
                 to="/coming-soon"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
@@ -361,17 +469,109 @@ export default function Layout({ children, onLogout }) {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto relative z-10">
-           {children}
+          {(showQueuedBanner || showExpiringBanner || showExpiredBanner) && (
+            <div className="px-4 pt-4 md:px-6 md:pt-6">
+              <div className="mx-auto max-w-7xl space-y-3">
+                {showQueuedBanner && (
+                  <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/15 via-sky-500/10 to-blue-500/15 p-4 md:p-5">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Downgrade Scheduled</p>
+                        <p className="mt-1 text-sm text-gray-100">
+                          Your account will move to Free on {queuedDate.toLocaleDateString()} after the current cycle ends.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(showExpiringBanner || showExpiredBanner) && (
+                  <div className={`rounded-2xl border p-4 md:p-5 ${showExpiredBanner ? 'border-rose-400/35 bg-gradient-to-r from-rose-500/20 via-red-500/15 to-orange-500/20' : 'border-amber-400/30 bg-gradient-to-r from-amber-500/20 via-yellow-500/12 to-orange-500/18'}`}>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className={`text-xs font-semibold uppercase tracking-wider ${showExpiredBanner ? 'text-rose-200' : 'text-amber-200'}`}>
+                          {showExpiredBanner ? 'Plan Expired' : 'Renewal Reminder'}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-100">
+                          {showExpiredBanner
+                            ? `Your ${currentPlanName} plan has expired. Renew now to restore full access.`
+                            : `Your ${currentPlanName} plan expires in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}. Renew now to avoid interruption.`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUpgradeModal({
+                          open: true,
+                          title: 'Renew your plan',
+                          featureName: 'Plan access',
+                          description: `Pay now to renew ${currentPlanName}. If your current cycle is still active, renewal starts automatically after it ends.`,
+                          targetPlanName: currentPlanName,
+                          targetPlanCode: resolvePlanCode(currentPlanCode),
+                          ctaLabel: `Pay & Renew ${currentPlanName}`,
+                          subtitle: showExpiredBanner
+                            ? `Your ${currentPlanName} access has expired.`
+                            : `Keep your ${currentPlanName} access active without interruption.`,
+                        })}
+                        className="inline-flex items-center justify-center rounded-lg bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-gray-200 transition-colors"
+                      >
+                        Renew now
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isFreePlan && !isAllowedFreeRoute(location.pathname) ? (
+            <div className="p-6 md:p-10">
+              <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+                <h2 className="text-2xl font-bold text-white mb-2">This section is locked on Free</h2>
+                <p className="text-sm text-gray-300 mb-4">
+                  Your Free plan can access only Sales Invoices, Customers, and Profile. Upgrade to unlock dashboard, inventory, reports, integrations, and advanced features.
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    to="/sales"
+                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors text-sm font-medium"
+                  >
+                    Go to Sales Invoices
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setUpgradeModal({
+                      open: true,
+                      title: 'Upgrade required',
+                      featureName: 'Premium Modules',
+                      description: 'Upgrade to Pro or Business to unlock dashboard, reports, integrations, and advanced operations.',
+                      targetPlanName: 'Pro',
+                      targetPlanCode: 'pro',
+                      ctaLabel: '',
+                      subtitle: '',
+                    })}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 transition-all text-sm font-semibold"
+                  >
+                    Upgrade Plan
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
 
       <UpgradePromptModal
         isOpen={upgradeModal.open}
-        onClose={() => setUpgradeModal({ open: false, featureName: '', description: '', targetPlanName: 'Pro' })}
-        title="Upgrade required"
+        onClose={() => setUpgradeModal({ open: false, title: 'Upgrade required', featureName: '', description: '', targetPlanName: 'Pro', targetPlanCode: 'pro', ctaLabel: '', subtitle: '' })}
+        title={upgradeModal.title || 'Upgrade required'}
         featureName={upgradeModal.featureName}
         targetPlanName={upgradeModal.targetPlanName}
+        targetPlanCode={upgradeModal.targetPlanCode || 'pro'}
         description={upgradeModal.description}
+        ctaLabel={upgradeModal.ctaLabel}
+        subtitle={upgradeModal.subtitle}
       />
     </div>
   );

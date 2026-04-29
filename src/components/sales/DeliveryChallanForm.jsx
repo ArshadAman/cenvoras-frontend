@@ -134,7 +134,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
           initialValues={{
             customer_name: editData?.customer_name || "",
             challan_number: editData?.challan_number || `DC-${Date.now()}`,
-            date: editData?.date || new Date().toISOString().split('T')[0],
+            date: editData?.date || new Date().toLocaleDateString('sv-SE'),
             vehicle_number: editData?.vehicle_number || "", // Extra field for DC
             notes: editData?.notes || "",
             items: editData?.items?.map(item => ({

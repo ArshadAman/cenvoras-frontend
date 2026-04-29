@@ -133,7 +133,7 @@ export default function StockJournalForm({ isOpen, onClose }) {
 
         <Formik
           initialValues={{
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toLocaleDateString('sv-SE'),
             warehouse: "",
             adjustment_type: "damage",
             notes: "",

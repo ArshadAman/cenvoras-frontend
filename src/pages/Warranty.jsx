@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/api';
 import Layout from '../components/Layout';
-import { ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, XCircleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const STATUS_CONFIG = {
   active: { label: 'Active', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', icon: ShieldCheckIcon },
@@ -13,10 +13,11 @@ const STATUS_CONFIG = {
 
 export default function Warranty() {
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['warranty-report'],
-    queryFn: () => api.get('/inventory/reports/warranty/').then(res => res.data),
+    queryKey: ['warranty-report', search],
+    queryFn: () => api.get('/inventory/reports/warranty/', { params: search ? { search } : {} }).then(res => res.data),
   });
 
   const stats = data || { count: 0, active_count: 0, warning_count: 0, critical_count: 0, expired_count: 0, results: [] };
@@ -34,6 +35,22 @@ export default function Warranty() {
             Warranty Tracker
           </h1>
           <p className="text-gray-400 text-sm">Track warranty status for all sold products</p>
+        </div>
+
+        <div className="bento-card !p-4 flex items-center gap-3">
+          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by invoice number or customer name"
+            className="w-full bg-transparent text-white placeholder-gray-500 outline-none"
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} className="text-xs text-cyan-400 hover:text-cyan-300">
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Stats Cards */}

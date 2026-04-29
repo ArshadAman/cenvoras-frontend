@@ -20,10 +20,10 @@ import 'react-toastify/dist/ReactToastify.css';
 // ─── Back to — not needed here, this is under System group in sidebar ───
 
 const TABS = [
-  { id: 'email', label: '📧 Email', icon: EnvelopeIcon },
-  { id: 'backup', label: '💾 Data Backup', icon: CloudArrowDownIcon },
-  { id: 'whatsapp', label: '💬 WhatsApp', icon: ChatBubbleLeftIcon, comingSoon: true },
-  { id: 'apikeys', label: '🔑 API Keys', icon: KeyIcon, comingSoon: true },
+  { id: 'email', label: 'Email Automation', icon: EnvelopeIcon },
+  { id: 'backup', label: 'Data Backup', icon: CloudArrowDownIcon },
+  { id: 'whatsapp', label: 'WhatsApp', icon: ChatBubbleLeftIcon, comingSoon: true },
+  { id: 'apikeys', label: 'API Keys', icon: KeyIcon, comingSoon: true },
 ];
 
 // ─── ComingSoon Placeholder ───
@@ -127,7 +127,7 @@ function EmailTab() {
         </div>
         <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mb-4 text-sm text-amber-200">
           <ExclamationTriangleIcon className="w-4 h-4 inline mr-2 text-amber-400" />
-          This will email <strong>every customer with an outstanding balance</strong>. Verify your email configuration first.
+          This will email <strong>every customer with an outstanding balance</strong>.
         </div>
         <button
           onClick={() => remindersMutation.mutate()}
@@ -519,7 +519,7 @@ function BackupTab() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `cenvora-backup-${new Date().toISOString().split('T')[0]}.${isCsv ? 'zip' : 'json'}`;
+      a.download = `cenvora-backup-${new Date().toLocaleDateString('sv-SE')}.${isCsv ? 'zip' : 'json'}`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`${backupFormat.toUpperCase()} backup downloaded successfully!`);
@@ -664,55 +664,85 @@ function BackupTab() {
 // ─── Main IntegrationsPage ───
 export default function IntegrationsPage() {
   const [activeTab, setActiveTab] = useState('email');
+  const activeTabConfig = TABS.find((tab) => tab.id === activeTab);
 
   return (
     <Layout>
-      <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8 animate-fade-up">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-1">Business Tools & Integrations</h1>
-          <p className="text-gray-400 text-sm">Email notifications, barcode scanning, data backups, and more — all automated.</p>
+      <div className="relative p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-fade-up">
+        <div className="pointer-events-none absolute inset-0 opacity-80">
+          <div className="absolute -top-8 -left-12 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute top-1/3 -right-12 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
         </div>
 
-        {/* Tab Bar */}
-        <div className="flex flex-wrap gap-2">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? 'bg-white/10 text-white shadow-sm border border-white/20'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              {tab.label}
-              {tab.comingSoon && (
-                <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-gradient-to-r from-pink-500 to-orange-400 text-white leading-none">
-                  Soon
-                </span>
+        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80 mb-2">System Hub</p>
+              <h1 className="text-3xl md:text-4xl font-semibold text-white mb-2">Business Tools</h1>
+              <p className="text-white/65 text-sm md:text-base max-w-2xl">Centralized automation for communication, backup, and platform operations.</p>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-sm text-white/85">
+              <span className="text-white/50">Active Tool:</span>{' '}
+              <span className="font-semibold text-cyan-300">{activeTabConfig?.label}</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <aside className="lg:col-span-3">
+            <div className="rounded-3xl border border-white/10 bg-black/30 p-3 backdrop-blur-xl space-y-1">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full rounded-2xl px-4 py-3.5 text-left transition-all border flex items-center justify-between gap-3 ${
+                      isActive
+                        ? 'bg-white/10 border-white/20 text-white shadow-sm'
+                        : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className={`p-2 rounded-xl ${isActive ? 'bg-cyan-500/20 text-cyan-300' : 'bg-white/5 text-gray-400'}`}>
+                        <Icon className="w-4 h-4" />
+                      </span>
+                      <span className="text-sm font-medium">{tab.label}</span>
+                    </span>
+                    {tab.comingSoon && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-gradient-to-r from-pink-500 to-orange-400 text-white leading-none">
+                        Soon
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          <section className="lg:col-span-9">
+            <div className="rounded-3xl border border-white/10 bg-black/25 p-5 md:p-6 backdrop-blur-xl">
+              {/* Tab Content */}
+              {activeTab === 'email' && <EmailTab />}
+              {activeTab === 'backup' && <BackupTab />}
+              {activeTab === 'whatsapp' && (
+                <ComingSoonPlaceholder
+                  title="WhatsApp Business Integration"
+                  description="Send invoices, payment reminders, and order updates directly via WhatsApp Business. Requires Meta Business API approval and a verified WhatsApp Business number."
+                  icon={ChatBubbleLeftIcon}
+                />
               )}
-            </button>
-          ))}
+              {activeTab === 'apikeys' && (
+                <ComingSoonPlaceholder
+                  title="External API Keys"
+                  description="Generate API keys to connect your Cenvora account with external tools — online stores, POS systems, and custom integrations. Full REST API documentation included."
+                  icon={KeyIcon}
+                />
+              )}
+            </div>
+          </section>
         </div>
-
-        {/* Tab Content */}
-        {activeTab === 'email' && <EmailTab />}
-        {activeTab === 'backup' && <BackupTab />}
-        {activeTab === 'whatsapp' && (
-          <ComingSoonPlaceholder
-            title="WhatsApp Business Integration"
-            description="Send invoices, payment reminders, and order updates directly via WhatsApp Business. Requires Meta Business API approval and a verified WhatsApp Business number."
-            icon={ChatBubbleLeftIcon}
-          />
-        )}
-        {activeTab === 'apikeys' && (
-          <ComingSoonPlaceholder
-            title="External API Keys"
-            description="Generate API keys to connect your Cenvora account with external tools — online stores, POS systems, and custom integrations. Full REST API documentation included."
-            icon={KeyIcon}
-          />
-        )}
       </div>
     </Layout>
   );

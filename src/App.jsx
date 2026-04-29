@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import ContactUs from './pages/ContactUs'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import Sitemap from './pages/Sitemap'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
 import Sales from './pages/Sales'
+import Quotations from './pages/Quotations'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
 import Vendors from './pages/Vendors'
@@ -44,6 +47,7 @@ import DebitNoteList from './pages/DebitNoteList'
 import ProfitLossStatement from './pages/reports/ProfitLossStatement'
 import BalanceSheet from './pages/reports/BalanceSheet'
 import BankReconciliation from './pages/financial/BankReconciliation'
+import ManualJournal from './pages/financial/ManualJournal'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -55,7 +59,7 @@ function App() {
 
   return (
     <Router>
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
       <Routes>
         <Route
           path="/"
@@ -72,7 +76,12 @@ function App() {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />}
         />
+        <Route
+          path="/forgot-password"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />}
+        />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sitemap" element={<Sitemap />} />
         <Route
@@ -92,6 +101,10 @@ function App() {
         <Route
           path="/sales"
           element={isAuthenticated ? <Sales /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/quotations"
+          element={isAuthenticated ? <Quotations /> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales-orders"
@@ -201,6 +214,10 @@ function App() {
         <Route
           path="/bank-reconciliation"
           element={isAuthenticated ? <BankReconciliation /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/ledger/manual-journal"
+          element={isAuthenticated ? <ManualJournal /> : <Navigate to="/" replace />}
         />
         <Route
           path="/warranty"

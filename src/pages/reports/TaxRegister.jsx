@@ -7,7 +7,7 @@ import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } f
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toLocaleDateString('sv-SE');
 const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 
 export default function TaxRegister() {
