@@ -239,7 +239,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                       {bill.items?.map((item, index) => (
                         <tr key={index} className="bg-transparent hover:bg-white/5 transition-colors">
                           <td className="px-4 py-3 font-medium text-white">
-                            <div>{item.product}</div>
+                            <div>{item.product_detail?.name || item.product}</div>
                             {item.hsn_sac_code && (
                               <div className="text-[10px] text-gray-500 mt-0.5 uppercase">HSN: {item.hsn_sac_code}</div>
                             )}

@@ -49,7 +49,6 @@ const INDIAN_STATES = [
 ];
 
 // Product Autocomplete Component - Dark Theme
-// Product Autocomplete Component - Dark Theme
 function ProductAutocomplete({ idx, values, setFieldValue, products }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -274,26 +273,6 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
            onClose();
         }
       }
-      // Enter Navigation
-      if (e.key === "Enter") {
-        const target = e.target;
-        if ((target.tagName === "INPUT" || target.tagName === "SELECT") && !target.dataset.noEnter) {
-            e.preventDefault();
-            const form = target.form;
-            if (form) {
-                const index = Array.prototype.indexOf.call(form, target);
-                let nextIndex = index + 1;
-                while (form.elements[nextIndex]) {
-                   const next = form.elements[nextIndex];
-                   if (next.tagName !== "FIELDSET" && !next.hidden && !next.disabled && next.offsetParent !== null && next.tabIndex >= 0) {
-                       next.focus();
-                       break;
-                   }
-                   nextIndex++;
-                }
-            }
-        }
-      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -454,7 +433,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 toast.success("Purchase bill created successfully!");
               }
               
-              queryClient.invalidateQueries({ queryKey: ["purchase-bills"] });
+              queryClient.invalidateQueries({ queryKey: ["purchaseBills"] });
               onClose();
             } catch (error) {
               console.error('Error saving purchase bill:', error);
@@ -489,150 +468,147 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               <div className="flex-1 overflow-y-auto p-0">
                 <div className="p-6 sm:p-8 space-y-8">
                 
-                {/* Bill Details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="relative group">
-                   <label className="block text-[10px] font-bold text-cyan-500/70 mb-2 uppercase tracking-widest">
-                     Bill Number <span className="text-red-500">*</span>
-                   </label>
-                   <Field
-                     name="bill_number"
-                     placeholder="e.g. PUR/2024/001"
-                     className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10"
-                   />
-                   <ErrorMessage name="bill_number" component="div" className="text-red-500/80 text-[10px] mt-1.5 ml-1 font-medium italic" />
-                </div>
-                <div className="relative group">
-                  <label className="block text-[10px] font-bold text-cyan-500/70 mb-2 uppercase tracking-widest">
-                     Bill Date <span className="text-red-500">*</span>
-                  </label>
-                  <Field
-                    name="bill_date"
-                    type="date"
-                    className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10"
-                  />
-                  <ErrorMessage name="bill_date" component="div" className="text-red-500/80 text-[10px] mt-1.5 ml-1 font-medium italic" />
-                </div>
-                <div className="relative group">
-                  <label className="block text-[10px] font-bold text-cyan-500/70 mb-2 uppercase tracking-widest">
-                     Warehouse <span className="text-red-500">*</span>
-                   </label>
-                   <Field
-                     name="warehouse"
-                     as="select"
-                     className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10 appearance-none"
-                   >
-                     <option value="" className="bg-[#111]">Select Warehouse</option>
-                     {warehouses?.map(w => (
-                       <option key={w.id} value={w.id} className="bg-[#111]">{w.name}</option>
-                     ))}
-                   </Field>
-                   <ErrorMessage name="warehouse" component="div" className="text-red-500/80 text-[10px] mt-1.5 ml-1 font-medium italic" />
-                   <div className="absolute right-4 top-[38px] pointer-events-none text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
-                   </div>
-                </div>
-              </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="relative group">
-                    <label className="block text-[10px] font-bold text-cyan-500/70 mb-2 uppercase tracking-widest">
-                       Journal <span className="text-red-500">*</span>
-                    </label>
-                    <Field
-                       name="journal"
-                       placeholder="Purchases"
-                       className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10"
-                    />
-                 </div>
-                 <div className="relative group">
-                    <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">
-                       Due Date
-                    </label>
-                    <Field
-                       name="due_date"
-                       type="date"
-                       className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10"
-                    />
-                 </div>
-               </div>
-
-              {/* Vendor Info */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-white/5">
-                 <div className="md:col-span-2 relative group">
-                    <label className="block text-[10px] font-bold text-cyan-500/70 mb-2 uppercase tracking-widest">
-                       Vendor Name <span className="text-red-500">*</span>
-                    </label>
-                    <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
-                    <ErrorMessage name="vendor_name" component="div" className="text-red-500/80 text-[10px] mt-1.5 ml-1 font-medium italic" />
-                 </div>
-                 
-                 <div className="relative group">
-                    <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">
-                       Vendor Address
-                    </label>
-                    <Field
-                       name="vendor_address"
-                       as="textarea"
-                       rows="2"
-                       placeholder="Full registered address of the vendor..."
-                       className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10 resize-none"
-                    />
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-4">
+                {/* Bill & Vendor Details Card */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 sm:p-8 space-y-8">
+                  {/* Bill Details Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="relative group">
-                        <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">
-                           Vendor GSTIN
-                        </label>
-                        <Field
-                           name="vendor_gstin"
-                           placeholder="29AAAAA0000A1Z5"
-                           className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10 uppercase"
-                        />
-                        <ErrorMessage name="vendor_gstin" component="div" className="text-red-500/80 text-[10px] mt-1.5 ml-1 font-medium italic" />
+                      <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                        Bill Number <span className="text-red-500">*</span>
+                      </label>
+                      <Field
+                        name="bill_number"
+                        placeholder="e.g. PUR/2024/001"
+                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20"
+                      />
+                      <ErrorMessage name="bill_number" component="div" className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium" />
                     </div>
+                    
                     <div className="relative group">
-                       <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">
-                          GST Treatment
-                       </label>
-                       <div className="relative">
+                      <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                        Bill Date <span className="text-red-500">*</span>
+                      </label>
+                      <Field
+                        name="bill_date"
+                        type="date"
+                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 [color-scheme:dark]"
+                      />
+                    </div>
+
+                    <div className="relative group">
+                      <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                        Warehouse
+                      </label>
+                      <div className="relative">
                         <Field
-                            name="gst_treatment"
-                            as="select"
-                            className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/10 appearance-none"
+                          name="warehouse"
+                          as="select"
+                          className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 appearance-none"
                         >
-                            <option value="" className="bg-[#111]">Select Treatment</option>
-                            <option value="registered" className="bg-[#111]">Registered</option>
-                            <option value="unregistered" className="bg-[#111]">Unregistered</option>
-                            <option value="export" className="bg-[#111]">Export</option>
-                            <option value="consumer" className="bg-[#111]">Consumer</option>
+                          <option value="" className="bg-[#111]">Direct to Stock</option>
+                          {warehouses?.map(w => (
+                            <option key={w.id} value={w.id} className="bg-[#111]">{w.name}</option>
+                          ))}
                         </Field>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                          </svg>
                         </div>
-                       </div>
+                      </div>
                     </div>
-                 </div>
-               </div>
-              </div> {/* End of p-8 space-y-8 div */}
 
-              {/* Items Section */}
-              <div className="p-8 bg-[#0a0a0a] border-y border-white/5">
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-6 bg-cyan-500 rounded-full"></div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">Invoice Items</h3>
+                    <div className="relative group">
+                      <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                        Due Date
+                      </label>
+                      <Field
+                        name="due_date"
+                        type="date"
+                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 [color-scheme:dark]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Vendor Info Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-8 border-t border-white/5">
+                    <div className="md:col-span-4 space-y-6">
+                      <div className="relative group">
+                        <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                          Vendor Name <span className="text-red-500">*</span>
+                        </label>
+                        <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
+                        <ErrorMessage name="vendor_name" component="div" className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium" />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="relative group">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                            GSTIN
+                          </label>
+                          <Field
+                            name="vendor_gstin"
+                            placeholder="29AAAAA0000A1Z5"
+                            className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 uppercase text-xs"
+                          />
+                        </div>
+                        <div className="relative group">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
+                            Journal
+                          </label>
+                          <Field
+                            name="journal"
+                            className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-8 flex flex-col">
+                      <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest">
+                        Vendor Address & Treatment
+                      </label>
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Field
+                          name="vendor_address"
+                          as="textarea"
+                          placeholder="Registered office address..."
+                          className="w-full h-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 resize-none text-xs"
+                        />
+                        <div className="space-y-4">
+                           <div className="relative group">
+                              <label className="block text-[8px] font-black text-gray-600 mb-1 uppercase">GST Treatment</label>
+                              <Field
+                                name="gst_treatment"
+                                as="select"
+                                className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 appearance-none text-xs"
+                              >
+                                <option value="registered">Registered Business</option>
+                                <option value="unregistered">Unregistered Business</option>
+                                <option value="consumer">Consumer</option>
+                                <option value="overseas">Overseas</option>
+                              </Field>
+                           </div>
+                           <div className="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10 text-[10px] text-cyan-500/70 leading-relaxed italic">
+                             Address and GSTIN will be used to automatically calculate Intra-state (CGST/SGST) or Inter-state (IGST) taxes.
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Section Header */}
+                <div className="flex items-center justify-between pt-4">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">Itemized Bill</h3>
+                    <div className="h-px w-20 bg-gradient-to-r from-white/20 to-transparent"></div>
                   </div>
                   <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
                     {values.items.length} {values.items.length === 1 ? 'Item' : 'Items'} Listed
                   </div>
                 </div>
-                
+
                 <FieldArray name="items">
                   {({ push, remove }) => (
                     <div className="space-y-4">
@@ -650,7 +626,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                         </div>
 
                         {values.items.map((item, idx) => (
-                          <PurchaseItemRow
+                           <PurchaseItemRow
                              key={idx}
                              item={item}
                              idx={idx}
@@ -659,10 +635,10 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                              remove={remove}
                              units={units}
                              products={products}
-                          />
+                           />
                         ))}
-                        
-                        <div className="pt-2">
+
+                         <div className="pt-6">
                             <button
                             type="button"
                             onClick={() => push({
@@ -681,19 +657,17 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                                 amount: 0,
                                 isExistingProduct: false,
                             })}
-                            className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all text-[11px] font-bold uppercase tracking-wider"
+                            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-all text-xs font-bold uppercase tracking-widest"
                             >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-cyan-500">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
-                            Add New Line
+                            Add New Line Item
                             </button>
-                        </div>
+                         </div>
                      </div>
                    )}
                  </FieldArray>
-              </div>
-              </div>
 
                 {/* Totals Section */}
                 <div className="flex justify-end pt-8">
@@ -743,8 +717,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 </button>
               </div>
             </Form>
-          )}
-        }
+          );
+         }}
         </Formik>
       </div>
     </div>,
