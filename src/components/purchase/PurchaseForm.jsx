@@ -695,46 +695,52 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               </div>
               </div>
 
-              {/* Totals & Footer */}
-              <div className="p-6 sm:p-8 bg-[#0c0c0e] border-t border-white/5 flex-none z-40 backdrop-blur-xl">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                    <div className="hidden md:block">
-                        <div className="p-4 rounded-xl border border-white/5 bg-white/2 text-[10px] text-gray-500 space-y-2 max-w-sm">
-                            <p className="font-bold text-gray-400 uppercase tracking-widest">Notes & Terms</p>
-                            <p>Items will be added to selected warehouse stock immediately upon save. New products will be created automatically if not found in master.</p>
-                        </div>
-                    </div>
-                    
+                {/* Totals Section */}
+                <div className="flex justify-end pt-8">
+                  <div className="w-full max-w-md bg-[#111] border border-white/10 rounded-3xl p-8 shadow-2xl">
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center px-6 py-5 rounded-[20px] bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-white/5 shadow-xl shadow-black/20">
-                            <span className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.2em]">Payable Amount</span>
-                            <span className="text-3xl font-black text-white tabular-nums drop-shadow-md">₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-400 font-medium">Subtotal</span>
+                        <span className="text-white font-black tabular-nums tracking-tight">₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="h-px bg-white/5"></div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest">Payable Amount</span>
+                          <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">Net Total (Inclusive of all taxes)</span>
                         </div>
-
-                        {/* Actions */}
-                        <div className="flex justify-end space-x-4 pt-2">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-6 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors"
-                            >
-                                Discard
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="px-10 py-4 bg-white text-black rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-cyan-500 transition-all shadow-xl shadow-white/5 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
-                            >
-                                {isSubmitting ? (
-                                    <span className="flex items-center gap-2">
-                                        <div className="w-3.5 h-3.5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                                        Processing...
-                                    </span>
-                                ) : (isEdit ? "Update Bill" : "Finalize Bill")}
-                            </button>
-                        </div>
+                        <span className="text-3xl font-black text-white tabular-nums drop-shadow-md">₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
                     </div>
+                  </div>
                 </div>
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-4 rounded-b-[24px] items-center z-40 relative">
+                <div className="flex-1 text-gray-500 text-[10px] font-medium uppercase tracking-[0.1em] hidden sm:block">
+                  All changes are saved locally until finalized.
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all font-bold text-xs uppercase tracking-widest"
+                >
+                  Discard
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-10 py-4 bg-white text-black rounded-xl text-xs font-black uppercase tracking-[0.15em] hover:bg-cyan-500 transition-all shadow-xl shadow-cyan-500/10 active:scale-95 disabled:opacity-50 min-w-[180px]"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                      Processing...
+                    </span>
+                  ) : (isEdit ? "Update Bill" : "Finalize Bill")}
+                </button>
               </div>
             </Form>
           )}
