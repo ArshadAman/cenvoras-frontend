@@ -239,22 +239,23 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                       {bill.items?.map((item, index) => (
                         <tr key={index} className="bg-transparent hover:bg-white/5 transition-colors">
                           <td className="px-4 py-3 font-medium text-white">
-                            <div>{item.item_name}</div>
-                            {item.description && (
-                              <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                            <div>{item.product}</div>
+                            {item.hsn_sac_code && (
+                              <div className="text-[10px] text-gray-500 mt-0.5 uppercase">HSN: {item.hsn_sac_code}</div>
                             )}
                           </td>
                           <td className="px-4 py-3 text-center text-gray-300">
                             {item.quantity} {item.unit}
+                            {item.free_quantity > 0 && <span className="text-[10px] text-green-500 block">+{item.free_quantity} Free</span>}
                           </td>
                           <td className="px-4 py-3 text-right text-gray-300">
-                            ₹{parseFloat(item.rate || 0).toFixed(2)}
+                            ₹{parseFloat(item.price || 0).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-right text-gray-300">
-                            {item.discount_type === 'percentage' ? `${item.discount || 0}%` : `₹${parseFloat(item.discount || 0).toFixed(2)}`}
+                            {parseFloat(item.discount || 0).toFixed(1)}%
                           </td>
                           <td className="px-4 py-3 text-right text-gray-300">
-                            ₹{parseFloat(item.tax_amount || 0).toFixed(2)}
+                            ₹{parseFloat(item.tax || 0).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-right font-bold text-white">
                             ₹{parseFloat(item.amount || 0).toFixed(2)}
@@ -271,25 +272,17 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                 <div className="w-80">
                   <div className="bg-white/5 p-6 rounded-xl border border-white/10 space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Subtotal</span>
-                      <span className="text-white">₹{parseFloat(bill.sub_total || 0).toFixed(2)}</span>
+                      <span className="text-gray-400">Items Total</span>
+                      <span className="text-white">₹{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Discount</span>
-                      <span className="text-white">₹{parseFloat(bill.total_discount || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Tax</span>
-                      <span className="text-white">₹{parseFloat(bill.total_tax || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Adjustment</span>
-                      <span className="text-white">₹{parseFloat(bill.adjustment || 0).toFixed(2)}</span>
+                      <span className="text-gray-400">Paid Amount</span>
+                      <span className="text-green-500">₹{parseFloat(bill.amount_paid || 0).toFixed(2)}</span>
                     </div>
                     <div className="border-t border-white/10 pt-3 mt-1">
                       <div className="flex justify-between text-lg font-bold">
-                        <span className="text-blue-400">Total Amount</span>
-                        <span className="text-white">₹{parseFloat(bill.total || 0).toFixed(2)}</span>
+                        <span className="text-blue-400">Net Payable</span>
+                        <span className="text-white">₹{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
