@@ -879,6 +879,5 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
       </div>
       </div>
 
-    </div>
   );
 }
