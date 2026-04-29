@@ -649,6 +649,19 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                            <div className="col-span-1"></div>
                         </div>
 
+                        {/* Table Header */}
+                        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 mb-2 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+                            <div className="col-span-3">Product / HSN</div>
+                            <div className="col-span-2">Batch Details</div>
+                            <div className="col-span-1 text-center">Quantity</div>
+                            <div className="col-span-1 text-center">Free</div>
+                            <div className="col-span-1">Unit</div>
+                            <div className="col-span-1 text-right">Unit Price</div>
+                            <div className="col-span-1 text-center">Disc / Tax</div>
+                            <div className="col-span-1 text-right">Net Amount</div>
+                            <div className="col-span-1"></div>
+                        </div>
+
                         {values.items.map((item, idx) => (
                           <PurchaseItemRow
                              key={idx}
@@ -756,7 +769,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
   const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
 
   return (
-     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-[#0a0a0a] border border-white/5 rounded-xl p-4 transition-all hover:bg-white/[0.02] hover:border-white/10 group">
+     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white/[0.02] border border-white/5 rounded-xl p-3 transition-all hover:bg-white/[0.04] hover:border-white/10 group mb-2">
       
       {/* Product (3 cols) */}
       <div className="md:col-span-3">
@@ -767,32 +780,32 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
                 {({ field }) => (
                     <input 
                         {...field} 
-                        placeholder="HSN CODE" 
-                        className="w-1/2 bg-white/2 border border-white/5 rounded-md px-2 py-1.5 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase" 
+                        placeholder="HSN/SAC" 
+                        className="w-1/2 bg-black/20 border border-white/5 rounded-md px-2 py-1 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase" 
                     />
                 )}
             </Field>
-            <div className="w-1/2 flex items-center justify-center bg-white/2 border border-white/5 rounded-md text-[9px] font-bold text-gray-600">
-               {item.isExistingProduct ? "Master Sync" : "New Entry"}
+            <div className="w-1/2 flex items-center justify-center bg-cyan-500/5 border border-cyan-500/10 rounded-md text-[8px] font-black text-cyan-500/50 uppercase tracking-tighter">
+               {item.isExistingProduct ? "Master Item" : "New Entry"}
             </div>
          </div>
       </div>
 
       {/* Batch Info (2 cols) */}
-      <div className="md:col-span-2 space-y-2">
+      <div className="md:col-span-2 flex flex-col gap-1.5">
           <div className="relative">
-            <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Batch</label>
+            <label className="block text-[9px] font-black text-gray-600 mb-1 md:hidden uppercase tracking-widest">Batch</label>
             <Field name={`items.${idx}.batch_number`}>
               {({ field }) => (
-                <input {...field} placeholder="BATCH NO" className="w-full bg-white/2 border border-white/5 rounded-lg px-3 py-2 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none" />
+                <input {...field} placeholder="BATCH NO" className="w-full bg-white/2 border border-white/5 rounded-lg px-2.5 py-1.5 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none placeholder:text-gray-700" />
               )}
             </Field>
           </div>
           <div className="relative">
-             <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Expiry</label>
+             <label className="block text-[9px] font-black text-gray-600 mb-1 md:hidden uppercase tracking-widest">Expiry</label>
              <Field name={`items.${idx}.expiry_date`}>
                {({ field }) => (
-                 <input {...field} type="date" className="w-full bg-white/2 border border-white/5 rounded-lg px-3 py-2 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none" />
+                 <input {...field} type="date" className="w-full bg-white/2 border border-white/5 rounded-lg px-2 py-1 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none [color-scheme:dark]" />
                )}
              </Field>
           </div>
@@ -805,7 +818,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
              name={`items.${idx}.quantity`}
              type="number"
              min="1"
-             className="w-full bg-white/2 border border-white/10 rounded-lg px-2 py-2 text-center text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-[11px] tabular-nums"
+             className="w-full bg-white/2 border border-white/10 rounded-lg px-1 py-2 text-center text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-[11px] tabular-nums"
          />
       </div>
 
@@ -817,7 +830,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
               type="number"
               min="0"
               placeholder="0"
-              className="w-full bg-green-500/5 border border-green-500/20 rounded-lg px-2 py-2 text-center text-green-500 font-bold focus:ring-1 focus:ring-green-500 outline-none text-[11px] tabular-nums"
+              className="w-full bg-green-500/5 border border-green-500/10 rounded-lg px-1 py-2 text-center text-green-500/50 font-bold focus:ring-1 focus:ring-green-500 outline-none text-[11px] tabular-nums"
           />
       </div>
 
@@ -826,7 +839,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
           <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Unit</label>
           <Field name={`items.${idx}.unit`}>
               {({ field }) => (
-              <select {...field} className="w-full bg-white/2 border border-white/10 rounded-lg px-2 py-2 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase">
+              <select {...field} className="w-full bg-white/2 border border-white/10 rounded-lg px-1 py-2 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase appearance-none text-center">
                   {units.map(u => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
               </select>
               )}
@@ -841,37 +854,35 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
               type="number"
               min="0"
               step="0.01"
-              className="w-full bg-white/2 border border-white/10 rounded-lg px-2 py-2 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-[11px] tabular-nums"
+              className="w-full bg-white/2 border border-white/10 rounded-lg px-1 py-2 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-[11px] tabular-nums"
           />
       </div>
 
       {/* Tax/Disc (1 col) */}
-      <div className="md:col-span-1 space-y-1">
-         <div className="flex items-center gap-1">
-             <label className="text-[8px] font-bold text-gray-500 w-6 uppercase">Disc</label>
-             <Field name={`items.${idx}.discount`} type="number" className="w-full bg-white/2 border border-white/5 rounded px-1 py-1 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+      <div className="md:col-span-1 flex flex-col gap-1">
+         <div className="relative group/field">
+             <Field name={`items.${idx}.discount`} type="number" className="w-full bg-white/2 border border-white/5 rounded px-1.5 py-1 text-center text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none" placeholder="D%" />
          </div>
-         <div className="flex items-center gap-1">
-             <label className="text-[8px] font-bold text-gray-500 w-6 uppercase">Tax</label>
-             <Field name={`items.${idx}.tax`} type="number" className="w-full bg-white/2 border border-white/5 rounded px-1 py-1 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+         <div className="relative group/field">
+             <Field name={`items.${idx}.tax`} type="number" className="w-full bg-white/2 border border-white/5 rounded px-1.5 py-1 text-center text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none" placeholder="T%" />
          </div>
       </div>
 
       {/* Amount (1 col) */}
       <div className="md:col-span-1">
           <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Total</label>
-          <div className="w-full px-2 py-2 text-right font-black text-cyan-400 text-[11px] tabular-nums">
+          <div className="w-full px-1 py-2 text-right font-black text-cyan-400 text-[11px] tabular-nums">
               {calculatedAmount.toFixed(2)}
           </div>
       </div>
 
       {/* Remove (1 col) */}
-      <div className="md:col-span-1 flex justify-center pt-1">
+      <div className="md:col-span-1 flex justify-center">
           <button
               type="button"
               onClick={() => remove(idx)}
               disabled={values.items.length === 1}
-              className="text-gray-600 hover:text-red-500 transition-all p-2 disabled:opacity-10 hover:bg-red-500/5 rounded-lg active:scale-90"
+              className="text-gray-700 hover:text-red-500 transition-all p-2 disabled:opacity-0 hover:bg-red-500/5 rounded-lg active:scale-90"
               title="Remove Item"
           >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -879,7 +890,6 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
               </svg>
           </button>
       </div>
-      </div>
-
+    </div>
   );
 }
