@@ -207,7 +207,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
             bill.bill_number,
             bill.bill_date,
             bill.vendor_name,
-            item.product || item.item_name,
+            item.product_detail?.name || item.product || item.item_name,
             item.quantity,
             item.unit,
             item.price || item.rate,
@@ -404,11 +404,11 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                               <span
                                 key={item.id || idx}
                                 className="inline-flex items-center px-2 py-1 bg-white/10 text-white/90 text-xs rounded-md border border-white/10 truncate max-w-[90px]"
-                                title={`${item.product || 'Product'} - Qty: ${item.quantity} × ₹${Number(item.price).toFixed(0)}`}
+                                title={`${item.product_detail?.name || item.product || 'Product'} - Qty: ${item.quantity} × ₹${Number(item.price).toFixed(0)}`}
                               >
-                                {(item.product || 'Product').length > 12 
-                                  ? (item.product || 'Product').slice(0, 12) + '...' 
-                                  : (item.product || 'Product')}
+                                {(item.product_detail?.name || item.product || 'Product').length > 12 
+                                  ? (item.product_detail?.name || item.product || 'Product').slice(0, 12) + '...' 
+                                  : (item.product_detail?.name || item.product || 'Product')}
                               </span>
                             ))}
                           </div>
