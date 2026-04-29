@@ -684,7 +684,11 @@ export default function SalesForm({
     staleTime: 10 * 60 * 1000,
     enabled: isOpen,
   });
-  const sellerState = userProfileData?.profile?.state || userProfileData?.state || null;
+  const sellerState =
+    userProfileData?.billing_profile?.state ||
+    userProfileData?.profile?.state ||
+    userProfileData?.state ||
+    null;
 
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,

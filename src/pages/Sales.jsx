@@ -37,15 +37,22 @@ export default function Sales({ documentType = "invoice" }) {
     mutationFn: (prefix) => patchUserProfile({ invoice_prefix: prefix }),
   });
 
-  // # Extract business info from profile
-  const businessInfo = userProfile?.profile ? {
-    business_name: userProfile.profile.business_name,
-    business_address: userProfile.profile.business_address,
-    phone: userProfile.profile.phone,
-    email: userProfile.profile.email,
-    gstin: userProfile.profile.gstin,
-    gem_id: userProfile.profile.gem_id,
-    state: userProfile.profile.state,
+  const billingProfile = userProfile?.billing_profile || userProfile?.profile;
+  const canEditInvoicePrefix = Boolean(
+    userProfile?.profile?.id &&
+    billingProfile?.id &&
+    userProfile.profile.id === billingProfile.id
+  );
+
+  // # Extract business info from billing profile (tenant/owner)
+  const businessInfo = billingProfile ? {
+    business_name: billingProfile.business_name,
+    business_address: billingProfile.business_address,
+    phone: billingProfile.phone,
+    email: billingProfile.email,
+    gstin: billingProfile.gstin,
+    gem_id: billingProfile.gem_id,
+    state: billingProfile.state,
   } : {};
 
   const handleEdit = (invoice) => {
@@ -59,16 +66,19 @@ export default function Sales({ documentType = "invoice" }) {
   };
 
   useEffect(() => {
-    const dbPrefix = userProfile?.profile?.invoice_prefix;
+    const dbPrefix = billingProfile?.invoice_prefix;
     if (dbPrefix !== undefined && dbPrefix !== null) {
       setInvoicePrefix(normalizePrefix(dbPrefix));
     }
-  }, [userProfile?.profile?.invoice_prefix]);
+  }, [billingProfile?.invoice_prefix]);
 
   const handlePrefixBlur = () => {
     const normalized = normalizePrefix(invoicePrefix);
     setInvoicePrefix(normalized);
-    if (normalized !== normalizePrefix(userProfile?.profile?.invoice_prefix || DEFAULT_INVOICE_PREFIX)) {
+    if (!canEditInvoicePrefix) {
+      return;
+    }
+    if (normalized !== normalizePrefix(billingProfile?.invoice_prefix || DEFAULT_INVOICE_PREFIX)) {
       saveInvoicePrefixMutation.mutate(normalized);
     }
   };
@@ -97,9 +107,11 @@ export default function Sales({ documentType = "invoice" }) {
                  value={invoicePrefix}
                  onChange={(e) => setInvoicePrefix(normalizePrefix(e.target.value))}
                  onBlur={handlePrefixBlur}
+                 disabled={!canEditInvoicePrefix}
                  className="bg-transparent border-none text-white text-sm w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
                  placeholder="INV-"
                  maxLength={10}
+                 title={!canEditInvoicePrefix ? 'Invoice prefix is managed by the main account.' : ''}
                />
              </div>
              <button
