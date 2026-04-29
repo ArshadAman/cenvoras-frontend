@@ -637,30 +637,16 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                   {({ push, remove }) => (
                     <div className="space-y-4">
                       
-                      {/* Desktop Header */}
-                      <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 bg-white/5 border border-white/10 rounded-lg font-black text-[9px] text-gray-500 uppercase tracking-widest mb-2">
-                        <div className="col-span-3">Product Description <span className="text-red-500">*</span></div>
-                        <div className="col-span-2">Batch / Expiry</div>
-                           <div className="col-span-1 text-center">Qty <span className="text-red-500">*</span></div>
-                           <div className="col-span-1 text-center text-green-500/70">Free</div>
-                           <div className="col-span-1">Unit <span className="text-red-500">*</span></div>
-                           <div className="col-span-1 text-right">Price <span className="text-red-500">*</span></div>
-                           <div className="col-span-1 text-center">Tax (%)</div>
-                           <div className="col-span-1 text-right">Total</div>
-                           <div className="col-span-1"></div>
-                        </div>
-
                         {/* Table Header */}
-                        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 mb-2 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+                        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-black text-[9px] text-gray-500 uppercase tracking-widest mb-3">
                             <div className="col-span-3">Product / HSN</div>
                             <div className="col-span-2">Batch Details</div>
                             <div className="col-span-1 text-center">Quantity</div>
-                            <div className="col-span-1 text-center">Free</div>
+                            <div className="col-span-1 text-center text-green-500/70">Free</div>
                             <div className="col-span-1">Unit</div>
                             <div className="col-span-1 text-right">Unit Price</div>
                             <div className="col-span-1 text-center">Disc / Tax</div>
-                            <div className="col-span-1 text-right">Net Amount</div>
-                            <div className="col-span-1"></div>
+                            <div className="col-span-2 text-right">Net Amount</div>
                         </div>
 
                         {values.items.map((item, idx) => (
@@ -707,10 +693,11 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                    )}
                  </FieldArray>
               </div>
+              </div>
 
-               {/* Totals & Footer */}
-               <div className="p-8 bg-[#111] border-t border-white/5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+              {/* Totals & Footer */}
+              <div className="p-6 sm:p-8 bg-[#0c0c0e] border-t border-white/5 flex-none z-40 backdrop-blur-xl">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
                     <div className="hidden md:block">
                         <div className="p-4 rounded-xl border border-white/5 bg-white/2 text-[10px] text-gray-500 space-y-2 max-w-sm">
                             <p className="font-bold text-gray-400 uppercase tracking-widest">Notes & Terms</p>
@@ -719,8 +706,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                     </div>
                     
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center px-6 py-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
-                            <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Payable Amount</span>
+                        <div className="flex justify-between items-center px-6 py-5 rounded-[20px] bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-white/5 shadow-xl shadow-black/20">
+                            <span className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.2em]">Payable Amount</span>
                             <span className="text-3xl font-black text-white tabular-nums drop-shadow-md">₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
 
@@ -729,14 +716,14 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-6 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest hover:text-white transition-colors"
+                                className="px-6 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors"
                             >
                                 Discard
                             </button>
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-10 py-3.5 bg-white text-black rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-xl shadow-white/5 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                className="px-10 py-4 bg-white text-black rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-cyan-500 transition-all shadow-xl shadow-white/5 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                             >
                                 {isSubmitting ? (
                                     <span className="flex items-center gap-2">
@@ -748,11 +735,10 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                         </div>
                     </div>
                 </div>
-               </div>
-
-                </div>
+              </div>
             </Form>
-            )}}
+          )}
+        }
         </Formik>
       </div>
     </div>,
@@ -771,120 +757,118 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
   const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
 
   return (
-     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white/[0.02] border border-white/5 rounded-xl p-3 transition-all hover:bg-white/[0.04] hover:border-white/10 group mb-2">
+     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-white/[0.01] border border-white/5 rounded-[20px] p-5 transition-all hover:bg-white/[0.03] hover:border-white/10 group mb-3 shadow-sm">
       
-      {/* Product (3 cols) */}
-      <div className="md:col-span-3">
-         <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Product</label>
-         <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} products={products} />
-         <div className="flex gap-2 mt-2">
+      {/* Product & HSN (3 cols) */}
+      <div className="md:col-span-3 space-y-2.5">
+         <div className="relative">
+            <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Product</label>
+            <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} products={products} />
+         </div>
+         <div className="flex items-center gap-2">
             <Field name={`items.${idx}.hsn_code`}>
                 {({ field }) => (
                     <input 
                         {...field} 
-                        placeholder="HSN/SAC" 
-                        className="w-1/2 bg-black/20 border border-white/5 rounded-md px-2 py-1 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase" 
+                        placeholder="HSN/SAC CODE" 
+                        className="flex-1 bg-black/20 border border-white/5 rounded-lg px-3 py-1.5 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase tracking-wider" 
                     />
                 )}
             </Field>
-            <div className="w-1/2 flex items-center justify-center bg-cyan-500/5 border border-cyan-500/10 rounded-md text-[8px] font-black text-cyan-500/50 uppercase tracking-tighter">
-               {item.isExistingProduct ? "Master Item" : "New Entry"}
+            <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-tighter border ${item.isExistingProduct ? "bg-cyan-500/5 border-cyan-500/10 text-cyan-500/50" : "bg-purple-500/5 border-purple-500/10 text-purple-500/50"}`}>
+               {item.isExistingProduct ? "Master" : "New"}
             </div>
          </div>
       </div>
 
-      {/* Batch Info (2 cols) */}
-      <div className="md:col-span-2 flex flex-col gap-1.5">
+      {/* Batch & Expiry (2 cols) */}
+      <div className="md:col-span-2 flex flex-col gap-2">
           <div className="relative">
-            <label className="block text-[9px] font-black text-gray-600 mb-1 md:hidden uppercase tracking-widest">Batch</label>
+            <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Batch Number</label>
             <Field name={`items.${idx}.batch_number`}>
               {({ field }) => (
-                <input {...field} placeholder="BATCH NO" className="w-full bg-white/2 border border-white/5 rounded-lg px-2.5 py-1.5 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none placeholder:text-gray-700" />
+                <input {...field} placeholder="BATCH NO" className="w-full bg-white/2 border border-white/5 rounded-xl px-3 py-2 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none placeholder:text-gray-700" />
               )}
             </Field>
           </div>
           <div className="relative">
-             <label className="block text-[9px] font-black text-gray-600 mb-1 md:hidden uppercase tracking-widest">Expiry</label>
+             <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Expiry Date</label>
              <Field name={`items.${idx}.expiry_date`}>
                {({ field }) => (
-                 <input {...field} type="date" className="w-full bg-white/2 border border-white/5 rounded-lg px-2 py-1 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none [color-scheme:dark]" />
+                 <input {...field} type="date" className="w-full bg-white/2 border border-white/5 rounded-xl px-3 py-1.5 text-white text-[10px] font-bold focus:border-cyan-500/50 outline-none [color-scheme:dark]" />
                )}
              </Field>
           </div>
       </div>
 
-      {/* Qty (1 col) */}
-      <div className="md:col-span-1">
-         <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Qty</label>
-         <Field
-             name={`items.${idx}.quantity`}
-             type="number"
-             min="1"
-             className="w-full bg-white/2 border border-white/10 rounded-lg px-1 py-2 text-center text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-[11px] tabular-nums"
-         />
-      </div>
-
-      {/* Free (1 col) */}
-      <div className="md:col-span-1">
-          <label className="block text-[9px] font-black text-green-600/70 mb-1.5 md:hidden uppercase tracking-widest">Free</label>
-          <Field
-              name={`items.${idx}.free_quantity`}
-              type="number"
-              min="0"
-              placeholder="0"
-              className="w-full bg-green-500/5 border border-green-500/10 rounded-lg px-1 py-2 text-center text-green-500/50 font-bold focus:ring-1 focus:ring-green-500 outline-none text-[11px] tabular-nums"
-          />
-      </div>
-
-      {/* Unit (1 col) */}
-      <div className="md:col-span-1">
-          <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Unit</label>
-          <Field name={`items.${idx}.unit`}>
-              {({ field }) => (
-              <select {...field} className="w-full bg-white/2 border border-white/10 rounded-lg px-1 py-2 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase appearance-none text-center">
-                  {units.map(u => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
-              </select>
-              )}
-          </Field>
-      </div>
-
-      {/* Price (1 col) */}
-      <div className="md:col-span-1">
-          <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Price</label>
-          <Field
-              name={`items.${idx}.purchase_price`}
-              type="number"
-              min="0"
-              step="0.01"
-              className="w-full bg-white/2 border border-white/10 rounded-lg px-1 py-2 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-[11px] tabular-nums"
-          />
-      </div>
-
-      {/* Tax/Disc (1 col) */}
-      <div className="md:col-span-1 flex flex-col gap-1">
-         <div className="relative group/field">
-             <Field name={`items.${idx}.discount`} type="number" className="w-full bg-white/2 border border-white/5 rounded px-1.5 py-1 text-center text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none" placeholder="D%" />
-         </div>
-         <div className="relative group/field">
-             <Field name={`items.${idx}.tax`} type="number" className="w-full bg-white/2 border border-white/5 rounded px-1.5 py-1 text-center text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none" placeholder="T%" />
-         </div>
-      </div>
-
-      {/* Amount (1 col) */}
-      <div className="md:col-span-1">
-          <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Total</label>
-          <div className="w-full px-1 py-2 text-right font-black text-cyan-400 text-[11px] tabular-nums">
-              {calculatedAmount.toFixed(2)}
+      {/* Qty, Free, Unit (3 cols) */}
+      <div className="md:col-span-3 grid grid-cols-3 gap-2">
+          <div className="space-y-1.5">
+             <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Qty</label>
+             <Field
+                 name={`items.${idx}.quantity`}
+                 type="number"
+                 min="1"
+                 className="w-full bg-white/2 border border-white/10 rounded-xl px-1 py-3 text-center text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
+             />
+          </div>
+          <div className="space-y-1.5">
+              <label className="block text-[9px] font-black text-green-600/70 md:hidden uppercase tracking-widest">Free</label>
+              <Field
+                  name={`items.${idx}.free_quantity`}
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  className="w-full bg-green-500/5 border border-green-500/10 rounded-xl px-1 py-3 text-center text-green-500/70 font-bold focus:ring-1 focus:ring-green-500 outline-none text-xs tabular-nums"
+              />
+          </div>
+          <div className="space-y-1.5">
+              <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Unit</label>
+              <Field name={`items.${idx}.unit`}>
+                  {({ field }) => (
+                  <select {...field} className="w-full h-[42px] bg-white/2 border border-white/10 rounded-xl px-1 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase appearance-none text-center">
+                      {units.map(u => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
+                  </select>
+                  )}
+              </Field>
           </div>
       </div>
 
-      {/* Remove (1 col) */}
-      <div className="md:col-span-1 flex justify-center">
+      {/* Price, Disc, Tax (3 cols) */}
+      <div className="md:col-span-3 grid grid-cols-12 gap-2">
+          <div className="col-span-6 space-y-1.5">
+              <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Unit Price</label>
+              <Field
+                  name={`items.${idx}.purchase_price`}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="w-full bg-white/2 border border-white/10 rounded-xl px-3 py-3 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
+              />
+          </div>
+          <div className="col-span-3 space-y-1.5">
+              <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Disc%</label>
+              <Field name={`items.${idx}.discount`} type="number" className="w-full bg-white/2 border border-white/5 rounded-xl px-1 py-3 text-center text-gray-500 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+          </div>
+          <div className="col-span-3 space-y-1.5">
+              <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Tax%</label>
+              <Field name={`items.${idx}.tax`} type="number" className="w-full bg-white/2 border border-white/5 rounded-xl px-1 py-3 text-center text-gray-500 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+          </div>
+      </div>
+
+      {/* Amount & Actions (1 col) */}
+      <div className="md:col-span-1 flex flex-col items-end gap-2">
+          <div className="text-right">
+              <label className="block text-[9px] font-black text-gray-700 md:hidden uppercase tracking-widest mb-1">Subtotal</label>
+              <div className="font-black text-cyan-400 text-sm tabular-nums tracking-tighter">
+                  ₹{calculatedAmount.toFixed(2)}
+              </div>
+          </div>
           <button
               type="button"
               onClick={() => remove(idx)}
               disabled={values.items.length === 1}
-              className="text-gray-700 hover:text-red-500 transition-all p-2 disabled:opacity-0 hover:bg-red-500/5 rounded-lg active:scale-90"
+              className="text-gray-800 hover:text-red-500 transition-all p-2 disabled:opacity-0 hover:bg-red-500/5 rounded-lg active:scale-90"
               title="Remove Item"
           >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
