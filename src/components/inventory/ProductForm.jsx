@@ -30,14 +30,14 @@ const productSchema = Yup.object().shape({
     .min(1, "Conversion factor must be at least 1")
     .nullable(),
   cost_price: Yup.string()
-    .required("Cost price is required")
-    .matches(/^\d+(\.\d{1,2})?$/, "Cost price must be a valid decimal number"),
-  sale_price: Yup.string()
     .nullable()
-    .test("is-decimal-or-empty", "Sale price must be a valid decimal number", (value) => {
+    .test("is-decimal-or-empty", "Cost price must be a valid decimal number", (value) => {
       if (value === null || value === undefined || value === "") return true;
       return /^\d+(\.\d{1,2})?$/.test(value);
     }),
+  sale_price: Yup.string()
+    .required("Sale price is required")
+    .matches(/^\d+(\.\d{1,2})?$/, "Sale price must be a valid decimal number"),
   stock: Yup.number()
     .required("Stock is required")
     .integer("Stock must be a whole number")
@@ -293,23 +293,23 @@ export default function ProductForm({ product, onClose }) {
               {/* Section 3: Pricing & Stock */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className={labelClass}>Cost Price (₹) *</label>
+                  <label className={labelClass}>Cost Price (₹)</label>
                   <Field
                     name="cost_price"
                     type="text"
                     className={inputClass}
-                    placeholder="0.00"
+                    placeholder="Optional"
                   />
                   <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Sale Price (₹)</label>
+                  <label className={labelClass}>Sale Price (₹) *</label>
                   <Field
                     name="sale_price"
                     type="text"
                     className={inputClass}
-                    placeholder="Optional"
+                    placeholder="0.00"
                   />
                   <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-1" />
                 </div>

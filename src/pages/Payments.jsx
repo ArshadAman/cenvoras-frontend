@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useLoadingPolicy } from '../hooks/useLoadingPolicy';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,6 +22,17 @@ import {
 import { toast } from 'react-toastify';
 import api from '../api/api';
 import Layout from '../components/Layout';
+
+const roundTo3 = (value) => {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return 0;
+  return Math.round((num + Number.EPSILON) * 1000) / 1000;
+};
+
+const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 3,
+});
 
 // Payment mode icons and colors
 const PAYMENT_MODES = {
@@ -48,7 +60,7 @@ function PaymentCard({ payment, onEdit, onDelete }) {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-green-400">₹{parseFloat(payment.amount).toLocaleString('en-IN')}</div>
+          <div className="text-lg font-bold text-green-400">₹{formatAmount(payment.amount)}</div>
           <div className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       </div>
@@ -89,7 +101,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     customer: '',
     invoice: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toLocaleDateString('sv-SE'),
     mode: 'cash',
     reference: '',
     notes: ''
@@ -104,13 +116,46 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
+  const extractApiErrorMessage = (err) => {
+    const data = err?.response?.data;
+
+    if (!data) {
+      return err?.message || 'Failed to record payment';
+    }
+
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (typeof data?.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+
+    if (Array.isArray(data?.amount) && data.amount.length > 0) {
+      return String(data.amount[0]);
+    }
+
+    const firstField = Object.keys(data)[0];
+    if (firstField) {
+      const fieldError = data[firstField];
+      if (Array.isArray(fieldError) && fieldError.length > 0) {
+        return String(fieldError[0]);
+      }
+      if (typeof fieldError === 'string' && fieldError.trim()) {
+        return fieldError;
+      }
+    }
+
+    return err?.message || 'Failed to record payment';
+  };
+
   useEffect(() => {
     if (isOpen && editData) {
       setFormData({
         customer: editData.customer || '',
         invoice: editData.invoice || '',
         amount: editData.amount || '',
-        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toLocaleDateString('sv-SE'),
         mode: editData.mode || 'cash',
         reference: editData.reference || '',
         notes: editData.notes || ''
@@ -127,29 +172,46 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     c.id.slice(0, 8).toLowerCase().includes(customerSearch.toLowerCase())
   );
 
+  const selectedCustomer = customers.find(c => String(c.id) === String(formData.customer));
+
   // Fetch invoices when customer changes
   useEffect(() => {
     if (formData.customer) {
-      fetchInvoices(formData.customer);
+      fetchInvoices(formData.customer, formData.invoice || editData?.invoice || null);
     } else {
       setInvoices([]);
       setSelectedInvoice(null);
       setFormData(prev => ({ ...prev, invoice: '', amount: '' }));
     }
-  }, [formData.customer]);
+  }, [formData.customer, formData.invoice, editData?.invoice]);
 
-  const fetchInvoices = async (customerId) => {
+  const fetchInvoices = async (customerId, currentInvoiceId = null) => {
     setIsLoadingInvoices(true);
     try {
       const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
       // Handle array or object results
       const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
       const openInvoices = data.filter((inv) => {
-        const total = parseFloat(inv?.total_amount || 0);
-        const paid = parseFloat(inv?.amount_paid || 0);
-        return (total - paid) > 0;
+        if (inv?.status === 'draft') return false;
+        const outstanding = roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0));
+        return outstanding > 0;
       });
-      setInvoices(openInvoices);
+
+      let invoiceOptions = openInvoices;
+      if (currentInvoiceId) {
+        const linkedInvoice = data.find((inv) => String(inv.id) === String(currentInvoiceId));
+        const alreadyIncluded = openInvoices.some((inv) => String(inv.id) === String(currentInvoiceId));
+        if (linkedInvoice && !alreadyIncluded) {
+          invoiceOptions = [linkedInvoice, ...openInvoices];
+        }
+      }
+
+      setInvoices(invoiceOptions);
+
+      if (currentInvoiceId) {
+        const current = invoiceOptions.find((inv) => String(inv.id) === String(currentInvoiceId));
+        setSelectedInvoice(current || null);
+      }
     } catch (err) {
       console.error("Failed to fetch invoices", err);
     } finally {
@@ -165,9 +227,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   };
 
   const getInvoiceOutstanding = (invoice) => {
-    const total = parseFloat(invoice?.total_amount || 0);
-    const paid = parseFloat(invoice?.amount_paid || 0);
-    return Math.max(total - paid, 0);
+    const total = roundTo3(invoice?.total_amount || 0);
+    const paid = roundTo3(invoice?.amount_paid || 0);
+    return roundTo3(Math.max(total - paid, 0));
   };
 
   const handleSelectInvoice = (invoiceId) => {
@@ -177,15 +239,15 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     setFormData({ 
       ...formData, 
       invoice: invoiceId, 
-      amount: outstanding 
+      amount: roundTo3(outstanding)
     });
   };
 
   const calculateRemainingDue = () => {
     if (!selectedInvoice) return null;
-    const paid = parseFloat(formData.amount) || 0;
+    const paid = roundTo3(formData.amount || 0);
     const outstanding = getInvoiceOutstanding(selectedInvoice);
-    return outstanding - paid;
+    return roundTo3(outstanding - paid);
   };
 
   const handleSubmit = async (e) => {
@@ -208,24 +270,23 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         throw new Error("Please select or enter a customer name");
       }
 
-      // Invoice is required to update payment status
-      if (!formData.invoice) {
-        throw new Error("Please select an invoice to record payment against");
+      const paymentPayload = {
+        ...formData,
+        customer: targetCustomerId,
+        amount: roundTo3(formData.amount)
+      };
+
+      if (formData.invoice) {
+        paymentPayload.invoice = formData.invoice;
+      } else {
+        delete paymentPayload.invoice;
       }
 
       if (editData) {
-        await api.put(`/billing/payments/${editData.id}/`, {
-          ...formData,
-          customer: targetCustomerId,
-          amount: parseFloat(formData.amount)
-        });
+        await api.put(`/billing/payments/${editData.id}/`, paymentPayload);
         toast.success("Payment updated successfully");
       } else {
-        await api.post('/billing/payments/', {
-          ...formData,
-          customer: targetCustomerId,
-          amount: parseFloat(formData.amount)
-        });
+        await api.post('/billing/payments/', paymentPayload);
         toast.success("Payment recorded successfully");
       }
       
@@ -233,7 +294,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       onClose();
       if (!editData) resetForm();
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Failed to record payment');
+      setError(extractApiErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -244,7 +305,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       customer: '',
       invoice: '',
       amount: '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       mode: 'cash',
       reference: '',
       notes: ''
@@ -303,7 +364,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                     >
                       <div className="text-sm font-medium text-white">{c.name}</div>
                       <div className="text-xs text-gray-500">
-                        ID: {c.id.slice(0, 8)} • Balance: ₹{parseFloat(c.current_balance).toLocaleString()}
+                        ID: {c.id.slice(0, 8)} • Balance: ₹{formatAmount(c.current_balance)}
                       </div>
                     </button>
                   ))
@@ -328,7 +389,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
               <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
               {invoices.map((inv) => (
                 <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
-                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{getInvoiceOutstanding(inv).toLocaleString('en-IN')}
+                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{formatAmount(getInvoiceOutstanding(inv))}
                 </option>
               ))}
             </select>
@@ -344,7 +405,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   type="number"
                   required
                   min="0.01"
-                  step="0.01"
+                  step="0.001"
                   placeholder="5,000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -371,12 +432,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
               <div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">₹{getInvoiceOutstanding(selectedInvoice).toLocaleString('en-IN')}</div>
+                <div className="text-base font-bold text-white">₹{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
                 <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
-                  ₹{calculateRemainingDue().toLocaleString('en-IN')}
+                  ₹{formatAmount(calculateRemainingDue())}
                 </div>
               </div>
             </div>
@@ -475,18 +536,55 @@ export default function Payments({ onLogout }) {
   const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all'); // 'all' or 'today'
+  const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'month'
+
+  const invalidatePaymentRelatedQueries = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['payments'] }),
+    queryClient.invalidateQueries({ queryKey: ['customers'] }),
+    queryClient.invalidateQueries({ queryKey: ['generalLedgerEntries'] }),
+    queryClient.invalidateQueries({ queryKey: ['ledgerStats'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] }),
+    queryClient.invalidateQueries({ queryKey: ['smart-dashboard'] }),
+  ]);
 
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['payments'] });
+      const previousPayments = queryClient.getQueryData(['payments']);
+
+      queryClient.setQueryData(['payments'], (old) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          return old.filter((payment) => payment.id !== id);
+        }
+
+        if (Array.isArray(old.results)) {
+          return {
+            ...old,
+            results: old.results.filter((payment) => payment.id !== id),
+            count: Math.max(Number(old.count || 0) - 1, 0),
+          };
+        }
+
+        return old;
+      });
+
+      setIsDeleteModalOpen(false);
+      setPaymentToDelete(null);
+      return { previousPayments };
+    },
+    onSuccess: async () => {
+      await invalidatePaymentRelatedQueries();
       toast.success("Payment deleted successfully");
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
     },
-    onError: (err) => {
+    onError: (err, _id, context) => {
+      if (context?.previousPayments) {
+        queryClient.setQueryData(['payments'], context.previousPayments);
+      }
       toast.error(err.response?.data?.detail || "Failed to delete payment");
     }
   });
@@ -515,19 +613,24 @@ export default function Payments({ onLogout }) {
     queryFn: () => api.get('/billing/customers/').then(res => res.data)
   });
   const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
+  const loadingPolicy = useLoadingPolicy(isLoading);
   
   // Filter and search payments
   const filteredPayments = (payments || []).filter(p => {
     const matchesSearch = p.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           p.reference?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesMode = filterMode === 'all' || p.mode === filterMode;
-    const matchesDate = dateFilter === 'all' || p.date === new Date().toISOString().split('T')[0];
+    const paymentDate = new Date(p.date);
+    const now = new Date();
+    const matchesDate = dateFilter === 'all' ||
+      (dateFilter === 'today' && p.date === new Date().toLocaleDateString('sv-SE')) ||
+      (dateFilter === 'month' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear());
     return matchesSearch && matchesMode && matchesDate;
   });
   
   // Calculate stats
   const todayTotal = (payments || [])
-    .filter(p => p.date === new Date().toISOString().split('T')[0])
+    .filter(p => p.date === new Date().toLocaleDateString('sv-SE'))
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
   
   const thisMonthTotal = (payments || [])
@@ -537,6 +640,9 @@ export default function Payments({ onLogout }) {
       return paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
     })
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+  const totalCollection = (payments || [])
+    .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
   
   return (
     <Layout onLogout={onLogout}>
@@ -576,20 +682,22 @@ export default function Payments({ onLogout }) {
             </div>
             <div className="text-2xl font-bold text-green-400">₹{todayTotal.toLocaleString('en-IN')}</div>
           </div>
-          <div className="bento-card !p-4 group">
-            <div className="text-xs text-gray-500 mb-1">This Month</div>
-            <div className="text-2xl font-bold text-white">₹{thisMonthTotal.toLocaleString('en-IN')}</div>
+          <div
+            onClick={() => setDateFilter(dateFilter === 'month' ? 'all' : 'month')}
+            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'month' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/5 hover:border-white/20'}`}
+          >
+            <div className="flex justify-between items-start mb-1">
+              <div className="text-xs text-gray-500">Monthly Collection</div>
+              {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
+            </div>
+            <div className="text-2xl font-bold text-cyan-400">₹{thisMonthTotal.toLocaleString('en-IN')}</div>
           </div>
           <div 
-            onClick={() => {
-              setSearchQuery('');
-              setFilterMode('all');
-              setDateFilter('all');
-            }}
-            className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-white/20"
+            onClick={() => setDateFilter('all')}
+            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'all' ? 'border-white/20 bg-white/5' : 'border-white/5 hover:border-white/20'}`}
           >
-            <div className="text-xs text-gray-500 mb-1">Total Payments</div>
-            <div className="text-2xl font-bold text-white">{payments?.length || 0}</div>
+            <div className="text-xs text-gray-500 mb-1">Total Collection Till Date</div>
+            <div className="text-2xl font-bold text-white">₹{totalCollection.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setIsDueModalOpen(true)}
@@ -642,7 +750,7 @@ export default function Payments({ onLogout }) {
         </div>
         
         {/* Payments List */}
-        {isLoading ? (
+        {loadingPolicy.visible ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array(6).fill(0).map((_, i) => (
               <div key={i} className="bento-card !p-4 animate-pulse">
@@ -699,7 +807,7 @@ export default function Payments({ onLogout }) {
           customers={customers}
           editData={selectedPayment}
           onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            invalidatePaymentRelatedQueries();
             setSelectedPayment(null);
           }}
         />

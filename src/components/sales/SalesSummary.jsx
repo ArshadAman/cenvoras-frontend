@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSalesAnalytics, getSalesInvoices } from "../../api/sales";
+import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
   CurrencyRupeeIcon, 
   CalendarIcon, 
@@ -11,8 +11,15 @@ import {
 
 export default function SalesSummary() {
   const [dateFilter, setDateFilter] = useState("today"); // "today", "month", "custom"
-  
-  const todayStr = new Date().toISOString().split('T')[0];
+
+  const formatLocalDate = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const todayStr = formatLocalDate(new Date());
   const [customRange, setCustomRange] = useState({ start: todayStr, end: todayStr });
 
   const getDates = () => {
@@ -20,7 +27,7 @@ export default function SalesSummary() {
     if (dateFilter === "month") {
       const d = new Date();
       d.setDate(1);
-      return { start_date: d.toISOString().split('T')[0], end_date: todayStr };
+      return { start_date: formatLocalDate(d), end_date: todayStr };
     }
     if (dateFilter === "custom") {
       return { start_date: customRange.start, end_date: customRange.end };
@@ -40,16 +47,17 @@ export default function SalesSummary() {
     queryFn: () => getSalesInvoices({ search: "", ordering: "-invoice_date", page: 1 }),
   });
 
+  const { data: overdueReport } = useQuery({
+    queryKey: ["overdueSalesInvoicesSummary"],
+    queryFn: () => getOverdueSalesInvoices({ refresh: "true" }),
+  });
+
   const analytics = analyticsRes || {};
   const invoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
 
-  // Calculate overdue invoices (using recent invoices as a simple check)
-  const today = new Date();
-  const overdueInvoices = invoices.filter(invoice => {
-    const invoiceDate = new Date(invoice.invoice_date);
-    const dueDate = new Date(invoiceDate.getTime() + (30 * 24 * 60 * 60 * 1000));
-    return dueDate < today && invoice.status !== 'draft';
-  });
+  const overdueInvoices = overdueReport?.results || [];
+  const overdueCount = overdueReport?.count ?? overdueInvoices.length;
+  const overduePreview = overdueInvoices.slice(0, 8);
 
   // Top customers
   const customerTotals = invoices.filter(inv => inv.status !== 'draft').reduce((acc, invoice) => {
@@ -126,7 +134,7 @@ export default function SalesSummary() {
          <div className="flex items-center gap-4">
              <h3 className="text-white font-medium">Analytics Filter</h3>
              <select 
-               className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+               className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
                value={dateFilter}
                onChange={e => setDateFilter(e.target.value)}
              >
@@ -142,7 +150,7 @@ export default function SalesSummary() {
                   type="date"
                   min={minDate}
                   max={maxDate}
-                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
                   value={customRange.start}
                   onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
                 />
@@ -151,7 +159,7 @@ export default function SalesSummary() {
                   type="date"
                   min={customRange.start || minDate}
                   max={maxDate}
-                  className="bg-[#1a1a1a] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
                   value={customRange.end}
                   onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
                 />
@@ -208,19 +216,36 @@ export default function SalesSummary() {
         </div>
 
         {/* Overdue Alerts */}
-        <div className="bento-card p-6">
+        <div className="bento-card p-6 min-h-[24rem]">
            <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-2 flex items-center gap-2">
              <ExclamationTriangleIcon className="w-5 h-5 text-red-400" /> Action Required
            </h3>
            
-           {overdueInvoices.length > 0 ? (
-             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+           {overdueCount > 0 ? (
+             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 h-[18.5rem] flex flex-col">
                <div className="flex items-start gap-3">
                  <div className="flex-1">
                    <p className="text-red-200 font-medium mb-1">Overdue Invoices</p>
                    <p className="text-red-300/70 text-sm">
-                     You have <span className="font-bold text-white">{overdueInvoices.length}</span> invoices that are overdue.
+                     You have <span className="font-bold text-white">{overdueCount}</span> invoices that are overdue.
                    </p>
+                    {overduePreview.length > 0 && (
+                      <div className="mt-3 space-y-2 overflow-y-auto pr-1 custom-scrollbar max-h-[12.5rem]">
+                        {overduePreview.map((invoice) => (
+                          <div key={invoice.id} className="rounded-lg border border-red-400/20 bg-black/20 px-3 py-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-xs font-semibold text-white truncate">{invoice.invoice_number || 'Invoice'}</p>
+                              <p className="text-[11px] text-red-200/90 whitespace-nowrap">{invoice.days_overdue}d overdue</p>
+                            </div>
+                            <p className="text-xs text-red-200/90 truncate">{invoice.customer_name || 'Unknown Customer'}</p>
+                            <p className="text-xs text-red-300/90">Outstanding: ₹{Number(invoice.outstanding_amount || 0).toLocaleString()}</p>
+                          </div>
+                        ))}
+                        {overdueCount > overduePreview.length && (
+                          <p className="text-[11px] text-red-300/80">+{overdueCount - overduePreview.length} more overdue invoices</p>
+                        )}
+                      </div>
+                    )}
                  </div>
                </div>
              </div>

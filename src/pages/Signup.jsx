@@ -5,6 +5,50 @@ import api from '../api/api.js';
 import Loader from '../components/Loader';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import Select from 'react-select';
+import { indianStates, citiesByState } from '../utils/indiaData';
+
+const customSelectStyles = {
+    control: (provided, state) => ({
+        ...provided,
+        backgroundColor: '#1e293b',
+        borderColor: state.isFocused ? '#06b6d4' : '#334155',
+        borderRadius: '0.75rem',
+        padding: '2px',
+        color: 'white',
+        boxShadow: state.isFocused ? '0 0 0 1px #06b6d4' : 'none',
+        '&:hover': {
+            borderColor: '#334155'
+        }
+    }),
+    menu: (provided) => ({
+        ...provided,
+        backgroundColor: '#1e293b',
+        border: '1px solid #334155',
+        borderRadius: '0.75rem',
+        zIndex: 50
+    }),
+    option: (provided, state) => ({
+        ...provided,
+        backgroundColor: state.isSelected ? '#06b6d4' : state.isFocused ? '#334155' : 'transparent',
+        color: 'white',
+        '&:active': {
+            backgroundColor: '#06b6d4'
+        }
+    }),
+    singleValue: (provided) => ({
+        ...provided,
+        color: 'white'
+    }),
+    input: (provided) => ({
+        ...provided,
+        color: 'white'
+    }),
+    placeholder: (provided) => ({
+        ...provided,
+        color: '#64748b'
+    })
+};
 
 const SignupSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Required'),
@@ -13,12 +57,16 @@ const SignupSchema = Yup.object().shape({
   phone: Yup.string().required('Required'),
   business_name: Yup.string().nullable(),
   gstin: Yup.string().nullable(),
+  state: Yup.string().required('State is required'),
+  city: Yup.string().nullable(),
   termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
 });
 
 export default function Signup() {
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+    const [otpRequested, setOtpRequested] = useState(false);
+    const [pendingEmail, setPendingEmail] = useState('');
+    const [signupMessage, setSignupMessage] = useState('');
   const navigate = useNavigate();
 
   return (
@@ -81,7 +129,7 @@ export default function Signup() {
             <div className="text-center lg:text-left">
                 <h2 className="text-3xl font-bold text-white tracking-tight">Create your account</h2>
                 <p className="mt-2 text-slate-400">
-                    Start your 30-day free trial. No credit card required.
+                    Start your 14-day starter trial. No credit card required.
                 </p>
             </div>
 
@@ -93,26 +141,77 @@ export default function Signup() {
                     phone: '', 
                     business_name: '', 
                     gstin: '',
+                    state: '',
+                    city: '',
+                    otp: '',
                     termsAccepted: false
                 }}
                 validationSchema={SignupSchema}
                 onSubmit={async (values, { setSubmitting, setFieldError }) => {
                     setLoading(true);
                     try {
-                        const response = await api.post('/users/signup/', values);
-                        if (response.status === 201) {
-                            navigate('/login');
+                        if (!otpRequested) {
+                            const payload = {
+                                email: values.email,
+                                password: values.password,
+                                confirm_password: values.confirm_password,
+                                phone: values.phone,
+                                business_name: values.business_name,
+                                gstin: values.gstin,
+                                state: values.state,
+                                city: values.city,
+                            };
+                            const response = await api.post('/users/signup/', payload);
+                            if (response?.data?.otp_required) {
+                                setOtpRequested(true);
+                                setPendingEmail(values.email);
+                                setSignupMessage('OTP sent to your email. Enter it below to complete signup.');
+                            }
+                        } else {
+                            const response = await api.post('/users/signup/', {
+                                email: pendingEmail || values.email,
+                                otp: values.otp,
+                            });
+                            if (response.status === 201) {
+                                navigate('/login');
+                            }
                         }
                     } catch (error) {
-                        console.error("Signup error:", error);
-                        // Handle generic errors here
+                        const backendErrors = error?.response?.data?.errors;
+                        const backendError = error?.response?.data?.error;
+                        if (backendErrors) {
+                            Object.entries(backendErrors).forEach(([key, val]) => {
+                                setFieldError(key, Array.isArray(val) ? val[0] : String(val));
+                            });
+                        } else if (backendError) {
+                            setFieldError(otpRequested ? 'otp' : 'email', backendError);
+                        } else {
+                            setFieldError('email', 'Signup failed. Please try again.');
+                        }
                     }
                     setLoading(false);
                     setSubmitting(false);
                 }}
             >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, setFieldValue, values }) => (
                     <Form className="mt-8 space-y-5">
+                        {signupMessage ? (
+                            <div className="text-sm text-cyan-300">{signupMessage}</div>
+                        ) : null}
+
+                        {otpRequested ? (
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Signup OTP</label>
+                            <Field
+                                type="text"
+                                name="otp"
+                                className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                placeholder="Enter 6-digit OTP"
+                            />
+                            <ErrorMessage name="otp" component="div" className="text-red-400 text-xs mt-1" />
+                            <p className="text-xs text-slate-400 mt-2">Sent to: {pendingEmail || 'your email'}</p>
+                          </div>
+                        ) : (
                         <div className="grid grid-cols-1 gap-5">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
@@ -178,9 +277,42 @@ export default function Signup() {
                                     placeholder="22AAAAA0000A1Z5"
                                 />
                             </div>
-                        </div>
 
-                        <div className="mt-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
+                                    <Select
+                                        options={indianStates}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                        placeholder="Select State"
+                                        styles={customSelectStyles}
+                                        onChange={(option) => {
+                                            setFieldValue('state', option.value);
+                                            setFieldValue('city', ''); // Reset city when state changes
+                                        }}
+                                    />
+                                    <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
+                                    <Select
+                                        options={(citiesByState[values.state] || []).map(city => ({ value: city, label: city }))}
+                                        className="react-select-container"
+                                        classNamePrefix="react-select"
+                                        placeholder="Select City"
+                                        styles={customSelectStyles}
+                                        isDisabled={!values.state}
+                                        onChange={(option) => setFieldValue('city', option.value)}
+                                        value={values.city ? { value: values.city, label: values.city } : null}
+                                    />
+                                    <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
+                                </div>
+                            </div>
+                        </div>
+                        )}
+
+                        {!otpRequested && <div className="mt-4">
                             <div className="flex items-start gap-3">
                                 <Field 
                                     type="checkbox" 
@@ -192,14 +324,14 @@ export default function Signup() {
                                 </p>
                             </div>
                             <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />
-                        </div>
+                        </div>}
 
                         <button
                             type="submit"
                             disabled={isSubmitting}
                             className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                         >
-                            {isSubmitting ? 'Creating account...' : 'Create Account'}
+                            {isSubmitting ? (otpRequested ? 'Verifying OTP...' : 'Sending OTP...') : (otpRequested ? 'Verify OTP & Create Account' : 'Continue with OTP')}
                             {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
                         </button>
                     </Form>

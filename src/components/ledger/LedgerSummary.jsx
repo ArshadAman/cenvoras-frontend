@@ -93,7 +93,12 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     recent_transactions: 0,
     average_payment: 0,
     largest_payment: 0,
-    outstanding_balance: 0
+    outstanding_balance: 0,
+    overdue_invoices_count: 0,
+    overdue_amount: 0,
+    unapplied_credits: 0,
+    unmapped_outstanding: 0,
+    reconciliation_gap: 0
   };
 
   const summaryCards = [
@@ -123,31 +128,8 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     }
   ];
 
-  const additionalStats = [
-    {
-      name: 'Average Payment',
-      value: formatCurrency(stats.average_payment),
-      description: 'Average payment amount per transaction'
-    },
-    {
-      name: 'Largest Payment',
-      value: formatCurrency(stats.largest_payment),
-      description: 'Highest single payment received'
-    },
-    {
-      name: 'Outstanding Balance',
-      value: formatCurrency(stats.outstanding_balance),
-      description: 'Total amount pending from customers'
-    },
-    {
-      name: 'Recent Transactions',
-      value: stats.recent_transactions?.toString() || '0',
-      description: 'Transactions in the last 30 days'
-    }
-  ];
-
   return (
-    <div className="mb-8 space-y-6">
+    <div className="mb-8">
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryCards.map((item) => (
@@ -165,28 +147,6 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Additional Statistics */}
-      <div className="bento-card p-6">
-        <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
-          Additional Insights
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {additionalStats.map((stat) => (
-            <div key={stat.name} className="text-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-              <div className="text-2xl font-bold text-white mb-1">
-                {stat.value}
-              </div>
-              <div className="text-sm font-medium text-cyan-300">
-                {stat.name}
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                {stat.description}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

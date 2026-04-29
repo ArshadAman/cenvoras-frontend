@@ -24,6 +24,7 @@ import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
+import { getGSTR1Export } from '../api/gst'
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -49,21 +50,35 @@ export default function Dashboard({ onLogout }) {
   // Refresh ALL dashboard data
   const handleRefreshAll = async () => {
     setIsRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ['smart-dashboard'] });
-    await queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
-    await queryClient.invalidateQueries({ queryKey: ['recent-sales'] });
-    await queryClient.invalidateQueries({ queryKey: ['recent-purchases'] });
-    await queryClient.invalidateQueries({ queryKey: ['low-stock'] });
-    await queryClient.invalidateQueries({ queryKey: ['ml-predictions'] });
-    setIsRefreshing(false);
+    try {
+      await Promise.all(
+        [
+          refetchSmart(),
+          refetchMetrics(),
+          refetchSales(),
+          refetchPurchases(),
+          refetchLowStock(),
+          refetchStockPoints(),
+          refetchML(),
+          queryClient.invalidateQueries({ queryKey: ['customers'] }),
+          queryClient.invalidateQueries({ queryKey: ['customers-with-balance'] }),
+          queryClient.invalidateQueries({ queryKey: ['profile'] }),
+          queryClient.invalidateQueries({ queryKey: ['subscription-entitlements'] }),
+        ]
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Fetch Smart Dashboard Data (new)
-  const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch } = useQuery({
+  const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch: refetchSmart } = useQuery({
     queryKey: ['smart-dashboard'],
-    queryFn: () => api.get('/analytics/smart-dashboard/').then(res => res.data),
+    queryFn: () => api.get('/analytics/smart-dashboard/?refresh=true').then(res => res.data),
     refetchInterval: 60000,
-    staleTime: 30000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 
   const { data: profileData } = useQuery({
@@ -78,34 +93,34 @@ export default function Dashboard({ onLogout }) {
   });
 
   // Fetch Legacy Dashboard Data (old metrics)
-  const { data: metrics, isLoading: loadingMetrics } = useQuery({
+  const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
-    queryFn: () => api.get('/analytics/dashboard/').then(res => res.data)
+    queryFn: () => api.get('/analytics/dashboard/?refresh=true').then(res => res.data)
   });
   
-  const { data: sales, isLoading: loadingSales } = useQuery({
+  const { data: sales, isLoading: loadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['recent-sales'],
     queryFn: () => api.get('/billing/sales-invoices/?ordering=-invoice_date&limit=5').then(res => res.data)
   });
   
-  const { data: purchases, isLoading: loadingPurchases } = useQuery({
+  const { data: purchases, isLoading: loadingPurchases, refetch: refetchPurchases } = useQuery({
     queryKey: ['recent-purchases'],
     queryFn: () => api.get('/billing/purchase-bills/?ordering=-bill_date&limit=5').then(res => res.data)
   });
   
-  const { data: lowStock } = useQuery({
+  const { data: lowStock, refetch: refetchLowStock } = useQuery({
     queryKey: ['low-stock'],
     queryFn: () => api.get('/analytics/inventory-summary/').then(res => res.data)
   });
 
-  const { data: stockPointsRaw } = useQuery({
+  const { data: stockPointsRaw, refetch: refetchStockPoints } = useQuery({
     queryKey: ['stock-points-dashboard'],
     queryFn: () => api.get('/inventory/stock-points/').then(res => res.data),
     staleTime: 30000,
   });
 
   // Fetch ML Predictions
-  const { data: mlData, isLoading: loadingML } = useQuery({
+  const { data: mlData, isLoading: loadingML, refetch: refetchML } = useQuery({
     queryKey: ['ml-predictions'],
     queryFn: () => api.get('/analytics/ml-predictions/').then(res => res.data),
     staleTime: 60000, // Cache for 1 minute
@@ -115,6 +130,26 @@ export default function Dashboard({ onLogout }) {
   const handleQuickAction = (action) => {
     if (action === 'sale') navigate('/sales');
     if (action === 'purchase') navigate('/purchase');
+  };
+
+  const handleDownloadReportForCA = async () => {
+    const today = new Date();
+    const toDate = today.toISOString().split('T')[0];
+    const fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+    try {
+      const gstr1Data = await getGSTR1Export(fromDate, toDate);
+      const blob = new Blob([JSON.stringify(gstr1Data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GSTR1_${gstr1Data?.fp || `${fromDate}_to_${toDate}`}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download GSTR-1 report for CA:', error);
+      navigate('/reports/tax-register?tab=gstr1');
+    }
   };
 
   // Legacy card data
@@ -154,11 +189,11 @@ export default function Dashboard({ onLogout }) {
   const formatINR = (value) => `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
   const salesChartData = React.useMemo(() => {
-    const raw = metrics?.sales_vs_purchases || [];
+    const raw = Array.isArray(metrics?.sales_vs_purchases) ? metrics.sales_vs_purchases : [];
     return raw.map((row) => ({
-      name: row?.name || '-',
-      Sales: Number(row?.Sales || 0),
-      Purchases: Number(row?.Purchases || 0),
+      name: row?.name || row?.month || '-',
+      Sales: Number(row?.Sales ?? row?.sales ?? 0),
+      Purchases: Number(row?.Purchases ?? row?.purchases ?? 0),
     }));
   }, [metrics?.sales_vs_purchases]);
 
@@ -197,7 +232,7 @@ export default function Dashboard({ onLogout }) {
   const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
-  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Free';
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
   const mlDataWithEntitlements = React.useMemo(() => ({
     ...mlData,
     can,
@@ -226,7 +261,7 @@ export default function Dashboard({ onLogout }) {
           <div className="flex gap-3">
             <button 
               onClick={handleRefreshAll}
-              disabled={isRefreshing || loadingSmart}
+              disabled={isRefreshing}
               className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white disabled:opacity-50 flex items-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -234,15 +269,9 @@ export default function Dashboard({ onLogout }) {
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-            >
-              <PlusIcon className="w-4 h-4"/> New Sale
-            </button>
-            <button 
-              onClick={() => handleQuickAction('purchase')} 
               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
             >
-              <PlusIcon className="w-4 h-4"/> New Purchase
+              <PlusIcon className="w-4 h-4"/> Record Sales
             </button>
           </div>
         </div>
@@ -292,6 +321,7 @@ export default function Dashboard({ onLogout }) {
           <GstShieldSection 
             data={smartData?.gst_shield} 
             isLoading={loadingSmart} 
+            onDownloadReport={handleDownloadReportForCA}
           />
         </div>
 

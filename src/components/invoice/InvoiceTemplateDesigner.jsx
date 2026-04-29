@@ -149,7 +149,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [templates, setTemplates] = useState([]);
   const [activeTemplateId, setActiveTemplateId] = useState(null);
   const [currentTemplate, setCurrentTemplate] = useState(defaultInvoiceTemplate);
-  const [activeTab, setActiveTab] = useState('branding');
+  const [activeTab, setActiveTab] = useState('layout');
   const [previewScale, setPreviewScale] = useState(0.6);
   const [hasChanges, setHasChanges] = useState(false);
   const [showTemplateList, setShowTemplateList] = useState(false);
@@ -301,6 +301,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
 
   // Tabs configuration
   const tabs = [
+    { id: 'layout', label: 'Layout', icon: Squares2X2Icon },
     { id: 'branding', label: 'Branding', icon: PhotoIcon },
     { id: 'colors', label: 'Colors', icon: SwatchIcon },
     { id: 'typography', label: 'Typography', icon: DocumentTextIcon },
@@ -408,6 +409,29 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Layout Tab */}
+          {activeTab === 'layout' && (
+            <div className="space-y-4">
+              <SectionHeader>Invoice Structure</SectionHeader>
+              <Select
+                label="Visual Layout"
+                value={currentTemplate.layout?.layoutType || 'classic'}
+                onChange={(v) => updateTemplate('layout.layoutType', v)}
+                options={[
+                  { value: 'classic', label: 'Classic Professional' },
+                  { value: 'professional', label: 'Professional (Clean)' },
+                  { value: 'genz', label: 'GenZ Modern (Bold)' },
+                  { value: 'service', label: 'Service Template' },
+                  { value: 'legend', label: 'Legend Corporate' },
+                  { value: 'billship', label: 'Bill To - Ship To' },
+                ]}
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                This changes the overall structural arrangement of your invoice. Specific options like colors and custom fields will adapt to the chosen layout.
+              </p>
+            </div>
+          )}
+
           {/* Branding Tab */}
           {activeTab === 'branding' && (
             <div className="space-y-4">

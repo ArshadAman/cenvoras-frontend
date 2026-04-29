@@ -104,7 +104,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
       </Field>
       {showDropdown && (
         <div className="absolute z-10 bg-[#1a1a1a] border border-white/10 rounded-md shadow-lg w-full max-h-40 overflow-y-auto mt-1">
-          {filteredProducts.slice(0, 50).map(product => (
+          {filteredProducts.map(product => (
             <div
               key={product.id}
               className="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0"
@@ -213,7 +213,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 const PurchaseSchema = Yup.object().shape({
   bill_number: Yup.string().required().min(1).max(100),
   bill_date: Yup.string().required("Bill date is required"),
-  warehouse: Yup.string().required("Warehouse is required"),
+  warehouse: Yup.string().nullable(),
   due_date: Yup.string().nullable(),
   vendor_name: Yup.string().required().min(1).max(255),
   vendor_address: Yup.string().nullable(),
@@ -300,12 +300,12 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-white/10 bg-[#0c0c0e] overflow-hidden">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+        <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
               {isEdit ? "Edit Purchase Bill" : "New Purchase Bill"}
@@ -329,7 +329,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
         <Formik
           initialValues={{
             bill_number: bill?.bill_number || "",
-            bill_date: bill?.bill_date || new Date().toISOString().split('T')[0],
+            bill_date: bill?.bill_date || new Date().toLocaleDateString('sv-SE'),
             due_date: bill?.due_date || "",
             warehouse: bill?.warehouse || "",
             vendor_name: bill?.vendor_name || "",
@@ -483,10 +483,11 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             }, 0);
 
             return (
-            <Form className="p-0">
+            <Form className="flex flex-col flex-1 overflow-hidden">
               
               {/* Form Content */}
-              <div className="p-8 space-y-8">
+              <div className="flex-1 overflow-y-auto p-0">
+                <div className="p-6 sm:p-8 space-y-8">
                 
                 {/* Bill Details */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -736,8 +737,9 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 </div>
                </div>
 
+                </div>
             </Form>
-          )} }
+            )}}
         </Formik>
       </div>
     </div>,

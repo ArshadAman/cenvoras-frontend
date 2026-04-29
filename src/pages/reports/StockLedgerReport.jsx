@@ -11,16 +11,27 @@ export default function StockLedgerReport() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
-    const { data: products } = useQuery({
+    const { data: productsData } = useQuery({
         queryKey: ['products'],
         queryFn: getProducts
     });
+
+    const products = React.useMemo(() => {
+        if (!productsData) return [];
+        return Array.isArray(productsData) ? productsData : (productsData.results || productsData.data || []);
+    }, [productsData]);
 
     const { data: ledgerData, isLoading } = useQuery({
         queryKey: ['stock-ledger', selectedProduct, startDate, endDate],
         queryFn: () => getStockLedger(selectedProduct, startDate, endDate),
         enabled: !!selectedProduct
     });
+
+    const ledgerItems = React.useMemo(() => {
+        if (!ledgerData) return [];
+        const items = ledgerData.items || ledgerData.results || ledgerData.data || [];
+        return Array.isArray(items) ? items : [];
+    }, [ledgerData]);
 
     return (
         <Layout>
@@ -85,7 +96,7 @@ export default function StockLedgerReport() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {ledgerData?.items?.length === 0 ? (
+                                {ledgerItems.length === 0 ? (
                                     <tr>
                                         <td colSpan="7" className="p-8 text-center text-gray-500">
                                             <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -93,7 +104,7 @@ export default function StockLedgerReport() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    ledgerData?.items?.map((t) => (
+                                    ledgerItems.map((t) => (
                                         <tr key={t.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                             <td className="p-4 text-sm text-gray-300 font-mono">{t.date}</td>
                                             <td className="p-4 text-sm text-white">{t.type}</td>

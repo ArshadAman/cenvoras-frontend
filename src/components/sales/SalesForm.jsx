@@ -1,22 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
+import { createProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
+import { getSubscriptionEntitlements } from "../../api/subscription";
+import { getUserProfile } from "../../api/users";
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
+import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
+  const wrapperRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState(null);
+
+  const updateDropdownPosition = () => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: `${rect.bottom + 6}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      zIndex: 9999,
+    });
+  };
 
   useEffect(() => {
     const query = (inputValue || "").trim().toLowerCase();
@@ -30,17 +50,36 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       (product?.name || "").toLowerCase().includes(query)
     );
     setFilteredProducts(filtered);
-    setShowDropdown(isFocused && filtered.length > 0);
+
+    if (!isFocused) {
+      setShowDropdown(false);
+    }
   }, [inputValue, products, isFocused]);
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    updateDropdownPosition();
+
+    const handleReposition = () => updateDropdownPosition();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [showDropdown, inputValue, filteredProducts.length]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
-    setFieldValue(`items.${idx}.price`, product.price ?? 0);
+    const roundedPrice = Math.round(Number(product.sale_price ?? product.price ?? 0) || 0);
+    setFieldValue(`items.${idx}.price`, roundedPrice);
     // Calculate amount automatically
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * (product.price ?? 0);
+    const amount = quantity * roundedPrice;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.product_description`, product.description || "");
@@ -70,11 +109,16 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setSelectedIndex(-1);
     if (!value.trim()) {
       setShowDropdown(false);
+      return;
+    }
+
+    if (isFocused) {
+      setShowDropdown(true);
     }
   };
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
@@ -132,31 +176,52 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
           </div>
         )}
       </Field>
-      {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
-          {filteredProducts.slice(0, 50).map((product, index) => (
-            <div
-              key={product.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
-                index === selectedIndex 
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
-              }`}
-              onClick={() => selectProduct(product)}
-            >
-              <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
-                Unit: {product.unit} | Price: ₹{product.price}
+        {showDropdown && filteredProducts.length > 0 && dropdownStyle && typeof document !== "undefined" && createPortal(
+          <div
+            style={dropdownStyle}
+            className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
+          >
+            {filteredProducts.slice(0, 50).map((product, index) => (
+              <div
+                key={product.id}
+                className={`cursor-pointer border-b border-white/5 px-4 py-3 text-sm transition-colors last:border-0 ${
+                  index === selectedIndex
+                    ? 'bg-cyan-500/20 text-white'
+                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                }`}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  selectProduct(product);
+                }}
+              >
+                <div className="font-medium">{product.name}</div>
+                <div className="mt-0.5 text-xs text-gray-500">
+                  Unit: {product.unit} | Price: ₹{product.sale_price ?? product.price}
+                </div>
               </div>
-            </div>
-          ))}
-          {filteredProducts.length > 50 && (
-             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+            ))}
+            {filteredProducts.length > 50 && (
+              <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
                 Showing top 50 results...
-             </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+            {inputValue.trim() && filteredProducts.length === 0 && onCreateNewProduct && (
+              <button
+                type="button"
+                className="w-full border-t border-white/5 px-4 py-3 text-left text-sm text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onCreateNewProduct(inputValue.trim(), idx);
+                }}
+              >
+                + Add to inventory: "{inputValue.trim()}"
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -421,9 +486,13 @@ const SalesSchema = Yup.object().shape({
   customer_address: Yup.string().nullable(),
   customer_gstin: Yup.string().nullable(),
   delivery_address: Yup.string().nullable(),
+  due_date: Yup.string().nullable().test(
+    'not-past-date',
+    'Due date cannot be in the past',
+    (value) => !value || value >= new Date().toLocaleDateString('sv-SE')
+  ),
   
   // Optional invoice fields
-  due_date: Yup.string().nullable(),
   gst_treatment: Yup.string().nullable(),
   journal: Yup.string().nullable(),
   total_amount: Yup.number().nullable(),
@@ -435,7 +504,7 @@ const SalesSchema = Yup.object().shape({
       product: Yup.string().required("Product is required").min(1),
       quantity: Yup.number().required("Quantity is required").min(1),
       batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
-      price: Yup.number().required("Price is required").min(0),
+      price: Yup.number().required("Price is required").integer("Price should be a whole number").min(0),
       amount: Yup.number().required("Amount is required").min(0),
       
       // Optional item fields
@@ -459,7 +528,19 @@ const DEFAULT_ITEM_SETTINGS = {
   show_item_tax: true,
 };
 
-export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "INV-" }) {
+export default function SalesForm({
+  isOpen,
+  onClose,
+  editData,
+  invoicePrefix = "INV-",
+  documentType = "invoice",
+  forceDraft = false,
+  createDocument = createSalesInvoice,
+  updateDocument = updateSalesInvoice,
+  getNextNumber = getNextInvoiceNumber,
+  finalSubmitStatus = 'final',
+}) {
+  const isQuotation = documentType === "quotation";
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -469,7 +550,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
         const submitBtn = document.querySelector('button[type="submit"]');
         if(submitBtn) {
             submitBtn.click();
-            toast.info("Saving Invoice (F2)...");
+            toast.info(`Saving ${isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
         }
       }
       
@@ -516,10 +597,20 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const formikRef = React.useRef(null);
-  const submitActionRef = React.useRef('final');
+  const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [productSearch, setProductSearch] = useState("");
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
+  const [productCreationState, setProductCreationState] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductSearch((productSearch || "").trim());
+    }, 220);
+
+    return () => clearTimeout(timer);
+  }, [productSearch]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -532,18 +623,34 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     const fraction = amount - integerPart;
     return fraction >= 0.5 ? Math.ceil(amount) : Math.floor(amount);
   };
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-entitlements"],
+    queryFn: getSubscriptionEntitlements,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+  const entitlements = subscriptionData?.data || {};
+  const currentPlanCode = String(entitlements?.plan?.code || entitlements?.plan_code || "starter").toLowerCase();
+  const isStarterPlan = currentPlanCode === "starter" || currentPlanCode === "free";
+  const canAccessInventory = Boolean(entitlements?.can?.inventory);
   
-  const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const { data: warehousesResult } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: getWarehouses,
+    enabled: isOpen && canAccessInventory,
+  });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
   
   
   // Lifted state: Fetch products and customers once at top level
   const { data: productsResult } = useQuery({ 
-      queryKey: ["products", productSearch], 
+      queryKey: ["products", debouncedProductSearch], 
       queryFn: () => getProducts({
-        ...(productSearch ? { search: productSearch } : {}),
+        ...(debouncedProductSearch ? { search: debouncedProductSearch } : {}),
         ordering: "name",
       }),
+      enabled: isOpen && canAccessInventory && debouncedProductSearch.length >= 2,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
@@ -561,7 +668,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const { data: stockPointsResult } = useQuery({
     queryKey: ["stockPoints", selectedWarehouseId],
     queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
-    enabled: !!selectedWarehouseId
+    enabled: canAccessInventory && !!selectedWarehouseId
   });
   const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
 
@@ -570,6 +677,14 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     queryFn: getInvoiceSettings,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: userProfileData } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+    enabled: isOpen,
+  });
+  const sellerState = userProfileData?.profile?.state || userProfileData?.state || null;
 
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,
@@ -590,44 +705,119 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
       [key]: nextValue,
     });
   };
+
+  const handleCreateInventoryProduct = (productName, idx) => {
+    if (!canAccessInventory) {
+      toast.info("Inventory browsing is locked on Starter. Enter item details manually to create this sales bill.");
+      return;
+    }
+
+    setProductCreationState({
+      idx,
+      name: productName,
+      sale_price: "",
+      unit: "pcs",
+      tax: "0",
+      hsn_sac_code: "",
+      description: "",
+    });
+  };
+
+  const handleSaveInventoryProduct = async () => {
+    if (!productCreationState) return;
+
+    try {
+      const salePrice = Math.round(Number(productCreationState.sale_price || 0) || 0);
+      const createdProduct = await createProduct({
+        name: productCreationState.name,
+        sale_price: salePrice,
+        cost_price: salePrice,
+        unit: productCreationState.unit || "pcs",
+        tax: Number(productCreationState.tax || 0),
+        hsn_sac_code: productCreationState.hsn_sac_code || null,
+        description: productCreationState.description || null,
+        stock: 0,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      if (formikRef.current && typeof productCreationState.idx === 'number') {
+        const itemPath = `items.${productCreationState.idx}`;
+        const quantity = Number(formikRef.current.values?.items?.[productCreationState.idx]?.quantity || 1);
+        const normalizedPrice = Math.round(Number(createdProduct.sale_price ?? salePrice) || 0);
+
+        formikRef.current.setFieldValue(`${itemPath}.product`, createdProduct.name);
+        formikRef.current.setFieldValue(`${itemPath}.product_id`, createdProduct.id);
+        formikRef.current.setFieldValue(`${itemPath}.unit`, createdProduct.unit || productCreationState.unit || 'pcs');
+        formikRef.current.setFieldValue(`${itemPath}.price`, normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.amount`, quantity * normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, createdProduct.hsn_sac_code || productCreationState.hsn_sac_code || "");
+        formikRef.current.setFieldValue(`${itemPath}.product_description`, createdProduct.description || productCreationState.description || "");
+        formikRef.current.setFieldValue(`${itemPath}.discount`, 0);
+        formikRef.current.setFieldValue(`${itemPath}.tax`, Number(createdProduct.tax ?? productCreationState.tax ?? 0));
+        formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
+      }
+
+      toast.success(`Added ${createdProduct.name} to inventory.`);
+      setProductCreationState(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Failed to create inventory item");
+    }
+  };
   
 
   // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
   
   const { data: nextInvData } = useQuery({
-    queryKey: ["nextInvoiceNumber"],
-    queryFn: () => getNextInvoiceNumber(invoicePrefix || "INV-"),
+    queryKey: ["nextInvoiceNumber", invoicePrefix],
+    queryFn: () => getNextNumber(invoicePrefix ?? ""),
     enabled: !isEdit && isOpen
   });
 
   const createMutation = useMutation({
-    mutationFn: createSalesInvoice,
+    mutationFn: createDocument,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-      toast.success("Sales bill created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
+      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       onClose();
     },
     onError: (error) => {
       if (error.response?.status === 409) {
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(error.response?.data?.message || error.message || "Failed to create sales bill");
+          toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            `Failed to create ${isQuotation ? 'quotation' : 'sales bill'}`
+          );
       }
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateSalesInvoice(id, data),
+    mutationFn: ({ id, data }) => updateDocument(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-      toast.success("Sales bill updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
+      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       onClose();
     },
     onError: (error) => {
       if (error.response?.status === 409) {
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(error.response?.data?.message || error.message || "Failed to update sales bill");
+          toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            `Failed to update ${isQuotation ? 'quotation' : 'sales bill'}`
+          );
       }
     },
   });
@@ -660,7 +850,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
         <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
-              {isEdit ? "Edit Sales Invoice" : "New Sales Invoice"}
+              {isEdit
+                ? `Edit ${isQuotation ? 'Quotation' : 'Sales Invoice'}`
+                : `New ${isQuotation ? 'Quotation' : 'Sales Invoice'}`}
             </h2>
              <p className="text-xs text-gray-400 flex items-center gap-2">
               <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
@@ -685,7 +877,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             customer_name: editData?.customer_name || "",
             // Use fetched next number or edit data
             invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
-            invoice_date: editData?.invoice_date ? new Date(editData.invoice_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            invoice_date: editData?.invoice_date 
+              ? new Date(editData.invoice_date).toISOString().split('T')[0] 
+              : new Date().toLocaleDateString('sv-SE'),
             
             // Optional customer fields (for Customer record creation)
             customer_email: editData?.customer_email || "",
@@ -708,7 +902,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             
             items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
               const qty = item.quantity || 1;
-              const price = item.price || 0;
+              const price = Math.round(Number(item.price || 0) || 0);
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
               return {
                 product: item.product || item.product_name || "",
@@ -743,7 +937,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           }}
           enableReinitialize={true}
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
-            const isDraft = submitActionRef.current === "draft";
+            const isDraft = forceDraft || submitActionRef.current === "draft";
             
             // Clean up empty product rows before processing/validation
             const cleanedItems = values.items.filter(item => 
@@ -799,7 +993,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             try {
               const processedItems = cleanedItems.map(item => {
                 const quantity = Number(item.quantity) || 1;
-                const price = Number(item.price) || 0;
+                const price = Math.round(Number(item.price) || 0);
                 const discount = Number(item.discount) || 0;
                 const tax = Number(item.tax) || 0;
                 const baseAmount = quantity * price;
@@ -842,7 +1036,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 place_of_supply: values.place_of_supply || null,
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
-                status: isDraft ? 'draft' : 'final',
+                status: isDraft ? 'draft' : finalSubmitStatus,
                 total_amount: finalTotal.toString(),
                 round_off: roundOffValue.toString(),
                 items: processedItems,
@@ -895,6 +1089,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             const roundedGrandTotal = computeRoundedTotal(grandTotal);
             const roundOffDelta = Number((roundedGrandTotal - grandTotal).toFixed(2));
 
+            // Determine IGST vs CGST/SGST
+            const taxType = getTaxType(
+              { place_of_supply: values.place_of_supply },
+              { state: sellerState }
+            );
+            const isIGST = taxType === 'igst';
+
             return (
               <Form 
                 className="flex flex-col flex-1 overflow-hidden"
@@ -928,11 +1129,19 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                           customers={customers} 
                       />
                       <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
+                      {isQuotation && (values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
+                        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-gray-300 space-y-1">
+                          {values.customer_address && <div><span className="text-gray-500">Address:</span> {values.customer_address}</div>}
+                          {values.customer_phone && <div><span className="text-gray-500">Phone:</span> {values.customer_phone}</div>}
+                          {values.customer_email && <div><span className="text-gray-500">Email:</span> {values.customer_email}</div>}
+                          {values.customer_gstin && <div><span className="text-gray-500">GSTIN:</span> {values.customer_gstin}</div>}
+                        </div>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Invoice Number *
+                        {isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                       </label>
                       <Field
                         name="invoice_number"
@@ -944,7 +1153,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Invoice Date *
+                        {isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                       </label>
                       <Field
                         name="invoice_date"
@@ -994,6 +1203,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <Field
                         name="due_date"
                         type="date"
+                        min={new Date().toLocaleDateString('sv-SE')}
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                       />
                     </div>
@@ -1016,6 +1226,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   </div>
 
                   {/* Optional PO / Challan */}
+                  {!isQuotation && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
@@ -1065,6 +1276,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Items */}
@@ -1109,6 +1321,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       )}
                     </div>
                   </div>
+                  {!canAccessInventory && isStarterPlan && (
+                    <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                      Inventory browsing is locked on Starter. You can still create this sales bill by typing item name, quantity, and price manually.
+                    </div>
+                  )}
                   <FieldArray name="items">
                     {({ push, remove }) => {
                       // Function to auto-add new row when user starts typing in the last row
@@ -1170,7 +1387,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             return (
                               <>
                                 <div className="hidden md:block overflow-x-auto border-y border-white/10 bg-[#1b2030]">
-                                  <div className="grid items-center px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                  <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
                                         key={col.key}
@@ -1206,6 +1423,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                                   onInputChange={() => handleAutoAddRow(index)}
                                                   onProductSearchChange={setProductSearch}
                                                   showDescription={itemSettings.show_item_description}
+                                                  onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                 />
                                               </div>
                                             );
@@ -1247,7 +1465,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                                   onChange={(e) => {
                                                     const qty = e.target.value;
                                                     setFieldValue(`items.${index}.quantity`, qty);
-                                                    const price = parseFloat(values.items[index]?.price) || 0;
+                                                    const price = Math.round(Number(values.items[index]?.price) || 0);
                                                     setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
                                                   }}
                                                 />
@@ -1284,13 +1502,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                                   name={`items.${index}.price`}
                                                   type="number"
                                                   min="0"
+                                                  step="1"
                                                   className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
                                                   onChange={(e) => {
                                                     const price = e.target.value;
                                                     setFieldValue(`items.${index}.price`, price);
                                                     const qty = parseFloat(values.items[index]?.quantity) || 0;
-                                                    setFieldValue(`items.${index}.amount`, (parseFloat(price) || 0) * qty);
-                                                    if (price && parseFloat(price) > 0) handleAutoAddRow(index);
+                                                    const roundedPrice = Math.round(Number(price) || 0);
+                                                    setFieldValue(`items.${index}.amount`, roundedPrice * qty);
+                                                    if (price && Number(price) > 0) handleAutoAddRow(index);
                                                   }}
                                                 />
                                               </div>
@@ -1362,6 +1582,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                                             onInputChange={() => handleAutoAddRow(index)}
                                             onProductSearchChange={setProductSearch}
                                             showDescription={itemSettings.show_item_description}
+                                            onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                           />
                                         </div>
                                       </div>
@@ -1372,7 +1593,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             );
                           })()}
                         
-                        <div className="flex items-center justify-between">
+                        <div className="mt-4 flex justify-start">
                           <button
                             type="button"
                             onClick={() => push({
@@ -1391,16 +1612,13 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                               amount: 0,
                               isExistingProduct: false,
                             })}
-                            className="btn-secondary text-sm flex items-center gap-2"
+                            className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                             Add Item
                           </button>
-                          <p className="text-xs text-gray-500">
-                            Pro Tip: Items are auto-added as you type.
-                          </p>
                         </div>
                         </div>
                       );
@@ -1423,6 +1641,23 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <span>Total Tax</span>
                       <span>₹{totalTax.toFixed(2)}</span>
                     </div>
+                    {isIGST ? (
+                      <div className="flex justify-between text-orange-400 text-xs pl-2">
+                        <span>↳ IGST</span>
+                        <span>₹{totalTax.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between text-orange-400 text-xs pl-2">
+                          <span>↳ CGST</span>
+                          <span>₹{(totalTax / 2).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-orange-400 text-xs pl-2">
+                          <span>↳ SGST</span>
+                          <span>₹{(totalTax / 2).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="h-px bg-white/10 my-3"></div>
                     {roundOffApplied && (
                       <div className="flex justify-between text-amber-300">
@@ -1463,18 +1698,22 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 {/* Actions */}
                 <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
                   <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
-                    Closing modal automatically saves as draft. Or use Save Draft.
+                    {isQuotation
+                      ? "Closing modal automatically saves as quotation draft."
+                      : "Closing modal automatically saves as draft. Or use Save Draft."}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                        submitActionRef.current = 'draft';
-                        handleSubmit();
-                    }}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
-                  >
-                    Save Draft
-                  </button>
+                  {!forceDraft && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                          submitActionRef.current = 'draft';
+                          handleSubmit();
+                      }}
+                      className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
+                    >
+                      Save Draft
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -1487,7 +1726,9 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    onClick={() => { submitActionRef.current = 'final'; }}
+                    onClick={() => {
+                      submitActionRef.current = forceDraft ? 'draft' : 'final';
+                    }}
                     className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px] rounded-[14px] focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
                   >
                     {isSubmitting ? (
@@ -1495,13 +1736,100 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                          Saving...
                       </span>
-                    ) : (isEdit ? "Update Invoice" : "Create Invoice")}
+                    ) : isQuotation
+                      ? (isEdit ? "Update Quotation" : "Create Quotation")
+                      : forceDraft
+                        ? (isEdit ? "Update Draft" : "Save Draft")
+                        : (isEdit ? "Update Invoice" : "Create Invoice")}
                   </button>
                 </div>
               </Form>
             );
           }}
         </Formik>
+
+        {productCreationState && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setProductCreationState(null)}></div>
+            <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-6 shadow-2xl shadow-cyan-950/40 animate-fade-up">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Add Inventory Item</h3>
+                  <p className="mt-1 text-xs text-gray-400">Create the product first, then it will be inserted into this quotation row.</p>
+                </div>
+                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300 hover:text-white">
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Product Name</label>
+                  <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Sale Price</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={productCreationState.sale_price}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, sale_price: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Whole number"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Unit</label>
+                  <input
+                    value={productCreationState.unit}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, unit: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="pcs"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={productCreationState.tax}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC</label>
+                  <input
+                    value={productCreationState.hsn_sac_code}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, hsn_sac_code: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Description</label>
+                  <textarea
+                    rows={3}
+                    value={productCreationState.description}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, description: e.target.value }))}
+                    className="w-full resize-none rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Optional product description"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 hover:text-white">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleSaveInventoryProduct} className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-400">
+                  Create Product
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body

@@ -32,14 +32,15 @@ export const updatePurchaseBill = (id, data) =>
 export const deletePurchaseBill = id =>
   api.delete(`/billing/purchase-bills/${id}/edit/`).then(res => res.data);
 
-export const uploadPurchaseCsv = formData =>
+export const uploadPurchaseCsv = (formData, options = {}) =>
   api.post("/billing/upload-purchase-bills-csv/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 
 // Product API endpoints for purchase form
 export const getProducts = () =>
-  api.get("/inventory/products/").then(res => res.data);
+  api.get("/inventory/products/", { params: { page_size: 1000 } }).then(res => res.data);
 
 export const getVendorProducts = (vendorName) =>
   api.get("/billing/vendor-products/", { params: { vendor_name: vendorName } }).then(res => res.data);

@@ -1,14 +1,24 @@
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import SalesOrderTable from "../components/sales/SalesOrderTable";
 import SalesOrderForm from "../components/sales/SalesOrderForm";
 import Layout from "../components/Layout";
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { deleteSalesOrder } from "../api/sales_order";
 
 export default function SalesOrderList() {
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editOrder, setEditOrder] = useState(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteSalesOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+    },
+  });
 
   const handleEdit = (order) => {
     setEditOrder(order);
@@ -18,6 +28,11 @@ export default function SalesOrderList() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditOrder(null);
+  };
+
+  const handleDelete = async (order) => {
+    if (!window.confirm(`Delete sales order ${order.order_number}?`)) return;
+    await deleteMutation.mutateAsync(order.id);
   };
 
   return (
@@ -45,7 +60,7 @@ export default function SalesOrderList() {
           <SalesOrderTable
             onEdit={handleEdit}
             onView={(order) => console.log("View", order)}
-            onDelete={(order) => console.log("Delete", order)} // Add delete logic to table or here
+            onDelete={handleDelete}
           />
         </div>
 

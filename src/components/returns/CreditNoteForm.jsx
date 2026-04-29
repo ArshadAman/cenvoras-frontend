@@ -85,7 +85,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     }
 
     const payload = {
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       customer: selectedCustomer,
       original_invoice: selectedInvoiceId,
       reason,

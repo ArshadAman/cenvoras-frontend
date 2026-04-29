@@ -4,6 +4,8 @@ import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDel
 import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
+import InlineProgressBar from "../common/InlineProgressBar";
+import { useLoadingPolicy } from "../../hooks/useLoadingPolicy";
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -78,6 +80,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
@@ -103,6 +106,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData,
   });
+  const loadingPolicy = useLoadingPolicy(isLoading);
 
   const handleDownloadTemplate = async () => {
     try {
@@ -136,8 +140,16 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     }
 
     setIsUploadingCsv(true);
+    setUploadProgress(0);
     try {
-      const result = await bulkUploadProductsCsv(file);
+      const result = await bulkUploadProductsCsv(file, {
+        onUploadProgress: (event) => {
+          const total = Number(event?.total || 0);
+          if (!total) return;
+          const percent = (Number(event.loaded || 0) / total) * 100;
+          setUploadProgress(percent);
+        },
+      });
       
       if (result?.message) {
         toast.info(result.message);
@@ -168,6 +180,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       }
     } finally {
       setIsUploadingCsv(false);
+      setUploadProgress(0);
       event.target.value = '';
     }
   };
@@ -341,7 +354,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `inventory-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `inventory-${new Date().toLocaleDateString('sv-SE')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -459,6 +472,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         </div>
       </div>
 
+      {isUploadingCsv && uploadProgress > 0 && (
+        <div className="mb-4">
+          <InlineProgressBar value={uploadProgress} label="Uploading inventory CSV" />
+        </div>
+      )}
+
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
@@ -484,7 +503,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             </tr>
           </thead>
           <tbody>
-            {isLoading
+            {loadingPolicy.visible
               ? Array(5)
                   .fill(0)
                   .map((_, i) => (
@@ -601,7 +620,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
       {/* Mobile Card Layout */}
       <div className="lg:hidden space-y-4">
-        {isLoading ? (
+        {loadingPolicy.visible ? (
           Array(3).fill(0).map((_, i) => (
             <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
               <div className="h-4 bg-white/20 rounded mb-2"></div>
