@@ -15,8 +15,20 @@ export const convertPurchaseOrder = async (id) => {
   return resp.data
 }
 
+export const updatePurchaseOrder = async (id, payload) => {
+  const resp = await api.patch(`/billing/purchase-orders/${id}/`, payload)
+  return resp.data
+}
+
+export const deletePurchaseOrder = async (id) => {
+  const resp = await api.delete(`/billing/purchase-orders/${id}/`)
+  return resp.data
+}
+
 export default {
   listPurchaseOrders,
   createPurchaseOrder,
   convertPurchaseOrder,
+  updatePurchaseOrder,
+  deletePurchaseOrder,
 }

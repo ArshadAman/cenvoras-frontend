@@ -1,41 +1,68 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Layout from '../components/Layout'
-import { listPurchaseOrders, createPurchaseOrder, convertPurchaseOrder } from '../api/purchase_orders'
+import { listPurchaseOrders, deletePurchaseOrder, convertPurchaseOrder } from '../api/purchase_orders'
+import PurchaseOrderTable from '../components/purchase/PurchaseOrderTable'
+import PurchaseOrderForm from '../components/purchase/PurchaseOrderForm'
+import { PlusIcon } from '@heroicons/react/24/outline'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export default function PurchaseOrders() {
   const qc = useQueryClient()
+  const [showForm, setShowForm] = useState(false)
+  const [editOrder, setEditOrder] = useState(null)
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['purchaseOrders'],
     queryFn: listPurchaseOrders,
   })
-  const [creating, setCreating] = useState(false)
-
-  const createMut = useMutation({
-    mutationFn: createPurchaseOrder,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchaseOrders'] })
-  })
 
   const convertMut = useMutation({
     mutationFn: convertPurchaseOrder,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchaseOrders'] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchaseOrders'] })
+      toast.success("Purchase order converted to bill successfully!")
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to convert purchase order")
+    }
   })
 
-  const handleCreate = async () => {
-    setCreating(true)
+  const deleteMut = useMutation({
+    mutationFn: deletePurchaseOrder,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchaseOrders'] })
+      toast.success("Purchase order deleted successfully!")
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to delete purchase order")
+    }
+  })
+
+  const handleEdit = (order) => {
+    setEditOrder(order)
+    setShowForm(true)
+  }
+
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setEditOrder(null)
+  }
+
+  const handleDelete = async (order) => {
+    if (!window.confirm(`Are you sure you want to delete purchase order ${order.po_number}?`)) return
     try {
-      await createMut.mutateAsync({ vendor: null, items: [] })
+      await deleteMut.mutateAsync(order.id)
     } catch (err) {
-      console.error('Failed to create PO:', err)
-    } finally {
-      setCreating(false)
+      console.error('Failed to delete PO:', err)
     }
   }
 
-  const handleConvert = async (id) => {
-    if (!window.confirm('Convert this Purchase Order to a Purchase Bill?')) return
+  const handleConvert = async (order) => {
+    if (!window.confirm(`Convert Purchase Order ${order.po_number} to a Purchase Bill?`)) return
     try {
-      await convertMut.mutateAsync(id)
+      await convertMut.mutateAsync(order.id)
     } catch (err) {
       console.error('Failed to convert PO:', err)
     }
@@ -58,61 +85,45 @@ export default function PurchaseOrders() {
 
   return (
     <Layout>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Purchase Orders</h2>
+      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <button onClick={handleCreate} className="btn btn-primary" disabled={creating || createMut.isPending}>
-              {creating || createMut.isPending ? 'Creating...' : 'New Purchase Order'}
-            </button>
+            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Purchase Orders</h1>
+            <p className="text-gray-400 text-sm">Manage vendor orders before they arrive.</p>
+          </div>
+          <div className="flex gap-3">
+             <button
+               onClick={() => setShowForm(true)}
+               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-black border-none"
+             >
+               <PlusIcon className="w-4 h-4"/> New Purchase Order
+             </button>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-gray-400">Loading...</div>
-        ) : orders.length === 0 ? (
-          <div className="text-gray-400">No purchase orders found. Create one to get started.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-400 border-b border-white/10">
-                <th className="py-3 px-4">PO Number</th>
-                <th className="py-3 px-4">Vendor</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Total</th>
-                <th className="py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((po) => (
-                <tr key={po.id} className="border-t border-white/5 hover:bg-white/5">
-                  <td className="py-3 px-4">{po.po_number || 'N/A'}</td>
-                  <td className="py-3 px-4">{po.vendor_name || 'Unknown'}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      po.status === 'received' ? 'bg-green-500/20 text-green-400' :
-                      po.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
-                      'bg-yellow-500/20 text-yellow-400'
-                    }`}>
-                      {po.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">₹{parseFloat(po.total_amount || 0).toFixed(2)}</td>
-                  <td className="py-3 px-4">
-                    <button 
-                      onClick={() => handleConvert(po.id)} 
-                      className="px-3 py-1 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-sm disabled:opacity-50"
-                      disabled={po.status === 'received' || convertMut.isPending}
-                    >
-                      {convertMut.isPending ? 'Converting...' : 'Convert'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        {/* Orders Table */}
+        <div className="bento-card p-6">
+          <PurchaseOrderTable
+            orders={orders}
+            isLoading={isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onConvert={handleConvert}
+          />
+        </div>
       </div>
+
+      {/* Modals */}
+      {showForm && (
+        <PurchaseOrderForm 
+          isOpen={showForm} 
+          onClose={handleCloseForm}
+          editData={editOrder}
+        />
+      )}
+
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
     </Layout>
   )
 }
