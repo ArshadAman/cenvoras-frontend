@@ -62,8 +62,14 @@ export default function GSTAndHSNGuide() {
   const results = searchType === 'hsn' ? hsnResults : gstResults
   const isLoading = searchType === 'hsn' ? hsnLoading : gstLoading
 
+  const getBackendUrl = (path) => {
+    const apiUrl = (import.meta.env.VITE_API_URL || '').trim() || (import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : '');
+    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    return `${baseUrl}${path}`;
+  };
+
   const content = (
-    <div className={`min-h-screen bg-gradient-to-br from-black to-gray-900 text-white p-6 md:p-12 ${!isAuthenticated ? 'pt-32' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-br from-black to-gray-900 text-white p-6 md:px-12 md:pb-12 ${!isAuthenticated ? 'pt-32 md:pt-32' : 'md:pt-12'}`}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -146,9 +152,9 @@ export default function GSTAndHSNGuide() {
               className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-all cursor-pointer"
               onClick={() => {
                 if (searchType === 'hsn') {
-                  window.location.href = `/hsn/${item.slug}/`
+                  window.location.href = getBackendUrl(`/hsn/${item.slug}/`)
                 } else {
-                  window.location.href = `/gst-rate/${item.slug}/`
+                  window.location.href = getBackendUrl(`/gst-rate/${item.slug}/`)
                 }
               }}
             >
@@ -178,10 +184,10 @@ export default function GSTAndHSNGuide() {
           <h2 className="text-2xl font-bold mb-6">Popular HSN Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { code: '8471', desc: 'Computer Equipment', url: '/hsn/8471-automatic-data-processing-machines/' },
-              { code: '8517', desc: 'Telecommunications', url: '/hsn/8517-telephone-sets/' },
-              { code: '6204', desc: 'Textiles & Clothing', url: '/hsn/6204-womens-clothing/' },
-              { code: '3004', desc: 'Pharmaceuticals', url: '/hsn/3004-medicaments/' },
+              { code: '8471', desc: 'Computer Equipment', url: getBackendUrl('/hsn/8471-automatic-data-processing-machines/') },
+              { code: '8517', desc: 'Telecommunications', url: getBackendUrl('/hsn/8517-telephone-sets/') },
+              { code: '6204', desc: 'Textiles & Clothing', url: getBackendUrl('/hsn/6204-womens-clothing/') },
+              { code: '3004', desc: 'Pharmaceuticals', url: getBackendUrl('/hsn/3004-medicaments/') },
             ].map((item) => (
               <a
                 key={item.code}
