@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PublicNavbar from '../components/PublicNavbar';
+import Seo from '../components/Seo';
 
 export default function PrivacyPolicy() {
   useEffect(() => {
@@ -9,6 +10,11 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+      <Seo
+        title="Privacy Policy"
+        description="Read how Cenvora handles customer, billing, inventory, and account data on the platform."
+        canonicalPath="/privacy"
+      />
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
       

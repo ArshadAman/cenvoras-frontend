@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import api from '../api/api';
 import Loader from '../components/Loader';
+import Seo from '../components/Seo';
 
 const requestSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Required'),
@@ -26,6 +27,12 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans flex items-center justify-center p-6">
+      <Seo
+        title="Reset Password"
+        description="Reset your Cenvora password to regain access to billing and inventory tools."
+        canonicalPath="/forgot-password"
+        noindex
+      />
       {loading && <Loader />}
       <div className="w-full max-w-md bg-[#111827] border border-slate-800 rounded-2xl p-8 shadow-xl">
         <h1 className="text-2xl font-bold">Forgot Password</h1>
@@ -48,7 +55,7 @@ export default function ForgotPassword() {
                 setEmail(values.email);
                 setOtpSent(true);
                 setMessage('OTP sent to your email.');
-              } catch (err) {
+              } catch {
                 setFieldError('email', 'Unable to send OTP right now. Please try again.');
               }
               setLoading(false);

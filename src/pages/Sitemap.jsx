@@ -8,6 +8,7 @@ import {
   DocumentTextIcon,
   MapIcon
 } from '@heroicons/react/24/outline';
+import Seo from '../components/Seo';
 
 export default function Sitemap() {
   useEffect(() => {
@@ -25,6 +26,11 @@ export default function Sitemap() {
 
   return (
     <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+      <Seo
+        title="Sitemap"
+        description="Browse the public pages available on Cenvora."
+        canonicalPath="/sitemap"
+      />
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
       

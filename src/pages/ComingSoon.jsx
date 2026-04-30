@@ -1,6 +1,7 @@
 import React from "react";
 import Layout from "../components/Layout";
 import { SparklesIcon, BeakerIcon, ArrowTrendingUpIcon, ShieldCheckIcon, CubeTransparentIcon, TruckIcon, BuildingLibraryIcon } from "@heroicons/react/24/outline";
+import Seo from "../components/Seo";
 
 export default function ComingSoon() {
   const upcomingFeatures = [
@@ -50,6 +51,12 @@ export default function ComingSoon() {
 
   return (
     <Layout>
+      <Seo
+        title="Coming Soon"
+        description="Preview upcoming Cenvora features for billing, inventory, GST, and finance workflows."
+        canonicalPath="/coming-soon"
+        noindex
+      />
       <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-fade-up">
         {/* Header section */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">

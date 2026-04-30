@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Select from 'react-select';
 import { indianStates, citiesByState } from '../utils/indiaData';
+import Seo from '../components/Seo';
 
 const customSelectStyles = {
     control: (provided, state) => ({
@@ -71,6 +72,12 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans flex overflow-hidden">
+            <Seo
+                title="Create Account"
+                description="Create your Cenvora account to start using billing and inventory software for your business."
+                canonicalPath="/signup"
+                noindex
+            />
       {loading && <Loader />}
       
       {/* Left Side - Visual & Value Prop (Hidden on Mobile) */}

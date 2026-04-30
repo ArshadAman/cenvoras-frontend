@@ -7,6 +7,7 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
+import Seo from '../components/Seo';
 
 export default function ContactUs() {
   useEffect(() => {
@@ -15,6 +16,11 @@ export default function ContactUs() {
 
   return (
     <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+      <Seo
+        title="Contact Cenvora"
+        description="Contact Cenvora for billing software, inventory software, GST support, onboarding, and account help."
+        canonicalPath="/contact"
+      />
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -left-24 top-24 h-80 w-80 rounded-full bg-cyan-500/15 blur-3xl"></div>

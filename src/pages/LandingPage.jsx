@@ -14,6 +14,7 @@ import {
   CubeIcon
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
+import Seo from '../components/Seo';
 
 // Hook for scroll animations
 const useScrollAnimation = () => {
@@ -140,6 +141,32 @@ export default function LandingPage() {
   useScrollAnimation();
   const [billingCycle, setBillingCycle] = useState('monthly');
   const selectedCycle = BILLING_CYCLES.find((cycle) => cycle.code === billingCycle) || BILLING_CYCLES[0];
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Cenvora',
+      url: siteUrl,
+      logo: `${siteUrl}/cenvora-logo-backgrond-removed.png`,
+      description: 'Billing and inventory software for Indian businesses.',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Cenvora',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      url: siteUrl,
+      description: 'Billing and inventory software for Indian businesses with GST-ready sales, stock, customers, and reporting.',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Cenvora',
+      url: siteUrl,
+    },
+  ];
 
   const planCards = [
     {
@@ -195,6 +222,12 @@ export default function LandingPage() {
 
   return (
     <div className="font-sans text-white overflow-x-hidden bg-black selection:bg-purple-500/30">
+      <Seo
+        title="Billing & Inventory Software for Indian Businesses"
+        description="Cenvora helps Indian businesses manage billing, inventory, customers, GST, and reporting in one platform."
+        canonicalPath="/"
+        structuredData={structuredData}
+      />
       
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>

@@ -3,8 +3,9 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import api from '../api/api.js';
 import Loader from '../components/Loader';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import Seo from '../components/Seo';
 
 const LoginSchema = Yup.object().shape({
   username: Yup.string().required('Required'),
@@ -14,10 +15,15 @@ const LoginSchema = Yup.object().shape({
 export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans flex overflow-hidden">
+            <Seo
+                title="Login"
+                description="Sign in to Cenvora to access billing, inventory, GST, and reporting tools."
+                canonicalPath="/login"
+                noindex
+            />
       {loading && <Loader />}
       
       {/* Left Side - Visual & Testimonial (Hidden on Mobile) */}
@@ -104,7 +110,7 @@ export default function Login({ onLogin }) {
                         } else {
                             setFieldError('username', 'No token received');
                         }
-                    } catch (error) {
+                    } catch {
                         setFieldError('username', 'Invalid credentials');
                     }
                     setLoading(false);

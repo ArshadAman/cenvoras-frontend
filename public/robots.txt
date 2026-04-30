@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+
+# Keep authenticated and utility routes out of the search index.
+Disallow: /dashboard
+Disallow: /purchase
+Disallow: /sales
+Disallow: /quotations
+Disallow: /sales-orders
+Disallow: /delivery-challans
+Disallow: /inventory
+Disallow: /batches
+Disallow: /stock-journals
+Disallow: /warehouses
+Disallow: /customers
+Disallow: /vendors
+Disallow: /payments
+Disallow: /ledger
+Disallow: /reports
+Disallow: /gst
+Disallow: /credit-notes
+Disallow: /debit-notes
+Disallow: /bank-reconciliation
+Disallow: /integrations
+Disallow: /audit-logs
+Disallow: /settings
