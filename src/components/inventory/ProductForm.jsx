@@ -55,6 +55,8 @@ const productSchema = Yup.object().shape({
     is_h1: Yup.boolean(),
     is_narcotic: Yup.boolean(),
     is_new_launch: Yup.boolean(),
+    temperature: Yup.string().max(50, "Temperature must be 50 characters or less").nullable(),
+    storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
   }),
 });
 
@@ -109,6 +111,8 @@ export default function ProductForm({ product, onClose }) {
       is_h1: product?.meta?.is_h1 || false,
       is_narcotic: product?.meta?.is_narcotic || false,
       is_new_launch: product?.meta?.is_new_launch || false,
+      temperature: product?.meta?.temperature || "",
+      storage_condition: product?.meta?.storage_condition || "",
     },
   };
 
@@ -127,6 +131,8 @@ export default function ProductForm({ product, onClose }) {
     if (values.meta.mandi_tax !== "" && values.meta.mandi_tax !== null) {
       metaData.mandi_tax = parseFloat(values.meta.mandi_tax);
     }
+    if (values.meta.temperature?.trim()) metaData.temperature = values.meta.temperature;
+    if (values.meta.storage_condition?.trim()) metaData.storage_condition = values.meta.storage_condition;
 
     const productData = {
       name: values.name,
@@ -384,6 +390,27 @@ export default function ProductForm({ product, onClose }) {
                         type="number"
                         className={inputClass}
                         placeholder="0.00"
+                      />
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <label className={labelClass}>Temperature (°C)</label>
+                      <Field
+                        name="meta.temperature"
+                        type="text"
+                        className={inputClass}
+                        placeholder="e.g. 2-8 °C"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Storage Condition</label>
+                      <Field
+                        name="meta.storage_condition"
+                        type="text"
+                        className={inputClass}
+                        placeholder="e.g. Store in a cool, dry place"
                       />
                     </div>
                  </div>

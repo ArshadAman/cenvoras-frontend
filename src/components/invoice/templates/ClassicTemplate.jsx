@@ -401,6 +401,13 @@ const InvoicePreview = forwardRef(({
                                 {item.product_detail?.description || item.product_description}
                               </div>
                             ) : null}
+                            {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                              <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', fontWeight: 500 }}>
+                                {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
+                                {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                                {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                              </div>
+                            ) : null}
                           </div>
                         ) : value}
                       </td>

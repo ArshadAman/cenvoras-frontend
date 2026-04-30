@@ -526,6 +526,7 @@ const DEFAULT_ITEM_SETTINGS = {
   show_item_free_quantity: true,
   show_item_discount: true,
   show_item_tax: true,
+  show_item_storage_condition: false,
 };
 
 export default function SalesForm({
@@ -1304,6 +1305,7 @@ export default function SalesForm({
                             ["show_item_hsn", "HSN/SAC"],
                             ["show_item_batch", "Batch"],
                             ["show_item_free_quantity", "Free Qty"],
+                            ["show_item_storage_condition", "Storage Details"],
                             ["show_item_discount", "Discount"],
                             ["show_item_tax", "Taxes"],
                             ["require_item_batch", "Require Batch"],

@@ -96,7 +96,18 @@ const BillShipTemplate = forwardRef(({
             {visibleColumns.map(col => {
               let val = '';
               if(col.id==='serial') val = idx+1;
-              else if(col.id==='description') val = <div className="text-left py-2 font-semibold text-gray-900">{item.product_name || item.product}</div>;
+              else if(col.id==='description') val = (
+                <div className="text-left py-2">
+                  <div className="font-semibold text-gray-900">{item.product_detail?.name || item.product_name || item.product}</div>
+                  {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                    <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                      {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
+                      {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                      {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                    </div>
+                  ) : null}
+                </div>
+              );
               else if(col.id==='quantity') val = item.quantity;
               else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
               else if(col.id==='tax') val = `${item.tax||0}%`;
