@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ErrorBoundary from './ErrorBoundary'
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { getUserProfile } from '../api/users';
@@ -329,8 +330,8 @@ export default function Layout({ children, onLogout }) {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative z-10 min-w-0">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
         <header className="md:hidden sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 h-16">
           <button
@@ -488,7 +489,8 @@ export default function Layout({ children, onLogout }) {
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto relative z-10">
+        <ErrorBoundary>
+          <main className="flex-1 overflow-y-auto relative z-10">
           {(showQueuedBanner || showExpiringBanner || showExpiredBanner) && (
             <div className="px-4 pt-4 md:px-6 md:pt-6">
               <div className="mx-auto max-w-7xl space-y-3">
@@ -579,7 +581,8 @@ export default function Layout({ children, onLogout }) {
           ) : (
             children
           )}
-        </main>
+          </main>
+        </ErrorBoundary>
       </div>
 
       <UpgradePromptModal
