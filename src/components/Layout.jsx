@@ -88,6 +88,7 @@ export default function Layout({ children, onLogout }) {
         { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
         { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
         { path: "/gst", label: "GST Compliance", icon: ReceiptPercentIcon, roles: [] },
+          { path: "/gst-hsn-guide", label: "HSN & GST Guide", icon: BookOpenIcon, roles: [] },
       ]
     },
     {

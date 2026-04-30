@@ -43,6 +43,7 @@ import Warranty from './pages/Warranty'
 
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
+import GSTAndHSNGuide from './pages/GSTAndHSNGuide'
 import TaxRegister from './pages/reports/TaxRegister'
 import CreditNoteList from './pages/CreditNoteList'
 import DebitNoteList from './pages/DebitNoteList'
@@ -229,6 +230,10 @@ function App() {
           path="/warranty"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Warranty /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
+          <Route
+            path="/gst-hsn-guide"
+            element={isAuthenticated ? <GSTAndHSNGuide /> : <Navigate to="/" replace />}
+          />
         <Route
           path="/audit-logs"
           element={
