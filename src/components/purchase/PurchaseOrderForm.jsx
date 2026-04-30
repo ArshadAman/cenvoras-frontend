@@ -279,7 +279,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({
-              product: item.product_name || item.product || "",
+              product: item.product_display_name || item.product_name || item.product || "",
               product_id: item.product || null,
               quantity: item.quantity || 1,
               price: item.price || 0,
