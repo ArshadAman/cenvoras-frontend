@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import Layout from '../components/Layout'
 import PublicNavbar from '../components/PublicNavbar'
 import api from '../api/api'
+import { toast } from 'react-toastify'
 
 export default function GSTAndHSNGuide() {
   const [searchParams] = useSearchParams()
@@ -61,12 +62,6 @@ export default function GSTAndHSNGuide() {
 
   const results = searchType === 'hsn' ? hsnResults : gstResults
   const isLoading = searchType === 'hsn' ? hsnLoading : gstLoading
-
-  const getBackendUrl = (path) => {
-    const apiUrl = (import.meta.env.VITE_API_URL || '').trim() || (import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : '');
-    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
-    return `${baseUrl}${path}`;
-  };
 
   const content = (
     <div className={`min-h-screen bg-gradient-to-br from-black to-gray-900 text-white p-6 md:px-12 md:pb-12 ${!isAuthenticated ? 'pt-32 md:pt-32' : 'md:pt-12'}`}>
@@ -151,10 +146,16 @@ export default function GSTAndHSNGuide() {
               key={`${searchType}-${item.code || item.rate}-${item.slug}`}
               className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-all cursor-pointer"
               onClick={() => {
-                if (searchType === 'hsn') {
-                  window.location.href = getBackendUrl(`/hsn/${item.slug}/`)
+                if (isAuthenticated) {
+                  const val = searchType === 'hsn' ? item.code : item.rate;
+                  navigator.clipboard.writeText(val);
+                  toast.success(`${searchType === 'hsn' ? 'HSN Code' : 'GST Rate'} ${val} copied!`);
                 } else {
-                  window.location.href = getBackendUrl(`/gst-rate/${item.slug}/`)
+                  setSignupModal({
+                    open: true,
+                    hsnCode: searchType === 'hsn' ? item.code : null,
+                    gstRate: searchType === 'gst' ? item.rate : null,
+                  });
                 }
               }}
             >
@@ -184,19 +185,26 @@ export default function GSTAndHSNGuide() {
           <h2 className="text-2xl font-bold mb-6">Popular HSN Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { code: '8471', desc: 'Computer Equipment', url: getBackendUrl('/hsn/8471-automatic-data-processing-machines/') },
-              { code: '8517', desc: 'Telecommunications', url: getBackendUrl('/hsn/8517-telephone-sets/') },
-              { code: '6204', desc: 'Textiles & Clothing', url: getBackendUrl('/hsn/6204-womens-clothing/') },
-              { code: '3004', desc: 'Pharmaceuticals', url: getBackendUrl('/hsn/3004-medicaments/') },
+              { code: '8471', desc: 'Computer Equipment' },
+              { code: '8517', desc: 'Telecommunications' },
+              { code: '6204', desc: 'Textiles & Clothing' },
+              { code: '3004', desc: 'Pharmaceuticals' },
             ].map((item) => (
-              <a
+              <div
                 key={item.code}
-                href={item.url}
-                className="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    navigator.clipboard.writeText(item.code);
+                    toast.success(`HSN Code ${item.code} copied!`);
+                  } else {
+                    setSignupModal({ open: true, hsnCode: item.code, gstRate: null });
+                  }
+                }}
+                className="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all cursor-pointer"
               >
                 <div className="font-semibold">HSN {item.code}</div>
                 <p className="text-gray-400 text-sm">{item.desc}</p>
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -212,6 +220,30 @@ export default function GSTAndHSNGuide() {
             Start Free Trial
           </button>
         </div>
+
+        {/* Signup Modal */}
+        {signupModal.open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-[#111] border border-white/10 p-8 rounded-xl max-w-md w-full text-center relative animate-fade-up">
+              <button 
+                onClick={() => setSignupModal({ open: false, hsnCode: null, gstRate: null })}
+                className="absolute top-4 right-4 text-gray-500 hover:text-white"
+              >
+                ✕
+              </button>
+              <h3 className="text-2xl font-bold mb-2">Unlock {signupModal.hsnCode ? `HSN ${signupModal.hsnCode}` : 'GST Rates'}</h3>
+              <p className="text-gray-400 mb-6">
+                Sign up for Cenvora to auto-fill this code and generate GST-compliant invoices instantly.
+              </p>
+              <button
+                onClick={() => window.location.href = `/signup?hsn=${signupModal.hsnCode || ''}`}
+                className="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-bold transition-all"
+              >
+                Start Free Trial
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
