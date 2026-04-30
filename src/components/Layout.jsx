@@ -161,7 +161,8 @@ export default function Layout({ children, onLogout }) {
     if (groupTitle === 'Purchasing') return permissions.purchases;
     if (groupTitle === 'Inventory & Logistics') return permissions.inventory;
     if (groupTitle === 'Financials') return permissions.financials;
-    return 'edit';
+    // Default to 'none' (denied) when permission is unspecified for managers
+    return 'none';
   };
 
   const getSidebarLockState = (groupTitle, itemPath, itemFeatureKey) => {
