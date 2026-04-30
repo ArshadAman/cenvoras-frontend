@@ -305,6 +305,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             try {
                const processedItems = values.items.map(item => ({
                   product: item.product_id, // PrimaryKeyRelatedField expects ID
+                  product_name: item.product,
                   quantity: Math.max(1, Number(item.quantity) || 1),
                   price: Number(item.price),
                   amount: Number(item.amount),
