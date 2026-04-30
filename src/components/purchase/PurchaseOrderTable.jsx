@@ -16,6 +16,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
     return orders.filter(order => {
       const matchesSearch = 
         order.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.vendor_display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === "all" || order.status === statusFilter;
@@ -89,7 +90,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-white">{order.vendor_name || "Unknown"}</div>
+                    <div className="font-medium text-white">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
                     {order.expected_date && (
                       <div className="text-xs text-gray-500 mt-1">
                         Expected: {format(new Date(order.expected_date), "MMM d, yyyy")}
@@ -131,8 +132,13 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                       </button>
                       <button
                         onClick={() => onDelete(order)}
-                        className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
-                        title="Delete Order"
+                        disabled={order.status !== 'draft' && order.status !== 'cancelled'}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          order.status !== 'draft' && order.status !== 'cancelled'
+                            ? 'text-gray-600 cursor-not-allowed opacity-50'
+                            : 'text-red-400 hover:bg-red-500/10'
+                        }`}
+                        title={order.status !== 'draft' && order.status !== 'cancelled' ? "Only draft or cancelled orders can be deleted" : "Delete Order"}
                       >
                         <TrashIcon className="w-5 h-5" />
                       </button>

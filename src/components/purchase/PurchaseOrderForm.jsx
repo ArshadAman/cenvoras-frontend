@@ -228,7 +228,10 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create purchase order");
+      console.error("Create PO Error:", error.response?.data || error);
+      const errors = error.response?.data?.errors;
+      const errorMsg = errors ? JSON.stringify(errors) : error.message;
+      toast.error(errorMsg || "Failed to create purchase order");
     },
   });
 
@@ -240,7 +243,10 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update purchase order");
+      console.error("Update PO Error:", error.response?.data || error);
+      const errors = error.response?.data?.errors;
+      const errorMsg = errors ? JSON.stringify(errors) : error.message;
+      toast.error(errorMsg || "Failed to update purchase order");
     },
   });
 
@@ -267,7 +273,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
         <Formik
           initialValues={{
             vendor_id: editData?.vendor?.id || editData?.vendor || null,
-            vendor_name: editData?.vendor_name || "",
+            vendor_name: editData?.vendor_display_name || editData?.vendor_name || "",
             po_number: editData?.po_number || `PO-${Date.now()}`,
             expected_date: editData?.expected_date || new Date().toLocaleDateString('sv-SE'),
             notes: editData?.notes || "",
@@ -311,6 +317,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
 
                const formData = {
                    vendor_name: values.vendor_name,
+                   vendor_id: values.vendor_id,
                    po_number: values.po_number,
                    expected_date: values.expected_date,
                    total_amount: totalAmount,
@@ -383,7 +390,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                                     <div className="col-span-2">
                                         <label className="block text-xs text-gray-400 mb-1">Amount</label>
                                         <div className="px-3 py-2 text-white font-mono bg-[#111]/50 border border-white/5 rounded-lg">
-                                            {values.items[index].amount.toFixed(2)}
+                                            {Number(values.items[index].amount || 0).toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="col-span-2 flex justify-end">
@@ -408,7 +415,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                    {/* Footer Actions */}
                    <div className="flex justify-between items-center pt-6 border-t border-white/10">
                         <div className="text-xl font-bold text-white">
-                          Total: ₹{values.items.reduce((sum, item) => sum + (item.amount || 0), 0).toFixed(2)}
+                          Total: ₹{values.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2)}
                         </div>
                         <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50">
                           {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Purchase Order"}
