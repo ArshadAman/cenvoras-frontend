@@ -119,7 +119,6 @@ export default function Layout({ children, onLogout }) {
   const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
   const isVipAccess = String(currentPlanName).toLowerCase().includes('vip');
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
-  const pendingPlanName = entitlements.plan?.pending_plan_name || '';
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
   const nextPlanCode = (entitlements.plan?.pending_plan_code || entitlements.plan?.next_plan_code || '').toLowerCase();
   const currentPeriodEnd = entitlements.plan?.current_period_end;
@@ -157,20 +156,33 @@ export default function Layout({ children, onLogout }) {
     return false;
   };
 
-  // Filter structural groups by roles AND granular permissions
+  const getManagerModulePermission = (groupTitle) => {
+    if (groupTitle === 'Sales & Trade') return permissions.sales;
+    if (groupTitle === 'Purchasing') return permissions.purchases;
+    if (groupTitle === 'Inventory & Logistics') return permissions.inventory;
+    if (groupTitle === 'Financials') return permissions.financials;
+    return 'edit';
+  };
+
+  const getSidebarLockState = (groupTitle, itemPath, itemFeatureKey) => {
+    const isManagerDenied = role === 'manager' && getManagerModulePermission(groupTitle) === 'none';
+    const isPlanLocked = (isFreePlan && !isAllowedFreeRoute(itemPath)) || (itemFeatureKey && can[itemFeatureKey] === false);
+
+    return {
+      isLocked: isManagerDenied || isPlanLocked,
+      lockLabel: isManagerDenied ? 'Access denied' : 'Locked',
+      lockDescription: isManagerDenied
+        ? 'You do not have permission to access this section.'
+        : 'This feature is locked on your current plan.',
+    };
+  };
+
+  // Filter structural groups by roles only; manager module permissions are shown as locked items.
   const filteredGroups = navigationGroups.map(group => {
     const validItems = group.items.filter(item => {
       // 1. Role Check
       if (item.roles && item.roles.length > 0 && !item.roles.includes(role)) {
         return false;
-      }
-      
-      // 2. Granular Permission Check (if manager)
-      if (role === 'manager') {
-        if (group.title === "Sales & Trade" && permissions.sales === 'none') return false;
-        if (group.title === "Purchasing" && permissions.purchases === 'none') return false;
-        if (group.title === "Inventory & Logistics" && permissions.inventory === 'none') return false;
-        if (group.title === "Financials" && permissions.financials === 'none') return false;
       }
       
       return true;
@@ -221,7 +233,7 @@ export default function Layout({ children, onLogout }) {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
-                const isLocked = (isFreePlan && !isAllowedFreeRoute(item.path)) || (item.featureKey && can[item.featureKey] === false);
+                const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
 
                 const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                   isActive
@@ -234,21 +246,24 @@ export default function Layout({ children, onLogout }) {
                     <button
                       key={item.path}
                       type="button"
+                      disabled
+                      aria-disabled="true"
+                      title={lockDescription}
                       onClick={() => setUpgradeModal({
                         open: true,
                         title: 'Upgrade required',
                         featureName: item.label,
-                        description: item.upgradeText || `${item.label} is locked on your current plan.`,
+                        description: item.upgradeText || lockDescription,
                         targetPlanName: item.upgradePlan || 'Pro',
                         targetPlanCode: resolvePlanCode(item.upgradePlan),
                         ctaLabel: '',
                         subtitle: '',
                       })}
-                      className={`${baseClass} w-full text-left`}
+                      className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
                     >
                       <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
                       <span className="text-sm flex-1">{item.label}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">Locked</span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                     </button>
                   );
                 }
@@ -380,7 +395,7 @@ export default function Layout({ children, onLogout }) {
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
-                    const isLocked = (isFreePlan && !isAllowedFreeRoute(item.path)) || (item.featureKey && can[item.featureKey] === false);
+                    const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
                     const baseClass = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
@@ -392,21 +407,24 @@ export default function Layout({ children, onLogout }) {
                         <button
                           key={item.path}
                           type="button"
+                          disabled
+                          aria-disabled="true"
+                          title={lockDescription}
                           onClick={() => setUpgradeModal({
                             open: true,
                             title: 'Upgrade required',
                             featureName: item.label,
-                            description: item.upgradeText || `${item.label} is locked on your current plan.`,
+                            description: item.upgradeText || lockDescription,
                             targetPlanName: item.upgradePlan || 'Pro',
                             targetPlanCode: resolvePlanCode(item.upgradePlan),
                             ctaLabel: '',
                             subtitle: '',
                           })}
-                          className={`${baseClass} w-full text-left`}
+                          className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
                         >
                           <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
                           <span className="text-sm flex-1">{item.label}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">Locked</span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                         </button>
                       );
                     }

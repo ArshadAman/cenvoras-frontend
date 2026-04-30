@@ -27,6 +27,7 @@ export default function StockValuation() {
                 <div className="text-right">
                     <p className="text-sm text-gray-400 uppercase font-bold">Total Value</p>
                     <p className="text-3xl font-black text-green-400">₹{Number(data.total_value).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                <small className="mt-1 block text-xs text-gray-500">excluding GST</small>
                 </div>
             )}
         </div>
