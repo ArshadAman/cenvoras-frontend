@@ -21,6 +21,7 @@ export default function PrivacyPolicy() {
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
+          { label: 'HSN Code', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
           { label: 'Terms', href: '/terms' },
         ]}

@@ -237,6 +237,7 @@ export default function LandingPage() {
         links={[
           { label: 'Features', href: '#features' },
           { label: 'Pricing', href: '#pricing' },
+          { label: 'HSN Code', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
         ]}
       />
@@ -462,6 +463,7 @@ export default function LandingPage() {
            <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between text-xs text-gray-600 gap-4">
               <p>&copy; {new Date().getFullYear()} Cenvora Inc. All rights reserved.</p>
               <div className="flex gap-6">
+                <Link to="/gst-hsn-guide" className="hover:text-gray-400">HSN Code</Link>
                 <Link to="/contact" className="hover:text-gray-400">Contact</Link>
                  <Link to="/privacy" className="hover:text-gray-400">Privacy</Link>
                  <Link to="/terms" className="hover:text-gray-400">Terms</Link>

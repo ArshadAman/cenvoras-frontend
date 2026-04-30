@@ -230,10 +230,7 @@ function App() {
           path="/warranty"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Warranty /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
-          <Route
-            path="/gst-hsn-guide"
-            element={isAuthenticated ? <GSTAndHSNGuide /> : <Navigate to="/" replace />}
-          />
+        <Route path="/gst-hsn-guide" element={<GSTAndHSNGuide />} />
         <Route
           path="/audit-logs"
           element={

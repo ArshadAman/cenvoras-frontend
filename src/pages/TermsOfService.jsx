@@ -21,6 +21,7 @@ export default function TermsOfService() {
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
+          { label: 'HSN Code', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
           { label: 'Privacy', href: '/privacy' },
         ]}

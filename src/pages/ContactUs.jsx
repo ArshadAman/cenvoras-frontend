@@ -31,6 +31,7 @@ export default function ContactUs() {
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
+          { label: 'HSN Code', href: '/gst-hsn-guide' },
           { label: 'Privacy', href: '/privacy' },
           { label: 'Terms', href: '/terms' },
         ]}

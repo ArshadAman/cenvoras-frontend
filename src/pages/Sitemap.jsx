@@ -19,6 +19,7 @@ export default function Sitemap() {
     { title: 'Home', path: '/', icon: HomeIcon, desc: 'Cenvora Main Landing Page' },
     { title: 'Login', path: '/login', icon: ArrowRightOnRectangleIcon, desc: 'Sign into your ERP account' },
     { title: 'Sign Up', path: '/signup', icon: UserPlusIcon, desc: 'Create a new free trial account' },
+    { title: 'HSN & GST Guide', path: '/gst-hsn-guide', icon: BookOpenIcon, desc: 'Reference for GST rates and HSN codes' },
     { title: 'Privacy Policy', path: '/privacy', icon: ShieldCheckIcon, desc: 'How we manage and protect your data' },
     { title: 'Terms of Service', path: '/terms', icon: DocumentTextIcon, desc: 'Legal agreements and billing terms' },
     { title: 'Sitemap', path: '/sitemap', icon: MapIcon, desc: 'Directory of all public pages' },

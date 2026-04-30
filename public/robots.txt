@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /gst-hsn-guide
 
 # Keep authenticated and utility routes out of the search index.
 Disallow: /dashboard
@@ -24,3 +25,5 @@ Disallow: /bank-reconciliation
 Disallow: /integrations
 Disallow: /audit-logs
 Disallow: /settings
+
+Sitemap: https://cenvora.app/sitemap.xml
