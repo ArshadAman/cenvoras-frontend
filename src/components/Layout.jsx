@@ -67,6 +67,7 @@ export default function Layout({ children, onLogout }) {
       title: "Purchasing",
       items: [
         { path: "/purchase", label: "Purchase Bills", icon: ShoppingBagIcon, roles: [] },
+        { path: "/purchase-orders", label: "Purchase Orders", icon: BuildingLibraryIcon, roles: [] },
         { path: "/debit-notes", label: "Debit Notes", icon: ArrowUturnRightIcon, roles: [] },
       ]
     },
