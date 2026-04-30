@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/hsn/:match*",
+      "destination": "https://api.cenvora.app/hsn/:match*"
+    },
+    {
+      "source": "/gst-rate/:match*",
+      "destination": "https://api.cenvora.app/gst-rate/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

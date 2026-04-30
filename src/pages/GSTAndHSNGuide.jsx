@@ -142,10 +142,12 @@ export default function GSTAndHSNGuide() {
             <div className="text-gray-400">No results found. Try a different search term.</div>
           )}
           {!isLoading && results?.map((item) => (
-            <div
+            <a
               key={`${searchType}-${item.code || item.rate}-${item.slug}`}
-              className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-all cursor-pointer"
-              onClick={() => {
+              href={searchType === 'hsn' ? `/hsn/${item.slug}/` : `/gst-rate/${item.slug}/`}
+              className="block bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-all cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
                 if (isAuthenticated) {
                   const val = searchType === 'hsn' ? item.code : item.rate;
                   navigator.clipboard.writeText(val);
@@ -176,7 +178,7 @@ export default function GSTAndHSNGuide() {
                   {item.notes && <p className="text-xs text-gray-500 mt-1">{item.notes}</p>}
                 </div>
               )}
-            </div>
+            </a>
           ))}
         </div>
 
@@ -185,14 +187,16 @@ export default function GSTAndHSNGuide() {
           <h2 className="text-2xl font-bold mb-6">Popular HSN Codes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { code: '8471', desc: 'Computer Equipment' },
-              { code: '8517', desc: 'Telecommunications' },
-              { code: '6204', desc: 'Textiles & Clothing' },
-              { code: '3004', desc: 'Pharmaceuticals' },
+              { code: '8471', desc: 'Computer Equipment', url: '/hsn/8471-automatic-data-processing-machines/' },
+              { code: '8517', desc: 'Telecommunications', url: '/hsn/8517-telephone-sets/' },
+              { code: '6204', desc: 'Textiles & Clothing', url: '/hsn/6204-womens-clothing/' },
+              { code: '3004', desc: 'Pharmaceuticals', url: '/hsn/3004-medicaments/' },
             ].map((item) => (
-              <div
+              <a
                 key={item.code}
-                onClick={() => {
+                href={item.url}
+                onClick={(e) => {
+                  e.preventDefault();
                   if (isAuthenticated) {
                     navigator.clipboard.writeText(item.code);
                     toast.success(`HSN Code ${item.code} copied!`);
@@ -204,7 +208,7 @@ export default function GSTAndHSNGuide() {
               >
                 <div className="font-semibold">HSN {item.code}</div>
                 <p className="text-gray-400 text-sm">{item.desc}</p>
-              </div>
+              </a>
             ))}
           </div>
         </div>
