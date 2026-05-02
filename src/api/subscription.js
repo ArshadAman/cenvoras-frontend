@@ -9,7 +9,7 @@ export const getPlanCatalog = () =>
 export const getPlanChangeQuote = (targetPlanCode, billingCycle = 'monthly') =>
   api.post('/subscription/plan-change/quote/', {
     target_plan_code: targetPlanCode,
-    billing_cycle: billingCycle,
+    target_billing_cycle: billingCycle,
   }).then((res) => res.data);
 
 export const schedulePlanChange = (targetPlanCode, billingCycle = 'monthly') =>
