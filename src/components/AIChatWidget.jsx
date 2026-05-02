@@ -35,12 +35,13 @@ export default function AIChatWidget() {
     return null;
   }
 
-  const handleSend = async (overrideInput = null) => {
+  const handleSend = async (overrideInput = null, displayName = null) => {
     const textToSend = overrideInput || input.trim();
     if (!textToSend || loading) return;
 
-    const userMsg = { role: 'user', content: textToSend };
+    const userMsg = { role: 'user', content: displayName || textToSend };
     setMessages(prev => [...prev, userMsg]);
+
     if (!overrideInput) setInput('');
     setLoading(true);
 
@@ -117,10 +118,11 @@ export default function AIChatWidget() {
                           <button
                             key={idx}
                             onClick={() => {
-                              // Send the choice as a new message
-                              setInput(opt.name);
-                              handleSend(opt.name); 
+                              // Send the choice with ID but show name in chat
+                              handleSend(`CHOOSE_CUSTOMER:${opt.id}`, opt.name); 
                             }}
+
+
                             className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-500/30 transition-all group"
                           >
                             <p className="text-sm font-medium text-white/90 group-hover:text-cyan-200">{opt.name}</p>
