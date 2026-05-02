@@ -943,11 +943,20 @@ const Profile = ({ onLogout }) => {
                                 className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
                                 disabled={isPlanActionLoading}
                               >
-                                {availablePlanOptions.map((planOption) => (
-                                  <option key={planOption.code} value={planOption.code}>
-                                    {planOption.name} {planOption.code !== 'free' && planOption.code !== 'starter' ? `(INR ${formatINR(planOption.monthlyPrice)}/month)` : '(INR 0)'}
-                                  </option>
-                                ))}
+                                {availablePlanOptions.map((planOption) => {
+                                  const isDiscounted = planOption.originalMonthlyPrice > 0 && Number(planOption.originalMonthlyPrice) > Number(planOption.monthlyPrice);
+                                  return (
+                                    <option key={planOption.code} value={planOption.code}>
+                                      {planOption.name}
+                                      {isDiscounted 
+                                        ? ` (Early Bird: INR ${formatINR(planOption.monthlyPrice)}/mo, was INR ${formatINR(planOption.originalMonthlyPrice)})`
+                                        : (planOption.code !== 'free' && planOption.code !== 'starter' 
+                                          ? ` (INR ${formatINR(planOption.monthlyPrice)}/month)` 
+                                          : ' (INR 0)')
+                                      }
+                                    </option>
+                                  );
+                                })}
                               </select>
                             </div>
 

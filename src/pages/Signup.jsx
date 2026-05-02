@@ -136,7 +136,7 @@ export default function Signup() {
             <div className="text-center lg:text-left">
                 <h2 className="text-3xl font-bold text-white tracking-tight">Create your account</h2>
                 <p className="mt-2 text-slate-400">
-                    Start your 14-day starter trial. No credit card required.
+                    Start your 14-day Pro trial. No credit card required.
                 </p>
             </div>
 
