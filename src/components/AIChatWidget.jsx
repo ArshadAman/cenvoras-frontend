@@ -35,16 +35,18 @@ export default function AIChatWidget() {
     return null;
   }
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async (overrideInput = null) => {
+    const textToSend = overrideInput || input.trim();
+    if (!textToSend || loading) return;
 
-    const userMsg = { role: 'user', content: input.trim() };
+    const userMsg = { role: 'user', content: textToSend };
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
+    if (!overrideInput) setInput('');
     setLoading(true);
 
     try {
-      const { data } = await askAI(input.trim());
+      const { data } = await askAI(textToSend);
+
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: data.answer,
@@ -108,6 +110,25 @@ export default function AIChatWidget() {
                     >
                       {msg.content}
                     </ReactMarkdown>
+
+                    {msg.action && msg.action.intent === 'select_option' && (
+                      <div className="mt-4 space-y-2 animate-fade-up">
+                        {msg.action.options.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              // Send the choice as a new message
+                              setInput(opt.name);
+                              handleSend(opt.name); 
+                            }}
+                            className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-500/30 transition-all group"
+                          >
+                            <p className="text-sm font-medium text-white/90 group-hover:text-cyan-200">{opt.name}</p>
+                            <p className="text-xs text-white/40 group-hover:text-white/60">{opt.detail}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {msg.action && msg.action.intent === 'create_invoice' && (
                       <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 animate-fade-up">
