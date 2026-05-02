@@ -540,6 +540,7 @@ export default function SalesForm({
   updateDocument = updateSalesInvoice,
   getNextNumber = getNextInvoiceNumber,
   finalSubmitStatus = 'final',
+  aiDraftData = null,
 }) {
   const isQuotation = documentType === "quotation";
   // Keyboard Shortcuts Logic
@@ -596,7 +597,7 @@ export default function SalesForm({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
   const queryClient = useQueryClient();
-  const isEdit = !!editData;
+  const isEdit = !!editData && !!editData.id;
   const formikRef = React.useRef(null);
   const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [productSearch, setProductSearch] = useState("");
@@ -879,7 +880,7 @@ export default function SalesForm({
           innerRef={formikRef}
           initialValues={{
             // Required fields
-            customer_name: editData?.customer_name || "",
+            customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
             // Use fetched next number or edit data
             invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
             invoice_date: editData?.invoice_date 
@@ -887,9 +888,9 @@ export default function SalesForm({
               : new Date().toLocaleDateString('sv-SE'),
             
             // Optional customer fields (for Customer record creation)
-            customer_email: editData?.customer_email || "",
-            customer_phone: editData?.customer_phone || "",
-            customer_address: editData?.customer_address || "",
+            customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
+            customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
+            customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
             customer_gstin: editData?.customer_gstin || "",
             delivery_address: editData?.delivery_address || "",
             
@@ -924,6 +925,24 @@ export default function SalesForm({
                 tax: item.tax || 0,
                 isExistingProduct: !!(item.product_id),
               };
+            }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map(item => {
+                const qty = item.quantity || 1;
+                const price = Math.round(Number(item.price || 0) || 0);
+                return {
+                    product: item.product_name || "",
+                    product_id: null,
+                    product_description: "",
+                    quantity: qty,
+                    free_quantity: 0,
+                    batch: "",
+                    price: price,
+                    amount: qty * price,
+                    unit: "pcs",
+                    hsn_sac_code: "",
+                    discount: 0,
+                    tax: 0,
+                    isExistingProduct: false,
+                };
             }) : [{
               product: "",
               product_id: null,

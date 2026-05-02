@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChatBubbleLeftRightIcon, XMarkIcon, PaperAirplaneIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
@@ -12,6 +13,7 @@ export default function AIChatWidget() {
     staleTime: 60_000,
     retry: false,
   });
+  const navigate = useNavigate();
 
   const entitlements = subscriptionData?.data || {};
   const planCode = String(entitlements?.plan?.code || '').toLowerCase();
@@ -43,7 +45,11 @@ export default function AIChatWidget() {
 
     try {
       const { data } = await askAI(input.trim());
-      setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.answer,
+        action: data.action 
+      }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }]);
     } finally {
@@ -102,6 +108,46 @@ export default function AIChatWidget() {
                     >
                       {msg.content}
                     </ReactMarkdown>
+
+                    {msg.action && msg.action.intent === 'create_invoice' && (
+                      <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 animate-fade-up">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                            <SparklesIcon className="w-4 h-4 text-cyan-300" />
+                          </div>
+                          <p className="text-xs font-semibold text-cyan-100/80 uppercase tracking-wider">
+                            {msg.action.status === 'success' ? 'Action Completed' : 'AI Draft Prepared'}
+                          </p>
+                        </div>
+                        <p className="text-sm text-white/60 mb-4 font-light">
+                          {msg.action.status === 'success' 
+                            ? `Invoice ${msg.action.invoice_number} has been recorded in your ledger.`
+                            : `I've prepared a draft for ${msg.action.entities?.customer_name || 'a new customer'} with ${msg.action.entities?.items?.length || 0} items.`
+                          }
+                        </p>
+                        {msg.action.status === 'success' ? (
+                          <button
+                            onClick={() => {
+                              setIsOpen(false);
+                              navigate('/sales', { state: { viewInvoiceId: msg.action.invoice_id } });
+                            }}
+                            className="w-full py-2.5 rounded-xl bg-green-500 text-white text-sm font-medium hover:bg-green-400 transition-all shadow-lg shadow-green-950/20 active:scale-95"
+                          >
+                            View Invoice Details
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setIsOpen(false);
+                              navigate('/sales', { state: { aiDraft: msg.action.entities } });
+                            }}
+                            className="w-full py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-950/20 active:scale-95"
+                          >
+                            Review & Create Invoice
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

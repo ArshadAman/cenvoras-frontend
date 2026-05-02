@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import SalesTable from "../components/sales/SalesTable";
 import SalesForm from "../components/sales/SalesForm";
@@ -19,8 +20,10 @@ const normalizePrefix = (value) => {
 
 export default function Sales({ documentType = "invoice" }) {
   const isQuotation = documentType === "quotation";
+  const location = useLocation();
   const [showForm, setShowForm] = useState(false);
   const [editInvoice, setEditInvoice] = useState(null);
+  const [aiDraftData, setAiDraftData] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -63,6 +66,7 @@ export default function Sales({ documentType = "invoice" }) {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditInvoice(null);
+    setAiDraftData(null);
   };
 
   useEffect(() => {
@@ -71,6 +75,25 @@ export default function Sales({ documentType = "invoice" }) {
       setInvoicePrefix(normalizePrefix(dbPrefix));
     }
   }, [billingProfile?.invoice_prefix]);
+
+  // Handle AI Draft or View Invoice from navigation state
+  useEffect(() => {
+    if (location.state?.aiDraft) {
+      setAiDraftData(location.state.aiDraft);
+      setShowForm(true);
+      // Clear location state to prevent re-opening on refresh
+      window.history.replaceState({}, document.title);
+    } else if (location.state?.viewInvoiceId) {
+      // Find and show details of the newly created invoice
+      // We'll set showDetails to a dummy object with ID first, 
+      // or we can wait for the table to load.
+      // Better: pass the ID to showDetails if we can fetch it, 
+      // but SalesDetailsModal expects the full invoice object.
+      // For now, let's just trigger the modal if we have the ID.
+      setShowDetails({ id: location.state.viewInvoiceId });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handlePrefixBlur = () => {
     const normalized = normalizePrefix(invoicePrefix);
@@ -160,6 +183,7 @@ export default function Sales({ documentType = "invoice" }) {
           isOpen={showForm} 
           onClose={handleCloseForm}
           editData={editInvoice}
+          aiDraftData={aiDraftData}
           invoicePrefix={invoicePrefix}
           documentType={documentType}
           forceDraft={isQuotation}
