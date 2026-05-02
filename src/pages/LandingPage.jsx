@@ -188,13 +188,13 @@ export default function LandingPage() {
     {
       code: 'pro',
       name: 'Pro',
-      monthlyPrice: 1599,
-      originalMonthlyPrice: 1899,
+      monthlyPrice: 399,
+      originalMonthlyPrice: 1599,
       trialDays: 14,
       cta: 'Start 14-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10',
       description: 'For growing shops that need more control',
-      highlight: 'Most Popular',
+      highlight: 'Early Bird Plan',
       features: [
         'Everything in Starter',
         'Inventory module',
@@ -205,12 +205,13 @@ export default function LandingPage() {
     {
       code: 'business',
       name: 'Business',
-      monthlyPrice: 1999,
+      monthlyPrice: 499,
       originalMonthlyPrice: 1999,
       trialDays: 14,
       cta: 'Start 14-Day Trial',
       ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
       description: 'For larger teams and multi-location operations',
+      highlight: 'Early Bird Plan',
       features: [
         'Everything in Pro',
         'Warehouses and multi-location inventory',
