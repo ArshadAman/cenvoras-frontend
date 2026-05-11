@@ -108,10 +108,10 @@ export default function Sales({ documentType = "invoice" }) {
 
   return (
     <Layout>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
+      <div className="p-2 sm:p-6 md:p-10 space-y-8 animate-fade-up">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 sm:px-0">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
               {isQuotation ? "Quotation Management" : "Sales Management"}
@@ -122,8 +122,8 @@ export default function Sales({ documentType = "invoice" }) {
                 : "Create, manage and track your sales invoices."}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-             <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
+             <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50 w-full sm:w-auto">
                <span className="text-xs text-gray-400 font-medium">PREFIX:</span>
                <input 
                  type="text" 
@@ -131,24 +131,26 @@ export default function Sales({ documentType = "invoice" }) {
                  onChange={(e) => setInvoicePrefix(normalizePrefix(e.target.value))}
                  onBlur={handlePrefixBlur}
                  disabled={!canEditInvoicePrefix}
-                 className="bg-transparent border-none text-white text-sm w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
+                 className="bg-transparent border-none text-white text-sm flex-1 sm:w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
                  placeholder="INV-"
                  maxLength={10}
                  title={!canEditInvoicePrefix ? 'Invoice prefix is managed by the main account.' : ''}
                />
              </div>
-             <button
-               onClick={() => setShowUpload(true)}
-               className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center gap-2"
-             >
-               <ArrowUpTrayIcon className="w-4 h-4 text-cyan-400"/> Upload CSV
-             </button>
-             <button
-               onClick={() => setShowForm(true)}
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
-             >
-               <PlusIcon className="w-4 h-4"/> {isQuotation ? "New Quotation" : "New Sale"}
-             </button>
+             <div className="flex gap-2 w-full sm:w-auto">
+               <button
+                 onClick={() => setShowUpload(true)}
+                 className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white flex-1 sm:flex-none flex items-center justify-center gap-2"
+               >
+                 <ArrowUpTrayIcon className="w-4 h-4 text-cyan-400"/> Upload CSV
+               </button>
+               <button
+                 onClick={() => setShowForm(true)}
+                 className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex-1 sm:flex-none flex items-center justify-center gap-2"
+               >
+                 <PlusIcon className="w-4 h-4"/> {isQuotation ? "New Quotation" : "New Sale"}
+               </button>
+             </div>
           </div>
         </div>
 
@@ -156,8 +158,8 @@ export default function Sales({ documentType = "invoice" }) {
         {!isQuotation && <SalesSummary />}
 
         {/* Sales Table */}
-        <div className="bento-card p-6">
-          <div className="mb-6 flex items-center justify-between">
+        <div className="bento-card p-3 sm:p-6">
+          <div className="mb-6 flex items-center justify-between px-1 sm:px-0">
             <div>
               <h2 className="text-lg font-bold text-white mb-1">Sales Invoices</h2>
               <p className="text-xs text-gray-400">

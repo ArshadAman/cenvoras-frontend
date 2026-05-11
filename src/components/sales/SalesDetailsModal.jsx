@@ -263,20 +263,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
           
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/50">
-            <div>
-              <h2 className="text-lg font-bold text-white">{isQuotation ? "Performa Invoice Preview" : "Invoice Preview"}</h2>
-              <p className="text-xs text-gray-400">
-                {invoiceDetails.invoice_number || 'Loading...'}
-                {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
-              </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-white/10 bg-black/50 gap-4">
+            <div className="flex justify-between items-center w-full sm:w-auto">
+              <div>
+                <h2 className="text-lg font-bold text-white">{isQuotation ? "Performa Invoice Preview" : "Invoice Preview"}</h2>
+                <p className="text-xs text-gray-400">
+                  {invoiceDetails.invoice_number || 'Loading...'}
+                  {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="sm:hidden p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
             </div>
             
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
               <button
                 onClick={() => setShowDesigner(true)}
-                className="px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <PaintBrushIcon className="w-4 h-4" />
                 Customize
@@ -284,7 +292,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               
               <button
                 onClick={handlePrint}
-                className="px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <PrinterIcon className="w-4 h-4" />
                 Print
@@ -292,7 +300,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               
               <button
                 onClick={handleDownloadPDF}
-                className="px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
                 PDF
@@ -301,7 +309,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               <button
                 disabled={sendingEmail}
                 onClick={handleEmailClick}
-                className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="whitespace-nowrap px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {sendingEmail
                   ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
@@ -310,7 +318,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
               <button
                 onClick={(e) => { e.preventDefault(); toast.info('WhatsApp integration is coming soon!'); }}
-                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden"
+                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden whitespace-nowrap"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
@@ -324,7 +332,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="hidden sm:block p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
@@ -332,21 +340,23 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div className="flex-1 overflow-auto p-6 bg-gray-900/50 flex justify-center">
+          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start sm:items-center">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
                 <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="shadow-2xl" ref={printRef} data-print-target>
-                <div className="w-full h-full bg-white">
-                  <InvoicePreview
-                    invoice={invoiceDetails}
-                    template={previewTemplate}
-                    businessInfo={businessInfo}
-                    invoiceSettings={invoiceSettings || {}}
-                  />
+              <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center">
+                <div className="shadow-2xl origin-top sm:origin-center scale-[0.45] sm:scale-100" ref={printRef} data-print-target>
+                  <div className="w-[210mm] min-h-[297mm] bg-white">
+                    <InvoicePreview
+                      invoice={invoiceDetails}
+                      template={previewTemplate}
+                      businessInfo={businessInfo}
+                      invoiceSettings={invoiceSettings || {}}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
