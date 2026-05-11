@@ -34,8 +34,8 @@ export default function Quotations() {
 
   return (
     <Layout>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="p-2 sm:p-6 md:p-10 space-y-8 animate-fade-up">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 sm:px-0">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Quotation Management</h1>
             <p className="text-gray-400 text-sm">Create quotations separately and convert approved items to sales orders.</p>
@@ -45,13 +45,13 @@ export default function Quotations() {
               setEditData(null);
               setShowForm(true);
             }}
-            className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+            className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <PlusIcon className="w-4 h-4" /> New Quotation
           </button>
         </div>
 
-        <div className="bento-card p-6">
+        <div className="bento-card p-3 sm:p-6">
           <QuotationTable
             onEdit={(q) => {
               setEditData(q);
