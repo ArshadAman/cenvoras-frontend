@@ -153,6 +153,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [previewScale, setPreviewScale] = useState(0.6);
   const [hasChanges, setHasChanges] = useState(false);
   const [showTemplateList, setShowTemplateList] = useState(false);
+  const [viewMode, setViewMode] = useState('design'); // 'design' or 'preview'
   const previewRef = useRef(null);
 
   // Sample invoice data for preview
@@ -313,9 +314,25 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex bg-[#0a0a0a]">
+    <div className="fixed inset-0 z-[9999] flex flex-col lg:flex-row bg-[#0a0a0a]">
+      {/* Mobile View Switcher */}
+      <div className="lg:hidden flex border-b border-white/10 bg-[#111]">
+        <button 
+          onClick={() => setViewMode('design')}
+          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'design' ? 'text-cyan-400 bg-cyan-400/5 border-b-2 border-cyan-400' : 'text-gray-500'}`}
+        >
+          Design
+        </button>
+        <button 
+          onClick={() => setViewMode('preview')}
+          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'text-cyan-400 bg-cyan-400/5 border-b-2 border-cyan-400' : 'text-gray-500'}`}
+        >
+          Preview
+        </button>
+      </div>
+
       {/* Left Panel - Settings */}
-      <div className="w-96 bg-[#111] border-r border-white/10 flex flex-col h-full">
+      <div className={`w-full lg:w-96 bg-[#111] border-r border-white/10 flex flex-col h-full ${viewMode === 'design' ? 'flex' : 'hidden lg:flex'}`}>
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div>
@@ -862,7 +879,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-hidden">
+      <div className={`flex-1 flex flex-col bg-[#0a0a0a] overflow-hidden ${viewMode === 'preview' ? 'flex' : 'hidden lg:flex'}`}>
         {/* Preview Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">

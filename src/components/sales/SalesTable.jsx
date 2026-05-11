@@ -260,15 +260,15 @@ export default function SalesTable({
 
   // Removed global isLoading return to avoid unmounting search bar
   return (
-    <div className="bg-white/5 backdrop-filter backdrop-blur-20 rounded-lg shadow p-6 border border-white/10">
+    <div className="lg:bg-white/5 lg:backdrop-filter lg:backdrop-blur-20 rounded-lg lg:shadow p-0 lg:p-6 lg:border lg:border-white/10 bg-transparent border-none shadow-none backdrop-blur-none">
       {/* Status Tabs */}
       {!hideStatusTabs && (
-        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit">
+        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit max-w-full overflow-x-auto no-scrollbar mx-4 lg:mx-0">
           {['all', 'final', 'draft'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilterTab(tab)}
-              className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+              className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all whitespace-nowrap ${
                 statusFilterTab === tab 
                 ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
                 : 'text-gray-400 hover:text-white border border-transparent'
@@ -281,7 +281,7 @@ export default function SalesTable({
       )}
 
       {/* Header with Search and Filters */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 px-4 lg:px-0">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
             <input
@@ -571,7 +571,7 @@ export default function SalesTable({
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-4">
+      <div className="lg:hidden space-y-3 px-2">
         {isLoading ? (
           <div className="flex justify-center items-center py-12 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
@@ -582,9 +582,9 @@ export default function SalesTable({
           </div>
         ) : (
           filteredInvoices.map((invoice) => (
-          <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+          <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">
             {/* Card Header */}
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -593,60 +593,16 @@ export default function SalesTable({
                   className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                 />
                 <div>
-                  <div className="text-lg font-semibold text-white">
+                  <div className="text-base font-bold text-white">
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-sm text-white/70">
-                    {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
+                  <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
+                    {format(new Date(invoice.invoice_date), 'dd MMM, yyyy')}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Card Content */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-white/70">Status:</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                      'bg-gray-500/20 text-gray-400'
-                   }`}>
-                      {invoice.status || 'final'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-white/70">Payment:</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
-                  invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                  invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                  'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}>
-                  {invoice.payment_status || 'pending'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-white/70">Customer:</span>
-                <span className="text-sm font-medium text-white">{invoice.customer_name}</span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-white/70">Amount (Before Tax):</span>
-                <span className="text-sm font-medium text-white">
-                  ₹{(() => {
-                    const untaxedAmount = invoice.items?.reduce((sum, item) => {
-                      const quantity = parseFloat(item.quantity || 0);
-                      const price = parseFloat(item.price || 0);
-                      return sum + (quantity * price);
-                    }, 0) || 0;
-                    return Number(untaxedAmount).toLocaleString();
-                  })()}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-white/70">Total (With Tax):</span>
-                <span className="text-lg font-semibold text-[#7fd3f7]">
+              <div className="text-right">
+                <div className="text-lg font-black text-cyan-400">
                   ₹{(() => {
                     const calculations = invoice.items?.reduce((acc, item) => {
                       const quantity = parseFloat(item.quantity || 0);
@@ -663,23 +619,56 @@ export default function SalesTable({
                     const totalWithTax = calculations.untaxed + calculations.taxAmount;
                     return Number(totalWithTax).toLocaleString();
                   })()}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-white/70">Items:</span>
-                <span className="text-sm text-white">{invoice.items?.length || 0} items</span>
+                </div>
+                <div className={`mt-1 inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black tracking-tighter ${
+                  invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                  invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                  'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                  {invoice.payment_status || 'pending'}
+                </div>
               </div>
             </div>
 
+            {/* Card Content Grid */}
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/5 mb-4">
+               <div>
+                  <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Customer</div>
+                  <div className="text-xs font-bold text-white truncate">{invoice.customer_name}</div>
+               </div>
+               <div className="text-right">
+                  <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Status</div>
+                  <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
+                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                      'bg-gray-500/20 text-gray-400'
+                   }`}>
+                      {invoice.status || 'final'}
+                  </div>
+               </div>
+            </div>
+
             {/* Card Actions */}
-            <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onView(invoice)}
-                className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                className="flex-1 min-w-[70px] px-3 py-2.5 bg-white/5 text-white border border-white/10 rounded-xl hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95"
               >
+                <EyeIcon className="w-3.5 h-3.5" />
                 View
               </button>
+              
+              {canRecordPayment(invoice) && (
+                <button
+                  type="button"
+                  onClick={() => openPaymentForInvoice(invoice)}
+                  className="flex-1 min-w-[70px] px-3 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <CurrencyDollarIcon className="w-3.5 h-3.5" />
+                  Pay
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => {
@@ -688,32 +677,15 @@ export default function SalesTable({
                   }
                 }}
                 disabled={!canEditInvoice(invoice)}
-                title={editInvoiceTooltip(invoice)}
-                aria-disabled={!canEditInvoice(invoice)}
-                className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
+                className={`flex-none p-2.5 rounded-xl transition-all border active:scale-95 ${
                   canEditInvoice(invoice)
-                    ? 'bg-cyan-500/30 text-white border-cyan-300/50 hover:bg-cyan-500/50'
-                    : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                    ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20'
+                    : 'bg-white/5 text-gray-500 border-white/10 opacity-50'
                 }`}
               >
-                Edit
+                <PencilSquareIcon className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={() => openPaymentForInvoice(invoice)}
-                disabled={!canRecordPayment(invoice)}
-                title={canRecordPayment(invoice)
-                  ? 'Record payment for this invoice'
-                  : 'Available only for final invoices with pending or partial payment status.'}
-                aria-disabled={!canRecordPayment(invoice)}
-                className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
-                  canRecordPayment(invoice)
-                    ? 'bg-emerald-500/30 text-white border-emerald-300/50 hover:bg-emerald-500/50'
-                    : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
-                }`}
-              >
-                Pay
-              </button>
+              
               <button
                 type="button"
                 onClick={() => {
@@ -722,15 +694,13 @@ export default function SalesTable({
                   }
                 }}
                 disabled={!canDeleteInvoice(invoice)}
-                title={getDeleteTooltip(invoice)}
-                aria-disabled={!canDeleteInvoice(invoice)}
-                className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
+                className={`flex-none p-2.5 rounded-xl transition-all border active:scale-95 ${
                   canDeleteInvoice(invoice)
-                    ? 'bg-red-500/30 text-white border-red-300/50 hover:bg-red-500/50'
-                    : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                    ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
+                    : 'bg-white/5 text-gray-500 border-white/10 opacity-50'
                 }`}
               >
-                Delete
+                <TrashIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
