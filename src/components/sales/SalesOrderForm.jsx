@@ -493,39 +493,41 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                     {({ push, remove }) => (
                         <div className="space-y-4">
                             {values.items.map((item, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
-                                    <div className="col-span-4">
+                                <div key={index} className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-start sm:items-end bg-white/5 p-4 rounded-xl border border-white/5">
+                                    <div className="w-full sm:col-span-4">
                                         <label className="block text-xs text-gray-400 mb-1">Product</label>
                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
                                     </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Qty</label>
-                                        <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" 
-                                            onChange={e => {
-                                            const qty = Math.max(1, Number(e.target.value) || 1);
-                                                setFieldValue(`items.${index}.quantity`, qty);
-                                                setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Price</label>
-                                        <Field name={`items.${index}.price`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
-                                            onChange={e => {
-                                                const price = e.target.value;
-                                                setFieldValue(`items.${index}.price`, price);
-                                                setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Amount</label>
-                                        <div className="px-3 py-2 text-white font-mono">
-                                            {values.items[index].amount}
+                                    <div className="w-full flex gap-4 sm:col-span-4 sm:grid sm:grid-cols-2">
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-gray-400 mb-1">Qty</label>
+                                            <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" 
+                                                onChange={e => {
+                                                const qty = Math.max(1, Number(e.target.value) || 1);
+                                                    setFieldValue(`items.${index}.quantity`, qty);
+                                                    setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-gray-400 mb-1">Price</label>
+                                            <Field name={`items.${index}.price`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
+                                                onChange={e => {
+                                                    const price = e.target.value;
+                                                    setFieldValue(`items.${index}.price`, price);
+                                                    setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
+                                                }}
+                                            />
                                         </div>
                                     </div>
-                                    <div className="col-span-2 flex justify-end">
-                                        <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-300">Remove</button>
+                                    <div className="w-full sm:col-span-2 flex items-center justify-between sm:block">
+                                        <label className="block text-xs text-gray-400 mb-1 sm:mb-1">Amount</label>
+                                        <div className="px-0 sm:px-3 py-0 sm:py-2 text-white font-mono text-right sm:text-left text-lg sm:text-base">
+                                            ₹{values.items[index].amount}
+                                        </div>
+                                    </div>
+                                    <div className="w-full sm:col-span-2 flex justify-end mt-2 sm:mt-0">
+                                        <button type="button" onClick={() => remove(index)} className="w-full sm:w-auto text-red-400 hover:text-red-300 bg-red-500/10 sm:bg-transparent px-4 py-2 sm:p-0 rounded-lg transition-colors font-medium text-sm">Remove Item</button>
                                     </div>
                                 </div>
                             ))}

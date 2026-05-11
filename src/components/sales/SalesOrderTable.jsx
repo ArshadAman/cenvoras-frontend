@@ -103,7 +103,15 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="text-base font-bold text-white">{order.order_number}</div>
-                    <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">{format(new Date(order.date), 'dd MMM, yyyy')}</div>
+                    <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
+                      {(() => {
+                        try {
+                          return format(new Date(order.date), 'dd MMM, yyyy');
+                        } catch (e) {
+                          return order.date || '';
+                        }
+                      })()}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-black text-cyan-400">₹{Number(order.total_amount).toLocaleString()}</div>

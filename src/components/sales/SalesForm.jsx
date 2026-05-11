@@ -1593,12 +1593,12 @@ export default function SalesForm({
                                   })}
                                 </div>
 
-                                <div className="md:hidden space-y-3">
+                                <div className="md:hidden space-y-4">
                                   {values.items.map((item, index) => (
-                                    <div key={`mobile-${index}`} className="border-b border-white/10 pb-3">
-                                      <div className="grid grid-cols-2 gap-3 py-3">
-                                        <div className="col-span-2">
-                                          <label className="text-xs text-gray-400">Product</label>
+                                    <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4">
+                                      {/* Row 1: Product */}
+                                      <div className="w-full">
+                                          <label className="block text-xs font-medium text-gray-400 mb-1">Product</label>
                                           <ProductAutocomplete
                                             idx={index}
                                             values={values}
@@ -1609,7 +1609,122 @@ export default function SalesForm({
                                             showDescription={itemSettings.show_item_description}
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                           />
-                                        </div>
+                                      </div>
+                                      
+                                      {/* Settings Optional Fields */}
+                                      {(itemSettings.show_item_hsn || itemSettings.show_item_batch) && (
+                                          <div className="flex gap-4">
+                                              {itemSettings.show_item_hsn && (
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">HSN/SAC</label>
+                                                    <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                                </div>
+                                              )}
+                                              {itemSettings.show_item_batch && (
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Batch</label>
+                                                    <Field name={`items.${index}.batch`}>
+                                                      {({ field }) => (
+                                                        <select {...field} className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm" disabled={!item.product_id}>
+                                                          <option value="">Auto (FEFO)</option>
+                                                          {(stockPoints?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || []).map((b) => (
+                                                            <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
+                                                          ))}
+                                                        </select>
+                                                      )}
+                                                    </Field>
+                                                </div>
+                                              )}
+                                          </div>
+                                      )}
+
+                                      {/* Row 2: Qty, Unit, Price */}
+                                      <div className="grid grid-cols-3 gap-4">
+                                          <div>
+                                              <label className="block text-xs font-medium text-gray-400 mb-1">Qty</label>
+                                              <Field
+                                                name={`items.${index}.quantity`}
+                                                type="number"
+                                                min="1"
+                                                className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center"
+                                                onChange={(e) => {
+                                                  const qty = e.target.value;
+                                                  setFieldValue(`items.${index}.quantity`, qty);
+                                                  const price = Math.round(Number(values.items[index]?.price) || 0);
+                                                  setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
+                                                }}
+                                              />
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-medium text-gray-400 mb-1">Unit</label>
+                                              <Field name={`items.${index}.unit`}>
+                                                {({ field }) => (
+                                                  <select {...field} className="w-full bg-[#111] border border-white/10 rounded-lg px-2 py-2 text-white text-sm text-center">
+                                                    {units.map((u) => <option key={u} value={u}>{u}</option>)}
+                                                  </select>
+                                                )}
+                                              </Field>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-medium text-gray-400 mb-1">Price</label>
+                                              <Field
+                                                name={`items.${index}.price`}
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-right font-mono"
+                                                onChange={(e) => {
+                                                  const price = e.target.value;
+                                                  setFieldValue(`items.${index}.price`, price);
+                                                  const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                  const roundedPrice = Math.round(Number(price) || 0);
+                                                  setFieldValue(`items.${index}.amount`, roundedPrice * qty);
+                                                  if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                }}
+                                              />
+                                          </div>
+                                      </div>
+
+                                      {/* Row 3: Discounts and Taxes */}
+                                      {(itemSettings.show_item_discount || itemSettings.show_item_tax || itemSettings.show_item_free_quantity) && (
+                                          <div className="grid grid-cols-3 gap-4">
+                                            {itemSettings.show_item_free_quantity && (
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Free</label>
+                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center" />
+                                                </div>
+                                            )}
+                                            {itemSettings.show_item_discount && (
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Disc %</label>
+                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center" />
+                                                </div>
+                                            )}
+                                            {itemSettings.show_item_tax && (
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
+                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center" />
+                                                </div>
+                                            )}
+                                          </div>
+                                      )}
+
+                                      {/* Row 4: Amount & Remove */}
+                                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                          <div>
+                                              <label className="block text-xs font-medium text-gray-400 mb-0.5">Amount</label>
+                                              <div className="text-lg font-mono font-bold text-cyan-400">
+                                                  ₹{item.amount?.toFixed(2) || "0.00"}
+                                              </div>
+                                          </div>
+                                          <button
+                                              type="button"
+                                              onClick={() => remove(index)}
+                                              disabled={values.items.length === 1}
+                                              className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg transition-colors hover:bg-red-500/20 disabled:opacity-50 text-sm font-medium"
+                                          >
+                                              Remove Item
+                                          </button>
                                       </div>
                                     </div>
                                   ))}
