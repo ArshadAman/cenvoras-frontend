@@ -5,7 +5,7 @@ import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesC
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, EyeIcon, PencilSquareIcon, TrashIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import PaymentForm from "../ledger/PaymentForm";
 
