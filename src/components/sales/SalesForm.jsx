@@ -1593,12 +1593,12 @@ export default function SalesForm({
                                   })}
                                 </div>
 
-                                <div className="md:hidden space-y-4">
+                                <div className="lg:hidden space-y-4">
                                   {values.items.map((item, index) => (
-                                    <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4">
+                                    <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
                                       {/* Row 1: Product */}
                                       <div className="w-full">
-                                          <label className="block text-xs font-medium text-gray-400 mb-1">Product</label>
+                                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
                                           <ProductAutocomplete
                                             idx={index}
                                             values={values}
@@ -1611,21 +1611,21 @@ export default function SalesForm({
                                           />
                                       </div>
                                       
-                                      {/* Settings Optional Fields */}
+                                      {/* Settings Optional Fields: HSN & Batch */}
                                       {(itemSettings.show_item_hsn || itemSettings.show_item_batch) && (
-                                          <div className="flex gap-4">
+                                          <div className="grid grid-cols-2 gap-4">
                                               {itemSettings.show_item_hsn && (
-                                                <div className="flex-1">
-                                                    <label className="block text-xs font-medium text-gray-400 mb-1">HSN/SAC</label>
-                                                    <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">HSN/SAC</label>
+                                                    <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
                                                 </div>
                                               )}
                                               {itemSettings.show_item_batch && (
-                                                <div className="flex-1">
-                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Batch</label>
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Batch</label>
                                                     <Field name={`items.${index}.batch`}>
                                                       {({ field }) => (
-                                                        <select {...field} className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm" disabled={!item.product_id}>
+                                                        <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" disabled={!item.product_id}>
                                                           <option value="">Auto (FEFO)</option>
                                                           {(stockPoints?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || []).map((b) => (
                                                             <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -1641,12 +1641,12 @@ export default function SalesForm({
                                       {/* Row 2: Qty, Unit, Price */}
                                       <div className="grid grid-cols-3 gap-4">
                                           <div>
-                                              <label className="block text-xs font-medium text-gray-400 mb-1">Qty</label>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Qty</label>
                                               <Field
                                                 name={`items.${index}.quantity`}
                                                 type="number"
                                                 min="1"
-                                                className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center"
+                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center font-bold"
                                                 onChange={(e) => {
                                                   const qty = e.target.value;
                                                   setFieldValue(`items.${index}.quantity`, qty);
@@ -1656,23 +1656,23 @@ export default function SalesForm({
                                               />
                                           </div>
                                           <div>
-                                              <label className="block text-xs font-medium text-gray-400 mb-1">Unit</label>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Unit</label>
                                               <Field name={`items.${index}.unit`}>
                                                 {({ field }) => (
-                                                  <select {...field} className="w-full bg-[#111] border border-white/10 rounded-lg px-2 py-2 text-white text-sm text-center">
+                                                  <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-2 py-2.5 text-white text-sm text-center">
                                                     {units.map((u) => <option key={u} value={u}>{u}</option>)}
                                                   </select>
                                                 )}
                                               </Field>
                                           </div>
                                           <div>
-                                              <label className="block text-xs font-medium text-gray-400 mb-1">Price</label>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
                                               <Field
                                                 name={`items.${index}.price`}
                                                 type="number"
                                                 min="0"
                                                 step="1"
-                                                className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-right font-mono"
+                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-right font-mono"
                                                 onChange={(e) => {
                                                   const price = e.target.value;
                                                   setFieldValue(`items.${index}.price`, price);
@@ -1690,40 +1690,40 @@ export default function SalesForm({
                                           <div className="grid grid-cols-3 gap-4">
                                             {itemSettings.show_item_free_quantity && (
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Free</label>
-                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center" />
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Free</label>
+                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_discount && (
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Disc %</label>
-                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center" />
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Disc %</label>
+                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_tax && (
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Tax %</label>
-                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-center" />
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Tax %</label>
+                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
                                                 </div>
                                             )}
                                           </div>
                                       )}
 
                                       {/* Row 4: Amount & Remove */}
-                                      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
                                           <div>
-                                              <label className="block text-xs font-medium text-gray-400 mb-0.5">Amount</label>
-                                              <div className="text-lg font-mono font-bold text-cyan-400">
-                                                  ₹{item.amount?.toFixed(2) || "0.00"}
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Subtotal</label>
+                                              <div className="text-xl font-mono font-black text-cyan-400">
+                                                  ₹{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
                                           </div>
                                           <button
                                               type="button"
                                               onClick={() => remove(index)}
                                               disabled={values.items.length === 1}
-                                              className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg transition-colors hover:bg-red-500/20 disabled:opacity-50 text-sm font-medium"
+                                              className="px-6 py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
                                           >
-                                              Remove Item
+                                              Remove
                                           </button>
                                       </div>
                                     </div>

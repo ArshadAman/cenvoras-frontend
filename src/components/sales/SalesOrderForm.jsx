@@ -492,45 +492,59 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                    <FieldArray name="items">
                     {({ push, remove }) => (
                         <div className="space-y-4">
-                            {values.items.map((item, index) => (
-                                <div key={index} className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-start sm:items-end bg-white/5 p-4 rounded-xl border border-white/5">
-                                    <div className="w-full sm:col-span-4">
-                                        <label className="block text-xs text-gray-400 mb-1">Product</label>
-                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
-                                    </div>
-                                    <div className="w-full flex gap-4 sm:col-span-4 sm:grid sm:grid-cols-2">
-                                        <div className="flex-1">
-                                            <label className="block text-xs text-gray-400 mb-1">Qty</label>
-                                            <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" 
-                                                onChange={e => {
-                                                const qty = Math.max(1, Number(e.target.value) || 1);
-                                                    setFieldValue(`items.${index}.quantity`, qty);
-                                                    setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="block text-xs text-gray-400 mb-1">Price</label>
-                                            <Field name={`items.${index}.price`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
-                                                onChange={e => {
-                                                    const price = e.target.value;
-                                                    setFieldValue(`items.${index}.price`, price);
-                                                    setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="w-full sm:col-span-2 flex items-center justify-between sm:block">
-                                        <label className="block text-xs text-gray-400 mb-1 sm:mb-1">Amount</label>
-                                        <div className="px-0 sm:px-3 py-0 sm:py-2 text-white font-mono text-right sm:text-left text-lg sm:text-base">
-                                            ₹{values.items[index].amount}
-                                        </div>
-                                    </div>
-                                    <div className="w-full sm:col-span-2 flex justify-end mt-2 sm:mt-0">
-                                        <button type="button" onClick={() => remove(index)} className="w-full sm:w-auto text-red-400 hover:text-red-300 bg-red-500/10 sm:bg-transparent px-4 py-2 sm:p-0 rounded-lg transition-colors font-medium text-sm">Remove Item</button>
-                                    </div>
-                                </div>
-                            ))}
+                             {values.items.map((item, index) => (
+                                 <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end hover:bg-white/10 transition-all">
+                                     {/* Row 1: Product (Full width on mobile, col-span-4 on desktop) */}
+                                     <div className="lg:col-span-4">
+                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
+                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                     </div>
+
+                                     {/* Row 2: Qty & Price (Side-by-side on mobile, col-span-4 on desktop) */}
+                                     <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
+                                         <div>
+                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quantity</label>
+                                             <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-center" 
+                                                 onChange={e => {
+                                                     const qty = Math.max(1, Number(e.target.value) || 1);
+                                                     setFieldValue(`items.${index}.quantity`, qty);
+                                                     setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
+                                                 }}
+                                             />
+                                         </div>
+                                         <div>
+                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
+                                             <Field name={`items.${index}.price`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-right font-mono"
+                                                 onChange={e => {
+                                                     const price = e.target.value;
+                                                     setFieldValue(`items.${index}.price`, price);
+                                                     setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
+                                                 }}
+                                             />
+                                         </div>
+                                     </div>
+
+                                     {/* Row 3: Amount Display (Full width on mobile, col-span-2 on desktop) */}
+                                     <div className="flex justify-between items-center lg:col-span-2 lg:block lg:text-left">
+                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 lg:mb-2">Subtotal</label>
+                                         <div className="text-xl lg:text-base font-black text-cyan-400 font-mono">
+                                             ₹{Number(values.items[index].amount || 0).toLocaleString()}
+                                         </div>
+                                     </div>
+
+                                     {/* Row 4: Actions (Full width on mobile, col-span-2 on desktop) */}
+                                     <div className="lg:col-span-2">
+                                         <button 
+                                            type="button" 
+                                            onClick={() => remove(index)} 
+                                            disabled={values.items.length === 1}
+                                            className="w-full py-3 lg:py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-30"
+                                         >
+                                             Remove Item
+                                         </button>
+                                     </div>
+                                 </div>
+                             ))}
                             <button type="button" onClick={() => push({ product: "", quantity: 1, price: 0, amount: 0 })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
                                 + Add Item
                             </button>
