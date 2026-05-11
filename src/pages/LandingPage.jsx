@@ -254,8 +254,8 @@ export default function LandingPage() {
           </div>
           
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-none">
-            Simple business <br/>
-            software.
+            Business, <br/>
+            perfectly synced.
           </h1>
           <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-12 opacity-0 animate-fade-up delay-200 leading-relaxed font-light">
             Cenvora helps you manage sales, stock, customers, and billing in one place. It is made for shop owners, traders, and growing businesses that want less confusion and more control.
