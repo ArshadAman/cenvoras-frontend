@@ -692,21 +692,21 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               </div>
 
               {/* Actions Footer */}
-              <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-4 rounded-b-[24px] items-center z-40 relative">
+              <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-4 rounded-b-[24px] items-center z-40 relative">
                 <div className="flex-1 text-gray-500 text-[10px] font-medium uppercase tracking-[0.1em] hidden sm:block">
                   All changes are saved locally until finalized.
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all font-bold text-xs uppercase tracking-widest"
+                  className="w-full sm:w-auto px-6 py-4 sm:py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all font-bold text-xs uppercase tracking-widest text-center"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-10 py-4 bg-white text-black rounded-xl text-xs font-black uppercase tracking-[0.15em] hover:bg-cyan-500 transition-all shadow-xl shadow-cyan-500/10 active:scale-95 disabled:opacity-50 min-w-[180px]"
+                  className="w-full sm:w-auto px-10 py-4 bg-white text-black rounded-xl text-xs font-black uppercase tracking-[0.15em] hover:bg-cyan-500 transition-all shadow-xl shadow-cyan-500/10 active:scale-95 disabled:opacity-50 min-w-[180px] text-center flex items-center justify-center"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

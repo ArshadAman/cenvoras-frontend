@@ -246,100 +246,93 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   return (
     <div className="bg-white/5 backdrop-filter backdrop-blur-20 p-4 rounded shadow border border-white/10">
       {/* Enhanced Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <input
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          placeholder="Search Bill Number or Vendor"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select
-          value={ordering}
-          onChange={(e) => setOrdering(e.target.value)}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        >
-          <option value="-bill_date" className="bg-[#1a2341] text-white">Newest</option>
-          <option value="bill_date" className="bg-[#1a2341] text-white">Oldest</option>
-          <option value="-total_amount" className="bg-[#1a2341] text-white">Amount (High to Low)</option>
-          <option value="total_amount" className="bg-[#1a2341] text-white">Amount (Low to High)</option>
-        </select>
-        <input
-          type="date"
-          placeholder="From Date"
-          value={dateFilter.start}
-          onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        />
-        <input
-          type="date"
-          placeholder="To Date"
-          value={dateFilter.end}
-          onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        />
-        <button
-          onClick={() => setDateFilter({ start: "", end: "" })}
-          className="px-3 py-1 bg-gray-500/30 text-white border border-gray-300/50 rounded hover:bg-gray-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
-        >
-          Clear Dates
-        </button>
-        <button
-          onClick={() => setShowAdvancedFilters(true)}
-          className="px-3 py-1 bg-purple-500/30 text-white border border-purple-300/50 rounded hover:bg-purple-500/50 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 drop-shadow-lg"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-          </svg>
-          Advanced Filters
-        </button>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          <input
+            className="w-full sm:w-64 px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white placeholder-white/30 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+            placeholder="Search Bill or Vendor..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            value={ordering}
+            onChange={(e) => setOrdering(e.target.value)}
+            className="w-full sm:w-48 px-4 py-2.5 border border-white/10 rounded-xl bg-[#0a0a0a] text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all cursor-pointer"
+          >
+            <option value="-bill_date">Newest First</option>
+            <option value="bill_date">Oldest First</option>
+            <option value="-total_amount">Amount: High-Low</option>
+            <option value="total_amount">Amount: Low-High</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 w-full lg:w-auto">
+          <input
+            type="date"
+            value={dateFilter.start}
+            onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+            className="w-full sm:w-auto px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+          />
+          <input
+            type="date"
+            value={dateFilter.end}
+            onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+            className="w-full sm:w-auto px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+          />
+          <button
+            onClick={() => setDateFilter({ start: "", end: "" })}
+            className="col-span-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white text-xs font-black uppercase tracking-widest transition-all"
+          >
+            Clear
+          </button>
+          <button
+            onClick={() => setShowAdvancedFilters(true)}
+            className="col-span-1 px-4 py-2.5 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400 hover:bg-purple-500/20 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+            </svg>
+            Filters
+          </button>
+        </div>
       </div>
 
-      {/* Bulk Actions */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-4">
+      {/* Bulk Actions & Export */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           {selectedBills.size > 0 && (
-            <>
-              <span className="text-sm text-white/80 drop-shadow-lg">
-                {selectedBills.size} selected
+            <div className="flex items-center gap-3 p-2 px-4 bg-purple-500/10 border border-purple-500/20 rounded-xl w-full sm:w-auto justify-between sm:justify-start">
+              <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">
+                {selectedBills.size} Selected
               </span>
               <button
-                onClick={() => setShowBulkActions(!showBulkActions)}
-                className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
-              >
-                Bulk Actions
-              </button>
-            </>
-          )}
-          {showBulkActions && (
-            <div className="flex gap-2">
-              <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                className="px-4 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-red-500/30 transition-all"
               >
-                Delete Selected
+                Delete
               </button>
             </div>
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={exportToCSV}
-            className="px-3 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 drop-shadow-lg"
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Export CSV
+            Summary
           </button>
           <button
             onClick={exportDetailedCSV}
-            className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 drop-shadow-lg"
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Detailed CSV
+            Detailed
           </button>
         </div>
       </div>
@@ -487,32 +480,34 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-4">
+      <div className="lg:hidden space-y-4 p-2">
         {isLoading ? (
           Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
-              <div className="h-4 bg-white/20 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-2xl border border-white/10 p-5 animate-pulse">
+              <div className="h-5 bg-white/20 rounded-lg mb-4 w-1/2"></div>
+              <div className="space-y-3">
+                <div className="h-3 bg-white/10 rounded w-full"></div>
+                <div className="h-3 bg-white/10 rounded w-3/4"></div>
+              </div>
             </div>
           ))
         ) : (
           filteredBills.map((bill) => (
-            <div key={bill.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+            <div key={bill.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-all duration-300">
               {/* Card Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={selectedBills.has(bill.id)}
                     onChange={(e) => handleSelectBill(bill.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="rounded border-white/10 text-purple-500 focus:ring-purple-500 bg-white/5 w-5 h-5"
                   />
                   <div>
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-base font-black text-white tracking-tight">
                       {bill.bill_number}
                     </div>
-                    <div className="text-sm text-white/70">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">
                       {format(new Date(bill.bill_date), 'MMM dd, yyyy')}
                     </div>
                   </div>
@@ -522,28 +517,30 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               {/* Card Content */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Vendor:</span>
-                  <span className="text-sm font-medium text-white">{bill.vendor_name}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vendor:</span>
+                  <span className="text-sm font-bold text-white text-right truncate max-w-[150px]">{bill.vendor_name}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Items:</span>
-                  <span className="text-sm text-white">{bill.items?.length || 0} items</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Items:</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20">
+                    {bill.items?.length || 0} items
+                  </span>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Total Amount:</span>
-                  <span className="text-lg font-semibold text-[#7fd3f7]">
+                <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Amount:</span>
+                  <span className="text-lg font-black text-white font-mono tracking-tighter">
                     ₹{Number(bill.total_amount || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
 
               {/* Card Actions */}
-              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+              <div className="flex gap-2 mt-5 pt-4 border-t border-white/5">
                 <button
-                  onClick={() => onView(bill)}
-                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  onClick={() => onView(bill.id)}
+                  className="flex-1 px-4 py-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center"
                 >
                   View
                 </button>
@@ -555,18 +552,17 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     }
                   }}
                   disabled={!canEditBill(bill)}
-                  title={editBillTitle(bill)}
-                  className={`flex-1 px-3 py-2 rounded-lg transition backdrop-filter backdrop-blur-10 text-sm font-medium border ${
+                  className={`flex-1 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center border ${
                     canEditBill(bill)
-                      ? 'bg-indigo-500/30 text-white border-indigo-300/50 hover:bg-indigo-500/50'
-                      : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                      ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
+                      : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-50'
                   }`}
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => onDelete(bill)}
-                  className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  onClick={() => onDelete(bill.id)}
+                  className="flex-1 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center"
                 >
                   Delete
                 </button>
@@ -577,11 +573,8 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
 
         {/* No data message for mobile */}
         {!isLoading && filteredBills.length === 0 && (
-          <div className="p-8 text-center text-white/80">
-            <p>No purchase bills found.</p>
-            <p className="text-sm mt-2">
-              Click "New Purchase" to create your first purchase bill.
-            </p>
+          <div className="p-12 text-center">
+            <p className="text-sm font-black uppercase tracking-widest text-gray-500">No purchase bills found.</p>
           </div>
         )}
       </div>

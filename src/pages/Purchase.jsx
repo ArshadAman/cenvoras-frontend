@@ -39,22 +39,22 @@ export default function Purchase() {
              <p className="text-gray-400 text-sm">Track procurement and supplier relationships.</p>
            </div>
            
-           <div className="flex gap-3">
-             <button
-               onClick={() => setShowUpload(true)}
-               className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm"
-             >
-               <DocumentArrowUpIcon className="h-4 w-4" />
-               <span>Upload CSV</span>
-             </button>
-             <button
-               onClick={() => setShowForm(true)}
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-purple-500/20"
-             >
-               <PlusIcon className="h-4 w-4" />
-               <span>New Purchase</span>
-             </button>
-           </div>
+           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <button
+                onClick={() => setShowUpload(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 shadow-sm uppercase tracking-widest"
+              >
+                <DocumentArrowUpIcon className="h-4 w-4" />
+                <span>Upload CSV</span>
+              </button>
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-purple-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-400 shadow-lg shadow-purple-500/20 uppercase tracking-widest"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span>New Purchase</span>
+              </button>
+            </div>
         </div>
 
         {/* Purchase Table Container */}
