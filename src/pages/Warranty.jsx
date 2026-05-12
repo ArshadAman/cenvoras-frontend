@@ -69,12 +69,12 @@ export default function Warranty() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
           {['all', 'active', 'warning', 'critical', 'expired'].map(tab => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 filter === tab
                   ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-900/30'
                   : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
@@ -85,60 +85,111 @@ export default function Warranty() {
           ))}
         </div>
 
-        {/* Warranty Table */}
-        <div className="bento-card !p-0 overflow-hidden">
+        {/* Warranty Table (Responsive) */}
+        <div className="bento-card !p-0 overflow-hidden bg-transparent border-none shadow-none">
           {isLoading ? (
-            <div className="p-12 text-center text-gray-500">Loading warranty data...</div>
+            <div className="bento-card p-12 text-center text-gray-500 bg-[#0a0a0a]">Loading warranty data...</div>
           ) : filteredItems.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
+            <div className="bento-card p-12 text-center text-gray-500 bg-[#0a0a0a]">
               <ShieldCheckIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>No warranty records found</p>
               <p className="text-xs mt-1 text-gray-600">Warranty tracking starts when you sell products that have a warranty duration set</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="bg-white/[0.03] border-b border-white/10">
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Invoice</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Warranty Period</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Start</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">End</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Countdown</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item, idx) => {
-                    const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.active;
-                    const Icon = cfg.icon;
-                    return (
-                      <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                        <td className="px-6 py-4 text-white font-medium">{item.product_name}</td>
-                        <td className="px-6 py-4 text-gray-300">{item.customer_name}</td>
-                        <td className="px-6 py-4 text-gray-400 font-mono text-xs">{item.invoice_number}</td>
-                        <td className="px-6 py-4 text-gray-300">{item.warranty_months} months</td>
-                        <td className="px-6 py-4 text-gray-400">{item.warranty_start}</td>
-                        <td className="px-6 py-4 text-gray-400">{item.warranty_end}</td>
-                        <td className="px-6 py-4">
-                          <span className={`font-semibold ${cfg.color}`}>
-                            {item.countdown}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${cfg.bg} ${cfg.color}`}>
-                            <Icon className="w-3.5 h-3.5" />
-                            {cfg.label}
-                          </span>
-                        </td>
+            <>
+              {/* Desktop View */}
+              <div className="hidden lg:block bento-card !p-0 overflow-hidden bg-[#0a0a0a]">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="bg-white/[0.03] border-b border-white/10">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Product</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Invoice</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Warranty Period</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Start</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">End</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Countdown</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody>
+                      {filteredItems.map((item, idx) => {
+                        const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.active;
+                        const Icon = cfg.icon;
+                        return (
+                          <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{item.product_name}</td>
+                            <td className="px-6 py-4 text-gray-300">{item.customer_name}</td>
+                            <td className="px-6 py-4 text-gray-400 font-mono text-xs">{item.invoice_number}</td>
+                            <td className="px-6 py-4 text-gray-300">{item.warranty_months} months</td>
+                            <td className="px-6 py-4 text-gray-400">{item.warranty_start}</td>
+                            <td className="px-6 py-4 text-gray-400">{item.warranty_end}</td>
+                            <td className="px-6 py-4">
+                              <span className={`font-semibold ${cfg.color}`}>
+                                {item.countdown}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${cfg.bg} ${cfg.color}`}>
+                                <Icon className="w-3.5 h-3.5" />
+                                {cfg.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile View */}
+              <div className="lg:hidden space-y-4 px-1">
+                {filteredItems.map((item, idx) => {
+                  const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.active;
+                  const Icon = cfg.icon;
+                  return (
+                    <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 hover:bg-white/10 transition-all">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-white font-bold text-lg mb-1">{item.product_name}</div>
+                          <div className="text-gray-400 text-sm">{item.customer_name}</div>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.color}`}>
+                          <Icon className="w-3 h-3" />
+                          {cfg.label}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Invoice</div>
+                          <div className="text-white font-mono text-xs">{item.invoice_number}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Period</div>
+                          <div className="text-white text-xs">{item.warranty_months} Months</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Starts</div>
+                          <div className="text-gray-400 text-xs">{item.warranty_start}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Ends</div>
+                          <div className="text-gray-400 text-xs">{item.warranty_end}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Remaining Time</div>
+                        <div className={`text-sm font-black ${cfg.color} tracking-tighter`}>{item.countdown}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>
