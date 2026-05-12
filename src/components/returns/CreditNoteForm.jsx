@@ -203,43 +203,88 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* Step 3: Items Table */}
+              {/* Step 3: Items Table (Responsive) */}
               {selectedInvoice && (
-                <div className="border border-white/10 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-white/5 text-gray-400">
-                      <tr>
-                        <th className="p-3">Product</th>
-                        <th className="p-3 text-right">Sold Qty</th>
-                        <th className="p-3 text-right">Price</th>
-                        <th className="p-3 text-right w-32">Return Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {returnItems.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="p-3 text-white">{item.product_detail?.name || 'N/A'}</td>
-                          <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
-                          <td className="p-3 text-right text-gray-400">₹{item.price}</td>
-                          <td className="p-3">
-                            <input 
-                              type="number"
-                              min="0"
-                              max={item.original_qty}
-                              value={item.return_qty}
-                              onChange={(e) => {
-                                const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
-                                const newItems = [...returnItems];
-                                newItems[idx].return_qty = newQty;
-                                setReturnItems(newItems);
-                              }}
-                              className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
-                            />
-                          </td>
+                <div className="space-y-4">
+                  {/* Desktop Table */}
+                  <div className="hidden lg:block border border-white/10 rounded-lg overflow-hidden">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-white/5 text-gray-400">
+                        <tr>
+                          <th className="p-3">Product</th>
+                          <th className="p-3 text-right">Sold Qty</th>
+                          <th className="p-3 text-right">Price</th>
+                          <th className="p-3 text-right w-32">Return Qty</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {returnItems.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="p-3 text-white">{item.product_detail?.name || 'N/A'}</td>
+                            <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
+                            <td className="p-3 text-right text-gray-400">₹{item.price}</td>
+                            <td className="p-3">
+                              <input 
+                                type="number"
+                                min="0"
+                                max={item.original_qty}
+                                value={item.return_qty}
+                                onChange={(e) => {
+                                  const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
+                                  const newItems = [...returnItems];
+                                  newItems[idx].return_qty = newQty;
+                                  setReturnItems(newItems);
+                                }}
+                                className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Item Cards */}
+                  <div className="lg:hidden space-y-4">
+                    {returnItems.map((item, idx) => (
+                      <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+                        <div className="text-white font-bold">{item.product_detail?.name || 'N/A'}</div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Sold Qty</label>
+                            <div className="text-gray-300 text-sm font-medium">{item.original_qty} {item.unit}</div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Price</label>
+                            <div className="text-gray-300 text-sm font-medium">₹{item.price}</div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-white/5">
+                           <label className="block text-[10px] font-black uppercase tracking-widest text-cyan-400 mb-2">Quantity to Return</label>
+                           <div className="relative">
+                              <input 
+                                type="number"
+                                min="0"
+                                max={item.original_qty}
+                                value={item.return_qty}
+                                onChange={(e) => {
+                                  const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
+                                  const newItems = [...returnItems];
+                                  newItems[idx].return_qty = newQty;
+                                  setReturnItems(newItems);
+                                }}
+                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-center font-bold text-lg"
+                              />
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs uppercase font-black pointer-events-none">
+                                max: {item.original_qty}
+                              </div>
+                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
