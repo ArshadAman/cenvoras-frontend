@@ -93,35 +93,37 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   if (!isOpen || !vendor) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start sm:items-center justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-[#0F0F12] border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl my-8 sm:my-auto transform animate-fade-up">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between print-hidden">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Vendor Details
+        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#0F0F12]/80 backdrop-blur-md z-10 print-hidden">
+          <h2 className="text-xl font-black text-white uppercase tracking-tight">
+            Vendor <span className="text-indigo-400">Profile</span>
           </h2>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center space-x-2"
+              className="p-2 sm:px-4 sm:py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all flex items-center gap-2"
+              title="Print Profile"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
-              <span>Print</span>
+              <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Print</span>
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center space-x-2"
+              className="p-2 sm:px-4 sm:py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-all flex items-center gap-2"
+              title="Download PDF"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Download PDF</span>
+              <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">PDF</span>
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="p-2 text-gray-500 hover:text-white transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -131,135 +133,109 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         </div>
 
         {/* Content */}
-        <div ref={printRef} data-print-target className="px-6 py-4">
+        <div ref={printRef} data-print-target className="p-6 sm:p-10">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="flex flex-col items-center justify-center py-24 space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+              <div className="text-gray-500 text-xs font-black uppercase tracking-widest">Loading Profile...</div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-10">
               {/* Vendor Header */}
-              <div className="text-center border-b border-gray-200 dark:border-gray-700 pb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Vendor Information
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-black mb-2 shadow-xl shadow-indigo-500/20">
+                  {vendorDetails.name?.charAt(0).toUpperCase() || 'V'}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {vendorDetails.name || 'N/A'}
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Generated on {format(new Date(), 'MMMM dd, yyyy')}
-                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                   {vendorDetails.meta?.party_category && (
+                     <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
+                       {vendorDetails.meta.party_category}
+                     </span>
+                   )}
+                   {vendorDetails.gstin && (
+                     <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/20 font-mono">
+                       {vendorDetails.gstin}
+                     </span>
+                   )}
+                </div>
               </div>
 
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Basic Information
+              {/* Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                {/* Contact Details */}
+                <div className="bg-white/5 border border-white/10 p-5 sm:p-6 rounded-2xl space-y-6">
+                  <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-white/5 pb-3">
+                    Contact Details
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Vendor ID:</span>
-                      <span className="text-gray-900 dark:text-white font-mono text-sm">
-                        {vendorDetails.id}
-                      </span>
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Email</span>
+                      <span className="text-sm text-white font-medium break-all">{vendorDetails.email || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Name:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">
-                        {vendorDetails.name || 'N/A'}
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</span>
+                      <span className="text-sm text-white font-medium">{vendorDetails.phone || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Email:</span>
-                      <span className="text-gray-900 dark:text-white">
-                        {vendorDetails.email || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Phone:</span>
-                      <span className="text-gray-900 dark:text-white">
-                        {vendorDetails.phone || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">GSTIN:</span>
-                      <span className="text-gray-900 dark:text-white font-mono text-sm">
-                        {vendorDetails.gstin || 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Contact Information
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400 block mb-1">Address:</span>
-                      <span className="text-gray-900 dark:text-white">
+                    <div className="pt-2">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Billing Address</span>
+                      <span className="text-sm text-gray-300 leading-relaxed block bg-black/20 p-3 rounded-xl border border-white/5">
                         {vendorDetails.address || 'No address provided'}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* System Information */}
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  System Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Created By:</span>
-                    <span className="text-gray-900 dark:text-white">
-                      User ID: {vendorDetails.created_by || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Created At:</span>
-                    <span className="text-gray-900 dark:text-white">
-                      {vendorDetails.created_at ? 
-                        format(new Date(vendorDetails.created_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
-                    </span>
+                {/* Account Summary */}
+                <div className="bg-white/5 border border-white/10 p-5 sm:p-6 rounded-2xl space-y-6">
+                  <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-white/5 pb-3">
+                    Account Summary
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Vendor ID</span>
+                      <span className="text-xs text-indigo-400 font-mono bg-indigo-400/10 px-2 py-1 rounded self-start sm:self-auto">{vendorDetails.id?.substring(0, 8)}...</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Created At</span>
+                      <span className="text-sm text-white">
+                        {vendorDetails.created_at ? format(new Date(vendorDetails.created_at), 'MMM dd, yyyy') : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Place of Supply</span>
+                      <span className="text-sm text-white uppercase tracking-wider font-bold">{vendorDetails.state || 'N/A'}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-white/5">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Limit</span>
+                      <span className="text-lg font-black text-white font-mono">
+                        ₹{vendorDetails.meta?.credit_limit ? Number(vendorDetails.meta.credit_limit).toLocaleString() : '0.00'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Additional Notes Section */}
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Summary
-                </h3>
-                <div className="text-gray-600 dark:text-gray-400">
-                  <p>
-                    This vendor record was created on{' '}
-                    {vendorDetails.created_at ? 
-                      format(new Date(vendorDetails.created_at), 'MMMM dd, yyyy') : 'an unknown date'}.
-                  </p>
-                  {vendorDetails.email && (
-                    <p className="mt-2">
-                      Primary contact email: <span className="text-gray-900 dark:text-white">{vendorDetails.email}</span>
-                    </p>
-                  )}
-                  {vendorDetails.phone && (
-                    <p className="mt-2">
-                      Primary contact phone: <span className="text-gray-900 dark:text-white">{vendorDetails.phone}</span>
-                    </p>
-                  )}
-                </div>
+              {/* System Note */}
+              <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-xl text-center">
+                <p className="text-xs text-indigo-400/70 font-medium">
+                  This profile was automatically generated on {format(new Date(), 'PPPP')}
+                </p>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 print-hidden">
+        <div className="px-6 py-4 border-t border-white/10 print-hidden">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+              className="w-full sm:w-auto px-8 py-3 text-xs font-black text-gray-400 uppercase tracking-widest bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
             >
-              Close
+              Close Profile
             </button>
           </div>
         </div>
