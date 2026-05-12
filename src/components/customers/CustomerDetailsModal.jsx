@@ -93,8 +93,8 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   if (!isOpen || !customer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-[#0F0F12] border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto transform animate-fade-up">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start sm:items-center justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-[#0F0F12] border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl my-8 sm:my-auto transform animate-fade-up">
         {/* Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#0F0F12]/80 backdrop-blur-md z-10 print-hidden">
           <h2 className="text-xl font-black text-white uppercase tracking-tight">
@@ -143,10 +143,10 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
             <div className="space-y-10">
               {/* Customer Header */}
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black mb-2 shadow-xl shadow-cyan-500/20">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-black mb-2 shadow-xl shadow-cyan-500/20">
                   {customerDetails.name?.charAt(0).toUpperCase() || 'C'}
                 </div>
-                <h1 className="text-3xl font-black text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   {customerDetails.name || 'N/A'}
                 </h1>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -164,19 +164,19 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
               </div>
 
               {/* Information Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                 {/* Contact Details */}
-                <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-6">
+                <div className="bg-white/5 border border-white/10 p-5 sm:p-6 rounded-2xl space-y-6">
                   <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-white/5 pb-3">
                     Contact Details
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</span>
-                      <span className="text-sm text-white font-medium">{customerDetails.email || 'N/A'}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Email</span>
+                      <span className="text-sm text-white font-medium break-all">{customerDetails.email || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</span>
                       <span className="text-sm text-white font-medium">{customerDetails.phone || 'N/A'}</span>
                     </div>
                     <div className="pt-2">
@@ -194,22 +194,22 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                     Account Summary
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Customer ID</span>
-                      <span className="text-xs text-cyan-400 font-mono bg-cyan-400/10 px-2 py-1 rounded">{customerDetails.id?.substring(0, 8)}...</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Customer ID</span>
+                      <span className="text-xs text-cyan-400 font-mono bg-cyan-400/10 px-2 py-1 rounded self-start sm:self-auto">{customerDetails.id?.substring(0, 8)}...</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Created At</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Created At</span>
                       <span className="text-sm text-white">
                         {customerDetails.created_at ? format(new Date(customerDetails.created_at), 'MMM dd, yyyy') : 'N/A'}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Place of Supply</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Place of Supply</span>
                       <span className="text-sm text-white uppercase tracking-wider font-bold">{customerDetails.state || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Limit</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-white/5">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Limit</span>
                       <span className="text-lg font-black text-white font-mono">
                         ₹{customerDetails.meta?.credit_limit ? Number(customerDetails.meta.credit_limit).toLocaleString() : '0.00'}
                       </span>
