@@ -111,8 +111,8 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     <Transition show={isOpen} as={React.Fragment}>
       <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <div className="fixed inset-0 bg-black/80" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-[#0F0F12] border border-white/10 p-6 text-left align-middle shadow-xl transition-all">
+        <div className="fixed inset-0 flex items-center justify-center p-2 sm:p-4">
+          <Dialog.Panel className="w-full max-w-2xl max-h-[95vh] overflow-y-auto transform rounded-2xl bg-[#0F0F12] border border-white/10 p-5 sm:p-8 text-left align-middle shadow-2xl transition-all">
             <div className="flex justify-between items-center mb-6">
               <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-white">
                 New Credit Note (Sales Return)
@@ -124,7 +124,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Step 1: Select Customer & Invoice */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Customer</label>
                   <select 
@@ -176,7 +176,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               </div>
 
               {/* Step 2: Return Details */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Reason</label>
                   <select 
@@ -288,18 +288,18 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-sm font-bold uppercase tracking-widest"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || !selectedInvoiceId}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary w-full sm:w-auto py-3 px-8 text-sm font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_-5px_rgba(255,255,255,0.2)]"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create Credit Note'}
                 </button>
