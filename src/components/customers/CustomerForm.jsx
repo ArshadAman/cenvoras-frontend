@@ -250,7 +250,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:w-auto px-6 py-3 sm:py-2.5 text-gray-400 hover:text-white font-bold text-sm uppercase tracking-widest hover:bg-white/5 rounded-xl transition-all"
+                  className="w-full sm:w-auto px-6 py-3 sm:py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
                 >
                   Cancel
                 </button>
