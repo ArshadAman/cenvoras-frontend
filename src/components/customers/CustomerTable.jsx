@@ -136,26 +136,28 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
         <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
       {/* Header with search and actions */}
       <div className="p-6 border-b border-white/10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <h2 className="text-lg font-bold text-white drop-shadow-lg">
-            👥 Customers ({totalCount})
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <h2 className="text-xl font-black text-white tracking-tight">
+            Customers <span className="text-cyan-400/50 text-sm font-normal ml-2 tracking-normal">({totalCount} total)</span>
           </h2>
           
           {/* Search and Controls */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Search customers..."
-              className="px-3 py-2 border border-white/30 rounded-md bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <input
+                type="text"
+                placeholder="Search customers..."
+                className="w-full px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
             
             <select
-              className="px-3 py-2 border border-white/30 rounded-md bg-[#111] backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+              className="w-full sm:w-48 px-4 py-2.5 border border-white/10 rounded-xl bg-[#0a0a0a] text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all cursor-pointer"
               value={ordering}
               onChange={(e) => {
                 setOrdering(e.target.value);
@@ -174,22 +176,24 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
 
         {/* Bulk Actions */}
         {showBulkActions && (
-          <div className="mt-4 flex items-center gap-3 p-3 bg-cyan-500/20 backdrop-filter backdrop-blur-10 border border-cyan-300/30 rounded-md">
-            <span className="text-sm text-cyan-300 font-bold drop-shadow-lg">
-              {selectedCustomers.size} customer(s) selected
+          <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
+            <span className="text-sm text-cyan-400 font-bold uppercase tracking-widest">
+              {selectedCustomers.size} Selected
             </span>
-            <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1 bg-red-500/80 hover:bg-red-400/90 text-white text-sm rounded backdrop-filter backdrop-blur-10 border border-red-300/30 font-bold transition-colors"
-            >
-              Delete Selected
-            </button>
-            <button
-              onClick={exportToCSV}
-              className="px-3 py-1 bg-green-500/80 hover:bg-green-400/90 text-white text-sm rounded backdrop-filter backdrop-blur-10 border border-green-300/30 font-bold transition-colors"
-            >
-              Export Selected
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleBulkDelete}
+                className="flex-1 sm:flex-none px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs rounded-lg border border-red-500/30 font-black uppercase tracking-widest transition-all"
+              >
+                Delete
+              </button>
+              <button
+                onClick={exportToCSV}
+                className="flex-1 sm:flex-none px-4 py-2 bg-green-500/20 hover:bg-green-500/40 text-green-400 text-xs rounded-lg border border-green-500/30 font-black uppercase tracking-widest transition-all"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -322,7 +326,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-4">
+      <div className="lg:hidden space-y-4 p-2">
         {isLoading ? (
           Array(3).fill(0).map((_, i) => (
             <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
@@ -337,12 +341,12 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedCustomers.has(customer.id)}
-                    onChange={(e) => handleSelectCustomer(customer.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
-                  />
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomers.has(customer.id)}
+                      onChange={(e) => handleCustomerSelect(customer.id, e.target.checked)}
+                      className="rounded border-white/10 text-cyan-500 focus:ring-cyan-500 bg-white/5 w-5 h-5"
+                    />
                   <div>
                     <div className="text-lg font-semibold text-white">
                       {customer.name}
@@ -362,22 +366,13 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">GST:</span>
-                  <span className="text-sm text-white">{customer.gst_number || 'N/A'}</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">GSTIN:</span>
+                  <span className="text-sm text-white font-mono">{customer.gstin || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Balance:</span>
-                  <span className={`text-lg font-semibold ${
-                    Number(customer.balance || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    ₹{Number(customer.balance || 0).toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Category:</span>
-                  <span className="text-sm text-cyan-300 uppercase">{customer.meta?.party_category || '-'}</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">Category:</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded border border-cyan-400/20">{customer.meta?.party_category || '-'}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
@@ -395,23 +390,22 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                 )}
               </div>
 
-              {/* Card Actions */}
-              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+              <div className="flex gap-2 mt-4 pt-4 border-t border-white/5">
                 <button
                   onClick={() => onView(customer)}
-                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all text-xs font-black uppercase tracking-widest"
                 >
                   View
                 </button>
                 <button
                   onClick={() => onEdit(customer)}
-                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl hover:bg-green-500/20 transition-all text-xs font-black uppercase tracking-widest"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => onDelete(customer)}
-                  className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all text-xs font-black uppercase tracking-widest"
                 >
                   Delete
                 </button>
