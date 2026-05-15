@@ -340,7 +340,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start sm:items-center">
+          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
