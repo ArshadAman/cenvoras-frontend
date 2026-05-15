@@ -340,16 +340,16 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start sm:items-center">
+          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
                 <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center">
-                <div className="shadow-2xl origin-top sm:origin-center scale-[0.45] sm:scale-100" ref={printRef} data-print-target>
-                  <div className="w-[210mm] min-h-[297mm] bg-white">
+              <div className="w-full sm:w-max overflow-hidden sm:overflow-visible mx-auto pb-10">
+                <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100 mx-auto" ref={printRef} data-print-target>
+                  <div className="w-[210mm] min-h-[297mm] bg-white mx-auto">
                     <InvoicePreview
                       invoice={invoiceDetails}
                       template={previewTemplate}
