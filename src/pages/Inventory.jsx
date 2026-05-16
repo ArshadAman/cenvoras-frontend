@@ -112,9 +112,9 @@ export default function Inventory() {
           </div>
         </section>
 
-        <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">All Products</h2>
+        <section className="relative rounded-[2rem] sm:rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
+          <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white/[0.02] gap-1 sm:gap-4">
+            <h2 className="text-base sm:text-sm font-semibold text-white uppercase tracking-wider">All Products</h2>
             <span className="text-xs text-gray-400">Monitor stock, price, and batch health in real time</span>
           </div>
           <InventoryTable

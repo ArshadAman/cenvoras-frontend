@@ -60,9 +60,9 @@ export default function ProductDetailsModal({ productId, onClose }) {
           ) : (
             <div>
               {/* Header */}
-              <div className="flex justify-between items-start mb-6 border-b-2 border-blue-600 pb-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-blue-700">
+              <div className="flex flex-col sm:flex-row justify-between items-start mb-6 border-b-2 border-blue-600 pb-4 gap-4 sm:gap-0">
+                <div className="w-full sm:w-auto">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-blue-700 break-words">
                     {product.name}
                   </h2>
                   <div className="text-sm text-gray-600 mt-1">
@@ -74,8 +74,8 @@ export default function ProductDetailsModal({ productId, onClose }) {
                     </div>
                   )}
                 </div>
-                <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${stockStatus.className}`}>
+                <div className="text-left sm:text-right flex-shrink-0">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${stockStatus.className}`}>
                     {stockStatus.text}
                   </span>
                 </div>

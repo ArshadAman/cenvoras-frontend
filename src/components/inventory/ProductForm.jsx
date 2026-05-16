@@ -173,7 +173,7 @@ export default function ProductForm({ product, onClose }) {
       <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/10 bg-white/5">
           <h2 className="text-xl font-bold text-white">
             {isEdit ? "Edit Product" : "New Product"}
           </h2>
@@ -192,7 +192,7 @@ export default function ProductForm({ product, onClose }) {
           enableReinitialize
         >
           {({ isSubmitting, values }) => (
-            <Form className="p-6 md:p-8 space-y-8">
+            <Form className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
               {/* Section 1: Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
