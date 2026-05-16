@@ -76,7 +76,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
   const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-20 sm:pt-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
