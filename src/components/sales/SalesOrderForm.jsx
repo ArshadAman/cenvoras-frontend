@@ -414,16 +414,16 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             items: editData?.items?.map(item => ({
               product: item.product_name || item.product || "",
               product_id: item.product || null,
-              quantity: item.quantity || 1,
-              price: item.price || 0,
+              quantity: item.quantity || "",
+              price: item.price || "",
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
               isExistingProduct: !!(item.product),
             })) || [{
               product: "",
               product_id: null,
-              quantity: 1,
-              price: 0,
+              quantity: "",
+              price: "",
               amount: 0,
               unit: "pcs",
               isExistingProduct: false,
@@ -437,10 +437,10 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             submitLockRef.current = true;
             try {
                const processedItems = values.items.map(item => ({
-                  product: item.product_id, // Must be UUID
+                  product: item.product_id || item.product, // UUID or Name
                   quantity: Math.max(1, Number(item.quantity) || 1),
-                  price: Number(item.price),
-                  amount: Number(item.amount),
+                  price: Number(item.price || 0),
+                  amount: Number(item.amount || 0),
                }));
                
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
@@ -504,21 +504,21 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
                                          <div>
                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quantity</label>
-                                             <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-center" 
+                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-center" 
                                                  onChange={e => {
-                                                     const qty = Math.max(1, Number(e.target.value) || 1);
+                                                     const qty = e.target.value;
                                                      setFieldValue(`items.${index}.quantity`, qty);
-                                                     setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
+                                                     setFieldValue(`items.${index}.amount`, (Number(qty) || 0) * (values.items[index].price || 0));
                                                  }}
                                              />
                                          </div>
                                          <div>
                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
-                                             <Field name={`items.${index}.price`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-right font-mono"
+                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-right font-mono"
                                                  onChange={e => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
-                                                     setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
+                                                     setFieldValue(`items.${index}.amount`, (Number(values.items[index].quantity) || 0) * (Number(price) || 0));
                                                  }}
                                              />
                                          </div>
@@ -545,7 +545,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      </div>
                                  </div>
                              ))}
-                            <button type="button" onClick={() => push({ product: "", quantity: 1, price: 0, amount: 0 })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+                            <button type="button" onClick={() => push({ product: "", quantity: "", price: "", amount: 0 })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
                                 + Add Item
                             </button>
                         </div>

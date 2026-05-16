@@ -204,7 +204,7 @@ export default function AIChatWidget() {
                 disabled={loading}
               />
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
                 className={`p-2 rounded-full transition-all duration-300 ${
                   input.trim() && !loading 
