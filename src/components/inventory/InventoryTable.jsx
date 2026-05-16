@@ -376,48 +376,50 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   return (
     <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg p-4 rounded">
       {/* Enhanced Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-2 mb-4">
         <input
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          className="w-full sm:w-64 border border-white/30 rounded px-3 py-2 sm:px-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search by name or description"
           value={searchInput}
           onChange={(e) => {
             setSearchInput(e.target.value);
           }}
         />
-        <select
-          value={ordering}
-          onChange={(e) => setOrdering(e.target.value)}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        >
-          <option value="name">Name (A-Z)</option>
-          <option value="-name">Name (Z-A)</option>
-          <option value="-current_stock">Stock (High to Low)</option>
-          <option value="current_stock">Stock (Low to High)</option>
-          <option value="-unit_price">Price (High to Low)</option>
-          <option value="unit_price">Price (Low to High)</option>
-        </select>
-        <select
-          value={stockFilter}
-          onChange={(e) => setStockFilter(e.target.value)}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        >
-          <option value="all">All Stock</option>
-          <option value="in-stock">In Stock</option>
-          <option value="low-stock">Low Stock</option>
-          <option value="out-of-stock">Out of Stock</option>
-        </select>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <select
+            value={ordering}
+            onChange={(e) => setOrdering(e.target.value)}
+            className="w-1/2 sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          >
+            <option value="name">Name (A-Z)</option>
+            <option value="-name">Name (Z-A)</option>
+            <option value="-current_stock">Stock (High to Low)</option>
+            <option value="current_stock">Stock (Low to High)</option>
+            <option value="-unit_price">Price (High to Low)</option>
+            <option value="unit_price">Price (Low to High)</option>
+          </select>
+          <select
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            className="w-1/2 sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          >
+            <option value="all">All Stock</option>
+            <option value="in-stock">In Stock</option>
+            <option value="low-stock">Low Stock</option>
+            <option value="out-of-stock">Out of Stock</option>
+          </select>
+        </div>
         <button
           onClick={() => setShowAdvancedFilters(true)}
-          className="px-3 py-1 bg-purple-500/30 text-purple-200 border border-purple-300/50 rounded hover:bg-purple-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+          className="w-full sm:w-auto px-3 py-2 sm:py-1 bg-purple-500/30 text-purple-200 border border-purple-300/50 rounded hover:bg-purple-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
         >
           Advanced Filters
         </button>
       </div>
 
       {/* Bulk Actions */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {selectedProducts.size > 0 && (
             <>
               <span className="text-sm text-cyan-300 font-bold drop-shadow-lg">
@@ -443,7 +445,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={handleDownloadTemplate}
             className="px-3 py-1 bg-cyan-500/30 text-cyan-200 border border-cyan-300/50 rounded hover:bg-cyan-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
@@ -640,15 +642,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   <>
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-start space-x-3 w-full">
                   <input
                     type="checkbox"
                     checked={selectedProducts.has(product.id)}
                     onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="flex-shrink-0 mt-1.5 rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
-                  <div>
-                    <div className="text-lg font-semibold text-white">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg font-semibold text-white break-words">
                       {product.name}
                     </div>
                     <div className="text-sm text-white/70">Unit: {product.unit || 'pcs'}</div>
