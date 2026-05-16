@@ -701,12 +701,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   View
                 </button>
                 <button
-                  onClick={() => onStockAdjustment(product)}
-                  className="flex-1 px-3 py-2 bg-orange-500/30 text-white border border-orange-300/50 rounded-lg hover:bg-orange-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                >
-                  Adjust
-                </button>
-                <button
                   onClick={() => onEdit(product)}
                   className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
                 >
