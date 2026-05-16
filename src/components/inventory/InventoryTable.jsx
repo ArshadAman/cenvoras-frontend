@@ -575,7 +575,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         )}
                       </td>
                       <td className="py-3 px-4 text-center space-x-1">
-                        {/* View button removed */}
+                        <button
+                          className="px-2 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                          onClick={() => onView(product)}
+                        >
+                          View
+                        </button>
                         <button
                           className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
                           onClick={() => onEdit(product)}
@@ -699,12 +704,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
                 >
                   View
-                </button>
-                <button
-                  onClick={() => onStockAdjustment(product)}
-                  className="flex-1 px-3 py-2 bg-orange-500/30 text-white border border-orange-300/50 rounded-lg hover:bg-orange-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                >
-                  Adjust
                 </button>
                 <button
                   onClick={() => onEdit(product)}
