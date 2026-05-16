@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts } from "../../api/inventory";
-import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
@@ -409,12 +408,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <option value="out-of-stock">Out of Stock</option>
           </select>
         </div>
-        <button
-          onClick={() => setShowAdvancedFilters(true)}
-          className="w-full sm:w-auto px-3 py-2 sm:py-1 bg-purple-500/30 text-purple-200 border border-purple-300/50 rounded hover:bg-purple-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
-        >
-          Advanced Filters
-        </button>
       </div>
 
       {/* Bulk Actions */}
@@ -740,14 +733,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
       {/* Pagination */}
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
-
-      {/* Advanced Filters Modal */}
-      {showAdvancedFilters && (
-        <AdvancedInventoryFilters
-          onFiltersChange={setAdvancedFilters}
-          onClose={() => setShowAdvancedFilters(false)}
-        />
-      )}
     </div>
   );
 }
