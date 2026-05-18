@@ -95,6 +95,33 @@ export default function Sales({ documentType = "invoice" }) {
     }
   }, [location.state]);
 
+  // Intercept back button to close any open overlay instead of navigating back in browser history
+  useEffect(() => {
+    const isAnyOverlayOpen = showForm || showDetails || deleteInvoice || showUpload;
+    if (!isAnyOverlayOpen) return;
+
+    const stateObj = { salesOverlayOpen: true };
+    window.history.pushState(stateObj, '');
+
+    const handlePopState = () => {
+      setShowForm(false);
+      setEditInvoice(null);
+      setAiDraftData(null);
+      setShowDetails(null);
+      setDeleteInvoice(null);
+      setShowUpload(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (window.history.state && window.history.state.salesOverlayOpen) {
+        window.history.back();
+      }
+    };
+  }, [showForm, showDetails, deleteInvoice, showUpload]);
+
   const handlePrefixBlur = () => {
     const normalized = normalizePrefix(invoicePrefix);
     setInvoicePrefix(normalized);

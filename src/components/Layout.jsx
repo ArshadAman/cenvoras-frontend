@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ErrorBoundary from './ErrorBoundary'
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
@@ -46,6 +46,48 @@ export default function Layout({ children, onLogout }) {
 
   const role = getUserRole();
   const country = getCountryCode();
+
+  // Intercept browser back button to close the mobile drawer menu instead of navigating back in browser history
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const stateObj = { mobileMenuOpen: true };
+    window.history.pushState(stateObj, '');
+
+    const handlePopState = () => {
+      setIsMobileMenuOpen(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (window.history.state && window.history.state.mobileMenuOpen) {
+        window.history.back();
+      }
+    };
+  }, [isMobileMenuOpen]);
+
+  // Intercept browser back button to close the upgrade modal instead of navigating back in browser history
+  useEffect(() => {
+    if (!upgradeModal.open) return;
+
+    const stateObj = { upgradeModalOpen: true };
+    window.history.pushState(stateObj, '');
+
+    const handlePopState = () => {
+      setUpgradeModal(prev => ({ ...prev, open: false }));
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (window.history.state && window.history.state.upgradeModalOpen) {
+        window.history.back();
+      }
+    };
+  }, [upgradeModal.open]);
 
   const navigationGroups = [
     {

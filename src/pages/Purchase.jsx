@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PurchaseTable from "../components/purchase/PurchaseTable";
 import PurchaseForm from "../components/purchase/PurchaseForm";
 import PurchaseDetailsModal from "../components/purchase/PurchaseDetailsModal";
@@ -25,6 +25,32 @@ export default function Purchase() {
     setShowForm(false);
     setEditBill(null);
   };
+
+  // Intercept back button to close any open overlay instead of navigating back in browser history
+  useEffect(() => {
+    const isAnyOverlayOpen = showForm || showDetails || deleteBill || showUpload;
+    if (!isAnyOverlayOpen) return;
+
+    const stateObj = { purchaseOverlayOpen: true };
+    window.history.pushState(stateObj, '');
+
+    const handlePopState = () => {
+      setShowForm(false);
+      setEditBill(null);
+      setShowDetails(null);
+      setDeleteBill(null);
+      setShowUpload(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (window.history.state && window.history.state.purchaseOverlayOpen) {
+        window.history.back();
+      }
+    };
+  }, [showForm, showDetails, deleteBill, showUpload]);
 
   return (
     <Layout>
