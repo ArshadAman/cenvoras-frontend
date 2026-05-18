@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
+import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 
 // Bill To - Ship To Template (Flipkart Style)
 const BillShipTemplate = forwardRef(({ 
@@ -53,7 +54,7 @@ const BillShipTemplate = forwardRef(({
            )}
            <div>
              <h1 className="font-extrabold text-xl mb-1">{companyName}</h1>
-             {sections.showGST && <p className="font-bold text-xs uppercase text-gray-700">GSTIN: {businessInfo.gstin}</p>}
+             {sections.showGST && <p className="font-bold text-xs uppercase text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
              {invoice.customer_phone && <p className="font-bold text-xs text-gray-700 mt-1">Contact: {invoice.customer_phone}</p>}
            </div>
         </div>
@@ -72,7 +73,7 @@ const BillShipTemplate = forwardRef(({
            <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2">Bill To:</h3>
            <p className="font-bold text-base">{customerName}</p>
            <p className="whitespace-pre-line text-gray-700 leading-snug mt-1">{billingAddress}</p>
-           {invoice.customer_gstin && <p className="font-bold text-xs mt-2">GSTIN: {invoice.customer_gstin}</p>}
+           {invoice.customer_gstin && <p className="font-bold text-xs mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
         </div>
         <div className="w-1/2 pl-6 border-l border-gray-300">
            <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2">Ship To:</h3>
@@ -154,28 +155,28 @@ const BillShipTemplate = forwardRef(({
            <div>
              <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
                <span>Taxable Amount</span>
-               <span className="font-bold text-gray-900">₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
              </div>
              {isIGST ? (
                <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
                  <span>IGST</span>
-                 <span className="font-bold text-gray-900">₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                </div>
              ) : (
                <>
                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
                    <span>CGST</span>
-                   <span className="font-bold text-gray-900">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                  </div>
                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
                    <span>SGST</span>
-                   <span className="font-bold text-gray-900">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                  </div>
                </>
              )}
              <div className="flex justify-between text-lg font-bold text-gray-900 py-3 border-t-2 border-b-2 border-gray-800 mt-2">
                <span>Grand Total</span>
-               <span>₹{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               <span>{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
              </div>
              <div className="flex justify-end mt-2">
                 <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-extrabold uppercase">✔ Amount Due</span>
@@ -198,7 +199,7 @@ const BillShipTemplate = forwardRef(({
       
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: built for Indian Businesses<br />
+          Made with Cenvora: built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}

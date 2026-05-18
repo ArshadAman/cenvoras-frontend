@@ -22,6 +22,7 @@ import {
 import { toast } from 'react-toastify';
 import api from '../api/api';
 import Layout from '../components/Layout';
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 const roundTo3 = (value) => {
   const num = Number(value || 0);
@@ -60,7 +61,7 @@ function PaymentCard({ payment, onEdit, onDelete }) {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-green-400">₹{formatAmount(payment.amount)}</div>
+          <div className="text-lg font-bold text-green-400">{getCurrencySymbol()}{formatAmount(payment.amount)}</div>
           <div className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       </div>
@@ -364,7 +365,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                     >
                       <div className="text-sm font-medium text-white">{c.name}</div>
                       <div className="text-xs text-gray-500">
-                        ID: {c.id.slice(0, 8)} • Balance: ₹{formatAmount(c.current_balance)}
+                        ID: {c.id.slice(0, 8)} • Balance: {getCurrencySymbol()}{formatAmount(c.current_balance)}
                       </div>
                     </button>
                   ))
@@ -389,7 +390,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
               <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
               {invoices.map((inv) => (
                 <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
-                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due ₹{formatAmount(getInvoiceOutstanding(inv))}
+                  {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due {getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(inv))}
                 </option>
               ))}
             </select>
@@ -400,7 +401,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <div>
               <label className="block text-sm text-gray-400 mb-1">Amount Paid *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{getCurrencySymbol()}</span>
                 <input
                   type="number"
                   required
@@ -432,12 +433,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
               <div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">₹{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
+                <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
                 <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
                 <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
-                  ₹{formatAmount(calculateRemainingDue())}
+                  {getCurrencySymbol()}{formatAmount(calculateRemainingDue())}
                 </div>
               </div>
             </div>
@@ -680,7 +681,7 @@ export default function Payments({ onLogout }) {
               <div className="text-xs text-gray-500">Today's Collection</div>
               {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />}
             </div>
-            <div className="text-2xl font-bold text-green-400">₹{todayTotal.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{todayTotal.toLocaleString('en-IN')}</div>
           </div>
           <div
             onClick={() => setDateFilter(dateFilter === 'month' ? 'all' : 'month')}
@@ -690,14 +691,14 @@ export default function Payments({ onLogout }) {
               <div className="text-xs text-gray-500">Monthly Collection</div>
               {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
             </div>
-            <div className="text-2xl font-bold text-cyan-400">₹{thisMonthTotal.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-cyan-400">{getCurrencySymbol()}{thisMonthTotal.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setDateFilter('all')}
             className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'all' ? 'border-white/20 bg-white/5' : 'border-white/5 hover:border-white/20'}`}
           >
             <div className="text-xs text-gray-500 mb-1">Total Collection Till Date</div>
-            <div className="text-2xl font-bold text-white">₹{totalCollection.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-white">{getCurrencySymbol()}{totalCollection.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setIsDueModalOpen(true)}
@@ -823,7 +824,7 @@ export default function Payments({ onLogout }) {
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Delete Payment?</h3>
                 <p className="text-sm text-gray-400 mb-6">
-                  Are you sure you want to delete this payment of <span className="text-white font-medium">₹{paymentToDelete?.amount}</span> from <span className="text-white font-medium">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
+                  Are you sure you want to delete this payment of <span className="text-white font-medium">{getCurrencySymbol()}{paymentToDelete?.amount}</span> from <span className="text-white font-medium">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
                 </p>
                 <div className="flex w-full gap-3">
                   <button
@@ -880,7 +881,7 @@ export default function Payments({ onLogout }) {
                           <div className="text-xs text-gray-500">ID: {c.id.slice(0, 8)}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-amber-500">₹{parseFloat(c.current_balance).toLocaleString()}</div>
+                          <div className="text-lg font-bold text-amber-500">{getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString()}</div>
                           <button 
                             onClick={() => {
                               setIsDueModalOpen(false);

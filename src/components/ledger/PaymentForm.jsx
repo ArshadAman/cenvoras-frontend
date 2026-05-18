@@ -7,6 +7,7 @@ import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Customer Autocomplete for payment form
 function PaymentCustomerAutocomplete({ values, setFieldValue }) {
@@ -181,7 +182,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Outstanding</div>
-                  <div className="text-green-400 font-bold">₹{formatAmount(invoiceOutstanding)}</div>
+                  <div className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
                 </div>
               </div>
               <div className="text-[11px] text-cyan-300/80">
@@ -203,7 +204,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
           <div>
             <label className={labelClass}>Payment Amount *</label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">₹</span>
+              <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
               <Field
                 id="amount"
                 name="amount"

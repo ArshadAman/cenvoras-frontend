@@ -6,6 +6,7 @@ import { getSalesInvoices } from "../../api/sales";
 import { createCreditNote } from "../../api/gst";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function CreditNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -222,7 +223,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                           <tr key={idx}>
                             <td className="p-3 text-white">{item.product_detail?.name || 'N/A'}</td>
                             <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
-                            <td className="p-3 text-right text-gray-400">₹{item.price}</td>
+                            <td className="p-3 text-right text-gray-400">{getCurrencySymbol()}{item.price}</td>
                             <td className="p-3">
                               <input 
                                 type="number"
@@ -257,7 +258,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                           </div>
                           <div>
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Price</label>
-                            <div className="text-gray-300 text-sm font-medium">₹{item.price}</div>
+                            <div className="text-gray-300 text-sm font-medium">{getCurrencySymbol()}{item.price}</div>
                           </div>
                         </div>
 

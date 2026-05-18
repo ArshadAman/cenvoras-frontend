@@ -25,6 +25,7 @@ import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
 import { getGSTR1Export } from '../api/gst'
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -156,19 +157,19 @@ export default function Dashboard({ onLogout }) {
   const cardData = [
     {
       label: 'Total Sales',
-      value: metrics?.total_sales != null ? `₹${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
+      value: metrics?.total_sales != null ? `${getCurrencySymbol()}${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
       color: 'text-cyan-400'
     },
     {
       label: 'Total Purchases',
-      value: metrics?.total_purchases != null ? `₹${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
+      value: metrics?.total_purchases != null ? `${getCurrencySymbol()}${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
       icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
       color: 'text-purple-400'
     },
     {
       label: 'Inventory Value',
-      value: metrics?.total_inventory_value != null ? `₹${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
+      value: metrics?.total_inventory_value != null ? `${getCurrencySymbol()}${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
       icon: <CubeIcon className="w-6 h-6 text-blue-400" />,
       color: 'text-blue-400'
     },
@@ -180,13 +181,13 @@ export default function Dashboard({ onLogout }) {
     },
     {
       label: metrics?.gst_payable < 0 ? 'GST Credit' : 'GST Payable',
-      value: metrics?.gst_payable != null ? (metrics.gst_payable < 0 ? `₹${Math.abs(metrics.gst_payable).toLocaleString()}` : `₹${metrics.gst_payable.toLocaleString()}`) : '--',
+      value: metrics?.gst_payable != null ? (metrics.gst_payable < 0 ? `${getCurrencySymbol()}${Math.abs(metrics.gst_payable).toLocaleString()}` : `${getCurrencySymbol()}${metrics.gst_payable.toLocaleString()}`) : '--',
       icon: <BanknotesIcon className="w-6 h-6 text-yellow-400" />,
       color: metrics?.gst_payable < 0 ? 'text-green-400' : 'text-yellow-400'
     },
   ];
 
-  const formatINR = (value) => `₹${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+  const formatINR = (value) => `${getCurrencySymbol()}${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
   const salesChartData = React.useMemo(() => {
     const raw = Array.isArray(metrics?.sales_vs_purchases) ? metrics.sales_vs_purchases : [];
@@ -352,13 +353,13 @@ export default function Dashboard({ onLogout }) {
                     tickLine={false}
                     axisLine={false}
                     width={86}
-                    tickFormatter={(value) => formatINR(value)}
+                    tickFormatter={(value) => formatCurrency(value)}
                   />
                   <Tooltip 
                     contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
                     labelStyle={{ color: '#fff', fontWeight: 600 }}
                     itemStyle={{ color: '#e5e7eb' }}
-                    formatter={(value, key) => [formatINR(value), key]}
+                    formatter={(value, key) => [formatCurrency(value), key]}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px', color: '#d1d5db' }} iconType="circle" />
                   <Line
@@ -463,7 +464,7 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">₹{invoice.total_amount}</div>
+                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{invoice.total_amount}</div>
                       <div className="text-xs text-gray-500">{invoice.invoice_date}</div>
                     </div>
                   </div>
@@ -500,7 +501,7 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">₹{bill.total_amount}</div>
+                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{bill.total_amount}</div>
                       <div className="text-xs text-gray-500">{bill.bill_date}</div>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { 
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
   ShieldCheckIcon,
   CalendarDaysIcon,
   DocumentArrowDownIcon,
@@ -23,10 +24,10 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
   const gst = data || {};
   
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '₹0';
-    if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000).toFixed(1)}K`;
-    return `₹${Math.abs(value).toLocaleString('en-IN')}`;
+    if (value === undefined || value === null) return '{getCurrencySymbol()}0';
+    if (value >= 100000) return `$${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `$${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
+    return `$${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
   };
 
   const turnoverPercent = gst.turnover_percent || 0;
@@ -68,7 +69,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           
           <div className="flex justify-between items-center mt-1">
             <span className={`text-xs ${isApproachingLimit ? 'text-amber-400' : 'text-gray-600'}`}>
-              {turnoverPercent.toFixed(1)}% of ₹40L limit
+              {turnoverPercent.toFixed(1)}% of {getCurrencySymbol()}40L limit
             </span>
             {isApproachingLimit && (
               <span className="flex items-center gap-1 text-xs text-amber-400">

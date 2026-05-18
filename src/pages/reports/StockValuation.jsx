@@ -4,6 +4,7 @@ import { getStockValuation } from "../../api/reports";
 import Layout from "../../components/Layout";
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from "react-router-dom";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function StockValuation() {
   const { data, isLoading } = useQuery({
@@ -26,7 +27,7 @@ export default function StockValuation() {
             {data && (
                 <div className="text-right">
                     <p className="text-sm text-gray-400 uppercase font-bold">Total Value</p>
-                    <p className="text-3xl font-black text-green-400">₹{Number(data.total_value).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                    <p className="text-3xl font-black text-green-400">{getCurrencySymbol()}{Number(data.total_value).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
                 <small className="mt-1 block text-xs text-gray-500">excluding GST</small>
                 </div>
             )}
@@ -53,8 +54,8 @@ export default function StockValuation() {
                     <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="p-4 text-sm text-white font-medium">{item.name}</td>
                       <td className="p-4 text-sm text-gray-300 text-right">{item.stock}</td>
-                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.avg_cost).toFixed(2)}</td>
-                      <td className="p-4 text-sm text-green-400 font-bold text-right">₹{Number(item.total_value).toLocaleString('en-IN')}</td>
+                      <td className="p-4 text-sm text-gray-300 text-right">{getCurrencySymbol()}{Number(item.avg_cost).toFixed(2)}</td>
+                      <td className="p-4 text-sm text-green-400 font-bold text-right">{getCurrencySymbol()}{Number(item.total_value).toLocaleString('en-IN')}</td>
                     </tr>
                   ))
                 )}

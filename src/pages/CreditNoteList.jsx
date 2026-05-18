@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 import CreditNoteForm from "../components/returns/CreditNoteForm"; // Add Import
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 export default function CreditNoteList() {
   const [showForm, setShowForm] = useState(false); // Add State
@@ -100,7 +101,7 @@ export default function CreditNoteList() {
                           </span>
                         </td>
                         <td className="p-4 text-gray-400 text-sm">{cn.items?.length || 0} items</td>
-                        <td className="p-4 text-right text-white font-semibold">₹{fmt(cn.total_amount)}</td>
+                        <td className="p-4 text-right text-white font-semibold">{getCurrencySymbol()}{fmt(cn.total_amount)}</td>
                         <td className="p-4 text-right">
                           <button
                             onClick={() => { if (confirm('Delete this credit note?')) deleteMutation.mutate(cn.id); }}
@@ -152,7 +153,7 @@ export default function CreditNoteList() {
                     <div className="flex justify-between items-end pt-3 border-t border-white/5">
                       <div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Amount</div>
-                        <div className="text-xl font-black text-white font-mono">₹{fmt(cn.total_amount)}</div>
+                        <div className="text-xl font-black text-white font-mono">{getCurrencySymbol()}{fmt(cn.total_amount)}</div>
                       </div>
                       <div className="flex gap-2">
                          <button

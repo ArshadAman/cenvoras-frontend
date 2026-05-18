@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPurchaseBills } from "../../api/purchase";
 import { format } from "date-fns";
 import AdvancedPurchaseFilters from "./AdvancedPurchaseFilters";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
@@ -397,7 +398,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                               <span
                                 key={item.id || idx}
                                 className="inline-flex items-center px-2 py-1 bg-white/10 text-white/90 text-xs rounded-md border border-white/10 truncate max-w-[90px]"
-                                title={`${item.product_detail?.name || item.product || 'Product'} - Qty: ${item.quantity} × ₹${Number(item.price).toFixed(0)}`}
+                                title={`${item.product_detail?.name || item.product || 'Product'} - Qty: ${item.quantity} × ${getCurrencySymbol()}${Number(item.price).toFixed(0)}`}
                               >
                                 {(item.product_detail?.name || item.product || 'Product').length > 12 
                                   ? (item.product_detail?.name || item.product || 'Product').slice(0, 12) + '...' 
@@ -421,7 +422,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
-                      ₹{Number(bill.total_amount).toLocaleString(undefined, {
+                      {getCurrencySymbol()}{Number(bill.total_amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -531,7 +532,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                 <div className="flex justify-between items-center pt-2 border-t border-white/5">
                   <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Amount:</span>
                   <span className="text-lg font-black text-white font-mono tracking-tighter">
-                    ₹{Number(bill.total_amount || 0).toLocaleString()}
+                    {getCurrencySymbol()}{Number(bill.total_amount || 0).toLocaleString()}
                   </span>
                 </div>
               </div>

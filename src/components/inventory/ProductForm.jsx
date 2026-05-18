@@ -5,6 +5,7 @@ import { createProduct, updateProduct } from "../../api/inventory";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
 
@@ -299,7 +300,7 @@ export default function ProductForm({ product, onClose }) {
               {/* Section 3: Pricing & Stock */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className={labelClass}>Cost Price (₹)</label>
+                  <label className={labelClass}>Cost Price ({getCurrencySymbol()})</label>
                   <Field
                     name="cost_price"
                     type="text"
@@ -310,7 +311,7 @@ export default function ProductForm({ product, onClose }) {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Sale Price (₹) *</label>
+                  <label className={labelClass}>Sale Price ({getCurrencySymbol()}) *</label>
                   <Field
                     name="sale_price"
                     type="text"
@@ -335,7 +336,7 @@ export default function ProductForm({ product, onClose }) {
                 <div>
                   <label className={labelClass}>Stock Value</label>
                   <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
+                    {getCurrencySymbol()}{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -384,7 +385,7 @@ export default function ProductForm({ product, onClose }) {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Mandi Tax (₹)</label>
+                      <label className={labelClass}>Mandi Tax ({getCurrencySymbol()})</label>
                       <Field
                         name="meta.mandi_tax"
                         type="number"

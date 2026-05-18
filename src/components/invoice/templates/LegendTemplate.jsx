@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
+import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 
 // Legend Template (ITC Style)
 const LegendTemplate = forwardRef(({ 
@@ -53,7 +54,7 @@ const LegendTemplate = forwardRef(({
             <div>
               <h1 className="font-bold text-lg mb-0.5" style={{ color: colors.primary }}>{companyName}</h1>
               <p className="whitespace-pre-line leading-snug">{companyAddress}</p>
-              {sections.showGST && <p className="font-bold mt-1">GSTIN: {businessInfo.gstin || '-'}</p>}
+              {sections.showGST && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin || '-'}</p>}
               {invoice.customer_phone && <p>Mobile: {invoice.customer_phone}</p>}
             </div>
           </div>
@@ -68,7 +69,7 @@ const LegendTemplate = forwardRef(({
           <div className="w-1/2 p-3 border-r" style={{ borderColor }}>
              <p className="font-bold uppercase mb-1">Customer Details:</p>
              <p className="font-bold">{customerName}</p>
-             {invoice.customer_gstin && <p className="font-bold mt-1">GSTIN: {invoice.customer_gstin}</p>}
+             {invoice.customer_gstin && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
              <p className="whitespace-pre-line mt-1 leading-snug">{billingAddress}</p>
           </div>
           <div className="w-1/2">
@@ -119,7 +120,7 @@ const LegendTemplate = forwardRef(({
                 Total items: {items.length}
               </td>
               <td className="border-r border-gray-200">Subtotal</td>
-              <td>₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+              <td>{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
             </tr>
           </tbody>
         </table>
@@ -160,18 +161,18 @@ const LegendTemplate = forwardRef(({
           <div className="w-2/5 flex flex-col justify-between">
              <table className="w-full text-right p-3 block text-sm">
                <tbody className="w-full block">
-                 <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">Taxable Amount</td><td>₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                 <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">Taxable Amount</td><td>{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                  {isIGST ? (
-                   <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">IGST</td><td>₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                   <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">IGST</td><td>{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                  ) : (
                    <>
-                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">CGST</td><td>₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">SGST</td><td>₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">CGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">SGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                    </>
                  )}
                  <tr className="w-full flex justify-between px-3 py-2 border-t-2 border-b-2 bg-gray-100" style={{ borderColor }}>
                    <td className="font-bold text-lg">Total Amount</td>
-                   <td className="font-bold text-lg">₹{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                   <td className="font-bold text-lg">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                  </tr>
                </tbody>
              </table>
@@ -191,7 +192,7 @@ const LegendTemplate = forwardRef(({
       
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: built for Indian Businesses<br />
+          Made with Cenvora: built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}

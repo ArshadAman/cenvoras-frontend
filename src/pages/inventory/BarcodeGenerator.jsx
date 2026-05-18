@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import Barcode from 'react-barcode';
 import { useReactToPrint } from 'react-to-print';
 import { PrinterIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function BarcodeGenerator() {
     const [selectedProduct, setSelectedProduct] = useState('');
@@ -104,7 +105,7 @@ export default function BarcodeGenerator() {
                                         <div className="font-bold text-sm truncate w-full text-center text-gray-800 mb-1" title={activeProduct.name}>
                                             {activeProduct.name}
                                         </div>
-                                        <div className="text-xs text-gray-500 mb-2">MRP: ₹{activeProduct.sale_price}</div>
+                                        <div className="text-xs text-gray-500 mb-2">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
                                         <div className="w-full flex justify-center scale-75 origin-top">
                                             <Barcode 
                                                 value={activeProduct.id.split('-')[0].toUpperCase()} // Generate a short unique ID for barcode, as UUID is too long

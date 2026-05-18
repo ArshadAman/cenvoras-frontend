@@ -16,6 +16,7 @@ import {
 } from '../../api/integrations';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // ─── Back to — not needed here, this is under System group in sidebar ───
 
@@ -476,7 +477,7 @@ function BarcodeTab() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: 'Name', value: scannedProduct.name },
-                { label: 'Sale Price', value: `₹${scannedProduct.sale_price}` },
+                { label: 'Sale Price', value: `${getCurrencySymbol()}${scannedProduct.sale_price}` },
                 { label: 'Stock', value: scannedProduct.stock },
                 { label: 'HSN/SAC', value: scannedProduct.hsn_sac_code || '—' },
               ].map(f => (

@@ -8,6 +8,7 @@ import AdvancedSalesFilters from "./AdvancedSalesFilters";
 import { ArrowDownTrayIcon, EyeIcon, PencilSquareIcon, TrashIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import PaymentForm from "../ledger/PaymentForm";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function SalesTable({
   onEdit,
@@ -448,7 +449,7 @@ export default function SalesTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-white">
-                    ₹{(() => {
+                    {getCurrencySymbol()}{(() => {
                       // Calculate untaxed amount from items
                       const untaxedAmount = invoice.items?.reduce((sum, item) => {
                         const quantity = parseFloat(item.quantity || 0);
@@ -461,7 +462,7 @@ export default function SalesTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-bold text-cyan-400">
-                    ₹{(() => {
+                    {getCurrencySymbol()}{(() => {
                       // Calculate total amount including tax
                       const calculations = invoice.items?.reduce((acc, item) => {
                         const quantity = parseFloat(item.quantity || 0);
@@ -603,7 +604,7 @@ export default function SalesTable({
               </div>
               <div className="text-right">
                 <div className="text-lg font-black text-cyan-400">
-                  ₹{(() => {
+                  {getCurrencySymbol()}{(() => {
                     const calculations = invoice.items?.reduce((acc, item) => {
                       const quantity = parseFloat(item.quantity || 0);
                       const price = parseFloat(item.price || 0);

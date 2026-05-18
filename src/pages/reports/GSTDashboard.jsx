@@ -1,5 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import {
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency'; Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 import {
   DocumentTextIcon,
@@ -39,7 +40,7 @@ export default function GSTDashboard() {
     },
     {
       title: "E-Invoice (IRN)",
-      description: "Generate Invoice Reference Number for B2B invoices. Required for ₹5 Cr+ turnover.",
+      description: "Generate Invoice Reference Number for B2B invoices. Required for {getCurrencySymbol()}5 Cr+ turnover.",
       icon: QrCodeIcon,
       link: "/reports/tax-register?tab=einvoice",
       color: "text-amber-400",
@@ -47,7 +48,7 @@ export default function GSTDashboard() {
     },
     {
       title: "E-Way Bill",
-      description: "Generate E-Way Bills for goods movement above ₹50,000. Track vehicle and transporter details.",
+      description: "Generate E-Way Bills for goods movement above {getCurrencySymbol()}50,000. Track vehicle and transporter details.",
       icon: TruckIcon,
       link: "/reports/tax-register?tab=ewaybill",
       color: "text-rose-400",

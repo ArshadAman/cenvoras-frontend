@@ -14,6 +14,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon, UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 const Ledger = () => {
   const [selectedCustomer, setSelectedCustomer] = useState('');
@@ -168,7 +169,7 @@ const Ledger = () => {
                   >
                     <span className="text-white font-medium">{c.name}</span>
                     {c.current_balance > 0 && (
-                      <span className="ml-2 text-amber-400 text-xs">(₹{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
+                      <span className="ml-2 text-amber-400 text-xs">({getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
                     )}
                   </div>
                 ))}
@@ -186,7 +187,7 @@ const Ledger = () => {
           {selectedCustomerData?.current_balance > 0 && (
             <div className="ml-auto flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
               <span className="text-xs text-amber-400 font-medium">Outstanding Balance:</span>
-              <span className="text-amber-300 font-bold text-lg">₹{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
+              <span className="text-amber-300 font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
             </div>
           )}
         </div>
@@ -215,7 +216,7 @@ const Ledger = () => {
                         <p className="text-xs text-gray-400">{invoice.customer_name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-amber-300">₹{parseFloat(invoice.outstanding_amount || 0).toLocaleString('en-IN')}</p>
+                        <p className="text-sm font-semibold text-amber-300">{getCurrencySymbol()}{parseFloat(invoice.outstanding_amount || 0).toLocaleString('en-IN')}</p>
                         <p className="text-xs text-gray-500">{invoice.days_overdue} days overdue</p>
                       </div>
                     </div>
@@ -241,7 +242,7 @@ const Ledger = () => {
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-white truncate">{row.customer_name}</p>
                       <p className={`text-sm font-semibold ${parseFloat(row.difference) < 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                        ₹{Math.abs(parseFloat(row.difference || 0)).toLocaleString('en-IN')}
+                        {getCurrencySymbol()}{Math.abs(parseFloat(row.difference || 0)).toLocaleString('en-IN')}
                       </p>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">

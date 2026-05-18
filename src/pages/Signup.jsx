@@ -57,8 +57,22 @@ const SignupSchema = Yup.object().shape({
   confirm_password: Yup.string().oneOf([Yup.ref('password')], 'Passwords must match').required('Required'),
   phone: Yup.string().required('Required'),
   business_name: Yup.string().nullable(),
-  gstin: Yup.string().nullable(),
-  state: Yup.string().required('State is required'),
+  country: Yup.string().required('Country is required'),
+  gstin: Yup.string().when('country', {
+    is: 'IN',
+    then: (schema) => schema.length(15, 'GSTIN must be 15 characters').nullable(),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  trn: Yup.string().when('country', {
+    is: 'AE',
+    then: (schema) => schema.matches(/^\d{15}$/, 'TRN must be exactly 15 digits').nullable(),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  state: Yup.string().when('country', {
+    is: 'IN',
+    then: (schema) => schema.required('State is required for India'),
+    otherwise: (schema) => schema.nullable(),
+  }),
   city: Yup.string().nullable(),
   termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
 });
@@ -147,7 +161,9 @@ export default function Signup() {
                     confirm_password: '', 
                     phone: '', 
                     business_name: '', 
+                    country: 'IN',
                     gstin: '',
+                    trn: '',
                     state: '',
                     city: '',
                     otp: '',
@@ -164,7 +180,9 @@ export default function Signup() {
                                 confirm_password: values.confirm_password,
                                 phone: values.phone,
                                 business_name: values.business_name,
+                                country: values.country,
                                 gstin: values.gstin,
+                                trn: values.trn,
                                 state: values.state,
                                 city: values.city,
                             };
@@ -276,46 +294,85 @@ export default function Signup() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
-                                <Field
-                                    type="text"
-                                    name="gstin"
-                                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                    placeholder="22AAAAA0000A1Z5"
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Country <span className="text-red-400">*</span></label>
+                                <Select
+                                    options={[
+                                        { value: 'IN', label: 'India' },
+                                        { value: 'AE', label: 'United Arab Emirates' }
+                                    ]}
+                                    className="react-select-container"
+                                    classNamePrefix="react-select"
+                                    placeholder="Select Country"
+                                    styles={customSelectStyles}
+                                    onChange={(option) => {
+                                        setFieldValue('country', option.value);
+                                        setFieldValue('state', '');
+                                        setFieldValue('city', '');
+                                    }}
+                                    value={{ value: values.country, label: values.country === 'IN' ? 'India' : 'United Arab Emirates' }}
                                 />
+                                <ErrorMessage name="country" component="div" className="text-red-400 text-xs mt-1" />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {values.country === 'IN' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
-                                    <Select
-                                        options={indianStates}
-                                        className="react-select-container"
-                                        classNamePrefix="react-select"
-                                        placeholder="Select State"
-                                        styles={customSelectStyles}
-                                        onChange={(option) => {
-                                            setFieldValue('state', option.value);
-                                            setFieldValue('city', ''); // Reset city when state changes
-                                        }}
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
+                                    <Field
+                                        type="text"
+                                        name="gstin"
+                                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                        placeholder="22AAAAA0000A1Z5"
                                     />
-                                    <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
+                                    <ErrorMessage name="gstin" component="div" className="text-red-400 text-xs mt-1" />
                                 </div>
+                            )}
+
+                            {values.country === 'AE' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
-                                    <Select
-                                        options={(citiesByState[values.state] || []).map(city => ({ value: city, label: city }))}
-                                        className="react-select-container"
-                                        classNamePrefix="react-select"
-                                        placeholder="Select City"
-                                        styles={customSelectStyles}
-                                        isDisabled={!values.state}
-                                        onChange={(option) => setFieldValue('city', option.value)}
-                                        value={values.city ? { value: values.city, label: values.city } : null}
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">TRN (Optional, 15-digit)</label>
+                                    <Field
+                                        type="text"
+                                        name="trn"
+                                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                        placeholder="100000000000003"
                                     />
-                                    <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
+                                    <ErrorMessage name="trn" component="div" className="text-red-400 text-xs mt-1" />
                                 </div>
-                            </div>
+                            )}
+
+                            {values.country === 'IN' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
+                                        <Select
+                                            options={indianStates}
+                                            className="react-select-container"
+                                            classNamePrefix="react-select"
+                                            placeholder="Select State"
+                                            styles={customSelectStyles}
+                                            onChange={(option) => {
+                                                setFieldValue('state', option.value);
+                                                setFieldValue('city', ''); // Reset city when state changes
+                                            }}
+                                        />
+                                        <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
+                                        <Select
+                                            options={(citiesByState[values.state] || []).map(city => ({ value: city, label: city }))}
+                                            className="react-select-container"
+                                            classNamePrefix="react-select"
+                                            placeholder="Select City"
+                                            styles={customSelectStyles}
+                                            isDisabled={!values.state}
+                                            onChange={(option) => setFieldValue('city', option.value)}
+                                            value={values.city ? { value: values.city, label: values.city } : null}
+                                        />
+                                        <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         )}
 

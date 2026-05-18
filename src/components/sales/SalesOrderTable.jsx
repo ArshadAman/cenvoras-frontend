@@ -4,6 +4,7 @@ import { getSalesOrders, deleteSalesOrder, convertToInvoice } from "../../api/sa
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import Pagination from "../common/Pagination";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function SalesOrderTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -71,7 +72,7 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                           <td className="px-6 py-4 whitespace-nowrap text-white font-medium">{order.order_number}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-gray-400">{format(new Date(order.date), 'MMM dd, yyyy')}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-white">{order.customer_display_name || order.customer_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-cyan-400 font-bold">₹{Number(order.total_amount).toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-cyan-400 font-bold">{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
                            <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 rounded text-xs ${order.stage === 'completed' ? 'bg-green-500/20 text-green-400' : order.stage === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                                   {order.stage || 'new'}
@@ -114,7 +115,7 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-black text-cyan-400">₹{Number(order.total_amount).toLocaleString()}</div>
+                    <div className="text-lg font-black text-cyan-400">{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</div>
                   </div>
                 </div>
 

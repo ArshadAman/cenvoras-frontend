@@ -321,6 +321,8 @@ const Profile = ({ onLogout }) => {
     business_name: '',
     business_address: '',
     gstin: '',
+    trn: '',
+    country: 'IN',
     gem_id: '',
     dl_number: '',
     state: '',
@@ -381,6 +383,8 @@ const Profile = ({ onLogout }) => {
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
           gstin: profile.gstin || '',
+          trn: profile.trn || '',
+          country: profile.country || 'IN',
           gem_id: profile.gem_id || '',
           dl_number: profile.dl_number || '',
           state: profile.state || '',
@@ -554,7 +558,9 @@ const Profile = ({ onLogout }) => {
       phone: formData.phone,
       business_name: formData.business_name,
       business_address: formData.business_address,
+      country: formData.country,
       gstin: formData.gstin,
+      trn: formData.trn,
       gem_id: formData.gem_id,
       dl_number: formData.dl_number,
       state: formData.state,
@@ -581,7 +587,9 @@ const Profile = ({ onLogout }) => {
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
+        country: profile.country || 'IN',
         gstin: profile.gstin || '',
+        trn: profile.trn || '',
         gem_id: profile.gem_id || '',
         dl_number: profile.dl_number || '',
         state: profile.state || '',
@@ -1217,16 +1225,46 @@ const Profile = ({ onLogout }) => {
                           className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
                           placeholder="Business name"
                         />
-                        <input
-                          type="text"
-                          name="gstin"
-                          value={formData.gstin}
-                          onChange={handleInputChange}
-                          disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
-                          placeholder="GSTIN"
-                          maxLength={15}
-                        />
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Country</label>
+                          <Select
+                            options={[
+                              { value: 'IN', label: 'India' },
+                              { value: 'AE', label: 'United Arab Emirates' }
+                            ]}
+                            value={{ value: formData.country, label: formData.country === 'AE' ? 'United Arab Emirates' : 'India' }}
+                            onChange={(option) => setFormData(prev => ({ ...prev, country: option.value, state: '', city: '' }))}
+                            isDisabled={!isEditing || updateProfileMutation.isPending}
+                            styles={customSelectStyles}
+                            placeholder="Select Country"
+                          />
+                        </div>
+
+                        {formData.country === 'IN' && (
+                          <input
+                            type="text"
+                            name="gstin"
+                            value={formData.gstin}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                            placeholder="GSTIN"
+                            maxLength={15}
+                          />
+                        )}
+                        {formData.country === 'AE' && (
+                          <input
+                            type="text"
+                            name="trn"
+                            value={formData.trn}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                            placeholder="TRN (15-digit)"
+                            maxLength={15}
+                          />
+                        )}
+
                         <input
                           type="text"
                           name="gem_id"
@@ -1245,28 +1283,33 @@ const Profile = ({ onLogout }) => {
                           className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
                           placeholder="DL Number"
                         />
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">State</label>
-                          <Select
-                            options={indianStates}
-                            value={indianStates.find(s => s.value === formData.state) || null}
-                            onChange={(option) => setFormData(prev => ({ ...prev, state: option.value, city: '' }))}
-                            isDisabled={!isEditing || updateProfileMutation.isPending}
-                            styles={customSelectStyles}
-                            placeholder="Select State"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">City</label>
-                          <Select
-                            options={(citiesByState[formData.state] || []).map(c => ({ value: c, label: c }))}
-                            value={formData.city ? { value: formData.city, label: formData.city } : null}
-                            onChange={(option) => setFormData(prev => ({ ...prev, city: option.value }))}
-                            isDisabled={!isEditing || !formData.state || updateProfileMutation.isPending}
-                            styles={customSelectStyles}
-                            placeholder="Select City"
-                          />
-                        </div>
+                        
+                        {formData.country === 'IN' && (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">State</label>
+                            <Select
+                              options={indianStates}
+                              value={indianStates.find(s => s.value === formData.state) || null}
+                              onChange={(option) => setFormData(prev => ({ ...prev, state: option.value, city: '' }))}
+                              isDisabled={!isEditing || updateProfileMutation.isPending}
+                              styles={customSelectStyles}
+                              placeholder="Select State"
+                            />
+                          </div>
+                        )}
+                        {formData.country === 'IN' && (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">City</label>
+                            <Select
+                              options={(citiesByState[formData.state] || []).map(c => ({ value: c, label: c }))}
+                              value={formData.city ? { value: formData.city, label: formData.city } : null}
+                              onChange={(option) => setFormData(prev => ({ ...prev, city: option.value }))}
+                              isDisabled={!isEditing || !formData.state || updateProfileMutation.isPending}
+                              styles={customSelectStyles}
+                              placeholder="Select City"
+                            />
+                          </div>
+                        )}
                       </div>
                       <textarea
                         name="business_address"

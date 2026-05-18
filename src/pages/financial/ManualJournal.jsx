@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
 import api from '../../api/api';
 import { PlusIcon, TrashIcon, ArrowLeftIcon, BookOpenIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const fetchAccounts = () => api.get('/ledger/accounts/').then(res => res.data);
 const createManualJournalEntry = (data) => api.post('/ledger/create-journal-entry/', data).then(res => res.data);
@@ -231,10 +232,10 @@ export default function ManualJournal() {
                   <tr className="bg-white/5 border-t-2 border-white/10 font-bold">
                     <td className="px-6 py-4 text-right text-gray-300">Totals</td>
                     <td className={`px-6 py-4 text-right font-mono ${totalDebit > 0 && isBalanced ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      ₹{totalDebit.toFixed(2)}
+                      {getCurrencySymbol()}{totalDebit.toFixed(2)}
                     </td>
                     <td className={`px-6 py-4 text-right font-mono ${totalCredit > 0 && isBalanced ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      ₹{totalCredit.toFixed(2)}
+                      {getCurrencySymbol()}{totalCredit.toFixed(2)}
                     </td>
                     <td></td>
                   </tr>
@@ -248,7 +249,7 @@ export default function ManualJournal() {
                 {isBalanced ? (
                   <><CheckCircleIcon className="w-5 h-5" /> <span>Balanced & Ready</span></>
                 ) : (
-                  <><span>⚠ Difference: ₹{Math.abs(totalDebit - totalCredit).toFixed(2)}</span></>
+                  <><span>⚠ Difference: {getCurrencySymbol()}{Math.abs(totalDebit - totalCredit).toFixed(2)}</span></>
                 )}
               </div>
             </div>

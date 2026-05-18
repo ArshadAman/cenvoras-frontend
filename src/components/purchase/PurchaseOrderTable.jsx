@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { format } from "date-fns";
+import {
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency'; format } from "date-fns";
 import {
   PencilIcon,
   TrashIcon,
@@ -99,7 +100,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="font-bold text-white tabular-nums">
-                      ₹{parseFloat(order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {getCurrencySymbol()}{parseFloat(order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">

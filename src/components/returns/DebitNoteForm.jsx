@@ -7,6 +7,7 @@ import { getVendors } from "../../api/vendors";
 import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function DebitNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -265,7 +266,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                         {returnItems.map((item, idx) => (
                           <tr key={idx}>
                             <td className="p-3 text-white">{item.product_name}</td>
-                            <td className="p-3 text-right text-gray-400">₹{item.price}</td>
+                            <td className="p-3 text-right text-gray-400">{getCurrencySymbol()}{item.price}</td>
                             <td className="p-3">
                               <input 
                                 type="number"
@@ -281,7 +282,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                                 className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
                               />
                             </td>
-                            <td className="p-3 text-right text-white">₹{item.amount.toFixed(2)}</td>
+                            <td className="p-3 text-right text-white">{getCurrencySymbol()}{item.amount.toFixed(2)}</td>
                             <td className="p-3 text-center">
                               <button type="button" onClick={() => handleRemoveProduct(idx)} className="text-red-400 hover:text-red-300">
                                 <XMarkIcon className="w-4 h-4 mx-auto" />

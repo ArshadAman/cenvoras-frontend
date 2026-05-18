@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 // Hook for scroll animations
 const useScrollAnimation = () => {
@@ -149,7 +150,7 @@ export default function LandingPage() {
       name: 'Cenvora',
       url: siteUrl,
       logo: `${siteUrl}/cenvora-logo-backgrond-removed.png`,
-      description: 'Billing and inventory software for Indian businesses.',
+      description: 'Billing and inventory software for businesses in India & UAE.',
     },
     {
       '@context': 'https://schema.org',
@@ -158,7 +159,7 @@ export default function LandingPage() {
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
       url: siteUrl,
-      description: 'Billing and inventory software for Indian businesses with GST-ready sales, stock, customers, and reporting.',
+      description: 'Billing and inventory software for businesses with localized sales, stock, customers, and reporting.',
     },
     {
       '@context': 'https://schema.org',
@@ -224,8 +225,8 @@ export default function LandingPage() {
   return (
     <div className="font-sans text-white overflow-x-hidden bg-black selection:bg-purple-500/30">
       <Seo
-        title="Billing & Inventory Software for Indian Businesses"
-        description="Cenvora helps Indian businesses manage billing, inventory, customers, GST, and reporting in one platform."
+        title="Billing & Inventory Software for India & UAE"
+        description="Cenvora helps businesses manage billing, inventory, customers, localized taxes, and reporting in one platform."
         canonicalPath="/"
         structuredData={structuredData}
       />
@@ -250,7 +251,7 @@ export default function LandingPage() {
         
         <div className="max-w-5xl mx-auto px-6 relative">
           <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-8 opacity-0 animate-fade-up tracking-wide">
-             <span className="animate-pulse mr-2">●</span> Built for Indian businesses
+             <span className="animate-pulse mr-2">●</span> Built for businesses in India & UAE
           </div>
           
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-none">
@@ -423,12 +424,12 @@ export default function LandingPage() {
                  <h3 className="text-xl font-semibold mb-2 text-white">{plan.name}</h3>
                  <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
                  <div className="mb-2 flex items-end gap-2">
-                   <p className="text-3xl font-bold text-white">₹{formatINR(amount)}</p>
+                   <p className="text-3xl font-bold text-white">{getCurrencySymbol()}{formatCurrency(amount)}</p>
                    <span className="pb-1 text-base font-normal text-gray-500">/{isFree ? 'forever' : selectedCycle.duration}</span>
                  </div>
                  {showOriginal ? (
                    <p className="mb-2 text-sm text-gray-500">
-                     <span className="line-through">₹{formatINR(originalAmount)}</span>
+                     <span className="line-through">{getCurrencySymbol()}{formatCurrency(originalAmount)}</span>
                      <span className="ml-2 text-emerald-300">{selectedCycle.discount ? `${Math.round(selectedCycle.discount * 100)}% off` : 'Discounted'}</span>
                    </p>
                  ) : null}

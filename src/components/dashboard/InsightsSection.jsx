@@ -6,6 +6,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 /**
  * InsightsSection - Profit Finder / Business Intelligence
@@ -27,10 +28,10 @@ export default function InsightsSection({ data, isLoading }) {
   const peakHours = insights.peak_hours || { message: 'Analyzing your data...' };
 
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '₹0';
-    if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000).toFixed(1)}K`;
-    return `₹${value.toLocaleString('en-IN')}`;
+    if (value === undefined || value === null) return '{getCurrencySymbol()}0';
+    if (value >= 100000) return `$${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `$${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
+    return `$${getCurrencySymbol()}${value.toLocaleString('en-IN')}`;
   };
 
   const colors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b'];

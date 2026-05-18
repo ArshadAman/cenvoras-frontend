@@ -21,6 +21,7 @@ import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
 import { getActiveTemplate } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
@@ -157,8 +158,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         `<tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${item.product_name || item.product?.name || '—'}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.price || 0).toFixed(2)}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.amount || 0).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.price || 0).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.amount || 0).toFixed(2)}</td>
         </tr>`
       ).join('');
 
@@ -180,7 +181,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         `<tbody>${itemRows}</tbody>` +
         `<tfoot><tr style="background:#f5f5f5;font-weight:bold;">` +
         `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
-        `<td style="padding:8px;text-align:right;">₹${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
+        `<td style="padding:8px;text-align:right;">${getCurrencySymbol()}${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
         `</tr></tfoot>` +
         `</table>` +
         `<p style="color:#666;">Thank you for your business!<br>— ${businessName}</p>` +
