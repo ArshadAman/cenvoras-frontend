@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['cenvorapwa.jpeg'],
+      includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'Cenvora',
         short_name: 'Cenvora',
@@ -18,15 +18,15 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/cenvorapwa.jpeg',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/jpeg',
+            type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/cenvorapwa.jpeg',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/jpeg',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
