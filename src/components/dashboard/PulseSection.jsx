@@ -164,7 +164,7 @@ export default function PulseSection({ data, isLoading }) {
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null) return '--';
-    return `$${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
+    return `${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
   };
 
   const cards = [
