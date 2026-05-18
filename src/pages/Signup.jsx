@@ -310,7 +310,7 @@ export default function Signup() {
                                 <ErrorMessage name="country" component="div" className="text-red-400 text-xs mt-1" />
                             </div>
 
-                            {values.country && (
+                            {values.country === 'IN' && (
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
                                     <Field
