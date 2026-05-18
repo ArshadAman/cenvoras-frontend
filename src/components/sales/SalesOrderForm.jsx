@@ -9,6 +9,7 @@ import { INDIAN_STATES } from "../../utils/constants";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
@@ -88,7 +89,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             >
               <div className="font-medium">{product.name}</div>
               <div className="text-gray-500 text-xs mt-0.5">
-                Unit: {product.unit} | Price: ₹{product.price}
+                Unit: {product.unit} | Price: {getCurrencySymbol()}{product.price}
               </div>
             </div>
           ))}
@@ -528,7 +529,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      <div className="flex justify-between items-center lg:col-span-2 lg:block lg:text-left">
                                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 lg:mb-2">Subtotal</label>
                                          <div className="text-xl lg:text-base font-black text-cyan-400 font-mono">
-                                             ₹{Number(values.items[index].amount || 0).toLocaleString()}
+                                             {getCurrencySymbol()}{Number(values.items[index].amount || 0).toLocaleString()}
                                          </div>
                                      </div>
 

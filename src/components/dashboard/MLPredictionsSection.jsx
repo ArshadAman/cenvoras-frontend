@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import UpgradePromptModal from '../subscription/UpgradePromptModal';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 /**
  * MLPredictionsSection - Machine Learning Powered Predictions
@@ -40,10 +41,10 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   const restockItems = restockData.predictions || [];
 
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '₹0';
-    if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000).toFixed(1)}K`;
-    return `₹${Math.round(value).toLocaleString('en-IN')}`;
+    if (value === undefined || value === null) return '{getCurrencySymbol()}0';
+    if (value >= 100000) return `$${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `$${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
+    return `$${getCurrencySymbol()}${Math.round(value).toLocaleString('en-IN')}`;
   };
 
   const TrendIcon = salesForecast.trend === 'growing' ? ArrowTrendingUpIcon :
@@ -148,7 +149,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                     fontSize={9} 
                     tickLine={false} 
                     axisLine={false}
-                    tickFormatter={(val) => `₹${(val/1000).toFixed(0)}K`}
+                    tickFormatter={(val) => `$${getCurrencySymbol()}${(val/1000).toFixed(0)}K`}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -157,7 +158,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                       borderRadius: '8px',
                       fontSize: '12px'
                     }}
-                    formatter={(value) => [`₹${Math.round(value).toLocaleString()}`, 'Predicted']}
+                    formatter={(value) => [`$${getCurrencySymbol()}${Math.round(value).toLocaleString()}`, 'Predicted']}
                     labelFormatter={(label) => label}
                   />
                   <ReferenceLine 

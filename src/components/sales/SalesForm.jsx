@@ -13,6 +13,7 @@ import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct }) {
@@ -197,7 +198,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               >
                 <div className="font-medium">{product.name}</div>
                 <div className="mt-0.5 text-xs text-gray-500">
-                  Unit: {product.unit} | Price: ₹{product.sale_price ?? product.price}
+                  Unit: {product.unit} | Price: {getCurrencySymbol()}{product.sale_price ?? product.price}
                 </div>
               </div>
             ))}
@@ -1714,7 +1715,7 @@ export default function SalesForm({
                                           <div>
                                               <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Subtotal</label>
                                               <div className="text-xl font-mono font-black text-cyan-400">
-                                                  ₹{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                  {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
                                           </div>
                                           <button
@@ -1771,30 +1772,30 @@ export default function SalesForm({
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between text-gray-400">
                       <span>Subtotal</span>
-                      <span className="text-white font-medium">₹{subtotal.toFixed(2)}</span>
+                      <span className="text-white font-medium">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-green-400">
                       <span>Total Discount</span>
-                      <span>-₹{totalDiscount.toFixed(2)}</span>
+                      <span>-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-red-400">
                       <span>Total Tax</span>
-                      <span>₹{totalTax.toFixed(2)}</span>
+                      <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                     </div>
                     {isIGST ? (
                       <div className="flex justify-between text-orange-400 text-xs pl-2">
                         <span>↳ IGST</span>
-                        <span>₹{totalTax.toFixed(2)}</span>
+                        <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                       </div>
                     ) : (
                       <>
                         <div className="flex justify-between text-orange-400 text-xs pl-2">
                           <span>↳ CGST</span>
-                          <span>₹{(totalTax / 2).toFixed(2)}</span>
+                          <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-orange-400 text-xs pl-2">
                           <span>↳ SGST</span>
-                          <span>₹{(totalTax / 2).toFixed(2)}</span>
+                          <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
                         </div>
                       </>
                     )}
@@ -1802,12 +1803,12 @@ export default function SalesForm({
                     {roundOffApplied && (
                       <div className="flex justify-between text-amber-300">
                         <span>Round Off</span>
-                        <span>{roundOffDelta >= 0 ? '+' : ''}₹{roundOffDelta.toFixed(2)}</span>
+                        <span>{roundOffDelta >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOffDelta.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-xl">
                       <span className="text-white">Grand Total</span>
-                      <span className="text-cyan-400">₹{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
+                      <span className="text-cyan-400">{getCurrencySymbol()}{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
                     </div>
                     <div className="text-right">
                       {!roundOffApplied ? (

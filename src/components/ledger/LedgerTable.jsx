@@ -17,6 +17,7 @@ import { getAccounts } from '../../api/ledger';
 import { subDays } from 'date-fns';
 import { useLoadingPolicy } from '../../hooks/useLoadingPolicy';
 import TableSkeleton from '../common/TableSkeleton';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, customerFilter = '' }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -488,14 +489,14 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                         <span className={`text-lg font-semibold ${
                           entry.entry_type === 'credit' ? 'text-green-400' : 'text-red-400'
                         }`}>
-                          {entry.entry_type === 'credit' ? '+' : '-'}₹{Number(entry.amount || 0).toLocaleString()}
+                          {entry.entry_type === 'credit' ? '+' : '-'}{getCurrencySymbol()}{Number(entry.amount || 0).toLocaleString()}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-white/70">Balance:</span>
                         <span className="text-sm font-medium text-[#7fd3f7]">
-                          ₹{Number(entry.running_balance || 0).toLocaleString()}
+                          {getCurrencySymbol()}{Number(entry.running_balance || 0).toLocaleString()}
                         </span>
                       </div>
                     </div>

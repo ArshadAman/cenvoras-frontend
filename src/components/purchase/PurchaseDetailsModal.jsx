@@ -6,6 +6,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { createPortal } from "react-dom";
 import { XMarkIcon, PrinterIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function PurchaseDetailsModal({ billId, onClose }) {
   const printRef = useRef();
@@ -253,10 +254,10 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                             <div className="text-[10px] text-gray-500 uppercase">{item.unit}</div>
                             {item.free_quantity > 0 && <span className="text-[9px] font-black text-green-500 uppercase tracking-tighter mt-1 block">+{item.free_quantity} Free</span>}
                           </td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-300">₹{parseFloat(item.price || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-300">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
                           <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">{parseFloat(item.discount || 0).toFixed(1)}%</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">₹{parseFloat(item.tax || 0).toFixed(2)}</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm font-black text-white">₹{parseFloat(item.amount || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">{getCurrencySymbol()}{parseFloat(item.tax || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm font-black text-white">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -273,7 +274,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                           {item.hsn_sac_code && <div className="text-[8px] font-black text-gray-600 mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>}
                         </div>
                         <div className="text-right">
-                          <div className="text-xs font-black text-white font-mono">₹{parseFloat(item.amount || 0).toFixed(2)}</div>
+                          <div className="text-xs font-black text-white font-mono">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</div>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
@@ -283,7 +284,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                         </div>
                         <div className="space-y-1 text-right">
                           <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Unit Rate</div>
-                          <div className="text-[10px] font-bold text-gray-300">₹{parseFloat(item.price || 0).toFixed(2)}</div>
+                          <div className="text-[10px] font-bold text-gray-300">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</div>
                         </div>
                       </div>
                     </div>
@@ -310,11 +311,11 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                 <div className="w-full sm:w-80 bg-white/[0.03] border border-white/10 rounded-[32px] p-8 space-y-4 shadow-xl">
                   <div className="flex justify-between items-center text-[10px] font-black text-gray-500 uppercase tracking-widest">
                     <span>Subtotal</span>
-                    <span className="font-mono text-xs">₹{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
+                    <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[10px] font-black text-green-500/70 uppercase tracking-widest">
                     <span>Amount Paid</span>
-                    <span className="font-mono text-xs">₹{parseFloat(bill.amount_paid || 0).toFixed(2)}</span>
+                    <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.amount_paid || 0).toFixed(2)}</span>
                   </div>
                   <div className="pt-4 border-t border-white/5">
                     <div className="flex justify-between items-baseline">
@@ -322,7 +323,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                         <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Net Total</span>
                         <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">Tax Inclusive</span>
                       </div>
-                      <span className="text-3xl font-black text-white tracking-tighter font-mono">₹{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
+                      <span className="text-3xl font-black text-white tracking-tighter font-mono">{getCurrencySymbol()}{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

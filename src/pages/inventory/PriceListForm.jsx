@@ -7,6 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Layout from "../../components/Layout";
 import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const priceListSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -128,7 +129,7 @@ export default function PriceListForm() {
                                                     <Field type="number" name={`items.${index}.min_qty`} className={inputClass} placeholder="Min Qty" />
                                                 </div>
                                                 <div className="w-32">
-                                                    <Field type="number" name={`items.${index}.price`} className={inputClass} placeholder="Price (₹)" />
+                                                    <Field type="number" name={`items.${index}.price`} className={inputClass} placeholder="Price ({getCurrencySymbol()})" />
                                                     <ErrorMessage name={`items.${index}.price`} component="div" className="text-red-400 text-xs" />
                                                 </div>
                                                 <button type="button" onClick={() => remove(index)} className="p-2 text-red-400 hover:text-red-300">

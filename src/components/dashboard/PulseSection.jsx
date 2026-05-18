@@ -13,6 +13,7 @@ import {
 import api from '../../api/api';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 /**
  * UdhaarModal - Shows a list of customers with outstanding balances
@@ -43,7 +44,7 @@ function UdhaarModal({ isOpen, onClose }) {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <UserGroupIcon className="w-6 h-6 text-orange-400" />
-              Udhaar Status
+              Ledger Balances
             </h2>
             <p className="text-xs text-gray-500 mt-1">List of customers with outstanding balances</p>
           </div>
@@ -87,11 +88,11 @@ function UdhaarModal({ isOpen, onClose }) {
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">{customer.name}</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-tight">Credit Limit: ₹{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-tight">Credit Limit: {getCurrencySymbol()}{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-orange-400">₹{parseFloat(customer.current_balance).toLocaleString()}</div>
+                    <div className="text-sm font-bold text-orange-400">{getCurrencySymbol()}{parseFloat(customer.current_balance).toLocaleString()}</div>
                     <div className="text-[10px] text-gray-500">Balance Due</div>
                   </div>
                 </div>
@@ -163,7 +164,7 @@ export default function PulseSection({ data, isLoading }) {
 
   const formatCurrency = (value) => {
     if (value === undefined || value === null) return '--';
-    return `₹${Math.abs(value).toLocaleString('en-IN')}`;
+    return `$${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
   };
 
   const cards = [
@@ -192,7 +193,7 @@ export default function PulseSection({ data, isLoading }) {
       color: pulse.net_profit_today >= 0 ? 'emerald' : 'red',
     },
     {
-      label: 'Udhaar Status',
+      label: 'Ledger Balances',
       value: formatCurrency(liveReceivables || pulse.total_receivables),
       subtitle: (
         <div className="flex justify-between items-center w-full">

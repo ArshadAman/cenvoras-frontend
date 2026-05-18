@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const SITE_NAME = 'Cenvora';
-const DEFAULT_DESCRIPTION = 'Cenvora is billing and inventory software for Indian businesses, combining sales, stock, customers, GST, and reporting in one platform.';
-const DEFAULT_KEYWORDS = 'billing software, inventory software, GST billing, business management software, ERP for Indian businesses';
+const DEFAULT_DESCRIPTION = 'Cenvora is billing and inventory software for modern businesses, combining sales, stock, customers, localized taxes, and reporting in one platform.';
+const DEFAULT_KEYWORDS = 'billing software, inventory software, business management software, ERP for businesses';
 const DEFAULT_IMAGE = '/cenvora-logo-backgrond-removed.png';
 
 const getBaseUrl = () => {

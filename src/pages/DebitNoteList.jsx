@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 import DebitNoteForm from "../components/returns/DebitNoteForm"; // Add Import
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 export default function DebitNoteList() {
   const [showForm, setShowForm] = useState(false); // Add State
@@ -100,7 +101,7 @@ export default function DebitNoteList() {
                         </span>
                       </td>
                       <td className="p-4 text-gray-400 text-sm">{dn.items?.length || 0} items</td>
-                      <td className="p-4 text-right text-white font-semibold">₹{fmt(dn.total_amount)}</td>
+                      <td className="p-4 text-right text-white font-semibold">{getCurrencySymbol()}{fmt(dn.total_amount)}</td>
                       <td className="p-4 text-right">
                         <button
                           onClick={() => { if (confirm('Delete this debit note?')) deleteMutation.mutate(dn.id); }}

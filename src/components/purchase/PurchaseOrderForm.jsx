@@ -7,6 +7,7 @@ import { getVendors } from "../../api/vendors";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
@@ -85,7 +86,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             >
               <div className="font-medium">{product.name}</div>
               <div className="text-gray-500 text-xs mt-0.5">
-                Unit: {product.unit} | Price: ₹{product.purchase_price ?? product.price}
+                Unit: {product.unit} | Price: {getCurrencySymbol()}{product.purchase_price ?? product.price}
               </div>
             </div>
           ))}
@@ -416,7 +417,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                    {/* Footer Actions */}
                    <div className="flex justify-between items-center pt-6 border-t border-white/10">
                         <div className="text-xl font-bold text-white">
-                          Total: ₹{values.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2)}
+                          Total: {getCurrencySymbol()}{values.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2)}
                         </div>
                         <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50">
                           {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Purchase Order"}

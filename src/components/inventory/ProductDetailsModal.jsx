@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProduct, getProductBatches } from "../../api/inventory";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function ProductDetailsModal({ productId, onClose }) {
   const { data, isLoading } = useQuery({
@@ -108,11 +109,11 @@ export default function ProductDetailsModal({ productId, onClose }) {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-400">Cost Price:</span>
-                        <span className="font-bold text-green-400">₹{costPrice.toFixed(2)}</span>
+                        <span className="font-bold text-green-400">{getCurrencySymbol()}{costPrice.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-400">Sale Price:</span>
-                        <span className="font-bold text-blue-400">{salePrice === null ? '-' : `₹${salePrice.toFixed(2)}`}</span>
+                        <span className="font-bold text-blue-400">{salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}</span>
                       </div>
                       {product.supplier && (
                         <div className="flex justify-between">
@@ -153,7 +154,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
                       )}
                       <div className="flex justify-between border-t pt-2">
                         <span className="font-medium text-gray-400">Total Value:</span>
-                        <span className="font-bold text-blue-400">₹{totalValue.toFixed(2)}</span>
+                        <span className="font-bold text-blue-400">{getCurrencySymbol()}{totalValue.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -177,11 +178,11 @@ export default function ProductDetailsModal({ productId, onClose }) {
                   <div className="text-sm text-blue-700">Current Stock</div>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-green-400">₹{costPrice.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{costPrice.toFixed(2)}</div>
                   <div className="text-sm text-green-700">Cost Price</div>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-purple-600">₹{totalValue.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-purple-600">{getCurrencySymbol()}{totalValue.toFixed(2)}</div>
                   <div className="text-sm text-purple-700">Total Value</div>
                 </div>
               </div>
@@ -256,9 +257,9 @@ export default function ProductDetailsModal({ productId, onClose }) {
                               <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-white drop-shadow-md">
                                 {batchStock}
                               </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">₹{parseFloat(batch.mrp || 0).toFixed(2)}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400 font-medium">₹{parseFloat(batch.cost_price || 0).toFixed(2)}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-400 font-semibold">₹{parseFloat(batch.sale_price || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">{getCurrencySymbol()}{parseFloat(batch.mrp || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400 font-medium">{getCurrencySymbol()}{parseFloat(batch.cost_price || 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-400 font-semibold">{getCurrencySymbol()}{parseFloat(batch.sale_price || 0).toFixed(2)}</td>
                               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                                 {batch.expiry_date ? (
                                   <span className={new Date(batch.expiry_date) < new Date() ? 'text-red-500 font-bold' : ''}>

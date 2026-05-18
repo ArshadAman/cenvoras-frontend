@@ -3,6 +3,7 @@ import { Formik, Form, Field, FieldArray, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { createPurchaseBill, updatePurchaseBill, getProducts, createProduct, updateProduct } from "../../api/purchase";
 import { toast } from "react-toastify";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue }) {
@@ -80,7 +81,7 @@ function ProductAutocomplete({ idx, values, setFieldValue }) {
             >
               <div className="font-medium">{product.name}</div>
               <div className="text-gray-500 text-xs">
-                Unit: {product.unit} | Price: ₹{product.purchase_price}
+                Unit: {product.unit} | Price: {getCurrencySymbol()}{product.purchase_price}
               </div>
             </div>
           ))}

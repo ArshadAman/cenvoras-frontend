@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getVendors, deleteVendor } from "../../api/vendors";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function VendorTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -279,7 +280,7 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-white font-medium drop-shadow-lg">
-                      {vendor.meta?.credit_limit ? `₹${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
+                      {vendor.meta?.credit_limit ? `${getCurrencySymbol()}${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -370,7 +371,7 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Credit Limit:</span>
                   <span className="text-sm text-white">
-                    {vendor.meta?.credit_limit ? `₹${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
+                    {vendor.meta?.credit_limit ? `${getCurrencySymbol()}${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
                   </span>
                 </div>
 

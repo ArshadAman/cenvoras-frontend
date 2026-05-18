@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/api';
 import { ClockIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const DAY_OPTIONS = [7, 14, 30, 60, 90];
 
@@ -45,7 +46,7 @@ export default function ExpiryCard() {
           </div>
           {count > 0 && (
             <div className="text-xs text-orange-400 mt-1 font-medium">
-              ₹{Number(totalValue).toLocaleString('en-IN')} at risk
+              {getCurrencySymbol()}{Number(totalValue).toLocaleString('en-IN')} at risk
             </div>
           )}
         </div>
@@ -64,7 +65,7 @@ export default function ExpiryCard() {
                   Products Expiring Soon
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">
-                  {count} batches · Total value at risk: ₹{Number(totalValue).toLocaleString('en-IN')}
+                  {count} batches · Total value at risk: {getCurrencySymbol()}{Number(totalValue).toLocaleString('en-IN')}
                 </p>
               </div>
               <button
@@ -128,7 +129,7 @@ export default function ExpiryCard() {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-gray-300">{item.quantity}</td>
-                        <td className="px-6 py-3 text-orange-400 font-bold">₹{Number(item.value).toLocaleString('en-IN')}</td>
+                        <td className="px-6 py-3 text-orange-400 font-bold">{getCurrencySymbol()}{Number(item.value).toLocaleString('en-IN')}</td>
                       </tr>
                     ))}
                   </tbody>

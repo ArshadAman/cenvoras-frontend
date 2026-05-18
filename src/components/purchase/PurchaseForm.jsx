@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -111,7 +112,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
             >
               <div className="font-medium text-white">{product.name}</div>
               <div className="text-gray-500 text-xs">
-                Unit: {product.unit} | Price: ₹{product.purchase_price}
+                Unit: {product.unit} | Price: {getCurrencySymbol()}{product.purchase_price}
               </div>
             </div>
           ))}
@@ -675,7 +676,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                     <div className="space-y-4">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-400 font-medium">Subtotal</span>
-                        <span className="text-white font-black tabular-nums tracking-tight">₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-white font-black tabular-nums tracking-tight">{getCurrencySymbol()}{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                       <div className="h-px bg-white/5"></div>
                       <div className="flex justify-between items-center">
@@ -683,7 +684,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                           <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest">Payable Amount</span>
                           <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">Net Total (Inclusive of all taxes)</span>
                         </div>
-                        <span className="text-3xl font-black text-white tabular-nums drop-shadow-md">₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-3xl font-black text-white tabular-nums drop-shadow-md">{getCurrencySymbol()}{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     </div>
                   </div>
@@ -841,7 +842,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
           <div className="text-right">
               <label className="block text-[9px] font-black text-gray-700 md:hidden uppercase tracking-widest mb-1">Subtotal</label>
               <div className="font-black text-cyan-400 text-sm tabular-nums tracking-tighter">
-                  ₹{calculatedAmount.toFixed(2)}
+                  {getCurrencySymbol()}{calculatedAmount.toFixed(2)}
               </div>
           </div>
           <button

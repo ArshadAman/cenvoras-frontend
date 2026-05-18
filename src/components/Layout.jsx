@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getUserProfile } from '../api/users';
 import { getSubscriptionEntitlements } from '../api/subscription';
 import UpgradePromptModal from './subscription/UpgradePromptModal';
+import { getCountryCode } from '../utils/currency';
 import { 
   ChartBarIcon, 
   CurrencyRupeeIcon, 
@@ -44,6 +45,7 @@ export default function Layout({ children, onLogout }) {
   });
 
   const role = getUserRole();
+  const country = getCountryCode();
 
   const navigationGroups = [
     {
@@ -87,8 +89,8 @@ export default function Layout({ children, onLogout }) {
         { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
         { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
         { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
-        { path: "/gst", label: "GST Compliance", icon: ReceiptPercentIcon, roles: [] },
-          { path: "/gst-hsn-guide", label: "HSN & GST Guide", icon: BookOpenIcon, roles: [] },
+        { path: "/gst", label: country === 'IN' ? "GST Dashboard" : "Tax & VAT", icon: ReceiptPercentIcon, roles: [] },
+        { path: "/gst-hsn-guide", label: country === 'IN' ? "HSN & GST Guide" : "Tax Codes Guide", icon: BookOpenIcon, roles: [] },
       ]
     },
     {

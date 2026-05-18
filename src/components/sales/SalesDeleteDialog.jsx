@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteSalesInvoice } from "../../api/sales";
 import { toast } from "react-toastify";
 import { XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
   const queryClient = useQueryClient();
@@ -63,15 +64,15 @@ export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Total:</span>
-              <span className="text-cyan-400 font-bold">₹{totalAmount.toLocaleString()}</span>
+              <span className="text-cyan-400 font-bold">{getCurrencySymbol()}{totalAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Paid:</span>
-              <span className="text-green-400 font-bold">₹{amountPaid.toLocaleString()}</span>
+              <span className="text-green-400 font-bold">{getCurrencySymbol()}{amountPaid.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Outstanding:</span>
-              <span className="text-amber-400 font-bold">₹{outstanding.toLocaleString()}</span>
+              <span className="text-amber-400 font-bold">{getCurrencySymbol()}{outstanding.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Payment Status:</span>

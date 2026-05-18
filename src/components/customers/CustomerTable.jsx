@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCustomers, deleteCustomer } from "../../api/customers";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function CustomerTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -287,7 +288,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-white font-medium drop-shadow-lg">
-                      {customer.meta?.credit_limit ? `₹${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
+                      {customer.meta?.credit_limit ? `${getCurrencySymbol()}${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -378,7 +379,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Credit Limit:</span>
                   <span className="text-sm text-white">
-                    {customer.meta?.credit_limit ? `₹${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
+                    {customer.meta?.credit_limit ? `${getCurrencySymbol()}${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
                   </span>
                 </div>
 

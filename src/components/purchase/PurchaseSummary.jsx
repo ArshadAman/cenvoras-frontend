@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPurchaseBills } from "../../api/purchase";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function PurchaseSummary() {
   const { data, isLoading } = useQuery({
@@ -75,7 +76,7 @@ export default function PurchaseSummary() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Amount</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ₹{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {getCurrencySymbol()}{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
@@ -91,7 +92,7 @@ export default function PurchaseSummary() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">This Month</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{thisMonthBills.length}</p>
-              <p className="text-xs text-gray-500">₹{thisMonthAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              <p className="text-xs text-gray-500">{getCurrencySymbol()}{thisMonthAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
             </div>
             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
               <svg className="w-6 h-6 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,7 +135,7 @@ export default function PurchaseSummary() {
               {overdueBills.slice(0, 3).map(bill => (
                 <div key={bill.id} className="flex justify-between items-center text-sm">
                   <span className="text-red-700 dark:text-red-300">{bill.bill_number} - {bill.vendor_name}</span>
-                  <span className="font-medium text-red-800 dark:text-red-200">₹{parseFloat(bill.total_amount).toFixed(2)}</span>
+                  <span className="font-medium text-red-800 dark:text-red-200">{getCurrencySymbol()}{parseFloat(bill.total_amount).toFixed(2)}</span>
                 </div>
               ))}
               {overdueBills.length > 3 && (
@@ -162,7 +163,7 @@ export default function PurchaseSummary() {
                     {index + 1}. {vendor}
                   </span>
                   <span className="font-medium text-blue-800 dark:text-blue-200">
-                    ₹{amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    {getCurrencySymbol()}{amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 </div>
               ))}

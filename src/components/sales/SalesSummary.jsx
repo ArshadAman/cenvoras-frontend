@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { 
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';useQuery } from "@tanstack/react-query";
 import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
   CurrencyRupeeIcon, 
@@ -101,20 +102,20 @@ export default function SalesSummary() {
     {
       label: cardTitle,
       value: selectedCount,
-      subValue: `₹${selectedRevenue.toLocaleString()}`,
+      subValue: `$${getCurrencySymbol()}${selectedRevenue.toLocaleString()}`,
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
       color: 'cyan'
     },
     {
       label: 'Overall This Month',
       value: analytics.this_month_invoices || 0,
-      subValue: `₹${overallMonthRevenue.toLocaleString()}`,
+      subValue: `$${getCurrencySymbol()}${overallMonthRevenue.toLocaleString()}`,
       icon: <CalendarIcon className="w-6 h-6 text-green-400" />,
       color: 'green'
     },
     {
       label: 'Avg. Invoice Value',
-      value: `₹${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
+      value: `$${getCurrencySymbol()}${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
       subValue: 'For selected period',
       icon: <ChartBarIcon className="w-6 h-6 text-blue-400" />,
       color: 'blue'
@@ -205,7 +206,7 @@ export default function SalesSummary() {
                     </div>
                   </div>
                   <span className="text-sm font-bold text-cyan-400">
-                    ₹{amount.toLocaleString()}
+                    {getCurrencySymbol()}{amount.toLocaleString()}
                   </span>
                 </div>
               ))
@@ -238,7 +239,7 @@ export default function SalesSummary() {
                               <p className="text-[11px] text-red-200/90 whitespace-nowrap">{invoice.days_overdue}d overdue</p>
                             </div>
                             <p className="text-xs text-red-200/90 truncate">{invoice.customer_name || 'Unknown Customer'}</p>
-                            <p className="text-xs text-red-300/90">Outstanding: ₹{Number(invoice.outstanding_amount || 0).toLocaleString()}</p>
+                            <p className="text-xs text-red-300/90">Outstanding: {getCurrencySymbol()}{Number(invoice.outstanding_amount || 0).toLocaleString()}</p>
                           </div>
                         ))}
                         {overdueCount > overduePreview.length && (

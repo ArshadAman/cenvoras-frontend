@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
+import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 
 // Professional Template (Marico Style)
 const ProfessionalTemplate = forwardRef(({ 
@@ -57,7 +58,7 @@ const ProfessionalTemplate = forwardRef(({
           <h1 className="font-bold text-xl mb-1" style={{ color: colors.primary }}>{companyName}</h1>
           <div className="text-gray-600 space-y-0.5">
             <p className="whitespace-pre-line">{companyAddress}</p>
-            {sections.showGST && companyGST && <p><strong>GSTIN:</strong> {companyGST}</p>}
+            {sections.showGST && companyGST && <p><strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {companyGST}</p>}
           </div>
         </div>
         <div className="text-right w-1/2">
@@ -110,9 +111,9 @@ const ProfessionalTemplate = forwardRef(({
                 if(col.id==='serial') val = idx+1;
                 else if(col.id==='description') val = item.product_name || item.product;
                 else if(col.id==='quantity') val = item.quantity;
-                else if(col.id==='price') val = `₹${parseFloat(item.price||0).toFixed(2)}`;
+                else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toFixed(2)}`;
                 else if(col.id==='tax') val = `${item.tax||0}%`;
-                else if(col.id==='amount') val = `₹${(item.quantity * item.price).toFixed(2)}`;
+                else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                 return <td key={col.id} className="px-2 py-1.5 font-medium text-gray-800">{val}</td>;
               })}
@@ -148,28 +149,28 @@ const ProfessionalTemplate = forwardRef(({
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
               <span className="text-gray-600">Subtotal</span>
-              <span className="font-bold">₹{subtotal.toFixed(2)}</span>
+              <span className="font-bold">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
             </div>
             {isIGST ? (
               <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
                 <span className="text-gray-600">IGST</span>
-                <span className="font-bold">₹{taxTotal.toFixed(2)}</span>
+                <span className="font-bold">{getCurrencySymbol()}{taxTotal.toFixed(2)}</span>
               </div>
             ) : (
               <>
                 <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
                   <span className="text-gray-600">CGST</span>
-                  <span className="font-bold">₹{(taxTotal / 2).toFixed(2)}</span>
+                  <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
                   <span className="text-gray-600">SGST</span>
-                  <span className="font-bold">₹{(taxTotal / 2).toFixed(2)}</span>
+                  <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
                 </div>
               </>
             )}
             <div className="flex justify-between p-4 bg-gray-50 text-base">
               <span className="font-bold text-gray-900">Total</span>
-              <span className="font-bold text-indigo-600">₹{finalTotal.toFixed(2)}</span>
+              <span className="font-bold text-indigo-600">{getCurrencySymbol()}{finalTotal.toFixed(2)}</span>
             </div>
           </div>
           {sections.showAmountInWords && (
@@ -194,7 +195,7 @@ const ProfessionalTemplate = forwardRef(({
 
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: built for Indian Businesses<br />
+          Made with Cenvora: built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}

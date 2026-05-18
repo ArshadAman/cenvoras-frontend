@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   const printRef = useRef();
@@ -211,7 +212,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-white/5">
                       <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Limit</span>
                       <span className="text-lg font-black text-white font-mono">
-                        ₹{vendorDetails.meta?.credit_limit ? Number(vendorDetails.meta.credit_limit).toLocaleString() : '0.00'}
+                        {getCurrencySymbol()}{vendorDetails.meta?.credit_limit ? Number(vendorDetails.meta.credit_limit).toLocaleString() : '0.00'}
                       </span>
                     </div>
                   </div>

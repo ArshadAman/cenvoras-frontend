@@ -5,6 +5,7 @@ import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
 import { useLoadingPolicy } from "../../hooks/useLoadingPolicy";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -549,13 +550,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                           )}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        ₹{costPrice.toFixed(2)}
+                        {getCurrencySymbol()}{costPrice.toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        {salePrice === null ? '-' : `₹${salePrice.toFixed(2)}`}
+                        {salePrice === null ? '-' : `$${getCurrencySymbol()}${salePrice.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
-                        ₹{totalValue.toLocaleString(undefined, {
+                        {getCurrencySymbol()}{totalValue.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -679,14 +680,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Cost Price:</span>
                   <span className="text-lg font-semibold text-[#7fd3f7]">
-                    ₹{Number(costPrice || 0).toLocaleString()}
+                    {getCurrencySymbol()}{Number(costPrice || 0).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Sale Price:</span>
                   <span className="text-sm font-medium text-white">
-                    {product.sale_price == null ? '-' : `₹${Number(product.sale_price).toLocaleString()}`}
+                    {product.sale_price == null ? '-' : `$${getCurrencySymbol()}${Number(product.sale_price).toLocaleString()}`}
                   </span>
                 </div>
 

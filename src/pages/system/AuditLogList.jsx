@@ -8,6 +8,7 @@ import {
     DocumentTextIcon 
 } from '@heroicons/react/24/outline';
 import { format } from "date-fns";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function AuditLogList() {
   const [params, setParams] = useState({ page: 1 });
@@ -69,7 +70,7 @@ export default function AuditLogList() {
     if (val === null || val === undefined) return 'None';
     if (typeof val === 'boolean') return val ? 'Yes' : 'No';
     if (field.includes('amount') || field.includes('price') || field === 'total_revenue') {
-      return `₹${Number(val).toLocaleString()}`;
+      return `${getCurrencySymbol()}${Number(val).toLocaleString()}`;
     }
     return String(val);
   };

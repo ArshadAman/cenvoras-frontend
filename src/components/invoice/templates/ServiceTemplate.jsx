@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
+import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 
 // Service Template (LTIMindtree Style)
 const ServiceTemplate = forwardRef(({ 
@@ -61,7 +62,7 @@ const ServiceTemplate = forwardRef(({
              <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 50 }} className="mb-4" />
           )}
           <h1 className="font-bold text-2xl mb-1 uppercase tracking-tight" style={{ color: primaryColor }}>{companyName}</h1>
-          {sections.showGST && businessInfo.gstin && <p className="font-bold text-[10px] text-gray-700">GSTIN: {businessInfo.gstin}</p>}
+          {sections.showGST && businessInfo.gstin && <p className="font-bold text-[10px] text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
           <p className="whitespace-pre-line text-gray-600 text-[11px] mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
           {(businessInfo.phone || businessInfo.email) && (
             <p className="text-gray-600 text-[11px] mt-1 font-medium">
@@ -83,7 +84,7 @@ const ServiceTemplate = forwardRef(({
           <h3 className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-2">Bill To:</h3>
           <p className="font-bold text-lg text-gray-900 leading-none mb-1">{customerName}</p>
           <p className="whitespace-pre-line text-gray-600 text-sm leading-relaxed">{billingAddress}</p>
-          {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">GSTIN: {invoice.customer_gstin}</p>}
+          {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
         </div>
         <div className="w-1/2 space-y-2 text-sm pl-12 border-l border-gray-100">
           <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Invoice Date:</span> <span className="font-semibold text-gray-900">{invoiceDate}</span></div>
@@ -123,9 +124,9 @@ const ServiceTemplate = forwardRef(({
                 );
                 else if(col.id==='hsn') val = item.hsn_sac_code || item.hsn_code || '-';
                 else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
-                else if(col.id==='price') { val = `₹${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
+                else if(col.id==='price') { val = `${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                 else if(col.id==='tax') { val = `${item.tax||0}%`; isNumeric = true; }
-                else if(col.id==='amount') { val = `₹${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
+                else if(col.id==='amount') { val = `${getCurrencySymbol()}${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                 
                 return (
                   <th 
@@ -164,19 +165,19 @@ const ServiceTemplate = forwardRef(({
         <div className="w-[40%]">
           <table className="w-full text-sm text-right">
             <tbody>
-              <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">₹{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+              <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
               {isIGST ? (
-                <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">₹{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
               ) : (
                 <>
-                  <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                  <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">₹{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                  <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                  <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                 </>
               )}
-              {invoice.round_off ? <tr><td className="py-1 font-semibold text-gray-700">Round Off</td><td className="py-1">₹{parseFloat(invoice.round_off).toFixed(2)}</td></tr> : null}
+              {invoice.round_off ? <tr><td className="py-1 font-semibold text-gray-700">Round Off</td><td className="py-1">{getCurrencySymbol()}{parseFloat(invoice.round_off).toFixed(2)}</td></tr> : null}
               <tr className="border-t-2 border-b-2 border-gray-900 text-base">
                 <td className="py-2 font-bold text-gray-900">Total</td>
-                <td className="py-2 font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                <td className="py-2 font-bold text-gray-900">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
               </tr>
             </tbody>
           </table>
@@ -204,7 +205,7 @@ const ServiceTemplate = forwardRef(({
       
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: built for Indian Businesses<br />
+          Made with Cenvora: built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}

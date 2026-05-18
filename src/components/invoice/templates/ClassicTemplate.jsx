@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
+import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 
 // Beautiful Invoice Preview Component
 // Renders invoice based on template settings with dynamic styling
@@ -189,7 +190,7 @@ const InvoicePreview = forwardRef(({
                   {companyEmail ? `email-${companyEmail}` : ''}
                 </p>
               )}
-              {sections.showGST && companyGST && <p className="font-medium">GST- {companyGST}</p>}
+              {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}</p>}
               {sections.showGEMID && companyGEM && <p className="font-medium">GEM ID- {companyGEM}</p>}
               {companyDL && <p className="font-medium">DL No- {companyDL}</p>}
               {companyGIN && <p className="font-medium">GIN- {companyGIN}</p>}
@@ -207,7 +208,7 @@ const InvoicePreview = forwardRef(({
           <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
             <div className="font-medium">{customerName}</div>
             {billingAddress && <p className="whitespace-pre-line">{billingAddress}</p>}
-            {customerGST && <p className="font-medium">GSTIN: {customerGST}</p>}
+            {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
           </div>
         </div>
 
@@ -257,7 +258,7 @@ const InvoicePreview = forwardRef(({
             {companyAddress && <p className="whitespace-pre-line">{companyAddress}</p>}
             {companyPhone && <p>Ph: {companyPhone}</p>}
             {companyEmail && <p>Email: {companyEmail}</p>}
-            {sections.showGST && companyGST && <p className="font-medium">GSTIN: {companyGST}</p>}
+            {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {companyGST}</p>}
             {sections.showGEMID && companyGEM && <p>GEM ID: {companyGEM}</p>}
             {companyDL && <p>DL No: {companyDL}</p>}
             {companyGIN && <p>GIN: {companyGIN}</p>}
@@ -272,7 +273,7 @@ const InvoicePreview = forwardRef(({
           </div>
           <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${typography.smallSize || 9}px` }}>
             {customerAddress && <p className="whitespace-pre-line">{customerAddress}</p>}
-            {customerGST && <p className="font-medium">GSTIN: {customerGST}</p>}
+            {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
           </div>
           </div>
         </div>
@@ -374,10 +375,10 @@ const InvoicePreview = forwardRef(({
                       case 'quantity': value = qty; break;
                       case 'free_qty': value = item.free_quantity || 0; break;
                       case 'unit': value = item.unit || 'pcs'; break;
-                      case 'price': value = `₹${price.toFixed(2)}`; break;
+                      case 'price': value = `$${getCurrencySymbol()}${price.toFixed(2)}`; break;
                       case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
                       case 'tax': value = `${tax}%`; break;
-                      case 'amount': value = `₹${amount.toFixed(2)}`; break;
+                      case 'amount': value = `$${getCurrencySymbol()}${amount.toFixed(2)}`; break;
                       default: value = '';
                     }
                     
@@ -470,23 +471,23 @@ const InvoicePreview = forwardRef(({
                   Untaxed Amount
                 </td>
                 <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                  ₹{subtotal.toFixed(2)}
+                  {getCurrencySymbol()}{subtotal.toFixed(2)}
                 </td>
               </tr>
               {isIGST ? (
                 <tr>
                   <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
-                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>₹{taxTotal.toFixed(2)}</td>
+                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
                 </tr>
               ) : (
                 <>
                   <tr>
                     <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>₹{(taxTotal / 2).toFixed(2)}</td>
+                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>₹{(taxTotal / 2).toFixed(2)}</td>
+                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
                   </tr>
                 </>
               )}
@@ -496,7 +497,7 @@ const InvoicePreview = forwardRef(({
                     Round Off
                   </td>
                   <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                    {roundOff >= 0 ? '+' : ''}₹{roundOff.toFixed(2)}
+                    {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
                   </td>
                 </tr>
               )}
@@ -505,7 +506,7 @@ const InvoicePreview = forwardRef(({
                   Grand Total
                 </td>
                 <td className="px-3 py-3 border text-right font-bold text-lg">
-                  ₹{finalTotal.toFixed(2)}
+                  {getCurrencySymbol()}{finalTotal.toFixed(2)}
                 </td>
               </tr>
             </tbody>
@@ -579,7 +580,7 @@ const InvoicePreview = forwardRef(({
       
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
-          Made with Cenvora: built for Indian Businesses<br />
+          Made with Cenvora: built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}
