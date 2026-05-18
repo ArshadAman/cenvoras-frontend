@@ -20,7 +20,7 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import Select from 'react-select';
-import { indianStates, citiesByState } from '../utils/indiaData';
+import { State, City } from 'country-state-city';
 import { getUserProfile, patchUserProfile, changePassword } from '../api/users';
 import {
   getSubscriptionEntitlements,
@@ -1240,7 +1240,7 @@ const Profile = ({ onLogout }) => {
                           />
                         </div>
 
-                        {formData.country === 'IN' && (
+                        {formData.country && (
                           <input
                             type="text"
                             name="gstin"
@@ -1284,7 +1284,7 @@ const Profile = ({ onLogout }) => {
                           placeholder="DL Number"
                         />
                         
-                        {formData.country === 'IN' && (
+                        {formData.country && (
                           <div className="space-y-1.5">
                             <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">State</label>
                             <Select
@@ -1297,7 +1297,7 @@ const Profile = ({ onLogout }) => {
                             />
                           </div>
                         )}
-                        {formData.country === 'IN' && (
+                        {formData.country && (
                           <div className="space-y-1.5">
                             <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">City</label>
                             <Select

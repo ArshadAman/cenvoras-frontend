@@ -6,7 +6,7 @@ import Loader from '../components/Loader';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Select from 'react-select';
-import { indianStates, citiesByState } from '../utils/indiaData';
+import { State, City } from 'country-state-city';
 import Seo from '../components/Seo';
 
 const customSelectStyles = {
@@ -68,11 +68,7 @@ const SignupSchema = Yup.object().shape({
     then: (schema) => schema.matches(/^\d{15}$/, 'TRN must be exactly 15 digits').nullable(),
     otherwise: (schema) => schema.nullable(),
   }),
-  state: Yup.string().when('country', {
-    is: 'IN',
-    then: (schema) => schema.required('State is required for India'),
-    otherwise: (schema) => schema.nullable(),
-  }),
+  state: Yup.string().required('State/Region is required'),
   city: Yup.string().nullable(),
   termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
 });
@@ -314,7 +310,7 @@ export default function Signup() {
                                 <ErrorMessage name="country" component="div" className="text-red-400 text-xs mt-1" />
                             </div>
 
-                            {values.country === 'IN' && (
+                            {values.country && (
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
                                     <Field
@@ -340,27 +336,28 @@ export default function Signup() {
                                 </div>
                             )}
 
-                            {values.country === 'IN' && (
+                            {values.country && (
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
                                         <Select
-                                            options={indianStates}
+                                            options={State.getStatesOfCountry(values.country).map(state => ({ value: state.isoCode, label: state.name }))}
                                             className="react-select-container"
                                             classNamePrefix="react-select"
                                             placeholder="Select State"
                                             styles={customSelectStyles}
                                             onChange={(option) => {
                                                 setFieldValue('state', option.value);
-                                                setFieldValue('city', ''); // Reset city when state changes
+                                                setFieldValue('city', '');
                                             }}
+                                            value={values.state ? { value: values.state, label: State.getStateByCodeAndCountry(values.state, values.country)?.name || values.state } : null}
                                         />
                                         <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
                                         <Select
-                                            options={(citiesByState[values.state] || []).map(city => ({ value: city, label: city }))}
+                                            options={City.getCitiesOfState(values.country, values.state).map(city => ({ value: city.name, label: city.name }))}
                                             className="react-select-container"
                                             classNamePrefix="react-select"
                                             placeholder="Select City"
