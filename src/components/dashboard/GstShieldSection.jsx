@@ -1,6 +1,6 @@
 import React from 'react';
-import { 
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import {
   ShieldCheckIcon,
   CalendarDaysIcon,
   DocumentArrowDownIcon,

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { 
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';useQuery } from "@tanstack/react-query";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import {useQuery } from "@tanstack/react-query";
 import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
   CurrencyRupeeIcon, 

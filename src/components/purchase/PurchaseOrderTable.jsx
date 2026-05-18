@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import {
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency'; format } from "date-fns";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { format } from "date-fns";
 import {
   PencilIcon,
   TrashIcon,

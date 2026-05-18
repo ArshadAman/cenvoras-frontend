@@ -1,6 +1,6 @@
 import React from "react";
-import {
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency'; Link } from "react-router-dom";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 import {
   DocumentTextIcon,
