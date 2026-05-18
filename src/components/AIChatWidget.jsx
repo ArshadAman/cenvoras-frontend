@@ -36,6 +36,30 @@ export default function AIChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Intercept back button to close chat widget instead of navigating back in browser history
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Push a custom state when the chat opens
+    const stateObj = { chatOpen: true };
+    window.history.pushState(stateObj, '');
+
+    const handlePopState = () => {
+      // If the state is popped (back button clicked), close the chat
+      setIsOpen(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      // If manually closing the chat, clean up the pushed history entry
+      if (window.history.state && window.history.state.chatOpen) {
+        window.history.back();
+      }
+    };
+  }, [isOpen]);
+
   // Render only on /dashboard and when subscription permits
   if (!canUseGemini || pathname !== '/dashboard') {
     return null;
