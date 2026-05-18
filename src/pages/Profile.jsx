@@ -1097,7 +1097,7 @@ const Profile = ({ onLogout }) => {
                         <p className="line-clamp-2">{formData.business_address || 'No address added'}</p>
                         {(formData.city || formData.state) && (
                           <p className="mt-1 text-xs text-white/50">
-                            {[formData.city, indianStates.find(s => s.value === formData.state)?.label].filter(Boolean).join(', ')}
+                            {[formData.city, State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state].filter(Boolean).join(', ')}
                           </p>
                         )}
                       </div>
@@ -1240,7 +1240,7 @@ const Profile = ({ onLogout }) => {
                           />
                         </div>
 
-                        {formData.country && (
+                        {formData.country === 'IN' && (
                           <input
                             type="text"
                             name="gstin"
@@ -1288,8 +1288,8 @@ const Profile = ({ onLogout }) => {
                           <div className="space-y-1.5">
                             <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">State</label>
                             <Select
-                              options={indianStates}
-                              value={indianStates.find(s => s.value === formData.state) || null}
+                              options={State.getStatesOfCountry(formData.country).map(state => ({ value: state.isoCode, label: state.name }))}
+                              value={formData.state ? { value: formData.state, label: State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state } : null}
                               onChange={(option) => setFormData(prev => ({ ...prev, state: option.value, city: '' }))}
                               isDisabled={!isEditing || updateProfileMutation.isPending}
                               styles={customSelectStyles}
@@ -1301,7 +1301,7 @@ const Profile = ({ onLogout }) => {
                           <div className="space-y-1.5">
                             <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">City</label>
                             <Select
-                              options={(citiesByState[formData.state] || []).map(c => ({ value: c, label: c }))}
+                              options={City.getCitiesOfState(formData.country, formData.state).map(c => ({ value: c.name, label: c.name }))}
                               value={formData.city ? { value: formData.city, label: formData.city } : null}
                               onChange={(option) => setFormData(prev => ({ ...prev, city: option.value }))}
                               isDisabled={!isEditing || !formData.state || updateProfileMutation.isPending}
