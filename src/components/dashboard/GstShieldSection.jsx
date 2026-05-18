@@ -24,10 +24,10 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
   const gst = data || {};
   
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '{getCurrencySymbol()}0';
-    if (value >= 100000) return `$${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
-    if (value >= 1000) return `$${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
-    return `$${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
+    if (!value) return `${getCurrencySymbol()}0`;
+    if (value >= 100000) return `${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
+    return `${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
   };
 
   const turnoverPercent = gst.turnover_percent || 0;

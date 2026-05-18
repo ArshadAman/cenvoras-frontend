@@ -41,10 +41,10 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   const restockItems = restockData.predictions || [];
 
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '{getCurrencySymbol()}0';
-    if (value >= 100000) return `$${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
-    if (value >= 1000) return `$${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
-    return `$${getCurrencySymbol()}${Math.round(value).toLocaleString('en-IN')}`;
+    if (!value) return `${getCurrencySymbol()}0`;
+    if (value >= 100000) return `${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
+    return `${getCurrencySymbol()}${Math.round(value).toLocaleString('en-IN')}`;
   };
 
   const TrendIcon = salesForecast.trend === 'growing' ? ArrowTrendingUpIcon :
@@ -149,7 +149,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                     fontSize={9} 
                     tickLine={false} 
                     axisLine={false}
-                    tickFormatter={(val) => `$${getCurrencySymbol()}${(val/1000).toFixed(0)}K`}
+                    tickFormatter={(val) => `${getCurrencySymbol()}${(val/1000).toFixed(0)}K`}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -158,7 +158,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                       borderRadius: '8px',
                       fontSize: '12px'
                     }}
-                    formatter={(value) => [`$${getCurrencySymbol()}${Math.round(value).toLocaleString()}`, 'Predicted']}
+                    formatter={(value) => [`${getCurrencySymbol()}${Math.round(value).toLocaleString()}`, 'Predicted']}
                     labelFormatter={(label) => label}
                   />
                   <ReferenceLine 
