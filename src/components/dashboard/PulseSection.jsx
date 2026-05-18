@@ -44,7 +44,7 @@ function UdhaarModal({ isOpen, onClose }) {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <UserGroupIcon className="w-6 h-6 text-orange-400" />
-              Ledger Balances
+              Udhaar
             </h2>
             <p className="text-xs text-gray-500 mt-1">List of customers with outstanding balances</p>
           </div>
@@ -193,7 +193,7 @@ export default function PulseSection({ data, isLoading }) {
       color: pulse.net_profit_today >= 0 ? 'emerald' : 'red',
     },
     {
-      label: 'Ledger Balances',
+      label: 'Udhaar',
       value: formatCurrency(liveReceivables || pulse.total_receivables),
       subtitle: (
         <div className="flex justify-between items-center w-full">
