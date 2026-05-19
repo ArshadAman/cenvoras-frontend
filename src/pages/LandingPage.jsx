@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
-import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { formatCurrency } from '../utils/currency';
 
 // Hook for scroll animations
 const useScrollAnimation = () => {
@@ -409,6 +409,7 @@ export default function LandingPage() {
                const amount = isFree ? 0 : getCyclePrice(plan.monthlyPrice, selectedCycle);
                const originalAmount = isFree ? 0 : getOriginalCyclePrice(plan.originalMonthlyPrice, selectedCycle);
                const showOriginal = originalAmount > amount;
+               const totalDiscountPercent = isFree ? 0 : Math.round((1 - amount / originalAmount) * 100);
 
                return (
                <div
@@ -418,19 +419,24 @@ export default function LandingPage() {
                  {plan.highlight ? (
                    <>
                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 to-purple-500"></div>
-                     <div className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-wider uppercase mb-2">{plan.highlight}</div>
+                     <div className="mb-4 mt-1">
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-widest uppercase bg-gradient-to-r from-cyan-500/25 to-purple-500/25 border border-cyan-400/40 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.25)] select-none">
+                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                         {plan.highlight}
+                       </span>
+                     </div>
                    </>
                  ) : null}
                  <h3 className="text-xl font-semibold mb-2 text-white">{plan.name}</h3>
                  <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
                  <div className="mb-2 flex items-end gap-2">
-                   <p className="text-3xl font-bold text-white">{getCurrencySymbol()}{formatCurrency(amount)}</p>
+                   <p className="text-3xl font-bold text-white">{formatCurrency(amount)}</p>
                    <span className="pb-1 text-base font-normal text-gray-500">/{isFree ? 'forever' : selectedCycle.duration}</span>
                  </div>
                  {showOriginal ? (
                    <p className="mb-2 text-sm text-gray-500">
-                     <span className="line-through">{getCurrencySymbol()}{formatCurrency(originalAmount)}</span>
-                     <span className="ml-2 text-emerald-300">{selectedCycle.discount ? `${Math.round(selectedCycle.discount * 100)}% off` : 'Discounted'}</span>
+                     <span className="line-through">{formatCurrency(originalAmount)}</span>
+                     <span className="ml-2 text-emerald-300">{totalDiscountPercent}% off</span>
                    </p>
                  ) : null}
                  <p className="mb-6 text-xs uppercase tracking-wider text-gray-500">{plan.billingText || `Trial: ${plan.trialDays} days`}</p>
