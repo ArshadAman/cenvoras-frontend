@@ -123,6 +123,15 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
               {...field}
               value={inputValue}
               onChange={handleInputChange}
+              onFocus={() => {
+                const query = (inputValue || "").trim().toLowerCase();
+                const filtered = products.filter(product =>
+                  (product.name || "").toLowerCase().includes(query)
+                );
+                setFilteredProducts(filtered);
+                setShowDropdown(filtered.length > 0);
+              }}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               placeholder="Product name"
               className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
@@ -132,7 +141,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
       </Field>
       {showDropdown && (
         <div className="absolute z-10 bg-[#1a1a1a] border border-white/10 rounded-md shadow-lg w-full max-h-40 overflow-y-auto mt-1">
-          {filteredProducts.map(product => (
+          {filteredProducts.slice(0, 50).map(product => (
             <div
               key={product.id}
               className="px-3 py-2 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0"
