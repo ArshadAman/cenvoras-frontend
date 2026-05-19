@@ -49,11 +49,39 @@ const INDIAN_STATES = [
   { code: "38", name: "Ladakh" }
 ];
 
+// Recursive helper to parse nested error details from the backend
+const parseErrorDetails = (details) => {
+  if (!details) return null;
+  if (typeof details === 'string') return details;
+  if (Array.isArray(details)) {
+    for (const item of details) {
+      if (item) {
+        const parsed = parseErrorDetails(item);
+        if (parsed) return parsed;
+      }
+    }
+  } else if (typeof details === 'object') {
+    for (const key of Object.keys(details)) {
+      const value = details[key];
+      const parsed = parseErrorDetails(value);
+      if (parsed) {
+        // If the key is numeric (like index in an items array), omit it from the prefix
+        return isNaN(Number(key)) ? `${key}: ${parsed}` : parsed;
+      }
+    }
+  }
+  return null;
+};
+
 // Product Autocomplete Component - Dark Theme
 function ProductAutocomplete({ idx, values, setFieldValue, products }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product_name || "");
+
+  useEffect(() => {
+    setInputValue(values.items[idx]?.product_name || "");
+  }, [values.items[idx]?.product_name]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product_name`, product.name);
@@ -132,6 +160,10 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
   const [filteredVendors, setFilteredVendors] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.vendor_name || "");
+
+  useEffect(() => {
+    setInputValue(values.vendor_name || "");
+  }, [values.vendor_name]);
 
   const selectVendor = (vendor) => {
     setFieldValue("vendor_name", vendor.name || "");
@@ -438,11 +470,9 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
               onClose();
             } catch (error) {
               console.error('Error saving purchase bill:', error);
-              const details = error?.details;
-              if (details && typeof details === 'object') {
-                const firstField = Object.keys(details)[0];
-                const firstMessage = Array.isArray(details[firstField]) ? details[firstField][0] : details[firstField];
-                toast.error(`Error saving purchase bill: ${firstField} - ${firstMessage}`);
+              const parsedError = parseErrorDetails(error?.details);
+              if (parsedError) {
+                toast.error(`Error saving purchase bill: ${parsedError}`);
               } else {
                 toast.error(`Error saving purchase bill: ${error.message}`);
               }
