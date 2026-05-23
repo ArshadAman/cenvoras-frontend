@@ -1857,9 +1857,7 @@ export default function SalesForm({
                   )}
                   <button
                     type="button"
-                    onClick={() => {
-                        handleBeforeClose();
-                    }}
+                    onClick={onClose}
                     className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-[14px] transition-colors font-medium text-sm focus:ring-2 focus:ring-red-500/50 focus:outline-none"
                   >
                     Cancel
