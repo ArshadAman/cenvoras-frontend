@@ -94,7 +94,7 @@ function App() {
             localStorage.removeItem('refresh');
             localStorage.removeItem('role');
             localStorage.removeItem('activeSession');
-            setIsAuthenticated(false);
+            window.location.href = '/';
           }} /> : <Navigate to="/" replace />}
         />
         <Route
@@ -260,7 +260,7 @@ function App() {
             localStorage.removeItem('refresh');
             localStorage.removeItem('role');
             localStorage.removeItem('activeSession');
-            setIsAuthenticated(false);
+            window.location.href = '/';
           }} /> : <Navigate to="/" replace />}
         />
         <Route

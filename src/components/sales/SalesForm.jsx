@@ -830,7 +830,7 @@ export default function SalesForm({
   });
 
   const handleBeforeClose = async () => {
-    if (formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
+    if (isEdit && formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
       const values = formikRef.current.values || {};
       const cleanedItems = (values.items || []).filter((item) =>
         (item?.product && item.product.trim() !== '') || item?.product_id
