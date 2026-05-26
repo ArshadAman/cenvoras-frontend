@@ -32,6 +32,13 @@ import { getUserRole } from "../utils/auth";
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('role');
+    localStorage.removeItem('activeSession');
+    window.location.href = '/';
+  };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({
     open: false,
@@ -364,14 +371,12 @@ export default function Layout({ children, onLogout }) {
           </Link>
 
           {/* Sign Out */}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="w-full px-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2"
-            >
-              Sign Out
-            </button>
-          )}
+          <button
+            onClick={handleSignOut}
+            className="w-full px-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2"
+          >
+            Sign Out
+          </button>
         </div>
       </aside>
 
@@ -521,14 +526,12 @@ export default function Layout({ children, onLogout }) {
                 <span className="text-sm flex-1">Coming Soon</span>
                 <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
               </Link>
-              {onLogout && (
-                <button
-                  onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
-                  className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
-                >
-                  Sign Out
-                </button>
-              )}
+              <button
+                onClick={() => { handleSignOut(); setIsMobileMenuOpen(false); }}
+                className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </div>
