@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../../components/Layout';
 import {
   EnvelopeIcon, ChatBubbleLeftIcon, QrCodeIcon, CloudArrowDownIcon, CloudArrowUpIcon,
   KeyIcon, CheckCircleIcon, XCircleIcon, BellAlertIcon, CameraIcon,
@@ -668,7 +667,7 @@ export default function IntegrationsPage() {
   const activeTabConfig = TABS.find((tab) => tab.id === activeTab);
 
   return (
-    <Layout>
+    <>
       <div className="relative p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-fade-up">
         <div className="pointer-events-none absolute inset-0 opacity-80">
           <div className="absolute -top-8 -left-12 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -745,6 +744,6 @@ export default function IntegrationsPage() {
           </section>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

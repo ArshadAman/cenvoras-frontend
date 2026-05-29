@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import Layout from '../components/Layout';
 import Loader from '../components/Loader';
 import { 
   UserIcon, 
@@ -711,19 +710,19 @@ const Profile = ({ onLogout }) => {
 
   if (isLoading) {
     return (
-      <Layout onLogout={onLogout}>
+      <>
         <div className="page-bg">
           <div className="container mx-auto px-4 py-8">
             <Loader />
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (error) {
     return (
-      <Layout onLogout={onLogout}>
+      <>
         <div className="page-bg">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto">
@@ -736,7 +735,7 @@ const Profile = ({ onLogout }) => {
             </div>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -834,7 +833,7 @@ const Profile = ({ onLogout }) => {
   const emailChanged = !!updatedEmail && updatedEmail !== originalEmail;
 
   return (
-    <Layout onLogout={onLogout}>
+    <>
       <div className="page-bg relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 opacity-70">
           <div className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -1353,7 +1352,7 @@ const Profile = ({ onLogout }) => {
           onClose={() => setIsPasswordModalOpen(false)} 
         />
       </div>
-    </Layout>
+    </>
   );
 };
 

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTeamMembers, createTeamMember, deleteTeamMember, updateTeamMember } from '../../api/team';
 import { getUserProfile } from '../../api/users';
-import Layout from '../../components/Layout';
 import { UserPlusIcon, TrashIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, CurrencyDollarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 export default function TeamSettings() {
@@ -130,7 +129,7 @@ export default function TeamSettings() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -349,6 +348,6 @@ export default function TeamSettings() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

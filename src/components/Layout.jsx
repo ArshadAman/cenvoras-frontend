@@ -26,7 +26,9 @@ import {
   ReceiptPercentIcon,
   BuildingLibraryIcon,
   ShieldCheckIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  BuildingOfficeIcon,
+  BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 
@@ -140,6 +142,18 @@ export default function Layout({ children, onLogout }) {
         { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
         { path: "/gst", label: country === 'IN' ? "GST Dashboard" : "Tax & VAT", icon: ReceiptPercentIcon, roles: [] },
         { path: "/gst-hsn-guide", label: country === 'IN' ? "HSN & GST Guide" : "Tax Codes Guide", icon: BookOpenIcon, roles: [] },
+      ]
+    },
+    {
+      title: "HR & Payroll",
+      items: [
+        { path: "/hr/dashboard", label: "HR Dashboard", icon: ChartBarIcon, roles: [] },
+        { path: "/hr/departments", label: "Departments", icon: BuildingOfficeIcon, roles: [] },
+        { path: "/hr/designations", label: "Designations", icon: BriefcaseIcon, roles: [] },
+        { path: "/hr/employees", label: "Employees", icon: UsersIcon, roles: [] },
+        { path: "/hr/attendance", label: "Attendance", icon: ClipboardDocumentListIcon, roles: [] },
+        { path: "/hr/leave-applications", label: "Leaves", icon: DocumentTextIcon, roles: [] },
+        { path: "/hr/payroll-runs", label: "Payroll", icon: BanknotesIcon, roles: [] },
       ]
     },
     {

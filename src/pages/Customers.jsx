@@ -5,7 +5,6 @@ import CustomerDetailsModal from "../components/customers/CustomerDetailsModal";
 import CustomerDeleteDialog from "../components/customers/CustomerDeleteDialog";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Layout from "../components/Layout";
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Customers() {
@@ -25,7 +24,7 @@ export default function Customers() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="pointer-events-none absolute inset-0 opacity-80">
           <div className="absolute -top-6 -left-10 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
@@ -92,6 +91,6 @@ export default function Customers() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-    </Layout>
+    </>
   );
 }

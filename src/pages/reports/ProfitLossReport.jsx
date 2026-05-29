@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProfitLoss } from "../../api/reports";
-import Layout from "../../components/Layout";
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from "react-router-dom";
 import { format, subDays } from "date-fns";
@@ -20,7 +19,7 @@ export default function ProfitLossReport() {
   const summary = data?.summary || {};
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <Link to="/reports" className="flex items-center text-gray-400 hover:text-white mb-6">
             <ArrowLeftIcon className="w-4 h-4 mr-2" /> Back to Reports
@@ -109,6 +108,6 @@ export default function ProfitLossReport() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

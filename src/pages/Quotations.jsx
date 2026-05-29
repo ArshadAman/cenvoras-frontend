@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import Layout from '../components/Layout';
 import SalesForm from '../components/sales/SalesForm';
 import SalesDetailsModal from '../components/sales/SalesDetailsModal';
 import QuotationTable from '../components/quotation/QuotationTable';
@@ -33,7 +32,7 @@ export default function Quotations() {
     : {};
 
   return (
-    <Layout>
+    <>
       <div className="p-2 sm:p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 sm:px-0">
           <div>
@@ -86,6 +85,6 @@ export default function Quotations() {
         businessInfo={businessInfo}
         documentType="quotation"
       />
-    </Layout>
+    </>
   );
 }

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import SalesOrderTable from "../components/sales/SalesOrderTable";
 import SalesOrderForm from "../components/sales/SalesOrderForm";
-import Layout from "../components/Layout";
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -36,7 +35,7 @@ export default function SalesOrderList() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-2 sm:p-6 md:p-10 space-y-8 animate-fade-up">
         
         {/* Header */}
@@ -76,6 +75,6 @@ export default function SalesOrderList() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }

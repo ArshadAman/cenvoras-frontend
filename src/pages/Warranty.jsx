@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/api';
-import Layout from '../components/Layout';
 import { ShieldCheckIcon, ExclamationTriangleIcon, ClockIcon, XCircleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const STATUS_CONFIG = {
@@ -26,7 +25,7 @@ export default function Warranty() {
   const filteredItems = filter === 'all' ? items : items.filter(i => i.status === filter);
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div>
@@ -193,6 +192,6 @@ export default function Warranty() {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

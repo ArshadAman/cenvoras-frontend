@@ -1,5 +1,4 @@
 import React, { useState } from "react"; // Fixed import path
-import Layout from "../../components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { getStockJournals } from "../../api/stock_journal";
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
@@ -40,7 +39,7 @@ export default function StockJournalList() {
   const journals = Array.isArray(journalsResult) ? journalsResult : journalsResult?.data || journalsResult?.results || [];
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex justify-between items-center">
           <div>
@@ -153,6 +152,6 @@ export default function StockJournalList() {
       />
       
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }

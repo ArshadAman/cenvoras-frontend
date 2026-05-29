@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Layout from "../components/Layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDebitNotes, deleteDebitNote } from "../api/gst";
 import { ArrowUturnRightIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -48,7 +47,7 @@ export default function DebitNoteList() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex justify-between items-center">
           <div>
@@ -124,7 +123,7 @@ export default function DebitNoteList() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }
 

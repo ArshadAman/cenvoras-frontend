@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/api';
-import Layout from '../../components/Layout';
 import { ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { toast, ToastContainer } from 'react-toastify';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -63,7 +62,7 @@ export default function BankReconciliation() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex justify-between items-center">
           <div>
@@ -181,6 +180,6 @@ export default function BankReconciliation() {
         )}
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
       </div>
-    </Layout>
+    </>
   );
 }
