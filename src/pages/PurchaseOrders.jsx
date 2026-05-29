@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import Layout from '../components/Layout'
 import { listPurchaseOrders, deletePurchaseOrder, convertPurchaseOrder } from '../api/purchase_orders'
 import PurchaseOrderTable from '../components/purchase/PurchaseOrderTable'
 import PurchaseOrderForm from '../components/purchase/PurchaseOrderForm'
@@ -70,21 +69,21 @@ export default function PurchaseOrders() {
 
   if (error) {
     return (
-      <Layout>
+      <>
         <div className="p-6">
           <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4">
             <h3 className="text-red-400 font-semibold">Error loading purchase orders</h3>
             <p className="text-red-300 text-sm mt-1">{error?.message || 'Unknown error'}</p>
           </div>
         </div>
-      </Layout>
+      </>
     )
   }
 
   const orders = data?.data || []
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -124,6 +123,6 @@ export default function PurchaseOrders() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   )
 }

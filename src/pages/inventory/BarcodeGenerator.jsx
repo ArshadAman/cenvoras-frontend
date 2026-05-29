@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from '../../api/inventory';
-import Layout from '../../components/Layout';
 import Barcode from 'react-barcode';
 import { useReactToPrint } from 'react-to-print';
 import { PrinterIcon } from '@heroicons/react/24/outline';
@@ -25,7 +24,7 @@ export default function BarcodeGenerator() {
     });
 
     return (
-        <Layout>
+        <>
             <div className="p-6 md:p-10 space-y-8 animate-fade-up border-white/5">
                 <div className="flex justify-between items-center">
                     <div>
@@ -131,6 +130,6 @@ export default function BarcodeGenerator() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 }

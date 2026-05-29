@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import Layout from '../components/Layout'
 import PublicNavbar from '../components/PublicNavbar'
 import api from '../api/api'
 import { toast } from 'react-toastify'
@@ -253,7 +252,7 @@ export default function GSTAndHSNGuide() {
   );
 
   if (isAuthenticated) {
-    return <Layout>{content}</Layout>;
+    return <>{content}</>;
   }
 
   return (

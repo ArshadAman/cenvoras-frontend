@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
-import Layout from "../../components/Layout";
 import { 
   ChartBarIcon, 
   PresentationChartLineIcon, 
@@ -118,7 +117,7 @@ export default function ReportsDashboard() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <h1 className="text-3xl font-bold tracking-tight text-white">Reports & MIS</h1>
@@ -178,6 +177,6 @@ export default function ReportsDashboard() {
           description={upgradeModal.description}
         />
       </div>
-    </Layout>
+    </>
   );
 }

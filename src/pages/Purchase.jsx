@@ -6,7 +6,6 @@ import PurchaseDeleteDialog from "../components/purchase/PurchaseDeleteDialog";
 import PurchaseUploadCsv from "../components/purchase/PurchaseUploadCsv";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Layout from "../components/Layout";
 import { ShoppingBagIcon, DocumentArrowUpIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Purchase() {
@@ -53,7 +52,7 @@ export default function Purchase() {
   }, [showForm, showDetails, deleteBill, showUpload]);
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -121,6 +120,6 @@ export default function Purchase() {
         <PurchaseUploadCsv onClose={() => setShowUpload(false)} />
       )}
       <ToastContainer position="top-right" />
-    </Layout>
+    </>
   );
 }

@@ -1,5 +1,4 @@
 import React from "react";
-import Layout from "../components/Layout";
 import { SparklesIcon, BeakerIcon, ArrowTrendingUpIcon, ShieldCheckIcon, CubeTransparentIcon, TruckIcon, BuildingLibraryIcon } from "@heroicons/react/24/outline";
 import Seo from "../components/Seo";
 
@@ -50,7 +49,7 @@ export default function ComingSoon() {
   ];
 
   return (
-    <Layout>
+    <>
       <Seo
         title="Coming Soon"
         description="Preview upcoming Cenvora features for billing, inventory, GST, and finance workflows."
@@ -123,6 +122,6 @@ export default function ComingSoon() {
           </button>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

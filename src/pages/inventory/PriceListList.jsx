@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPriceLists, deletePriceList } from "../../api/inventory";
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
 import { toast } from "react-toastify";
 import { PlusIcon, TrashIcon, PencilIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { format } from "date-fns";
@@ -31,7 +30,7 @@ export default function PriceListList() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -93,6 +92,6 @@ export default function PriceListList() {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

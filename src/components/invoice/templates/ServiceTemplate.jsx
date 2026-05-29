@@ -205,7 +205,7 @@ const ServiceTemplate = forwardRef(({
       
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: built for Modern Businesses<br />
+          Made with Cenvora: Built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProductBatches } from '../../api/inventory';
-import Layout from '../../components/Layout';
 import Pagination from '../../components/common/Pagination';
 import { CubeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -31,7 +30,7 @@ export default function BatchListPage() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div>
@@ -117,6 +116,6 @@ export default function BatchListPage() {
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </div>
-    </Layout>
+    </>
   );
 }

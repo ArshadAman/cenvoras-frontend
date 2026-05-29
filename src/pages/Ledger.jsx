@@ -9,7 +9,6 @@ import BulkDeleteModal from '../components/BulkDeleteModal';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api/customers';
 import { bulkDeleteLedgerEntries, getOverdueInvoices, getCustomerBalanceReconciliation } from '../api/ledger';
-import Layout from '../components/Layout';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon, UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
@@ -101,7 +100,7 @@ const Ledger = () => {
   const labelClass = "block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide";
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -354,7 +353,7 @@ const Ledger = () => {
       />
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 };
 

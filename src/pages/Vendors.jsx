@@ -5,7 +5,6 @@ import VendorDetailsModal from "../components/vendors/VendorDetailsModal";
 import VendorDeleteDialog from "../components/vendors/VendorDeleteDialog";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Layout from "../components/Layout";
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Vendors() {
@@ -25,7 +24,7 @@ export default function Vendors() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="pointer-events-none absolute inset-0 opacity-80">
           <div className="absolute -top-8 -left-8 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
@@ -92,6 +91,6 @@ export default function Vendors() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-    </Layout>
+    </>
   );
 }

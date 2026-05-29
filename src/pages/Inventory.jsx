@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import Layout from "../components/Layout";
 import InventoryTable from "../components/inventory/InventoryTable";
 import ProductForm from "../components/inventory/ProductForm";
 import ProductDetailsModal from "../components/inventory/ProductDetailsModal";
@@ -65,7 +64,7 @@ export default function Inventory() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="pointer-events-none absolute inset-0 opacity-80">
           <div className="absolute -top-10 left-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -168,6 +167,6 @@ export default function Inventory() {
           onClose={() => setShowBatchSplit(false)}
         />
       )}
-    </Layout>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import Layout from './components/Layout'
 import ContactUs from './pages/ContactUs'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
@@ -41,6 +42,20 @@ import AIChatWidget from './components/AIChatWidget'
 import TeamSettings from './pages/settings/TeamSettings'
 import Warranty from './pages/Warranty'
 
+// HR Pages
+import Departments from './pages/hr/Departments'
+import Designations from './pages/hr/Designations'
+import Employees from './pages/hr/Employees'
+import Attendance from './pages/hr/Attendance'
+import LeaveTypes from './pages/hr/LeaveTypes'
+import LeaveBalances from './pages/hr/LeaveBalances'
+import LeaveApplications from './pages/hr/LeaveApplications'
+import SalaryStructures from './pages/hr/SalaryStructures'
+import SalaryAssignments from './pages/hr/SalaryAssignments'
+import PayrollRuns from './pages/hr/PayrollRuns'
+import Payslips from './pages/hr/Payslips'
+import HRDashboard from './pages/hr/HRDashboard'
+
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
 import GSTAndHSNGuide from './pages/GSTAndHSNGuide'
@@ -55,6 +70,14 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 const getToken = () => !!localStorage.getItem('token')
+
+const AppLayout = () => {
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  )
+}
 
 function App() {
   // Persist login across refresh as long as a token exists.
@@ -87,6 +110,9 @@ function App() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sitemap" element={<Sitemap />} />
+
+        {/* --- PROTECTED ROUTES WITH LAYOUT --- */}
+        <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/" replace />}>
         <Route
           path="/dashboard"
           element={isAuthenticated ? <Dashboard onLogout={() => {
@@ -230,6 +256,55 @@ function App() {
           path="/warranty"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Warranty /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
+        {/* HR Routes */}
+        <Route
+          path="/hr/departments"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Departments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/designations"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Designations /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/employees"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Employees /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/attendance"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Attendance /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/leave-types"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><LeaveTypes /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/leave-balances"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><LeaveBalances /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/leave-applications"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><LeaveApplications /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/salary-structures"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><SalaryStructures /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/salary-assignments"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><SalaryAssignments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/payroll-runs"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/payslips"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Payslips /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/dashboard"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRDashboard /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
         <Route path="/gst-hsn-guide" element={<GSTAndHSNGuide />} />
         <Route
           path="/audit-logs"
@@ -277,6 +352,7 @@ function App() {
           path="*"
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />}
         />
+      </Route>
       </Routes>
       {isAuthenticated && <AIChatWidget />}
     </Router>

@@ -14,7 +14,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
 import api from '../api/api'
-import Layout from '../components/Layout'
 
 // Smart Dashboard Components
 import PulseSection from '../components/dashboard/PulseSection'
@@ -240,7 +239,7 @@ export default function Dashboard({ onLogout }) {
   }), [mlData, can]);
 
   return (
-    <Layout onLogout={onLogout}>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         
         {/* Header */}
@@ -512,6 +511,6 @@ export default function Dashboard({ onLogout }) {
         </section>
 
       </div>
-    </Layout>
+    </>
   )
 }

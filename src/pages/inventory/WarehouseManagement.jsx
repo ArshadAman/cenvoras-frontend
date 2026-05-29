@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { getWarehouses, createWarehouse, getStockPoints } from "../../api/inventory";
 import { updateWarehouse, deleteWarehouse } from "../../api/reports";
-import Layout from "../../components/Layout";
 import {
   BuildingStorefrontIcon,
   PlusIcon,
@@ -191,7 +190,7 @@ export default function WarehouseManagement() {
   const expandedWarehouseName = warehouseList.find((w) => w.id === expandedWarehouse)?.name;
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -460,6 +459,6 @@ export default function WarehouseManagement() {
         warehouseName={expandedWarehouseName}
         onClose={() => setViewBatch(null)}
       />
-    </Layout>
+    </>
   );
 }

@@ -8,7 +8,6 @@ import SalesDeleteDialog from "../components/sales/SalesDeleteDialog";
 import SalesUploadCsv from "../components/sales/SalesUploadCsv";
 import SalesSummary from "../components/sales/SalesSummary";
 import "react-toastify/dist/ReactToastify.css";
-import Layout from "../components/Layout";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { getUserProfile, patchUserProfile } from "../api/users";
 
@@ -134,7 +133,7 @@ export default function Sales({ documentType = "invoice" }) {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-2 sm:p-6 md:p-10 space-y-8 animate-fade-up">
         
         {/* Header */}
@@ -242,6 +241,6 @@ export default function Sales({ documentType = "invoice" }) {
           onClose={() => setShowUpload(false)}
         />
       )}
-    </Layout>
+    </>
   );
 }

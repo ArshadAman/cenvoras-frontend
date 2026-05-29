@@ -1,10 +1,9 @@
 import React from 'react';
-import Layout from '../components/Layout';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 
 export default function TrialBalance() {
   return (
-    <Layout>
+    <>
       <div className="page-bg min-h-screen p-6 flex items-center justify-center">
         <div className="bento-card p-12 text-center max-w-lg w-full">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-cyan-500/10 flex items-center justify-center">
@@ -23,6 +22,6 @@ export default function TrialBalance() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

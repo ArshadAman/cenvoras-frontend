@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAuditLogs } from "../../api/audit";
-import Layout from "../../components/Layout";
 import { 
     ClockIcon, 
     UserIcon, 
@@ -120,7 +119,7 @@ export default function AuditLogList() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
@@ -203,6 +202,6 @@ export default function AuditLogList() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

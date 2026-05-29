@@ -1,7 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getShortageReport } from "../../api/reports";
-import Layout from "../../components/Layout";
 import { ArrowLeftIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Link } from "react-router-dom";
 
@@ -14,7 +13,7 @@ export default function ShortageReport() {
   const results = data?.results || [];
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <Link to="/reports" className="flex items-center text-gray-400 hover:text-white mb-6">
             <ArrowLeftIcon className="w-4 h-4 mr-2" /> Back to Reports
@@ -92,6 +91,6 @@ export default function ShortageReport() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getStockLedger } from '../../api/reports';
 import { getProducts } from '../../api/inventory';
-import Layout from '../../components/Layout';
 import { DocumentTextIcon, ArrowDownCircleIcon, ArrowUpCircleIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 export default function StockLedgerReport() {
@@ -34,7 +33,7 @@ export default function StockLedgerReport() {
     }, [ledgerData]);
 
     return (
-        <Layout>
+        <>
             <div className="p-6 md:p-10 space-y-8 animate-fade-up">
                 <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
                   <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
@@ -133,6 +132,6 @@ export default function StockLedgerReport() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 }

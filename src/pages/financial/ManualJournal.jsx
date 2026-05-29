@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import Layout from '../../components/Layout';
 import api from '../../api/api';
 import { PlusIcon, TrashIcon, ArrowLeftIcon, BookOpenIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -91,7 +90,7 @@ export default function ManualJournal() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-6 max-w-5xl mx-auto animate-fade-up">
         {/* Back navigation */}
         <Link
@@ -276,6 +275,6 @@ export default function ManualJournal() {
           </div>
         </form>
       </div>
-    </Layout>
+    </>
   );
 }

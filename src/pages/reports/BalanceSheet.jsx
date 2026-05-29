@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
 import { repairRoundOffEntries } from "../../api/ledger";
@@ -165,7 +164,7 @@ export default function BalanceSheet() {
   });
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
         {/* Back to Reports */}
         <Link
@@ -389,6 +388,6 @@ export default function BalanceSheet() {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

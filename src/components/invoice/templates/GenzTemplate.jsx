@@ -95,9 +95,9 @@ const GenzTemplate = forwardRef(({
                     if(col.id==='serial') val = idx+1;
                     else if(col.id==='description') val = <div className="py-1"><p className="font-bold text-gray-900 text-base">{item.product_name || item.product}</p><p className="text-xs text-gray-400 mt-0.5">{item.hsn_sac_code ? `{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} ${item.hsn_sac_code}` : ''}</p></div>;
                     else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-3 py-1 rounded-full">{item.quantity}</span>;
-                    else if(col.id==='price') val = `$${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN')}`;
+                    else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN')}`;
                     else if(col.id==='tax') val = `${item.tax||0}%`;
-                    else if(col.id==='amount') val = <span className="font-bold">${getCurrencySymbol()}${(item.quantity * item.price).toLocaleString('en-IN')}</span>;
+                    else if(col.id==='amount') val = <span className="font-bold">{getCurrencySymbol()}{(item.quantity * item.price).toLocaleString('en-IN')}</span>;
                     else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                     return <td key={col.id} className="px-6 py-1.5 align-middle text-gray-800">{val}</td>;
                   })}
@@ -161,7 +161,7 @@ const GenzTemplate = forwardRef(({
         
         {showWatermarkFooter && (
           <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-            Made with Cenvora: built for Modern Businesses<br />
+            Made with Cenvora: Built for Modern Businesses<br />
             <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
           </div>
         )}

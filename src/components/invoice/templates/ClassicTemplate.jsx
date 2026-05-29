@@ -375,10 +375,10 @@ const InvoicePreview = forwardRef(({
                       case 'quantity': value = qty; break;
                       case 'free_qty': value = item.free_quantity || 0; break;
                       case 'unit': value = item.unit || 'pcs'; break;
-                      case 'price': value = `$${getCurrencySymbol()}${price.toFixed(2)}`; break;
+                      case 'price': value = `${getCurrencySymbol()}${price.toFixed(2)}`; break;
                       case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
                       case 'tax': value = `${tax}%`; break;
-                      case 'amount': value = `$${getCurrencySymbol()}${amount.toFixed(2)}`; break;
+                      case 'amount': value = `${getCurrencySymbol()}${amount.toFixed(2)}`; break;
                       default: value = '';
                     }
                     
@@ -580,7 +580,7 @@ const InvoicePreview = forwardRef(({
       
       {showWatermarkFooter && (
         <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
-          Made with Cenvora: built for Modern Businesses<br />
+          Made with Cenvora: Built for Modern Businesses<br />
           <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
         </div>
       )}

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import DeliveryChallanTable from "../components/sales/DeliveryChallanTable";
 import DeliveryChallanForm from "../components/sales/DeliveryChallanForm";
-import Layout from "../components/Layout";
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,7 +20,7 @@ export default function DeliveryChallanList() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         
         {/* Header */}
@@ -61,6 +60,6 @@ export default function DeliveryChallanList() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }

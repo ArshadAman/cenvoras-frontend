@@ -9,6 +9,7 @@ const MODULE_ALIASES = {
   purchases: ['purchases', 'purchase'],
   inventory: ['inventory'],
   financials: ['financials', 'finance', 'financial'],
+  hr: ['hr'],
 };
 
 function resolvePermissionLevel(permissions, moduleKey) {

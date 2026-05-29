@@ -21,7 +21,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import api from '../api/api';
-import Layout from '../components/Layout';
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 const roundTo3 = (value) => {
@@ -646,7 +645,7 @@ export default function Payments({ onLogout }) {
     .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
   
   return (
-    <Layout onLogout={onLogout}>
+    <>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
         
         {/* Header */}
@@ -912,6 +911,6 @@ export default function Payments({ onLogout }) {
           document.body
         )}
       </div>
-    </Layout>
+    </>
   );
 }

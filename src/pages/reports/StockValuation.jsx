@@ -1,7 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getStockValuation } from "../../api/reports";
-import Layout from "../../components/Layout";
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from "react-router-dom";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -13,7 +12,7 @@ export default function StockValuation() {
   });
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <Link to="/reports" className="flex items-center text-gray-400 hover:text-white mb-6">
             <ArrowLeftIcon className="w-4 h-4 mr-2" /> Back to Reports
@@ -64,6 +63,6 @@ export default function StockValuation() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
