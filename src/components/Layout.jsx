@@ -28,7 +28,9 @@ import {
   ShieldCheckIcon,
   ChatBubbleLeftRightIcon,
   BuildingOfficeIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  ClockIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 
@@ -129,7 +131,6 @@ export default function Layout({ children, onLogout }) {
       title: "Inventory & Logistics",
       items: [
         { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
-        { path: "/batches", label: "Batches", icon: CubeIcon, roles: [] },
         { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
         { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [], featureKey: 'warehouse', upgradePlan: 'Business', upgradeText: 'Warehouses are available on the Business plan.' },
       ]
@@ -148,12 +149,17 @@ export default function Layout({ children, onLogout }) {
       title: "HR & Payroll",
       items: [
         { path: "/hr/dashboard", label: "HR Dashboard", icon: ChartBarIcon, roles: [] },
-        { path: "/hr/departments", label: "Departments", icon: BuildingOfficeIcon, roles: [] },
-        { path: "/hr/designations", label: "Designations", icon: BriefcaseIcon, roles: [] },
         { path: "/hr/employees", label: "Employees", icon: UsersIcon, roles: [] },
-        { path: "/hr/attendance", label: "Attendance", icon: ClipboardDocumentListIcon, roles: [] },
-        { path: "/hr/leave-applications", label: "Leaves", icon: DocumentTextIcon, roles: [] },
-        { path: "/hr/payroll-runs", label: "Payroll", icon: BanknotesIcon, roles: [] },
+        { path: "/hr/attendance", label: "Attendance", icon: ClockIcon, roles: [] },
+        { path: "/hr/leave-applications", label: "Leave Applications", icon: CalendarDaysIcon, roles: [] },
+        { path: "/hr/salary-structures", label: "Salary Structures", icon: CurrencyRupeeIcon, roles: [] },
+        { path: "/hr/salary-assignments", label: "Salary Assignments", icon: BriefcaseIcon, roles: [] }
+      ]
+    },
+    {
+      title: "Employee Portal",
+      items: [
+        { path: "/employee/portal", label: "My Portal", icon: UserIcon, roles: ['employee'] }
       ]
     },
     {
@@ -161,7 +167,7 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/profile", label: "Profile", icon: UserIcon, roles: [] },
         { path: "/settings/team", label: "Team Settings", icon: UsersIcon, roles: ['admin'] },
-        { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: [], featureKey: 'integrations', upgradePlan: 'Pro', upgradeText: 'Business tools and integrations unlock on Pro.' },
+        { path: "/integrations", label: "Business Tools", icon: Cog6ToothIcon, roles: ['admin', 'manager'], featureKey: 'integrations', upgradePlan: 'Pro', upgradeText: 'Business tools and integrations unlock on Pro.' },
         { path: "/audit-logs", label: "Audit Logs", icon: DocumentTextIcon, roles: ['admin', 'manager'] },
       ]
     }
@@ -248,6 +254,11 @@ export default function Layout({ children, onLogout }) {
 
   // Filter structural groups by roles only; manager module permissions are shown as locked items.
   const filteredGroups = navigationGroups.map(group => {
+    // Strict role-based isolation
+    if (role === 'hr' && group.title !== 'HR & Payroll' && group.title !== 'System') return null;
+    if (role === 'employee' && group.title !== 'Employee Portal' && group.title !== 'System') return null;
+    if (role !== 'employee' && group.title === 'Employee Portal') return null;
+
     const validItems = group.items.filter(item => {
       // 1. Role Check
       if (item.roles && item.roles.length > 0 && !item.roles.includes(role)) {
@@ -257,7 +268,7 @@ export default function Layout({ children, onLogout }) {
       return true;
     });
     return { ...group, items: validItems };
-  }).filter(group => group.items.length > 0); // Hide empty groups
+  }).filter(group => group !== null && group.items.length > 0); // Hide empty groups
   
   if (!role) console.log("Layout: No role found (User might be guest or token invalid)");
 
@@ -493,6 +504,21 @@ export default function Layout({ children, onLogout }) {
                           <span className="text-sm flex-1">{item.label}</span>
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                         </button>
+                      );
+                    }
+
+                    if (item.isComingSoon) {
+                      return (
+                        <Link 
+                          key={item.label}
+                          to="/coming-soon"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={baseClass}
+                        >
+                          <Icon className="w-5 h-5 text-gray-500" />
+                          <span className="text-sm flex-1">{item.label}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">Soon</span>
+                        </Link>
                       );
                     }
 

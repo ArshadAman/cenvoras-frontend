@@ -31,6 +31,7 @@ import {
   getLatestPaymentStatus,
 } from '../api/subscription';
 import { getUserRole } from '../utils/auth';
+import { hrApi } from '../api/hr';
 
 const loadCashfreeSdk = () => {
   if (window.Cashfree) {
@@ -359,6 +360,15 @@ const Profile = ({ onLogout }) => {
     queryKey: ['subscription-latest-payment-status'],
     queryFn: getLatestPaymentStatus,
     staleTime: 30_000,
+  });
+
+  const { data: employeeData } = useQuery({
+    queryKey: ['employeeProfile'],
+    queryFn: () => hrApi.getEmployees().then(res => {
+      const emps = res?.data?.results || res?.data || [];
+      return emps[0] || null;
+    }),
+    enabled: role === 'employee'
   });
 
   const planRank = (code) => {
@@ -848,7 +858,7 @@ const Profile = ({ onLogout }) => {
                 <div className="flex items-start gap-4">
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/30 to-blue-500/20 ring-1 ring-white/20 md:h-20 md:w-20">
                     <span className="text-2xl font-semibold tracking-wide text-white md:text-3xl">{initials}</span>
-                    {profileExpiryBadge && (
+                    {isAdmin && profileExpiryBadge && (
                       <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-300/40 bg-slate-900 px-3 py-1 text-xs font-bold text-cyan-100 shadow-lg shadow-black/50">
                         {profileExpiryBadge}
                       </span>
@@ -875,7 +885,7 @@ const Profile = ({ onLogout }) => {
                     <KeyIcon className="h-4 w-4 text-cyan-300" />
                     Change Password
                   </button>
-                  {!isEditing && (
+                  {!isEditing && role !== 'employee' && (
                     <button
                       onClick={() => setIsEditing(true)}
                       className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
@@ -890,7 +900,8 @@ const Profile = ({ onLogout }) => {
 
             <div className="grid grid-cols-1 gap-7 xl:grid-cols-12">
               <aside className="space-y-6 xl:col-span-4">
-                <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
+                {isAdmin && (
+                  <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
                   <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-white">
                     <ChartBarIcon className="h-5 w-5 text-cyan-300" />
                     Account Signals
@@ -915,7 +926,9 @@ const Profile = ({ onLogout }) => {
                     </div>
                   </div>
                 </section>
+                )}
 
+                {isAdmin && (
                 <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
                   <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-white">
                     <CalendarIcon className="h-5 w-5 text-cyan-300" />
@@ -1074,6 +1087,7 @@ const Profile = ({ onLogout }) => {
                     )}
                   </div>
                 </section>
+                )}
 
                 <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
                   <h3 className="mb-4 text-base font-semibold text-white">Identity Snapshot</h3>
@@ -1086,25 +1100,29 @@ const Profile = ({ onLogout }) => {
                       <PhoneIcon className="h-4 w-4 text-cyan-300" />
                       <span>{formData.phone || 'No phone added'}</span>
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                      <BuildingOfficeIcon className="h-4 w-4 text-cyan-300" />
-                      <span className="truncate">{formData.business_name || 'No business name'}</span>
-                    </div>
-                    <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                      <MapPinIcon className="mt-0.5 h-4 w-4 text-cyan-300" />
-                      <div>
-                        <p className="line-clamp-2">{formData.business_address || 'No address added'}</p>
-                        {(formData.city || formData.state) && (
-                          <p className="mt-1 text-xs text-white/50">
-                            {[formData.city, State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state].filter(Boolean).join(', ')}
-                          </p>
-                        )}
+                    {isAdmin && (
+                      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                        <BuildingOfficeIcon className="h-4 w-4 text-cyan-300" />
+                        <span className="truncate">{formData.business_name || 'No business name'}</span>
                       </div>
-                    </div>
+                    )}
+                    {isAdmin && (
+                      <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                        <MapPinIcon className="mt-0.5 h-4 w-4 text-cyan-300" />
+                        <div>
+                          <p className="line-clamp-2">{formData.business_address || 'No address added'}</p>
+                          {(formData.city || formData.state) && (
+                            <p className="mt-1 text-xs text-white/50">
+                              {[formData.city, State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state].filter(Boolean).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </section>
 
-                {latestPayment && (
+                {isAdmin && latestPayment && (
                   <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
                     <h3 className="mb-4 text-base font-semibold text-white">Last Payment Status</h3>
                     <div className="space-y-3 text-sm text-white/75">
@@ -1139,7 +1157,9 @@ const Profile = ({ onLogout }) => {
                   </div>
 
                   <form id="profile-form" onSubmit={handleSubmit} className="space-y-7">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                    {role !== 'employee' ? (
+                      <>
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
                       <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
                         <UserIcon className="h-4 w-4" />
                         Personal Information
@@ -1207,8 +1227,33 @@ const Profile = ({ onLogout }) => {
                           />
                         </div>
                       )}
-                    </div>
+                      </div>
+                      </>
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-6 backdrop-blur-sm">
+                        <h3 className="text-lg font-semibold text-white mb-4">Employee Information</h3>
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between border-b border-white/5 pb-2">
+                            <span className="text-gray-400">Employee Code</span>
+                            <span className="text-white font-medium">{employeeData?.employee_code || "—"}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-white/5 pb-2">
+                            <span className="text-gray-400">Department</span>
+                            <span className="text-white font-medium">{employeeData?.department_name || "—"}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-white/5 pb-2">
+                            <span className="text-gray-400">Designation</span>
+                            <span className="text-white font-medium">{employeeData?.designation_name || "—"}</span>
+                          </div>
+                          <div className="flex justify-between pb-2">
+                            <span className="text-gray-400">Employment Type</span>
+                            <span className="text-white font-medium capitalize">{(employeeData?.employment_type || "—").replace('_', ' ')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
+                    {isAdmin && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
                       <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
                         <BuildingOfficeIcon className="h-4 w-4" />
@@ -1320,8 +1365,9 @@ const Profile = ({ onLogout }) => {
                         placeholder="Business address"
                       />
                     </div>
+                    )}
 
-                    {isEditing && (
+                    {isEditing && role !== 'employee' && (
                       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-white/10 pt-6">
                         <button
                           type="button"

@@ -77,6 +77,20 @@ export const hrApi = {
   // Dashboard
   getHRDashboard: () => api.get('/hr/dashboard/'),
 
+  // Tasks
+  getTasks: (params) => api.get('/hr/tasks/', { params }),
+  createTask: (data) => api.post('/hr/tasks/', data),
+  updateTask: (id, data) => api.put(`/hr/tasks/${id}/`, data),
+  deleteTask: (id) => api.delete(`/hr/tasks/${id}/`),
+
+  // Queries
+  getQueries: (params) => api.get('/hr/queries/', { params }),
+  createQuery: (data) => api.post('/hr/queries/', data),
+  updateQuery: (id, data) => api.patch(`/hr/queries/${id}/`, data),
+
+  // Salary Increment
+  incrementSalary: (employeeId, data) => api.post(`/hr/employees/${employeeId}/increment_salary/`, data),
+
   // Setup Defaults
   seedDefaults: () => api.post('/hr/setup-defaults/'),
 };

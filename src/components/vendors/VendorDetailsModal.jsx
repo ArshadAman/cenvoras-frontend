@@ -94,8 +94,8 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   if (!isOpen || !vendor) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start sm:items-center justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-[#0F0F12] border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl my-8 sm:my-auto transform animate-fade-up">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-[#0F0F12] border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl my-8 transform animate-fade-up">
         {/* Header */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#0F0F12]/80 backdrop-blur-md z-10 print-hidden">
           <h2 className="text-xl font-black text-white uppercase tracking-tight">

@@ -18,8 +18,8 @@ export default function SimpleFormModal({ isOpen, onClose, title, label, initial
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">

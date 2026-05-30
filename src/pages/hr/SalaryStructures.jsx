@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { hrApi } from "../../api/hr";
 import { CurrencyRupeeIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import SalaryStructureModal from "./SalaryStructureModal";
 
 export default function SalaryStructures() {
   const [structures, setStructures] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState({ open: false, item: null });
 
   const fetchStructures = async () => {
     try {
@@ -23,6 +25,17 @@ export default function SalaryStructures() {
     fetchStructures();
   }, []);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this salary structure?")) return;
+    try {
+      await hrApi.deleteSalaryStructure(id);
+      toast.success("Salary structure deleted");
+      fetchStructures();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to delete salary structure");
+    }
+  };
+
   return (
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
@@ -37,7 +50,10 @@ export default function SalaryStructures() {
               <p className="text-white/65 text-sm mt-2">Define salary breakdown components and rules.</p>
             </div>
 
-            <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300">
+            <button 
+              onClick={() => setModalState({ open: true, item: null })}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300"
+            >
               <PlusIcon className="h-4 w-4" />
               Add Structure
             </button>
@@ -68,8 +84,8 @@ export default function SalaryStructures() {
                       <td className="px-6 py-4 font-medium text-white">{structure.name}</td>
                       <td className="px-6 py-4">{structure.components?.length || 0} Components</td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button className="text-indigo-400 hover:text-indigo-300"><PencilIcon className="w-4 h-4" /></button>
-                        <button className="text-red-400 hover:text-red-300"><TrashIcon className="w-4 h-4" /></button>
+                        <button onClick={() => setModalState({ open: true, item: structure })} className="text-indigo-400 hover:text-indigo-300" title="Edit"><PencilIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(structure.id)} className="text-red-400 hover:text-red-300" title="Delete"><TrashIcon className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))
@@ -79,6 +95,13 @@ export default function SalaryStructures() {
           </div>
         </section>
       </div>
+
+      <SalaryStructureModal 
+        isOpen={modalState.open} 
+        onClose={() => setModalState({ open: false, item: null })} 
+        onSuccess={fetchStructures} 
+        initialData={modalState.item} 
+      />
     </>
   );
 }
