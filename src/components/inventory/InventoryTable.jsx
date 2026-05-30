@@ -553,7 +553,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         {getCurrencySymbol()}{costPrice.toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        {salePrice === null ? '-' : `$${getCurrencySymbol()}${salePrice.toFixed(2)}`}
+                        {salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
                         {getCurrencySymbol()}{totalValue.toLocaleString(undefined, {
@@ -687,7 +687,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Sale Price:</span>
                   <span className="text-sm font-medium text-white">
-                    {product.sale_price == null ? '-' : `$${getCurrencySymbol()}${Number(product.sale_price).toLocaleString()}`}
+                    {product.sale_price == null ? '-' : `${getCurrencySymbol()}${Number(product.sale_price).toLocaleString()}`}
                   </span>
                 </div>
 

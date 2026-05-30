@@ -102,20 +102,20 @@ export default function SalesSummary() {
     {
       label: cardTitle,
       value: selectedCount,
-      subValue: `$${getCurrencySymbol()}${selectedRevenue.toLocaleString()}`,
+      subValue: `${getCurrencySymbol()}${selectedRevenue.toLocaleString()}`,
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
       color: 'cyan'
     },
     {
       label: 'Overall This Month',
       value: analytics.this_month_invoices || 0,
-      subValue: `$${getCurrencySymbol()}${overallMonthRevenue.toLocaleString()}`,
+      subValue: `${getCurrencySymbol()}${overallMonthRevenue.toLocaleString()}`,
       icon: <CalendarIcon className="w-6 h-6 text-green-400" />,
       color: 'green'
     },
     {
       label: 'Avg. Invoice Value',
-      value: `$${getCurrencySymbol()}${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
+      value: `${getCurrencySymbol()}${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
       subValue: 'For selected period',
       icon: <ChartBarIcon className="w-6 h-6 text-blue-400" />,
       color: 'blue'
