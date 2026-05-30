@@ -114,9 +114,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const labelCls = 'block text-sm font-medium text-gray-300 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl my-4">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl my-8">
+        <div className="flex justify-between items-center p-5 border-b border-white/10 sticky top-0 bg-[#111116] z-10 rounded-t-2xl">
           <h2 className="text-xl font-semibold text-white">
             {employee ? 'Edit Employee' : 'Add New Employee'}
           </h2>
@@ -125,7 +125,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Full Name */}
           <div>
             <label className={labelCls}>Full Name *</label>

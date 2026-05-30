@@ -56,6 +56,9 @@ import PayrollRuns from './pages/hr/PayrollRuns'
 import Payslips from './pages/hr/Payslips'
 import HRDashboard from './pages/hr/HRDashboard'
 
+// Employee Pages
+import EmployeePortal from './pages/employee/EmployeePortal'
+
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
 import GSTAndHSNGuide from './pages/GSTAndHSNGuide'
@@ -70,6 +73,13 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 const getToken = () => !!localStorage.getItem('token')
+
+const RoleBasedRedirect = () => {
+  const role = localStorage.getItem('role');
+  if (role === 'employee') return <Navigate to="/employee/portal" replace />;
+  if (role === 'hr') return <Navigate to="/hr/dashboard" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
 
 const AppLayout = () => {
   return (
@@ -89,22 +99,22 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <LandingPage />}
         />
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={(rememberMe) => {
+          element={isAuthenticated ? <RoleBasedRedirect /> : <Login onLogin={(rememberMe) => {
             void rememberMe;
             setIsAuthenticated(true);
           }} />}
         />
         <Route
           path="/signup"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <Signup />}
         />
         <Route
           path="/forgot-password"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <ForgotPassword />}
         />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/contact" element={<ContactUs />} />
@@ -305,6 +315,16 @@ function App() {
           path="/hr/dashboard"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRDashboard /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
+        <Route
+          path="/employee/portal"
+          element={
+            isAuthenticated ? (
+              <ProtectedRoute allowedRoles={['employee', 'admin', 'manager']}>
+                <EmployeePortal />
+              </ProtectedRoute>
+            ) : <Navigate to="/" replace />
+          }
+        />
         <Route path="/gst-hsn-guide" element={<GSTAndHSNGuide />} />
         <Route
           path="/audit-logs"
@@ -350,7 +370,7 @@ function App() {
         />
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <Navigate to="/" replace />}
         />
       </Route>
       </Routes>

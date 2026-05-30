@@ -1,5 +1,5 @@
 import React from "react";
-import { SparklesIcon, BeakerIcon, ArrowTrendingUpIcon, ShieldCheckIcon, CubeTransparentIcon, TruckIcon, BuildingLibraryIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, BeakerIcon, ArrowTrendingUpIcon, ShieldCheckIcon, CubeTransparentIcon, TruckIcon, BuildingLibraryIcon, BanknotesIcon, DocumentTextIcon, CubeIcon } from "@heroicons/react/24/outline";
 import Seo from "../components/Seo";
 
 export default function ComingSoon() {
@@ -45,6 +45,27 @@ export default function ComingSoon() {
        icon: CubeTransparentIcon,
        status: "Exploring",
        eta: "Q3 2026"
+    },
+    {
+       title: "Payroll Runs",
+       description: "Automated monthly payroll processing with dynamic salary computation based on attendance, leaves, and salary structures.",
+       icon: BanknotesIcon,
+       status: "In Development",
+       eta: "Next Release"
+    },
+    {
+       title: "Payslips Generation",
+       description: "Generate, view, and email detailed PDF payslips to employees instantly after payroll finalization.",
+       icon: DocumentTextIcon,
+       status: "In Development",
+       eta: "Next Release"
+    },
+    {
+       title: "Inventory Batches",
+       description: "Track inventory by batches, enabling expiry date management, targeted recall capabilities, and precise lot profitability analysis.",
+       icon: CubeIcon,
+       status: "In Development",
+       eta: "Next Release"
     }
   ];
 

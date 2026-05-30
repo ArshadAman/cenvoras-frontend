@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { hrApi } from "../../api/hr";
 import { DocumentCheckIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import SalaryAssignmentModal from "./SalaryAssignmentModal";
 
 export default function SalaryAssignments() {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState({ open: false, item: null });
 
   const fetchAssignments = async () => {
     try {
@@ -23,6 +25,17 @@ export default function SalaryAssignments() {
     fetchAssignments();
   }, []);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this assignment?")) return;
+    try {
+      await hrApi.deleteSalaryAssignment(id);
+      toast.success("Salary assignment deleted");
+      fetchAssignments();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to delete salary assignment");
+    }
+  };
+
   return (
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
@@ -37,7 +50,10 @@ export default function SalaryAssignments() {
               <p className="text-white/65 text-sm mt-2">Assign salary structures and CTC to employees.</p>
             </div>
 
-            <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300">
+            <button 
+              onClick={() => setModalState({ open: true, item: null })}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300"
+            >
               <PlusIcon className="h-4 w-4" />
               New Assignment
             </button>
@@ -72,8 +88,8 @@ export default function SalaryAssignments() {
                       <td className="px-6 py-4">{assign.effective_from}</td>
                       <td className="px-6 py-4">₹{parseFloat(assign.monthly_ctc).toFixed(2)}</td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button className="text-indigo-400 hover:text-indigo-300"><PencilIcon className="w-4 h-4" /></button>
-                        <button className="text-red-400 hover:text-red-300"><TrashIcon className="w-4 h-4" /></button>
+                        <button onClick={() => setModalState({ open: true, item: assign })} className="text-indigo-400 hover:text-indigo-300" title="Edit"><PencilIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(assign.id)} className="text-red-400 hover:text-red-300" title="Delete"><TrashIcon className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))
@@ -83,6 +99,13 @@ export default function SalaryAssignments() {
           </div>
         </section>
       </div>
+
+      <SalaryAssignmentModal 
+        isOpen={modalState.open} 
+        onClose={() => setModalState({ open: false, item: null })} 
+        onSuccess={fetchAssignments} 
+        initialData={modalState.item} 
+      />
     </>
   );
 }
