@@ -33,6 +33,7 @@
     "postcss": "^8.5.6",
     "react": "^19.1.0",
     "react-barcode": "^1.6.1",
+    "react-calendly": "^4.4.0",
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",
     "react-markdown": "^10.1.0",
