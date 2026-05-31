@@ -36,6 +36,7 @@ const TABS = [
   { id: "leaves",        label: "Leaves" },
   { id: "tasks",         label: "Tasks" },
   { id: "queries",       label: "Queries" },
+  { id: "notifications", label: "Notifications" },
 ];
 
 const STATUS_COLORS = {
@@ -149,9 +150,9 @@ function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes }) {
 
 // ─── Task Assignment Modal ──────────────────────────────────────────────────
 function TaskModal({ isOpen, onClose, onSuccess, employees }) {
-  const [form, setForm] = useState({ employee: "", title: "", description: "" });
+  const [form, setForm] = useState({ employee: "", title: "", description: "", deadline: "" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (isOpen) setForm({ employee: "", title: "", description: "" }); }, [isOpen]);
+  useEffect(() => { if (isOpen) setForm({ employee: "", title: "", description: "", deadline: "" }); }, [isOpen]);
   const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true);
@@ -178,9 +179,69 @@ function TaskModal({ isOpen, onClose, onSuccess, employees }) {
             <input required type="text" name="title" value={form.title} onChange={hc} className={ic} /></div>
           <div><label className="block text-sm text-gray-300 mb-1">Description</label>
             <textarea name="description" value={form.description} onChange={hc} rows={3} className={ic + " resize-none"} /></div>
+          <div><label className="block text-sm text-gray-300 mb-1">Deadline</label>
+            <input type="date" name="deadline" value={form.deadline} onChange={hc} className={ic} /></div>
           <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
             <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Saving..." : "Assign"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── HR Notification Broadcast Modal ──────────────────────────────────────────
+function NotificationModal({ isOpen, onClose, onSuccess, employees }) {
+  const [form, setForm] = useState({ employee: "", title: "", message: "" });
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { if (isOpen) setForm({ employee: "", title: "", message: "" }); }, [isOpen]);
+  const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault(); setSaving(true);
+    const payload = {
+      ...form,
+      employee: form.employee === "" ? null : form.employee
+    };
+    try {
+      await hrApi.createNotification(payload);
+      toast.success("Notification sent successfully");
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error("Failed to send notification");
+    } finally {
+      setSaving(false);
+    }
+  };
+  if (!isOpen) return null;
+  const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
+        <div className="flex justify-between items-center p-5 border-b border-white/10">
+          <h2 className="text-lg font-semibold text-white">Send Broadcast Notification</h2>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Target Recipient</label>
+            <select name="employee" value={form.employee} onChange={hc} className={ic}>
+              <option value="">All Active Employees (Broadcast)</option>
+              {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Title *</label>
+            <input required type="text" name="title" value={form.title} onChange={hc} className={ic} placeholder="e.g. Office Closure, Policy Update" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Message *</label>
+            <textarea required name="message" value={form.message} onChange={hc} rows={4} className={ic + " resize-none"} placeholder="Enter announcement content..." />
+          </div>
+          <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Sending..." : "Send Announcement"}</button>
           </div>
         </form>
       </div>
@@ -239,6 +300,7 @@ export default function HRDashboard() {
   const [leaves, setLeaves] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [queries, setQueries] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Modals
@@ -248,12 +310,13 @@ export default function HRDashboard() {
   const [attModal, setAttModal] = useState(false);
   const [leaveModal, setLeaveModal] = useState(false);
   const [taskModal, setTaskModal] = useState(false);
+  const [notificationModal, setNotificationModal] = useState(false);
   const [incrementModal, setIncrementModal] = useState({ open: false, employee: null });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [mRes, eRes, dRes, dgRes, ltRes, aRes, lRes, tRes, qRes] = await Promise.allSettled([
+      const [mRes, eRes, dRes, dgRes, ltRes, aRes, lRes, tRes, qRes, nRes] = await Promise.allSettled([
         hrApi.getHRDashboard(),
         hrApi.getEmployees(),
         hrApi.getDepartments(),
@@ -263,6 +326,7 @@ export default function HRDashboard() {
         hrApi.getLeaveApplications(),
         hrApi.getTasks(),
         hrApi.getQueries(),
+        hrApi.getNotifications(),
       ]);
       if (mRes.status === "fulfilled") setMetrics(mRes.value.data);
       if (eRes.status === "fulfilled") setEmployees(eRes.value.data?.results || eRes.value.data || []);
@@ -273,6 +337,7 @@ export default function HRDashboard() {
       if (lRes.status === "fulfilled") setLeaves(lRes.value.data?.results || lRes.value.data || []);
       if (tRes.status === "fulfilled") setTasks(tRes.value.data?.results || tRes.value.data || []);
       if (qRes.status === "fulfilled") setQueries(qRes.value.data?.results || qRes.value.data || []);
+      if (nRes.status === "fulfilled") setNotifications(nRes.value.data?.results || nRes.value.data || []);
     } finally { setLoading(false); }
   }, []);
 
@@ -637,13 +702,14 @@ export default function HRDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left text-gray-300">
                     <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                      <tr><th className="px-5 py-3">Employee</th><th className="px-5 py-3">Title</th><th className="px-5 py-3">Status</th></tr>
+                      <tr><th className="px-5 py-3">Employee</th><th className="px-5 py-3">Title</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
                     <tbody>
                       {tasks.map(t => (
                         <tr key={t.id} className="border-b border-white/5 hover:bg-white/5">
                           <td className="px-5 py-3 text-white font-medium">{employees.find(e => e.id === t.employee)?.full_name || "—"}</td>
                           <td className="px-5 py-3">{t.title}</td>
+                          <td className="px-5 py-3 text-indigo-300 font-mono text-xs">{t.deadline || "No deadline"}</td>
                           <td className="px-5 py-3 capitalize"><span className={`px-2 py-0.5 rounded text-xs font-medium ${t.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>{t.status.replace('_', ' ')}</span></td>
                         </tr>
                       ))}
@@ -693,6 +759,42 @@ export default function HRDashboard() {
               )}
             </div>
           )}
+
+          {/* ── NOTIFICATIONS ── */}
+          {tab === "notifications" && (
+            <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+              <div className="p-4 border-b border-white/10 bg-white/[0.02] flex justify-between items-center">
+                <span className="text-sm font-semibold text-white uppercase tracking-wider">Broadcast & Announcements</span>
+                <button onClick={() => setNotificationModal(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-indigo-300 transition">
+                  <PlusIcon className="h-3.5 w-3.5" /> Send Notification
+                </button>
+              </div>
+              {notifications.length === 0 ? emptyState("No notifications sent yet", false) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                      <tr>
+                        <th className="px-5 py-3">Recipient</th>
+                        <th className="px-5 py-3">Title</th>
+                        <th className="px-5 py-3">Message</th>
+                        <th className="px-5 py-3">Sent At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {notifications.map(n => (
+                        <tr key={n.id} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="px-5 py-3 text-indigo-300 font-medium">{n.employee_name || "All Employees (Broadcast)"}</td>
+                          <td className="px-5 py-3 text-white font-medium">{n.title}</td>
+                          <td className="px-5 py-3 max-w-sm truncate" title={n.message}>{n.message}</td>
+                          <td className="px-5 py-3 text-xs text-gray-500">{new Date(n.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -705,6 +807,7 @@ export default function HRDashboard() {
       <AttendanceModal isOpen={attModal} onClose={() => setAttModal(false)} onSuccess={fetchAll} employees={employees} />
       <LeaveModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onSuccess={fetchAll} employees={employees} leaveTypes={leaveTypes} />
       <TaskModal isOpen={taskModal} onClose={() => setTaskModal(false)} onSuccess={fetchAll} employees={employees} />
+      <NotificationModal isOpen={notificationModal} onClose={() => setNotificationModal(false)} onSuccess={fetchAll} employees={employees} />
       <SalaryIncrementModal isOpen={incrementModal.open} onClose={() => setIncrementModal({ open: false, employee: null })} onSuccess={fetchAll} employee={incrementModal.employee} />
     </>
   );
