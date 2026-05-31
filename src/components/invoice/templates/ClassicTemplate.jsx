@@ -35,7 +35,6 @@ const InvoicePreview = forwardRef(({
   const companyGST = businessInfo.gstin || businessInfo.gst || '';
   const companyGEM = businessInfo.gem_id || '';
   const companyDL = businessInfo.dl_number || '';
-  const companyGIN = businessInfo.gin_number || businessInfo.gin || businessInfo.gstin || '';
   
   // Invoice data
   const items = invoice.items || [];
@@ -193,7 +192,6 @@ const InvoicePreview = forwardRef(({
               {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}</p>}
               {sections.showGEMID && companyGEM && <p className="font-medium">GEM ID- {companyGEM}</p>}
               {companyDL && <p className="font-medium">DL No- {companyDL}</p>}
-              {companyGIN && <p className="font-medium">GIN- {companyGIN}</p>}
             </div>
           </div>
         </div>
@@ -261,7 +259,6 @@ const InvoicePreview = forwardRef(({
             {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {companyGST}</p>}
             {sections.showGEMID && companyGEM && <p>GEM ID: {companyGEM}</p>}
             {companyDL && <p>DL No: {companyDL}</p>}
-            {companyGIN && <p>GIN: {companyGIN}</p>}
           </div>
           </div>
           <div className="text-right flex-1">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PopupModal } from 'react-calendly';
 import { 
   ChartBarIcon, 
   BoltIcon, 
@@ -15,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
+import DetailedFeatures from '../components/DetailedFeatures';
 import { formatCurrency } from '../utils/currency';
 
 // Hook for scroll animations
@@ -140,6 +142,7 @@ const getOriginalCyclePrice = (originalMonthlyPrice, cycle) => originalMonthlyPr
 
 export default function LandingPage() {
   useScrollAnimation();
+  const [isCalendlyOpen, setIsCalendlyOpen] = useState(false);
   const [billingCycle, setBillingCycle] = useState('monthly');
   const selectedCycle = BILLING_CYCLES.find((cycle) => cycle.code === billingCycle) || BILLING_CYCLES[0];
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -266,9 +269,9 @@ export default function LandingPage() {
             <Link to="/signup" className="btn-primary w-full sm:w-auto shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]">
               Start Now
             </Link>
-            <a href="#demo" className="btn-secondary w-full sm:w-auto justify-center">
-              See how it works <ArrowRightIcon className="w-5 h-5"/>
-             </a>
+            <button onClick={() => setIsCalendlyOpen(true)} className="btn-secondary w-full sm:w-auto justify-center">
+              Schedule a demo <ArrowRightIcon className="w-5 h-5"/>
+            </button>
           </div>
 
           {/* Hero Screenshot Showcase */}
@@ -366,6 +369,21 @@ export default function LandingPage() {
               </div>
           </div>
 
+        </div>
+      </section>
+
+      {/* Everything You Need Section */}
+      <section id="detailed-features" className="py-24 relative z-10 bg-[#050505]">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="text-center mb-16 scroll-animate">
+            <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-6 tracking-wide">
+              Comprehensive Suite
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white tracking-tight">Everything your business needs.</h2>
+            <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">From quick sales to complete HR management, explore all the tools packed into Cenvora.</p>
+          </div>
+          
+          <DetailedFeatures />
         </div>
       </section>
 
@@ -478,8 +496,15 @@ export default function LandingPage() {
                  <Link to="/sitemap" className="hover:text-gray-400">Sitemap</Link>
               </div>
            </div>
-        </div>
+         </div>
       </footer>
+
+      <PopupModal
+        url="https://calendly.com/cenvora"
+        onModalClose={() => setIsCalendlyOpen(false)}
+        open={isCalendlyOpen}
+        rootElement={document.getElementById("root")}
+      />
     </div>
   );
 }
