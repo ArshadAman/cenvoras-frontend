@@ -88,6 +88,10 @@ export const hrApi = {
   createQuery: (data) => api.post('/hr/queries/', data),
   updateQuery: (id, data) => api.patch(`/hr/queries/${id}/`, data),
 
+  // Notifications
+  getNotifications: (params) => api.get('/hr/notifications/', { params }),
+  createNotification: (data) => api.post('/hr/notifications/', data),
+
   // Salary Increment
   incrementSalary: (employeeId, data) => api.post(`/hr/employees/${employeeId}/increment_salary/`, data),
 

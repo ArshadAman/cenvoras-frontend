@@ -30,6 +30,7 @@ export default function EmployeePortal() {
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [queries, setQueries] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   // Forms
   const [leaveForm, setLeaveForm] = useState({ leave_type: "", start_date: "", end_date: "", reason: "" });
@@ -41,13 +42,14 @@ export default function EmployeePortal() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [empRes, attRes, lvRes, ltRes, tskRes, qryRes] = await Promise.allSettled([
+      const [empRes, attRes, lvRes, ltRes, tskRes, qryRes, nRes] = await Promise.allSettled([
         hrApi.getEmployees(),
         hrApi.getAttendance(),
         hrApi.getLeaveApplications(),
         hrApi.getLeaveTypes(),
         hrApi.getTasks(),
-        hrApi.getQueries()
+        hrApi.getQueries(),
+        hrApi.getNotifications()
       ]);
       
       if (empRes.status === "fulfilled") {
@@ -59,6 +61,7 @@ export default function EmployeePortal() {
       if (ltRes.status === "fulfilled") setLeaveTypes(ltRes.value.data?.results || ltRes.value.data || []);
       if (tskRes.status === "fulfilled") setTasks(tskRes.value.data?.results || tskRes.value.data || []);
       if (qryRes.status === "fulfilled") setQueries(qryRes.value.data?.results || qryRes.value.data || []);
+      if (nRes.status === "fulfilled") setNotifications(nRes.value.data?.results || nRes.value.data || []);
       
     } catch (err) {
       console.error(err);
@@ -157,6 +160,30 @@ export default function EmployeePortal() {
         <StatCard icon={ClockIcon} iconBg="bg-amber-500/20" iconColor="text-amber-400" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
       </div>
 
+      {/* Announcements */}
+      {notifications.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden animate-fade-up">
+          <div className="p-4 border-b border-white/10 bg-white/[0.02] flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            <span className="text-sm font-semibold text-white uppercase tracking-wider">HR Announcements & Broadcasts</span>
+          </div>
+          <div className="p-5 space-y-4 max-h-[300px] overflow-y-auto divide-y divide-white/5">
+            {notifications.map((n, idx) => (
+              <div key={n.id} className="pt-4 first:pt-0">
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="text-base font-semibold text-indigo-300">{n.title}</h3>
+                  <span className="text-xs text-gray-500">{new Date(n.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-sm text-gray-300 mt-2 whitespace-pre-wrap">{n.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* LEAVES */}
           <div className="space-y-6">
@@ -210,13 +237,14 @@ export default function EmployeePortal() {
               ) : (
                 <table className="w-full text-sm text-left text-gray-300">
                   <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                    <tr><th className="px-5 py-3">Title</th><th className="px-5 py-3">Description</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr>
+                    <tr><th className="px-5 py-3">Title</th><th className="px-5 py-3">Description</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr>
                   </thead>
                   <tbody>
                     {tasks.map(t => (
                       <tr key={t.id} className="border-b border-white/5 hover:bg-white/5">
                         <td className="px-5 py-3 font-medium text-white">{t.title}</td>
                         <td className="px-5 py-3 max-w-xs truncate">{t.description}</td>
+                        <td className="px-5 py-3 text-indigo-300 font-mono text-xs">{t.deadline || "No deadline"}</td>
                         <td className="px-5 py-3 capitalize">
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                             t.status === 'completed' ? 'bg-green-500/10 text-green-400' : 
