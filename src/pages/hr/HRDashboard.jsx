@@ -173,12 +173,16 @@ function TaskModal({ isOpen, onClose, onSuccess, employees, task = null }) {
   
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true);
+    const cleanedForm = {
+      ...form,
+      deadline: form.deadline ? form.deadline : null
+    };
     try {
       if (task) {
-        await hrApi.updateTask(task.id, form);
+        await hrApi.updateTask(task.id, cleanedForm);
         toast.success("Task updated successfully");
       } else {
-        await hrApi.createTask(form);
+        await hrApi.createTask(cleanedForm);
         toast.success("Task assigned successfully");
       }
       onSuccess();
