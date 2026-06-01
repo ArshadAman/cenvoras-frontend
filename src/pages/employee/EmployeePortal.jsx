@@ -369,8 +369,13 @@ export default function EmployeePortal() {
                               </span>
                             </td>
                             <td className="px-5 py-3 text-right">
-                              {t.status !== 'completed' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'completed'); }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg hover:bg-green-500/30 transition">
+                              {t.status === 'pending' && (
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'in_progress'); }} className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg hover:bg-amber-500/30 transition font-medium">
+                                  Start Task
+                                </button>
+                              )}
+                              {t.status === 'in_progress' && (
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'completed'); }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg hover:bg-green-500/30 transition font-medium">
                                   Mark Done
                                 </button>
                               )}
