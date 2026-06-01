@@ -33,17 +33,23 @@ import {
   CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
+import OnboardingWizard from './OnboardingWizard';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
   const handleSignOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh');
-    localStorage.removeItem('role');
-    localStorage.removeItem('activeSession');
-    window.location.href = '/';
+    if (onLogout) {
+      onLogout();
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh');
+      localStorage.removeItem('role');
+      localStorage.removeItem('activeSession');
+      window.location.href = '/';
+    }
   };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({
     open: false,
     title: 'Upgrade required',
@@ -178,6 +184,19 @@ export default function Layout({ children, onLogout }) {
     queryFn: getUserProfile,
     enabled: !!role // Only fetch if authenticated
   });
+
+  const isProfileIncomplete = profileData?.profile && !profileData.profile.profile_completed && role === 'admin';
+
+  useEffect(() => {
+    if (isProfileIncomplete) {
+      const skipped = localStorage.getItem('onboarding_skipped');
+      if (!skipped) {
+        setShowOnboarding(true);
+      }
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [isProfileIncomplete]);
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription-entitlements'],
@@ -684,6 +703,13 @@ export default function Layout({ children, onLogout }) {
         ctaLabel={upgradeModal.ctaLabel}
         subtitle={upgradeModal.subtitle}
       />
+
+      {showOnboarding && profileData?.profile && (
+        <OnboardingWizard 
+          profile={profileData.profile} 
+          onClose={() => setShowOnboarding(false)} 
+        />
+      )}
     </div>
   );
 }

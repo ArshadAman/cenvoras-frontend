@@ -81,9 +81,9 @@ const RoleBasedRedirect = () => {
   return <Navigate to="/dashboard" replace />;
 };
 
-const AppLayout = () => {
+const AppLayout = ({ onLogout }) => {
   return (
-    <Layout>
+    <Layout onLogout={onLogout}>
       <Outlet />
     </Layout>
   )
@@ -92,6 +92,15 @@ const AppLayout = () => {
 function App() {
   // Persist login across refresh as long as a token exists.
   const [isAuthenticated, setIsAuthenticated] = useState(getToken())
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('role');
+    localStorage.removeItem('activeSession');
+    setIsAuthenticated(false);
+    window.location.href = '/';
+  };
 
   return (
     <Router>
@@ -122,7 +131,7 @@ function App() {
         <Route path="/sitemap" element={<Sitemap />} />
 
         {/* --- PROTECTED ROUTES WITH LAYOUT --- */}
-        <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/" replace />}>
+        <Route element={isAuthenticated ? <AppLayout onLogout={handleLogout} /> : <Navigate to="/" replace />}>
         <Route
           path="/dashboard"
           element={isAuthenticated ? <Dashboard onLogout={() => {

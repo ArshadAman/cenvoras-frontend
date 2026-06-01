@@ -32,6 +32,7 @@ import {
 } from '../api/subscription';
 import { getUserRole } from '../utils/auth';
 import { hrApi } from '../api/hr';
+import OnboardingWizard from '../components/OnboardingWizard';
 
 const loadCashfreeSdk = () => {
   if (window.Cashfree) {
@@ -333,6 +334,7 @@ const Profile = ({ onLogout }) => {
   const [isPlanActionLoading, setIsPlanActionLoading] = useState(false);
   const paymentWatchIntervalRef = useRef(null);
   const paymentWatchTimeoutRef = useRef(null);
+  const [showWizard, setShowWizard] = useState(false);
 
   const queryClient = useQueryClient();
   const role = getUserRole();
@@ -1147,7 +1149,80 @@ const Profile = ({ onLogout }) => {
                 )}
               </aside>
 
-              <section className="xl:col-span-8">
+              <section className="xl:col-span-8 space-y-8">
+                {isAdmin && userProfile?.setup_progress && (
+                  <div className="rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 backdrop-blur-xl relative overflow-hidden shadow-xl">
+                    {/* Background glow lines */}
+                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                    
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                      {/* Left: Progress info & Percentage */}
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${userProfile.setup_progress.profile_completed ? 'bg-emerald-400' : 'bg-cyan-400'}`} />
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Profile Setup Progress</h3>
+                        </div>
+
+                        <div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-extrabold text-white tracking-tight">{userProfile.setup_progress.completion_percentage}%</span>
+                            <span className={`text-sm font-semibold ${userProfile.setup_progress.profile_completed ? 'text-emerald-400' : 'text-cyan-400'}`}>
+                              {userProfile.setup_progress.profile_completed ? 'Fully Completed' : 'Completed'}
+                            </span>
+                          </div>
+                          
+                          {/* Sleek Progress Bar */}
+                          <div className="w-full bg-white/5 h-2.5 rounded-full mt-3 overflow-hidden border border-white/5">
+                            <div 
+                              className={`h-full bg-gradient-to-r ${userProfile.setup_progress.profile_completed ? 'from-emerald-400 to-teal-500' : 'from-cyan-400 via-blue-500 to-indigo-500'} rounded-full transition-all duration-1000 ease-out`}
+                              style={{ width: `${userProfile.setup_progress.completion_percentage}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Checklist items */}
+                        {userProfile.setup_progress.next_steps && userProfile.setup_progress.next_steps.length > 0 && (
+                          <div className="space-y-2 mt-4">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Remaining Actions:</p>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {userProfile.setup_progress.next_steps.map((step, idx) => (
+                                <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-300">
+                                  {step.includes('complete') || step.includes('complete!') ? (
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                                      <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                    </span>
+                                  ) : (
+                                    <span className="flex-shrink-0 w-2 h-2 rounded-full bg-cyan-400/80 mt-1.5" />
+                                  )}
+                                  <span className="leading-tight">{step}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Premium Launch Button */}
+                      {!userProfile.setup_progress.profile_completed && (
+                        <div className="flex flex-col items-stretch md:items-end justify-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setShowWizard(true)}
+                            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 rounded-2xl text-sm font-bold text-white shadow-lg shadow-cyan-500/15 hover:shadow-cyan-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                          >
+                            <SparklesIcon className="w-4 h-4 text-cyan-200" />
+                            Launch Setup Wizard
+                          </button>
+                          <p className="text-[11px] text-center md:text-right text-slate-400">
+                            Configure business details & tax settings in seconds.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl md:p-8">
                   <div className="mb-8 flex items-center justify-between">
                     <div>
@@ -1397,6 +1472,17 @@ const Profile = ({ onLogout }) => {
           isOpen={isPasswordModalOpen} 
           onClose={() => setIsPasswordModalOpen(false)} 
         />
+
+        {/* Onboarding Wizard Modal */}
+        {showWizard && userProfile?.profile && (
+          <OnboardingWizard 
+            profile={userProfile.profile} 
+            onClose={() => {
+              setShowWizard(false);
+              queryClient.invalidateQueries(['userProfile']);
+            }} 
+          />
+        )}
       </div>
     </>
   );

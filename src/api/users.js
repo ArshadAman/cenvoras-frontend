@@ -20,7 +20,7 @@ export const patchUserProfile = async (profileData) => {
 
 // Setup user profile (for initial profile completion)
 export const setupUserProfile = async (profileData) => {
-  const response = await api.post('/users/profile/setup/', profileData);
+  const response = await api.patch('/users/profile/setup/', profileData);
   return response.data;
 };
 

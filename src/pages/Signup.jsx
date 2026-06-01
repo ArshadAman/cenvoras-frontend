@@ -75,10 +75,68 @@ const SignupSchema = Yup.object().shape({
 
 export default function Signup() {
   const [loading, setLoading] = useState(false);
-    const [otpRequested, setOtpRequested] = useState(false);
-    const [pendingEmail, setPendingEmail] = useState('');
-    const [signupMessage, setSignupMessage] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [signupMessage, setSignupMessage] = useState('');
+  const [googleError, setGoogleError] = useState('');
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    /* global google */
+    const initGoogleSignUp = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1072296580062-cvlumiglcsg77jqbal1f727vkhvkats1.apps.googleusercontent.com',
+          callback: handleGoogleCredentialResponse,
+        });
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleSignUpDiv"),
+          { 
+            theme: "filled_blue", 
+            size: "large", 
+            width: "100%",
+            text: "signup_with",
+            shape: "pill"
+          }
+        );
+      } else {
+        setTimeout(initGoogleSignUp, 100);
+      }
+    };
+    initGoogleSignUp();
+  }, []);
+
+  const handleGoogleCredentialResponse = async (response) => {
+    setLoading(true);
+    setGoogleError('');
+    try {
+      const payload = {
+        credential: response.credential,
+      };
+      const res = await api.post('/users/google-login/', payload);
+      const token = res.data.token || res.data.access;
+      if (token) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('refresh', res.data.refresh);
+        
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          localStorage.setItem('role', payload.role || 'admin');
+        } catch (e) {
+          console.error("Failed to parse token", e);
+        }
+
+        window.location.href = '/profile';
+      } else {
+        setGoogleError('Failed to sign up with Google: No token received');
+      }
+    } catch (err) {
+      console.error(err);
+      setGoogleError(err?.response?.data?.error || 'Google Sign-up failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans flex overflow-hidden">
@@ -395,6 +453,25 @@ export default function Signup() {
                             {isSubmitting ? (otpRequested ? 'Verifying OTP...' : 'Sending OTP...') : (otpRequested ? 'Verify OTP & Create Account' : 'Continue with OTP')}
                             {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
                         </button>
+
+                        {!otpRequested && (
+                          <>
+                            <div className="relative my-5">
+                              <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-800"></div>
+                              </div>
+                              <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-[#0f172a] px-2 text-slate-400 font-medium">Or continue with</span>
+                              </div>
+                            </div>
+
+                            {googleError && (
+                              <div className="text-red-400 text-xs text-center font-medium mt-2">{googleError}</div>
+                            )}
+
+                            <div id="googleSignUpDiv" className="w-full flex justify-center min-h-[44px]"></div>
+                          </>
+                        )}
                     </Form>
                 )}
             </Formik>
