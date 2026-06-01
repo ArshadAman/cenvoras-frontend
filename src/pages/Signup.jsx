@@ -86,7 +86,7 @@ export default function Signup() {
     const initGoogleSignUp = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1072296580062-cvlumiglcsg77jqbal1f727vkhvkats1.apps.googleusercontent.com',
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           callback: handleGoogleCredentialResponse,
         });
         window.google.accounts.id.renderButton(
