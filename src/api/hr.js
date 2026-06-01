@@ -91,6 +91,7 @@ export const hrApi = {
   // Notifications
   getNotifications: (params) => api.get('/hr/notifications/', { params }),
   createNotification: (data) => api.post('/hr/notifications/', data),
+  deleteNotification: (id) => api.delete(`/hr/notifications/${id}/`),
 
   // Salary Increment
   incrementSalary: (employeeId, data) => api.post(`/hr/employees/${employeeId}/increment_salary/`, data),
