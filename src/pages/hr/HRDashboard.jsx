@@ -189,7 +189,9 @@ function TaskModal({ isOpen, onClose, onSuccess, employees, task = null }) {
       onClose();
     }
     catch (err) {
-      toast.error(task ? "Failed to update task" : "Failed to assign task");
+      console.error("Task submission error:", err);
+      const errMsg = err.response?.data ? JSON.stringify(err.response.data) : (task ? "Failed to update task" : "Failed to assign task");
+      toast.error(errMsg);
     }
     finally { setSaving(false); }
   };
