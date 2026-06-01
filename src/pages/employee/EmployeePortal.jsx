@@ -221,12 +221,19 @@ export default function EmployeePortal() {
   const handleUpdateTaskStatus = async (taskId, status) => {
     try {
       const task = tasks.find(t => t.id === taskId);
-      await hrApi.updateTask(taskId, { ...task, status });
+      const cleanedTask = {
+        ...task,
+        status,
+        deadline: task.deadline ? task.deadline : null
+      };
+      await hrApi.updateTask(taskId, cleanedTask);
       toast.success(`Task marked as ${status.replace('_', ' ')}`);
       setSelectedTask(null);
       fetchAll();
     } catch (err) {
-      toast.error("Failed to update task status");
+      console.error("Task status update error:", err);
+      const errMsg = err.response?.data ? JSON.stringify(err.response.data) : "Failed to update task status";
+      toast.error(errMsg);
     }
   };
 
