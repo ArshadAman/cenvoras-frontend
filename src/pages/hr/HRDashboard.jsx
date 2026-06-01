@@ -149,43 +149,193 @@ function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes }) {
 }
 
 // ─── Task Assignment Modal ──────────────────────────────────────────────────
-function TaskModal({ isOpen, onClose, onSuccess, employees }) {
-  const [form, setForm] = useState({ employee: "", title: "", description: "", deadline: "" });
+function TaskModal({ isOpen, onClose, onSuccess, employees, task = null }) {
+  const [form, setForm] = useState({ employee: "", title: "", description: "", deadline: "", status: "pending" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (isOpen) setForm({ employee: "", title: "", description: "", deadline: "" }); }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (task) {
+        setForm({
+          employee: task.employee || "",
+          title: task.title || "",
+          description: task.description || "",
+          deadline: task.deadline || "",
+          status: task.status || "pending"
+        });
+      } else {
+        setForm({ employee: "", title: "", description: "", deadline: "", status: "pending" });
+      }
+    }
+  }, [isOpen, task]);
+
   const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true);
-    try { await hrApi.createTask(form); toast.success("Task assigned"); onSuccess(); onClose(); }
-    catch (err) { toast.error("Failed to assign task"); }
+    try {
+      if (task) {
+        await hrApi.updateTask(task.id, form);
+        toast.success("Task updated successfully");
+      } else {
+        await hrApi.createTask(form);
+        toast.success("Task assigned successfully");
+      }
+      onSuccess();
+      onClose();
+    }
+    catch (err) {
+      toast.error(task ? "Failed to update task" : "Failed to assign task");
+    }
     finally { setSaving(false); }
   };
+
   if (!isOpen) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">Assign Task</h2>
+          <h2 className="text-lg font-semibold text-white">{task ? "Edit Task" : "Assign Task"}</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div><label className="block text-sm text-gray-300 mb-1">Employee *</label>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Employee *</label>
             <select required name="employee" value={form.employee} onChange={hc} className={ic}>
               <option value="">Select Employee</option>
               {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
-            </select></div>
-          <div><label className="block text-sm text-gray-300 mb-1">Title *</label>
-            <input required type="text" name="title" value={form.title} onChange={hc} className={ic} /></div>
-          <div><label className="block text-sm text-gray-300 mb-1">Description</label>
-            <textarea name="description" value={form.description} onChange={hc} rows={3} className={ic + " resize-none"} /></div>
-          <div><label className="block text-sm text-gray-300 mb-1">Deadline</label>
-            <input type="date" name="deadline" value={form.deadline} onChange={hc} className={ic} /></div>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Title *</label>
+            <input required type="text" name="title" value={form.title} onChange={hc} className={ic} />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Description</label>
+            <textarea name="description" value={form.description} onChange={hc} rows={3} className={ic + " resize-none"} />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Deadline</label>
+            <input type="date" name="deadline" value={form.deadline} onChange={hc} className={ic} />
+          </div>
+          {task && (
+            <div>
+              <label className="block text-sm text-gray-300 mb-1">Status *</label>
+              <select required name="status" value={form.status} onChange={hc} className={ic}>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          )}
           <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Saving..." : "Assign"}</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">
+              {saving ? "Saving..." : (task ? "Update" : "Assign")}
+            </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Task Details Modal ─────────────────────────────────────────────────────
+function TaskDetailsModal({ isOpen, onClose, task, employees, onEdit = null, onDelete = null, onStatusChange = null }) {
+  if (!isOpen || !task) return null;
+  const isOverdue = task.status !== "completed" && task.deadline && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
+  const emp = employees.find(e => e.id === task.employee);
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl my-8 animate-fade-up">
+        <div className="flex justify-between items-center p-5 border-b border-white/10">
+          <span className="text-xs uppercase tracking-widest text-indigo-300 font-bold">Task Details</span>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div>
+            <h3 className="text-xl font-bold text-white leading-snug">{task.title}</h3>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider ${
+                task.status === "completed" 
+                  ? "bg-green-500/10 text-green-400 border border-green-500/20" 
+                  : task.status === "in_progress"
+                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                  : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+              }`}>
+                {task.status.replace("_", " ")}
+              </span>
+              
+              {isOverdue && (
+                <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse uppercase tracking-wider">
+                  Overdue
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 space-y-4">
+            {task.description ? (
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-1">Description</span>
+                <p className="text-sm text-gray-300 whitespace-pre-wrap">{task.description}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">No description provided for this task.</p>
+            )}
+            
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 text-sm">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Assigned To</span>
+                <span className="font-semibold text-white">{emp ? `${emp.full_name} (${emp.employee_code})` : "—"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Assigned By</span>
+                <span className="font-semibold text-white">{task.assigned_by_name || "HR System"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Deadline</span>
+                <span className={`font-mono font-semibold ${isOverdue ? "text-rose-400 font-bold" : "text-indigo-300"}`}>
+                  {task.deadline || "No deadline"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Created At</span>
+                <span className="text-gray-300">{new Date(task.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Action buttons */}
+          <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
+            {onStatusChange && task.status !== "completed" && (
+              <>
+                {task.status === "pending" && (
+                  <button onClick={() => onStatusChange(task.id, "in_progress")} className="px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition">
+                    Start Task
+                  </button>
+                )}
+                <button onClick={() => onStatusChange(task.id, "completed")} className="px-4 py-2 text-xs font-semibold text-slate-950 bg-green-400 hover:bg-green-300 rounded-xl transition">
+                  Complete Task
+                </button>
+              </>
+            )}
+            {onEdit && (
+              <button onClick={() => { onClose(); onEdit(task); }} className="px-4 py-2 text-xs font-semibold text-slate-950 bg-indigo-400 hover:bg-indigo-300 rounded-xl transition">
+                Edit Task
+              </button>
+            )}
+            {onDelete && (
+              <button onClick={() => onDelete(task.id)} className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition">
+                Delete Task
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition">Close</button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -312,6 +462,8 @@ export default function HRDashboard() {
   const [taskModal, setTaskModal] = useState(false);
   const [notificationModal, setNotificationModal] = useState(false);
   const [incrementModal, setIncrementModal] = useState({ open: false, employee: null });
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -377,6 +529,27 @@ export default function HRDashboard() {
     if (!window.confirm(`Delete "${emp.full_name}"?`)) return;
     try { await hrApi.deleteEmployee(emp.id); toast.success("Deleted"); fetchAll(); }
     catch (e) { toast.error("Failed to delete employee"); }
+  };
+  const handleDeleteNotification = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this notification?")) return;
+    try {
+      await hrApi.deleteNotification(id);
+      toast.success("Notification deleted successfully");
+      fetchAll();
+    } catch (err) {
+      toast.error("Failed to delete notification");
+    }
+  };
+  const handleDeleteTask = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    try {
+      await hrApi.deleteTask(id);
+      toast.success("Task deleted successfully");
+      setSelectedTask(null);
+      fetchAll();
+    } catch (err) {
+      toast.error("Failed to delete task");
+    }
   };
   const handleApproveLeave = async (id) => {
     try { await hrApi.approveLeave(id); toast.success("Approved"); fetchAll(); }
@@ -705,14 +878,29 @@ export default function HRDashboard() {
                       <tr><th className="px-5 py-3">Employee</th><th className="px-5 py-3">Title</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
                     <tbody>
-                      {tasks.map(t => (
-                        <tr key={t.id} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="px-5 py-3 text-white font-medium">{employees.find(e => e.id === t.employee)?.full_name || "—"}</td>
-                          <td className="px-5 py-3">{t.title}</td>
-                          <td className="px-5 py-3 text-indigo-300 font-mono text-xs">{t.deadline || "No deadline"}</td>
-                          <td className="px-5 py-3 capitalize"><span className={`px-2 py-0.5 rounded text-xs font-medium ${t.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>{t.status.replace('_', ' ')}</span></td>
-                        </tr>
-                      ))}
+                      {tasks.map(t => {
+                        const isOverdue = t.status !== 'completed' && t.deadline && new Date(t.deadline) < new Date(new Date().setHours(0,0,0,0));
+                        return (
+                          <tr key={t.id} onClick={() => setSelectedTask(t)} className={`border-b border-white/5 hover:bg-white/10 cursor-pointer transition ${isOverdue ? 'bg-red-500/5 hover:bg-red-500/10' : ''}`}>
+                            <td className="px-5 py-3 text-white font-medium">{employees.find(e => e.id === t.employee)?.full_name || "—"}</td>
+                            <td className="px-5 py-3 font-semibold text-white">{t.title}</td>
+                            <td className="px-5 py-3 font-mono text-xs">
+                              {t.deadline ? (
+                                <span className={`px-2 py-0.5 rounded ${isOverdue ? 'bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30' : 'text-indigo-300'}`}>
+                                  {t.deadline} {isOverdue && "(OVERDUE)"}
+                                </span>
+                              ) : (
+                                "No deadline"
+                              )}
+                            </td>
+                            <td className="px-5 py-3 capitalize">
+                              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${t.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : t.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                                {t.status.replace('_', ' ')}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -778,6 +966,7 @@ export default function HRDashboard() {
                         <th className="px-5 py-3">Title</th>
                         <th className="px-5 py-3">Message</th>
                         <th className="px-5 py-3">Sent At</th>
+                        <th className="px-5 py-3 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -787,6 +976,11 @@ export default function HRDashboard() {
                           <td className="px-5 py-3 text-white font-medium">{n.title}</td>
                           <td className="px-5 py-3 max-w-sm truncate" title={n.message}>{n.message}</td>
                           <td className="px-5 py-3 text-xs text-gray-500">{new Date(n.created_at).toLocaleString()}</td>
+                          <td className="px-5 py-3 text-right">
+                            <button onClick={() => handleDeleteNotification(n.id)} className="p-1.5 text-gray-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition" title="Delete Notification">
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -806,7 +1000,8 @@ export default function HRDashboard() {
       <SimpleFormModal isOpen={desigModal.open} onClose={() => setDesigModal({ open: false, item: null })} title={desigModal.item ? "Edit Designation" : "Add Designation"} label="Designation Name" initialValue={desigModal.item?.name || ""} onSubmit={handleSaveDesig} />
       <AttendanceModal isOpen={attModal} onClose={() => setAttModal(false)} onSuccess={fetchAll} employees={employees} />
       <LeaveModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onSuccess={fetchAll} employees={employees} leaveTypes={leaveTypes} />
-      <TaskModal isOpen={taskModal} onClose={() => setTaskModal(false)} onSuccess={fetchAll} employees={employees} />
+      <TaskModal isOpen={taskModal} onClose={() => { setTaskModal(false); setTaskToEdit(null); }} onSuccess={fetchAll} employees={employees} task={taskToEdit} />
+      <TaskDetailsModal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} task={selectedTask} employees={employees} onEdit={(t) => { setTaskToEdit(t); setTaskModal(true); }} onDelete={handleDeleteTask} />
       <NotificationModal isOpen={notificationModal} onClose={() => setNotificationModal(false)} onSuccess={fetchAll} employees={employees} />
       <SalaryIncrementModal isOpen={incrementModal.open} onClose={() => setIncrementModal({ open: false, employee: null })} onSuccess={fetchAll} employee={incrementModal.employee} />
     </>

@@ -3,7 +3,8 @@ import { hrApi } from "../../api/hr";
 import { toast } from "react-toastify";
 import {
   UserIcon, ClockIcon, CalendarDaysIcon, BriefcaseIcon, 
-  ChatBubbleLeftRightIcon, CheckCircleIcon, ArrowPathIcon, PlusIcon
+  ChatBubbleLeftRightIcon, CheckCircleIcon, ArrowPathIcon, PlusIcon,
+  XMarkIcon, BellIcon
 } from '@heroicons/react/24/outline';
 
 function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
@@ -21,6 +22,91 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
   );
 }
 
+// ─── Task Details Modal ─────────────────────────────────────────────────────
+function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
+  if (!isOpen || !task) return null;
+  const isOverdue = task.status !== "completed" && task.deadline && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl my-8 animate-fade-up">
+        <div className="flex justify-between items-center p-5 border-b border-white/10">
+          <span className="text-xs uppercase tracking-widest text-indigo-300 font-bold">Task Details</span>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div>
+            <h3 className="text-xl font-bold text-white leading-snug">{task.title}</h3>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider ${
+                task.status === "completed" 
+                  ? "bg-green-500/10 text-green-400 border border-green-500/20" 
+                  : task.status === "in_progress"
+                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                  : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+              }`}>
+                {task.status.replace("_", " ")}
+              </span>
+              
+              {isOverdue && (
+                <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse uppercase tracking-wider">
+                  Overdue
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 space-y-4">
+            {task.description ? (
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-1">Description</span>
+                <p className="text-sm text-gray-300 whitespace-pre-wrap">{task.description}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">No description provided for this task.</p>
+            )}
+            
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 text-sm">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Assigned By</span>
+                <span className="font-semibold text-white">{task.assigned_by_name || "HR System"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Deadline</span>
+                <span className={`font-mono font-semibold ${isOverdue ? "text-rose-400 font-bold" : "text-indigo-300"}`}>
+                  {task.deadline || "No deadline"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Created At</span>
+                <span className="text-gray-300">{new Date(task.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Action buttons */}
+          <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
+            {onStatusChange && task.status !== "completed" && (
+              <>
+                {task.status === "pending" && (
+                  <button onClick={() => onStatusChange(task.id, "in_progress")} className="px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition">
+                    Start Task
+                  </button>
+                )}
+                <button onClick={() => onStatusChange(task.id, "completed")} className="px-4 py-2 text-xs font-semibold text-slate-950 bg-green-400 hover:bg-green-300 rounded-xl transition">
+                  Complete Task
+                </button>
+              </>
+            )}
+            <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EmployeePortal() {
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +117,7 @@ export default function EmployeePortal() {
   const [tasks, setTasks] = useState([]);
   const [queries, setQueries] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   // Forms
   const [leaveForm, setLeaveForm] = useState({ leave_type: "", start_date: "", end_date: "", reason: "" });
@@ -38,6 +125,7 @@ export default function EmployeePortal() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showQueryModal, setShowQueryModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState("dashboard");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -130,6 +218,18 @@ export default function EmployeePortal() {
     }
   };
 
+  const handleUpdateTaskStatus = async (taskId, status) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      await hrApi.updateTask(taskId, { ...task, status });
+      toast.success(`Task marked as ${status.replace('_', ' ')}`);
+      setSelectedTask(null);
+      fetchAll();
+    } catch (err) {
+      toast.error("Failed to update task status");
+    }
+  };
+
   if (loading && !profile) {
     return <div className="p-8 text-gray-400">Loading portal...</div>;
   }
@@ -152,190 +252,267 @@ export default function EmployeePortal() {
         </button>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={BriefcaseIcon} iconBg="bg-indigo-500/20" iconColor="text-indigo-400" label="Total Tasks" value={tasks.length} />
-        <StatCard icon={CheckCircleIcon} iconBg="bg-green-500/20" iconColor="text-green-400" label="Completed Tasks" value={tasks.filter(t => t.status === 'completed').length} />
-        <StatCard icon={CalendarDaysIcon} iconBg="bg-purple-500/20" iconColor="text-purple-400" label="Total Leaves" value={leaves.length} />
-        <StatCard icon={ClockIcon} iconBg="bg-amber-500/20" iconColor="text-amber-400" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
+      {/* Tabs */}
+      <div className="overflow-x-auto pb-1">
+        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit min-w-full md:min-w-0 whitespace-nowrap">
+          <button onClick={() => setTab("dashboard")}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition ${tab === "dashboard" ? "bg-indigo-500 text-white shadow-lg" : "text-gray-400 hover:text-white"}`}>
+            My Dashboard
+          </button>
+          <button onClick={() => setTab("announcements")}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition relative flex items-center gap-2 ${tab === "announcements" ? "bg-indigo-500 text-white shadow-lg" : "text-gray-400 hover:text-white"}`}>
+            <BellIcon className="w-4 h-4" />
+            <span>Announcements & Broadcasts</span>
+            {notifications.length > 0 && (
+              <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Announcements */}
-      {notifications.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden animate-fade-up">
-          <div className="p-4 border-b border-white/10 bg-white/[0.02] flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-            </span>
-            <span className="text-sm font-semibold text-white uppercase tracking-wider">HR Announcements & Broadcasts</span>
+      {tab === "dashboard" && (
+        <>
+          {/* Stats Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={BriefcaseIcon} iconBg="bg-indigo-500/20" iconColor="text-indigo-400" label="Total Tasks" value={tasks.length} />
+            <StatCard icon={CheckCircleIcon} iconBg="bg-green-500/20" iconColor="text-green-400" label="Completed Tasks" value={tasks.filter(t => t.status === 'completed').length} />
+            <StatCard icon={CalendarDaysIcon} iconBg="bg-purple-500/20" iconColor="text-purple-400" label="Total Leaves" value={leaves.length} />
+            <StatCard icon={ClockIcon} iconBg="bg-amber-500/20" iconColor="text-amber-400" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
           </div>
-          <div className="p-5 space-y-4 max-h-[300px] overflow-y-auto divide-y divide-white/5">
-            {notifications.map((n, idx) => (
-              <div key={n.id} className="pt-4 first:pt-0">
-                <div className="flex justify-between items-start gap-4">
-                  <h3 className="text-base font-semibold text-indigo-300">{n.title}</h3>
-                  <span className="text-xs text-gray-500">{new Date(n.created_at).toLocaleDateString()}</span>
-                </div>
-                <p className="text-sm text-gray-300 mt-2 whitespace-pre-wrap">{n.message}</p>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* LEAVES */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-medium text-white">Leave Applications</h2>
+                <button onClick={() => setShowLeaveModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition">
+                  <PlusIcon className="w-4 h-4" /> Apply Leave
+                </button>
               </div>
-            ))}
+              
+              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+                {leaves.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">No leave applications found.</div>
+                ) : (
+                  <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                      <tr><th className="px-5 py-3">Type</th><th className="px-5 py-3">Duration</th><th className="px-5 py-3">Status</th></tr>
+                    </thead>
+                    <tbody>
+                      {leaves.map(l => (
+                        <tr key={l.id} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="px-5 py-3">
+                            <div className="font-medium text-white">{l.leave_type_name || l.leave_type}</div>
+                            {l.reason && <div className="text-xs text-gray-500 mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
+                          </td>
+                          <td className="px-5 py-3">{l.start_date} to {l.end_date}</td>
+                          <td className="px-5 py-3 capitalize">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              l.status === 'approved' ? 'bg-green-500/10 text-green-400' : 
+                              l.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 
+                              'bg-yellow-500/10 text-yellow-400'
+                            }`}>
+                              {l.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {/* TASKS */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center h-[38px]">
+                <h2 className="text-lg font-medium text-white">My Assigned Tasks</h2>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+                {tasks.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">No tasks assigned to you.</div>
+                ) : (
+                  <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                      <tr><th className="px-5 py-3">Title</th><th className="px-5 py-3">Description</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                      {tasks.map(t => {
+                        const isOverdue = t.status !== 'completed' && t.deadline && new Date(t.deadline) < new Date(new Date().setHours(0,0,0,0));
+                        return (
+                          <tr key={t.id} onClick={() => setSelectedTask(t)} className={`border-b border-white/5 hover:bg-white/10 cursor-pointer transition ${isOverdue ? 'bg-red-500/5 hover:bg-red-500/10' : ''}`}>
+                            <td className="px-5 py-3 font-medium text-white">{t.title}</td>
+                            <td className="px-5 py-3 max-w-xs truncate text-gray-400">{t.description || <span className="italic text-gray-600">No description</span>}</td>
+                            <td className="px-5 py-3 font-mono text-xs">
+                              {t.deadline ? (
+                                <span className={`px-2 py-0.5 rounded ${isOverdue ? 'bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30' : 'text-indigo-300 bg-indigo-500/10 border border-indigo-500/20'}`}>
+                                  {t.deadline} {isOverdue && "(OVERDUE)"}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500 font-normal">No deadline</span>
+                              )}
+                            </td>
+                            <td className="px-5 py-3 capitalize">
+                              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                t.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                                t.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
+                                'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                              }`}>
+                                {t.status.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                              {t.status !== 'completed' && (
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'completed'); }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg hover:bg-green-500/30 transition">
+                                  Mark Done
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {/* QUERIES */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-medium text-white">HR Queries</h2>
+                <button onClick={() => setShowQueryModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition">
+                  <PlusIcon className="w-4 h-4" /> Raise Query
+                </button>
+              </div>
+              
+              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+                {queries.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">You have not raised any queries yet.</div>
+                ) : (
+                  <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                      <tr><th className="px-5 py-3">Subject</th><th className="px-5 py-3">Message</th><th className="px-5 py-3">Status</th></tr>
+                    </thead>
+                    <tbody>
+                      {queries.map(q => (
+                        <tr key={q.id} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="px-5 py-3 font-medium text-white">{q.subject}</td>
+                          <td className="px-5 py-3 max-w-sm truncate">{q.message}</td>
+                          <td className="px-5 py-3 capitalize">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              q.status === 'resolved' ? 'bg-green-500/10 text-green-400' : 
+                              q.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 
+                              'bg-yellow-500/10 text-yellow-400'
+                            }`}>
+                              {q.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {/* ATTENDANCE */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center h-9">
+                <h2 className="text-lg font-medium text-white">Attendance History</h2>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+                {attendance.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">No attendance records found.</div>
+                ) : (
+                  <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                      <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th></tr>
+                    </thead>
+                    <tbody>
+                      {attendance.map(a => (
+                        <tr key={a.id} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="px-5 py-3">{a.date}</td>
+                          <td className="px-5 py-3 capitalize">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${a.status === 'present' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                              {a.status.replace('_', ' ')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* LEAVES */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-white">Leave Applications</h2>
-              <button onClick={() => setShowLeaveModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition">
-                <PlusIcon className="w-4 h-4" /> Apply Leave
-              </button>
+      {tab === "announcements" && (
+        <div className="space-y-6 animate-fade-up">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <BellIcon className="w-6 h-6 text-indigo-400 animate-pulse" /> HR Announcements & Broadcasts
+              </h2>
+              <p className="text-sm text-gray-400 mt-1">Stay updated with the latest news, updates, and instructions from the HR department.</p>
             </div>
-            
-            <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
-              {leaves.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">No leave applications found.</div>
-              ) : (
-                <table className="w-full text-sm text-left text-gray-300">
-                  <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                    <tr><th className="px-5 py-3">Type</th><th className="px-5 py-3">Duration</th><th className="px-5 py-3">Status</th></tr>
-                  </thead>
-                  <tbody>
-                    {leaves.map(l => (
-                      <tr key={l.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="px-5 py-3">
-                          <div className="font-medium text-white">{l.leave_type_name || l.leave_type}</div>
-                          {l.reason && <div className="text-xs text-gray-500 mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
-                        </td>
-                        <td className="px-5 py-3">{l.start_date} to {l.end_date}</td>
-                        <td className="px-5 py-3 capitalize">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            l.status === 'approved' ? 'bg-green-500/10 text-green-400' : 
-                            l.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 
-                            'bg-yellow-500/10 text-yellow-400'
-                          }`}>
-                            {l.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            <div className="text-xs text-gray-500">
+              Showing {notifications.length} message{notifications.length !== 1 ? 's' : ''}
             </div>
           </div>
-        {/* TASKS */}
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
-              <div className="p-4 border-b border-white/10 bg-white/[0.02] flex items-center">
-                <span className="text-sm font-semibold text-white uppercase tracking-wider">My Assigned Tasks</span>
+
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 rounded-2xl border border-white/10 bg-black/25">
+              <div className="p-4 bg-indigo-500/10 rounded-full text-indigo-400">
+                <BellIcon className="w-12 h-12" />
               </div>
-              {tasks.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">No tasks assigned to you.</div>
-              ) : (
-                <table className="w-full text-sm text-left text-gray-300">
-                  <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                    <tr><th className="px-5 py-3">Title</th><th className="px-5 py-3">Description</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    {tasks.map(t => (
-                      <tr key={t.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="px-5 py-3 font-medium text-white">{t.title}</td>
-                        <td className="px-5 py-3 max-w-xs truncate">{t.description}</td>
-                        <td className="px-5 py-3 text-indigo-300 font-mono text-xs">{t.deadline || "No deadline"}</td>
-                        <td className="px-5 py-3 capitalize">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            t.status === 'completed' ? 'bg-green-500/10 text-green-400' : 
-                            'bg-yellow-500/10 text-yellow-400'
-                          }`}>
-                            {t.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          {t.status !== 'completed' && (
-                            <button onClick={() => handleCompleteTask(t)} className="text-xs bg-indigo-500/20 text-indigo-400 px-3 py-1.5 rounded-lg hover:bg-indigo-500/30">
-                              Mark Done
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              <div>
+                <h3 className="text-lg font-semibold text-white">All Caught Up</h3>
+                <p className="text-sm text-gray-400 mt-1 max-w-sm">There are no announcements or broadcasts from the HR department at this time.</p>
+              </div>
             </div>
-          </div>
-        {/* QUERIES */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-white">HR Queries</h2>
-              <button onClick={() => setShowQueryModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition">
-                <PlusIcon className="w-4 h-4" /> Raise Query
-              </button>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {notifications.map((n) => (
+                <div key={n.id} className="relative group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-white/[0.01] hover:from-white/[0.05] hover:to-white/[0.02] p-6 hover:border-white/20 transition-all duration-300 shadow-xl flex flex-col justify-between">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-300" />
+                  <div>
+                    <div className="flex justify-between items-start gap-4 mb-4">
+                      <span className="px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                        Broadcast
+                      </span>
+                      <span className="text-xs font-mono text-gray-500">
+                        {new Date(n.created_at).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white group-hover:text-indigo-200 transition-colors mb-3 leading-snug">{n.title}</h3>
+                    <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{n.message}</p>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
+                    <span>Sender: <strong className="text-gray-400 font-medium">HR Team</strong></span>
+                    <span>Received: {new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            
-            <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
-              {queries.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">You have not raised any queries yet.</div>
-              ) : (
-                <table className="w-full text-sm text-left text-gray-300">
-                  <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                    <tr><th className="px-5 py-3">Subject</th><th className="px-5 py-3">Message</th><th className="px-5 py-3">Status</th></tr>
-                  </thead>
-                  <tbody>
-                    {queries.map(q => (
-                      <tr key={q.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="px-5 py-3 font-medium text-white">{q.subject}</td>
-                        <td className="px-5 py-3 max-w-sm truncate">{q.message}</td>
-                        <td className="px-5 py-3 capitalize">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            q.status === 'resolved' ? 'bg-green-500/10 text-green-400' : 
-                            q.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 
-                            'bg-yellow-500/10 text-yellow-400'
-                          }`}>
-                            {q.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        {/* ATTENDANCE */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-center h-9">
-            <h2 className="text-lg font-medium text-white">Attendance History</h2>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
-            {attendance.length === 0 ? (
-              <div className="p-8 text-center text-gray-400">No attendance records found.</div>
-            ) : (
-              <table className="w-full text-sm text-left text-gray-300">
-                <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
-                  <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th></tr>
-                </thead>
-                <tbody>
-                  {attendance.map(a => (
-                    <tr key={a.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="px-5 py-3">{a.date}</td>
-                      <td className="px-5 py-3 capitalize">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${a.status === 'present' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                          {a.status.replace('_', ' ')}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
+
+      {/* TASK DETAILS MODAL */}
+      <TaskDetailsModal
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        task={selectedTask}
+        onStatusChange={handleUpdateTaskStatus}
+      />
 
       {/* LEAVE MODAL */}
       {showLeaveModal && (
