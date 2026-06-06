@@ -45,7 +45,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 py-2 ${className}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-2 pb-6 bg-gradient-to-b from-black via-black/80 to-transparent ${className}`}>
         <div className="w-full max-w-7xl">
           <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-black/40 via-black/50 to-black/40 px-6 py-2.5 backdrop-blur-md border border-white/10 shadow-lg transition-all duration-300">
             {/* Logo */}
@@ -79,7 +79,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
             {/* Mobile Menu Button & Sign Up */}
             <div className="flex items-center gap-2 md:hidden">
               {authLinks ? (
-                <Link to="/signup" className="px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-300 active:scale-95">
+                <Link to="/signup" className="inline-flex items-center justify-center text-center px-3.5 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-300 active:scale-95">
                   Sign Up
                 </Link>
               ) : null}

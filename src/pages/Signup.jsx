@@ -3,7 +3,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import api from '../api/api.js';
 import Loader from '../components/Loader';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Select from 'react-select';
 import { State, City } from 'country-state-city';
@@ -80,6 +80,10 @@ export default function Signup() {
   const [signupMessage, setSignupMessage] = useState('');
   const [googleError, setGoogleError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const phoneParam = searchParams.get('phone') || '';
+  const emailParam = searchParams.get('email') || '';
+  const [showManualForm, setShowManualForm] = useState(!!(phoneParam || emailParam));
 
   React.useEffect(() => {
     /* global google */
@@ -201,7 +205,7 @@ export default function Signup() {
         </nav>
 
         <div className="w-full max-w-md space-y-8 my-auto pt-16 lg:pt-0">
-            <div className="text-center lg:text-left">
+            <div className="text-center">
                 <h2 className="text-3xl font-bold text-white tracking-tight">Create your account</h2>
                 <p className="mt-2 text-slate-400">
                     Start your 14-day Pro trial. No credit card required.
@@ -210,10 +214,10 @@ export default function Signup() {
 
             <Formik
                 initialValues={{ 
-                    email: '', 
+                    email: emailParam || '', 
                     password: '', 
                     confirm_password: '', 
-                    phone: '', 
+                    phone: phoneParam || '', 
                     business_name: '', 
                     country: 'IN',
                     gstin: '',
@@ -275,202 +279,229 @@ export default function Signup() {
                 {({ isSubmitting, setFieldValue, values }) => (
                     <Form className="mt-8 space-y-5">
                         {signupMessage ? (
-                            <div className="text-sm text-cyan-300">{signupMessage}</div>
+                            <div className="text-sm text-cyan-300 mb-4">{signupMessage}</div>
                         ) : null}
 
                         {otpRequested ? (
-                          <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Signup OTP</label>
-                            <Field
-                                type="text"
-                                name="otp"
-                                className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                placeholder="Enter 6-digit OTP"
-                            />
-                            <ErrorMessage name="otp" component="div" className="text-red-400 text-xs mt-1" />
-                            <p className="text-xs text-slate-400 mt-2">Sent to: {pendingEmail || 'your email'}</p>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1.5">Signup OTP</label>
+                              <Field
+                                  type="text"
+                                  name="otp"
+                                  className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                  placeholder="Enter 6-digit OTP"
+                              />
+                              <ErrorMessage name="otp" component="div" className="text-red-400 text-xs mt-1" />
+                              <p className="text-xs text-slate-400 mt-2">Sent to: {pendingEmail || 'your email'}</p>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                                {isSubmitting ? 'Verifying OTP...' : 'Verify OTP & Create Account'}
+                                {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
+                            </button>
+                          </div>
+                        ) : showManualForm ? (
+                          <div className="space-y-5 animate-fade-in">
+                            <button
+                              type="button"
+                              onClick={() => setShowManualForm(false)}
+                              className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 mb-2 font-semibold"
+                            >
+                              ← Back to Google sign-up
+                            </button>
+
+                            <div className="grid grid-cols-1 gap-5">
+                              <div>
+                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
+                                  <Field
+                                      type="email"
+                                      name="email"
+                                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                      placeholder="name@company.com"
+                                  />
+                                  <ErrorMessage name="email" component="div" className="text-red-400 text-xs mt-1" />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+                                      <Field
+                                          type="password"
+                                          name="password"
+                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                          placeholder="••••••••"
+                                      />
+                                      <ErrorMessage name="password" component="div" className="text-red-400 text-xs mt-1" />
+                                  </div>
+                                  <div>
+                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm</label>
+                                      <Field
+                                          type="password"
+                                          name="confirm_password"
+                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                          placeholder="••••••••"
+                                      />
+                                      <ErrorMessage name="confirm_password" component="div" className="text-red-400 text-xs mt-1" />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
+                                  <Field
+                                      type="text"
+                                      name="phone"
+                                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                      placeholder="+91 98765 43210"
+                                  />
+                                  <ErrorMessage name="phone" component="div" className="text-red-400 text-xs mt-1" />
+                              </div>
+
+                              <div>
+                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Business Name (Optional)</label>
+                                  <Field
+                                      type="text"
+                                      name="business_name"
+                                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                      placeholder="Acme Corp"
+                                  />
+                              </div>
+
+                              <div>
+                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Country <span className="text-red-400">*</span></label>
+                                  <Select
+                                      options={[
+                                          { value: 'IN', label: 'India' },
+                                          { value: 'AE', label: 'United Arab Emirates' }
+                                      ]}
+                                      className="react-select-container"
+                                      classNamePrefix="react-select"
+                                      placeholder="Select Country"
+                                      styles={customSelectStyles}
+                                      onChange={(option) => {
+                                          setFieldValue('country', option.value);
+                                          setFieldValue('state', '');
+                                          setFieldValue('city', '');
+                                      }}
+                                      value={{ value: values.country, label: values.country === 'IN' ? 'India' : 'United Arab Emirates' }}
+                                  />
+                                  <ErrorMessage name="country" component="div" className="text-red-400 text-xs mt-1" />
+                              </div>
+
+                              {values.country === 'IN' && (
+                                  <div>
+                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
+                                      <Field
+                                          type="text"
+                                          name="gstin"
+                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                          placeholder="22AAAAA0000A1Z5"
+                                      />
+                                      <ErrorMessage name="gstin" component="div" className="text-red-400 text-xs mt-1" />
+                                  </div>
+                              )}
+
+                              {values.country === 'AE' && (
+                                  <div>
+                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">TRN (Optional, 15-digit)</label>
+                                      <Field
+                                          type="text"
+                                          name="trn"
+                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
+                                          placeholder="100000000000003"
+                                      />
+                                      <ErrorMessage name="trn" component="div" className="text-red-400 text-xs mt-1" />
+                                  </div>
+                              )}
+
+                              {values.country && (
+                                  <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                          <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
+                                          <Select
+                                              options={State.getStatesOfCountry(values.country).map(state => ({ value: state.isoCode, label: state.name }))}
+                                              className="react-select-container"
+                                              classNamePrefix="react-select"
+                                              placeholder="Select State"
+                                              styles={customSelectStyles}
+                                              onChange={(option) => {
+                                                  setFieldValue('state', option.value);
+                                                  setFieldValue('city', '');
+                                              }}
+                                              value={values.state ? { value: values.state, label: State.getStateByCodeAndCountry(values.state, values.country)?.name || values.state } : null}
+                                          />
+                                          <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
+                                      </div>
+                                      <div>
+                                          <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
+                                          <Select
+                                              options={City.getCitiesOfState(values.country, values.state).map(city => ({ value: city.name, label: city.name }))}
+                                              className="react-select-container"
+                                              classNamePrefix="react-select"
+                                              placeholder="Select City"
+                                              styles={customSelectStyles}
+                                              isDisabled={!values.state}
+                                              onChange={(option) => setFieldValue('city', option.value)}
+                                              value={values.city ? { value: values.city, label: values.city } : null}
+                                          />
+                                          <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
+                                      </div>
+                                  </div>
+                              )}
+                            </div>
+
+                            <div className="mt-4">
+                                <div className="flex items-start gap-3">
+                                    <Field 
+                                        type="checkbox" 
+                                        name="termsAccepted"
+                                        className="mt-1 w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500" 
+                                    />
+                                    <p className="text-sm text-slate-400">
+                                        I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</Link>.
+                                    </p>
+                                </div>
+                                <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                                {isSubmitting ? 'Sending OTP...' : 'Continue with OTP'}
+                                {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
+                            </button>
                           </div>
                         ) : (
-                        <div className="grid grid-cols-1 gap-5">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
-                                <Field
-                                    type="email"
-                                    name="email"
-                                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                    placeholder="name@company.com"
-                                />
-                                <ErrorMessage name="email" component="div" className="text-red-400 text-xs mt-1" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
-                                    <Field
-                                        type="password"
-                                        name="password"
-                                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                        placeholder="••••••••"
-                                    />
-                                    <ErrorMessage name="password" component="div" className="text-red-400 text-xs mt-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm</label>
-                                    <Field
-                                        type="password"
-                                        name="confirm_password"
-                                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                        placeholder="••••••••"
-                                    />
-                                    <ErrorMessage name="confirm_password" component="div" className="text-red-400 text-xs mt-1" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
-                                <Field
-                                    type="text"
-                                    name="phone"
-                                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                    placeholder="+91 98765 43210"
-                                />
-                                <ErrorMessage name="phone" component="div" className="text-red-400 text-xs mt-1" />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Business Name (Optional)</label>
-                                <Field
-                                    type="text"
-                                    name="business_name"
-                                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                    placeholder="Acme Corp"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Country <span className="text-red-400">*</span></label>
-                                <Select
-                                    options={[
-                                        { value: 'IN', label: 'India' },
-                                        { value: 'AE', label: 'United Arab Emirates' }
-                                    ]}
-                                    className="react-select-container"
-                                    classNamePrefix="react-select"
-                                    placeholder="Select Country"
-                                    styles={customSelectStyles}
-                                    onChange={(option) => {
-                                        setFieldValue('country', option.value);
-                                        setFieldValue('state', '');
-                                        setFieldValue('city', '');
-                                    }}
-                                    value={{ value: values.country, label: values.country === 'IN' ? 'India' : 'United Arab Emirates' }}
-                                />
-                                <ErrorMessage name="country" component="div" className="text-red-400 text-xs mt-1" />
-                            </div>
-
-                            {values.country === 'IN' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
-                                    <Field
-                                        type="text"
-                                        name="gstin"
-                                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                        placeholder="22AAAAA0000A1Z5"
-                                    />
-                                    <ErrorMessage name="gstin" component="div" className="text-red-400 text-xs mt-1" />
-                                </div>
-                            )}
-
-                            {values.country === 'AE' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">TRN (Optional, 15-digit)</label>
-                                    <Field
-                                        type="text"
-                                        name="trn"
-                                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                        placeholder="100000000000003"
-                                    />
-                                    <ErrorMessage name="trn" component="div" className="text-red-400 text-xs mt-1" />
-                                </div>
-                            )}
-
-                            {values.country && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
-                                        <Select
-                                            options={State.getStatesOfCountry(values.country).map(state => ({ value: state.isoCode, label: state.name }))}
-                                            className="react-select-container"
-                                            classNamePrefix="react-select"
-                                            placeholder="Select State"
-                                            styles={customSelectStyles}
-                                            onChange={(option) => {
-                                                setFieldValue('state', option.value);
-                                                setFieldValue('city', '');
-                                            }}
-                                            value={values.state ? { value: values.state, label: State.getStateByCodeAndCountry(values.state, values.country)?.name || values.state } : null}
-                                        />
-                                        <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
-                                        <Select
-                                            options={City.getCitiesOfState(values.country, values.state).map(city => ({ value: city.name, label: city.name }))}
-                                            className="react-select-container"
-                                            classNamePrefix="react-select"
-                                            placeholder="Select City"
-                                            styles={customSelectStyles}
-                                            isDisabled={!values.state}
-                                            onChange={(option) => setFieldValue('city', option.value)}
-                                            value={values.city ? { value: values.city, label: values.city } : null}
-                                        />
-                                        <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        )}
-
-                        {!otpRequested && <div className="mt-4">
-                            <div className="flex items-start gap-3">
-                                <Field 
-                                    type="checkbox" 
-                                    name="termsAccepted"
-                                    className="mt-1 w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500" 
-                                />
-                                <p className="text-sm text-slate-400">
-                                    I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</Link>.
-                                </p>
-                            </div>
-                            <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />
-                        </div>}
-
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
-                        >
-                            {isSubmitting ? (otpRequested ? 'Verifying OTP...' : 'Sending OTP...') : (otpRequested ? 'Verify OTP & Create Account' : 'Continue with OTP')}
-                            {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
-                        </button>
-
-                        {!otpRequested && (
-                          <>
-                            <div className="relative my-5">
-                              <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-800"></div>
-                              </div>
-                              <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-[#0f172a] px-2 text-slate-400 font-medium">Or continue with</span>
-                              </div>
-                            </div>
-
+                          <div className="space-y-6 animate-fade-in">
                             {googleError && (
                               <div className="text-red-400 text-xs text-center font-medium mt-2">{googleError}</div>
                             )}
 
                             <div id="googleSignUpDiv" className="w-full flex justify-center min-h-[44px]"></div>
-                          </>
+
+                            <div className="relative my-5">
+                              <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-800"></div>
+                              </div>
+                              <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-[#0f172a] px-2 text-slate-400 font-medium">Or</span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setShowManualForm(true)}
+                              className="w-full py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-semibold text-slate-200 shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+                            >
+                              Enter details manually <ArrowRightIcon className="w-5 h-5" />
+                            </button>
+                          </div>
                         )}
                     </Form>
                 )}

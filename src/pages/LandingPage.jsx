@@ -43,23 +43,24 @@ const useScrollAnimation = () => {
 
 // Screenshot Showcase Component
 const ScreenshotShowcase = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('demo');
   
   const tabs = [
+    { id: 'demo', label: 'Billing Demo', icon: BoltIcon, image: '/billcreationdemo.gif' },
     { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashboard.png' },
-    { id: 'sales', label: 'Sales', icon: ShoppingCartIcon, image: '/sales.png' },
+    { id: 'sales', label: 'Sales Invoicing', icon: ShoppingCartIcon, image: '/sales.png' },
     { id: 'inventory', label: 'Inventory', icon: CubeIcon, image: '/inventory.png' },
   ];
 
   return (
-    <div className="mt-24 opacity-0 animate-fade-up delay-300 relative">
+    <div className="mt-16 md:mt-24 opacity-0 animate-fade-up delay-300 relative">
       {/* Tab Navigation */}
-      <div className="flex justify-center gap-2 mb-8">
+      <div className="flex items-center overflow-x-auto md:justify-center gap-2 mb-8 px-4 pb-3 -mx-4 md:mx-0 whitespace-nowrap snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shrink-0 snap-center ${
               activeTab === tab.id
                 ? 'bg-white text-black shadow-lg shadow-white/20'
                 : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
@@ -248,30 +249,37 @@ export default function LandingPage() {
       />
 
       {/* 2. Hero Section */}
-      <section className="pt-40 pb-20 text-center relative overflow-hidden z-10">
+      <section className="pt-20 md:pt-40 pb-12 md:pb-20 text-center relative overflow-hidden z-10">
         {/* Background Ambient Glow */}
         <div className="absolute top-0 inset-x-0 h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-transparent -z-10"></div>
         
         <div className="max-w-5xl mx-auto px-6 relative">
-          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-8 opacity-0 animate-fade-up tracking-wide">
+          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-6 md:mb-8 opacity-0 animate-fade-up tracking-wide">
              <span className="animate-pulse mr-2">●</span> Built for businesses in India & UAE
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-none">
-            Business, <br/>
-            perfectly synced.
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 md:mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-tight">
+            Finally, billing software built for business owners, not accountants.
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-12 opacity-0 animate-fade-up delay-200 leading-relaxed font-light">
-            Cenvora helps you manage sales, stock, customers, and billing in one place. It is made for shop owners, traders, and growing businesses that want less confusion and more control.
+          <p className="text-sm sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-10 opacity-0 animate-fade-up delay-200 leading-relaxed font-light">
+            Ditch Tally's complex menus and billing errors. Cenvora is the ultra-simple GST billing and stock manager built for India & UAE. Create invoices, manage warehouses, and track profits from your phone or PC. Zero training required.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0 animate-fade-up delay-300">
-            <Link to="/signup" className="btn-primary w-full sm:w-auto shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]">
-              Start Now
+            <a 
+              href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20want%20to%20see%20a%20demo%20and%20start%20my%20free%20trial." 
+              target="_blank" 
+              rel="noreferrer" 
+              className="w-full sm:w-auto justify-center flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-[#128C7E] to-[#25D366] shadow-[0_0_30px_rgba(37,211,102,0.25)] hover:shadow-[0_0_45px_rgba(37,211,102,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            >
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.488 1.459 5.407 1.46h.007c5.632 0 10.21-4.58 10.213-10.21.002-2.729-1.051-5.293-2.964-7.208C17.399 1.282 14.836.22 12.012.22 6.38 0 1.797 4.582 1.795 10.21a10.16 10.16 0 0 0 1.522 5.3l.18.286-1.002 3.661 3.746-.982.278.165zm11.905-7.616c-.3-.149-1.772-.874-2.047-.975-.276-.102-.476-.15-.676.15-.199.3-.775 1.009-.95 1.21-.175.199-.35.224-.65.075-1.127-.565-1.954-1.049-2.748-2.408-.21-.359-.01-.176.185-.548.148-.3.074-.562-.038-.711-.112-.149-.9-.2.9-2.179-.868-.21-.43-.099-.583-.075-.413.074-.112.199-.19.325-.3.125-.109.199-.199.3-.35.099-.15.05-.299-.025-.448-.075-.15-.675-1.623-.925-2.223-.244-.589-.496-.51-.678-.51-.175-.008-.375-.01-.576-.01-.2 0-.525.075-.799.375-.274.3-1.05 1.03-1.05 2.516s1.075 2.916 1.225 3.116c.15.199 2.115 3.227 5.125 4.527.715.31 1.273.495 1.708.635.718.228 1.37.195 1.887.118.577-.089 1.772-.724 2.022-1.424.25-.699.25-1.3.175-1.424-.075-.124-.275-.199-.575-.349z"/>
+              </svg>
+              <span>Get WhatsApp Demo</span>
+            </a>
+            <Link to="/signup" className="w-full sm:w-auto justify-center flex items-center px-6 py-3.5 rounded-xl font-bold text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-300 active:scale-95">
+              Start Free Trial
             </Link>
-            <button onClick={() => setIsCalendlyOpen(true)} className="btn-secondary w-full sm:w-auto justify-center">
-              Schedule a demo <ArrowRightIcon className="w-5 h-5"/>
-            </button>
           </div>
 
           {/* Hero Screenshot Showcase */}
