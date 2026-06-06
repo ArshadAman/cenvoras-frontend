@@ -58,7 +58,7 @@ export default function ContactUs() {
 
         <section className="mt-8 grid gap-6 md:grid-cols-2">
           <a
-            href="mailto:cenvoras@gmail.com"
+            href="mailto:support@cenvora.app"
             className="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#0e1118] p-7 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-2xl hover:shadow-cyan-900/20"
           >
             <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-cyan-400/10 blur-2xl"></div>
@@ -68,7 +68,7 @@ export default function ContactUs() {
               </div>
               <h2 className="text-2xl font-bold text-white">Email</h2>
               <p className="mt-2 text-sm text-gray-400">Best for detailed requests and account support.</p>
-              <p className="mt-6 text-lg font-semibold text-cyan-300">cenvoras@gmail.com</p>
+              <p className="mt-6 text-lg font-semibold text-cyan-300">support@cenvora.app</p>
               <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-cyan-200">
                 Send Email <ArrowTopRightOnSquareIcon className="h-4 w-4" />
               </span>
@@ -76,7 +76,7 @@ export default function ContactUs() {
           </a>
 
           <a
-            href="https://wa.me/918895159796"
+            href="https://wa.me/917205289643"
             target="_blank"
             rel="noreferrer"
             className="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#121015] p-7 transition-all duration-300 hover:-translate-y-1 hover:border-purple-400/40 hover:shadow-2xl hover:shadow-purple-900/20"
@@ -88,7 +88,7 @@ export default function ContactUs() {
               </div>
               <h2 className="text-2xl font-bold text-white">WhatsApp</h2>
               <p className="mt-2 text-sm text-gray-400">Quick chat for faster response.</p>
-              <p className="mt-6 text-lg font-semibold text-purple-300">+91 8895159796</p>
+              <p className="mt-6 text-lg font-semibold text-purple-300">+91 7205289643</p>
               <p className="mt-2 text-xs uppercase tracking-wider text-amber-300">WhatsApp only, no calls</p>
               <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-purple-200">
                 Open WhatsApp <ArrowTopRightOnSquareIcon className="h-4 w-4" />

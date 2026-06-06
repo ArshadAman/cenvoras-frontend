@@ -103,16 +103,16 @@ export default function Login({ onLogin }) {
 
         {/* Testimonial / Value Prop */}
         <div className="relative z-10 max-w-lg">
-          <h2 className="text-4xl font-bold leading-tight mb-6">
-            "Cenvora transformed how we track our inventory. It's not just a tool; it's our growth engine."
+          <h2 className="text-3xl font-bold leading-relaxed mb-6 font-light italic text-slate-300">
+            "Calculations used to take hours, especially with CGST/SGST splitting. With Cenvora, my staff can raise GST bills in seconds and manage stock from one screen. It saved us at least 15 hours a week."
           </h2>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-lg font-bold">
-              JD
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-cyan-500/20">
+              RM
             </div>
             <div>
-              <p className="font-semibold text-white">John Doe</p>
-              <p className="text-slate-400 text-sm">CEO, TechFlow Inc.</p>
+              <p className="font-semibold text-white">Rajesh K. Mehta</p>
+              <p className="text-slate-400 text-sm">Managing Director, Mehta Traders</p>
             </div>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function Login({ onLogin }) {
         </nav>
 
         <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:text-left">
+          <div className="text-center">
             <h2 className="text-3xl font-bold text-white tracking-tight">Welcome back</h2>
             <p className="mt-2 text-slate-400">
               Please enter your details to sign in.
