@@ -76,11 +76,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
-    const roundedPrice = Math.round(Number(product.sale_price ?? product.price ?? 0) || 0);
-    setFieldValue(`items.${idx}.price`, roundedPrice);
+    const initialPrice = Number(product.sale_price ?? product.price ?? 0) || 0;
+    setFieldValue(`items.${idx}.price`, initialPrice);
     // Calculate amount automatically
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * roundedPrice;
+    const amount = quantity * initialPrice;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.product_description`, product.description || "");
@@ -505,7 +505,7 @@ const SalesSchema = Yup.object().shape({
       product: Yup.string().required("Product is required").min(1),
       quantity: Yup.number().required("Quantity is required").min(1),
       batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
-      price: Yup.number().required("Price is required").integer("Price should be a whole number").min(0),
+      price: Yup.number().required("Price is required").min(0),
       amount: Yup.number().required("Amount is required").min(0),
       
       // Optional item fields
@@ -734,7 +734,7 @@ export default function SalesForm({
     if (!productCreationState) return;
 
     try {
-      const salePrice = Math.round(Number(productCreationState.sale_price || 0) || 0);
+      const salePrice = Number(productCreationState.sale_price || 0) || 0;
       const createdProduct = await createProduct({
         name: productCreationState.name,
         sale_price: salePrice,
@@ -751,7 +751,7 @@ export default function SalesForm({
       if (formikRef.current && typeof productCreationState.idx === 'number') {
         const itemPath = `items.${productCreationState.idx}`;
         const quantity = Number(formikRef.current.values?.items?.[productCreationState.idx]?.quantity || 1);
-        const normalizedPrice = Math.round(Number(createdProduct.sale_price ?? salePrice) || 0);
+        const normalizedPrice = Number(createdProduct.sale_price ?? salePrice) || 0;
 
         formikRef.current.setFieldValue(`${itemPath}.product`, createdProduct.name);
         formikRef.current.setFieldValue(`${itemPath}.product_id`, createdProduct.id);
@@ -909,7 +909,7 @@ export default function SalesForm({
             
             items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
               const qty = item.quantity || 1;
-              const price = Math.round(Number(item.price || 0) || 0);
+              const price = Number(item.price || 0) || 0;
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
               return {
                 product: item.product || item.product_name || "",
@@ -928,7 +928,7 @@ export default function SalesForm({
               };
             }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map(item => {
                 const qty = item.quantity || 1;
-                const price = Math.round(Number(item.price || 0) || 0);
+                const price = Number(item.price || 0) || 0;
                 return {
                     product: item.product_name || "",
                     product_id: null,
@@ -1018,7 +1018,7 @@ export default function SalesForm({
             try {
               const processedItems = cleanedItems.map(item => {
                 const quantity = Number(item.quantity) || 1;
-                const price = Math.round(Number(item.price) || 0);
+                const price = Number(item.price) || 0;
                 const discount = Number(item.discount) || 0;
                 const tax = Number(item.tax) || 0;
                 const baseAmount = quantity * price;
@@ -1491,7 +1491,7 @@ export default function SalesForm({
                                                   onChange={(e) => {
                                                     const qty = e.target.value;
                                                     setFieldValue(`items.${index}.quantity`, qty);
-                                                    const price = Math.round(Number(values.items[index]?.price) || 0);
+                                                    const price = Number(values.items[index]?.price) || 0;
                                                     setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
                                                   }}
                                                 />
@@ -1525,20 +1525,20 @@ export default function SalesForm({
                                             return (
                                               <div key={col.key}>
                                                 <Field
-                                                  name={`items.${index}.price`}
-                                                  type="number"
-                                                  min="0"
-                                                  step="1"
-                                                  className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
-                                                  onChange={(e) => {
-                                                    const price = e.target.value;
-                                                    setFieldValue(`items.${index}.price`, price);
-                                                    const qty = parseFloat(values.items[index]?.quantity) || 0;
-                                                    const roundedPrice = Math.round(Number(price) || 0);
-                                                    setFieldValue(`items.${index}.amount`, roundedPrice * qty);
-                                                    if (price && Number(price) > 0) handleAutoAddRow(index);
-                                                  }}
-                                                />
+                                                   name={`items.${index}.price`}
+                                                   type="number"
+                                                   min="0"
+                                                   step="any"
+                                                   className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
+                                                   onChange={(e) => {
+                                                     const price = e.target.value;
+                                                     setFieldValue(`items.${index}.price`, price);
+                                                     const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                     const actualPrice = Number(price) || 0;
+                                                     setFieldValue(`items.${index}.amount`, actualPrice * qty);
+                                                     if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                   }}
+                                                 />
                                               </div>
                                             );
                                           }
@@ -1651,7 +1651,7 @@ export default function SalesForm({
                                                 onChange={(e) => {
                                                   const qty = e.target.value;
                                                   setFieldValue(`items.${index}.quantity`, qty);
-                                                  const price = Math.round(Number(values.items[index]?.price) || 0);
+                                                  const price = Number(values.items[index]?.price) || 0;
                                                   setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
                                                 }}
                                               />
@@ -1669,20 +1669,20 @@ export default function SalesForm({
                                           <div>
                                               <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
                                               <Field
-                                                name={`items.${index}.price`}
-                                                type="number"
-                                                min="0"
-                                                step="1"
-                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-right font-mono"
-                                                onChange={(e) => {
-                                                  const price = e.target.value;
-                                                  setFieldValue(`items.${index}.price`, price);
-                                                  const qty = parseFloat(values.items[index]?.quantity) || 0;
-                                                  const roundedPrice = Math.round(Number(price) || 0);
-                                                  setFieldValue(`items.${index}.amount`, roundedPrice * qty);
-                                                  if (price && Number(price) > 0) handleAutoAddRow(index);
-                                                }}
-                                              />
+                                                 name={`items.${index}.price`}
+                                                 type="number"
+                                                 min="0"
+                                                 step="any"
+                                                 className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-right font-mono"
+                                                 onChange={(e) => {
+                                                   const price = e.target.value;
+                                                   setFieldValue(`items.${index}.price`, price);
+                                                   const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                   const actualPrice = Number(price) || 0;
+                                                   setFieldValue(`items.${index}.amount`, actualPrice * qty);
+                                                   if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                 }}
+                                               />
                                           </div>
                                       </div>
 
@@ -1909,12 +1909,12 @@ export default function SalesForm({
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Sale Price</label>
                   <input
                     type="number"
-                    step="1"
+                    step="any"
                     min="0"
                     value={productCreationState.sale_price}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, sale_price: e.target.value }))}
                     className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
-                    placeholder="Whole number"
+                    placeholder="0.00"
                   />
                 </div>
                 <div>
@@ -1930,12 +1930,12 @@ export default function SalesForm({
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
                   <input
                     type="number"
-                    step="1"
+                    step="any"
                     min="0"
                     value={productCreationState.tax}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
                     className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
-                    placeholder="0"
+                    placeholder="0.00"
                   />
                 </div>
                 <div>
