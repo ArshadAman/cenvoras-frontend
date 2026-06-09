@@ -19,6 +19,7 @@ const ProfessionalTemplate = forwardRef(({
   
   const companyAddress = businessInfo.business_address || businessInfo.address || '';
   const companyGST = businessInfo.gstin || '';
+  const customerGST = invoice.customer_gstin || invoice.gstin || '';
   const customerName = invoice.customer_name || 'Customer Name';
   const billingAddress = invoice.customer_address || invoice.customer?.address || '';
   const shippingAddress = invoice.delivery_address || invoice.shipping_address || '';
@@ -84,6 +85,11 @@ const ProfessionalTemplate = forwardRef(({
           <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary }}>Bill To</h3>
           <p className="font-bold">{customerName}</p>
           <p className="whitespace-pre-line text-gray-600">{billingAddress}</p>
+          {customerGST && (
+            <p className="text-gray-600 mt-1">
+              <strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {customerGST}
+            </p>
+          )}
         </div>
         {(shippingAddress && shippingAddress !== billingAddress) && (
           <div className="col-span-1">

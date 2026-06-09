@@ -18,6 +18,7 @@ const GenzTemplate = forwardRef(({
   const companyAddress = businessInfo.business_address || businessInfo.address || '';
   const customerName = invoice.customer_name || 'Customer Name';
   const billingAddress = invoice.customer_address || '';
+  const customerGST = invoice.customer_gstin || invoice.gstin || '';
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
@@ -64,6 +65,11 @@ const GenzTemplate = forwardRef(({
             <h3 className="text-gray-400 font-bold mb-2 uppercase text-xs tracking-widest">Billed To</h3>
             <p className="font-bold text-lg text-gray-900 mb-1">{customerName}</p>
             <p className="whitespace-pre-line text-gray-600 font-medium">{billingAddress}</p>
+            {customerGST && (
+              <p className="text-gray-600 font-medium mt-1">
+                <strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {customerGST}
+              </p>
+            )}
           </div>
           <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col justify-center">
             <div className="flex justify-between mb-3 border-b border-gray-200 pb-3">
