@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import api from '../api/api.js';
 import Loader from '../components/Loader';
@@ -84,6 +84,7 @@ export default function Signup() {
   const phoneParam = searchParams.get('phone') || '';
   const emailParam = searchParams.get('email') || '';
   const [showManualForm, setShowManualForm] = useState(!!(phoneParam || emailParam));
+  const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
 
   React.useEffect(() => {
     /* global google */
@@ -171,20 +172,29 @@ export default function Signup() {
         {/* Value Prop */}
         <div className="relative z-10 max-w-lg">
             <h2 className="text-4xl font-bold leading-tight mb-6">
-                Join thousands of businesses scaling with Cenvora.
+                Take control of your billing and inventory in minutes.
             </h2>
-            <ul className="space-y-4 text-lg text-slate-300">
-                <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</div>
-                    Real-time inventory tracking
+            <ul className="space-y-6 text-lg text-slate-300">
+                <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 shrink-0 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 font-semibold">✓</div>
+                    <div>
+                        <strong className="text-white block font-semibold mb-0.5">14-Day Free Pro Trial</strong>
+                        <span className="text-sm text-slate-400 leading-relaxed">Instant access to all premium features. No credit card required.</span>
+                    </div>
                 </li>
-                <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</div>
-                    Advanced analytics dashboard
+                <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 shrink-0 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 font-semibold">✓</div>
+                    <div>
+                        <strong className="text-white block font-semibold mb-0.5">Setup in under 2 minutes</strong>
+                        <span className="text-sm text-slate-400 leading-relaxed">Import your items and start raising GST invoices immediately.</span>
+                    </div>
                 </li>
-                <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</div>
-                    GST-Ready Billing & Reports
+                <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 shrink-0 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 font-semibold">✓</div>
+                    <div>
+                        <strong className="text-white block font-semibold mb-0.5">Staff-ready simplicity</strong>
+                        <span className="text-sm text-slate-400 leading-relaxed">An interface so intuitive your team can use it with zero training.</span>
+                    </div>
                 </li>
             </ul>
         </div>
@@ -276,8 +286,16 @@ export default function Signup() {
                     setSubmitting(false);
                 }}
             >
-                {({ isSubmitting, setFieldValue, values }) => (
-                    <Form className="mt-8 space-y-5">
+                {({ isSubmitting, setFieldValue, values, errors, submitCount, resetForm, handleSubmit }) => (
+                    <form 
+                        className="mt-8 space-y-5"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            if (isSubmitAttempted) {
+                                handleSubmit(e);
+                            }
+                        }}
+                    >
                         {signupMessage ? (
                             <div className="text-sm text-cyan-300 mb-4">{signupMessage}</div>
                         ) : null}
@@ -292,12 +310,13 @@ export default function Signup() {
                                   className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                   placeholder="Enter 6-digit OTP"
                               />
-                              <ErrorMessage name="otp" component="div" className="text-red-400 text-xs mt-1" />
+                              {isSubmitAttempted && errors.otp && <div className="text-red-400 text-xs mt-1">{errors.otp}</div>}
                               <p className="text-xs text-slate-400 mt-2">Sent to: {pendingEmail || 'your email'}</p>
                             </div>
 
                             <button
                                 type="submit"
+                                onClick={() => setIsSubmitAttempted(true)}
                                 disabled={isSubmitting}
                                 className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                             >
@@ -309,7 +328,13 @@ export default function Signup() {
                           <div className="space-y-5 animate-fade-in">
                             <button
                               type="button"
-                              onClick={() => setShowManualForm(false)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                resetForm();
+                                setIsSubmitAttempted(false);
+                                setShowManualForm(false);
+                              }}
                               className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 mb-2 font-semibold"
                             >
                               ← Back to Google sign-up
@@ -324,7 +349,7 @@ export default function Signup() {
                                       className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                       placeholder="name@company.com"
                                   />
-                                  <ErrorMessage name="email" component="div" className="text-red-400 text-xs mt-1" />
+                                  {isSubmitAttempted && errors.email && <div className="text-red-400 text-xs mt-1">{errors.email}</div>}
                               </div>
 
                               <div className="grid grid-cols-2 gap-4">
@@ -336,7 +361,7 @@ export default function Signup() {
                                           className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                           placeholder="••••••••"
                                       />
-                                      <ErrorMessage name="password" component="div" className="text-red-400 text-xs mt-1" />
+                                      {isSubmitAttempted && errors.password && <div className="text-red-400 text-xs mt-1">{errors.password}</div>}
                                   </div>
                                   <div>
                                       <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm</label>
@@ -346,7 +371,7 @@ export default function Signup() {
                                           className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                           placeholder="••••••••"
                                       />
-                                      <ErrorMessage name="confirm_password" component="div" className="text-red-400 text-xs mt-1" />
+                                      {isSubmitAttempted && errors.confirm_password && <div className="text-red-400 text-xs mt-1">{errors.confirm_password}</div>}
                                   </div>
                               </div>
 
@@ -358,7 +383,7 @@ export default function Signup() {
                                       className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                       placeholder="+91 98765 43210"
                                   />
-                                  <ErrorMessage name="phone" component="div" className="text-red-400 text-xs mt-1" />
+                                  {isSubmitAttempted && errors.phone && <div className="text-red-400 text-xs mt-1">{errors.phone}</div>}
                               </div>
 
                               <div>
@@ -389,7 +414,7 @@ export default function Signup() {
                                       }}
                                       value={{ value: values.country, label: values.country === 'IN' ? 'India' : 'United Arab Emirates' }}
                                   />
-                                  <ErrorMessage name="country" component="div" className="text-red-400 text-xs mt-1" />
+                                  {isSubmitAttempted && errors.country && <div className="text-red-400 text-xs mt-1">{errors.country}</div>}
                               </div>
 
                               {values.country === 'IN' && (
@@ -401,7 +426,7 @@ export default function Signup() {
                                           className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                           placeholder="22AAAAA0000A1Z5"
                                       />
-                                      <ErrorMessage name="gstin" component="div" className="text-red-400 text-xs mt-1" />
+                                      {isSubmitAttempted && errors.gstin && <div className="text-red-400 text-xs mt-1">{errors.gstin}</div>}
                                   </div>
                               )}
 
@@ -414,7 +439,7 @@ export default function Signup() {
                                           className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
                                           placeholder="100000000000003"
                                       />
-                                      <ErrorMessage name="trn" component="div" className="text-red-400 text-xs mt-1" />
+                                      {isSubmitAttempted && errors.trn && <div className="text-red-400 text-xs mt-1">{errors.trn}</div>}
                                   </div>
                               )}
 
@@ -434,7 +459,7 @@ export default function Signup() {
                                               }}
                                               value={values.state ? { value: values.state, label: State.getStateByCodeAndCountry(values.state, values.country)?.name || values.state } : null}
                                           />
-                                          <ErrorMessage name="state" component="div" className="text-red-400 text-xs mt-1" />
+                                          {isSubmitAttempted && errors.state && <div className="text-red-400 text-xs mt-1">{errors.state}</div>}
                                       </div>
                                       <div>
                                           <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
@@ -448,7 +473,7 @@ export default function Signup() {
                                               onChange={(option) => setFieldValue('city', option.value)}
                                               value={values.city ? { value: values.city, label: values.city } : null}
                                           />
-                                          <ErrorMessage name="city" component="div" className="text-red-400 text-xs mt-1" />
+                                          {isSubmitAttempted && errors.city && <div className="text-red-400 text-xs mt-1">{errors.city}</div>}
                                       </div>
                                   </div>
                               )}
@@ -465,11 +490,12 @@ export default function Signup() {
                                         I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</Link>.
                                     </p>
                                 </div>
-                                <ErrorMessage name="termsAccepted" component="div" className="text-red-400 text-xs mt-1 ml-7" />
+                                {isSubmitAttempted && errors.termsAccepted && <div className="text-red-400 text-xs mt-1 ml-7">{errors.termsAccepted}</div>}
                             </div>
 
                             <button
                                 type="submit"
+                                onClick={() => setIsSubmitAttempted(true)}
                                 disabled={isSubmitting}
                                 className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                             >
@@ -496,14 +522,20 @@ export default function Signup() {
 
                             <button
                               type="button"
-                              onClick={() => setShowManualForm(true)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                resetForm();
+                                setIsSubmitAttempted(false);
+                                setShowManualForm(true);
+                              }}
                               className="w-full py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-semibold text-slate-200 shadow-md transition-all duration-200 flex items-center justify-center gap-2"
                             >
                               Enter details manually <ArrowRightIcon className="w-5 h-5" />
                             </button>
                           </div>
                         )}
-                    </Form>
+                    </form>
                 )}
             </Formik>
 
