@@ -79,13 +79,41 @@ export default function Payslips() {
                       <td className="px-6 py-4 font-medium text-white">{ps.employee_name || ps.employee}</td>
                       <td className="px-6 py-4">{ps.month} / {ps.year}</td>
                       <td className="px-6 py-4 text-green-400 font-medium">₹{parseFloat(ps.net_salary).toFixed(2)}</td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right space-x-2">
                         <button 
                           onClick={() => handleDownload(ps.id, ps.employee_code, ps.month, ps.year)}
                           className="p-2 rounded bg-white/5 text-white hover:bg-white/10 transition"
                           title="Download PDF"
                         >
                           <ArrowDownTrayIcon className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await hrApi.sendPayslipEmail(ps.id);
+                              toast.success(`Payslip emailed to ${ps.employee_name}`);
+                            } catch (e) {
+                              toast.error('Failed to send email');
+                            }
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition text-xs font-medium"
+                          title="Send Email"
+                        >
+                          ✉️ Email
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await hrApi.sendPayslipWhatsApp(ps.id);
+                              toast.success(`WhatsApp message queued for ${ps.employee_name}`);
+                            } catch (e) {
+                              toast.error('Failed to send WhatsApp');
+                            }
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition text-xs font-medium"
+                          title="Send WhatsApp"
+                        >
+                          💬 WhatsApp
                         </button>
                       </td>
                     </tr>

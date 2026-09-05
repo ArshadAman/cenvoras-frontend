@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/hsn/:match*",
-      "destination": "https://api.cenvora.app/hsn/:match*"
+      "destination": "https://newapi.cenvora.app/hsn/:match*"
     },
     {
       "source": "/gst-rate/:match*",
-      "destination": "https://api.cenvora.app/gst-rate/:match*"
+      "destination": "https://newapi.cenvora.app/gst-rate/:match*"
     },
     {
       "source": "/(.*)",

@@ -31,6 +31,8 @@ import {
   BriefcaseIcon,
   ClockIcon,
   CalendarDaysIcon,
+  FolderIcon,
+  AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
@@ -152,14 +154,17 @@ export default function Layout({ children, onLogout }) {
       ]
     },
     {
-      title: "HR & Payroll",
+      title: "HRMS",
       items: [
-        { path: "/hr/dashboard", label: "HR Dashboard", icon: ChartBarIcon, roles: [] },
+        { path: "/hr/dashboard", label: "Dashboard", icon: ChartBarIcon, roles: [] },
         { path: "/hr/employees", label: "Employees", icon: UsersIcon, roles: [] },
+        { path: "/hr/payroll", label: "Payroll", icon: CurrencyRupeeIcon, roles: [] },
         { path: "/hr/attendance", label: "Attendance", icon: ClockIcon, roles: [] },
-        { path: "/hr/leave-applications", label: "Leave Applications", icon: CalendarDaysIcon, roles: [] },
-        { path: "/hr/salary-structures", label: "Salary Structures", icon: CurrencyRupeeIcon, roles: [] },
-        { path: "/hr/salary-assignments", label: "Salary Assignments", icon: BriefcaseIcon, roles: [] }
+        { path: "/hr/leave-applications", label: "Leave", icon: CalendarDaysIcon, roles: [] },
+        { path: "/hr/advances-loans", label: "Advances & Loans", icon: BanknotesIcon, roles: [] },
+        { path: "/hr/documents", label: "Documents", icon: FolderIcon, roles: [] },
+        { path: "/hr/reports", label: "Reports", icon: BookOpenIcon, roles: [] },
+        { path: "/hr/settings", label: "Settings", icon: AdjustmentsHorizontalIcon, roles: [] }
       ]
     },
     {
