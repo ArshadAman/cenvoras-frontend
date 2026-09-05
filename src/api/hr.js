@@ -21,6 +21,8 @@ export const hrApi = {
   createEmployee: (data) => api.post('/hr/employees/', data),
   updateEmployee: (id, data) => api.put(`/hr/employees/${id}/`, data),
   deleteEmployee: (id) => api.delete(`/hr/employees/${id}/`),
+  incrementSalary: (id, data) => api.post(`/hr/employees/${id}/increment_salary/`, data),
+  getEmployeeSalaryHistory: (id) => api.get(`/hr/employees/${id}/salary_history/`),
 
   // Attendance
   getAttendance: (params) => api.get('/hr/attendance/', { params }),
