@@ -26,12 +26,34 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await hrApi.incrementSalary(employee.id, form);
+      await hrApi.incrementSalary(employee.id, {
+        new_salary: form.new_salary,
+        reason: form.reason,
+        effective_from: form.effective_date,
+        effective_date: form.effective_date,
+      });
       toast.success(`Salary revision logged for ${employee.full_name}`);
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to update salary');
+      const data = err.response?.data;
+      let msg = 'Failed to update salary';
+      if (typeof data === 'string') {
+        msg = data;
+      } else if (data?.error) {
+        msg = data.error;
+      } else if (data?.detail) {
+        msg = data.detail;
+      } else if (Array.isArray(data)) {
+        msg = data[0];
+      } else if (data && typeof data === 'object') {
+        msg = Object.entries(data)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v[0] : v}`)
+          .join('; ');
+      } else if (err.message) {
+        msg = err.message;
+      }
+      toast.error(msg);
     } finally {
       setSaving(false);
     }

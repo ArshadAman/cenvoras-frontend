@@ -415,9 +415,19 @@ function SalaryIncrementModal({ isOpen, onClose, onSuccess, employee }) {
   const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true);
-    try { await hrApi.incrementSalary(employee.id, form); toast.success("Salary incremented"); onSuccess(); onClose(); }
-    catch (err) { toast.error(err.response?.data?.detail || "Failed to increment salary"); }
-    finally { setSaving(false); }
+    try {
+      await hrApi.incrementSalary(employee.id, {
+        ...form,
+        effective_date: form.effective_from,
+      });
+      toast.success("Salary incremented");
+      onSuccess();
+      onClose();
+    } catch (err) {
+      const data = err.response?.data;
+      const msg = data?.error || data?.detail || (typeof data === 'string' ? data : null) || err.message || "Failed to increment salary";
+      toast.error(msg);
+    } finally { setSaving(false); }
   };
   if (!isOpen || !employee) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
