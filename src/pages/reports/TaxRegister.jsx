@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail } from "../../api/gst";
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getCurrencySymbol, formatCurrency, getCountryCode } from '../../utils/currency';
 
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toLocaleDateString('sv-SE');
 const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 
 export default function TaxRegister() {
@@ -56,6 +56,7 @@ export default function TaxRegister() {
     { id: 'gstr1', label: 'GSTR-1 Export' },
   ];
 
+  const country = getCountryCode();
   const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const { data: invoiceDetail, isLoading: invoiceDetailLoading } = useQuery({
@@ -65,15 +66,15 @@ export default function TaxRegister() {
   });
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
         <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
           <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
           <ChartBarIcon className="w-3.5 h-3.5" /> Back to Reports
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">GST Tax Register</h1>
-          <p className="text-gray-400 text-sm">Invoice-wise GST breakup, HSN summary, and GSTR-1 export.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">{country === 'IN' ? 'GST Tax Register' : 'Tax Register'}</h1>
+          <p className="text-gray-400 text-sm">{country === 'IN' ? 'Invoice-wise GST breakup' : 'Invoice-wise tax breakup'}, HSN summary, and GSTR-1 export.</p>
         </div>
 
         {/* Tabs */}
@@ -134,11 +135,17 @@ export default function TaxRegister() {
                     <th className="p-4 font-medium">Invoice</th>
                     <th className="p-4 font-medium">Date</th>
                     <th className="p-4 font-medium">Party</th>
-                    <th className="p-4 font-medium">GSTIN</th>
+                    <th className="p-4 font-medium">{country === 'IN' ? 'GSTIN' : 'TRN'}</th>
                     <th className="p-4 font-medium text-right">Taxable</th>
-                    <th className="p-4 font-medium text-right">CGST</th>
-                    <th className="p-4 font-medium text-right">SGST</th>
-                    <th className="p-4 font-medium text-right">IGST</th>
+                    {country === 'IN' ? (
+                      <>
+                        <th className="p-4 font-medium text-right">CGST</th>
+                        <th className="p-4 font-medium text-right">SGST</th>
+                        <th className="p-4 font-medium text-right">IGST</th>
+                      </>
+                    ) : (
+                      <th className="p-4 font-medium text-right">VAT</th>
+                    )}
                     <th className="p-4 font-medium text-right">Total</th>
                   </tr>
                 </thead>
@@ -155,21 +162,33 @@ export default function TaxRegister() {
                           <td className="p-4 text-gray-300 text-sm">{row.date}</td>
                           <td className="p-4 text-gray-300 text-sm">{row.party_name}</td>
                           <td className="p-4 text-gray-400 text-xs font-mono">{row.gstin || '—'}</td>
-                          <td className="p-4 text-right text-gray-300 text-sm">₹{fmt(row.taxable_value)}</td>
-                          <td className="p-4 text-right text-blue-400 text-sm">₹{fmt(row.cgst)}</td>
-                          <td className="p-4 text-right text-emerald-400 text-sm">₹{fmt(row.sgst)}</td>
-                          <td className="p-4 text-right text-purple-400 text-sm">₹{fmt(row.igst)}</td>
-                          <td className="p-4 text-right text-white font-semibold text-sm">₹{fmt(row.total_amount)}</td>
+                          <td className="p-4 text-right text-gray-300 text-sm">{getCurrencySymbol()}{fmt(row.taxable_value)}</td>
+                          {country === 'IN' ? (
+                            <>
+                              <td className="p-4 text-right text-blue-400 text-sm">{getCurrencySymbol()}{fmt(row.cgst)}</td>
+                              <td className="p-4 text-right text-emerald-400 text-sm">{getCurrencySymbol()}{fmt(row.sgst)}</td>
+                              <td className="p-4 text-right text-purple-400 text-sm">{getCurrencySymbol()}{fmt(row.igst)}</td>
+                            </>
+                          ) : (
+                            <td className="p-4 text-right text-amber-400 text-sm">{getCurrencySymbol()}{fmt((row.cgst || 0) + (row.sgst || 0) + (row.igst || 0))}</td>
+                          )}
+                          <td className="p-4 text-right text-white font-semibold text-sm">{getCurrencySymbol()}{fmt(row.total_amount)}</td>
                         </tr>
                       ))}
                       {/* Totals Row */}
                       <tr className="bg-white/5 border-t border-white/10 font-semibold">
                         <td colSpan="4" className="p-4 text-white">Totals ({registerData.count} invoices)</td>
-                        <td className="p-4 text-right text-white">₹{fmt(registerData.totals?.taxable)}</td>
-                        <td className="p-4 text-right text-blue-400">₹{fmt(registerData.totals?.cgst)}</td>
-                        <td className="p-4 text-right text-emerald-400">₹{fmt(registerData.totals?.sgst)}</td>
-                        <td className="p-4 text-right text-purple-400">₹{fmt(registerData.totals?.igst)}</td>
-                        <td className="p-4 text-right text-white">₹{fmt(registerData.totals?.total)}</td>
+                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(registerData.totals?.taxable)}</td>
+                        {country === 'IN' ? (
+                          <>
+                            <td className="p-4 text-right text-blue-400">{getCurrencySymbol()}{fmt(registerData.totals?.cgst)}</td>
+                            <td className="p-4 text-right text-emerald-400">{getCurrencySymbol()}{fmt(registerData.totals?.sgst)}</td>
+                            <td className="p-4 text-right text-purple-400">{getCurrencySymbol()}{fmt(registerData.totals?.igst)}</td>
+                          </>
+                        ) : (
+                          <td className="p-4 text-right text-amber-400">{getCurrencySymbol()}{fmt((registerData.totals?.cgst || 0) + (registerData.totals?.sgst || 0) + (registerData.totals?.igst || 0))}</td>
+                        )}
+                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(registerData.totals?.total)}</td>
                       </tr>
                     </>
                   )}
@@ -186,12 +205,18 @@ export default function TaxRegister() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-white/10 text-gray-400 text-xs uppercase bg-white/5">
-                    <th className="p-4 font-medium">HSN Code</th>
+                    <th className="p-4 font-medium">{country === 'IN' ? 'HSN Code' : 'Tax Code'}</th>
                     <th className="p-4 font-medium text-right">Qty</th>
                     <th className="p-4 font-medium text-right">Taxable Value</th>
-                    <th className="p-4 font-medium text-right">CGST</th>
-                    <th className="p-4 font-medium text-right">SGST</th>
-                    <th className="p-4 font-medium text-right">IGST</th>
+                    {country === 'IN' ? (
+                      <>
+                        <th className="p-4 font-medium text-right">CGST</th>
+                        <th className="p-4 font-medium text-right">SGST</th>
+                        <th className="p-4 font-medium text-right">IGST</th>
+                      </>
+                    ) : (
+                      <th className="p-4 font-medium text-right">VAT</th>
+                    )}
                     <th className="p-4 font-medium text-right">Total Tax</th>
                     <th className="p-4 font-medium text-right">Total Value</th>
                   </tr>
@@ -207,20 +232,26 @@ export default function TaxRegister() {
                         <tr key={i} className="hover:bg-white/5 transition-colors">
                           <td className="p-4 text-white font-mono font-medium">{row.hsn_code}</td>
                           <td className="p-4 text-right text-gray-300">{row.quantity}</td>
-                          <td className="p-4 text-right text-gray-300">₹{fmt(row.taxable_value)}</td>
-                          <td className="p-4 text-right text-blue-400">₹{fmt(row.cgst)}</td>
-                          <td className="p-4 text-right text-emerald-400">₹{fmt(row.sgst)}</td>
-                          <td className="p-4 text-right text-purple-400">₹{fmt(row.igst)}</td>
-                          <td className="p-4 text-right text-amber-400">₹{fmt(row.total_tax)}</td>
-                          <td className="p-4 text-right text-white font-semibold">₹{fmt(row.total_value)}</td>
+                          <td className="p-4 text-right text-gray-300">{getCurrencySymbol()}{fmt(row.taxable_value)}</td>
+                          {country === 'IN' ? (
+                            <>
+                              <td className="p-4 text-right text-blue-400 ">{getCurrencySymbol()}{fmt(row.cgst)}</td>
+                              <td className="p-4 text-right text-emerald-400 ">{getCurrencySymbol()}{fmt(row.sgst)}</td>
+                              <td className="p-4 text-right text-purple-400 ">{getCurrencySymbol()}{fmt(row.igst)}</td>
+                            </>
+                          ) : (
+                            <td className="p-4 text-right text-amber-400 ">{getCurrencySymbol()}{fmt((row.cgst || 0) + (row.sgst || 0) + (row.igst || 0))}</td>
+                          )}
+                          <td className="p-4 text-right text-amber-400">{getCurrencySymbol()}{fmt(row.total_tax)}</td>
+                          <td className="p-4 text-right text-white font-semibold">{getCurrencySymbol()}{fmt(row.total_value)}</td>
                         </tr>
                       ))}
                       <tr className="bg-white/5 border-t border-white/10 font-semibold">
                         <td colSpan="2" className="p-4 text-white">Total ({hsnData.count} HSN codes)</td>
-                        <td className="p-4 text-right text-white">₹{fmt(hsnData.summary?.total_taxable_value)}</td>
-                        <td colSpan="3" className="p-4 text-right text-amber-400">₹{fmt(hsnData.summary?.total_tax)}</td>
+                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(hsnData.summary?.total_taxable_value)}</td>
+                        <td colSpan="3" className="p-4 text-right text-amber-400">{getCurrencySymbol()}{fmt(hsnData.summary?.total_tax)}</td>
                         <td className="p-4"></td>
-                        <td className="p-4 text-right text-white">₹{fmt(hsnData.summary?.total_value)}</td>
+                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(hsnData.summary?.total_value)}</td>
                       </tr>
                     </>
                   )}
@@ -303,27 +334,27 @@ export default function TaxRegister() {
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
                       <div className="rounded-lg border border-white/10 p-2.5">
                         <div className="text-[11px] text-gray-400">Taxable</div>
-                        <div className="text-sm text-white font-semibold mt-1">₹{fmt(invoiceDetail.totals?.taxable)}</div>
+                        <div className="text-sm text-white font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.taxable)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-2.5">
                         <div className="text-[11px] text-gray-400">CGST</div>
-                        <div className="text-sm text-blue-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.cgst)}</div>
+                        <div className="text-sm text-blue-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.cgst)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-2.5">
                         <div className="text-[11px] text-gray-400">SGST</div>
-                        <div className="text-sm text-emerald-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.sgst)}</div>
+                        <div className="text-sm text-emerald-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.sgst)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-2.5">
                         <div className="text-[11px] text-gray-400">IGST</div>
-                        <div className="text-sm text-violet-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.igst)}</div>
+                        <div className="text-sm text-violet-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.igst)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-2.5">
                         <div className="text-[11px] text-gray-400">Tax</div>
-                        <div className="text-sm text-amber-300 font-semibold mt-1">₹{fmt(invoiceDetail.totals?.tax)}</div>
+                        <div className="text-sm text-amber-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.tax)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-2.5">
                         <div className="text-[11px] text-gray-400">Total</div>
-                        <div className="text-sm text-white font-semibold mt-1">₹{fmt(invoiceDetail.totals?.total_amount)}</div>
+                        <div className="text-sm text-white font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.total_amount)}</div>
                       </div>
                     </div>
 
@@ -336,9 +367,13 @@ export default function TaxRegister() {
                             <th className="p-3 font-medium text-right">Qty</th>
                             <th className="p-3 font-medium text-right">Price</th>
                             <th className="p-3 font-medium text-right">Taxable</th>
-                            <th className="p-3 font-medium text-right">CGST</th>
-                            <th className="p-3 font-medium text-right">SGST</th>
-                            <th className="p-3 font-medium text-right">IGST</th>
+                            {country === 'IN' ? (
+                              <>
+                                <th className="p-3 font-medium text-right">CGST</th>
+                                <th className="p-3 font-medium text-right">SGST</th>
+                                <th className="p-3 font-medium text-right">IGST</th>
+                              </>
+                            ) : null}
                             <th className="p-3 font-medium text-right">Tax</th>
                             <th className="p-3 font-medium text-right">Line Total</th>
                           </tr>
@@ -350,13 +385,17 @@ export default function TaxRegister() {
                                 <td className="p-3 text-white text-sm">{item.product_name}</td>
                                 <td className="p-3 text-gray-400 text-xs font-mono">{item.hsn_code || '-'}</td>
                                 <td className="p-3 text-right text-gray-300 text-sm">{item.quantity} {item.unit || ''}</td>
-                                <td className="p-3 text-right text-gray-300 text-sm">₹{fmt(item.price)}</td>
-                                <td className="p-3 text-right text-gray-300 text-sm">₹{fmt(item.taxable_value)}</td>
-                                <td className="p-3 text-right text-blue-300 text-sm">₹{fmt(item.cgst)}</td>
-                                <td className="p-3 text-right text-emerald-300 text-sm">₹{fmt(item.sgst)}</td>
-                                <td className="p-3 text-right text-violet-300 text-sm">₹{fmt(item.igst)}</td>
-                                <td className="p-3 text-right text-amber-300 text-sm">₹{fmt(item.tax)}</td>
-                                <td className="p-3 text-right text-white text-sm font-semibold">₹{fmt(item.line_total)}</td>
+                                <td className="p-3 text-right text-gray-300 text-sm">{getCurrencySymbol()}{fmt(item.price)}</td>
+                                <td className="p-3 text-right text-gray-300 text-sm">{getCurrencySymbol()}{fmt(item.taxable_value)}</td>
+                                {country === 'IN' ? (
+                                  <>
+                                    <td className="p-3 text-right text-blue-300 text-sm">{getCurrencySymbol()}{fmt(item.cgst)}</td>
+                                    <td className="p-3 text-right text-emerald-300 text-sm">{getCurrencySymbol()}{fmt(item.sgst)}</td>
+                                    <td className="p-3 text-right text-violet-300 text-sm">{getCurrencySymbol()}{fmt(item.igst)}</td>
+                                  </>
+                                ) : null}
+                                <td className="p-3 text-right text-amber-300 text-sm">{getCurrencySymbol()}{fmt(item.tax)}</td>
+                                <td className="p-3 text-right text-white text-sm font-semibold">{getCurrencySymbol()}{fmt(item.line_total)}</td>
                               </tr>
                             ))
                           ) : (
@@ -375,6 +414,6 @@ export default function TaxRegister() {
         )}
       </div>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }

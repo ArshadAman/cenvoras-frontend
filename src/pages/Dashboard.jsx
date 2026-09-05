@@ -12,9 +12,8 @@ import {
   BanknotesIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline'
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
 import api from '../api/api'
-import Layout from '../components/Layout'
 
 // Smart Dashboard Components
 import PulseSection from '../components/dashboard/PulseSection'
@@ -23,6 +22,9 @@ import InsightsSection from '../components/dashboard/InsightsSection'
 import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
+import { getSubscriptionEntitlements } from '../api/subscription'
+import { getGSTR1Export } from '../api/gst'
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -43,25 +45,40 @@ export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [activeStockIndex, setActiveStockIndex] = React.useState(null);
 
   // Refresh ALL dashboard data
   const handleRefreshAll = async () => {
     setIsRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ['smart-dashboard'] });
-    await queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
-    await queryClient.invalidateQueries({ queryKey: ['recent-sales'] });
-    await queryClient.invalidateQueries({ queryKey: ['recent-purchases'] });
-    await queryClient.invalidateQueries({ queryKey: ['low-stock'] });
-    await queryClient.invalidateQueries({ queryKey: ['ml-predictions'] });
-    setIsRefreshing(false);
+    try {
+      await Promise.all(
+        [
+          refetchSmart(),
+          refetchMetrics(),
+          refetchSales(),
+          refetchPurchases(),
+          refetchLowStock(),
+          refetchStockPoints(),
+          refetchML(),
+          queryClient.invalidateQueries({ queryKey: ['customers'] }),
+          queryClient.invalidateQueries({ queryKey: ['customers-with-balance'] }),
+          queryClient.invalidateQueries({ queryKey: ['profile'] }),
+          queryClient.invalidateQueries({ queryKey: ['subscription-entitlements'] }),
+        ]
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Fetch Smart Dashboard Data (new)
-  const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch } = useQuery({
+  const { data: smartData, isLoading: loadingSmart, isError: smartError, refetch: refetchSmart } = useQuery({
     queryKey: ['smart-dashboard'],
-    queryFn: () => api.get('/analytics/smart-dashboard/').then(res => res.data),
+    queryFn: () => api.get('/analytics/smart-dashboard/?refresh=true').then(res => res.data),
     refetchInterval: 60000,
-    staleTime: 30000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 
   const { data: profileData } = useQuery({
@@ -69,29 +86,41 @@ export default function Dashboard({ onLogout }) {
     queryFn: () => api.get('/users/profile/').then(res => res.data),
   });
 
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription-entitlements'],
+    queryFn: getSubscriptionEntitlements,
+    staleTime: 60_000,
+  });
+
   // Fetch Legacy Dashboard Data (old metrics)
-  const { data: metrics, isLoading: loadingMetrics } = useQuery({
+  const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
-    queryFn: () => api.get('/analytics/dashboard/').then(res => res.data)
+    queryFn: () => api.get('/analytics/dashboard/?refresh=true').then(res => res.data)
   });
   
-  const { data: sales, isLoading: loadingSales } = useQuery({
+  const { data: sales, isLoading: loadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['recent-sales'],
     queryFn: () => api.get('/billing/sales-invoices/?ordering=-invoice_date&limit=5').then(res => res.data)
   });
   
-  const { data: purchases, isLoading: loadingPurchases } = useQuery({
+  const { data: purchases, isLoading: loadingPurchases, refetch: refetchPurchases } = useQuery({
     queryKey: ['recent-purchases'],
     queryFn: () => api.get('/billing/purchase-bills/?ordering=-bill_date&limit=5').then(res => res.data)
   });
   
-  const { data: lowStock } = useQuery({
+  const { data: lowStock, refetch: refetchLowStock } = useQuery({
     queryKey: ['low-stock'],
     queryFn: () => api.get('/analytics/inventory-summary/').then(res => res.data)
   });
 
+  const { data: stockPointsRaw, refetch: refetchStockPoints } = useQuery({
+    queryKey: ['stock-points-dashboard'],
+    queryFn: () => api.get('/inventory/stock-points/').then(res => res.data),
+    staleTime: 30000,
+  });
+
   // Fetch ML Predictions
-  const { data: mlData, isLoading: loadingML } = useQuery({
+  const { data: mlData, isLoading: loadingML, refetch: refetchML } = useQuery({
     queryKey: ['ml-predictions'],
     queryFn: () => api.get('/analytics/ml-predictions/').then(res => res.data),
     staleTime: 60000, // Cache for 1 minute
@@ -103,23 +132,43 @@ export default function Dashboard({ onLogout }) {
     if (action === 'purchase') navigate('/purchase');
   };
 
+  const handleDownloadReportForCA = async () => {
+    const today = new Date();
+    const toDate = today.toISOString().split('T')[0];
+    const fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+    try {
+      const gstr1Data = await getGSTR1Export(fromDate, toDate);
+      const blob = new Blob([JSON.stringify(gstr1Data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GSTR1_${gstr1Data?.fp || `${fromDate}_to_${toDate}`}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download GSTR-1 report for CA:', error);
+      navigate('/reports/tax-register?tab=gstr1');
+    }
+  };
+
   // Legacy card data
   const cardData = [
     {
       label: 'Total Sales',
-      value: metrics?.total_sales != null ? `₹${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
+      value: metrics?.total_sales != null ? `${getCurrencySymbol()}${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
       color: 'text-cyan-400'
     },
     {
       label: 'Total Purchases',
-      value: metrics?.total_purchases != null ? `₹${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
+      value: metrics?.total_purchases != null ? `${getCurrencySymbol()}${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
       icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
       color: 'text-purple-400'
     },
     {
       label: 'Inventory Value',
-      value: metrics?.total_inventory_value != null ? `₹${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
+      value: metrics?.total_inventory_value != null ? `${getCurrencySymbol()}${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
       icon: <CubeIcon className="w-6 h-6 text-blue-400" />,
       color: 'text-blue-400'
     },
@@ -131,14 +180,66 @@ export default function Dashboard({ onLogout }) {
     },
     {
       label: metrics?.gst_payable < 0 ? 'GST Credit' : 'GST Payable',
-      value: metrics?.gst_payable != null ? (metrics.gst_payable < 0 ? `₹${Math.abs(metrics.gst_payable).toLocaleString()}` : `₹${metrics.gst_payable.toLocaleString()}`) : '--',
+      value: metrics?.gst_payable != null ? (metrics.gst_payable < 0 ? `${getCurrencySymbol()}${Math.abs(metrics.gst_payable).toLocaleString()}` : `${getCurrencySymbol()}${metrics.gst_payable.toLocaleString()}`) : '--',
       icon: <BanknotesIcon className="w-6 h-6 text-yellow-400" />,
       color: metrics?.gst_payable < 0 ? 'text-green-400' : 'text-yellow-400'
     },
   ];
 
+  const formatINR = (value) => `${getCurrencySymbol()}${Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+
+  const salesChartData = React.useMemo(() => {
+    const raw = Array.isArray(metrics?.sales_vs_purchases) ? metrics.sales_vs_purchases : [];
+    return raw.map((row) => ({
+      name: row?.name || row?.month || '-',
+      Sales: Number(row?.Sales ?? row?.sales ?? 0),
+      Purchases: Number(row?.Purchases ?? row?.purchases ?? 0),
+    }));
+  }, [metrics?.sales_vs_purchases]);
+
+  const stockSplitData = React.useMemo(() => {
+    const stockPoints = Array.isArray(stockPointsRaw)
+      ? stockPointsRaw
+      : stockPointsRaw?.data || stockPointsRaw?.results || [];
+
+    // Use stock points as source of truth because product.stock can be stale with multi-batch/multi-warehouse inventory.
+    if (stockPoints.length > 0) {
+      const merged = stockPoints.reduce((acc, item) => {
+        const key = item?.product_name || 'Unknown';
+        const quantity = Number(item?.quantity || 0);
+        if (!acc[key]) {
+          acc[key] = { name: key, value: 0 };
+        }
+        acc[key].value += quantity;
+        return acc;
+      }, {});
+
+      return Object.values(merged)
+        .filter((item) => item.value > 0)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 7);
+    }
+
+    const fallbackProducts = lowStock?.products || [];
+    return fallbackProducts
+      .map((p) => ({ name: p?.name || 'Unknown', value: Number(p?.stock || 0) }))
+      .filter((p) => p.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 7);
+  }, [stockPointsRaw, lowStock]);
+
+  const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
+  const entitlements = subscriptionData?.data || {};
+  const can = entitlements.can || {};
+  const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
+  const mlDataWithEntitlements = React.useMemo(() => ({
+    ...mlData,
+    can,
+  }), [mlData, can]);
+
   return (
-    <Layout onLogout={onLogout}>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         
         {/* Header */}
@@ -151,12 +252,16 @@ export default function Dashboard({ onLogout }) {
                 : 'Smart Dashboard'}
             </h1>
             <p className="text-gray-400 text-sm">Your intelligent business assistant</p>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300">
+              <span className="text-cyan-400 font-semibold">{currentPlanName}</span>
+              <span className="text-gray-500">plan active</span>
+            </div>
           </div>
           
           <div className="flex gap-3">
             <button 
               onClick={handleRefreshAll}
-              disabled={isRefreshing || loadingSmart}
+              disabled={isRefreshing}
               className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white disabled:opacity-50 flex items-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -164,15 +269,9 @@ export default function Dashboard({ onLogout }) {
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-secondary text-sm py-2 px-4 shadow-sm bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-            >
-              <PlusIcon className="w-4 h-4"/> New Sale
-            </button>
-            <button 
-              onClick={() => handleQuickAction('purchase')} 
               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
             >
-              <PlusIcon className="w-4 h-4"/> New Purchase
+              <PlusIcon className="w-4 h-4"/> Record Sales
             </button>
           </div>
         </div>
@@ -222,12 +321,13 @@ export default function Dashboard({ onLogout }) {
           <GstShieldSection 
             data={smartData?.gst_shield} 
             isLoading={loadingSmart} 
+            onDownloadReport={handleDownloadReportForCA}
           />
         </div>
 
         {/* 4. ML PREDICTIONS - Sales Forecast & Restock */}
         <MLPredictionsSection 
-          data={mlData} 
+          data={mlDataWithEntitlements} 
           isLoading={loadingML}
           onViewAllProducts={() => navigate('/inventory')}
         />
@@ -243,16 +343,42 @@ export default function Dashboard({ onLogout }) {
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metrics?.sales_vs_purchases || []}>
-                  <XAxis dataKey="name" stroke="#333" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#333" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                  <Tooltip 
-                    contentStyle={{ background: '#000', border: '1px solid #333', borderRadius: '12px', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
+                <LineChart data={salesChartData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+                  <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    width={86}
+                    tickFormatter={(value) => formatCurrency(value)}
                   />
-                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} iconType="circle" />
-                  <Line type="monotone" dataKey="Sales" stroke="#22d3ee" strokeWidth={2} dot={false} activeDot={{r: 6}} />
-                  <Line type="monotone" dataKey="Purchases" stroke="#a855f7" strokeWidth={2} dot={false} activeDot={{r: 6}} />
+                  <Tooltip 
+                    contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
+                    labelStyle={{ color: '#fff', fontWeight: 600 }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                    formatter={(value, key) => [formatCurrency(value), key]}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px', color: '#d1d5db' }} iconType="circle" />
+                  <Line
+                    type="monotone"
+                    dataKey="Sales"
+                    stroke="#22d3ee"
+                    strokeWidth={3}
+                    connectNulls
+                    dot={{ r: 3, fill: '#22d3ee', strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: '#22d3ee', stroke: '#fff', strokeWidth: 1 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Purchases"
+                    stroke="#a855f7"
+                    strokeWidth={3}
+                    connectNulls
+                    dot={{ r: 3, fill: '#a855f7', strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: '#a855f7', stroke: '#fff', strokeWidth: 1 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -267,31 +393,39 @@ export default function Dashboard({ onLogout }) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={(lowStock?.products || [])
-                      .filter(p => p.stock > 0)
-                      .slice(0, 5)
-                      .map(p => ({ name: p.name, value: p.stock }))}
+                    data={stockSplitData}
                     innerRadius={50}
-                    outerRadius={70}
+                    outerRadius={76}
                     paddingAngle={3}
                     dataKey="value"
+                    nameKey="name"
+                    onMouseEnter={(_, index) => setActiveStockIndex(index)}
+                    onMouseLeave={() => setActiveStockIndex(null)}
                     label={({ name, percent }) => 
-                      percent > 0.05 
+                      percent > 0.06 
                         ? `${name.slice(0, 8)}${name.length > 8 ? '...' : ''} ${(percent * 100).toFixed(0)}%`
                         : ''
                     }
                     labelLine={false}
                   >
-                    {(lowStock?.products || [])
-                      .filter(p => p.stock > 0)
-                      .slice(0, 5)
-                      .map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={['#22d3ee', '#a855f7', '#3b82f6', '#f43f5e', '#10b981'][index % 5]} stroke="rgba(0,0,0,0)" />
+                    {stockSplitData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={stockColors[index % stockColors.length]}
+                        stroke={index === activeStockIndex ? '#ffffff' : 'rgba(0,0,0,0)'}
+                        strokeWidth={index === activeStockIndex ? 1.4 : 0}
+                      />
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ background: '#000', border: '1px solid #333', borderRadius: '12px', color: '#fff' }}
-                    formatter={(value, name) => [`${value} units`, name]}
+                    contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
+                    labelStyle={{ color: '#fff', fontWeight: 600 }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                    formatter={(value, name) => {
+                      const qty = Number(value || 0);
+                      const pct = stockTotal > 0 ? ((qty / stockTotal) * 100).toFixed(1) : '0.0';
+                      return [`${qty.toLocaleString('en-IN')} units (${pct}%)`, name || 'Product'];
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -329,7 +463,7 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">₹{invoice.total_amount}</div>
+                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{invoice.total_amount}</div>
                       <div className="text-xs text-gray-500">{invoice.invoice_date}</div>
                     </div>
                   </div>
@@ -366,7 +500,7 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">₹{bill.total_amount}</div>
+                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{bill.total_amount}</div>
                       <div className="text-xs text-gray-500">{bill.bill_date}</div>
                     </div>
                   </div>
@@ -377,6 +511,6 @@ export default function Dashboard({ onLogout }) {
         </section>
 
       </div>
-    </Layout>
+    </>
   )
 }

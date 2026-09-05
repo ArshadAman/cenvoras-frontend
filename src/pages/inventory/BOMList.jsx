@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Layout from "../../components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { getBOMs } from "../../api/bom";
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -29,7 +28,7 @@ export default function BOMList() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex justify-between items-center">
           <div>
@@ -95,6 +94,6 @@ export default function BOMList() {
       )}
       
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }

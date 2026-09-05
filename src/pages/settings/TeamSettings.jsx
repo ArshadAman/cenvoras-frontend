@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTeamMembers, createTeamMember, deleteTeamMember, updateTeamMember } from '../../api/team';
 import { getUserProfile } from '../../api/users';
-import Layout from '../../components/Layout';
 import { UserPlusIcon, TrashIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, CurrencyDollarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 export default function TeamSettings() {
@@ -82,10 +81,10 @@ export default function TeamSettings() {
   
   // Read dynamic limits directly from plan 
   const currentCount = teamMembersList.length;
-  const maxLimit = profile?.max_managers || 0;
+  const maxLimit = Number(profile?.max_managers) || 0;
   const planName = profile?.plan_name || 'Starter Plan';
   
-  const canAddMore = currentCount < maxLimit;
+  const canAddMore = maxLimit === -1 || currentCount < maxLimit;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -130,7 +129,7 @@ export default function TeamSettings() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -167,12 +166,12 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-white font-medium">Subscription Plan: <span className="text-cyan-400 font-bold">{planName}</span></p>
-              <p className="text-gray-400">Limit: {maxLimit} Managers</p>
+              <p className="text-gray-400">Limit: {maxLimit === -1 ? 'Unlimited' : maxLimit} Managers</p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-white tracking-tighter">
-              {currentCount} <span className="text-lg text-gray-500">/ {maxLimit}</span>
+              {currentCount} <span className="text-lg text-gray-500">/ {maxLimit === -1 ? 'Unlimited' : maxLimit}</span>
             </p>
             <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Managers Used</p>
           </div>
@@ -349,6 +348,6 @@ export default function TeamSettings() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

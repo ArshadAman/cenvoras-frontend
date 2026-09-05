@@ -1,14 +1,19 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import Layout from './components/Layout'
+import ContactUs from './pages/ContactUs'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import Sitemap from './pages/Sitemap'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
+import PurchaseOrders from './pages/PurchaseOrders'
 import Sales from './pages/Sales'
+import Quotations from './pages/Quotations'
 import Inventory from './pages/Inventory'
 import Customers from './pages/Customers'
 import Vendors from './pages/Vendors'
@@ -32,72 +37,134 @@ import StockLedgerReport from './pages/reports/StockLedgerReport'
 import AuditLogList from './pages/system/AuditLogList'
 import IntegrationsPage from './pages/system/IntegrationsPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import ModuleProtectedRoute from './components/ModuleProtectedRoute'
 import AIChatWidget from './components/AIChatWidget'
 import TeamSettings from './pages/settings/TeamSettings'
 import Warranty from './pages/Warranty'
 
+// HR Pages
+import Departments from './pages/hr/Departments'
+import Designations from './pages/hr/Designations'
+import Employees from './pages/hr/Employees'
+import Attendance from './pages/hr/Attendance'
+import LeaveTypes from './pages/hr/LeaveTypes'
+import LeaveBalances from './pages/hr/LeaveBalances'
+import LeaveApplications from './pages/hr/LeaveApplications'
+import SalaryStructures from './pages/hr/SalaryStructures'
+import SalaryAssignments from './pages/hr/SalaryAssignments'
+import PayrollRuns from './pages/hr/PayrollRuns'
+import Payslips from './pages/hr/Payslips'
+import HRDashboard from './pages/hr/HRDashboard'
+import AdvancesLoans from './pages/hr/AdvancesLoans'
+import HRDocuments from './pages/hr/HRDocuments'
+import HRMSSettings from './pages/hr/HRMSSettings'
+import HRReports from './pages/hr/HRReports'
+
+// Employee Pages
+import EmployeePortal from './pages/employee/EmployeePortal'
+
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
+import GSTAndHSNGuide from './pages/GSTAndHSNGuide'
 import TaxRegister from './pages/reports/TaxRegister'
 import CreditNoteList from './pages/CreditNoteList'
 import DebitNoteList from './pages/DebitNoteList'
 import ProfitLossStatement from './pages/reports/ProfitLossStatement'
 import BalanceSheet from './pages/reports/BalanceSheet'
 import BankReconciliation from './pages/financial/BankReconciliation'
+import ManualJournal from './pages/financial/ManualJournal'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 const getToken = () => !!localStorage.getItem('token')
-const getActiveSession = () => !!localStorage.getItem('activeSession')
+
+const RoleBasedRedirect = () => {
+  const role = localStorage.getItem('role');
+  if (role === 'employee') return <Navigate to="/employee/portal" replace />;
+  if (role === 'hr') return <Navigate to="/hr/dashboard" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
+
+const AppLayout = ({ onLogout }) => {
+  return (
+    <Layout onLogout={onLogout}>
+      <Outlet />
+    </Layout>
+  )
+}
 
 function App() {
-  // Only auto-authenticate if there's both a token AND an active session
-  const [isAuthenticated, setIsAuthenticated] = useState(getToken() && getActiveSession())
+  // Persist login across refresh as long as a token exists.
+  const [isAuthenticated, setIsAuthenticated] = useState(getToken())
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('role');
+    localStorage.removeItem('activeSession');
+    setIsAuthenticated(false);
+    window.location.href = '/';
+  };
 
   return (
     <Router>
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <LandingPage />}
         />
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={(rememberMe) => {
-            if (rememberMe) {
-              localStorage.setItem('activeSession', 'true');
-            } else {
-              localStorage.removeItem('activeSession');
-            }
+          element={isAuthenticated ? <RoleBasedRedirect /> : <Login onLogin={(rememberMe) => {
+            void rememberMe;
             setIsAuthenticated(true);
           }} />}
         />
         <Route
           path="/signup"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <Signup />}
+        />
+        <Route
+          path="/forgot-password"
+          element={isAuthenticated ? <RoleBasedRedirect /> : <ForgotPassword />}
         />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sitemap" element={<Sitemap />} />
+
+        {/* --- PROTECTED ROUTES WITH LAYOUT --- */}
+        <Route element={isAuthenticated ? <AppLayout onLogout={handleLogout} /> : <Navigate to="/" replace />}>
         <Route
           path="/dashboard"
           element={isAuthenticated ? <Dashboard onLogout={() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('role');
             localStorage.removeItem('activeSession');
-            setIsAuthenticated(false);
+            window.location.href = '/';
           }} /> : <Navigate to="/" replace />}
         />
         <Route
           path="/purchase"
-          element={isAuthenticated ? <Purchase /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><Purchase /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/purchase-orders"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><PurchaseOrders /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales"
-          element={isAuthenticated ? <Sales /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Sales /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/quotations"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Quotations /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales-orders"
-          element={isAuthenticated ? <SalesOrderList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><SalesOrderList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/delivery-challans"
@@ -105,7 +172,7 @@ function App() {
         />
         <Route
           path="/inventory"
-          element={isAuthenticated ? <Inventory /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><Inventory /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/boms"
@@ -113,35 +180,35 @@ function App() {
         />
         <Route
           path="/stock-journals"
-          element={isAuthenticated ? <StockJournalList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><StockJournalList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/warehouses"
-          element={isAuthenticated ? <WarehouseManagement /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><WarehouseManagement /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/batches"
-          element={isAuthenticated ? <BatchListPage /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><BatchListPage /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/customers"
-          element={isAuthenticated ? <Customers /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Customers /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/vendors"
-          element={isAuthenticated ? <Vendors /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><Vendors /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists"
-          element={isAuthenticated ? <PriceListList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><PriceListList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists/new"
-          element={isAuthenticated ? <PriceListForm /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><PriceListForm /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory/price-lists/:id"
-          element={isAuthenticated ? <PriceListForm /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><PriceListForm /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/payments"
@@ -186,11 +253,11 @@ function App() {
         />
         <Route
           path="/credit-notes"
-          element={isAuthenticated ? <CreditNoteList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><CreditNoteList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/debit-notes"
-          element={isAuthenticated ? <DebitNoteList /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><DebitNoteList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/profit-loss-statement"
@@ -205,9 +272,93 @@ function App() {
           element={isAuthenticated ? <BankReconciliation /> : <Navigate to="/" replace />}
         />
         <Route
-          path="/warranty"
-          element={isAuthenticated ? <Warranty /> : <Navigate to="/" replace />}
+          path="/ledger/manual-journal"
+          element={isAuthenticated ? <ManualJournal /> : <Navigate to="/" replace />}
         />
+        <Route
+          path="/warranty"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Warranty /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        {/* HR Routes */}
+        <Route
+          path="/hr/departments"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Departments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/designations"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Designations /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/employees"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Employees /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/attendance"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Attendance /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/leave-types"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><LeaveTypes /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/leave-balances"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><LeaveBalances /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/leave-applications"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><LeaveApplications /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/salary-structures"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><SalaryStructures /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/salary-assignments"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><SalaryAssignments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/payroll-runs"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/payroll"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/advances-loans"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><AdvancesLoans /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/documents"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRDocuments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/settings"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRMSSettings /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/reports"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRReports /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/payslips"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><Payslips /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/dashboard"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRDashboard /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/employee/portal"
+          element={
+            isAuthenticated ? (
+              <ProtectedRoute allowedRoles={['employee', 'admin', 'manager']}>
+                <EmployeePortal />
+              </ProtectedRoute>
+            ) : <Navigate to="/" replace />
+          }
+        />
+        <Route path="/gst-hsn-guide" element={<GSTAndHSNGuide />} />
         <Route
           path="/audit-logs"
           element={
@@ -233,8 +384,11 @@ function App() {
         <Route
           path="/profile"
           element={isAuthenticated ? <Profile onLogout={() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('role');
             localStorage.removeItem('activeSession');
-            setIsAuthenticated(false);
+            window.location.href = '/';
           }} /> : <Navigate to="/" replace />}
         />
         <Route
@@ -249,8 +403,9 @@ function App() {
         />
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />}
+          element={isAuthenticated ? <RoleBasedRedirect /> : <Navigate to="/" replace />}
         />
+      </Route>
       </Routes>
       {isAuthenticated && <AIChatWidget />}
     </Router>

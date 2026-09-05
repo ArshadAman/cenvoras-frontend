@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesOrder, updateSalesOrder } from "../../api/sales_order";
@@ -9,6 +9,7 @@ import { INDIAN_STATES } from "../../utils/constants";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
@@ -76,7 +77,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       </Field>
       {showDropdown && (
         <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
-          {filteredProducts.slice(0, 50).map((product, index) => (
+          {filteredProducts.map((product, index) => (
             <div
               key={product.id}
               className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
@@ -88,7 +89,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             >
               <div className="font-medium">{product.name}</div>
               <div className="text-gray-500 text-xs mt-0.5">
-                Unit: {product.unit} | Price: ₹{product.price}
+                Unit: {product.unit} | Price: {getCurrencySymbol()}{product.price}
               </div>
             </div>
           ))}
@@ -341,6 +342,7 @@ const SalesOrderSchema = Yup.object().shape({
 export default function SalesOrderForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
+  const submitLockRef = useRef(false);
   
   const { data: productsResult } = useQuery({ 
       queryKey: ["products"], 
@@ -407,22 +409,22 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             customer_email: editData?.customer_email || "",
             customer_phone: editData?.customer_phone || "",
             order_number: editData?.order_number || `SO-${Date.now()}`,
-            date: editData?.date || new Date().toISOString().split('T')[0],
+            date: editData?.date || new Date().toLocaleDateString('sv-SE'),
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({
               product: item.product_name || item.product || "",
               product_id: item.product || null,
-              quantity: item.quantity || 1,
-              price: item.price || 0,
+              quantity: item.quantity || "",
+              price: item.price || "",
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
               isExistingProduct: !!(item.product),
             })) || [{
               product: "",
               product_id: null,
-              quantity: 1,
-              price: 0,
+              quantity: "",
+              price: "",
               amount: 0,
               unit: "pcs",
               isExistingProduct: false,
@@ -430,12 +432,16 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
           }}
           validationSchema={SalesOrderSchema}
           onSubmit={async (values, { setSubmitting }) => {
+            if (submitLockRef.current || createMutation.isPending || updateMutation.isPending) {
+              return;
+            }
+            submitLockRef.current = true;
             try {
                const processedItems = values.items.map(item => ({
-                  product: item.product_id, // Must be UUID
-                  quantity: Number(item.quantity),
-                  price: Number(item.price),
-                  amount: Number(item.amount),
+                  product: item.product_id || item.product, // UUID or Name
+                  quantity: Math.max(1, Number(item.quantity) || 1),
+                  price: Number(item.price || 0),
+                  amount: Number(item.amount || 0),
                }));
                
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
@@ -452,14 +458,16 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                };
 
                if (isEdit) {
-                 updateMutation.mutate({ id: editData.id, data: formData });
+                 await updateMutation.mutateAsync({ id: editData.id, data: formData });
                } else {
-                 createMutation.mutate(formData);
+                 await createMutation.mutateAsync(formData);
                }
             } catch (error) {
                console.error(error);
+            } finally {
+               submitLockRef.current = false;
+               setSubmitting(false);
             }
-            setSubmitting(false);
           }}
         >
           {({ values, setFieldValue, isSubmitting }) => (
@@ -485,44 +493,60 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                    <FieldArray name="items">
                     {({ push, remove }) => (
                         <div className="space-y-4">
-                            {values.items.map((item, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
-                                    <div className="col-span-4">
-                                        <label className="block text-xs text-gray-400 mb-1">Product</label>
-                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Qty</label>
-                                        <Field name={`items.${index}.quantity`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" 
-                                            onChange={e => {
-                                                const qty = e.target.value;
-                                                setFieldValue(`items.${index}.quantity`, qty);
-                                                setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Price</label>
-                                        <Field name={`items.${index}.price`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
-                                            onChange={e => {
-                                                const price = e.target.value;
-                                                setFieldValue(`items.${index}.price`, price);
-                                                setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Amount</label>
-                                        <div className="px-3 py-2 text-white font-mono">
-                                            {values.items[index].amount}
-                                        </div>
-                                    </div>
-                                    <div className="col-span-2 flex justify-end">
-                                        <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-300">Remove</button>
-                                    </div>
-                                </div>
-                            ))}
-                            <button type="button" onClick={() => push({ product: "", quantity: 1, price: 0, amount: 0 })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+                             {values.items.map((item, index) => (
+                                 <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end hover:bg-white/10 transition-all">
+                                     {/* Row 1: Product (Full width on mobile, col-span-4 on desktop) */}
+                                     <div className="lg:col-span-4">
+                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
+                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                     </div>
+
+                                     {/* Row 2: Qty & Price (Side-by-side on mobile, col-span-4 on desktop) */}
+                                     <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
+                                         <div>
+                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quantity</label>
+                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-center" 
+                                                 onChange={e => {
+                                                     const qty = e.target.value;
+                                                     setFieldValue(`items.${index}.quantity`, qty);
+                                                     setFieldValue(`items.${index}.amount`, (Number(qty) || 0) * (values.items[index].price || 0));
+                                                 }}
+                                             />
+                                         </div>
+                                         <div>
+                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
+                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-right font-mono"
+                                                 onChange={e => {
+                                                     const price = e.target.value;
+                                                     setFieldValue(`items.${index}.price`, price);
+                                                     setFieldValue(`items.${index}.amount`, (Number(values.items[index].quantity) || 0) * (Number(price) || 0));
+                                                 }}
+                                             />
+                                         </div>
+                                     </div>
+
+                                     {/* Row 3: Amount Display (Full width on mobile, col-span-2 on desktop) */}
+                                     <div className="flex justify-between items-center lg:col-span-2 lg:block lg:text-left">
+                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 lg:mb-2">Subtotal</label>
+                                         <div className="text-xl lg:text-base font-black text-cyan-400 font-mono">
+                                             {getCurrencySymbol()}{Number(values.items[index].amount || 0).toLocaleString()}
+                                         </div>
+                                     </div>
+
+                                     {/* Row 4: Actions (Full width on mobile, col-span-2 on desktop) */}
+                                     <div className="lg:col-span-2">
+                                         <button 
+                                            type="button" 
+                                            onClick={() => remove(index)} 
+                                            disabled={values.items.length === 1}
+                                            className="w-full py-3 lg:py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-30"
+                                         >
+                                             Remove Item
+                                         </button>
+                                     </div>
+                                 </div>
+                             ))}
+                            <button type="button" onClick={() => push({ product: "", quantity: "", price: "", amount: 0 })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
                                 + Add Item
                             </button>
                         </div>
@@ -531,8 +555,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
                    {/* Footer Actions */}
                    <div className="flex justify-end pt-6 border-t border-white/10">
-                        <button type="submit" disabled={isSubmitting} className="btn-primary">
-                            {isSubmitting ? "Saving..." : "Save Order"}
+                        <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="btn-primary">
+                          {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Order"}
                         </button>
                    </div>
                 </div>

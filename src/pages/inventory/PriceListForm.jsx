@@ -5,8 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPriceList, getPriceList, updatePriceList, getProducts } from "../../api/inventory";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import Layout from "../../components/Layout";
 import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const priceListSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -48,7 +48,7 @@ export default function PriceListForm() {
     onError: (err) => toast.error(err.message || "Failed to save price list"),
   });
 
-  if (isEdit && isLoading) return <Layout><div className="p-10 text-white">Loading...</div></Layout>;
+  if (isEdit && isLoading) return <><div className="p-10 text-white">Loading...</div></>;
 
   const initialValues = {
     name: priceList?.name || "",
@@ -64,7 +64,7 @@ export default function PriceListForm() {
   const inputClass = "bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-full focus:ring-1 focus:ring-green-500 outline-none";
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up max-w-5xl mx-auto">
         <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 hover:text-white mb-6 transition-colors">
             <ArrowLeftIcon className="w-4 h-4 mr-2" /> Back to List
@@ -128,7 +128,7 @@ export default function PriceListForm() {
                                                     <Field type="number" name={`items.${index}.min_qty`} className={inputClass} placeholder="Min Qty" />
                                                 </div>
                                                 <div className="w-32">
-                                                    <Field type="number" name={`items.${index}.price`} className={inputClass} placeholder="Price (₹)" />
+                                                    <Field type="number" name={`items.${index}.price`} className={inputClass} placeholder="Price ({getCurrencySymbol()})" />
                                                     <ErrorMessage name={`items.${index}.price`} component="div" className="text-red-400 text-xs" />
                                                 </div>
                                                 <button type="button" onClick={() => remove(index)} className="p-2 text-red-400 hover:text-red-300">
@@ -162,6 +162,6 @@ export default function PriceListForm() {
             </Formik>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

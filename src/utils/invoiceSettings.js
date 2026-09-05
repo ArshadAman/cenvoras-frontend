@@ -52,6 +52,7 @@ export const defaultInvoiceTemplate = {
   layout: {
     paperSize: 'A4',
     orientation: 'portrait',
+    layoutType: 'classic',
     margins: { top: 20, right: 20, bottom: 20, left: 20 },
     
     // Element positions (for Canva-like editing)
@@ -106,15 +107,17 @@ export const defaultInvoiceTemplate = {
   
   // Table Column Configuration
   columns: [
-    { id: 'serial', label: '#', width: '5%', show: true, align: 'center' },
-    { id: 'description', label: 'Description', width: '35%', show: true, align: 'left' },
-    { id: 'hsn', label: 'HSN/SAC', width: '10%', show: true, align: 'center' },
-    { id: 'quantity', label: 'Qty', width: '8%', show: true, align: 'center' },
-    { id: 'unit', label: 'Unit', width: '7%', show: false, align: 'center' },
-    { id: 'price', label: 'Rate', width: '12%', show: true, align: 'right' },
-    { id: 'discount', label: 'Disc.', width: '8%', show: false, align: 'right' },
-    { id: 'tax', label: 'Tax', width: '10%', show: true, align: 'center' },
-    { id: 'amount', label: 'Amount', width: '12%', show: true, align: 'right' },
+    { id: 'serial', label: 'S. No', width: '6%', show: true, align: 'center' },
+    { id: 'description', label: 'Description', width: '25%', show: true, align: 'left' },
+    { id: 'batch', label: 'Batch', width: '10%', show: false, align: 'center' },
+    { id: 'hsn', label: 'HSNC', width: '12%', show: true, align: 'center' },
+    { id: 'quantity', label: 'QTY', width: '7%', show: true, align: 'center' },
+    { id: 'free_qty', label: 'Free', width: '7%', show: false, align: 'center' },
+    { id: 'unit', label: 'Unit', width: '8%', show: false, align: 'center' },
+    { id: 'price', label: 'UNIT PRICE', width: '14%', show: true, align: 'right' },
+    { id: 'discount', label: 'Disc.', width: '9%', show: false, align: 'right' },
+    { id: 'tax', label: 'TAX', width: '9%', show: true, align: 'center' },
+    { id: 'amount', label: 'AMOUNT', width: '18%', show: true, align: 'right' },
   ],
   
   // Styles
@@ -133,11 +136,65 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'classic',
     name: 'Classic Professional',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'classic' },
+  },
+  {
+    ...defaultInvoiceTemplate,
+    id: 'professional',
+    name: 'Professional (Marico Style)',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'professional' },
+    colors: {
+      ...defaultInvoiceTemplate.colors,
+      primary: '#0a235c',
+    },
+  },
+  {
+    ...defaultInvoiceTemplate,
+    id: 'genz',
+    name: 'GenZ Modern (Google Style)',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'genz' },
+    colors: {
+      ...defaultInvoiceTemplate.colors,
+      primary: '#4285F4',
+      secondary: '#4285F4',
+    },
+  },
+  {
+    ...defaultInvoiceTemplate,
+    id: 'service',
+    name: 'Service Template (LTIMindtree)',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'service' },
+    colors: {
+      ...defaultInvoiceTemplate.colors,
+      primary: '#174A82',
+    },
+  },
+  {
+    ...defaultInvoiceTemplate,
+    id: 'legend',
+    name: 'Legend Corporate (ITC Style)',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'legend' },
+    colors: {
+      ...defaultInvoiceTemplate.colors,
+      primary: '#111827',
+      accent: '#2563eb',
+    },
+  },
+  {
+    ...defaultInvoiceTemplate,
+    id: 'billship',
+    name: 'Bill To - Ship To (Flipkart Style)',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'billship' },
+    colors: {
+      ...defaultInvoiceTemplate.colors,
+      primary: '#facc15',
+    },
   },
   {
     ...defaultInvoiceTemplate,
     id: 'modern',
     name: 'Modern Minimal',
+    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'classic' },
     colors: {
       ...defaultInvoiceTemplate.colors,
       primary: '#000000',
@@ -153,32 +210,6 @@ export const templatePresets = [
       tableStyle: 'minimal',
     },
   },
-  {
-    ...defaultInvoiceTemplate,
-    id: 'corporate',
-    name: 'Corporate Blue',
-    colors: {
-      ...defaultInvoiceTemplate.colors,
-      primary: '#1e40af',
-      secondary: '#1e3a8a',
-      accent: '#3b82f6',
-      tableHeader: '#eff6ff',
-      totalRow: '#1e40af',
-    },
-  },
-  {
-    ...defaultInvoiceTemplate,
-    id: 'elegant',
-    name: 'Elegant Gold',
-    colors: {
-      ...defaultInvoiceTemplate.colors,
-      primary: '#78350f',
-      secondary: '#92400e',
-      accent: '#d97706',
-      tableHeader: '#fffbeb',
-      totalRow: '#78350f',
-    },
-  },
 ];
 
 // Storage keys
@@ -190,7 +221,17 @@ export const getInvoiceTemplates = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Auto-inject missing templates from presets (to handle app updates)
+      const existingIds = new Set(parsed.map(t => t.id));
+      const missingPresets = templatePresets.filter(p => !existingIds.has(p.id));
+      
+      if (missingPresets.length > 0) {
+        const merged = [...parsed, ...missingPresets];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      }
+      return parsed;
     }
     // Return default presets if nothing stored
     return templatePresets;

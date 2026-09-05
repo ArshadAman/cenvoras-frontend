@@ -8,6 +8,7 @@ import {
   DocumentTextIcon,
   MapIcon
 } from '@heroicons/react/24/outline';
+import Seo from '../components/Seo';
 
 export default function Sitemap() {
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function Sitemap() {
     { title: 'Home', path: '/', icon: HomeIcon, desc: 'Cenvora Main Landing Page' },
     { title: 'Login', path: '/login', icon: ArrowRightOnRectangleIcon, desc: 'Sign into your ERP account' },
     { title: 'Sign Up', path: '/signup', icon: UserPlusIcon, desc: 'Create a new free trial account' },
+    { title: 'HSN & GST Guide', path: '/gst-hsn-guide', icon: BookOpenIcon, desc: 'Reference for GST rates and HSN codes' },
     { title: 'Privacy Policy', path: '/privacy', icon: ShieldCheckIcon, desc: 'How we manage and protect your data' },
     { title: 'Terms of Service', path: '/terms', icon: DocumentTextIcon, desc: 'Legal agreements and billing terms' },
     { title: 'Sitemap', path: '/sitemap', icon: MapIcon, desc: 'Directory of all public pages' },
@@ -25,6 +27,11 @@ export default function Sitemap() {
 
   return (
     <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+      <Seo
+        title="Sitemap"
+        description="Browse the public pages available on Cenvora."
+        canonicalPath="/sitemap"
+      />
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
       

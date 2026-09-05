@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
+import { useQuery } from '@tanstack/react-query';
 import { 
   ChartBarIcon, 
   PresentationChartLineIcon, 
@@ -12,8 +12,20 @@ import {
   BanknotesIcon,
   TableCellsIcon,
 } from '@heroicons/react/24/outline';
+import { getSubscriptionEntitlements } from '../../api/subscription';
+import UpgradePromptModal from '../../components/subscription/UpgradePromptModal';
 
 export default function ReportsDashboard() {
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription-entitlements'],
+    queryFn: getSubscriptionEntitlements,
+    staleTime: 60_000,
+  });
+  const entitlements = subscriptionData?.data || {};
+  const can = entitlements.can || {};
+  const currentPlanName = entitlements.plan?.name || 'Free';
+  const [upgradeModal, setUpgradeModal] = React.useState({ open: false, featureName: '', description: '', targetPlanName: 'Business' });
+
   const reports = [
     {
       title: "Stock Valuation",
@@ -21,7 +33,8 @@ export default function ReportsDashboard() {
       icon: PresentationChartLineIcon,
       link: "/reports/stock-valuation",
       color: "text-blue-400",
-      bg: "bg-blue-500/10"
+      bg: "bg-blue-500/10",
+      featureKey: 'inventory',
     },
     {
       title: "Item-Wise P&L",
@@ -29,7 +42,8 @@ export default function ReportsDashboard() {
       icon: ChartBarIcon,
       link: "/reports/profit-loss",
       color: "text-green-400",
-      bg: "bg-green-500/10"
+      bg: "bg-green-500/10",
+      featureKey: 'item_pnl',
     },
     {
       title: "P&L Statement",
@@ -77,7 +91,8 @@ export default function ReportsDashboard() {
       icon: ExclamationTriangleIcon,
       link: "/reports/shortage",
       color: "text-orange-400",
-      bg: "bg-orange-500/10"
+      bg: "bg-orange-500/10",
+      featureKey: 'shortage_management',
     },
     {
       title: "Stock Ledger",
@@ -85,34 +100,83 @@ export default function ReportsDashboard() {
       icon: DocumentTextIcon,
       link: "/reports/stock-ledger",
       color: "text-cyan-400",
-      bg: "bg-cyan-500/10"
+      bg: "bg-cyan-500/10",
+      featureKey: 'stock_ledger',
     },
   ];
 
+  const isLocked = (report) => report.featureKey && can[report.featureKey] === false;
+
+  const openUpgrade = (report) => {
+    setUpgradeModal({
+      open: true,
+      featureName: report.title,
+      description: report.description,
+      targetPlanName: 'Business',
+    });
+  };
+
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
-        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Reports & MIS</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <h1 className="text-3xl font-bold tracking-tight text-white">Reports & MIS</h1>
+          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300">
+            <span className="text-cyan-400 font-semibold">{currentPlanName}</span> plan
+          </div>
+        </div>
         <p className="text-gray-400 mb-8">Gain insights into your business performance and inventory health.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reports.map((report, index) => (
-            <Link 
-              key={index} 
-              to={report.link}
-              className="bento-card p-6 flex items-start gap-4 transition-all duration-300 hover:scale-[1.02] hover:bg-white/5"
-            >
-              <div className={`p-3 rounded-xl ${report.bg} shrink-0`}>
-                <report.icon className={`w-8 h-8 ${report.color}`} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">{report.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{report.description}</p>
-              </div>
-            </Link>
+            isLocked(report) ? (
+              <button
+                key={index}
+                type="button"
+                onClick={() => openUpgrade(report)}
+                className="bento-card p-6 flex items-start gap-4 transition-all duration-300 hover:scale-[1.02] hover:bg-white/5 text-left w-full relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-black/20" />
+                <div className={`p-3 rounded-xl ${report.bg} shrink-0 relative z-10`}>
+                  <report.icon className={`w-8 h-8 ${report.color}`} />
+                </div>
+                <div className="relative z-10 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg font-bold text-white">{report.title}</h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">Locked</span>
+                  </div>
+                  <p className="text-sm text-gray-400 leading-relaxed">{report.description}</p>
+                  <p className="mt-3 text-xs text-cyan-400">Click to unlock on Business</p>
+                </div>
+              </button>
+            ) : (
+              <Link 
+                key={index} 
+                to={report.link}
+                className="bento-card p-6 flex items-start gap-4 transition-all duration-300 hover:scale-[1.02] hover:bg-white/5"
+              >
+                <div className={`p-3 rounded-xl ${report.bg} shrink-0`}>
+                  <report.icon className={`w-8 h-8 ${report.color}`} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">{report.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{report.description}</p>
+                </div>
+              </Link>
+            )
           ))}
         </div>
+
+        <UpgradePromptModal
+          isOpen={upgradeModal.open}
+          onClose={() => setUpgradeModal({ open: false, featureName: '', description: '', targetPlanName: 'Business' })}
+          title="Business feature"
+          featureName={upgradeModal.featureName}
+          targetPlanName={upgradeModal.targetPlanName}
+          targetPlanCode="business"
+          description={upgradeModal.description}
+        />
       </div>
-    </Layout>
+    </>
   );
 }

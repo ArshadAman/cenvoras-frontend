@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { format, subDays } from 'date-fns';
 import LedgerSummary from '../components/ledger/LedgerSummary';
 import LedgerTable from '../components/ledger/LedgerTable';
 import PaymentForm from '../components/ledger/PaymentForm';
@@ -9,12 +8,12 @@ import LedgerDeleteDialog from '../components/ledger/LedgerDeleteDialog';
 import BulkDeleteModal from '../components/BulkDeleteModal';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api/customers';
-import { bulkDeleteLedgerEntries, getAccounts } from '../api/ledger';
-import Layout from '../components/Layout';
+import { bulkDeleteLedgerEntries, getOverdueInvoices, getCustomerBalanceReconciliation } from '../api/ledger';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, BanknotesIcon, XMarkIcon, DocumentArrowUpIcon, UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 const Ledger = () => {
   const [selectedCustomer, setSelectedCustomer] = useState('');
@@ -33,6 +32,22 @@ const Ledger = () => {
   );
 
   const selectedCustomerData = customers.find(c => c.id === selectedCustomer);
+
+  const { data: overdueData, isLoading: isOverdueLoading } = useQuery({
+    queryKey: ['overdueInvoices', selectedCustomer],
+    queryFn: () => getOverdueInvoices({ customer: selectedCustomer || undefined }),
+  });
+
+  const { data: reconciliationData, isLoading: isReconciliationLoading } = useQuery({
+    queryKey: ['customerBalanceReconciliation', selectedCustomer],
+    queryFn: () => getCustomerBalanceReconciliation({ customer: selectedCustomer || undefined }),
+  });
+
+  const overdueInvoices = overdueData?.results || [];
+  const reconciliationRows = reconciliationData?.results || [];
+  const topMismatches = reconciliationRows
+    .filter((row) => Math.abs(parseFloat(row.difference || 0)) >= 0.01)
+    .slice(0, 5);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -85,7 +100,7 @@ const Ledger = () => {
   const labelClass = "block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide";
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -97,7 +112,13 @@ const Ledger = () => {
              <p className="text-gray-400 text-sm">Track client payments, debits, and account balances.</p>
            </div>
            
-           <div className="flex gap-3">
+           <div className="flex flex-wrap gap-3">
+             <Link to="/ledger/manual-journal"
+               className="btn-secondary text-sm py-2 px-4 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 text-indigo-300 flex items-center gap-2"
+             >
+               <PlusIcon className="h-4 w-4" />
+               <span>Manual Journal Entry</span>
+             </Link>
              <button className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white shadow-sm flex items-center gap-2">
                <DocumentArrowUpIcon className="h-4 w-4" />
                <span>Export CSV</span>
@@ -147,7 +168,7 @@ const Ledger = () => {
                   >
                     <span className="text-white font-medium">{c.name}</span>
                     {c.current_balance > 0 && (
-                      <span className="ml-2 text-amber-400 text-xs">(₹{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
+                      <span className="ml-2 text-amber-400 text-xs">({getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
                     )}
                   </div>
                 ))}
@@ -165,13 +186,75 @@ const Ledger = () => {
           {selectedCustomerData?.current_balance > 0 && (
             <div className="ml-auto flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
               <span className="text-xs text-amber-400 font-medium">Outstanding Balance:</span>
-              <span className="text-amber-300 font-bold text-lg">₹{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
+              <span className="text-amber-300 font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
             </div>
           )}
         </div>
 
         {/* Summary Stats */}
         <LedgerSummary customerFilter={selectedCustomer} />
+
+        {/* Overdue and Reconciliation Visibility */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bento-card !p-0 overflow-hidden">
+            <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Overdue Invoices</h2>
+              <span className="text-xs text-amber-300">{overdueData?.count || 0} items</span>
+            </div>
+            <div className="p-4 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+              {isOverdueLoading ? (
+                <p className="text-sm text-gray-400">Loading overdue invoices...</p>
+              ) : overdueInvoices.length === 0 ? (
+                <p className="text-sm text-gray-400">No overdue invoices found for current filters.</p>
+              ) : (
+                overdueInvoices.slice(0, 8).map((invoice) => (
+                  <div key={invoice.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{invoice.invoice_number}</p>
+                        <p className="text-xs text-gray-400">{invoice.customer_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-amber-300">{getCurrencySymbol()}{parseFloat(invoice.outstanding_amount || 0).toLocaleString('en-IN')}</p>
+                        <p className="text-xs text-gray-500">{invoice.days_overdue} days overdue</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bento-card !p-0 overflow-hidden">
+            <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Balance Reconciliation</h2>
+              <span className="text-xs text-cyan-300">Top mismatches</span>
+            </div>
+            <div className="p-4 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+              {isReconciliationLoading ? (
+                <p className="text-sm text-gray-400">Loading reconciliation gaps...</p>
+              ) : topMismatches.length === 0 ? (
+                <p className="text-sm text-gray-400">No balance mismatch found. Customer balances match invoice outstanding.</p>
+              ) : (
+                topMismatches.map((row) => (
+                  <div key={row.customer_id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-white truncate">{row.customer_name}</p>
+                      <p className={`text-sm font-semibold ${parseFloat(row.difference) < 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                        {getCurrencySymbol()}{Math.abs(parseFloat(row.difference || 0)).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {parseFloat(row.difference) < 0
+                        ? 'Unmapped outstanding on customer balance'
+                        : 'Likely unapplied credits from unlinked payments'}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Ledger Table Container */}
         <div className="bento-card !p-0 overflow-hidden">
@@ -270,7 +353,7 @@ const Ledger = () => {
       />
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 };
 

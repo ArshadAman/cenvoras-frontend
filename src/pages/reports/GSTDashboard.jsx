@@ -1,6 +1,6 @@
 import React from "react";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
 import {
   DocumentTextIcon,
   TableCellsIcon,
@@ -39,7 +39,7 @@ export default function GSTDashboard() {
     },
     {
       title: "E-Invoice (IRN)",
-      description: "Generate Invoice Reference Number for B2B invoices. Required for ₹5 Cr+ turnover.",
+      description: "Generate Invoice Reference Number for B2B invoices. Required for {getCurrencySymbol()}5 Cr+ turnover.",
       icon: QrCodeIcon,
       link: "/reports/tax-register?tab=einvoice",
       color: "text-amber-400",
@@ -47,7 +47,7 @@ export default function GSTDashboard() {
     },
     {
       title: "E-Way Bill",
-      description: "Generate E-Way Bills for goods movement above ₹50,000. Track vehicle and transporter details.",
+      description: "Generate E-Way Bills for goods movement above {getCurrencySymbol()}50,000. Track vehicle and transporter details.",
       icon: TruckIcon,
       link: "/reports/tax-register?tab=ewaybill",
       color: "text-rose-400",
@@ -56,7 +56,7 @@ export default function GSTDashboard() {
   ];
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group mb-6">
           <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
@@ -94,6 +94,6 @@ export default function GSTDashboard() {
           })}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

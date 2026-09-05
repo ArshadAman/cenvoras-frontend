@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from '../../api/inventory';
-import Layout from '../../components/Layout';
 import Barcode from 'react-barcode';
 import { useReactToPrint } from 'react-to-print';
 import { PrinterIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function BarcodeGenerator() {
     const [selectedProduct, setSelectedProduct] = useState('');
@@ -19,12 +19,12 @@ export default function BarcodeGenerator() {
     const activeProduct = products?.find(p => p.id === selectedProduct);
 
     const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: `Barcodes-${activeProduct?.name || 'Labels'}`,
+        contentRef: printRef,
+        documentTitle: `Barcodes_${format(new Date(), 'yyyy-MM-dd')}`,
     });
 
     return (
-        <Layout>
+        <>
             <div className="p-6 md:p-10 space-y-8 animate-fade-up border-white/5">
                 <div className="flex justify-between items-center">
                     <div>
@@ -104,7 +104,7 @@ export default function BarcodeGenerator() {
                                         <div className="font-bold text-sm truncate w-full text-center text-gray-800 mb-1" title={activeProduct.name}>
                                             {activeProduct.name}
                                         </div>
-                                        <div className="text-xs text-gray-500 mb-2">MRP: ₹{activeProduct.sale_price}</div>
+                                        <div className="text-xs text-gray-500 mb-2">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
                                         <div className="w-full flex justify-center scale-75 origin-top">
                                             <Barcode 
                                                 value={activeProduct.id.split('-')[0].toUpperCase()} // Generate a short unique ID for barcode, as UUID is too long
@@ -130,6 +130,6 @@ export default function BarcodeGenerator() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 }

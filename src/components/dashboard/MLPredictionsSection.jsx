@@ -10,12 +10,16 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import UpgradePromptModal from '../subscription/UpgradePromptModal';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 /**
  * MLPredictionsSection - Machine Learning Powered Predictions
  * Shows: Sales Forecast (7-day) and Restock Predictions
  */
 export default function MLPredictionsSection({ data, isLoading, onViewAllProducts }) {
+  const [upgradeModal, setUpgradeModal] = React.useState({ open: false, featureName: '', targetPlanName: 'Business', targetPlanCode: 'business', description: '' });
+
   if (isLoading) {
     return (
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -37,10 +41,10 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   const restockItems = restockData.predictions || [];
 
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '₹0';
-    if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
-    if (value >= 1000) return `₹${(value / 1000).toFixed(1)}K`;
-    return `₹${Math.round(value).toLocaleString('en-IN')}`;
+    if (!value) return `${getCurrencySymbol()}0`;
+    if (value >= 100000) return `${getCurrencySymbol()}${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `${getCurrencySymbol()}${(value / 1000).toFixed(1)}K`;
+    return `${getCurrencySymbol()}${Math.round(value).toLocaleString('en-IN')}`;
   };
 
   const TrendIcon = salesForecast.trend === 'growing' ? ArrowTrendingUpIcon :
@@ -48,6 +52,19 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   
   const trendColor = salesForecast.trend === 'growing' ? 'text-green-400' :
                      salesForecast.trend === 'declining' ? 'text-red-400' : 'text-gray-400';
+
+  const isForecastLocked = data?.can?.forecast === false;
+  const isRestockLocked = data?.can?.restock === false;
+
+  const promptUpgrade = (featureName, description, targetPlanName = 'Business') => {
+    setUpgradeModal({
+      open: true,
+      featureName,
+      description,
+      targetPlanName,
+      targetPlanCode: String(targetPlanName).toLowerCase() === 'business' ? 'business' : 'pro',
+    });
+  };
 
   const urgencyColors = {
     critical: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400' },
@@ -76,7 +93,22 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
           </div>
         </div>
 
-        {forecast.length === 0 ? (
+        {isForecastLocked ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 min-h-[240px] flex flex-col justify-center items-center text-center">
+            <SparklesIcon className="w-12 h-12 text-purple-400/60 mb-3" />
+            <p className="text-white font-semibold mb-1">Sales Forecast locked</p>
+            <p className="text-sm text-gray-500 max-w-sm">
+              Upgrade to unlock sales forecasting and the predictive growth view.
+            </p>
+            <button
+              type="button"
+              onClick={() => promptUpgrade('Sales Forecast', 'Sales forecasting is available on the higher tier that includes predictive growth insights.')}
+              className="mt-4 text-xs px-3 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+            >
+              Unlock Forecast
+            </button>
+          </div>
+        ) : forecast.length === 0 ? (
           <div className="text-center py-8">
             <SparklesIcon className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <p className="text-sm text-gray-500">{salesForecast.message || 'Not enough data yet'}</p>
@@ -117,7 +149,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                     fontSize={9} 
                     tickLine={false} 
                     axisLine={false}
-                    tickFormatter={(val) => `₹${(val/1000).toFixed(0)}K`}
+                    tickFormatter={(val) => `${getCurrencySymbol()}${(val/1000).toFixed(0)}K`}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -126,7 +158,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                       borderRadius: '8px',
                       fontSize: '12px'
                     }}
-                    formatter={(value) => [`₹${Math.round(value).toLocaleString()}`, 'Predicted']}
+                    formatter={(value) => [`${getCurrencySymbol()}${Math.round(value).toLocaleString()}`, 'Predicted']}
                     labelFormatter={(label) => label}
                   />
                   <ReferenceLine 
@@ -180,7 +212,22 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
           )}
         </div>
 
-        {restockItems.length === 0 ? (
+        {isRestockLocked ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 min-h-[240px] flex flex-col justify-center items-center text-center">
+            <TruckIcon className="w-12 h-12 text-cyan-400/60 mb-3" />
+            <p className="text-white font-semibold mb-1">Restock Predictions locked</p>
+            <p className="text-sm text-gray-500 max-w-sm">
+              Upgrade to unlock restock predictions and automated replenishment insights.
+            </p>
+            <button
+              type="button"
+              onClick={() => promptUpgrade('Restock Predictions', 'Restock predictions are available on the higher tier that includes inventory intelligence.')}
+              className="mt-4 text-xs px-3 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+            >
+              Unlock Restock
+            </button>
+          </div>
+        ) : restockItems.length === 0 ? (
           <div className="text-center py-8">
             <CheckCircleIcon className="w-12 h-12 text-green-500/30 mx-auto mb-3" />
             <p className="text-sm text-gray-500">All products are well-stocked!</p>
@@ -236,6 +283,16 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
             </button>
           </div>
         )}
+
+        <UpgradePromptModal
+          isOpen={upgradeModal.open}
+          onClose={() => setUpgradeModal({ open: false, featureName: '', targetPlanName: 'Business', targetPlanCode: 'business', description: '' })}
+          title="Upgrade to unlock"
+          featureName={upgradeModal.featureName}
+          targetPlanName={upgradeModal.targetPlanName}
+          targetPlanCode={upgradeModal.targetPlanCode}
+          description={upgradeModal.description}
+        />
       </div>
     </section>
   );

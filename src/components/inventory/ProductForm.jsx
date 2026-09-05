@@ -5,6 +5,7 @@ import { createProduct, updateProduct } from "../../api/inventory";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
 
@@ -30,14 +31,14 @@ const productSchema = Yup.object().shape({
     .min(1, "Conversion factor must be at least 1")
     .nullable(),
   cost_price: Yup.string()
-    .required("Cost price is required")
-    .matches(/^\d+(\.\d{1,2})?$/, "Cost price must be a valid decimal number"),
-  sale_price: Yup.string()
     .nullable()
-    .test("is-decimal-or-empty", "Sale price must be a valid decimal number", (value) => {
+    .test("is-decimal-or-empty", "Cost price must be a valid decimal number", (value) => {
       if (value === null || value === undefined || value === "") return true;
       return /^\d+(\.\d{1,2})?$/.test(value);
     }),
+  sale_price: Yup.string()
+    .required("Sale price is required")
+    .matches(/^\d+(\.\d{1,2})?$/, "Sale price must be a valid decimal number"),
   stock: Yup.number()
     .required("Stock is required")
     .integer("Stock must be a whole number")
@@ -55,6 +56,8 @@ const productSchema = Yup.object().shape({
     is_h1: Yup.boolean(),
     is_narcotic: Yup.boolean(),
     is_new_launch: Yup.boolean(),
+    temperature: Yup.string().max(50, "Temperature must be 50 characters or less").nullable(),
+    storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
   }),
 });
 
@@ -109,6 +112,8 @@ export default function ProductForm({ product, onClose }) {
       is_h1: product?.meta?.is_h1 || false,
       is_narcotic: product?.meta?.is_narcotic || false,
       is_new_launch: product?.meta?.is_new_launch || false,
+      temperature: product?.meta?.temperature || "",
+      storage_condition: product?.meta?.storage_condition || "",
     },
   };
 
@@ -127,6 +132,8 @@ export default function ProductForm({ product, onClose }) {
     if (values.meta.mandi_tax !== "" && values.meta.mandi_tax !== null) {
       metaData.mandi_tax = parseFloat(values.meta.mandi_tax);
     }
+    if (values.meta.temperature?.trim()) metaData.temperature = values.meta.temperature;
+    if (values.meta.storage_condition?.trim()) metaData.storage_condition = values.meta.storage_condition;
 
     const productData = {
       name: values.name,
@@ -156,7 +163,7 @@ export default function ProductForm({ product, onClose }) {
   const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-20 sm:pt-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -167,7 +174,7 @@ export default function ProductForm({ product, onClose }) {
       <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/10 bg-white/5">
           <h2 className="text-xl font-bold text-white">
             {isEdit ? "Edit Product" : "New Product"}
           </h2>
@@ -186,7 +193,7 @@ export default function ProductForm({ product, onClose }) {
           enableReinitialize
         >
           {({ isSubmitting, values }) => (
-            <Form className="p-6 md:p-8 space-y-8">
+            <Form className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
               {/* Section 1: Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -293,23 +300,23 @@ export default function ProductForm({ product, onClose }) {
               {/* Section 3: Pricing & Stock */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className={labelClass}>Cost Price (₹) *</label>
+                  <label className={labelClass}>Cost Price ({getCurrencySymbol()})</label>
                   <Field
                     name="cost_price"
                     type="text"
                     className={inputClass}
-                    placeholder="0.00"
+                    placeholder="Optional"
                   />
                   <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Sale Price (₹)</label>
+                  <label className={labelClass}>Sale Price ({getCurrencySymbol()}) *</label>
                   <Field
                     name="sale_price"
                     type="text"
                     className={inputClass}
-                    placeholder="Optional"
+                    placeholder="0.00"
                   />
                   <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
@@ -329,7 +336,7 @@ export default function ProductForm({ product, onClose }) {
                 <div>
                   <label className={labelClass}>Stock Value</label>
                   <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                    ₹{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
+                    {getCurrencySymbol()}{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -378,12 +385,33 @@ export default function ProductForm({ product, onClose }) {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Mandi Tax (₹)</label>
+                      <label className={labelClass}>Mandi Tax ({getCurrencySymbol()})</label>
                       <Field
                         name="meta.mandi_tax"
                         type="number"
                         className={inputClass}
                         placeholder="0.00"
+                      />
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <label className={labelClass}>Temperature (°C)</label>
+                      <Field
+                        name="meta.temperature"
+                        type="text"
+                        className={inputClass}
+                        placeholder="e.g. 2-8 °C"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Storage Condition</label>
+                      <Field
+                        name="meta.storage_condition"
+                        type="text"
+                        className={inputClass}
+                        placeholder="e.g. Store in a cool, dry place"
                       />
                     </div>
                  </div>

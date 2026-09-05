@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getStockLedger } from '../../api/reports';
 import { getProducts } from '../../api/inventory';
-import Layout from '../../components/Layout';
 import { DocumentTextIcon, ArrowDownCircleIcon, ArrowUpCircleIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 export default function StockLedgerReport() {
@@ -11,10 +10,15 @@ export default function StockLedgerReport() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
-    const { data: products } = useQuery({
+    const { data: productsData } = useQuery({
         queryKey: ['products'],
         queryFn: getProducts
     });
+
+    const products = React.useMemo(() => {
+        if (!productsData) return [];
+        return Array.isArray(productsData) ? productsData : (productsData.results || productsData.data || []);
+    }, [productsData]);
 
     const { data: ledgerData, isLoading } = useQuery({
         queryKey: ['stock-ledger', selectedProduct, startDate, endDate],
@@ -22,8 +26,14 @@ export default function StockLedgerReport() {
         enabled: !!selectedProduct
     });
 
+    const ledgerItems = React.useMemo(() => {
+        if (!ledgerData) return [];
+        const items = ledgerData.items || ledgerData.results || ledgerData.data || [];
+        return Array.isArray(items) ? items : [];
+    }, [ledgerData]);
+
     return (
-        <Layout>
+        <>
             <div className="p-6 md:p-10 space-y-8 animate-fade-up">
                 <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
                   <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
@@ -85,7 +95,7 @@ export default function StockLedgerReport() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {ledgerData?.items?.length === 0 ? (
+                                {ledgerItems.length === 0 ? (
                                     <tr>
                                         <td colSpan="7" className="p-8 text-center text-gray-500">
                                             <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -93,7 +103,7 @@ export default function StockLedgerReport() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    ledgerData?.items?.map((t) => (
+                                    ledgerItems.map((t) => (
                                         <tr key={t.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                             <td className="p-4 text-sm text-gray-300 font-mono">{t.date}</td>
                                             <td className="p-4 text-sm text-white">{t.type}</td>
@@ -122,6 +132,6 @@ export default function StockLedgerReport() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 }

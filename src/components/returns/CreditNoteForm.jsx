@@ -6,6 +6,7 @@ import { getSalesInvoices } from "../../api/sales";
 import { createCreditNote } from "../../api/gst";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function CreditNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -33,6 +34,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   // Check for paginated vs unpaginated results
   const customerList = Array.isArray(customers) ? customers : customers?.results || [];
   const invoiceList = Array.isArray(invoices) ? invoices : invoices?.results || [];
+  const filteredInvoiceList = invoiceList.filter(inv =>
+    inv.invoice_number?.toLowerCase().includes(selectedInvoiceId.toLowerCase()) ||
+    inv.invoice_number || inv.invoice_date
+  );
 
   // Selected Invoice Details
   const selectedInvoice = invoiceList.find(inv => inv.id === selectedInvoiceId);
@@ -81,7 +86,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     }
 
     const payload = {
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('sv-SE'),
       customer: selectedCustomer,
       original_invoice: selectedInvoiceId,
       reason,
@@ -107,8 +112,8 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     <Transition show={isOpen} as={React.Fragment}>
       <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <div className="fixed inset-0 bg-black/80" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-[#0F0F12] border border-white/10 p-6 text-left align-middle shadow-xl transition-all">
+        <div className="fixed inset-0 flex items-center justify-center p-2 sm:p-4">
+          <Dialog.Panel className="w-full max-w-2xl max-h-[95vh] overflow-y-auto transform rounded-2xl bg-[#0F0F12] border border-white/10 p-5 sm:p-8 text-left align-middle shadow-2xl transition-all">
             <div className="flex justify-between items-center mb-6">
               <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-white">
                 New Credit Note (Sales Return)
@@ -120,7 +125,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Step 1: Select Customer & Invoice */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Customer</label>
                   <select 
@@ -137,23 +142,42 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Original Invoice</label>
-                  <select 
-                    value={selectedInvoiceId}
-                    onChange={(e) => setSelectedInvoiceId(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                    disabled={!selectedCustomer}
-                    required
-                  >
-                    <option value="">Select Invoice</option>
-                    {invoiceList.map(inv => (
-                      <option key={inv.id} value={inv.id}>{inv.invoice_number} ({inv.invoice_date})</option>
-                    ))}
-                  </select>
+                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
+                    <div className="px-3 py-2 border-b border-white/10 text-xs text-gray-500">
+                      Select an invoice below. The list scrolls inside this box.
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {selectedCustomer ? (
+                        filteredInvoiceList.length > 0 ? (
+                          filteredInvoiceList.map((inv) => {
+                            const isSelected = selectedInvoiceId === inv.id;
+                            return (
+                              <button
+                                key={inv.id}
+                                type="button"
+                                onClick={() => setSelectedInvoiceId(inv.id)}
+                                className={`w-full text-left px-3 py-2 border-b border-white/5 last:border-0 transition-colors ${isSelected ? 'bg-purple-500/20 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="font-medium">{inv.invoice_number}</span>
+                                  <span className="text-xs text-gray-500">{inv.invoice_date}</span>
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="px-3 py-4 text-sm text-gray-500">No invoices found for this customer.</div>
+                        )
+                      ) : (
+                        <div className="px-3 py-4 text-sm text-gray-500">Select a customer first.</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Step 2: Return Details */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Reason</label>
                   <select 
@@ -180,58 +204,103 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* Step 3: Items Table */}
+              {/* Step 3: Items Table (Responsive) */}
               {selectedInvoice && (
-                <div className="border border-white/10 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-white/5 text-gray-400">
-                      <tr>
-                        <th className="p-3">Product</th>
-                        <th className="p-3 text-right">Sold Qty</th>
-                        <th className="p-3 text-right">Price</th>
-                        <th className="p-3 text-right w-32">Return Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {returnItems.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="p-3 text-white">{item.product_detail?.name || 'N/A'}</td>
-                          <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
-                          <td className="p-3 text-right text-gray-400">₹{item.price}</td>
-                          <td className="p-3">
-                            <input 
-                              type="number"
-                              min="0"
-                              max={item.original_qty}
-                              value={item.return_qty}
-                              onChange={(e) => {
-                                const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
-                                const newItems = [...returnItems];
-                                newItems[idx].return_qty = newQty;
-                                setReturnItems(newItems);
-                              }}
-                              className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
-                            />
-                          </td>
+                <div className="space-y-4">
+                  {/* Desktop Table */}
+                  <div className="hidden lg:block border border-white/10 rounded-lg overflow-hidden">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-white/5 text-gray-400">
+                        <tr>
+                          <th className="p-3">Product</th>
+                          <th className="p-3 text-right">Sold Qty</th>
+                          <th className="p-3 text-right">Price</th>
+                          <th className="p-3 text-right w-32">Return Qty</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {returnItems.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="p-3 text-white">{item.product_detail?.name || 'N/A'}</td>
+                            <td className="p-3 text-right text-gray-400">{item.original_qty} {item.unit}</td>
+                            <td className="p-3 text-right text-gray-400">{getCurrencySymbol()}{item.price}</td>
+                            <td className="p-3">
+                              <input 
+                                type="number"
+                                min="0"
+                                max={item.original_qty}
+                                value={item.return_qty}
+                                onChange={(e) => {
+                                  const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
+                                  const newItems = [...returnItems];
+                                  newItems[idx].return_qty = newQty;
+                                  setReturnItems(newItems);
+                                }}
+                                className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Item Cards */}
+                  <div className="lg:hidden space-y-4">
+                    {returnItems.map((item, idx) => (
+                      <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+                        <div className="text-white font-bold">{item.product_detail?.name || 'N/A'}</div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Sold Qty</label>
+                            <div className="text-gray-300 text-sm font-medium">{item.original_qty} {item.unit}</div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Price</label>
+                            <div className="text-gray-300 text-sm font-medium">{getCurrencySymbol()}{item.price}</div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-white/5">
+                           <label className="block text-[10px] font-black uppercase tracking-widest text-cyan-400 mb-2">Quantity to Return</label>
+                           <div className="relative">
+                              <input 
+                                type="number"
+                                min="0"
+                                max={item.original_qty}
+                                value={item.return_qty}
+                                onChange={(e) => {
+                                  const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
+                                  const newItems = [...returnItems];
+                                  newItems[idx].return_qty = newQty;
+                                  setReturnItems(newItems);
+                                }}
+                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-center font-bold text-lg"
+                              />
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs uppercase font-black pointer-events-none">
+                                max: {item.original_qty}
+                              </div>
+                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-sm font-bold uppercase tracking-widest"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || !selectedInvoiceId}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary w-full sm:w-auto py-3 px-8 text-sm font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_-5px_rgba(255,255,255,0.2)]"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create Credit Note'}
                 </button>

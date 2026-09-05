@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Layout from "../components/Layout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDebitNotes, deleteDebitNote } from "../api/gst";
 import { ArrowUturnRightIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -9,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 import DebitNoteForm from "../components/returns/DebitNoteForm"; // Add Import
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 export default function DebitNoteList() {
   const [showForm, setShowForm] = useState(false); // Add State
@@ -47,7 +47,7 @@ export default function DebitNoteList() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex justify-between items-center">
           <div>
@@ -100,7 +100,7 @@ export default function DebitNoteList() {
                         </span>
                       </td>
                       <td className="p-4 text-gray-400 text-sm">{dn.items?.length || 0} items</td>
-                      <td className="p-4 text-right text-white font-semibold">₹{fmt(dn.total_amount)}</td>
+                      <td className="p-4 text-right text-white font-semibold">{getCurrencySymbol()}{fmt(dn.total_amount)}</td>
                       <td className="p-4 text-right">
                         <button
                           onClick={() => { if (confirm('Delete this debit note?')) deleteMutation.mutate(dn.id); }}
@@ -123,7 +123,7 @@ export default function DebitNoteList() {
       )}
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
-    </Layout>
+    </>
   );
 }
 

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/api';
-import Layout from '../../components/Layout';
 import { ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { toast, ToastContainer } from 'react-toastify';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const fmt = (v) => v?.toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
@@ -62,7 +62,7 @@ export default function BankReconciliation() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         <div className="flex justify-between items-center">
           <div>
@@ -112,7 +112,7 @@ export default function BankReconciliation() {
                       <div className="flex justify-between mb-1">
                         <span className="text-gray-400 text-xs font-mono">{line.date}</span>
                         <span className={`font-mono font-medium ${line.debit > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                          {line.debit > 0 ? `- ₹${fmt(line.debit)}` : `+ ₹${fmt(line.credit)}`}
+                          {line.debit > 0 ? `- ${getCurrencySymbol()}${fmt(line.debit)}` : `+ ${getCurrencySymbol()}${fmt(line.credit)}`}
                         </span>
                       </div>
                       <div className="text-white text-sm truncate" title={line.description}>
@@ -157,7 +157,7 @@ export default function BankReconciliation() {
                                                 {candidate.description}
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
-                                                <span className="text-white font-mono">₹{fmt(candidate.amount)}</span>
+                                                <span className="text-white font-mono">{getCurrencySymbol()}{fmt(candidate.amount)}</span>
                                                 <button className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded hover:bg-purple-500/30">Match</button>
                                             </div>
                                         </div>
@@ -180,6 +180,6 @@ export default function BankReconciliation() {
         )}
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
       </div>
-    </Layout>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import React from "react";
-import Layout from "../components/Layout";
-import { SparklesIcon, BeakerIcon, ArrowTrendingUpIcon, ShieldCheckIcon, CubeTransparentIcon, TruckIcon, BuildingLibraryIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, BeakerIcon, ArrowTrendingUpIcon, ShieldCheckIcon, CubeTransparentIcon, TruckIcon, BuildingLibraryIcon, BanknotesIcon, DocumentTextIcon, CubeIcon } from "@heroicons/react/24/outline";
+import Seo from "../components/Seo";
 
 export default function ComingSoon() {
   const upcomingFeatures = [
@@ -45,11 +45,38 @@ export default function ComingSoon() {
        icon: CubeTransparentIcon,
        status: "Exploring",
        eta: "Q3 2026"
+    },
+    {
+       title: "Payroll Runs",
+       description: "Automated monthly payroll processing with dynamic salary computation based on attendance, leaves, and salary structures.",
+       icon: BanknotesIcon,
+       status: "In Development",
+       eta: "Next Release"
+    },
+    {
+       title: "Payslips Generation",
+       description: "Generate, view, and email detailed PDF payslips to employees instantly after payroll finalization.",
+       icon: DocumentTextIcon,
+       status: "In Development",
+       eta: "Next Release"
+    },
+    {
+       title: "Inventory Batches",
+       description: "Track inventory by batches, enabling expiry date management, targeted recall capabilities, and precise lot profitability analysis.",
+       icon: CubeIcon,
+       status: "In Development",
+       eta: "Next Release"
     }
   ];
 
   return (
-    <Layout>
+    <>
+      <Seo
+        title="Coming Soon"
+        description="Preview upcoming Cenvora features for billing, inventory, GST, and finance workflows."
+        canonicalPath="/coming-soon"
+        noindex
+      />
       <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-fade-up">
         {/* Header section */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
@@ -111,11 +138,11 @@ export default function ComingSoon() {
           <p className="text-gray-400 text-sm mb-6">
             We prioritize features based on your feedback. Tell us what you need next!
           </p>
-          <button className="btn-primary" onClick={() => window.open('mailto:cenvoras@gmail.com')}>
+          <button className="btn-primary" onClick={() => window.open('mailto:support@cenvora.app')}>
              Send Feedback
           </button>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

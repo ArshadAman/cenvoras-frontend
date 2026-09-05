@@ -76,7 +76,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
   const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-20 sm:pt-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -87,7 +87,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
       <div className="relative w-full max-w-md bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/10 bg-white/5">
           <h2 className="text-xl font-bold text-white">
             Stock Adjustment
           </h2>
@@ -101,13 +101,13 @@ export default function StockAdjustmentModal({ product, onClose }) {
 
         {/* Product Info */}
         <div className="bg-purple-500/10 border-b border-white/5 p-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-2">
             <div>
-              <h3 className="font-bold text-white">{product.name}</h3>
+              <h3 className="font-bold text-white text-sm sm:text-base break-words">{product.name}</h3>
               <p className="text-xs text-purple-300 mt-0.5">SKU: {product.sku}</p>
             </div>
-            <div className="text-right">
-              <span className="block text-2xl font-mono text-white">{product.current_stock}</span>
+            <div className="text-right flex-shrink-0">
+              <span className="block text-xl sm:text-2xl font-mono text-white">{product.current_stock}</span>
               <span className="text-xs text-gray-400">{product.unit}</span>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
           onSubmit={handleSubmit}
         >
           {({ isSubmitting, values }) => (
-            <Form className="p-6 space-y-5">
+            <Form className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               
               {/* Adjustment Type */}
               <div>

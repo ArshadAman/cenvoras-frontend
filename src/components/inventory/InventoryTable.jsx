@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts } from "../../api/inventory";
-import AdvancedInventoryFilters from "./AdvancedInventoryFilters";
+import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts } from "../../api/inventory";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
+import InlineProgressBar from "../common/InlineProgressBar";
+import { useLoadingPolicy } from "../../hooks/useLoadingPolicy";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -69,6 +71,7 @@ const validateCsvBeforeUpload = async (file) => {
 };
 
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("name"); // default: alphabetical
   const [page, setPage] = useState(1);
@@ -77,6 +80,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
@@ -85,10 +89,24 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     outOfStock: false,
   });
 
-  const { data, isLoading, error } = useQuery({
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
+
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["products", search, ordering, page],
     queryFn: () => getProducts({ search, ordering, page }),
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
   });
+  const loadingPolicy = useLoadingPolicy(isLoading);
 
   const handleDownloadTemplate = async () => {
     try {
@@ -99,7 +117,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       a.download = 'product_bulk_template.csv';
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       toast.error('Failed to download product template.');
     }
   };
@@ -122,24 +140,37 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     }
 
     setIsUploadingCsv(true);
+    setUploadProgress(0);
     try {
-      const result = await bulkUploadProductsCsv(file);
-      const createdCount = Number(result?.created_count || 0);
-      const failedCount = Number(result?.failed_count || 0);
-
-      if (failedCount > 0) {
-        if (createdCount > 0) {
-          toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
-        } else {
-          toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
-        }
-      } else if (createdCount > 0) {
-        toast.success(`Bulk upload complete. Created: ${createdCount}`);
+      const result = await bulkUploadProductsCsv(file, {
+        onUploadProgress: (event) => {
+          const total = Number(event?.total || 0);
+          if (!total) return;
+          const percent = (Number(event.loaded || 0) / total) * 100;
+          setUploadProgress(percent);
+        },
+      });
+      
+      if (result?.message) {
+        toast.info(result.message);
       } else {
-        toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
+        const createdCount = Number(result?.created_count || 0);
+        const failedCount = Number(result?.failed_count || 0);
+
+        if (failedCount > 0) {
+          if (createdCount > 0) {
+            toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
+          } else {
+            toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
+          }
+        } else if (createdCount > 0) {
+          toast.success(`Bulk upload complete. Created: ${createdCount}`);
+        } else {
+          toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
+        }
       }
 
-      window.location.reload();
+      refetch();
     } catch (err) {
       const responseData = err?.response?.data;
       if (responseData?.errors?.length) {
@@ -149,6 +180,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       }
     } finally {
       setIsUploadingCsv(false);
+      setUploadProgress(0);
       event.target.value = '';
     }
   };
@@ -171,78 +203,92 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   }
 
   // Get the raw products array from API response
-  const productsRaw = Array.isArray(data)
-    ? data
-    : data?.results || data?.data || [];
+  const productsRaw = useMemo(
+    () => (Array.isArray(data) ? data : data?.results || data?.data || []),
+    [data]
+  );
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
   // Backend handles search across all products; frontend applies additional filters only.
-  const filteredProducts = productsRaw
-    .filter(product => {
-      // Stock filter
-      let matchesStock = true;
-  const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
-  const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
-      
-      if (stockFilter === "in-stock") {
-        matchesStock = currentStock > 0;
-      } else if (stockFilter === "out-of-stock") {
-        matchesStock = currentStock === 0;
-      } else if (stockFilter === "low-stock") {
-        matchesStock = currentStock > 0 && currentStock <= minStock;
-      }
-      
-      // Advanced filters
-      if (advancedFilters.lowStock) {
-        matchesStock = matchesStock && currentStock <= minStock;
-      }
-      if (advancedFilters.outOfStock) {
-        matchesStock = matchesStock && currentStock === 0;
-      }
-      
-      // Price range filter
-      let matchesPrice = true;
-      if (advancedFilters.priceRange.min || advancedFilters.priceRange.max) {
-      const price = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
-        if (advancedFilters.priceRange.min) {
-          matchesPrice = matchesPrice && price >= parseFloat(advancedFilters.priceRange.min);
-        }
-        if (advancedFilters.priceRange.max) {
-          matchesPrice = matchesPrice && price <= parseFloat(advancedFilters.priceRange.max);
-        }
-      }
-      
-      // Stock range filter
-      let matchesStockRange = true;
-      if (advancedFilters.stockRange.min || advancedFilters.stockRange.max) {
-        if (advancedFilters.stockRange.min) {
-          matchesStockRange = matchesStockRange && currentStock >= parseFloat(advancedFilters.stockRange.min);
-        }
-        if (advancedFilters.stockRange.max) {
-          matchesStockRange = matchesStockRange && currentStock <= parseFloat(advancedFilters.stockRange.max);
-        }
-      }
-      
-      // Supplier filter
-      let matchesSupplier = true;
-      if (advancedFilters.supplier) {
-        matchesSupplier = product.supplier?.toLowerCase().includes(advancedFilters.supplier.toLowerCase());
-      }
-      
-      return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
-    })
-    .sort((a, b) => {
-      // Frontend ordering
-      if (ordering === "name") return (a.name || "").localeCompare(b.name || "");
-      if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
-      if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
-      if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
-      if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
-      if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
+  const filteredProducts = useMemo(() => {
+    const minPrice = advancedFilters.priceRange.min === "" ? null : parseFloat(advancedFilters.priceRange.min);
+    const maxPrice = advancedFilters.priceRange.max === "" ? null : parseFloat(advancedFilters.priceRange.max);
+    const minStockRange = advancedFilters.stockRange.min === "" ? null : parseFloat(advancedFilters.stockRange.min);
+    const maxStockRange = advancedFilters.stockRange.max === "" ? null : parseFloat(advancedFilters.stockRange.max);
+    const supplierQuery = String(advancedFilters.supplier || "").toLowerCase();
 
-      return 0;
-    });
+    return productsRaw
+      .filter((product) => {
+        let matchesStock = true;
+        const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
+        const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
+
+        if (stockFilter === "in-stock") {
+          matchesStock = currentStock > 0;
+        } else if (stockFilter === "out-of-stock") {
+          matchesStock = currentStock === 0;
+        } else if (stockFilter === "low-stock") {
+          matchesStock = currentStock > 0 && currentStock <= minStock;
+        }
+
+        if (advancedFilters.lowStock) {
+          matchesStock = matchesStock && currentStock <= minStock;
+        }
+        if (advancedFilters.outOfStock) {
+          matchesStock = matchesStock && currentStock === 0;
+        }
+
+        let matchesPrice = true;
+        if (minPrice !== null || maxPrice !== null) {
+          const price = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+          if (minPrice !== null) {
+            matchesPrice = matchesPrice && price >= minPrice;
+          }
+          if (maxPrice !== null) {
+            matchesPrice = matchesPrice && price <= maxPrice;
+          }
+        }
+
+        let matchesStockRange = true;
+        if (minStockRange !== null || maxStockRange !== null) {
+          if (minStockRange !== null) {
+            matchesStockRange = matchesStockRange && currentStock >= minStockRange;
+          }
+          if (maxStockRange !== null) {
+            matchesStockRange = matchesStockRange && currentStock <= maxStockRange;
+          }
+        }
+
+        let matchesSupplier = true;
+        if (supplierQuery) {
+          matchesSupplier = String(product.supplier || "").toLowerCase().includes(supplierQuery);
+        }
+
+        return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
+      })
+      .sort((a, b) => {
+        if (ordering === "name") return (a.name || "").localeCompare(b.name || "");
+        if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
+        if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
+        if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
+        if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
+        if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
+
+        return 0;
+      });
+  }, [
+    advancedFilters.lowStock,
+    advancedFilters.outOfStock,
+    advancedFilters.priceRange.max,
+    advancedFilters.priceRange.min,
+    advancedFilters.stockRange.max,
+    advancedFilters.stockRange.min,
+    advancedFilters.supplier,
+    ordering,
+    productsRaw,
+    stockFilter,
+  ]);
 
   // Bulk operations functions
   const handleSelectAll = (checked) => {
@@ -268,14 +314,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     
     const confirmed = window.confirm(`Are you sure you want to delete ${selectedProducts.size} products?`);
     if (confirmed) {
+      // Show loading toast
+      const toastId = toast.loading(`Deleting ${selectedProducts.size} products...`);
       try {
-        for (const productId of selectedProducts) {
-          await onDelete(productId);
-        }
+        const productIds = Array.from(selectedProducts);
+        const result = await bulkDeleteProducts(productIds);
+        
         setSelectedProducts(new Set());
         setShowBulkActions(false);
+        toast.update(toastId, { render: result.message || `Successfully deleted products.`, type: "success", isLoading: false, autoClose: 3000 });
+        
+        refetch();
       } catch (error) {
-        alert('Error deleting some products. Please try again.');
+        toast.update(toastId, { render: error?.response?.data?.error || `Failed to delete products.`, type: "error", isLoading: false, autoClose: 3000 });
       }
     }
   };
@@ -303,7 +354,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `inventory-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `inventory-${new Date().toLocaleDateString('sv-SE')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -325,49 +376,44 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   return (
     <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg p-4 rounded">
       {/* Enhanced Filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-2 mb-4">
         <input
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          className="w-full sm:w-64 border border-white/30 rounded px-3 py-2 sm:px-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           placeholder="Search by name or description"
-          value={search}
+          value={searchInput}
           onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
+            setSearchInput(e.target.value);
           }}
         />
-        <select
-          value={ordering}
-          onChange={(e) => setOrdering(e.target.value)}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        >
-          <option value="name">Name (A-Z)</option>
-          <option value="-name">Name (Z-A)</option>
-          <option value="-current_stock">Stock (High to Low)</option>
-          <option value="current_stock">Stock (Low to High)</option>
-          <option value="-unit_price">Price (High to Low)</option>
-          <option value="unit_price">Price (Low to High)</option>
-        </select>
-        <select
-          value={stockFilter}
-          onChange={(e) => setStockFilter(e.target.value)}
-          className="border border-white/30 rounded px-2 py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-        >
-          <option value="all">All Stock</option>
-          <option value="in-stock">In Stock</option>
-          <option value="low-stock">Low Stock</option>
-          <option value="out-of-stock">Out of Stock</option>
-        </select>
-        <button
-          onClick={() => setShowAdvancedFilters(true)}
-          className="px-3 py-1 bg-purple-500/30 text-purple-200 border border-purple-300/50 rounded hover:bg-purple-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
-        >
-          Advanced Filters
-        </button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <select
+            value={ordering}
+            onChange={(e) => setOrdering(e.target.value)}
+            className="w-1/2 sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          >
+            <option value="name">Name (A-Z)</option>
+            <option value="-name">Name (Z-A)</option>
+            <option value="-current_stock">Stock (High to Low)</option>
+            <option value="current_stock">Stock (Low to High)</option>
+            <option value="-unit_price">Price (High to Low)</option>
+            <option value="unit_price">Price (Low to High)</option>
+          </select>
+          <select
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            className="w-1/2 sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          >
+            <option value="all">All Stock</option>
+            <option value="in-stock">In Stock</option>
+            <option value="low-stock">Low Stock</option>
+            <option value="out-of-stock">Out of Stock</option>
+          </select>
+        </div>
       </div>
 
       {/* Bulk Actions */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {selectedProducts.size > 0 && (
             <>
               <span className="text-sm text-cyan-300 font-bold drop-shadow-lg">
@@ -393,7 +439,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={handleDownloadTemplate}
             className="px-3 py-1 bg-cyan-500/30 text-cyan-200 border border-cyan-300/50 rounded hover:bg-cyan-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
@@ -422,6 +468,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         </div>
       </div>
 
+      {isUploadingCsv && uploadProgress > 0 && (
+        <div className="mb-4">
+          <InlineProgressBar value={uploadProgress} label="Uploading inventory CSV" />
+        </div>
+      )}
+
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
@@ -447,7 +499,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             </tr>
           </thead>
           <tbody>
-            {isLoading
+            {loadingPolicy.visible
               ? Array(5)
                   .fill(0)
                   .map((_, i) => (
@@ -498,13 +550,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                           )}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        ₹{costPrice.toFixed(2)}
+                        {getCurrencySymbol()}{costPrice.toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        {salePrice === null ? '-' : `₹${salePrice.toFixed(2)}`}
+                        {salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
-                        ₹{totalValue.toLocaleString(undefined, {
+                        {getCurrencySymbol()}{totalValue.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -524,7 +576,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         )}
                       </td>
                       <td className="py-3 px-4 text-center space-x-1">
-                        {/* View button removed */}
+                        <button
+                          className="px-2 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                          onClick={() => onView(product)}
+                        >
+                          View
+                        </button>
                         <button
                           className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
                           onClick={() => onEdit(product)}
@@ -564,7 +621,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
       {/* Mobile Card Layout */}
       <div className="lg:hidden space-y-4">
-        {isLoading ? (
+        {loadingPolicy.visible ? (
           Array(3).fill(0).map((_, i) => (
             <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
               <div className="h-4 bg-white/20 rounded mb-2"></div>
@@ -584,15 +641,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   <>
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-start space-x-3 w-full">
                   <input
                     type="checkbox"
                     checked={selectedProducts.has(product.id)}
                     onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="flex-shrink-0 mt-1.5 rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
-                  <div>
-                    <div className="text-lg font-semibold text-white">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg font-semibold text-white break-words">
                       {product.name}
                     </div>
                     <div className="text-sm text-white/70">Unit: {product.unit || 'pcs'}</div>
@@ -623,14 +680,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Cost Price:</span>
                   <span className="text-lg font-semibold text-[#7fd3f7]">
-                    ₹{Number(costPrice || 0).toLocaleString()}
+                    {getCurrencySymbol()}{Number(costPrice || 0).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-white/70">Sale Price:</span>
                   <span className="text-sm font-medium text-white">
-                    {product.sale_price == null ? '-' : `₹${Number(product.sale_price).toLocaleString()}`}
+                    {product.sale_price == null ? '-' : `${getCurrencySymbol()}${Number(product.sale_price).toLocaleString()}`}
                   </span>
                 </div>
 
@@ -648,12 +705,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
                 >
                   View
-                </button>
-                <button
-                  onClick={() => onStockAdjustment(product)}
-                  className="flex-1 px-3 py-2 bg-orange-500/30 text-white border border-orange-300/50 rounded-lg hover:bg-orange-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                >
-                  Adjust
                 </button>
                 <button
                   onClick={() => onEdit(product)}
@@ -682,14 +733,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
       {/* Pagination */}
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
-
-      {/* Advanced Filters Modal */}
-      {showAdvancedFilters && (
-        <AdvancedInventoryFilters
-          onFiltersChange={setAdvancedFilters}
-          onClose={() => setShowAdvancedFilters(false)}
-        />
-      )}
     </div>
   );
 }

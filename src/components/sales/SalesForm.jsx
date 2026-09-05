@@ -1,20 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
+import { createProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
+import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
+import { getSubscriptionEntitlements } from "../../api/subscription";
+import { getUserProfile } from "../../api/users";
 import { INDIAN_STATES } from "../../utils/constants"; // Added imports
+import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isFocused, setIsFocused] = useState(false);
+  const wrapperRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState(null);
+
+  const updateDropdownPosition = () => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: `${rect.bottom + 6}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      zIndex: 9999,
+    });
+  };
 
   useEffect(() => {
     const query = (inputValue || "").trim().toLowerCase();
@@ -28,19 +51,39 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       (product?.name || "").toLowerCase().includes(query)
     );
     setFilteredProducts(filtered);
-    setShowDropdown(filtered.length > 0);
-  }, [inputValue, products]);
+
+    if (!isFocused) {
+      setShowDropdown(false);
+    }
+  }, [inputValue, products, isFocused]);
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    updateDropdownPosition();
+
+    const handleReposition = () => updateDropdownPosition();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [showDropdown, inputValue, filteredProducts.length]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
-    setFieldValue(`items.${idx}.price`, product.price ?? 0);
+    const initialPrice = Number(product.sale_price ?? product.price ?? 0) || 0;
+    setFieldValue(`items.${idx}.price`, initialPrice);
     // Calculate amount automatically
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * (product.price ?? 0);
+    const amount = quantity * initialPrice;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.discount`, 0);
     setFieldValue(`items.${idx}.tax`, product.tax || 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
@@ -63,11 +106,20 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
+    setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
+    if (!value.trim()) {
+      setShowDropdown(false);
+      return;
+    }
+
+    if (isFocused) {
+      setShowDropdown(true);
+    }
   };
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
@@ -76,12 +128,17 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               value={inputValue}
               onChange={handleInputChange}
               onFocus={() => {
+                setIsFocused(true);
                 if ((inputValue || "").trim() && filteredProducts.length > 0) {
                   setShowDropdown(true);
                 }
               }}
+              onBlur={() => {
+                setIsFocused(false);
+                setTimeout(() => setShowDropdown(false), 100);
+              }}
               placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+              className="w-full bg-[#111] border border-white/10 rounded px-2 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-xs"
               autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === 'Tab' || (e.key === 'Enter' && !showDropdown)) {
@@ -112,34 +169,60 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
             )}
+            {showDescription && !!values.items[idx]?.product_description && (
+              <small className="block mt-1 text-[11px] text-gray-500 leading-tight">
+                {values.items[idx].product_description}
+              </small>
+            )}
           </div>
         )}
       </Field>
-      {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
-          {filteredProducts.slice(0, 50).map((product, index) => (
-            <div
-              key={product.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
-                index === selectedIndex 
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
-              }`}
-              onClick={() => selectProduct(product)}
-            >
-              <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
-                Unit: {product.unit} | Price: ₹{product.price}
+        {showDropdown && filteredProducts.length > 0 && dropdownStyle && typeof document !== "undefined" && createPortal(
+          <div
+            style={dropdownStyle}
+            className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
+          >
+            {filteredProducts.slice(0, 50).map((product, index) => (
+              <div
+                key={product.id}
+                className={`cursor-pointer border-b border-white/5 px-4 py-3 text-sm transition-colors last:border-0 ${
+                  index === selectedIndex
+                    ? 'bg-cyan-500/20 text-white'
+                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                }`}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  selectProduct(product);
+                }}
+              >
+                <div className="font-medium">{product.name}</div>
+                <div className="mt-0.5 text-xs text-gray-500">
+                  Unit: {product.unit} | Price: {getCurrencySymbol()}{product.sale_price ?? product.price}
+                </div>
               </div>
-            </div>
-          ))}
-          {filteredProducts.length > 50 && (
-             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+            ))}
+            {filteredProducts.length > 50 && (
+              <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
                 Showing top 50 results...
-             </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+            {inputValue.trim() && filteredProducts.length === 0 && onCreateNewProduct && (
+              <button
+                type="button"
+                className="w-full border-t border-white/5 px-4 py-3 text-left text-sm text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onCreateNewProduct(inputValue.trim(), idx);
+                }}
+              >
+                + Add to inventory: "{inputValue.trim()}"
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -191,7 +274,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   return (
     <div className="relative">
       <Field name="customer_name">
-        {({ field, meta }) => (
+        {({ meta }) => (
           <div>
             <input
               name="customer_name"
@@ -404,9 +487,13 @@ const SalesSchema = Yup.object().shape({
   customer_address: Yup.string().nullable(),
   customer_gstin: Yup.string().nullable(),
   delivery_address: Yup.string().nullable(),
+  due_date: Yup.string().nullable().test(
+    'not-past-date',
+    'Due date cannot be in the past',
+    (value) => !value || value >= new Date().toLocaleDateString('sv-SE')
+  ),
   
   // Optional invoice fields
-  due_date: Yup.string().nullable(),
   gst_treatment: Yup.string().nullable(),
   journal: Yup.string().nullable(),
   total_amount: Yup.number().nullable(),
@@ -432,7 +519,31 @@ const SalesSchema = Yup.object().shape({
 
 const units = ["pcs", "kg", "ltr", "box", "meter"];
 
-export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "INV-" }) {
+const DEFAULT_ITEM_SETTINGS = {
+  show_item_description: true,
+  show_item_hsn: true,
+  show_item_batch: true,
+  require_item_batch: false,
+  show_item_free_quantity: true,
+  show_item_discount: true,
+  show_item_tax: true,
+  show_item_storage_condition: false,
+};
+
+export default function SalesForm({
+  isOpen,
+  onClose,
+  editData,
+  invoicePrefix = "INV-",
+  documentType = "invoice",
+  forceDraft = false,
+  createDocument = createSalesInvoice,
+  updateDocument = updateSalesInvoice,
+  getNextNumber = getNextInvoiceNumber,
+  finalSubmitStatus = 'final',
+  aiDraftData = null,
+}) {
+  const isQuotation = documentType === "quotation";
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -442,7 +553,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
         const submitBtn = document.querySelector('button[type="submit"]');
         if(submitBtn) {
             submitBtn.click();
-            toast.info("Saving Invoice (F2)...");
+            toast.info(`Saving ${isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
         }
       }
       
@@ -466,13 +577,11 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
               const index = Array.prototype.indexOf.call(form, target);
               // Find next navigable element
               let nextIndex = index + 1;
-              let found = false;
               while (form.elements[nextIndex]) {
                  const next = form.elements[nextIndex];
                  // Skip hidden, disabled, or readOnly that shouldn't be focused
                  if (next.tagName !== "FIELDSET" && !next.hidden && !next.disabled && next.offsetParent !== null && next.tabIndex >= 0) {
                      next.focus();
-                     found = true;
                      break;
                  }
                  nextIndex++;
@@ -489,22 +598,62 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
   const queryClient = useQueryClient();
-  const isEdit = !!editData;
+  const isEdit = !!editData && !!editData.id;
   const formikRef = React.useRef(null);
-  const submitActionRef = React.useRef('final');
+  const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [productSearch, setProductSearch] = useState("");
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [roundOffApplied, setRoundOffApplied] = useState(false);
+  const [productCreationState, setProductCreationState] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductSearch((productSearch || "").trim());
+    }, 220);
+
+    return () => clearTimeout(timer);
+  }, [productSearch]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const existingRoundOff = Number(editData?.round_off || 0);
+    setRoundOffApplied(existingRoundOff !== 0);
+  }, [isOpen, editData?.id, editData?.round_off]);
+
+  const computeRoundedTotal = (amount) => {
+    const integerPart = Math.floor(amount);
+    const fraction = amount - integerPart;
+    return fraction >= 0.5 ? Math.ceil(amount) : Math.floor(amount);
+  };
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription-entitlements"],
+    queryFn: getSubscriptionEntitlements,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+  const entitlements = subscriptionData?.data || {};
+  const currentPlanCode = String(entitlements?.plan?.code || entitlements?.plan_code || "starter").toLowerCase();
+  const isStarterPlan = currentPlanCode === "starter" || currentPlanCode === "free";
+  const canAccessInventory = Boolean(entitlements?.can?.inventory);
   
-  const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
+  const { data: warehousesResult } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: getWarehouses,
+    enabled: isOpen && canAccessInventory,
+  });
   const warehouses = Array.isArray(warehousesResult) ? warehousesResult : warehousesResult?.data || warehousesResult?.results || [];
   
   
   // Lifted state: Fetch products and customers once at top level
   const { data: productsResult } = useQuery({ 
-      queryKey: ["products", productSearch], 
+      queryKey: ["products", debouncedProductSearch], 
       queryFn: () => getProducts({
-        ...(productSearch ? { search: productSearch } : {}),
+        ...(debouncedProductSearch ? { search: debouncedProductSearch } : {}),
         ordering: "name",
       }),
+      enabled: isOpen && canAccessInventory && debouncedProductSearch.length >= 2,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
@@ -522,60 +671,179 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   const { data: stockPointsResult } = useQuery({
     queryKey: ["stockPoints", selectedWarehouseId],
     queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
-    enabled: !!selectedWarehouseId
+    enabled: canAccessInventory && !!selectedWarehouseId
   });
   const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
-  
 
-  // Sync warehouse selection from Formik values (used by render below)
-  // This replaces the illegal useEffect-inside-IIFE that was causing form refreshes
-  const warehouseSyncRef = React.useRef(selectedWarehouseId);
+  const { data: invoiceSettings } = useQuery({
+    queryKey: ["invoiceSettings"],
+    queryFn: getInvoiceSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: userProfileData } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+    enabled: isOpen,
+  });
+  const sellerState =
+    userProfileData?.billing_profile?.state ||
+    userProfileData?.profile?.state ||
+    userProfileData?.state ||
+    null;
+
+  const itemSettings = {
+    ...DEFAULT_ITEM_SETTINGS,
+    ...(invoiceSettings || {}),
+  };
+
+  const updateInvoiceSettingsMutation = useMutation({
+    mutationFn: updateInvoiceSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoiceSettings"] });
+    },
+  });
+
+  const handleToggleItemSetting = (key) => {
+    const nextValue = !itemSettings[key];
+    updateInvoiceSettingsMutation.mutate({
+      ...invoiceSettings,
+      [key]: nextValue,
+    });
+  };
+
+  const handleCreateInventoryProduct = (productName, idx) => {
+    if (!canAccessInventory) {
+      toast.info("Inventory browsing is locked on Starter. Enter item details manually to create this sales bill.");
+      return;
+    }
+
+    setProductCreationState({
+      idx,
+      name: productName,
+      sale_price: "",
+      unit: "pcs",
+      tax: "0",
+      hsn_sac_code: "",
+      description: "",
+    });
+  };
+
+  const handleSaveInventoryProduct = async () => {
+    if (!productCreationState) return;
+
+    try {
+      const salePrice = Number(productCreationState.sale_price || 0) || 0;
+      const createdProduct = await createProduct({
+        name: productCreationState.name,
+        sale_price: salePrice,
+        cost_price: salePrice,
+        unit: productCreationState.unit || "pcs",
+        tax: Number(productCreationState.tax || 0),
+        hsn_sac_code: productCreationState.hsn_sac_code || null,
+        description: productCreationState.description || null,
+        stock: 0,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      if (formikRef.current && typeof productCreationState.idx === 'number') {
+        const itemPath = `items.${productCreationState.idx}`;
+        const quantity = Number(formikRef.current.values?.items?.[productCreationState.idx]?.quantity || 1);
+        const normalizedPrice = Number(createdProduct.sale_price ?? salePrice) || 0;
+
+        formikRef.current.setFieldValue(`${itemPath}.product`, createdProduct.name);
+        formikRef.current.setFieldValue(`${itemPath}.product_id`, createdProduct.id);
+        formikRef.current.setFieldValue(`${itemPath}.unit`, createdProduct.unit || productCreationState.unit || 'pcs');
+        formikRef.current.setFieldValue(`${itemPath}.price`, normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.amount`, quantity * normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, createdProduct.hsn_sac_code || productCreationState.hsn_sac_code || "");
+        formikRef.current.setFieldValue(`${itemPath}.product_description`, createdProduct.description || productCreationState.description || "");
+        formikRef.current.setFieldValue(`${itemPath}.discount`, 0);
+        formikRef.current.setFieldValue(`${itemPath}.tax`, Number(createdProduct.tax ?? productCreationState.tax ?? 0));
+        formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
+      }
+
+      toast.success(`Added ${createdProduct.name} to inventory.`);
+      setProductCreationState(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Failed to create inventory item");
+    }
+  };
+  
 
   // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
   
   const { data: nextInvData } = useQuery({
-    queryKey: ["nextInvoiceNumber"],
-    queryFn: () => getNextInvoiceNumber("INV-"),
+    queryKey: ["nextInvoiceNumber", invoicePrefix],
+    queryFn: () => getNextNumber(invoicePrefix ?? ""),
     enabled: !isEdit && isOpen
   });
 
   const createMutation = useMutation({
-    mutationFn: createSalesInvoice,
+    mutationFn: createDocument,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-      toast.success("Sales bill created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
+      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       onClose();
     },
     onError: (error) => {
       if (error.response?.status === 409) {
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(error.response?.data?.message || error.message || "Failed to create sales bill");
+          toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            `Failed to create ${isQuotation ? 'quotation' : 'sales bill'}`
+          );
       }
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateSalesInvoice(id, data),
+    mutationFn: ({ id, data }) => updateDocument(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
-      toast.success("Sales bill updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
+      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       onClose();
     },
     onError: (error) => {
       if (error.response?.status === 409) {
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(error.response?.data?.message || error.message || "Failed to update sales bill");
+          toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            `Failed to update ${isQuotation ? 'quotation' : 'sales bill'}`
+          );
       }
     },
   });
 
   const handleBeforeClose = async () => {
-    if (formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
-      // Auto-save as draft if form is touched
-      submitActionRef.current = 'draft';
-      await formikRef.current.submitForm();
+    if (isEdit && formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
+      const values = formikRef.current.values || {};
+      const cleanedItems = (values.items || []).filter((item) =>
+        (item?.product && item.product.trim() !== '') || item?.product_id
+      );
+
+      const hasCustomerName = !!(values.customer_name && values.customer_name.trim());
+      const hasAtLeastOneItem = cleanedItems.length > 0;
+
+      // Only auto-save draft on close when minimum draft payload is available.
+      if (hasCustomerName && hasAtLeastOneItem) {
+        submitActionRef.current = 'draft';
+        await formikRef.current.submitForm();
+      }
     }
     onClose();
   };
@@ -583,13 +851,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleBeforeClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={handleBeforeClose}></div>
+      <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-white/10 bg-[#0c0c0e] overflow-hidden">
+        <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
-              {isEdit ? "Edit Sales Invoice" : "New Sales Invoice"}
+              {isEdit
+                ? `Edit ${isQuotation ? 'Quotation' : 'Sales Invoice'}`
+                : `New ${isQuotation ? 'Quotation' : 'Sales Invoice'}`}
             </h2>
              <p className="text-xs text-gray-400 flex items-center gap-2">
               <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
@@ -611,20 +881,26 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           innerRef={formikRef}
           initialValues={{
             // Required fields
-            customer_name: editData?.customer_name || "",
+            customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
             // Use fetched next number or edit data
             invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
-            invoice_date: editData?.invoice_date ? new Date(editData.invoice_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            invoice_date: editData?.invoice_date 
+              ? new Date(editData.invoice_date).toISOString().split('T')[0] 
+              : new Date().toLocaleDateString('sv-SE'),
             
             // Optional customer fields (for Customer record creation)
-            customer_email: editData?.customer_email || "",
-            customer_phone: editData?.customer_phone || "",
-            customer_address: editData?.customer_address || "",
+            customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
+            customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
+            customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
             customer_gstin: editData?.customer_gstin || "",
             delivery_address: editData?.delivery_address || "",
             
             // Optional invoice fields
             due_date: editData?.due_date || "",
+            po_number: editData?.po_number || "",
+            po_date: editData?.po_date || "",
+            challan_number: editData?.challan_number || "",
+            challan_date: editData?.challan_date || "",
             gst_treatment: editData?.gst_treatment || "registered",
             place_of_supply: editData?.place_of_supply || "", // New field
             warehouse: editData?.warehouse || "", // New field
@@ -633,12 +909,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             
             items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
               const qty = item.quantity || 1;
-              const price = item.price || 0;
+              const price = Number(item.price || 0) || 0;
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
               return {
                 product: item.product || item.product_name || "",
                 product_id: item.product_id || null,
+                product_description: item.product_detail?.description || item.product_description || "",
                 quantity: qty,
+                free_quantity: item.free_quantity || 0,
+                batch: item.batch || "",
                 price: price,
                 amount: itemAmount, // This should always be qty * price before tax/discount
                 unit: item.unit || "pcs",
@@ -647,10 +926,31 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 tax: item.tax || 0,
                 isExistingProduct: !!(item.product_id),
               };
+            }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map(item => {
+                const qty = item.quantity || 1;
+                const price = Number(item.price || 0) || 0;
+                return {
+                    product: item.product_name || "",
+                    product_id: null,
+                    product_description: "",
+                    quantity: qty,
+                    free_quantity: 0,
+                    batch: "",
+                    price: price,
+                    amount: qty * price,
+                    unit: "pcs",
+                    hsn_sac_code: "",
+                    discount: 0,
+                    tax: 0,
+                    isExistingProduct: false,
+                };
             }) : [{
               product: "",
               product_id: null,
+              product_description: "",
               quantity: 1,
+              free_quantity: 0,
+              batch: "",
               price: 0,
               amount: 0, // Required field
               unit: "pcs",
@@ -662,7 +962,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
           }}
           enableReinitialize={true}
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
-            const isDraft = submitActionRef.current === "draft";
+            const isDraft = forceDraft || submitActionRef.current === "draft";
             
             // Clean up empty product rows before processing/validation
             const cleanedItems = values.items.filter(item => 
@@ -684,6 +984,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                    toast.error('At least one item is required to create an invoice');
                    setSubmitting(false);
                    return;
+                }
+
+                if (itemSettings.show_item_batch && itemSettings.require_item_batch) {
+                  const missingBatchRow = cleanedItems.findIndex((item) => !item.batch);
+                  if (missingBatchRow >= 0) {
+                    toast.error(`Batch is required for row ${missingBatchRow + 1}.`);
+                    setSubmitting(false);
+                    return;
+                  }
                 }
                 
                 // Perform validation manually for Final invoices using the cleaned items
@@ -721,29 +1030,40 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                 return {
                   product: item.product_id || item.product, // Pass UUID if available, else name
                   quantity: quantity,
+                  free_quantity: itemSettings.show_item_free_quantity ? (Number(item.free_quantity) || 0) : 0,
+                  ...(itemSettings.show_item_batch && item.batch ? { batch: item.batch } : {}),
                   price: price,
                   amount: amount,
                   unit: item.unit || null,
-                  hsn_sac_code: item.hsn_sac_code || null,
-                  discount: discount,
-                  tax: tax,
+                  hsn_sac_code: itemSettings.show_item_hsn ? (item.hsn_sac_code || null) : null,
+                  discount: itemSettings.show_item_discount ? discount : 0,
+                  tax: itemSettings.show_item_tax ? tax : 0,
                 };
               });
 
               const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
+              const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
+              const roundOffValue = roundOffApplied
+                ? Number((finalTotal - totalAmount).toFixed(2))
+                : 0;
 
               const formData = {
                 customer_name: values.customer_name,
                 invoice_number: values.invoice_number,
                 invoice_date: values.invoice_date,
                 due_date: values.due_date || null,
+                po_number: values.po_number || null,
+                po_date: values.po_date || null,
+                challan_number: values.challan_number || null,
+                challan_date: values.challan_date || null,
                 delivery_address: values.delivery_address || null,
                 gst_treatment: values.gst_treatment || null,
                 place_of_supply: values.place_of_supply || null,
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
-                status: isDraft ? 'draft' : 'final',
-                total_amount: totalAmount.toString(),
+                status: isDraft ? 'draft' : finalSubmitStatus,
+                total_amount: finalTotal.toString(),
+                round_off: roundOffValue.toString(),
                 items: processedItems,
                 // Optional customer fields for new record creation
                 ...(values.customer_email && { customer_email: values.customer_email }),
@@ -766,7 +1086,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             setSubmitting(false);
           }}
         >
-          {({ values, setFieldValue, isSubmitting, handleSubmit, setStatus }) => {
+          {({ values, setFieldValue, isSubmitting, handleSubmit }) => {
             // Calculate totals
             const subtotal = values.items.reduce((sum, item) => {
               const quantity = Number(item.quantity) || 0;
@@ -791,10 +1111,19 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
             }, 0);
 
             const grandTotal = subtotal - totalDiscount + totalTax;
+            const roundedGrandTotal = computeRoundedTotal(grandTotal);
+            const roundOffDelta = Number((roundedGrandTotal - grandTotal).toFixed(2));
+
+            // Determine IGST vs CGST/SGST
+            const taxType = getTaxType(
+              { place_of_supply: values.place_of_supply },
+              { state: sellerState }
+            );
+            const isIGST = taxType === 'igst';
 
             return (
               <Form 
-                className="p-0"
+                className="flex flex-col flex-1 overflow-hidden"
                 onKeyDown={(e) => {
                   // Handle global keyboard shortcuts
                   if (e.ctrlKey && e.key === 's') {
@@ -809,7 +1138,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   }
                 }}
               >
-                <div className="p-8 space-y-8">
+                <div className="flex-1 overflow-y-auto p-0">
+                  <div className="p-6 sm:p-8 space-y-8">
                   {/* Header Info */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
   
@@ -824,11 +1154,19 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                           customers={customers} 
                       />
                       <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
+                      {isQuotation && (values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
+                        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-gray-300 space-y-1">
+                          {values.customer_address && <div><span className="text-gray-500">Address:</span> {values.customer_address}</div>}
+                          {values.customer_phone && <div><span className="text-gray-500">Phone:</span> {values.customer_phone}</div>}
+                          {values.customer_email && <div><span className="text-gray-500">Email:</span> {values.customer_email}</div>}
+                          {values.customer_gstin && <div><span className="text-gray-500">GSTIN:</span> {values.customer_gstin}</div>}
+                        </div>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Invoice Number *
+                        {isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                       </label>
                       <Field
                         name="invoice_number"
@@ -840,7 +1178,7 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Invoice Date *
+                        {isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                       </label>
                       <Field
                         name="invoice_date"
@@ -890,57 +1228,8 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       <Field
                         name="due_date"
                         type="date"
+                        min={new Date().toLocaleDateString('sv-SE')}
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Customer Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Name *
-                      </label>
-
-                      <CustomerAutocomplete values={values} setFieldValue={setFieldValue} />
-                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-sm mt-1" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Email <span className="text-gray-600">(creates customer record)</span>
-                      </label>
-                      <Field
-                        name="customer_email"
-                        type="email"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="customer@example.com"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Additional Customer Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Phone
-                      </label>
-                      <Field
-                        name="customer_phone"
-                        type="tel"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="+91 9876543210"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer Address
-                      </label>
-                      <Field
-                        name="customer_address"
-                        as="textarea"
-                        rows="2"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="Customer's address"
                       />
                     </div>
                   </div>
@@ -949,63 +1238,120 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <div className="grid grid-cols-1 gap-6">
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Delivery Address
+                        Shipping Address
                       </label>
-                      <div className="mb-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFieldValue('delivery_address', values.customer_address);
-                              }
-                            }}
-                            className="rounded border-white/10 bg-[#111] text-cyan-500 focus:ring-cyan-500"
-                          />
-                          Same as customer address
-                        </label>
-                      </div>
                       <Field
                         name="delivery_address"
                         as="textarea"
                         rows="3"
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="123 Delivery Address, City, State"
+                        placeholder="123 Shipping Address, City, State"
                       />
                     </div>
                   </div>
 
+                  {/* Optional PO / Challan */}
+                  {!isQuotation && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        GST Treatment
-                      </label>
-                      <Field
-                        name="gst_treatment"
-                        as="select"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                      >
-                        <option value="registered">Registered</option>
-                        <option value="unregistered">Unregistered</option>
-                        <option value="export">Export</option>
-                      </Field>
+                    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO</label>
+                          <Field
+                            name="po_number"
+                            as="textarea"
+                            rows="1"
+                            className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            placeholder="Enter PO"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
+                          <Field
+                            name="po_date"
+                            type="date"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Journal
-                      </label>
-                      <Field
-                        name="journal"
-                        type="text"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                      />
+
+                    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Delivery Challan</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan</label>
+                          <Field
+                            name="challan_number"
+                            as="textarea"
+                            rows="1"
+                            className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            placeholder="Enter challan details"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan Date</label>
+                          <Field
+                            name="challan_date"
+                            type="date"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Items */}
                 <div className="p-8 bg-[#151515] border-t border-b border-white/5">
-                  <h3 className="text-lg font-bold text-white mb-4">Items</h3>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h3 className="text-lg font-bold text-white">Items</h3>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowColumnPicker((prev) => !prev)}
+                        className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                      >
+                        Columns
+                      </button>
+
+                      {showColumnPicker && (
+                        <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
+                          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                          {[
+                            ["show_item_description", "Description"],
+                            ["show_item_hsn", "HSN/SAC"],
+                            ["show_item_batch", "Batch"],
+                            ["show_item_free_quantity", "Free Qty"],
+                            ["show_item_storage_condition", "Storage Details"],
+                            ["show_item_discount", "Discount"],
+                            ["show_item_tax", "Taxes"],
+                            ["require_item_batch", "Require Batch"],
+                          ].map(([key, label]) => {
+                            if (key === "require_item_batch" && !itemSettings.show_item_batch) return null;
+                            return (
+                              <label key={key} className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={!!itemSettings[key]}
+                                  onChange={() => handleToggleItemSetting(key)}
+                                  className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                                />
+                                <span>{label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {!canAccessInventory && isStarterPlan && (
+                    <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                      Inventory browsing is locked on Starter. You can still create this sales bill by typing item name, quantity, and price manually.
+                    </div>
+                  )}
                   <FieldArray name="items">
                     {({ push, remove }) => {
                       // Function to auto-add new row when user starts typing in the last row
@@ -1027,13 +1373,15 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                             push({
                               product_name: "",
                               product_id: null,
+                              product_description: "",
                               quantity: 1,
                               free_quantity: 0,
+                              batch: "",
                               unit: "pcs", 
                               price: 0,
                               discount: 0,
                               tax: 0,
-                              hsn_code: "",
+                              hsn_sac_code: "",
                               tax_rate: 0,
                               amount: 0,
                               isExistingProduct: false,
@@ -1043,204 +1391,375 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                       };
 
                       return (
-                        <div className="space-y-4">
-                          {/* Desktop Header Row */}
-                          <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-xs text-gray-400 uppercase tracking-wider">
-                             <div className="col-span-3">Product</div>
-                             <div className="col-span-2">Batch</div>
-                             <div className="col-span-1 text-center">Qty</div>
-                             <div className="col-span-1 text-center text-green-400">Free</div>
-                             <div className="col-span-1">Unit</div>
-                             <div className="col-span-1 text-right">Price</div>
-                             <div className="col-span-1 text-center">Disc/Tax%</div>
-                             <div className="col-span-1 text-right">Amount</div>
-                             <div className="col-span-1 text-center"></div>
-                          </div>
+                        <div className="space-y-2">
+                          {(() => {
+                            const desktopColumns = [
+                              { key: "product", label: "Product", show: true, width: "minmax(340px, 1fr)", minWidth: 340 },
+                              { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "120px", minWidth: 120 },
+                              { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px", minWidth: 140 },
+                              { key: "quantity", label: "Quantity", show: true, width: "80px", minWidth: 80 },
+                              { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "70px", minWidth: 70 },
+                              { key: "unit", label: "Unit", show: true, width: "70px", minWidth: 70 },
+                              { key: "price", label: "Price", show: true, width: "110px", minWidth: 110 },
+                              { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
+                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
+                              { key: "amount", label: "Amount", show: true, width: "130px", minWidth: 130 },
+                              { key: "action", label: "", show: true, width: "44px", minWidth: 44 },
+                            ].filter((col) => col.show);
 
-                          {values.items.map((item, index) => {
-                             // Batches filtering logic
-                             const productBatches = stockPoints
-                               ?.filter(sp => sp.batch.product === item.product_id && sp.quantity > 0)
-                               ?.map(sp => ({
-                                 id: sp.batch.id, 
-                                 name: sp.batch.batch_number, 
-                                 expiry: sp.batch.expiry_date,
-                                 qty: sp.quantity
-                               })) || [];
+                            const gridTemplateColumns = desktopColumns.map((col) => col.width).join(" ");
+                            const totalMinWidth = desktopColumns.reduce((sum, col) => sum + (col.minWidth || 0), 0);
 
-                             return (
+                            return (
+                              <>
+                                <div className="hidden md:block overflow-x-auto border-y border-white/10 bg-[#1b2030]">
+                                  <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                    {desktopColumns.map((col) => (
+                                      <div
+                                        key={col.key}
+                                        className={[
+                                          col.key === "amount" || col.key === "price" ? "text-right" : "",
+                                          col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
+                                        ].join(" ")}
+                                      >
+                                        {col.label}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
 
-                          <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start bg-[#111] border border-white/5 rounded-xl p-6 shadow-lg shadow-black/20 group hover:border-white/10 transition-colors">
-                            
-                            {/* Product (3 cols) */}
-                            <div className="md:col-span-3">
-                              <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Product</label>
-                              <div className="relative">
-                                  <ProductAutocomplete 
-                                      idx={index}
-                                      values={values}
-                                      setFieldValue={setFieldValue}
-                                      products={products}
-                                      onInputChange={() => handleAutoAddRow(index)}
-                                      onProductSearchChange={setProductSearch}
-                                  />
-                              </div>
-                            </div>
+                                <div className="hidden md:block overflow-x-auto">
+                                  {values.items.map((item, index) => {
+                                    const productBatches = stockPoints
+                                      ?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)
+                                      ?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || [];
 
-                            {/* Batch (2 cols) */}
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Batch</label>
-                                <Field name={`items.${index}.batch`}>
-                                    {({ field }) => (
-                                    <select
-                                        {...field}
-                                        className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 outline-none text-xs"
-                                        disabled={!item.product_id}
-                                    >
-                                        <option value="">Auto (FEFO)</option>
-                                        {productBatches.map(b => (
-                                        <option key={b.id} value={b.id}>
-                                            {b.name} ({b.qty})
-                                        </option>
-                                        ))}
-                                    </select>
-                                    )}
-                                </Field>
-                            </div>
+                                    return (
+                                      <div key={index} className="border-b border-white/10">
+                                        <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                          {desktopColumns.map((col) => {
+                                          if (col.key === "product") {
+                                            return (
+                                              <div key={col.key}>
+                                                <ProductAutocomplete
+                                                  idx={index}
+                                                  values={values}
+                                                  setFieldValue={setFieldValue}
+                                                  products={products}
+                                                  onInputChange={() => handleAutoAddRow(index)}
+                                                  onProductSearchChange={setProductSearch}
+                                                  showDescription={itemSettings.show_item_description}
+                                                  onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
+                                                />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Qty (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Qty</label>
-                                <Field
-                                    name={`items.${index}.quantity`}
-                                    type="number"
-                                    min="1"
-                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-center text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
-                                    onChange={(e) => {
-                                      const qty = e.target.value;
-                                      setFieldValue(`items.${index}.quantity`, qty);
-                                      if (values.items[index]?.price) {
-                                         const price = parseFloat(values.items[index].price) || 0;
-                                         const amount = price * (parseFloat(qty) || 0);
-                                         setFieldValue(`items.${index}.amount`, amount);
-                                      }
-                                    }}
-                                />
-                            </div>
+                                          if (col.key === "hsn") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Free Qty (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-green-400">Free</label>
-                                <Field
-                                    name={`items.${index}.free_quantity`}
-                                    type="number"
-                                    min="0"
-                                    placeholder="0"
-                                    className="w-full bg-green-900/10 border border-green-500/20 rounded-lg px-2 py-3 text-center text-green-400 font-medium focus:ring-1 focus:ring-green-500 outline-none text-xs"
-                                />
-                            </div>
+                                          if (col.key === "batch") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.batch`}>
+                                                  {({ field }) => (
+                                                    <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" disabled={!item.product_id}>
+                                                      <option value="">Auto (FEFO)</option>
+                                                      {productBatches.map((b) => (
+                                                        <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
+                                                      ))}
+                                                    </select>
+                                                  )}
+                                                </Field>
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Unit (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Unit</label>
-                                <Field name={`items.${index}.unit`}>
-                                    {({ field }) => (
-                                    <select {...field} className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-3 text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs">
-                                        {units.map(u => <option key={u} value={u}>{u}</option>)}
-                                    </select>
-                                    )}
-                                </Field>
-                            </div>
+                                          if (col.key === "quantity") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field
+                                                  name={`items.${index}.quantity`}
+                                                  type="number"
+                                                  min="1"
+                                                  className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                  onChange={(e) => {
+                                                    const qty = e.target.value;
+                                                    setFieldValue(`items.${index}.quantity`, qty);
+                                                    const price = Number(values.items[index]?.price) || 0;
+                                                    setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
+                                                  }}
+                                                />
+                                              </div>
+                                            );
+                                          }
 
-                            {/* Price (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Price</label>
-                                <Field
-                                    name={`items.${index}.price`}
-                                    type="number"
-                                    min="0"
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-right text-white focus:ring-1 focus:ring-cyan-500 outline-none text-xs"
-                                    onChange={(e) => {
-                                      const price = e.target.value;
-                                      setFieldValue(`items.${index}.price`, price);
+                                          if (col.key === "free") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-green-300" />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "unit") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.unit`}>
+                                                  {({ field }) => (
+                                                    <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200">
+                                                      {units.map((u) => <option key={u} value={u}>{u}</option>)}
+                                                    </select>
+                                                  )}
+                                                </Field>
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "price") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field
+                                                   name={`items.${index}.price`}
+                                                   type="number"
+                                                   min="0"
+                                                   step="any"
+                                                   className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
+                                                   onChange={(e) => {
+                                                     const price = e.target.value;
+                                                     setFieldValue(`items.${index}.price`, price);
+                                                     const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                     const actualPrice = Number(price) || 0;
+                                                     setFieldValue(`items.${index}.amount`, actualPrice * qty);
+                                                     if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                   }}
+                                                 />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "discount") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "tax") {
+                                            return (
+                                              <div key={col.key}>
+                                                <Field name={`items.${index}.tax`} type="number" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "amount") {
+                                            return (
+                                              <div key={col.key} className="text-right px-1 py-2 font-semibold text-cyan-300 text-sm">
+                                                {item.amount?.toFixed(2) || "0.00"}
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "action") {
+                                            return (
+                                              <div key={col.key} className="flex justify-center">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => remove(index)}
+                                                  disabled={values.items.length === 1}
+                                                  className="text-gray-500 hover:text-red-400 transition-colors p-1.5 disabled:opacity-30"
+                                                  title="Remove Item"
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                  </svg>
+                                                </button>
+                                              </div>
+                                            );
+                                          }
+
+                                          return null;
+                                          })}
+                                        </div>
+
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="lg:hidden space-y-4">
+                                  {values.items.map((item, index) => (
+                                    <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
+                                      {/* Row 1: Product */}
+                                      <div className="w-full">
+                                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
+                                          <ProductAutocomplete
+                                            idx={index}
+                                            values={values}
+                                            setFieldValue={setFieldValue}
+                                            products={products}
+                                            onInputChange={() => handleAutoAddRow(index)}
+                                            onProductSearchChange={setProductSearch}
+                                            showDescription={itemSettings.show_item_description}
+                                            onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
+                                          />
+                                      </div>
                                       
-                                      if (price && values.items[index]?.quantity) {
-                                        const quantity = parseFloat(values.items[index].quantity) || 0;
-                                        const amount = parseFloat(price) * quantity;
-                                        setFieldValue(`items.${index}.amount`, amount);
-                                      }
-                                      if (price && parseFloat(price) > 0) {
-                                        handleAutoAddRow(index);
-                                      }
-                                    }}
-                                />
-                            </div>
+                                      {/* Settings Optional Fields: HSN & Batch */}
+                                      {(itemSettings.show_item_hsn || itemSettings.show_item_batch) && (
+                                          <div className="grid grid-cols-2 gap-4">
+                                              {itemSettings.show_item_hsn && (
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">HSN/SAC</label>
+                                                    <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
+                                                </div>
+                                              )}
+                                              {itemSettings.show_item_batch && (
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Batch</label>
+                                                    <Field name={`items.${index}.batch`}>
+                                                      {({ field }) => (
+                                                        <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" disabled={!item.product_id}>
+                                                          <option value="">Auto (FEFO)</option>
+                                                          {(stockPoints?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || []).map((b) => (
+                                                            <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
+                                                          ))}
+                                                        </select>
+                                                      )}
+                                                    </Field>
+                                                </div>
+                                              )}
+                                          </div>
+                                      )}
 
-                            {/* Disc/Tax (1 col) */}
-                            <div className="md:col-span-1 flex flex-col gap-2">
-                                <div className="flex items-center gap-1">
-                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Disc</label>
-                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="D%" />
+                                      {/* Row 2: Qty, Unit, Price */}
+                                      <div className="grid grid-cols-3 gap-4">
+                                          <div>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Qty</label>
+                                              <Field
+                                                name={`items.${index}.quantity`}
+                                                type="number"
+                                                min="1"
+                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center font-bold"
+                                                onChange={(e) => {
+                                                  const qty = e.target.value;
+                                                  setFieldValue(`items.${index}.quantity`, qty);
+                                                  const price = Number(values.items[index]?.price) || 0;
+                                                  setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
+                                                }}
+                                              />
+                                          </div>
+                                          <div>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Unit</label>
+                                              <Field name={`items.${index}.unit`}>
+                                                {({ field }) => (
+                                                  <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-2 py-2.5 text-white text-sm text-center">
+                                                    {units.map((u) => <option key={u} value={u}>{u}</option>)}
+                                                  </select>
+                                                )}
+                                              </Field>
+                                          </div>
+                                          <div>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
+                                              <Field
+                                                 name={`items.${index}.price`}
+                                                 type="number"
+                                                 min="0"
+                                                 step="any"
+                                                 className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-right font-mono"
+                                                 onChange={(e) => {
+                                                   const price = e.target.value;
+                                                   setFieldValue(`items.${index}.price`, price);
+                                                   const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                   const actualPrice = Number(price) || 0;
+                                                   setFieldValue(`items.${index}.amount`, actualPrice * qty);
+                                                   if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                 }}
+                                               />
+                                          </div>
+                                      </div>
+
+                                      {/* Row 3: Discounts and Taxes */}
+                                      {(itemSettings.show_item_discount || itemSettings.show_item_tax || itemSettings.show_item_free_quantity) && (
+                                          <div className="grid grid-cols-3 gap-4">
+                                            {itemSettings.show_item_free_quantity && (
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Free</label>
+                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
+                                                </div>
+                                            )}
+                                            {itemSettings.show_item_discount && (
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Disc %</label>
+                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
+                                                </div>
+                                            )}
+                                            {itemSettings.show_item_tax && (
+                                                <div>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Tax %</label>
+                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
+                                                </div>
+                                            )}
+                                          </div>
+                                      )}
+
+                                      {/* Row 4: Amount & Remove */}
+                                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                                          <div>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Subtotal</label>
+                                              <div className="text-xl font-mono font-black text-cyan-400">
+                                                  {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                              </div>
+                                          </div>
+                                          <button
+                                              type="button"
+                                              onClick={() => remove(index)}
+                                              disabled={values.items.length === 1}
+                                              className="px-6 py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+                                          >
+                                              Remove
+                                          </button>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <label className="text-[10px] text-gray-500 w-6 md:hidden">Tax</label>
-                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#1a1a1a] border border-white/10 rounded px-1 py-1.5 text-center text-gray-400 text-[10px]" placeholder="T%" />
-                                </div>
-                            </div>
-
-                            {/* Amount (1 col) */}
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-medium mb-1 md:hidden text-gray-400">Amount</label>
-                                <div className="w-full px-2 py-3 text-right font-bold text-cyan-400 text-xs">
-                                    {item.amount?.toFixed(2) || "0.00"}
-                                </div>
-                            </div>
-
-                            {/* Remove (1 col) */}
-                            <div className="md:col-span-1 flex justify-center">
-                                <button
-                                    type="button"
-                                    onClick={() => remove(index)}
-                                    disabled={values.items.length === 1}
-                                    className="text-gray-500 hover:text-red-400 transition-colors p-2 disabled:opacity-30 hover:bg-white/5 rounded-lg"
-                                    title="Remove Item"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                          </div>
-                          );
-                        })}
+                              </>
+                            );
+                          })()}
                         
-                        <div className="flex items-center justify-between">
+                        <div className="mt-4 flex justify-start">
                           <button
                             type="button"
                             onClick={() => push({
                               product_name: "",
                               product_id: null,
+                              product_description: "",
                               quantity: 1,
+                              free_quantity: 0,
+                              batch: "",
                               unit: "pcs",
                               price: 0,
                               discount: 0,
                               tax: 0,
-                              hsn_code: "",
+                              hsn_sac_code: "",
                               tax_rate: 0,
                               amount: 0,
                               isExistingProduct: false,
                             })}
-                            className="btn-secondary text-sm flex items-center gap-2"
+                            className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                             Add Item
                           </button>
-                          <p className="text-xs text-gray-500">
-                            Pro Tip: Items are auto-added as you type.
-                          </p>
                         </div>
                         </div>
                       );
@@ -1253,69 +1772,203 @@ export default function SalesForm({ isOpen, onClose, editData, invoicePrefix = "
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between text-gray-400">
                       <span>Subtotal</span>
-                      <span className="text-white font-medium">₹{subtotal.toFixed(2)}</span>
+                      <span className="text-white font-medium">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-green-400">
                       <span>Total Discount</span>
-                      <span>-₹{totalDiscount.toFixed(2)}</span>
+                      <span>-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-red-400">
                       <span>Total Tax</span>
-                      <span>₹{totalTax.toFixed(2)}</span>
+                      <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                     </div>
+                    {isIGST ? (
+                      <div className="flex justify-between text-orange-400 text-xs pl-2">
+                        <span>↳ IGST</span>
+                        <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between text-orange-400 text-xs pl-2">
+                          <span>↳ CGST</span>
+                          <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-orange-400 text-xs pl-2">
+                          <span>↳ SGST</span>
+                          <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                     <div className="h-px bg-white/10 my-3"></div>
+                    {roundOffApplied && (
+                      <div className="flex justify-between text-amber-300">
+                        <span>Round Off</span>
+                        <span>{roundOffDelta >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOffDelta.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-bold text-xl">
                       <span className="text-white">Grand Total</span>
-                      <span className="text-cyan-400">₹{grandTotal.toFixed(2)}</span>
+                      <span className="text-cyan-400">{getCurrencySymbol()}{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
+                    </div>
+                    <div className="text-right">
+                      {!roundOffApplied ? (
+                        <button
+                          type="button"
+                          onClick={() => setRoundOffApplied(true)}
+                          className="text-[11px] text-cyan-400 hover:text-cyan-300 underline"
+                        >
+                          Apply round off
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setRoundOffApplied(false)}
+                          className="text-[11px] text-gray-400 hover:text-white underline"
+                        >
+                          Revert round off
+                        </button>
+                      )}
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1 uppercase tracking-wide">
                       {grandTotal > 0 ? "Amount Payble" : ""}
                     </div>
                   </div>
                 </div>
+                </div>{/* End flex-1 scrollable */}
 
                 {/* Actions */}
-                <div className="p-8 bg-black/20 flex justify-end space-x-3 rounded-b-2xl items-center">
-                  <div className="text-gray-500 text-xs flex-1 mr-4">
-                    Closing modal automatically saves as draft. Or use Save Draft.
+                <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
+                  <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
+                    {isQuotation
+                      ? "Closing modal automatically saves as quotation draft."
+                      : "Closing modal automatically saves as draft. Or use Save Draft."}
                   </div>
+                  {!forceDraft && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                          submitActionRef.current = 'draft';
+                          handleSubmit();
+                      }}
+                      className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
+                    >
+                      Save Draft
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => {
-                        submitActionRef.current = 'draft';
-                        handleSubmit();
-                    }}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors font-medium border-dashed text-sm"
-                  >
-                    Save Draft
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                        handleBeforeClose();
-                    }}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-xl transition-colors font-medium text-sm"
+                    onClick={onClose}
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-[14px] transition-colors font-medium text-sm focus:ring-2 focus:ring-red-500/50 focus:outline-none"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    onClick={() => { submitActionRef.current = 'final'; }}
-                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px]"
+                    onClick={() => {
+                      submitActionRef.current = forceDraft ? 'draft' : 'final';
+                    }}
+                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px] rounded-[14px] focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                          Saving...
                       </span>
-                    ) : (isEdit ? "Update Invoice" : "Create Invoice")}
+                    ) : isQuotation
+                      ? (isEdit ? "Update Quotation" : "Create Quotation")
+                      : forceDraft
+                        ? (isEdit ? "Update Draft" : "Save Draft")
+                        : (isEdit ? "Update Invoice" : "Create Invoice")}
                   </button>
                 </div>
               </Form>
             );
           }}
         </Formik>
+
+        {productCreationState && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setProductCreationState(null)}></div>
+            <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-6 shadow-2xl shadow-cyan-950/40 animate-fade-up">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Add Inventory Item</h3>
+                  <p className="mt-1 text-xs text-gray-400">Create the product first, then it will be inserted into this quotation row.</p>
+                </div>
+                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300 hover:text-white">
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Product Name</label>
+                  <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Sale Price</label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={productCreationState.sale_price}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, sale_price: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Unit</label>
+                  <input
+                    value={productCreationState.unit}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, unit: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="pcs"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={productCreationState.tax}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC</label>
+                  <input
+                    value={productCreationState.hsn_sac_code}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, hsn_sac_code: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Description</label>
+                  <textarea
+                    rows={3}
+                    value={productCreationState.description}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, description: e.target.value }))}
+                    className="w-full resize-none rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Optional product description"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 hover:text-white">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleSaveInventoryProduct} className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-400">
+                  Create Product
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body

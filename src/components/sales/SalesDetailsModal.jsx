@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoice } from "../../api/sales";
+import { getQuotation } from "../../api/quotation";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -18,9 +19,11 @@ import { toast } from 'react-toastify';
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
-import { getActiveTemplate, amountInWords } from "../../utils/invoiceSettings";
+import { getActiveTemplate } from "../../utils/invoiceSettings";
+import { getInvoiceSettings } from "../../api/invoice_settings";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
-export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {} }) {
+export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
   const printRef = useRef();
   const [template, setTemplate] = useState(null);
@@ -37,24 +40,47 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
   }, [isOpen, showDesigner]);
 
+  const isQuotation = documentType === "quotation";
+
   const { data, isLoading } = useQuery({
-    queryKey: ["sales-invoice", invoice?.id],
-    queryFn: () => getSalesInvoice(invoice?.id),
-    enabled: !!invoice?.id,
+    queryKey: [isQuotation ? "quotation" : "sales-invoice", invoice?.id],
+    queryFn: () => (isQuotation ? getQuotation(invoice?.id) : getSalesInvoice(invoice?.id)),
+    enabled: isOpen && !!invoice?.id,
+  });
+
+  const { data: invoiceSettings } = useQuery({
+    queryKey: ["invoiceSettings"],
+    queryFn: getInvoiceSettings,
+    enabled: isOpen,
   });
 
   const invoiceDetails = data?.data || data?.result || data || invoice || {};
+  const previewTemplate = isQuotation
+    ? {
+        ...template,
+        content: {
+          ...(template?.content || {}),
+          invoiceTitle: "PERFORMA INVOICE",
+        },
+      }
+    : template;
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `Tax Invoice - ${invoiceDetails?.invoice_number || invoice?.id}`,
+    contentRef: printRef,
+    documentTitle: `${isQuotation ? "Performa Invoice" : "Tax Invoice"} - ${invoiceDetails?.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
         size: A4;
-        margin: 10mm;
+        margin: 0;
       }
       @media print {
+        html, body {
+          width: 210mm;
+          height: 297mm;
+          margin: 0;
+          padding: 0;
+        }
         body {
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
@@ -72,36 +98,50 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
     try {
       const element = printRef.current;
+      
+      // Scroll to top to ensure clean capture
+      window.scrollTo(0, 0);
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('[data-print-target]');
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.width = '210mm'; // Ensure standard width
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const imgWidth = 210;
-      const pageHeight = 295;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
 
+      // First page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      // Subsequent pages
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`invoice-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
+      pdf.save(`${isQuotation ? "performa-invoice" : "invoice"}-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      toast.error('Error generating PDF. Please try again.');
     }
   };
 
@@ -118,8 +158,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         `<tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${item.product_name || item.product?.name || '—'}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.price || 0).toFixed(2)}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${Number(item.amount || 0).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.price || 0).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.amount || 0).toFixed(2)}</td>
         </tr>`
       ).join('');
 
@@ -141,7 +181,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         `<tbody>${itemRows}</tbody>` +
         `<tfoot><tr style="background:#f5f5f5;font-weight:bold;">` +
         `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
-        `<td style="padding:8px;text-align:right;">₹${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
+        `<td style="padding:8px;text-align:right;">${getCurrencySymbol()}${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
         `</tr></tfoot>` +
         `</table>` +
         `<p style="color:#666;">Thank you for your business!<br>— ${businessName}</p>` +
@@ -224,20 +264,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
           
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/50">
-            <div>
-              <h2 className="text-lg font-bold text-white">Invoice Preview</h2>
-              <p className="text-xs text-gray-400">
-                {invoiceDetails.invoice_number || 'Loading...'}
-                {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
-              </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-white/10 bg-black/50 gap-4">
+            <div className="flex justify-between items-center w-full sm:w-auto">
+              <div>
+                <h2 className="text-lg font-bold text-white">{isQuotation ? "Performa Invoice Preview" : "Invoice Preview"}</h2>
+                <p className="text-xs text-gray-400">
+                  {invoiceDetails.invoice_number || 'Loading...'}
+                  {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="sm:hidden p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
             </div>
             
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
               <button
                 onClick={() => setShowDesigner(true)}
-                className="px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <PaintBrushIcon className="w-4 h-4" />
                 Customize
@@ -245,7 +293,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               
               <button
                 onClick={handlePrint}
-                className="px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <PrinterIcon className="w-4 h-4" />
                 Print
@@ -253,7 +301,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               
               <button
                 onClick={handleDownloadPDF}
-                className="px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
                 PDF
@@ -262,7 +310,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               <button
                 disabled={sendingEmail}
                 onClick={handleEmailClick}
-                className="px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="whitespace-nowrap px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {sendingEmail
                   ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
@@ -271,7 +319,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
               <button
                 onClick={(e) => { e.preventDefault(); toast.info('WhatsApp integration is coming soon!'); }}
-                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden"
+                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden whitespace-nowrap"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
@@ -285,7 +333,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="hidden sm:block p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
@@ -293,20 +341,24 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div className="flex-1 overflow-auto p-6 bg-gray-900/50 flex justify-center">
+          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
-                <p className="text-gray-400">Loading invoice...</p>
+                <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
-            ) : template ? (
-              <div className="shadow-2xl">
-                <InvoicePreview
-                  ref={printRef}
-                  invoice={invoiceDetails}
-                  template={template}
-                  businessInfo={businessInfo}
-                />
+            ) : previewTemplate ? (
+              <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center pb-10">
+                <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100" ref={printRef} data-print-target>
+                  <div className="w-[210mm] min-h-[297mm] bg-white">
+                    <InvoicePreview
+                      invoice={invoiceDetails}
+                      template={previewTemplate}
+                      businessInfo={businessInfo}
+                      invoiceSettings={invoiceSettings || {}}
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="text-center py-20 text-gray-400">

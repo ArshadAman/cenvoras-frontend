@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Customer Autocomplete for payment form
 function PaymentCustomerAutocomplete({ values, setFieldValue }) {
@@ -105,12 +106,37 @@ const paymentSchema = Yup.object().shape({
   date: Yup.string().required("Date is required"),
 });
 
-export default function PaymentForm({ onSuccess, onCancel }) {
+export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null, initialCustomer = null }) {
   const queryClient = useQueryClient();
+
+  const roundTo3 = (value) => Math.round((Number(value) || 0) * 1000) / 1000;
+  const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 3,
+  });
+
+  const resolvedCustomer = initialCustomer || initialInvoice?.customer_details || initialInvoice?.customer || null;
+  const invoiceOutstanding = initialInvoice
+    ? roundTo3(Math.max(roundTo3(initialInvoice.total_amount || 0) - roundTo3(initialInvoice.amount_paid || 0), 0))
+    : '';
+
+  const initialValues = useMemo(() => ({
+    customer: resolvedCustomer?.id || '',
+    customer_name: resolvedCustomer?.name || initialInvoice?.customer_name || '',
+    amount: initialInvoice ? invoiceOutstanding : '',
+    description: initialInvoice
+      ? `Payment for invoice ${initialInvoice.invoice_number}`
+      : 'Payment received',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    invoice: initialInvoice?.id || '',
+  }), [resolvedCustomer, initialInvoice, invoiceOutstanding]);
 
   const recordPaymentMutation = useMutation({
     mutationFn: recordClientPayment,
     onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      queryClient.invalidateQueries({ queryKey: ["salesAnalytics"] });
+      queryClient.invalidateQueries({ queryKey: ["overdueSalesInvoicesSummary"] });
       queryClient.invalidateQueries({ queryKey: ["clientLedger"] });
       queryClient.invalidateQueries({ queryKey: ["ledgerStats"] });
       toast.success("Payment recorded successfully!");
@@ -128,17 +154,10 @@ export default function PaymentForm({ onSuccess, onCancel }) {
       amount: parseFloat(values.amount),
       description: values.description || "Payment received",
       date: values.date,
+      invoice: values.invoice || undefined,
     };
 
     recordPaymentMutation.mutate(paymentData);
-  };
-
-  const initialValues = {
-    customer: "",
-    customer_name: "",
-    amount: "",
-    description: "Payment received",
-    date: format(new Date(), 'yyyy-MM-dd'),
   };
 
   const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
@@ -147,24 +166,45 @@ export default function PaymentForm({ onSuccess, onCancel }) {
   return (
     <Formik
       initialValues={initialValues}
+      enableReinitialize
       validationSchema={paymentSchema}
       onSubmit={handleSubmit}
     >
       {({ values, setFieldValue, isSubmitting }) => (
         <Form className="space-y-5">
-          {/* Customer Selection */}
-          <div>
-            <label className={labelClass}>Customer *</label>
-            <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
-            <Field name="customer" type="hidden" />
-            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
-          </div>
+          {initialInvoice ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Selected Invoice</div>
+                  <div className="text-white font-semibold">#{initialInvoice.invoice_number}</div>
+                  <div className="text-xs text-gray-400 mt-1">{resolvedCustomer?.name || initialInvoice.customer_name || 'Customer'}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Outstanding</div>
+                  <div className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+                </div>
+              </div>
+              <div className="text-[11px] text-cyan-300/80">
+                This payment will be linked directly to the selected invoice.
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className={labelClass}>Customer *</label>
+              <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+            </div>
+          )}
+
+          <Field name="customer" type="hidden" />
+          <Field name="invoice" type="hidden" />
+          <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
 
           {/* Amount */}
           <div>
             <label className={labelClass}>Payment Amount *</label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+              <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
               <Field
                 id="amount"
                 name="amount"
@@ -177,6 +217,10 @@ export default function PaymentForm({ onSuccess, onCancel }) {
             </div>
             <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
           </div>
+
+          {initialInvoice && (
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
+          )}
 
           {/* Date */}
           <div>

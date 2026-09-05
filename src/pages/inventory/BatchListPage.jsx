@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProductBatches } from '../../api/inventory';
-import Layout from '../../components/Layout';
 import Pagination from '../../components/common/Pagination';
 import { CubeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function BatchListPage() {
   const [search, setSearch] = useState('');
@@ -30,7 +30,7 @@ export default function BatchListPage() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div>
@@ -94,9 +94,9 @@ export default function BatchListPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-right text-gray-300">₹{Number(batch.mrp || 0).toLocaleString('en-IN')}</td>
-                        <td className="px-5 py-3 text-right text-gray-400">₹{Number(batch.cost_price || 0).toLocaleString('en-IN')}</td>
-                        <td className="px-5 py-3 text-right text-cyan-400 font-medium">₹{Number(batch.sale_price || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-5 py-3 text-right text-gray-300">{getCurrencySymbol()}{Number(batch.mrp || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-5 py-3 text-right text-gray-400">{getCurrencySymbol()}{Number(batch.cost_price || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-5 py-3 text-right text-cyan-400 font-medium">{getCurrencySymbol()}{Number(batch.sale_price || 0).toLocaleString('en-IN')}</td>
                         <td className="px-5 py-3">
                           {batch.is_active ? (
                             <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20">Active</span>
@@ -116,6 +116,6 @@ export default function BatchListPage() {
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </div>
-    </Layout>
+    </>
   );
 }

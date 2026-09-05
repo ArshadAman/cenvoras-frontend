@@ -10,6 +10,9 @@ export const getNextInvoiceNumber = (prefix = "INV-") =>
 export const getSalesAnalytics = params =>
   api.get("/billing/sales-invoices/analytics/", { params }).then(res => res.data);
 
+export const getOverdueSalesInvoices = params =>
+  api.get("/billing/reports/overdue-bills/", { params }).then(res => res.data);
+
 export const getSalesInvoice = id =>
   api.get(`/billing/sales-invoices/${id}/`).then(res => res.data);
 
@@ -27,16 +30,28 @@ export const deleteSalesInvoice = id =>
       throw new Error(message);
     });
 
-export const uploadSalesCsv = formData =>
+export const uploadSalesCsv = (formData, options = {}) =>
   api.post("/billing/upload-sales-invoices-csv/", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: options.onUploadProgress,
+  }).then(res => res.data);
+
+export const exportSalesInvoicesCsv = params =>
+  api.get("/billing/sales-invoices/export-csv/", { params }).then(res => res.data);
+
+export const getSalesCsvJobStatus = taskId =>
+  api.get(`/billing/sales-invoices/csv-jobs/${taskId}/`).then(res => res.data);
+
+export const downloadSalesCsv = taskId =>
+  api.get(`/billing/sales-invoices/csv-jobs/${taskId}/download/`, {
+    responseType: "blob",
   }).then(res => res.data);
 
 // Product API endpoints for sales form (reuse from inventory)
 export const getProducts = (params = {}) =>
   api.get("/inventory/products/", {
     params: {
-      page_size: 50,
+      page_size: 1000,
       ...params,
     },
   }).then(res => res.data);

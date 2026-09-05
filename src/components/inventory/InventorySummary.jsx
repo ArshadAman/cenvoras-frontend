@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, getLowStockProducts, getStockValuation } from "../../api/inventory";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function InventorySummary() {
   const { data: products, isLoading: productsLoading } = useQuery({
@@ -66,7 +67,7 @@ export default function InventorySummary() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Stock Value</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ₹{totalStockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {getCurrencySymbol()}{totalStockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">

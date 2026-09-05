@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { getProfitLossStatement } from "../../api/gst";
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toLocaleDateString('sv-SE');
 const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
 const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -22,7 +22,7 @@ export default function ProfitLossStatement() {
   const isProfit = netProfit >= 0;
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
         <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
           <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
@@ -64,7 +64,7 @@ export default function ProfitLossStatement() {
                   </div>
                   <span className="text-gray-400 text-sm">Total Revenue</span>
                 </div>
-                <div className="text-2xl font-bold text-green-400">₹{fmt(data.revenue?.total)}</div>
+                <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{fmt(data.revenue?.total)}</div>
               </div>
               <div className="bento-card p-5">
                 <div className="flex items-center gap-3 mb-2">
@@ -73,7 +73,7 @@ export default function ProfitLossStatement() {
                   </div>
                   <span className="text-gray-400 text-sm">Total Expenses</span>
                 </div>
-                <div className="text-2xl font-bold text-red-400">₹{fmt(data.expenses?.total)}</div>
+                <div className="text-2xl font-bold text-red-400">{getCurrencySymbol()}{fmt(data.expenses?.total)}</div>
               </div>
               <div className="bento-card p-5">
                 <div className="flex items-center gap-3 mb-2">
@@ -83,7 +83,7 @@ export default function ProfitLossStatement() {
                   <span className="text-gray-400 text-sm">Net {isProfit ? 'Profit' : 'Loss'}</span>
                 </div>
                 <div className={`text-2xl font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  ₹{fmt(Math.abs(netProfit))}
+                  {getCurrencySymbol()}{fmt(Math.abs(netProfit))}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Margin: {data.profit_margin}%</div>
               </div>
@@ -112,13 +112,13 @@ export default function ProfitLossStatement() {
                       <tr key={i} className="hover:bg-white/5 transition-colors">
                         <td className="p-4 text-white text-sm">{item.name}</td>
                         <td className="p-4 text-gray-400 text-sm font-mono">{item.code}</td>
-                        <td className="p-4 text-right text-green-400 font-semibold">₹{fmt(item.amount)}</td>
+                        <td className="p-4 text-right text-green-400 font-semibold">{getCurrencySymbol()}{fmt(item.amount)}</td>
                       </tr>
                     ))
                   )}
                   <tr className="bg-white/5 font-semibold">
                     <td colSpan="2" className="p-4 text-white">Total Revenue</td>
-                    <td className="p-4 text-right text-green-400">₹{fmt(data.revenue?.total)}</td>
+                    <td className="p-4 text-right text-green-400">{getCurrencySymbol()}{fmt(data.revenue?.total)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -147,13 +147,13 @@ export default function ProfitLossStatement() {
                       <tr key={i} className="hover:bg-white/5 transition-colors">
                         <td className="p-4 text-white text-sm">{item.name}</td>
                         <td className="p-4 text-gray-400 text-sm font-mono">{item.code}</td>
-                        <td className="p-4 text-right text-red-400 font-semibold">₹{fmt(item.amount)}</td>
+                        <td className="p-4 text-right text-red-400 font-semibold">{getCurrencySymbol()}{fmt(item.amount)}</td>
                       </tr>
                     ))
                   )}
                   <tr className="bg-white/5 font-semibold">
                     <td colSpan="2" className="p-4 text-white">Total Expenses</td>
-                    <td className="p-4 text-right text-red-400">₹{fmt(data.expenses?.total)}</td>
+                    <td className="p-4 text-right text-red-400">{getCurrencySymbol()}{fmt(data.expenses?.total)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -164,13 +164,13 @@ export default function ProfitLossStatement() {
               <div className="flex justify-between items-center">
                 <div className="text-lg font-bold text-white">Net {isProfit ? 'Profit' : 'Loss'}</div>
                 <div className={`text-2xl font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  ₹{fmt(Math.abs(netProfit))}
+                  {getCurrencySymbol()}{fmt(Math.abs(netProfit))}
                 </div>
               </div>
             </div>
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

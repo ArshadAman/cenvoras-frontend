@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAccounts, deleteAccount, setupDefaultAccounts, bulkDeleteAccounts } from '../api/ledger';
-import Layout from '../components/Layout';
 import Loader from '../components/Loader';
 import AccountForm from '../components/ledger/AccountForm';
 import GeneralLedgerModal from '../components/ledger/GeneralLedgerModal';
 import BulkDeleteModal from '../components/BulkDeleteModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 const ACCOUNT_TYPE_LABELS = {
   asset: 'Asset',
@@ -185,20 +185,20 @@ export default function ChartOfAccounts() {
 
   if (isLoading && !accountsData) {
     return (
-      <Layout>
+      <>
         <Loader />
-      </Layout>
+      </>
     );
   }
 
   if (isError) {
     return (
-      <Layout>
+      <>
         <div className="text-center py-12">
           <div className="text-red-500 text-lg mb-4">Error loading accounts</div>
           <div className="text-gray-500">{error?.message || 'Something went wrong'}</div>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -213,7 +213,7 @@ export default function ChartOfAccounts() {
   const isSomeCurrentPageSelected = displayedAccounts.some(account => selectedAccounts.includes(account.id));
 
   return (
-    <Layout>
+    <>
       <div className="page-bg min-h-screen p-6">
         {/* Header */}
         <div className="mb-8">
@@ -492,7 +492,7 @@ export default function ChartOfAccounts() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
-                        {account.balance !== undefined ? `₹${Number(account.balance).toLocaleString('en-IN')}` : '-'}
+                        {account.balance !== undefined ? `${getCurrencySymbol()}${Number(account.balance).toLocaleString('en-IN')}` : '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -682,6 +682,6 @@ export default function ChartOfAccounts() {
 
       {/* Toast Container */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-    </Layout>
+    </>
   );
 }

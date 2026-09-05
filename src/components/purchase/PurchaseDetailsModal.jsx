@@ -6,6 +6,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { createPortal } from "react-dom";
 import { XMarkIcon, PrinterIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function PurchaseDetailsModal({ billId, onClose }) {
   const printRef = useRef();
@@ -20,7 +21,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
   // Print functionality
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Purchase Bill - ${bill?.bill_number || billId}`,
     pageStyle: `
       @page {
@@ -52,8 +53,9 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
     try {
       const element = printRef.current;
-      // Temporarily switch to light mode for PDF generation
-      const wasDark = element.classList.contains('text-white');
+      
+      // Scroll to top for clean capture
+      window.scrollTo(0, 0);
       
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -66,9 +68,10 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
              if(clonedElement) {
                 clonedElement.style.backgroundColor = 'white';
                 clonedElement.style.color = 'black';
-                // You might need to target specific children to invert colors back to black if they are white
+                clonedElement.style.height = 'auto';
+                clonedElement.style.overflow = 'visible';
+                
                  clonedElement.querySelectorAll('*').forEach(el => {
-                     // Reset text colors that might be white classes
                      el.style.color = 'inherit';
                  });
              }
@@ -79,16 +82,17 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
+      const pageHeight = 297; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-
       let position = 0;
 
+      // First page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      // Subsequent pages
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
@@ -105,222 +109,237 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
   if (!billId) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
       
-      <div className="relative w-full max-w-4xl bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up bg-[#09090b] border border-white/10 max-h-[90vh] flex flex-col rounded-2xl overflow-hidden">
+      <div className="relative w-full sm:max-w-4xl bg-[#0F0F12] border-x sm:border border-white/10 shadow-2xl animate-fade-up min-h-screen sm:min-h-0 sm:rounded-[32px] overflow-hidden flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 print-hidden">
-           <h3 className="text-xl font-bold text-white">Invoice Details</h3>
-           <div className="flex gap-2">
+        <div className="sticky top-0 z-50 flex items-center justify-between p-6 sm:p-8 bg-[#0F0F12]/80 backdrop-blur-xl border-b border-white/5">
+           <div>
+             <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-1">Transaction Details</h3>
+             <div className="flex items-center gap-3">
+                <span className="text-xl font-black text-white tracking-tighter">Purchase Invoice</span>
+                <span className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black rounded uppercase tracking-widest">
+                  #{bill.bill_number || "Draft"}
+                </span>
+             </div>
+           </div>
+           <div className="flex items-center gap-2">
              <button
                onClick={handlePrint}
-               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+               className="p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                title="Print"
              >
                <PrinterIcon className="w-5 h-5" />
              </button>
              <button
                onClick={handleDownloadPDF}
-               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+               className="p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 title="Download PDF"
              >
                <ArrowDownTrayIcon className="w-5 h-5" />
              </button>
              <button
                onClick={onClose}
-               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+               className="p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
              >
                <XMarkIcon className="w-6 h-6" />
              </button>
            </div>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[#09090b]">
+        {/* Content */}
+        <div className="flex-1 p-6 sm:p-10">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Securing Data...</span>
             </div>
           ) : (
-             // We use a specific structure here to separate screen view (Dark) from print view (White) if we wanted to
-             // But for simplicity and user request "no white elements", we will style this document as Dark Mode.
-             // However, for printing/PDF, we usually want white. handling this via CSS @media print is best.
-             // We will apply Dark styles by default.
-            <div ref={printRef} data-print-target className="print-content text-white font-sans max-w-3xl mx-auto">
+            <div ref={printRef} data-print-target className="space-y-10">
               
-              {/* Invoice Header */}
-              <div className="flex justify-between items-start mb-8 border-b border-white/10 pb-6">
-                <div>
-                  <h2 className="text-3xl font-bold text-blue-500 mb-1">
-                    INVOICE
-                  </h2>
-                  <div className="text-sm text-gray-400">
-                    #{bill.bill_number}
+              {/* Top Section Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Vendor Info */}
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Supplier Profile</div>
+                  <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl space-y-4">
+                    <div>
+                      <div className="text-2xl font-black text-white tracking-tight mb-1">{bill.vendor_name}</div>
+                      {bill.vendor_address && (
+                        <div className="text-sm text-gray-400 leading-relaxed max-w-sm">
+                          {bill.vendor_address}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                      {bill.vendor_gstin && (
+                        <div>
+                          <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">GSTIN</div>
+                          <div className="text-xs font-bold text-gray-300">{bill.vendor_gstin}</div>
+                        </div>
+                      )}
+                      {bill.vendor_phone && (
+                        <div>
+                          <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">Contact</div>
+                          <div className="text-xs font-bold text-gray-300">{bill.vendor_phone}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-400 font-semibold uppercase tracking-wider">
-                    Date
-                  </div>
-                  <div className="text-lg font-medium text-white">{bill.bill_date}</div>
-                </div>
-              </div>
 
-              {/* Vendor and Journal Info */}
-              <div className="mb-8 grid grid-cols-2 gap-8">
-                <div>
-                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                    Vendor Details
-                  </div>
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <div className="text-lg font-bold text-white mb-1">{bill.vendor_name}</div>
-                    {bill.vendor_address && (
-                      <div className="text-sm text-gray-400">
-                        {bill.vendor_address}
+                {/* Bill Metadata */}
+                <div className="space-y-4">
+                  <div className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Invoice Context</div>
+                  <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl grid grid-cols-2 gap-6">
+                    <div>
+                      <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">Issue Date</div>
+                      <div className="text-sm font-bold text-white">{bill.bill_date}</div>
+                    </div>
+                    <div>
+                      <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">Account Journal</div>
+                      <div className="text-sm font-bold text-white">{bill.journal}</div>
+                    </div>
+                    <div>
+                      <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">GST Treatment</div>
+                      <div className="text-[10px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-400/5 px-2 py-0.5 rounded border border-cyan-400/10 inline-block">
+                        {bill.gst_treatment || "N/A"}
                       </div>
-                    )}
-                    {(bill.vendor_gstin || bill.vendor_phone) && <div className="mt-3 space-y-1">
-                        {bill.vendor_gstin && (
-                        <div className="text-xs text-gray-500">
-                            GSTIN: <span className="text-gray-300">{bill.vendor_gstin}</span>
-                        </div>
-                        )}
-                        {bill.vendor_phone && (
-                        <div className="text-xs text-gray-500">
-                            Phone: <span className="text-gray-300">{bill.vendor_phone}</span>
-                        </div>
-                        )}
-                    </div>}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                    Journal & Details
-                  </div>
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <div className="text-lg font-medium text-white">{bill.journal}</div>
-                    <div className="mt-2 space-y-1">
-                        {bill.gst_treatment && (
-                        <div className="text-xs text-gray-500">
-                            GST Treatment: <span className="text-gray-300">{bill.gst_treatment}</span>
-                        </div>
-                        )}
-                        {bill.place_of_supply && (
-                        <div className="text-xs text-gray-500">
-                            Place of Supply: <span className="text-gray-300">{bill.place_of_supply}</span>
-                        </div>
-                        )}
+                    </div>
+                    <div>
+                      <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">Status</div>
+                      <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border inline-block ${
+                        bill.payment_status === 'paid' 
+                        ? "bg-green-500/10 text-green-400 border-green-500/10"
+                        : "bg-orange-500/10 text-orange-400 border-orange-500/10"
+                      }`}>
+                        {bill.payment_status || "Pending"}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Items Table */}
-              <div className="mb-8">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Items</h3>
-                <div className="overflow-hidden border border-white/10 rounded-xl">
-                  <table className="min-w-full text-sm">
+              {/* Items Section */}
+              <div className="space-y-4">
+                <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Line Items</div>
+                
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-hidden border border-white/5 rounded-3xl bg-white/[0.01]">
+                  <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-white/5 text-gray-400 border-b border-white/10">
-                        <th className="px-4 py-3 text-left font-semibold">Item</th>
-                        <th className="px-4 py-3 text-center font-semibold">Qty</th>
-                        <th className="px-4 py-3 text-right font-semibold">Rate</th>
-                        <th className="px-4 py-3 text-right font-semibold">Disc.</th>
-                        <th className="px-4 py-3 text-right font-semibold">Tax</th>
-                        <th className="px-4 py-3 text-right font-semibold text-white">Amount</th>
+                      <tr className="bg-white/5 text-[9px] font-black text-gray-500 uppercase tracking-[0.15em] border-b border-white/5">
+                        <th className="px-6 py-4 text-left">Description</th>
+                        <th className="px-6 py-4 text-center">Qty / Unit</th>
+                        <th className="px-6 py-4 text-right">Unit Price</th>
+                        <th className="px-6 py-4 text-right">Disc.</th>
+                        <th className="px-6 py-4 text-right">Tax</th>
+                        <th className="px-6 py-4 text-right">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {bill.items?.map((item, index) => (
-                        <tr key={index} className="bg-transparent hover:bg-white/5 transition-colors">
-                          <td className="px-4 py-3 font-medium text-white">
-                            <div>{item.item_name}</div>
-                            {item.description && (
-                              <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                        <tr key={index} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="px-6 py-5">
+                            <div className="text-sm font-bold text-white">{item.product_detail?.name || item.product}</div>
+                            {item.hsn_sac_code && (
+                              <div className="text-[8px] font-black text-gray-600 mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-center text-gray-300">
-                            {item.quantity} {item.unit}
+                          <td className="px-6 py-5 text-center">
+                            <div className="text-sm font-bold text-white">{item.quantity}</div>
+                            <div className="text-[10px] text-gray-500 uppercase">{item.unit}</div>
+                            {item.free_quantity > 0 && <span className="text-[9px] font-black text-green-500 uppercase tracking-tighter mt-1 block">+{item.free_quantity} Free</span>}
                           </td>
-                          <td className="px-4 py-3 text-right text-gray-300">
-                            ₹{parseFloat(item.rate || 0).toFixed(2)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-gray-300">
-                            {item.discount_type === 'percentage' ? `${item.discount || 0}%` : `₹${parseFloat(item.discount || 0).toFixed(2)}`}
-                          </td>
-                          <td className="px-4 py-3 text-right text-gray-300">
-                            ₹{parseFloat(item.tax_amount || 0).toFixed(2)}
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-white">
-                            ₹{parseFloat(item.amount || 0).toFixed(2)}
-                          </td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-300">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">{parseFloat(item.discount || 0).toFixed(1)}%</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">{getCurrencySymbol()}{parseFloat(item.tax || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm font-black text-white">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              </div>
 
-              {/* Totals Section */}
-              <div className="flex justify-end mb-8">
-                <div className="w-80">
-                  <div className="bg-white/5 p-6 rounded-xl border border-white/10 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Subtotal</span>
-                      <span className="text-white">₹{parseFloat(bill.sub_total || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Discount</span>
-                      <span className="text-white">₹{parseFloat(bill.total_discount || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Tax</span>
-                      <span className="text-white">₹{parseFloat(bill.total_tax || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Adjustment</span>
-                      <span className="text-white">₹{parseFloat(bill.adjustment || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="border-t border-white/10 pt-3 mt-1">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span className="text-blue-400">Total Amount</span>
-                        <span className="text-white">₹{parseFloat(bill.total || 0).toFixed(2)}</span>
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-4">
+                  {bill.items?.map((item, index) => (
+                    <div key={index} className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="max-w-[70%]">
+                          <div className="text-sm font-black text-white leading-tight">{item.product_detail?.name || item.product}</div>
+                          {item.hsn_sac_code && <div className="text-[8px] font-black text-gray-600 mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-white font-mono">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
+                        <div className="space-y-1">
+                          <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Quantity</div>
+                          <div className="text-[10px] font-bold text-gray-300">{item.quantity} {item.unit} {item.free_quantity > 0 && <span className="text-green-500">+{item.free_quantity}</span>}</div>
+                        </div>
+                        <div className="space-y-1 text-right">
+                          <div className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Unit Rate</div>
+                          <div className="text-[10px] font-bold text-gray-300">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Notes and Terms */}
-              {(bill.notes || bill.terms_conditions) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-white/10 pt-6">
+              {/* Footer Summary */}
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 pt-6">
+                <div className="flex-1 space-y-6">
                   {bill.notes && (
-                    <div>
-                      <h4 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Notes</h4>
-                      <div className="text-sm text-gray-400 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Remarks & Notes</div>
+                      <div className="text-[11px] text-gray-500 leading-relaxed italic bg-white/[0.01] p-4 rounded-2xl border border-white/5">
                         {bill.notes}
                       </div>
                     </div>
                   )}
-                  {bill.terms_conditions && (
-                    <div>
-                      <h4 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Terms & Conditions</h4>
-                      <div className="text-sm text-gray-400 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">
-                        {bill.terms_conditions}
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-[8px] font-black text-gray-700 uppercase tracking-[0.2em]">
+                    Generated by Cenvoras Engine • {new Date().toLocaleDateString()}
+                  </div>
                 </div>
-              )}
 
-              {/* Footer */}
-              <div className="mt-8 pt-6 border-t border-white/10 text-center text-xs text-gray-600">
-                Generated from Cenvoras System on {new Date().toLocaleDateString()}
+                <div className="w-full sm:w-80 bg-white/[0.03] border border-white/10 rounded-[32px] p-8 space-y-4 shadow-xl">
+                  <div className="flex justify-between items-center text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                    <span>Subtotal</span>
+                    <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-black text-green-500/70 uppercase tracking-widest">
+                    <span>Amount Paid</span>
+                    <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.amount_paid || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="pt-4 border-t border-white/5">
+                    <div className="flex justify-between items-baseline">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Net Total</span>
+                        <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">Tax Inclusive</span>
+                      </div>
+                      <span className="text-3xl font-black text-white tracking-tighter font-mono">{getCurrencySymbol()}{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
+        </div>
+
+        {/* Modal Footer Actions */}
+        <div className="sticky bottom-0 p-6 sm:p-8 bg-[#0F0F12]/95 backdrop-blur-xl border-t border-white/5 flex justify-center print:hidden">
+          <button
+            onClick={onClose}
+            className="w-full sm:w-auto px-10 py-4 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-2xl transition-all font-black text-[10px] uppercase tracking-[0.2em] shadow-xl"
+          >
+            Close Insight
+          </button>
         </div>
       </div>
     </div>,

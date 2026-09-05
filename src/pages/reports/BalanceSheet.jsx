@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { Link } from "react-router-dom";
-import Layout from "../../components/Layout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
+import { repairRoundOffEntries } from "../../api/ledger";
+import { toast } from "react-toastify";
 import {
   BuildingLibraryIcon,
   ScaleIcon,
@@ -13,6 +15,7 @@ import {
   ChartBarIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 
 const today = new Date().toISOString().split("T")[0];
@@ -40,7 +43,7 @@ function SubGroup({ label, items = [], total, color }) {
           )}
           {label}
         </span>
-        <span className={`font-bold text-sm ${color}`}>₹{fmt(total)}</span>
+        <span className={`font-bold text-sm ${color}`}>{getCurrencySymbol()}{fmt(total)}</span>
       </button>
       {open && (
         <div className="pl-8 pr-5 pb-1">
@@ -58,7 +61,7 @@ function SubGroup({ label, items = [], total, color }) {
                 )}
               </div>
               <span className={`text-sm font-semibold ${color}`}>
-                ₹{fmt(item.amount)}
+                {getCurrencySymbol()}{fmt(item.amount)}
               </span>
             </div>
           ))}
@@ -81,7 +84,7 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
           {title}
         </h3>
         <span className={`text-xl font-extrabold tabular-nums ${color}`}>
-          ₹{fmt(total)}
+          {getCurrencySymbol()}{fmt(total)}
         </span>
       </div>
 
@@ -115,14 +118,14 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
                   <span className="ml-2 text-xs text-gray-500 font-mono">[{item.code}]</span>
                 )}
               </div>
-              <span className={`text-sm font-semibold ${color}`}>₹{fmt(item.amount)}</span>
+              <span className={`text-sm font-semibold ${color}`}>{getCurrencySymbol()}{fmt(item.amount)}</span>
             </button>
           ))}
           {extra && (
             <div className="flex justify-between items-center px-5 py-3 bg-white/[0.02] border-t border-white/10">
               <span className="text-gray-300 text-sm italic">{extra.label}</span>
               <span className={`text-sm font-semibold ${extra.amount >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                ₹{fmt(extra.amount)}
+                {getCurrencySymbol()}{fmt(extra.amount)}
               </span>
             </div>
           )}
@@ -135,10 +138,20 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
 export default function BalanceSheet() {
   const [asOf, setAsOf] = useState(today);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["balance-sheet", asOf],
     queryFn: () => getBalanceSheet(asOf),
+  });
+
+  const repairMutation = useMutation({
+    mutationFn: repairRoundOffEntries,
+    onSuccess: (d) => {
+      toast.success(d.message || "Round-off entries repaired.");
+      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
+    },
+    onError: () => toast.error("Failed to repair round-off entries."),
   });
 
   const isBalanced = data?.is_balanced;
@@ -151,7 +164,7 @@ export default function BalanceSheet() {
   });
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
         {/* Back to Reports */}
         <Link
@@ -207,27 +220,43 @@ export default function BalanceSheet() {
               <div className={`text-lg font-bold ${isBalanced ? "text-emerald-400" : "text-rose-400"}`}>
                 {isBalanced ? "✓ Balanced" : "⚠ Unbalanced"}
               </div>
-              <div className="text-sm text-gray-400 mt-0.5">
+              <div className="text-sm text-gray-400 mt-0.5 mb-2">
                 {isBalanced
                   ? "Assets equal Liabilities + Equity. Your books are in order."
-                  : `Difference of ₹${fmt(diff)} detected. Review your ledger entries for missing transactions.`}
+                  : `Difference of ${getCurrencySymbol()}${fmt(diff)} detected. Review your ledger entries for missing transactions.`}
               </div>
+              {!isBalanced && (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => repairMutation.mutate()}
+                    disabled={repairMutation.isPending}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-semibold rounded-lg border border-amber-500/30 transition-colors disabled:opacity-50"
+                  >
+                    <WrenchScrewdriverIcon className="w-3.5 h-3.5" />
+                    {repairMutation.isPending ? "Repairing..." : "Fix Round-Off Entries"}
+                  </button>
+                  <Link to="/ledger/manual-journal" className="inline-block px-4 py-1.5 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-semibold rounded-lg border border-rose-500/30 transition-colors">
+                    Create Adjusting Journal Entry
+                  </Link>
+                </div>
+              )}
             </div>
             {/* Mini Equation */}
             <div className="flex items-center gap-3 text-center shrink-0 bg-white/5 rounded-xl px-5 py-3 border border-white/10">
               <div>
                 <div className="text-xs text-gray-500 mb-1">Assets</div>
-                <div className="text-base font-bold text-blue-400 tabular-nums">₹{fmt(data.assets?.total)}</div>
+                <div className="text-base font-bold text-blue-400 tabular-nums">{getCurrencySymbol()}{fmt(data.assets?.total)}</div>
               </div>
               <div className="text-gray-600 font-bold">=</div>
               <div>
                 <div className="text-xs text-gray-500 mb-1">Liabilities</div>
-                <div className="text-base font-bold text-rose-400 tabular-nums">₹{fmt(data.liabilities?.total)}</div>
+                <div className="text-base font-bold text-rose-400 tabular-nums">{getCurrencySymbol()}{fmt(data.liabilities?.total)}</div>
               </div>
               <div className="text-gray-600 font-bold">+</div>
               <div>
                 <div className="text-xs text-gray-500 mb-1">Equity</div>
-                <div className="text-base font-bold text-emerald-400 tabular-nums">₹{fmt(data.equity?.total)}</div>
+                <div className="text-base font-bold text-emerald-400 tabular-nums">{getCurrencySymbol()}{fmt(data.equity?.total)}</div>
               </div>
             </div>
           </div>
@@ -308,15 +337,15 @@ export default function BalanceSheet() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
                       <div className="rounded-lg border border-white/10 p-3">
                         <div className="text-xs text-gray-400">Total Debit</div>
-                        <div className="text-sm font-semibold text-white mt-1">₹{fmt(accountDetail.totals?.debit)}</div>
+                        <div className="text-sm font-semibold text-white mt-1">{getCurrencySymbol()}{fmt(accountDetail.totals?.debit)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-3">
                         <div className="text-xs text-gray-400">Total Credit</div>
-                        <div className="text-sm font-semibold text-white mt-1">₹{fmt(accountDetail.totals?.credit)}</div>
+                        <div className="text-sm font-semibold text-white mt-1">{getCurrencySymbol()}{fmt(accountDetail.totals?.credit)}</div>
                       </div>
                       <div className="rounded-lg border border-white/10 p-3">
                         <div className="text-xs text-gray-400">Net Balance</div>
-                        <div className="text-sm font-semibold text-emerald-400 mt-1">₹{fmt(accountDetail.totals?.net_balance)}</div>
+                        <div className="text-sm font-semibold text-emerald-400 mt-1">{getCurrencySymbol()}{fmt(accountDetail.totals?.net_balance)}</div>
                       </div>
                     </div>
 
@@ -339,9 +368,9 @@ export default function BalanceSheet() {
                                 <td className="p-3 text-gray-300 text-sm">{entry.date}</td>
                                 <td className="p-3 text-white text-sm">{entry.description}</td>
                                 <td className="p-3 text-gray-400 text-xs">{entry.reference || "-"}</td>
-                                <td className="p-3 text-right text-blue-300 text-sm">₹{fmt(entry.debit)}</td>
-                                <td className="p-3 text-right text-rose-300 text-sm">₹{fmt(entry.credit)}</td>
-                                <td className="p-3 text-right text-emerald-300 text-sm font-semibold">₹{fmt(entry.running_balance)}</td>
+                                <td className="p-3 text-right text-blue-300 text-sm">{getCurrencySymbol()}{fmt(entry.debit)}</td>
+                                <td className="p-3 text-right text-rose-300 text-sm">{getCurrencySymbol()}{fmt(entry.credit)}</td>
+                                <td className="p-3 text-right text-emerald-300 text-sm font-semibold">{getCurrencySymbol()}{fmt(entry.running_balance)}</td>
                               </tr>
                             ))
                           ) : (
@@ -359,6 +388,6 @@ export default function BalanceSheet() {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

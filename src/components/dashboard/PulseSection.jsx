@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   CurrencyRupeeIcon, 
@@ -13,6 +13,7 @@ import {
 import api from '../../api/api';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 /**
  * UdhaarModal - Shows a list of customers with outstanding balances
@@ -21,7 +22,7 @@ function UdhaarModal({ isOpen, onClose }) {
   const [search, setSearch] = useState('');
   
   const { data: customersData, isLoading } = useQuery({
-    queryKey: ['customers-with-balance'],
+    queryKey: ['customers'],
     queryFn: () => api.get('/billing/customers/').then(res => res.data),
     enabled: isOpen
   });
@@ -43,7 +44,7 @@ function UdhaarModal({ isOpen, onClose }) {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <UserGroupIcon className="w-6 h-6 text-orange-400" />
-              Udhaar Status
+              Udhaar
             </h2>
             <p className="text-xs text-gray-500 mt-1">List of customers with outstanding balances</p>
           </div>
@@ -87,11 +88,11 @@ function UdhaarModal({ isOpen, onClose }) {
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">{customer.name}</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-tight">Credit Limit: ₹{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-tight">Credit Limit: {getCurrencySymbol()}{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-orange-400">₹{parseFloat(customer.current_balance).toLocaleString()}</div>
+                    <div className="text-sm font-bold text-orange-400">{getCurrencySymbol()}{parseFloat(customer.current_balance).toLocaleString()}</div>
                     <div className="text-[10px] text-gray-500">Balance Due</div>
                   </div>
                 </div>
@@ -128,8 +129,15 @@ function UdhaarModal({ isOpen, onClose }) {
  */
 export default function PulseSection({ data, isLoading }) {
   const [isUdhaarModalOpen, setIsUdhaarModalOpen] = useState(false);
+  const lastGoodPulseRef = useRef({});
 
-  if (isLoading) {
+  const { data: customersData } = useQuery({
+    queryKey: ['customers'],
+    queryFn: () => api.get('/billing/customers/').then(res => res.data),
+    staleTime: 0,
+  });
+
+  if (isLoading && !Object.keys(lastGoodPulseRef.current).length) {
     return (
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
@@ -143,11 +151,20 @@ export default function PulseSection({ data, isLoading }) {
     );
   }
 
-  const pulse = data || {};
+  const hasPulseData = !!(data && Object.keys(data).length > 0);
+  if (hasPulseData) {
+    lastGoodPulseRef.current = data;
+  }
+  const pulse = hasPulseData ? data : lastGoodPulseRef.current;
+  const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
+  const liveReceivables = customers.reduce((sum, customer) => {
+    const balance = parseFloat(customer?.current_balance || 0);
+    return balance > 0 ? sum + balance : sum;
+  }, 0);
 
   const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '₹0';
-    return `₹${Math.abs(value).toLocaleString('en-IN')}`;
+    if (value === undefined || value === null) return '--';
+    return `${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
   };
 
   const cards = [
@@ -163,8 +180,8 @@ export default function PulseSection({ data, isLoading }) {
     },
     {
       label: 'Cash / Bank',
-      value: formatCurrency((pulse.cash_in_hand || 0) + (pulse.bank_collections || 0)),
-      subtitle: `Cash: ${formatCurrency(pulse.cash_in_hand)} | UPI: ${formatCurrency(pulse.bank_collections)}`,
+      value: formatCurrency(pulse.cash_in_hand || 0),
+      subtitle: `Total: ${formatCurrency(pulse.total_liquid_balance || 0)} | Bank/UPI Today: ${formatCurrency(pulse.bank_collections || 0)}`,
       icon: BanknotesIcon,
       color: 'green',
     },
@@ -176,8 +193,8 @@ export default function PulseSection({ data, isLoading }) {
       color: pulse.net_profit_today >= 0 ? 'emerald' : 'red',
     },
     {
-      label: 'Udhaar Status',
-      value: formatCurrency(pulse.total_receivables),
+      label: 'Udhaar',
+      value: formatCurrency(liveReceivables || pulse.total_receivables),
       subtitle: (
         <div className="flex justify-between items-center w-full">
           <span>G: {formatCurrency(pulse.udhaar_given_today)} | C: {formatCurrency(pulse.udhaar_collected_today)}</span>

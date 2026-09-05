@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ExclamationTriangleIcon,
   ExclamationCircleIcon,
@@ -6,7 +7,8 @@ import {
   CubeIcon,
   BanknotesIcon,
   ArrowPathIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -14,6 +16,8 @@ import {
  * Shows: Out of stock, Low stock, Payment due, Dead stock, Cash flow warnings
  */
 export default function WarningsSection({ data, healthStatus, isLoading }) {
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
+
   if (isLoading) {
     return (
       <section className="bento-card !p-4 animate-pulse">
@@ -69,6 +73,63 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
 
   const HealthIcon = health.status === 'green' ? CheckCircleIcon : 
                      health.status === 'yellow' ? ExclamationTriangleIcon : ExclamationCircleIcon;
+
+  const AlertsModal = () => {
+    if (!showAllAlerts) return null;
+
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAllAlerts(false)} />
+
+        <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl flex flex-col">
+          <div className="flex items-start justify-between gap-4 border-b border-white/10 bg-white/[0.03] p-5">
+            <div>
+              <h3 className="text-xl font-bold text-white">All Alerts</h3>
+              <p className="mt-1 text-xs text-gray-500">Showing every alert currently available in the dashboard.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAllAlerts(false)}
+              className="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="space-y-3">
+              {warnings.map((warning, i) => {
+                const Icon = getIcon(warning.type);
+                const styles = severityStyles[warning.severity] || severityStyles.yellow;
+
+                return (
+                  <div key={i} className={`flex items-start gap-3 rounded-xl border p-4 ${styles.bg} ${styles.border}`}>
+                    <div className={`mt-1 h-2 w-2 rounded-full ${styles.dot} flex-shrink-0`} />
+                    <div className={`rounded-lg p-2 ${styles.bg} flex-shrink-0`}>
+                      <Icon className={`h-4 w-4 ${styles.text}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className={`text-sm font-medium ${styles.text}`}>{warning.title}</div>
+                      <div className="mt-0.5 text-xs text-gray-500 whitespace-pre-line">{warning.message}</div>
+                    </div>
+                    {warning.action && (
+                      <div className={`rounded-md px-2.5 py-1 text-xs font-medium ${styles.bg} ${styles.text} border ${styles.border}`}>
+                        {warning.action === 'reorder' ? 'Reorder' :
+                         warning.action === 'collect' ? 'Collect' :
+                         warning.action === 'discount' ? 'Discount' :
+                         warning.action === 'review' ? 'Review' : 'View'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
 
   return (
     <section className="bento-card !p-5">
@@ -143,11 +204,17 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
       
       {warnings.length > 5 && (
         <div className="mt-3 text-center">
-          <button className="text-xs text-cyan-400 hover:text-cyan-300">
+          <button
+            type="button"
+            onClick={() => setShowAllAlerts(true)}
+            className="text-xs text-cyan-400 hover:text-cyan-300"
+          >
             View all {warnings.length} alerts →
           </button>
         </div>
       )}
+
+      <AlertsModal />
     </section>
   );
 }

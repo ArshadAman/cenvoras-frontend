@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProfitLoss } from "../../api/reports";
-import Layout from "../../components/Layout";
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from "react-router-dom";
 import { format, subDays } from "date-fns";
+import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 export default function ProfitLossReport() {
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
@@ -19,7 +19,7 @@ export default function ProfitLossReport() {
   const summary = data?.summary || {};
 
   return (
-    <Layout>
+    <>
       <div className="p-6 md:p-10 animate-fade-up">
         <Link to="/reports" className="flex items-center text-gray-400 hover:text-white mb-6">
             <ArrowLeftIcon className="w-4 h-4 mr-2" /> Back to Reports
@@ -52,16 +52,16 @@ export default function ProfitLossReport() {
                     <div className="flex gap-4">
                         <div className="text-right px-4 border-r border-white/10">
                             <p className="text-xs text-gray-400 uppercase font-bold">Revenue</p>
-                            <p className="text-xl font-bold text-white">₹{Number(summary.total_revenue).toLocaleString('en-IN')}</p>
+                            <p className="text-xl font-bold text-white">{getCurrencySymbol()}{Number(summary.total_revenue).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="text-right px-4 border-r border-white/10">
                             <p className="text-xs text-gray-400 uppercase font-bold">COGS</p>
-                            <p className="text-xl font-bold text-gray-400">₹{Number(summary.total_cost).toLocaleString('en-IN')}</p>
+                            <p className="text-xl font-bold text-gray-400">{getCurrencySymbol()}{Number(summary.total_cost).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="text-right px-4">
                             <p className="text-xs text-gray-400 uppercase font-bold">Profit ({summary.overall_margin_pct}%)</p>
                             <p className={`text-xl font-bold ${summary.total_profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                ₹{Number(summary.total_profit).toLocaleString('en-IN')}
+                                {getCurrencySymbol()}{Number(summary.total_profit).toLocaleString('en-IN')}
                             </p>
                         </div>
                     </div>
@@ -92,10 +92,10 @@ export default function ProfitLossReport() {
                     <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="p-4 text-sm text-white font-medium">{item.product_name}</td>
                       <td className="p-4 text-sm text-gray-300 text-right">{item.qty_sold} {item.unit}</td>
-                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.revenue).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td className="p-4 text-sm text-gray-300 text-right">₹{Number(item.cost).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="p-4 text-sm text-gray-300 text-right">{getCurrencySymbol()}{Number(item.revenue).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="p-4 text-sm text-gray-300 text-right">{getCurrencySymbol()}{Number(item.cost).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       <td className={`p-4 text-sm font-bold text-right ${item.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        ₹{Number(item.profit).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                        {getCurrencySymbol()}{Number(item.profit).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                       </td>
                       <td className={`p-4 text-sm font-medium text-right ${item.margin_pct >= 20 ? 'text-green-400' : item.margin_pct >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
                         {item.margin_pct}%
@@ -108,6 +108,6 @@ export default function ProfitLossReport() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
