@@ -93,8 +93,50 @@ export const hrApi = {
   createNotification: (data) => api.post('/hr/notifications/', data),
   deleteNotification: (id) => api.delete(`/hr/notifications/${id}/`),
 
-  // Salary Increment
-  incrementSalary: (employeeId, data) => api.post(`/hr/employees/${employeeId}/increment_salary/`, data),
+  // Payroll Lifecycle & Exceptions
+  calculatePayroll: (id) => api.post(`/hr/payroll-runs/${id}/calculate/`),
+  getPayrollExceptions: (id) => api.get(`/hr/payroll-runs/${id}/exceptions/`),
+  approvePayroll: (id) => api.post(`/hr/payroll-runs/${id}/approve/`),
+  payPayroll: (id, data) => api.post(`/hr/payroll-runs/${id}/pay/`, data),
+  lockPayroll: (id) => api.post(`/hr/payroll-runs/${id}/lock/`),
+  reopenPayroll: (id, data) => api.post(`/hr/payroll-runs/${id}/reopen/`, data),
+
+  // Salary History
+  getSalaryHistories: (params) => api.get('/hr/salary-history/', { params }),
+
+  // Overtime
+  getOvertimeRecords: (params) => api.get('/hr/overtime/', { params }),
+  createOvertimeRecord: (data) => api.post('/hr/overtime/', data),
+  approveOvertime: (id) => api.post(`/hr/overtime/${id}/approve/`),
+  rejectOvertime: (id) => api.post(`/hr/overtime/${id}/reject/`),
+  deleteOvertime: (id) => api.delete(`/hr/overtime/${id}/`),
+
+  // Advances & Loans
+  getAdvancesLoans: (params) => api.get('/hr/advances-loans/', { params }),
+  createAdvanceLoan: (data) => api.post('/hr/advances-loans/', data),
+  approveAdvanceLoan: (id) => api.post(`/hr/advances-loans/${id}/approve/`),
+  closeAdvanceLoan: (id) => api.post(`/hr/advances-loans/${id}/close/`),
+  deleteAdvanceLoan: (id) => api.delete(`/hr/advances-loans/${id}/`),
+
+  // Exceptions
+  getExceptions: (params) => api.get('/hr/exceptions/', { params }),
+  resolveException: (id) => api.post(`/hr/exceptions/${id}/resolve/`),
+
+  // Documents
+  getDocuments: (params) => api.get('/hr/documents/', { params }),
+  createDocument: (data) => api.post('/hr/documents/', data),
+  deleteDocument: (id) => api.delete(`/hr/documents/${id}/`),
+
+  // HRMS Settings
+  getHRMSSettings: () => api.get('/hr/settings/'),
+  updateHRMSSettings: (data) => api.put('/hr/settings/', data),
+
+  // HR Reports
+  getHRReports: (params) => api.get('/hr/reports/', { params }),
+
+  // Payslip Dispatch
+  sendPayslipEmail: (id) => api.post(`/hr/payslips/${id}/send_email/`),
+  sendPayslipWhatsApp: (id) => api.post(`/hr/payslips/${id}/send_whatsapp/`),
 
   // Setup Defaults
   seedDefaults: () => api.post('/hr/setup-defaults/'),

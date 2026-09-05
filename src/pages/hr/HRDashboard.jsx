@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { hrApi } from "../../api/hr";
 import {
   ChartBarIcon, UserGroupIcon, CalendarDaysIcon, CurrencyRupeeIcon,
   BuildingOfficeIcon, BriefcaseIcon, ClockIcon, CheckCircleIcon,
   ArrowPathIcon, PlusIcon, PencilIcon, TrashIcon, CheckIcon,
-  XMarkIcon, CloudArrowDownIcon,
+  XMarkIcon, CloudArrowDownIcon, ExclamationTriangleIcon,
+  BanknotesIcon, ArrowRightIcon, ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
@@ -620,11 +622,100 @@ export default function HRDashboard() {
           {/* ── OVERVIEW ── */}
           {tab === "overview" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={UserGroupIcon} iconBg="bg-blue-500/20" iconColor="text-blue-400" label="Active Employees" value={metrics?.total_active_employees ?? employees.filter(e => e.status === "active").length} sub={`Across ${departments.length} departments`} />
-                <StatCard icon={CheckCircleIcon} iconBg="bg-green-500/20" iconColor="text-green-400" label="Present Today" value={metrics?.present_today ?? 0} />
-                <StatCard icon={CalendarDaysIcon} iconBg="bg-orange-500/20" iconColor="text-orange-400" label="On Leave Today" value={metrics?.on_leave_today ?? 0} sub={`${leaves.filter(l => l.status === "pending").length} pending`} />
-                <StatCard icon={CurrencyRupeeIcon} iconBg="bg-indigo-500/20" iconColor="text-indigo-400" label="Last Payroll Net" value={metrics?.last_payroll_net ? `₹${parseFloat(metrics.last_payroll_net).toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "N/A"} sub="Last finalised run" />
+              {/* 5 KPI Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <StatCard icon={UserGroupIcon} iconBg="bg-blue-500/20" iconColor="text-blue-400" label="Total Employees" value={metrics?.kpis?.total_employees ?? employees.length} sub={`${metrics?.kpis?.active_employees ?? employees.filter(e => e.status === 'active').length} Active`} />
+                <StatCard icon={CheckCircleIcon} iconBg="bg-emerald-500/20" iconColor="text-emerald-400" label="Present Today" value={metrics?.kpis?.present_today ?? metrics?.present_today ?? 0} sub={`${metrics?.kpis?.on_leave_today ?? metrics?.on_leave_today ?? 0} On Leave`} />
+                <StatCard icon={CurrencyRupeeIcon} iconBg="bg-indigo-500/20" iconColor="text-indigo-400" label="Payroll This Month" value={`₹${parseFloat(metrics?.kpis?.payroll_this_month || '0').toLocaleString('en-IN', { maximumFractionDigits: 0 })}`} sub="Gross Salary" />
+                <StatCard icon={BanknotesIcon} iconBg="bg-teal-500/20" iconColor="text-teal-400" label="Net Salary Payable" value={`₹${parseFloat(metrics?.kpis?.net_salary_payable || metrics?.last_payroll_net || '0').toLocaleString('en-IN', { maximumFractionDigits: 0 })}`} sub="Disbursement Due" />
+                <StatCard icon={ClockIcon} iconBg="bg-amber-500/20" iconColor="text-amber-400" label="Pending Payroll" value={metrics?.kpis?.pending_payroll ?? 0} sub="Cycles in Progress" />
+              </div>
+
+              {/* Current Payroll & Alerts Bento Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Current Payroll Card */}
+                <div className="lg:col-span-1 rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-black/30 to-purple-950/20 p-6 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Current Payroll Cycle</span>
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full uppercase ${
+                        metrics?.current_payroll?.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                        metrics?.current_payroll?.status === 'paid' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                        'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      }`}>
+                        {metrics?.current_payroll?.status || 'Draft'}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-6">
+                      {metrics?.current_payroll ? `${metrics.current_payroll.employee_count} employees processed` : 'Payroll not yet calculated for this month'}
+                    </p>
+
+                    <div className="space-y-2 mb-6">
+                      <div className="flex justify-between text-xs text-gray-300">
+                        <span>Gross Salary:</span>
+                        <span className="font-semibold text-white">₹{parseFloat(metrics?.current_payroll?.total_gross || '0').toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-300">
+                        <span>Total Deductions:</span>
+                        <span className="font-semibold text-red-400">₹{parseFloat(metrics?.current_payroll?.total_deductions || '0').toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-300 border-t border-white/10 pt-2 font-medium">
+                        <span>Net Payable:</span>
+                        <span className="font-bold text-emerald-400">₹{parseFloat(metrics?.current_payroll?.total_net || '0').toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link to="/hr/payroll" className="w-full py-2.5 px-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-500/20">
+                    Manage Payroll <ArrowRightIcon className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                {/* HR Alerts Drawer */}
+                <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-black/25 overflow-hidden flex flex-col">
+                  <div className="p-4 border-b border-white/10 bg-white/[0.02] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-amber-400" />
+                      <span className="text-sm font-semibold text-white uppercase tracking-wider">HR Alerts & Action Items</span>
+                    </div>
+                    <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded-full">
+                      {(metrics?.alerts || []).length} active
+                    </span>
+                  </div>
+
+                  <div className="p-4 flex-1 overflow-y-auto max-h-[260px] space-y-3">
+                    {(!metrics?.alerts || metrics.alerts.length === 0) ? (
+                      <div className="flex items-center justify-center py-10 text-gray-400 text-sm">
+                        ✅ No pending alerts or blocked actions.
+                      </div>
+                    ) : (
+                      metrics.alerts.map((alert, idx) => (
+                        <div key={idx} className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+                          alert.type === 'danger' ? 'bg-red-500/10 border-red-500/20 text-red-300' :
+                          alert.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-300' :
+                          'bg-blue-500/10 border-blue-500/20 text-blue-300'
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <ShieldExclamationIcon className="w-5 h-5 shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-white">{alert.title}</p>
+                              <p className="text-xs text-gray-400">{alert.message}</p>
+                            </div>
+                          </div>
+                          {alert.action_url && (
+                            <Link to={alert.action_url} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white whitespace-nowrap transition">
+                              Resolve
+                            </Link>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Departments summary */}
