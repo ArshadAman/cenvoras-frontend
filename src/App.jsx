@@ -55,6 +55,10 @@ import SalaryAssignments from './pages/hr/SalaryAssignments'
 import PayrollRuns from './pages/hr/PayrollRuns'
 import Payslips from './pages/hr/Payslips'
 import HRDashboard from './pages/hr/HRDashboard'
+import AdvancesLoans from './pages/hr/AdvancesLoans'
+import HRDocuments from './pages/hr/HRDocuments'
+import HRMSSettings from './pages/hr/HRMSSettings'
+import HRReports from './pages/hr/HRReports'
 
 // Employee Pages
 import EmployeePortal from './pages/employee/EmployeePortal'
@@ -315,6 +319,26 @@ function App() {
         <Route
           path="/hr/payroll-runs"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/payroll"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/advances-loans"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><AdvancesLoans /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/documents"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRDocuments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/settings"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRMSSettings /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/hr/reports"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><HRReports /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/hr/payslips"
