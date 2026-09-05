@@ -8,19 +8,33 @@ import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
 
 // ─── Salary Increment Modal ──────────────────────────────────────────────────
+// ─── Salary Increment Modal ──────────────────────────────────────────────────
 function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
   const [form, setForm] = useState({ new_salary: '', reason: '', effective_date: '' });
+  const [currentSalary, setCurrentSalary] = useState(0);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && employee) {
+      const initial = parseFloat(employee.current_ctc || 0);
+      setCurrentSalary(initial);
       setForm({
         new_salary: '',
         reason: '',
         effective_date: new Date().toISOString().split('T')[0]
       });
+
+      // Proactively fetch latest salary history to ensure freshest data
+      hrApi.getSalaryHistories({ employee: employee.id })
+        .then(res => {
+          const list = res.data?.results || res.data || [];
+          if (list.length > 0 && parseFloat(list[0].new_salary) > 0) {
+            setCurrentSalary(parseFloat(list[0].new_salary));
+          }
+        })
+        .catch(() => {});
     }
-  }, [isOpen]);
+  }, [isOpen, employee]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,6 +75,9 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
 
   if (!isOpen || !employee) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
+  const numNew = parseFloat(form.new_salary || 0);
+  const diff = currentSalary > 0 && numNew > 0 ? numNew - currentSalary : 0;
+  const diffPct = currentSalary > 0 && numNew > 0 ? ((diff / currentSalary) * 100).toFixed(1) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -68,7 +85,14 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <div>
             <h2 className="text-lg font-semibold text-white">Salary Revision</h2>
-            <p className="text-xs text-gray-400">{employee.full_name} ({employee.employee_code})</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-gray-400">{employee.full_name} ({employee.employee_code})</p>
+              {currentSalary > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                  Current: ₹{currentSalary.toLocaleString('en-IN')}
+                </span>
+              )}
+            </div>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
             <XMarkIcon className="w-5 h-5" />
@@ -76,9 +100,64 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {/* Current vs Proposed Salary Card */}
+          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
+            <div>
+              <span className="text-[11px] uppercase tracking-wider text-gray-400 block">Current Monthly CTC</span>
+              <span className="text-base font-bold text-white">
+                {currentSalary > 0 ? `₹${currentSalary.toLocaleString('en-IN')}` : 'Not Assigned (₹0.00)'}
+              </span>
+            </div>
+            {diffPct !== null && diff !== 0 && (
+              <div className="text-right">
+                <span className="text-[11px] uppercase tracking-wider text-gray-400 block">Proposed Change</span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
+                  diff > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                }`}>
+                  {diff > 0 ? `+₹${diff.toLocaleString('en-IN')} (+${diffPct}%)` : `-₹${Math.abs(diff).toLocaleString('en-IN')} (${diffPct}%)`}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Increment Percentage Buttons */}
+          {currentSalary > 0 && (
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Quick Percentage Increment</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[5, 10, 15, 20].map(pct => {
+                  const val = Math.round(currentSalary * (1 + pct / 100));
+                  return (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => setForm(p => ({
+                        ...p,
+                        new_salary: val,
+                        reason: p.reason || `${pct}% annual revision`
+                      }))}
+                      className="py-1 px-1.5 text-xs font-medium rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 transition text-center"
+                    >
+                      +{pct}%
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm text-gray-300 mb-1">New Monthly Gross CTC (₹) *</label>
-            <input required type="number" step="0.01" name="new_salary" value={form.new_salary} onChange={e => setForm(p => ({ ...p, new_salary: e.target.value }))} className={ic} placeholder="e.g. 65000" />
+            <input
+              required
+              type="number"
+              step="0.01"
+              name="new_salary"
+              value={form.new_salary}
+              onChange={e => setForm(p => ({ ...p, new_salary: e.target.value }))}
+              className={ic}
+              placeholder={currentSalary > 0 ? `Current: ₹${currentSalary.toLocaleString('en-IN')}` : "e.g. 65000"}
+            />
           </div>
           <div>
             <label className="block text-sm text-gray-300 mb-1">Effective Date *</label>
@@ -220,15 +299,16 @@ export default function Employees() {
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Department / Branch</th>
                   <th className="px-6 py-4">Designation</th>
+                  <th className="px-6 py-4">Monthly CTC</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" className="px-6 py-4 text-center">Loading...</td></tr>
+                  <tr><td colSpan="7" className="px-6 py-4 text-center">Loading...</td></tr>
                 ) : employees.length === 0 ? (
-                  <tr><td colSpan="6" className="px-6 py-4 text-center">No employees found</td></tr>
+                  <tr><td colSpan="7" className="px-6 py-4 text-center">No employees found</td></tr>
                 ) : (
                   employees.map(emp => (
                     <tr key={emp.id} className="border-b border-white/10 hover:bg-white/5">
@@ -246,6 +326,15 @@ export default function Employees() {
                         </div>
                       </td>
                       <td className="px-6 py-4">{emp.designation_name || '—'}</td>
+                      <td className="px-6 py-4">
+                        <span className="font-semibold text-emerald-400 whitespace-nowrap">
+                          {parseFloat(emp.current_ctc || 0) > 0 ? (
+                            `₹${parseFloat(emp.current_ctc).toLocaleString('en-IN')}`
+                          ) : (
+                            <span className="text-gray-500 font-normal text-xs">Not Set</span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium uppercase ${
                           emp.status === 'active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
