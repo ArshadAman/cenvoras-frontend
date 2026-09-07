@@ -242,7 +242,7 @@ export default function LandingPage() {
       <PublicNavbar
         links={[
           { label: 'Features', href: '#features' },
-          { label: 'Pricing', href: '#pricing' },
+          // { label: 'Pricing', href: '#pricing' },
           { label: 'HSN Code', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
         ]}
@@ -396,6 +396,7 @@ export default function LandingPage() {
       </section>
 
       {/* 4. Pricing (Clean Dark) */}
+      {/*
       <section id="pricing" className="py-32 relative z-10">
         <div className="max-w-[980px] mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold mb-4 scroll-animate text-white">Simple pricing.</h2>
@@ -480,6 +481,7 @@ export default function LandingPage() {
 
         </div>
       </section>
+      */}
 
       {/* 5. Clean Footer */}
       <footer className="bg-black py-16 border-t border-white/5 relative z-10">

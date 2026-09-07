@@ -930,7 +930,8 @@ const Profile = ({ onLogout }) => {
                 </section>
                 )}
 
-                {isAdmin && (
+                {/* Plan Management */}
+                {/* {isAdmin && (
                 <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
                   <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-white">
                     <CalendarIcon className="h-5 w-5 text-cyan-300" />
@@ -1089,7 +1090,7 @@ const Profile = ({ onLogout }) => {
                     )}
                   </div>
                 </section>
-                )}
+                )} */}
 
                 <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
                   <h3 className="mb-4 text-base font-semibold text-white">Identity Snapshot</h3>
