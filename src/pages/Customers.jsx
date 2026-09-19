@@ -90,7 +90,7 @@ export default function Customers() {
         />
       )}
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      
     </>
   );
 }

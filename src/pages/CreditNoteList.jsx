@@ -175,7 +175,7 @@ export default function CreditNoteList() {
         <CreditNoteForm isOpen={showForm} onClose={() => setShowForm(false)} />
       )}
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+      
     </>
   );
 }

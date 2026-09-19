@@ -23,7 +23,7 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
       console.error("Failed to delete product:", err);
       const msg = err.response?.data?.error || err.response?.data?.detail || "Failed to delete product. Please try again.";
       setErrorMessage(msg);
-      toast.error(msg, { autoClose: 4000 });
+      toast.error(msg, { toastId: `delete-error-${product?.id}`, autoClose: 4000 });
     },
   });
 
