@@ -312,28 +312,30 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const handleBulkDelete = async () => {
     if (selectedProducts.size === 0) return;
     
-    const confirmed = window.confirm(`Are you sure you want to delete ${selectedProducts.size} products?`);
+    const count = selectedProducts.size;
+    const confirmed = window.confirm(`Are you sure you want to delete ${count} product(s)?`);
     if (confirmed) {
-      // Show loading toast
-      const toastId = toast.loading(`Deleting ${selectedProducts.size} products...`);
+      const toastId = toast.loading(`Deleting ${count} product(s)...`);
       try {
         const productIds = Array.from(selectedProducts);
         const result = await bulkDeleteProducts(productIds);
         
+        toast.dismiss(toastId);
         setSelectedProducts(new Set());
         setShowBulkActions(false);
+
         const hasProtected = result.protected && result.protected.length > 0;
-        toast.update(toastId, { 
-          render: result.message || `Successfully processed product deletion.`, 
-          type: hasProtected ? "warning" : "success", 
-          isLoading: false, 
-          autoClose: hasProtected ? 5000 : 3000 
-        });
+        if (hasProtected) {
+          toast.warning(result.message || `Some products could not be deleted.`, { autoClose: 4000 });
+        } else {
+          toast.success(result.message || `Products deleted successfully.`, { autoClose: 3000 });
+        }
         
         refetch();
       } catch (error) {
+        toast.dismiss(toastId);
         const errMsg = error?.response?.data?.error || error?.response?.data?.detail || `Failed to delete products.`;
-        toast.update(toastId, { render: errMsg, type: "error", isLoading: false, autoClose: 5000 });
+        toast.error(errMsg, { autoClose: 4000 });
       }
     }
   };
