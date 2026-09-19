@@ -15,7 +15,7 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["lowStockProducts"] });
       queryClient.invalidateQueries({ queryKey: ["stockValuation"] });
-      toast.success("Product deleted successfully!");
+      toast.success("Product deleted successfully!", { autoClose: 3000 });
       onSuccess?.();
       onClose();
     },
@@ -23,7 +23,7 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
       console.error("Failed to delete product:", err);
       const msg = err.response?.data?.error || err.response?.data?.detail || "Failed to delete product. Please try again.";
       setErrorMessage(msg);
-      toast.error(msg);
+      toast.error(msg, { autoClose: 4000 });
     },
   });
 
