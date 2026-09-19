@@ -93,7 +93,7 @@ export default function BOMList() {
         <BOMForm isOpen={showForm} onClose={handClose} editData={editData} />
       )}
       
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+      
     </>
   );
 }

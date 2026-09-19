@@ -352,7 +352,7 @@ const Ledger = () => {
         entry={selectedEntry}
       />
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+      
     </>
   );
 };

@@ -119,7 +119,7 @@ export default function Purchase() {
       {showUpload && (
         <PurchaseUploadCsv onClose={() => setShowUpload(false)} />
       )}
-      <ToastContainer position="top-right" />
+      
     </>
   );
 }

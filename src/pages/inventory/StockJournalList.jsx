@@ -151,7 +151,7 @@ export default function StockJournalList() {
         journal={viewDetailsJournal} 
       />
       
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+      
     </>
   );
 }
