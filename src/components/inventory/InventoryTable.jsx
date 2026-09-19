@@ -322,11 +322,18 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         
         setSelectedProducts(new Set());
         setShowBulkActions(false);
-        toast.update(toastId, { render: result.message || `Successfully deleted products.`, type: "success", isLoading: false, autoClose: 3000 });
+        const hasProtected = result.protected && result.protected.length > 0;
+        toast.update(toastId, { 
+          render: result.message || `Successfully processed product deletion.`, 
+          type: hasProtected ? "warning" : "success", 
+          isLoading: false, 
+          autoClose: hasProtected ? 5000 : 3000 
+        });
         
         refetch();
       } catch (error) {
-        toast.update(toastId, { render: error?.response?.data?.error || `Failed to delete products.`, type: "error", isLoading: false, autoClose: 3000 });
+        const errMsg = error?.response?.data?.error || error?.response?.data?.detail || `Failed to delete products.`;
+        toast.update(toastId, { render: errMsg, type: "error", isLoading: false, autoClose: 5000 });
       }
     }
   };

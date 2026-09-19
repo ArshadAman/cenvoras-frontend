@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteProduct } from "../../api/inventory";
 import { createPortal } from "react-dom";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
 
 export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
   const queryClient = useQueryClient();
+  const [errorMessage, setErrorMessage] = useState(null);
   
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
@@ -13,18 +15,21 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["lowStockProducts"] });
       queryClient.invalidateQueries({ queryKey: ["stockValuation"] });
+      toast.success("Product deleted successfully!");
       onSuccess?.();
       onClose();
     },
     onError: (err) => {
       console.error("Failed to delete product:", err);
-      const errorMessage = err.response?.data?.error || "Failed to delete product. Please try again.";
-      toast.error(errorMessage);
+      const msg = err.response?.data?.error || err.response?.data?.detail || "Failed to delete product. Please try again.";
+      setErrorMessage(msg);
+      toast.error(msg);
     },
   });
 
   const handleDelete = () => {
     if (product?.id) {
+      setErrorMessage(null);
       deleteMutation.mutate(product.id);
     }
   };
@@ -92,6 +97,15 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
                <strong>Warning:</strong> Deleting this product will also remove all associated stock movement history and purchase records.
              </p>
            </div>
+
+           {errorMessage && (
+             <div className="bg-red-500/15 border border-red-500/30 rounded-xl p-3 flex items-start gap-3 animate-fade-in">
+               <ExclamationTriangleIcon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+               <p className="text-xs text-red-200 leading-relaxed font-medium">
+                 {errorMessage}
+               </p>
+             </div>
+           )}
         </div>
 
         {/* Actions */}
