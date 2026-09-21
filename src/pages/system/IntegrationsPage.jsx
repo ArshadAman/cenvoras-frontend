@@ -22,27 +22,27 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 const TABS = [
   { id: 'email', label: 'Email Automation', icon: EnvelopeIcon },
   { id: 'backup', label: 'Data Backup', icon: CloudArrowDownIcon },
-  { id: 'whatsapp', label: 'WhatsApp', icon: ChatBubbleLeftIcon, comingSoon: true },
+  { id: 'whatsapp', label: 'WhatsApp Automation', icon: ChatBubbleLeftIcon, badge: 'On demand', badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' },
   { id: 'apikeys', label: 'API Keys', icon: KeyIcon, comingSoon: true },
 ];
 
 // ─── ComingSoon Placeholder ───
-function ComingSoonPlaceholder({ title, description, icon: Icon }) {
+function ComingSoonPlaceholder({ title, description, icon: Icon, badge = 'Soon', badgeClass = 'bg-gradient-to-r from-pink-500 to-orange-400 text-white', note = "We'll notify you when this is available" }) {
   return (
     <div className="bento-card p-10 flex flex-col items-center justify-center text-center max-w-lg mx-auto">
       <div className="relative mb-6">
         <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
           <Icon className="w-12 h-12 text-gray-500" />
         </div>
-        <span className="absolute -top-2 -right-2 px-2.5 py-1 bg-gradient-to-r from-pink-500 to-orange-400 text-[10px] font-extrabold uppercase rounded-full text-white tracking-widest">
-          Soon
+        <span className={`absolute -top-2 -right-2 px-2.5 py-1 ${badgeClass} text-[10px] font-extrabold uppercase rounded-full tracking-wider shadow-md`}>
+          {badge}
         </span>
       </div>
       <h2 className="text-xl font-bold text-white mb-2">{title}</h2>
       <p className="text-gray-400 text-sm leading-relaxed mb-6">{description}</p>
-      <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-gray-500 text-sm">
-        <SparklesIcon className="w-4 h-4 text-purple-400" />
-        We'll notify you when this is available
+      <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-gray-400 text-sm">
+        <SparklesIcon className="w-4 h-4 text-emerald-400" />
+        {note}
       </div>
     </div>
   );
@@ -710,11 +710,15 @@ export default function IntegrationsPage() {
                       </span>
                       <span className="text-sm font-medium">{tab.label}</span>
                     </span>
-                    {tab.comingSoon && (
+                    {tab.badge ? (
+                      <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${tab.badgeClass || 'bg-amber-500/20 text-amber-300 border border-amber-500/30'} leading-none`}>
+                        {tab.badge}
+                      </span>
+                    ) : tab.comingSoon ? (
                       <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-gradient-to-r from-pink-500 to-orange-400 text-white leading-none">
                         Soon
                       </span>
-                    )}
+                    ) : null}
                   </button>
                 );
               })}
@@ -728,9 +732,12 @@ export default function IntegrationsPage() {
               {activeTab === 'backup' && <BackupTab />}
               {activeTab === 'whatsapp' && (
                 <ComingSoonPlaceholder
-                  title="WhatsApp Business Integration"
-                  description="Send invoices, payment reminders, and order updates directly via WhatsApp Business. Requires Meta Business API approval and a verified WhatsApp Business number."
+                  title="WhatsApp Automation"
+                  description="Send invoices, payment reminders, order updates, and low-stock alerts automatically to customers via the official WhatsApp Business Cloud API. Dedicated business number provisioning and custom templates are available on demand."
                   icon={ChatBubbleLeftIcon}
+                  badge="On demand"
+                  badgeClass="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  note="Available on demand — contact support to activate for your business"
                 />
               )}
               {activeTab === 'apikeys' && (

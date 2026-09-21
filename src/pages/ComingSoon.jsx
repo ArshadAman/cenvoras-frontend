@@ -26,11 +26,11 @@ export default function ComingSoon() {
       eta: "Testing Phase"
     },
     {
-       title: "WhatsApp Integration",
+       title: "WhatsApp Automation",
        description: "Send invoices, payment links, and low stock alerts automatically via WhatsApp to your customers.",
        icon: SparklesIcon,
-       status: "Planned",
-       eta: "Q2 2026"
+       status: "On demand",
+       eta: "Available on Demand"
     },
     {
        title: "Bank Reconciliation",
@@ -107,7 +107,11 @@ export default function ComingSoon() {
                     <feature.icon className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                     <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/5 text-gray-300 rounded-md border border-white/10">
+                     <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${
+                       feature.status === 'On demand'
+                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                         : 'bg-white/5 text-gray-300 border-white/10'
+                     }`}>
                        {feature.status}
                      </span>
                      <span className="text-xs text-purple-400 font-medium">

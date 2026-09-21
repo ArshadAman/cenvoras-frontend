@@ -11,11 +11,15 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
   
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["lowStockProducts"] });
       queryClient.invalidateQueries({ queryKey: ["stockValuation"] });
-      toast.success("Product deleted successfully!", { autoClose: 3000 });
+      if (data?.archived) {
+        toast.info(data.message || "Product archived to preserve transaction history.", { autoClose: 4000 });
+      } else {
+        toast.success("Product deleted successfully!", { autoClose: 3000 });
+      }
       onSuccess?.();
       onClose();
     },
