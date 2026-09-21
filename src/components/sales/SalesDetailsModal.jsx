@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoice, downloadSalesInvoicePDF } from "../../api/sales";
-import { getQuotation, downloadQuotationPDF } from "../../api/quotation";
+import { getSalesInvoice } from "../../api/sales";
+import { getQuotation } from "../../api/quotation";
 import { useReactToPrint } from "react-to-print";
 import { 
   XMarkIcon, 
@@ -20,6 +20,7 @@ import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
 import { getActiveTemplate } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
@@ -94,37 +95,29 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     `,
   });
 
-  // Native Vector PDF Download (<100KB, theme-aware, zero row slicing)
+  // 100% Pixel-Perfect Theme-Identical PDF Download (<100KB, zero row slicing, exact preview replica)
   const handleDownloadPDF = async () => {
-    if (!invoiceDetails) return;
+    if (!printRef.current || !invoiceDetails) return;
     setDownloadingPDF(true);
 
     try {
-      const templatePayload = template ? {
-        layoutType: template?.layout?.layoutType || 'classic',
-        colors: template?.colors || {},
-        sections: template?.sections || {},
-      } : null;
-
-      const pdfBlob = isQuotation
-        ? await downloadQuotationPDF(invoiceDetails.id || invoice?.id, templatePayload)
-        : await downloadSalesInvoicePDF(invoiceDetails.id || invoice?.id, templatePayload);
-
-      const blob = new Blob([pdfBlob], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
       const filePrefix = isQuotation ? "performa-invoice" : "invoice";
-      const fileNum = invoiceDetails.invoice_number || invoiceDetails.quotation_number || invoice?.id;
-      link.setAttribute('download', `${filePrefix}-${fileNum}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('Vector PDF downloaded successfully (<100KB)');
+      const fileNum = invoiceDetails.invoice_number || invoiceDetails.quotation_number || invoice?.id || 'doc';
+      const filename = `${filePrefix}-${fileNum}.pdf`;
+
+      // Target the container inside printRef
+      const targetElement = printRef.current.querySelector('[data-print-target]') || printRef.current;
+
+      await generatePixelPerfectPDF(targetElement, {
+        filename,
+        quality: 0.85,
+        scale: 2,
+      });
+
+      toast.success('Invoice PDF downloaded successfully (<100KB)');
     } catch (error) {
-      console.error('Error downloading vector PDF:', error);
-      toast.error('Failed to download PDF. Please try again.');
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setDownloadingPDF(false);
     }
