@@ -60,6 +60,16 @@ export const getProducts = (params = {}) =>
 export const getCustomers = () =>
   api.get("/billing/customers/").then(res => res.data);
 
+export const downloadSalesInvoicePDF = (id, templateData) => {
+  if (templateData) {
+    return api.post(`/billing/sales-invoices/${id}/pdf/`, { template: templateData }, { responseType: 'blob' })
+      .then(res => res.data);
+  }
+  return api.get(`/billing/sales-invoices/${id}/pdf/`, { responseType: 'blob' })
+    .then(res => res.data);
+};
+
+
 export const createCustomer = (data) =>
   api.post("/billing/customers/", data).then(res => res.data);
 

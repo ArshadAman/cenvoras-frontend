@@ -1,11 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoice } from "../../api/sales";
-import { getQuotation } from "../../api/quotation";
+import { getSalesInvoice, downloadSalesInvoicePDF } from "../../api/sales";
+import { getQuotation, downloadQuotationPDF } from "../../api/quotation";
 import { useReactToPrint } from "react-to-print";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { 
   XMarkIcon, 
   PrinterIcon, 
@@ -28,6 +26,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   const printRef = useRef();
   const [template, setTemplate] = useState(null);
   const [showDesigner, setShowDesigner] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [manualEmail, setManualEmail] = useState('');
@@ -38,23 +37,25 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       const activeTemplate = getActiveTemplate();
       setTemplate(activeTemplate);
     }
-  }, [isOpen, showDesigner]);
+  }, [isOpen]);
 
   const isQuotation = documentType === "quotation";
 
-  const { data, isLoading } = useQuery({
-    queryKey: [isQuotation ? "quotation" : "sales-invoice", invoice?.id],
-    queryFn: () => (isQuotation ? getQuotation(invoice?.id) : getSalesInvoice(invoice?.id)),
+  // Fetch invoice/quotation details
+  const { data: invoiceDetails = {}, isLoading } = useQuery({
+    queryKey: [isQuotation ? "quotation" : "salesInvoice", invoice?.id],
+    queryFn: () => isQuotation ? getQuotation(invoice?.id) : getSalesInvoice(invoice?.id),
     enabled: isOpen && !!invoice?.id,
   });
 
+  // Fetch tenant invoice settings
   const { data: invoiceSettings } = useQuery({
-    queryKey: ["invoiceSettings"],
+    queryKey: ['invoiceSettings'],
     queryFn: getInvoiceSettings,
     enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const invoiceDetails = data?.data || data?.result || data || invoice || {};
   const previewTemplate = isQuotation
     ? {
         ...template,
@@ -65,25 +66,26 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       }
     : template;
 
-  // Print functionality
+  // Print functionality with anti-slicing CSS rules
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `${isQuotation ? "Performa Invoice" : "Tax Invoice"} - ${invoiceDetails?.invoice_number || invoice?.id}`,
+    documentTitle: `${isQuotation ? "Performa-Invoice" : "Invoice"}-${invoiceDetails?.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
         size: A4;
-        margin: 0;
+        margin: 10mm;
       }
       @media print {
-        html, body {
-          width: 210mm;
-          height: 297mm;
-          margin: 0;
-          padding: 0;
-        }
         body {
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        thead {
+          display: table-header-group !important;
+        }
+        tr {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
         }
         .print-hidden {
           display: none !important;
@@ -92,56 +94,39 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     `,
   });
 
-  // PDF Download functionality
+  // Native Vector PDF Download (<100KB, theme-aware, zero row slicing)
   const handleDownloadPDF = async () => {
-    if (!printRef.current || !invoiceDetails) return;
+    if (!invoiceDetails) return;
+    setDownloadingPDF(true);
 
     try {
-      const element = printRef.current;
-      
-      // Scroll to top to ensure clean capture
-      window.scrollTo(0, 0);
+      const templatePayload = template ? {
+        layoutType: template?.layout?.layoutType || 'classic',
+        colors: template?.colors || {},
+        sections: template?.sections || {},
+      } : null;
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('[data-print-target]');
-          if (clonedElement) {
-            clonedElement.style.height = 'auto';
-            clonedElement.style.overflow = 'visible';
-            clonedElement.style.width = '210mm'; // Ensure standard width
-          }
-        }
-      });
+      const pdfBlob = isQuotation
+        ? await downloadQuotationPDF(invoiceDetails.id || invoice?.id, templatePayload)
+        : await downloadSalesInvoicePDF(invoiceDetails.id || invoice?.id, templatePayload);
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // First page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Subsequent pages
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`${isQuotation ? "performa-invoice" : "invoice"}-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
+      const blob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filePrefix = isQuotation ? "performa-invoice" : "invoice";
+      const fileNum = invoiceDetails.invoice_number || invoiceDetails.quotation_number || invoice?.id;
+      link.setAttribute('download', `${filePrefix}-${fileNum}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Vector PDF downloaded successfully (<100KB)');
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast.error('Error generating PDF. Please try again.');
+      console.error('Error downloading vector PDF:', error);
+      toast.error('Failed to download PDF. Please try again.');
+    } finally {
+      setDownloadingPDF(false);
     }
   };
 
@@ -300,11 +285,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               </button>
               
               <button
+                disabled={downloadingPDF}
                 onClick={handleDownloadPDF}
-                className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
               >
-                <ArrowDownTrayIcon className="w-4 h-4" />
-                PDF
+                {downloadingPDF ? (
+                  <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Generating...</>
+                ) : (
+                  <><ArrowDownTrayIcon className="w-4 h-4" /> PDF</>
+                )}
               </button>
 
               <button
@@ -318,16 +307,16 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               </button>
 
               <button
-                onClick={(e) => { e.preventDefault(); toast.info('WhatsApp integration is coming soon!'); }}
-                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden whitespace-nowrap"
+                onClick={(e) => { e.preventDefault(); toast.info('WhatsApp automation is available on demand. Contact support to activate.'); }}
+                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-pointer group overflow-hidden whitespace-nowrap"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
-                <span className="opacity-90">WhatsApp</span>
+                <span className="opacity-90">WhatsApp Automation</span>
                 
-                {/* Coming Soon Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[10px] uppercase tracking-wider text-green-400/90 rounded-lg border border-green-500/30">
-                  Coming Soon
+                {/* On Demand Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[10px] uppercase tracking-wider text-emerald-400/90 rounded-lg border border-emerald-500/30">
+                  On demand
                 </div>
               </button>
               

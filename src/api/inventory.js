@@ -130,7 +130,7 @@ export const updatePriceList = (id, data) => api.put(`/inventory/price-lists/${i
 export const deletePriceList = (id) => api.delete(`/inventory/price-lists/${id}/`).then(res => res.data);
 
 // Schemes
-export const getSchemes = () => api.get("/inventory/schemes/").then(res => res.data);
+export const getSchemes = (params) => api.get("/inventory/schemes/", { params }).then(res => res.data);
 export const createScheme = (data) => api.post("/inventory/schemes/", data).then(res => res.data);
 export const getScheme = (id) => api.get(`/inventory/schemes/${id}/`).then(res => res.data);
 export const updateScheme = (id, data) => api.put(`/inventory/schemes/${id}/`, data).then(res => res.data);

@@ -107,7 +107,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
               <p className="text-xs text-purple-300 mt-0.5">SKU: {product.sku}</p>
             </div>
             <div className="text-right flex-shrink-0">
-              <span className="block text-xl sm:text-2xl font-mono text-white">{product.current_stock}</span>
+              <span className="block text-xl sm:text-2xl font-mono text-white">{product.current_stock ?? product.stock ?? 0}</span>
               <span className="text-xs text-gray-400">{product.unit}</span>
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
                   <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10 flex justify-between items-center">
                     <span className="text-xs text-gray-400">New Stock Level:</span>
                     <span className="font-mono text-purple-400 font-bold">
-                       {getNewStockLevel(values.adjustment_type, values.quantity, product.current_stock)} {product.unit}
+                       {getNewStockLevel(values.adjustment_type, values.quantity, product.current_stock ?? product.stock ?? 0)} {product.unit}
                     </span>
                   </div>
                 )}

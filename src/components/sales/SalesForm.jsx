@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
 import { createProduct } from "../../api/inventory";
-import { getWarehouses, getStockPoints } from "../../api/inventory"; // Added imports
+import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
 import { getUserProfile } from "../../api/users";
@@ -16,7 +16,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; /
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct, onSelectProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -94,6 +94,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     // Trigger auto-add row functionality after product selection
     if (onInputChange) {
       onInputChange();
+    }
+    if (onSelectProduct) {
+      onSelectProduct(product);
     }
   };
 
@@ -503,7 +506,8 @@ const SalesSchema = Yup.object().shape({
     Yup.object().shape({
       // Required item fields
       product: Yup.string().required("Product is required").min(1),
-      quantity: Yup.number().required("Quantity is required").min(1),
+      quantity: Yup.number().required("Quantity is required").min(0),
+      free_quantity: Yup.number().nullable().min(0),
       batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
       price: Yup.number().required("Price is required").min(0),
       amount: Yup.number().required("Amount is required").min(0),
@@ -514,6 +518,10 @@ const SalesSchema = Yup.object().shape({
       discount: Yup.number().nullable().min(0),
       tax: Yup.number().nullable().min(0),
     })
+  ).test(
+    "has-positive-qty",
+    "Each item must have either quantity or free quantity greater than 0",
+    (items) => !items || items.every((i) => (Number(i?.quantity) || 0) + (Number(i?.free_quantity) || 0) > 0)
   ).min(1, "At least one item is required"),
 });
 
@@ -696,6 +704,73 @@ export default function SalesForm({
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,
     ...(invoiceSettings || {}),
+  };
+
+  const { data: schemesResult } = useQuery({
+    queryKey: ["activeSchemes"],
+    queryFn: () => getSchemes({ active_only: 'true' }),
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+  const activeSchemes = Array.isArray(schemesResult) ? schemesResult : schemesResult?.data || schemesResult?.results || [];
+
+  const findMatchingScheme = (productId, qty) => {
+    if (!productId || !activeSchemes || !activeSchemes.length) return null;
+    const numericQty = parseFloat(qty) || 0;
+    const matching = activeSchemes
+      .filter((s) => (s.product === productId || s.product_id === productId) && s.is_active !== false)
+      .sort((a, b) => (b.min_qty || 0) - (a.min_qty || 0));
+
+    for (const s of matching) {
+      if (numericQty >= (s.min_qty || 1)) {
+        return s;
+      }
+    }
+    return null;
+  };
+
+  const handleItemQuantityChange = (index, qtyValue, setFieldValue, currentValues) => {
+    setFieldValue(`items.${index}.quantity`, qtyValue);
+    const price = Number(currentValues.items[index]?.price) || 0;
+    const numQty = parseFloat(qtyValue) || 0;
+    setFieldValue(`items.${index}.amount`, price * numQty);
+
+    const prodId = currentValues.items[index]?.product_id;
+    if (prodId) {
+      const scheme = findMatchingScheme(prodId, numQty);
+      if (scheme && scheme.scheme_type === 'bogo') {
+        const minQty = scheme.min_qty || 1;
+        const freePerTier = scheme.free_qty || 0;
+        const earnedFree = Math.floor(numQty / minQty) * freePerTier;
+        if (!scheme.free_product || scheme.free_product === prodId) {
+          setFieldValue(`items.${index}.free_quantity`, earnedFree);
+        }
+      } else if (scheme && scheme.scheme_type === 'percentage_discount') {
+        const currDisc = Number(currentValues.items[index]?.discount) || 0;
+        if (currDisc === 0 && Number(scheme.discount_percent) > 0) {
+          setFieldValue(`items.${index}.discount`, Number(scheme.discount_percent));
+        }
+      } else if (currentValues.items[index]?.free_quantity > 0) {
+        setFieldValue(`items.${index}.free_quantity`, 0);
+      }
+    }
+  };
+
+  const handleProductSelected = (idx, prod, setFieldValue, currentValues) => {
+    const qty = parseFloat(currentValues.items[idx]?.quantity) || 1;
+    const scheme = findMatchingScheme(prod.id, qty);
+    if (scheme && scheme.scheme_type === 'bogo') {
+      const minQty = scheme.min_qty || 1;
+      const freePerTier = scheme.free_qty || 0;
+      const earnedFree = Math.floor(qty / minQty) * freePerTier;
+      if (!scheme.free_product || scheme.free_product === prod.id) {
+        setFieldValue(`items.${idx}.free_quantity`, earnedFree);
+      }
+    } else if (scheme && scheme.scheme_type === 'percentage_discount') {
+      if (Number(scheme.discount_percent) > 0) {
+        setFieldValue(`items.${idx}.discount`, Number(scheme.discount_percent));
+      }
+    }
   };
 
   const updateInvoiceSettingsMutation = useMutation({
@@ -1438,74 +1513,98 @@ export default function SalesForm({
                                       <div key={index} className="border-b border-white/10">
                                         <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                           {desktopColumns.map((col) => {
-                                          if (col.key === "product") {
-                                            return (
-                                              <div key={col.key}>
-                                                <ProductAutocomplete
-                                                  idx={index}
-                                                  values={values}
-                                                  setFieldValue={setFieldValue}
-                                                  products={products}
-                                                  onInputChange={() => handleAutoAddRow(index)}
-                                                  onProductSearchChange={setProductSearch}
-                                                  showDescription={itemSettings.show_item_description}
-                                                  onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
-                                                />
-                                              </div>
-                                            );
-                                          }
+                                           if (col.key === "product") {
+                                             const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
+                                             return (
+                                               <div key={col.key}>
+                                                 <ProductAutocomplete
+                                                   idx={index}
+                                                   values={values}
+                                                   setFieldValue={setFieldValue}
+                                                   products={products}
+                                                   onInputChange={() => handleAutoAddRow(index)}
+                                                   onProductSearchChange={setProductSearch}
+                                                   showDescription={itemSettings.show_item_description}
+                                                   onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
+                                                   onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
+                                                 />
+                                                 {matchedScheme && (
+                                                   <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded w-fit">
+                                                     <span>🎁</span>
+                                                     <span>{matchedScheme.name}</span>
+                                                     {matchedScheme.scheme_type === 'bogo' && (
+                                                       <span className="text-emerald-300">(Buy {matchedScheme.min_qty} Get {matchedScheme.free_qty} Free)</span>
+                                                     )}
+                                                     {matchedScheme.scheme_type === 'percentage_discount' && (
+                                                       <span className="text-emerald-300">({matchedScheme.discount_percent}% Off)</span>
+                                                     )}
+                                                   </div>
+                                                 )}
+                                               </div>
+                                             );
+                                           }
 
-                                          if (col.key === "hsn") {
-                                            return (
-                                              <div key={col.key}>
-                                                <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
-                                              </div>
-                                            );
-                                          }
+                                           if (col.key === "hsn") {
+                                             return (
+                                               <div key={col.key}>
+                                                 <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                               </div>
+                                             );
+                                           }
 
-                                          if (col.key === "batch") {
-                                            return (
-                                              <div key={col.key}>
-                                                <Field name={`items.${index}.batch`}>
-                                                  {({ field }) => (
-                                                    <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" disabled={!item.product_id}>
-                                                      <option value="">Auto (FEFO)</option>
-                                                      {productBatches.map((b) => (
-                                                        <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
-                                                      ))}
-                                                    </select>
-                                                  )}
-                                                </Field>
-                                              </div>
-                                            );
-                                          }
+                                           if (col.key === "batch") {
+                                             return (
+                                               <div key={col.key}>
+                                                 <Field name={`items.${index}.batch`}>
+                                                   {({ field }) => (
+                                                     <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" disabled={!item.product_id}>
+                                                       <option value="">Auto (FEFO)</option>
+                                                       {productBatches.map((b) => (
+                                                         <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
+                                                       ))}
+                                                     </select>
+                                                   )}
+                                                 </Field>
+                                               </div>
+                                             );
+                                           }
 
-                                          if (col.key === "quantity") {
-                                            return (
-                                              <div key={col.key}>
-                                                <Field
-                                                  name={`items.${index}.quantity`}
-                                                  type="number"
-                                                  min="1"
-                                                  className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
-                                                  onChange={(e) => {
-                                                    const qty = e.target.value;
-                                                    setFieldValue(`items.${index}.quantity`, qty);
-                                                    const price = Number(values.items[index]?.price) || 0;
-                                                    setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
-                                                  }}
-                                                />
-                                              </div>
-                                            );
-                                          }
+                                           if (col.key === "quantity") {
+                                             return (
+                                               <div key={col.key}>
+                                                 <Field
+                                                   name={`items.${index}.quantity`}
+                                                   type="number"
+                                                   min="0"
+                                                   className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                   onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
+                                                 />
+                                               </div>
+                                             );
+                                           }
 
-                                          if (col.key === "free") {
-                                            return (
-                                              <div key={col.key}>
-                                                <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-green-300" />
-                                              </div>
-                                            );
-                                          }
+                                           if (col.key === "free") {
+                                             const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
+                                             const freeQtyNum = Number(values.items[index]?.free_quantity) || 0;
+                                             return (
+                                               <div key={col.key} className="relative">
+                                                 <Field
+                                                   name={`items.${index}.free_quantity`}
+                                                   type="number"
+                                                   min="0"
+                                                   className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-green-300 font-bold focus:border-green-500"
+                                                 />
+                                                 {matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0 && (
+                                                   <span
+                                                     className="absolute -top-1.5 -right-1 bg-emerald-500/30 text-emerald-300 text-[8px] font-black px-1 rounded border border-emerald-400/40 pointer-events-none"
+                                                     title={`${matchedScheme.name}: Buy ${matchedScheme.min_qty} Get ${matchedScheme.free_qty} Free`}
+                                                   >
+                                                     +{freeQtyNum}
+                                                   </span>
+                                                 )}
+                                               </div>
+                                             );
+                                           }
 
                                           if (col.key === "unit") {
                                             return (
@@ -1609,7 +1708,24 @@ export default function SalesForm({
                                             onProductSearchChange={setProductSearch}
                                             showDescription={itemSettings.show_item_description}
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
+                                            onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                           />
+                                          {(() => {
+                                            const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
+                                            if (!matchedScheme) return null;
+                                            return (
+                                              <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded w-fit">
+                                                <span>🎁</span>
+                                                <span>{matchedScheme.name}</span>
+                                                {matchedScheme.scheme_type === 'bogo' && (
+                                                  <span className="text-emerald-300">(Buy {matchedScheme.min_qty} Get {matchedScheme.free_qty} Free)</span>
+                                                )}
+                                                {matchedScheme.scheme_type === 'percentage_discount' && (
+                                                  <span className="text-emerald-300">({matchedScheme.discount_percent}% Off)</span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
                                       </div>
                                       
                                       {/* Settings Optional Fields: HSN & Batch */}
@@ -1628,7 +1744,7 @@ export default function SalesForm({
                                                       {({ field }) => (
                                                         <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" disabled={!item.product_id}>
                                                           <option value="">Auto (FEFO)</option>
-                                                          {(stockPoints?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || []).map((b) => (
+                                                          {productBatches.map((b) => (
                                                             <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
                                                           ))}
                                                         </select>
@@ -1646,14 +1762,9 @@ export default function SalesForm({
                                               <Field
                                                 name={`items.${index}.quantity`}
                                                 type="number"
-                                                min="1"
+                                                min="0"
                                                 className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center font-bold"
-                                                onChange={(e) => {
-                                                  const qty = e.target.value;
-                                                  setFieldValue(`items.${index}.quantity`, qty);
-                                                  const price = Number(values.items[index]?.price) || 0;
-                                                  setFieldValue(`items.${index}.amount`, price * (parseFloat(qty) || 0));
-                                                }}
+                                                onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                               />
                                           </div>
                                           <div>
@@ -1690,9 +1801,23 @@ export default function SalesForm({
                                       {(itemSettings.show_item_discount || itemSettings.show_item_tax || itemSettings.show_item_free_quantity) && (
                                           <div className="grid grid-cols-3 gap-4">
                                             {itemSettings.show_item_free_quantity && (
-                                                <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Free</label>
-                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
+                                                <div className="relative">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Free</label>
+                                                      {(() => {
+                                                        const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
+                                                        const freeQtyNum = Number(values.items[index]?.free_quantity) || 0;
+                                                        if (matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0) {
+                                                          return (
+                                                            <span className="bg-emerald-500/30 text-emerald-300 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-400/40">
+                                                              +{freeQtyNum} Free
+                                                            </span>
+                                                          );
+                                                        }
+                                                        return null;
+                                                      })()}
+                                                    </div>
+                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-green-300 font-bold text-sm text-center" />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_discount && (

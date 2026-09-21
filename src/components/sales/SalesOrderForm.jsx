@@ -437,12 +437,13 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             }
             submitLockRef.current = true;
             try {
-               const processedItems = values.items.map(item => ({
-                  product: item.product_id || item.product, // UUID or Name
-                  quantity: Math.max(1, Number(item.quantity) || 1),
-                  price: Number(item.price || 0),
-                  amount: Number(item.amount || 0),
-               }));
+                const processedItems = values.items.map(item => ({
+                   product: item.product_id || item.product, // UUID or Name
+                   quantity: Math.max(1, Number(item.quantity) || 1),
+                   price: Number(item.price || 0),
+                   amount: Number(item.amount || 0),
+                   unit: item.unit || "pcs",
+                }));
                
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 

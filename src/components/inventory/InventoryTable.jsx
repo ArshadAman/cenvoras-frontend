@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts } from "../../api/inventory";
+import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts, updateProduct } from "../../api/inventory";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
@@ -78,6 +78,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
+  const [statusFilter, setStatusFilter] = useState("active"); // active, archived, all
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -99,14 +100,29 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   }, [searchInput]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["products", search, ordering, page],
-    queryFn: () => getProducts({ search, ordering, page }),
+    queryKey: ["products", search, ordering, page, statusFilter],
+    queryFn: () => getProducts({
+      search,
+      ordering,
+      page,
+      ...(statusFilter === 'archived' ? { is_active: false } : statusFilter === 'all' ? { include_archived: true } : { is_active: true })
+    }),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData,
   });
   const loadingPolicy = useLoadingPolicy(isLoading);
+
+  const handleRestore = async (product) => {
+    try {
+      await updateProduct(product.id, { ...product, is_active: true });
+      toast.success(`'${product.name}' restored to active inventory.`);
+      refetch();
+    } catch {
+      toast.error('Failed to restore product.');
+    }
+  };
 
   const handleDownloadTemplate = async () => {
     try {
@@ -420,6 +436,18 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <option value="low-stock">Low Stock</option>
             <option value="out-of-stock">Out of Stock</option>
           </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="w-full sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+          >
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+            <option value="all">All Status</option>
+          </select>
         </div>
       </div>
 
@@ -542,8 +570,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-white drop-shadow-lg">
-                          {product.name}
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white drop-shadow-lg">
+                            {product.name}
+                          </span>
+                          {product.is_active === false && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40">
+                              Archived
+                            </span>
+                          )}
                         </div>
                         {product.description && (
                           <div className="text-xs text-white/70 drop-shadow-md mt-1">
@@ -594,19 +629,29 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         >
                           View
                         </button>
-                        <button
-                          className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                          onClick={() => onEdit(product)}
-                        >
-                          Edit
-                        </button>
-                        {/* Stock button removed */}
-                        <button
-                          className="px-2 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                          onClick={() => onDelete(product)}
-                        >
-                          Delete
-                        </button>
+                        {product.is_active === false ? (
+                          <button
+                            className="px-2 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg font-medium"
+                            onClick={() => handleRestore(product)}
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                              onClick={() => onEdit(product)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="px-2 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                              onClick={() => onDelete(product)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
@@ -718,12 +763,21 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 >
                   View
                 </button>
-                <button
-                  onClick={() => onEdit(product)}
-                  className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                >
-                  Edit
-                </button>
+                {product.is_active === false ? (
+                  <button
+                    onClick={() => handleRestore(product)}
+                    className="flex-1 px-3 py-2 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded-lg hover:bg-emerald-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  >
+                    Restore
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onEdit(product)}
+                    className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
                   </>
                 );

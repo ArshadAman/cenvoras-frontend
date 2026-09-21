@@ -24,3 +24,13 @@ export const convertQuotationToSalesOrder = (id, approvedItemIds = []) =>
       approved_item_ids: approvedItemIds,
     })
     .then((res) => res.data);
+
+export const downloadQuotationPDF = (id, templateData) => {
+  if (templateData) {
+    return api.post(`/billing/quotations/${id}/pdf/`, { template: templateData }, { responseType: 'blob' })
+      .then((res) => res.data);
+  }
+  return api.get(`/billing/quotations/${id}/pdf/`, { responseType: 'blob' })
+    .then((res) => res.data);
+};
+

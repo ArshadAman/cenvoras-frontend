@@ -1,3 +1,17 @@
+/**
+ * Bank Reconciliation Feature (Disabled - MVP mockup)
+ *
+ * The MVP implementation hardcoded bank name:
+ * formData.append('bank_name', 'HDFC Bank');
+ *
+ * Feature is commented out as of now until dynamic bank account selection
+ * and multi-format parser integration is ready.
+ */
+
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+
+/*
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/api';
@@ -24,7 +38,7 @@ const reconcileLine = async ({ lineId, entryId }) => {
   return response.data;
 };
 
-export default function BankReconciliation() {
+export function BankReconciliationMVP() {
   const [statementId, setStatementId] = useState(null);
   const queryClient = useQueryClient();
 
@@ -71,7 +85,6 @@ export default function BankReconciliation() {
           </div>
           
           <div className="flex gap-4">
-             {/* Simple File Upload Button */}
              <label className="btn-primary flex items-center gap-2 cursor-pointer">
               <ArrowUpTrayIcon className="w-4 h-4" />
               <span>Upload Statement</span>
@@ -107,7 +120,6 @@ export default function BankReconciliation() {
                   line.is_reconciled ? 'border-green-500/20 bg-green-500/5' : 'border-white/10'
                 }`}>
                   <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                    {/* Bank Side */}
                     <div className="flex-1 w-full">
                       <div className="flex justify-between mb-1">
                         <span className="text-gray-400 text-xs font-mono">{line.date}</span>
@@ -120,7 +132,6 @@ export default function BankReconciliation() {
                       </div>
                     </div>
 
-                    {/* Divider Icon */}
                     <div className="hidden md:block text-gray-600">
                       {line.is_reconciled ? (
                         <CheckCircleIcon className="w-6 h-6 text-green-500" />
@@ -129,7 +140,6 @@ export default function BankReconciliation() {
                       )}
                     </div>
 
-                    {/* Ledger Side / Match Action */}
                     <div className="flex-1 w-full border-l border-white/10 md:pl-4">
                       {line.is_reconciled ? (
                         <div className="flex items-center gap-2">
@@ -182,4 +192,10 @@ export default function BankReconciliation() {
       </div>
     </>
   );
+}
+*/
+
+export default function BankReconciliation() {
+  // Feature commented out as of now — redirected to Coming Soon
+  return <Navigate to="/coming-soon" replace />;
 }
