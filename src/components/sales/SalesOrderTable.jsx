@@ -7,11 +7,23 @@ import Pagination from "../common/Pagination";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import SalesOrderConvertModal from "./SalesOrderConvertModal";
 
-export default function SalesOrderTable({ onEdit, onView, onDelete }) {
+export default function SalesOrderTable({ 
+  onEdit, 
+  onView, 
+  onDelete, 
+  initialSearch = "", 
+  highlightedOrderId = null 
+}) {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch || "");
   const [page, setPage] = useState(1);
   const [convertOrder, setConvertOrder] = useState(null);
+
+  React.useEffect(() => {
+    if (initialSearch) {
+      setSearch(initialSearch);
+    }
+  }, [initialSearch]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["salesOrders", search, page],
@@ -62,9 +74,25 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                 </tr>
               </thead>
               <tbody>
-                  {filteredOrders.map(order => (
-                      <tr key={order.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-white font-medium">{order.order_number}</td>
+                  {filteredOrders.map(order => {
+                    const isHighlighted = highlightedOrderId && (String(order.id) === String(highlightedOrderId));
+                    return (
+                      <tr 
+                        key={order.id} 
+                        className={`border-b transition-colors ${
+                          isHighlighted 
+                            ? 'bg-purple-500/20 border-purple-500/40 ring-1 ring-purple-500/50' 
+                            : 'bg-transparent border-white/5 hover:bg-white/5'
+                        }`}
+                      >
+                          <td className="px-6 py-4 whitespace-nowrap text-white font-medium flex items-center gap-2">
+                            <span>{order.order_number}</span>
+                            {isHighlighted && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-purple-500/30 text-purple-200 border border-purple-400/40 rounded-full">
+                                Referenced
+                              </span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-gray-400">{format(new Date(order.date), 'MMM dd, yyyy')}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-white">{order.customer_display_name || order.customer_name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-cyan-400 font-bold">{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
@@ -81,7 +109,8 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                                <button onClick={() => onDelete(order)} className="text-red-400 hover:text-red-300">Delete</button>
                           </td>
                       </tr>
-                  ))}
+                    );
+                  })}
                   {filteredOrders.length === 0 && (
                        <tr><td colSpan="6" className="text-center py-8 text-gray-500">No sales orders found</td></tr>
                   )}
@@ -96,11 +125,27 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
               No sales orders found.
             </div>
           ) : (
-            filteredOrders.map((order) => (
-              <div key={order.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">
+            filteredOrders.map((order) => {
+              const isHighlighted = highlightedOrderId && (String(order.id) === String(highlightedOrderId));
+              return (
+              <div 
+                key={order.id} 
+                className={`backdrop-filter backdrop-blur-10 rounded-xl border p-3 transition-all duration-300 ${
+                  isHighlighted 
+                    ? 'bg-purple-500/20 border-purple-500/50 ring-1 ring-purple-500/50' 
+                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                }`}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="text-base font-bold text-white">{order.order_number}</div>
+                    <div className="text-base font-bold text-white flex items-center gap-2">
+                      <span>{order.order_number}</span>
+                      {isHighlighted && (
+                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase bg-purple-500/30 text-purple-200 border border-purple-400/40 rounded-full">
+                          Referenced
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
                       {(() => {
                         try {
@@ -141,9 +186,10 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                   <button onClick={() => onDelete(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Delete</button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            );
+          })
+        )}
+      </div>
       </>
 
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
