@@ -375,7 +375,7 @@ export default function Employees() {
                                 toast.success('Employee deleted');
                                 fetchEmployees();
                               } catch(e){
-                                toast.error('Failed to delete employee');
+                                toast.error(e.response?.data?.detail || 'Failed to delete employee');
                               }
                             }
                           }}

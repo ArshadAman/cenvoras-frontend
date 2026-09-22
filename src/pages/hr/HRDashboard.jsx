@@ -11,6 +11,7 @@ import {
 import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
 import SimpleFormModal from "./SimpleFormModal";
+import LeaveTypeModal from "./LeaveTypeModal";
 
 // ─── Reusable Stat Card ───────────────────────────────────────────────────────
 function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
@@ -100,11 +101,32 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
 }
 
 // ─── Leave Application Modal ──────────────────────────────────────────────────
-function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes }) {
+function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes, onLeaveTypeAdded }) {
   const [form, setForm] = useState({ employee: "", leave_type: "", start_date: "", end_date: "", reason: "" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (isOpen) setForm({ employee: "", leave_type: "", start_date: "", end_date: "", reason: "" }); }, [isOpen]);
-  const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const [showAddLeaveType, setShowAddLeaveType] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setForm({ employee: "", leave_type: "", start_date: "", end_date: "", reason: "" });
+      setShowAddLeaveType(false);
+    }
+  }, [isOpen]);
+
+  const hc = (e) => {
+    if (e.target.name === "leave_type" && e.target.value === "__add_new__") {
+      setShowAddLeaveType(true);
+      return;
+    }
+    setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  };
+
+  const handleLeaveTypeCreated = (newLt) => {
+    if (onLeaveTypeAdded) onLeaveTypeAdded(newLt);
+    setForm(p => ({ ...p, leave_type: newLt.id }));
+    setShowAddLeaveType(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true);
     try { await hrApi.createLeaveApplication(form); toast.success("Leave application submitted"); onSuccess(); onClose(); }
@@ -117,36 +139,55 @@ function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes }) {
   if (!isOpen) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">Apply for Leave</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+    <>
+      <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+        <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
+          <div className="flex justify-between items-center p-5 border-b border-white/10">
+            <h2 className="text-lg font-semibold text-white">Apply for Leave</h2>
+            <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+          </div>
+          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <div><label className="block text-sm text-gray-300 mb-1">Employee *</label>
+              <select required name="employee" value={form.employee} onChange={hc} className={ic}>
+                <option value="">Select Employee</option>
+                {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
+              </select></div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm text-gray-300">Leave Type *</label>
+                <button
+                  type="button"
+                  onClick={() => setShowAddLeaveType(true)}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 transition"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Add
+                </button>
+              </div>
+              <select required name="leave_type" value={form.leave_type} onChange={hc} className={ic}>
+                <option value="">Select Leave Type</option>
+                {leaveTypes.map(lt => <option key={lt.id} value={lt.id}>{lt.name}</option>)}
+                <option value="__add_new__" className="text-indigo-400 font-semibold">+ Add New Leave Type...</option>
+              </select></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="block text-sm text-gray-300 mb-1">Start *</label><input required type="date" name="start_date" value={form.start_date} onChange={hc} className={ic} /></div>
+              <div><label className="block text-sm text-gray-300 mb-1">End *</label><input required type="date" name="end_date" value={form.end_date} onChange={hc} className={ic} /></div>
+            </div>
+            <div><label className="block text-sm text-gray-300 mb-1">Reason</label>
+              <textarea name="reason" value={form.reason} onChange={hc} rows={2} className={ic + " resize-none"} /></div>
+            <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
+              <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Submitting..." : "Submit"}</button>
+            </div>
+          </form>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div><label className="block text-sm text-gray-300 mb-1">Employee *</label>
-            <select required name="employee" value={form.employee} onChange={hc} className={ic}>
-              <option value="">Select Employee</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
-            </select></div>
-          <div><label className="block text-sm text-gray-300 mb-1">Leave Type *</label>
-            <select required name="leave_type" value={form.leave_type} onChange={hc} className={ic}>
-              <option value="">Select Leave Type</option>
-              {leaveTypes.map(lt => <option key={lt.id} value={lt.id}>{lt.name}</option>)}
-            </select></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-sm text-gray-300 mb-1">Start *</label><input required type="date" name="start_date" value={form.start_date} onChange={hc} className={ic} /></div>
-            <div><label className="block text-sm text-gray-300 mb-1">End *</label><input required type="date" name="end_date" value={form.end_date} onChange={hc} className={ic} /></div>
-          </div>
-          <div><label className="block text-sm text-gray-300 mb-1">Reason</label>
-            <textarea name="reason" value={form.reason} onChange={hc} rows={2} className={ic + " resize-none"} /></div>
-          <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Submitting..." : "Submit"}</button>
-          </div>
-        </form>
       </div>
-    </div>
+
+      <LeaveTypeModal
+        isOpen={showAddLeaveType}
+        onClose={() => setShowAddLeaveType(false)}
+        onSuccess={handleLeaveTypeCreated}
+      />
+    </>
   );
 }
 
@@ -546,7 +587,7 @@ export default function HRDashboard() {
   const handleDeleteEmployee = async (emp) => {
     if (!window.confirm(`Delete "${emp.full_name}"?`)) return;
     try { await hrApi.deleteEmployee(emp.id); toast.success("Deleted"); fetchAll(); }
-    catch (e) { toast.error("Failed to delete employee"); }
+    catch (e) { toast.error(e.response?.data?.detail || "Failed to delete employee"); }
   };
   const handleDeleteNotification = async (id) => {
     if (!window.confirm("Are you sure you want to delete this notification?")) return;
@@ -1106,7 +1147,7 @@ export default function HRDashboard() {
       <SimpleFormModal isOpen={deptModal.open} onClose={() => setDeptModal({ open: false, item: null })} title={deptModal.item ? "Edit Department" : "Add Department"} label="Department Name" initialValue={deptModal.item?.name || ""} onSubmit={handleSaveDept} />
       <SimpleFormModal isOpen={desigModal.open} onClose={() => setDesigModal({ open: false, item: null })} title={desigModal.item ? "Edit Designation" : "Add Designation"} label="Designation Name" initialValue={desigModal.item?.name || ""} onSubmit={handleSaveDesig} />
       <AttendanceModal isOpen={attModal} onClose={() => setAttModal(false)} onSuccess={fetchAll} employees={employees} />
-      <LeaveModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onSuccess={fetchAll} employees={employees} leaveTypes={leaveTypes} />
+      <LeaveModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onSuccess={fetchAll} employees={employees} leaveTypes={leaveTypes} onLeaveTypeAdded={(newLt) => setLeaveTypes(p => [...p, newLt])} />
       <TaskModal isOpen={taskModal} onClose={() => { setTaskModal(false); setTaskToEdit(null); }} onSuccess={fetchAll} employees={employees} task={taskToEdit} />
       <TaskDetailsModal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} task={selectedTask} employees={employees} onEdit={(t) => { setTaskToEdit(t); setTaskModal(true); }} onDelete={handleDeleteTask} />
       <NotificationModal isOpen={notificationModal} onClose={() => setNotificationModal(false)} onSuccess={fetchAll} employees={employees} />

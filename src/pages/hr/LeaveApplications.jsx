@@ -3,15 +3,33 @@ import { hrApi } from "../../api/hr";
 import { PaperAirplaneIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 
-function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTypes }) {
+import LeaveTypeModal from "./LeaveTypeModal";
+
+function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTypes, onLeaveTypeAdded }) {
   const [form, setForm] = useState({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
   const [saving, setSaving] = useState(false);
+  const [showAddLeaveType, setShowAddLeaveType] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setForm({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
+    if (isOpen) {
+      setForm({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
+      setShowAddLeaveType(false);
+    }
   }, [isOpen]);
 
-  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    if (e.target.name === 'leave_type' && e.target.value === '__add_new__') {
+      setShowAddLeaveType(true);
+      return;
+    }
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleLeaveTypeCreated = (newLt) => {
+    if (onLeaveTypeAdded) onLeaveTypeAdded(newLt);
+    setForm((prev) => ({ ...prev, leave_type: newLt.id }));
+    setShowAddLeaveType(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,58 +58,76 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
   const labelCls = "block text-sm font-medium text-gray-300 mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-xl font-semibold text-white">Apply for Leave</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">
-            <XMarkIcon className="w-6 h-6" />
-          </button>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+          <div className="flex justify-between items-center p-5 border-b border-white/10">
+            <h2 className="text-xl font-semibold text-white">Apply for Leave</h2>
+            <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <div>
+              <label className={labelCls}>Employee *</label>
+              <select required name="employee" value={form.employee} onChange={handleChange} className={inputCls}>
+                <option value="">Select Employee</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium text-gray-300">Leave Type *</label>
+                <button
+                  type="button"
+                  onClick={() => setShowAddLeaveType(true)}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 transition"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Add
+                </button>
+              </div>
+              <select required name="leave_type" value={form.leave_type} onChange={handleChange} className={inputCls}>
+                <option value="">Select Leave Type</option>
+                {leaveTypes.map((lt) => (
+                  <option key={lt.id} value={lt.id}>{lt.name}</option>
+                ))}
+                <option value="__add_new__" className="text-indigo-400 font-semibold">+ Add New Leave Type...</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Start Date *</label>
+                <input required type="date" name="start_date" value={form.start_date} onChange={handleChange} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>End Date *</label>
+                <input required type="date" name="end_date" value={form.end_date} onChange={handleChange} className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Reason</label>
+              <textarea name="reason" value={form.reason} onChange={handleChange} rows={3} className={inputCls + " resize-none"} placeholder="Optional reason..." />
+            </div>
+            <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
+              <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+                Cancel
+              </button>
+              <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 transition disabled:opacity-50">
+                {saving ? 'Submitting...' : 'Submit Application'}
+              </button>
+            </div>
+          </form>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className={labelCls}>Employee *</label>
-            <select required name="employee" value={form.employee} onChange={handleChange} className={inputCls}>
-              <option value="">Select Employee</option>
-              {employees.map((e) => (
-                <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Leave Type *</label>
-            <select required name="leave_type" value={form.leave_type} onChange={handleChange} className={inputCls}>
-              <option value="">Select Leave Type</option>
-              {leaveTypes.map((lt) => (
-                <option key={lt.id} value={lt.id}>{lt.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Start Date *</label>
-              <input required type="date" name="start_date" value={form.start_date} onChange={handleChange} className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>End Date *</label>
-              <input required type="date" name="end_date" value={form.end_date} onChange={handleChange} className={inputCls} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Reason</label>
-            <textarea name="reason" value={form.reason} onChange={handleChange} rows={3} className={inputCls + " resize-none"} placeholder="Optional reason..." />
-          </div>
-          <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
-              Cancel
-            </button>
-            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 transition disabled:opacity-50">
-              {saving ? 'Submitting...' : 'Submit Application'}
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
+
+      <LeaveTypeModal
+        isOpen={showAddLeaveType}
+        onClose={() => setShowAddLeaveType(false)}
+        onSuccess={handleLeaveTypeCreated}
+      />
+    </>
   );
 }
 
@@ -240,6 +276,7 @@ export default function LeaveApplications() {
         onSuccess={fetchApplications}
         employees={employees}
         leaveTypes={leaveTypes}
+        onLeaveTypeAdded={(newLt) => setLeaveTypes((prev) => [...prev, newLt])}
       />
     </>
   );
