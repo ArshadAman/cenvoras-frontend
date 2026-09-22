@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { hrApi } from '../../api/hr';
 import { getWarehouses } from '../../api/inventory';
 import { toast } from 'react-toastify';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const EMPTY_FORM = {
   full_name: '',
@@ -30,6 +30,7 @@ const EMPTY_FORM = {
   bank_account_number: '',
   bank_ifsc: '',
   account_holder_name: '',
+  upi_id: '',
 };
 
 export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess }) {
@@ -40,6 +41,16 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
+
+  // Quick Add Department Modal state
+  const [showAddDept, setShowAddDept] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [addingDept, setAddingDept] = useState(false);
+
+  // Quick Add Designation Modal state
+  const [showAddDesig, setShowAddDesig] = useState(false);
+  const [newDesigName, setNewDesigName] = useState('');
+  const [addingDesig, setAddingDesig] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -71,6 +82,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           bank_account_number: employee.bank_account_number || '',
           bank_ifsc: employee.bank_ifsc || '',
           account_holder_name: employee.account_holder_name || '',
+          upi_id: employee.upi_id || '',
         });
       } else {
         setFormData(EMPTY_FORM);
@@ -100,12 +112,102 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     }
   };
 
+  const handleQuickAddDepartment = async (e) => {
+    e.preventDefault();
+    if (!newDeptName.trim()) return;
+    setAddingDept(true);
+    try {
+      const res = await hrApi.createDepartment({ name: newDeptName.trim() });
+      const created = res.data;
+      setDepartments((prev) => [...prev, created]);
+      setFormData((prev) => ({ ...prev, department_id: created.id }));
+      toast.success(`Department "${created.name}" created`);
+      setNewDeptName('');
+      setShowAddDept(false);
+    } catch (err) {
+      toast.error(err.response?.data?.name?.[0] || err.response?.data?.detail || 'Failed to create department');
+    } finally {
+      setAddingDept(false);
+    }
+  };
+
+  const handleQuickAddDesignation = async (e) => {
+    e.preventDefault();
+    if (!newDesigName.trim()) return;
+    setAddingDesig(true);
+    try {
+      const res = await hrApi.createDesignation({ name: newDesigName.trim() });
+      const created = res.data;
+      setDesignations((prev) => [...prev, created]);
+      setFormData((prev) => ({ ...prev, designation_id: created.id }));
+      toast.success(`Designation "${created.name}" created`);
+      setNewDesigName('');
+      setShowAddDesig(false);
+    } catch (err) {
+      toast.error(err.response?.data?.name?.[0] || err.response?.data?.detail || 'Failed to create designation');
+    } finally {
+      setAddingDesig(false);
+    }
+  };
+
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Mandatory phone number check
+    if (!formData.personal_phone?.trim()) {
+      toast.error('Personal phone number is mandatory.');
+      setActiveTab('personal');
+      return;
+    }
+
+    // 2. Age must be at least 13 years
+    if (formData.date_of_birth) {
+      const dob = new Date(formData.date_of_birth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age < 13) {
+        toast.error('Employee must be at least 13 years old.');
+        setActiveTab('personal');
+        return;
+      }
+    } else {
+      toast.error('Date of birth is mandatory.');
+      setActiveTab('personal');
+      return;
+    }
+
+    // 3. Department & Designation mandatory check
+    if (!formData.department_id) {
+      toast.error('Please select or add a Department.');
+      setActiveTab('employment');
+      return;
+    }
+    if (!formData.designation_id) {
+      toast.error('Please select or add a Designation.');
+      setActiveTab('employment');
+      return;
+    }
+
+    // 4. Mandatory bank details check
+    if (
+      !formData.account_holder_name?.trim() ||
+      !formData.bank_name?.trim() ||
+      !formData.bank_account_number?.trim() ||
+      !formData.bank_ifsc?.trim()
+    ) {
+      toast.error('Please fill in all mandatory bank details (Account Holder, Bank Name, Account Number, IFSC).');
+      setActiveTab('bank');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -132,6 +234,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         bank_account_number: formData.bank_account_number,
         bank_ifsc: formData.bank_ifsc ? formData.bank_ifsc.toUpperCase() : '',
         account_holder_name: formData.account_holder_name,
+        upi_id: formData.upi_id?.trim() || null,
       };
 
       if (formData.personal_email) payload.personal_email = formData.personal_email;
@@ -162,6 +265,12 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   };
 
   if (!isOpen) return null;
+
+  const maxDobDate = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 13);
+    return d.toISOString().split('T')[0];
+  })();
 
   const inputCls = 'w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500';
   const labelCls = 'block text-sm font-medium text-gray-300 mb-1';
@@ -213,11 +322,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Personal Email</label>
-                  <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputCls} />
+                  <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputCls} placeholder="john@example.com" />
                 </div>
                 <div>
-                  <label className={labelCls}>Personal Phone</label>
-                  <input type="text" name="personal_phone" value={formData.personal_phone} onChange={handleChange} className={inputCls} />
+                  <label className={labelCls}>Personal Phone *</label>
+                  <input required type="tel" name="personal_phone" value={formData.personal_phone} onChange={handleChange} className={inputCls} placeholder="e.g. 9876543210" />
                 </div>
               </div>
 
@@ -227,8 +336,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   <input type="text" name="father_mother_name" value={formData.father_mother_name} onChange={handleChange} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Date of Birth *</label>
-                  <input required type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className={inputCls} />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls + ' mb-0'}>Date of Birth *</label>
+                    <span className="text-[11px] text-gray-400 font-medium">At least 13 yrs old</span>
+                  </div>
+                  <input required type="date" name="date_of_birth" max={maxDobDate} value={formData.date_of_birth} onChange={handleChange} className={inputCls} />
                 </div>
               </div>
 
@@ -291,8 +403,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Department</label>
-                  <select name="department_id" value={formData.department_id} onChange={handleChange} className={inputCls}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls + ' mb-0'}>Department *</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddDept(true)}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 transition"
+                    >
+                      <PlusIcon className="w-3.5 h-3.5" />
+                      Add New
+                    </button>
+                  </div>
+                  <select required name="department_id" value={formData.department_id} onChange={handleChange} className={inputCls}>
                     <option value="">Select Department</option>
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>{d.name}</option>
@@ -300,8 +422,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Designation</label>
-                  <select name="designation_id" value={formData.designation_id} onChange={handleChange} className={inputCls}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls + ' mb-0'}>Designation *</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddDesig(true)}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 transition"
+                    >
+                      <PlusIcon className="w-3.5 h-3.5" />
+                      Add New
+                    </button>
+                  </div>
+                  <select required name="designation_id" value={formData.designation_id} onChange={handleChange} className={inputCls}>
                     <option value="">Select Designation</option>
                     {designations.map((d) => (
                       <option key={d.id} value={d.id}>{d.name}</option>
@@ -371,24 +503,30 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           {activeTab === 'bank' && (
             <div className="space-y-4">
               <div>
-                <label className={labelCls}>Account Holder Name</label>
-                <input type="text" name="account_holder_name" value={formData.account_holder_name} onChange={handleChange} className={inputCls} placeholder="As per bank records" />
+                <label className={labelCls}>Account Holder Name *</label>
+                <input required type="text" name="account_holder_name" value={formData.account_holder_name} onChange={handleChange} className={inputCls} placeholder="As per bank records" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Bank Name</label>
-                  <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputCls} placeholder="e.g. HDFC Bank" />
+                  <label className={labelCls}>Bank Name *</label>
+                  <input required type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputCls} placeholder="e.g. HDFC Bank" />
                 </div>
                 <div>
-                  <label className={labelCls}>Bank Account Number</label>
-                  <input type="text" name="bank_account_number" value={formData.bank_account_number} onChange={handleChange} className={inputCls} placeholder="Account Number" />
+                  <label className={labelCls}>Bank Account Number *</label>
+                  <input required type="text" name="bank_account_number" value={formData.bank_account_number} onChange={handleChange} className={inputCls} placeholder="Account Number" />
                 </div>
               </div>
 
-              <div>
-                <label className={labelCls}>IFSC Code</label>
-                <input type="text" name="bank_ifsc" value={formData.bank_ifsc} onChange={handleChange} className={inputCls} placeholder="e.g. HDFC0001234" maxLength={11} />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>IFSC Code *</label>
+                  <input required type="text" name="bank_ifsc" value={formData.bank_ifsc} onChange={handleChange} className={inputCls} placeholder="e.g. HDFC0001234" maxLength={11} />
+                </div>
+                <div>
+                  <label className={labelCls}>UPI ID / VPA (Optional)</label>
+                  <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputCls} placeholder="e.g. employee@okhdfcbank" />
+                </div>
               </div>
             </div>
           )}
@@ -435,6 +573,102 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           </div>
         </form>
       </div>
+
+      {/* Quick Add Department Modal */}
+      {showAddDept && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-[#181820] border border-white/15 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center">
+              <h3 className="text-base font-semibold text-white">Add New Department</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddDept(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleQuickAddDepartment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Department Name *</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g. Sales, Marketing, IT"
+                  value={newDeptName}
+                  onChange={(e) => setNewDeptName(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDept(false)}
+                  className="px-3 py-1.5 text-xs text-gray-300 bg-white/5 rounded-lg hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingDept}
+                  className="px-4 py-1.5 text-xs font-semibold text-slate-950 bg-indigo-400 rounded-lg hover:bg-indigo-300 disabled:opacity-50"
+                >
+                  {addingDept ? 'Creating...' : 'Create Department'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Add Designation Modal */}
+      {showAddDesig && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="bg-[#181820] border border-white/15 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center">
+              <h3 className="text-base font-semibold text-white">Add New Designation</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddDesig(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleQuickAddDesignation} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1">Designation Title *</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g. Senior Developer, Sales Executive"
+                  value={newDesigName}
+                  onChange={(e) => setNewDesigName(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDesig(false)}
+                  className="px-3 py-1.5 text-xs text-gray-300 bg-white/5 rounded-lg hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingDesig}
+                  className="px-4 py-1.5 text-xs font-semibold text-slate-950 bg-indigo-400 rounded-lg hover:bg-indigo-300 disabled:opacity-50"
+                >
+                  {addingDesig ? 'Creating...' : 'Create Designation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
