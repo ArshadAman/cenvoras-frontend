@@ -1,16 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import SalesOrderTable from "../components/sales/SalesOrderTable";
 import SalesOrderForm from "../components/sales/SalesOrderForm";
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { deleteSalesOrder } from "../api/sales_order";
+import { deleteSalesOrder, getSalesOrder } from "../api/sales_order";
 
 export default function SalesOrderList() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const targetOrderId = searchParams.get("orderId");
+  const targetOrderNumber = searchParams.get("orderNumber");
+
   const [showForm, setShowForm] = useState(false);
   const [editOrder, setEditOrder] = useState(null);
+
+  // Auto-open referenced order if navigated from Delivery Challan
+  useEffect(() => {
+    if (!targetOrderId) return;
+    let isMounted = true;
+
+    getSalesOrder(targetOrderId)
+      .then((order) => {
+        if (isMounted && order) {
+          setEditOrder(order);
+          setShowForm(true);
+          toast.info(`Opened referenced Sales Order #${order.order_number}`, { autoClose: 3000 });
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load referenced sales order:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [targetOrderId]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteSalesOrder,
@@ -27,6 +54,11 @@ export default function SalesOrderList() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditOrder(null);
+    if (searchParams.get("orderId")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("orderId");
+      setSearchParams(nextParams, { replace: true });
+    }
   };
 
   const handleDelete = async (order) => {
@@ -60,6 +92,8 @@ export default function SalesOrderList() {
             onEdit={handleEdit}
             onView={(order) => console.log("View", order)}
             onDelete={handleDelete}
+            initialSearch={targetOrderNumber || ""}
+            highlightedOrderId={targetOrderId || null}
           />
         </div>
 

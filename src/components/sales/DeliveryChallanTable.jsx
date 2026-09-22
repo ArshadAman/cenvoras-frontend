@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDeliveryChallans, deleteDeliveryChallan, convertToInvoice } from "../../api/delivery_challan";
 import { format } from "date-fns";
@@ -10,15 +11,28 @@ import {
   ArrowPathRoundedSquareIcon,
   TruckIcon,
   DocumentCheckIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ClipboardDocumentListIcon,
+  ArrowTopRightOnSquareIcon
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
 
 export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess }) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "open", "invoiced", "cancelled"
   const [page, setPage] = useState(1);
+
+  const handleOpenSalesOrder = (salesOrder, salesOrderNumber) => {
+    if (!salesOrder && !salesOrderNumber) return;
+    const orderId = typeof salesOrder === "object" ? salesOrder.id : salesOrder;
+    const orderNum = salesOrderNumber || (typeof salesOrder === "object" ? salesOrder.order_number : "");
+    const params = new URLSearchParams();
+    if (orderId) params.set("orderId", String(orderId));
+    if (orderNum) params.set("orderNumber", String(orderNum));
+    navigate(`/sales-orders?${params.toString()}`);
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["deliveryChallans", search, statusFilterTab, page],
@@ -168,6 +182,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                 Customer
               </th>
               <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Ref Order
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
                 Transport / Vehicle
               </th>
               <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -187,7 +204,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="8" className="px-6 py-12 text-center">
+                <td colSpan="9" className="px-6 py-12 text-center">
                   <div className="flex justify-center items-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
                   </div>
@@ -195,7 +212,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
               </tr>
             ) : filteredChallans.length === 0 ? (
               <tr>
-                <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
+                <td colSpan="9" className="px-6 py-12 text-center text-gray-400">
                   No delivery challans found matching your criteria.
                 </td>
               </tr>
@@ -227,6 +244,25 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                         <div className="text-[11px] text-gray-500 font-mono">
                           {challan.customer_gstin}
                         </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      {challan.sales_order || challan.sales_order_number ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenSalesOrder(challan.sales_order, challan.sales_order_number);
+                          }}
+                          className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 hover:border-purple-400/50 transition-all font-mono text-xs font-semibold cursor-pointer shadow-sm shadow-purple-500/5"
+                          title={`Click to open Sales Order ${challan.sales_order_number || ''} in Sales Orders page`}
+                        >
+                          <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+                          <span>{challan.sales_order_number || challan.sales_order_details?.order_number || `SO #${String(challan.sales_order).slice(0, 8)}`}</span>
+                          <ArrowTopRightOnSquareIcon className="w-3 h-3 text-purple-400/70 group-hover:text-purple-200 transition-colors" />
+                        </button>
+                      ) : (
+                        <span className="text-gray-500 text-xs italic">—</span>
                       )}
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
@@ -387,6 +423,25 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                     <span className="text-white font-mono">{challan.eway_bill_number || "—"}</span>
                   </div>
                 </div>
+
+                {/* Ref Sales Order (Mobile) */}
+                {(challan.sales_order || challan.sales_order_number) && (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <span className="text-[10px] text-purple-300/80 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400" />
+                      Ref Sales Order
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSalesOrder(challan.sales_order, challan.sales_order_number)}
+                      className="text-xs font-mono font-bold text-purple-300 hover:text-purple-100 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 transition-colors"
+                      title="Click to open this Sales Order"
+                    >
+                      <span>{challan.sales_order_number || challan.sales_order_details?.order_number || `SO #${String(challan.sales_order).slice(0, 8)}`}</span>
+                      <ArrowTopRightOnSquareIcon className="w-3 h-3 text-purple-400" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2">

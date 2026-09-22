@@ -86,6 +86,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     invoice_number: invoiceDetails.invoice_number || invoiceDetails.challan_number || invoice?.challan_number || invoice?.invoice_number || '',
     invoice_date: invoiceDetails.invoice_date || invoiceDetails.date || invoice?.date || invoice?.invoice_date || '',
     customer_name: invoiceDetails.customer_name || invoiceDetails.customer?.name || invoice?.customer_name || '',
+    po_number: invoiceDetails.po_number || invoiceDetails.sales_order_number || invoice?.sales_order_number || (invoiceDetails.sales_order_details?.order_number ? `SO #${invoiceDetails.sales_order_details.order_number}` : '') || '',
   };
 
   // Print functionality with anti-slicing CSS rules
