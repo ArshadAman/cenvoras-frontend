@@ -28,9 +28,14 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
   const [ewayBillNumber, setEwayBillNumber] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Selected items & dispatch quantities for Delivery Challan
+  // Selected items & dispatch quantities for Delivery Challan / Sales Invoice
   const orderItems = useMemo(() => {
-    return Array.isArray(order?.items) ? order.items.filter((i) => Number(i.quantity) > 0) : [];
+    return Array.isArray(order?.items)
+      ? order.items.filter((i) => {
+          const pending = typeof i.pending_quantity === 'number' ? i.pending_quantity : i.quantity;
+          return Number(pending) > 0;
+        })
+      : [];
   }, [order]);
 
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
@@ -44,12 +49,9 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
 
     const initialQtys = {};
     orderItems.forEach((i) => {
-      initialQtFormat(i);
+      const pending = typeof i.pending_quantity === 'number' ? i.pending_quantity : i.quantity;
+      initialQtys[i.id] = Number(pending) || 1;
     });
-
-    function initialQtFormat(item) {
-      initialQtys[item.id] = Number(item.quantity) || 1;
-    }
     setDispatchQuantities(initialQtys);
     setVehicleNumber('');
     setTransportMode('');
@@ -116,34 +118,35 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
   const handleConvert = async () => {
     setIsSubmitting(true);
     try {
-      if (conversionType === 'challan') {
-        if (selectedItemIds.size === 0) {
-          toast.warning('Please select at least one item to include in the Delivery Challan.');
-          setIsSubmitting(false);
-          return;
-        }
+      if (selectedItemIds.size === 0) {
+        toast.warning(`Please select at least one item to ${conversionType === 'challan' ? 'dispatch' : 'invoice'}.`);
+        setIsSubmitting(false);
+        return;
+      }
 
-        const itemsPayload = [];
-        for (const item of orderItems) {
-          if (selectedItemIds.has(item.id)) {
-            const qty = Number(dispatchQuantities[item.id]) || 0;
-            if (qty <= 0) {
-              toast.error(`Please enter a valid dispatch quantity for ${item.product_name || 'item'}.`);
-              setIsSubmitting(false);
-              return;
-            }
-            if (qty > item.quantity) {
-              toast.error(`Cannot dispatch ${qty} for ${item.product_name || 'item'}. Max available in order: ${item.quantity}.`);
-              setIsSubmitting(false);
-              return;
-            }
-            itemsPayload.push({
-              id: item.id,
-              quantity: qty,
-            });
+      const itemsPayload = [];
+      for (const item of orderItems) {
+        if (selectedItemIds.has(item.id)) {
+          const qty = Number(dispatchQuantities[item.id]) || 0;
+          const maxAvailable = typeof item.pending_quantity === 'number' ? item.pending_quantity : item.quantity;
+          if (qty <= 0) {
+            toast.error(`Please enter a valid quantity for ${item.product_name || 'item'}.`);
+            setIsSubmitting(false);
+            return;
           }
+          if (qty > maxAvailable) {
+            toast.error(`Cannot select ${qty} for ${item.product_name || 'item'}. Max available in order: ${maxAvailable}.`);
+            setIsSubmitting(false);
+            return;
+          }
+          itemsPayload.push({
+            id: item.id,
+            quantity: qty,
+          });
         }
+      }
 
+      if (conversionType === 'challan') {
         const res = await convertOrderToChallan(order.id, {
           items: itemsPayload,
           vehicle_number: vehicleNumber,
@@ -158,7 +161,9 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
         onClose();
         navigate('/delivery-challans');
       } else {
-        const res = await convertToInvoice(order.id);
+        const res = await convertToInvoice(order.id, {
+          items: itemsPayload,
+        });
         toast.success(res?.message || 'Order converted to Sales Invoice successfully!');
         queryClient.invalidateQueries({ queryKey: ['salesOrders'] });
         queryClient.invalidateQueries({ queryKey: ['salesInvoices'] });
@@ -222,10 +227,10 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-white flex items-center justify-between">
                     <span>Delivery Challan</span>
-                    <span className="text-[10px] text-blue-400 font-medium">Dispatch Note</span>
+                    <span className="text-[10px] text-blue-400 font-medium">Dispatch</span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-1 leading-tight">
-                    Select items & dispatch quantities. Reduces stock; unfulfilled balance stays on order.
+                    Dispatches goods & reduces inventory stock. No ledger/receivable entry created.
                   </p>
                 </div>
               </div>
@@ -248,114 +253,120 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                     <span className="text-[10px] text-cyan-400 font-medium">Direct Billing</span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-1 leading-tight">
-                    Immediately converts order into a final GST tax invoice with ledger accounting.
+                    Converts selected items directly into a final GST tax invoice with ledger accounting.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Delivery Challan Items Selection & Quantity Customization */}
-            {conversionType === 'challan' && (
-              <div className="space-y-3 pt-1">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-                    <span>Select Items to Dispatch</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
-                      {selectedItemIds.size} of {orderItems.length} selected
-                    </span>
-                  </div>
-                  {orderItems.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={toggleAllItems}
-                      className="text-xs text-cyan-400 hover:text-cyan-300 font-medium px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 transition-all"
-                    >
-                      {selectedItemIds.size === orderItems.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                  )}
+            {/* Items Selection & Quantity Customization for both Challan & Invoice */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                  <span>Select Items to {conversionType === 'challan' ? 'Dispatch' : 'Invoice'}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                    {selectedItemIds.size} of {orderItems.length} selected
+                  </span>
                 </div>
+                {orderItems.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={toggleAllItems}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 font-medium px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 transition-all"
+                  >
+                    {selectedItemIds.size === orderItems.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                )}
+              </div>
 
-                {orderItems.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-gray-400 bg-white/5 rounded-xl border border-white/5">
-                    No items available in this sales order.
-                  </div>
-                ) : (
-                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                    {orderItems.map((item) => {
-                      const isSelected = selectedItemIds.has(item.id);
-                      const currentQty = dispatchQuantities[item.id] !== undefined ? dispatchQuantities[item.id] : item.quantity;
-                      const maxQty = item.quantity;
+              {orderItems.length === 0 ? (
+                <div className="p-6 text-center text-xs text-gray-400 bg-white/5 rounded-xl border border-white/5">
+                  No pending items available in this sales order.
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  {orderItems.map((item) => {
+                    const isSelected = selectedItemIds.has(item.id);
+                    const maxQty = typeof item.pending_quantity === 'number' ? item.pending_quantity : item.quantity;
+                    const currentQty = dispatchQuantities[item.id] !== undefined ? dispatchQuantities[item.id] : maxQty;
 
-                      return (
-                        <div
-                          key={item.id}
-                          className={`p-3 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                            isSelected
-                              ? 'bg-cyan-500/10 border-cyan-500/40'
-                              : 'bg-white/5 border-white/5 opacity-70 hover:opacity-100'
-                          }`}
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-3 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                          isSelected
+                            ? 'bg-cyan-500/10 border-cyan-500/40'
+                            : 'bg-white/5 border-white/5 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        {/* Item Left: Checkbox + Product Name */}
+                        <div 
+                          onClick={() => toggleItem(item.id)}
+                          className="flex items-center gap-3 cursor-pointer flex-1 min-w-0 select-none"
                         >
-                          {/* Item Left: Checkbox + Product Name */}
-                          <div 
-                            onClick={() => toggleItem(item.id)}
-                            className="flex items-center gap-3 cursor-pointer flex-1 min-w-0 select-none"
-                          >
-                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
-                              isSelected 
-                                ? 'bg-cyan-500 border-cyan-500 text-black' 
-                                : 'border-gray-500 bg-white/5'
-                            }`}>
-                              {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className={`text-xs font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-300'}`}>
-                                {item.product_name}
-                              </p>
-                              <p className="text-[11px] text-gray-400">
-                                Order Qty: <strong className="text-gray-200">{maxQty} {item.unit || 'pcs'}</strong> &bull; Rate: {getCurrencySymbol()}{Number(item.price || 0).toFixed(2)}
-                              </p>
-                            </div>
+                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isSelected 
+                              ? 'bg-cyan-500 border-cyan-500 text-black' 
+                              : 'border-gray-500 bg-white/5'
+                          }`}>
+                            {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
-
-                          {/* Item Right: Quantity Input & Line Amount */}
-                          <div className="flex items-center justify-between sm:justify-end gap-3 pl-8 sm:pl-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] text-gray-400 font-medium">Dispatch Qty:</span>
-                              <input
-                                type="number"
-                                min="1"
-                                max={maxQty}
-                                value={currentQty}
-                                disabled={!isSelected}
-                                onChange={(e) => handleQuantityChange(item.id, maxQty, e.target.value)}
-                                className="w-20 px-2.5 py-1.5 bg-[#111] border border-white/20 rounded-lg text-white text-xs text-center font-bold font-mono focus:border-cyan-400 focus:outline-none disabled:opacity-40"
-                              />
-                              <span className="text-[11px] text-gray-400">{item.unit || 'pcs'}</span>
-                            </div>
-
-                            <div className="text-right min-w-[70px]">
-                              <span className="text-xs font-bold text-cyan-400 font-mono">
-                                {getCurrencySymbol()}{(() => {
-                                  const q = Number(currentQty) || 0;
-                                  const p = Number(item.price || 0);
-                                  const d = Number(item.discount || 0);
-                                  const t = Number(item.tax || 0);
-                                  const base = q * p;
-                                  const discAmt = (base * d) / 100;
-                                  const taxable = base - discAmt;
-                                  const taxAmt = (taxable * t) / 100;
-                                  return (taxable + taxAmt).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                })()}
-                              </span>
-                            </div>
+                          <div className="min-w-0">
+                            <p className={`text-xs font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                              {item.product_name}
+                            </p>
+                            <p className="text-[11px] text-gray-400">
+                              Pending Qty: <strong className="text-gray-200">{maxQty} {item.unit || 'pcs'}</strong>
+                              {item.dispatched_quantity > 0 && (
+                                <span className="text-purple-300 ml-1.5">(Dispatched: {item.dispatched_quantity})</span>
+                              )}
+                              {' '}&bull; Rate: {getCurrencySymbol()}{Number(item.price || 0).toFixed(2)}
+                            </p>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
 
-                {/* Optional Transport Info Accordion */}
+                        {/* Item Right: Quantity Input & Line Amount */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 pl-8 sm:pl-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-gray-400 font-medium">
+                              {conversionType === 'challan' ? 'Dispatch Qty:' : 'Invoice Qty:'}
+                            </span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={maxQty}
+                              value={currentQty}
+                              disabled={!isSelected}
+                              onChange={(e) => handleQuantityChange(item.id, maxQty, e.target.value)}
+                              className="w-20 px-2.5 py-1.5 bg-[#111] border border-white/20 rounded-lg text-white text-xs text-center font-bold font-mono focus:border-cyan-400 focus:outline-none disabled:opacity-40"
+                            />
+                            <span className="text-[11px] text-gray-400">{item.unit || 'pcs'}</span>
+                          </div>
+
+                          <div className="text-right min-w-[70px]">
+                            <span className="text-xs font-bold text-cyan-400 font-mono">
+                              {getCurrencySymbol()}{(() => {
+                                const q = Number(currentQty) || 0;
+                                const p = Number(item.price || 0);
+                                const d = Number(item.discount || 0);
+                                const t = Number(item.tax || 0);
+                                const base = q * p;
+                                const discAmt = (base * d) / 100;
+                                const taxable = base - discAmt;
+                                const taxAmt = (taxable * t) / 100;
+                                return (taxable + taxAmt).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                              })()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Optional Transport Info Accordion (Only for Delivery Challan) */}
+              {conversionType === 'challan' && (
                 <div className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.02]">
                   <button
                     type="button"
@@ -405,31 +416,20 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Direct Sales Invoice info */}
-            {conversionType === 'invoice' && (
-              <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300">
-                <p className="font-semibold mb-1">Direct Full Order Conversion</p>
-                <p className="text-gray-300 leading-relaxed">
-                  This will convert all remaining items from Sales Order #{order.order_number} directly into a final Sales Invoice, deduct inventory stock, and update customer ledger balances.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
             <div className="text-xs">
               <span className="text-gray-400 block text-[10px] uppercase font-bold">
-                {conversionType === 'challan' ? 'Challan Dispatch Value' : 'Total Order Value'}
+                {conversionType === 'challan' ? 'Challan Dispatch Value' : 'Invoice Value'}
               </span>
               <span className="text-cyan-400 font-bold text-base font-mono">
                 {getCurrencySymbol()}
-                {Number(
-                  conversionType === 'challan' ? dispatchSummary.total : (order.total_amount || 0)
-                ).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {Number(dispatchSummary.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
 

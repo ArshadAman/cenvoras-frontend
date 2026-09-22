@@ -15,5 +15,5 @@ export const updateSalesOrder = (id, data) =>
 export const deleteSalesOrder = (id) => 
   api.delete(`/billing/sales-orders/${id}/`).then(res => res.data);
 
-export const convertToInvoice = (id) =>
-  api.post(`/billing/sales-orders/${id}/convert_to_invoice/`).then(res => res.data);
+export const convertToInvoice = (id, data = {}) =>
+  api.post(`/billing/sales-orders/${id}/convert_to_invoice/`, data).then(res => res.data);
