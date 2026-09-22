@@ -552,6 +552,7 @@ export default function SalesForm({
   aiDraftData = null,
 }) {
   const isQuotation = documentType === "quotation";
+  const isDeliveryChallan = documentType === "delivery_challan";
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -561,7 +562,7 @@ export default function SalesForm({
         const submitBtn = document.querySelector('button[type="submit"]');
         if(submitBtn) {
             submitBtn.click();
-            toast.info(`Saving ${isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
+            toast.info(`Saving ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
         }
       }
       
@@ -674,14 +675,37 @@ export default function SalesForm({
   const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
   
   // State to track selected warehouse for stock filtering
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState(editData?.warehouse || "");
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState(
+    typeof editData?.warehouse === 'object' ? editData.warehouse?.id : (editData?.warehouse || "")
+  );
 
   const { data: stockPointsResult } = useQuery({
     queryKey: ["stockPoints", selectedWarehouseId],
-    queryFn: () => getStockPoints({ warehouse: selectedWarehouseId }),
-    enabled: canAccessInventory && !!selectedWarehouseId
+    queryFn: () => getStockPoints(selectedWarehouseId ? { warehouse: selectedWarehouseId } : {}),
+    enabled: canAccessInventory,
   });
   const stockPoints = Array.isArray(stockPointsResult) ? stockPointsResult : stockPointsResult?.data || stockPointsResult?.results || [];
+
+  const getProductBatchesForItem = (item) => {
+    if (!item) return [];
+    const prodId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
+    const prodName = (typeof item.product === 'string' ? item.product : item.product_name || item.product_detail?.name || "").trim().toLowerCase();
+
+    return stockPoints
+      ?.filter((sp) => {
+        const spProdId = sp.product_id || sp.batch?.product || sp.product;
+        const spProdName = (sp.product_name || "").trim().toLowerCase();
+        const idMatch = prodId && spProdId && String(prodId) === String(spProdId);
+        const nameMatch = prodName && spProdName && prodName === spProdName;
+        return (idMatch || nameMatch) && Number(sp.quantity || 0) > 0;
+      })
+      ?.map((sp) => {
+        const batchId = typeof sp.batch === 'object' ? sp.batch?.id : (sp.batch || sp.id);
+        const batchNum = sp.batch_number || sp.batch?.batch_number || 'Batch';
+        const qty = sp.quantity || 0;
+        return { id: batchId, name: batchNum, qty };
+      }) || [];
+  };
 
   const { data: invoiceSettings } = useQuery({
     queryKey: ["invoiceSettings"],
@@ -861,10 +885,11 @@ export default function SalesForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
-      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
+      toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       onClose();
     },
     onError: (error) => {
@@ -874,7 +899,7 @@ export default function SalesForm({
           toast.error(
             error.response?.data?.message ||
             error.message ||
-            `Failed to create ${isQuotation ? 'quotation' : 'sales bill'}`
+            `Failed to create ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
           );
       }
     },
@@ -885,10 +910,11 @@ export default function SalesForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
-      toast.success(`${isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
+      toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       onClose();
     },
     onError: (error) => {
@@ -898,7 +924,7 @@ export default function SalesForm({
           toast.error(
             error.response?.data?.message ||
             error.message ||
-            `Failed to update ${isQuotation ? 'quotation' : 'sales bill'}`
+            `Failed to update ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
           );
       }
     },
@@ -933,8 +959,8 @@ export default function SalesForm({
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
               {isEdit
-                ? `Edit ${isQuotation ? 'Quotation' : 'Sales Invoice'}`
-                : `New ${isQuotation ? 'Quotation' : 'Sales Invoice'}`}
+                ? `Edit ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`
+                : `New ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`}
             </h2>
              <p className="text-xs text-gray-400 flex items-center gap-2">
               <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
@@ -958,9 +984,9 @@ export default function SalesForm({
             // Required fields
             customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
             // Use fetched next number or edit data
-            invoice_number: editData?.invoice_number || nextInvData?.next_number || "",
-            invoice_date: editData?.invoice_date 
-              ? new Date(editData.invoice_date).toISOString().split('T')[0] 
+            invoice_number: editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
+            invoice_date: (editData?.invoice_date || editData?.date)
+              ? new Date(editData.invoice_date || editData.date).toISOString().split('T')[0] 
               : new Date().toLocaleDateString('sv-SE'),
             
             // Optional customer fields (for Customer record creation)
@@ -969,6 +995,9 @@ export default function SalesForm({
             customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
             customer_gstin: editData?.customer_gstin || "",
             delivery_address: editData?.delivery_address || "",
+            vehicle_number: editData?.vehicle_number || "",
+            transport_mode: editData?.transport_mode || "",
+            eway_bill_number: editData?.eway_bill_number || "",
             
             // Optional invoice fields
             due_date: editData?.due_date || "",
@@ -986,20 +1015,23 @@ export default function SalesForm({
               const qty = item.quantity || 1;
               const price = Number(item.price || 0) || 0;
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
+              const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
+              const productName = (typeof item.product === 'string' ? item.product : item.product_name || item.product_detail?.name || "");
+              const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
               return {
-                product: item.product || item.product_name || "",
-                product_id: item.product_id || null,
+                product: productName,
+                product_id: productId,
                 product_description: item.product_detail?.description || item.product_description || "",
                 quantity: qty,
                 free_quantity: item.free_quantity || 0,
-                batch: item.batch || "",
+                batch: batchId,
                 price: price,
                 amount: itemAmount, // This should always be qty * price before tax/discount
                 unit: item.unit || "pcs",
                 hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
                 discount: item.discount || 0,
                 tax: item.tax || 0,
-                isExistingProduct: !!(item.product_id),
+                isExistingProduct: !!productId,
               };
             }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map(item => {
                 const qty = item.quantity || 1;
@@ -1145,6 +1177,14 @@ export default function SalesForm({
                 ...(values.customer_phone && { customer_phone: values.customer_phone }),
                 ...(values.customer_address && { customer_address: values.customer_address }),
                 ...(values.customer_gstin && { customer_gstin: values.customer_gstin }),
+                // Delivery Challan specific fields
+                ...(isDeliveryChallan && {
+                  challan_number: values.invoice_number,
+                  date: values.invoice_date,
+                  vehicle_number: values.vehicle_number || null,
+                  transport_mode: values.transport_mode || null,
+                  eway_bill_number: values.eway_bill_number || null,
+                }),
               };
 
               console.log("DEBUG: Submitting Sales Invoice:", formData);
@@ -1241,19 +1281,19 @@ export default function SalesForm({
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        {isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
+                        {isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                       </label>
                       <Field
                         name="invoice_number"
                         type="text"
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="e.g. INV-ABCD-001"
+                        placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        {isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
+                        {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                       </label>
                       <Field
                         name="invoice_date"
@@ -1325,14 +1365,14 @@ export default function SalesForm({
                     </div>
                   </div>
 
-                  {/* Optional PO / Challan */}
+                  {/* Optional PO / Challan / Transport Details */}
                   {!isQuotation && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                       <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO</label>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Number</label>
                           <Field
                             name="po_number"
                             as="textarea"
@@ -1352,29 +1392,64 @@ export default function SalesForm({
                       </div>
                     </div>
 
-                    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Delivery Challan</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan</label>
-                          <Field
-                            name="challan_number"
-                            as="textarea"
-                            rows="1"
-                            className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                            placeholder="Enter challan details"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan Date</label>
-                          <Field
-                            name="challan_date"
-                            type="date"
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                          />
+                    {isDeliveryChallan ? (
+                      <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Transport & Vehicle Details</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">Vehicle #</label>
+                            <Field
+                              name="vehicle_number"
+                              type="text"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none"
+                              placeholder="e.g. KA-01-1234"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">Transport</label>
+                            <Field
+                              name="transport_mode"
+                              type="text"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none"
+                              placeholder="e.g. Road / Tempo"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">E-Way Bill #</label>
+                            <Field
+                              name="eway_bill_number"
+                              type="text"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none"
+                              placeholder="E-Way Bill #"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Delivery Challan</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan</label>
+                            <Field
+                              name="challan_number"
+                              as="textarea"
+                              rows="1"
+                              className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                              placeholder="Enter challan details"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan Date</label>
+                            <Field
+                              name="challan_date"
+                              type="date"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   )}
                 </div>
@@ -1505,9 +1580,7 @@ export default function SalesForm({
 
                                 <div className="hidden md:block overflow-x-auto">
                                   {values.items.map((item, index) => {
-                                    const productBatches = stockPoints
-                                      ?.filter((sp) => sp.batch.product === item.product_id && sp.quantity > 0)
-                                      ?.map((sp) => ({ id: sp.batch.id, name: sp.batch.batch_number, qty: sp.quantity })) || [];
+                                    const productBatches = getProductBatchesForItem(item);
 
                                     return (
                                       <div key={index} className="border-b border-white/10">
@@ -1694,8 +1767,10 @@ export default function SalesForm({
                                 </div>
 
                                 <div className="lg:hidden space-y-4">
-                                  {values.items.map((item, index) => (
-                                    <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
+                                  {values.items.map((item, index) => {
+                                    const productBatches = getProductBatchesForItem(item);
+                                    return (
+                                      <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
                                       {/* Row 1: Product */}
                                       <div className="w-full">
                                           <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
@@ -1852,8 +1927,9 @@ export default function SalesForm({
                                               Remove
                                           </button>
                                       </div>
-                                    </div>
-                                  ))}
+                                     </div>
+                                    );
+                                  })}
                                 </div>
                               </>
                             );
@@ -2000,7 +2076,9 @@ export default function SalesForm({
                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                          Saving...
                       </span>
-                    ) : isQuotation
+                    ) : isDeliveryChallan
+                      ? (isEdit ? "Update Challan" : "Create Delivery Challan")
+                      : isQuotation
                       ? (isEdit ? "Update Quotation" : "Create Quotation")
                       : forceDraft
                         ? (isEdit ? "Update Draft" : "Save Draft")

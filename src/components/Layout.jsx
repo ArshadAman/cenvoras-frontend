@@ -33,6 +33,7 @@ import {
   CalendarDaysIcon,
   FolderIcon,
   AdjustmentsHorizontalIcon,
+  TruckIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
@@ -121,6 +122,7 @@ export default function Layout({ children, onLogout }) {
         { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
         { path: "/quotations", label: "Quotations", icon: DocumentTextIcon, roles: [], upgradePlan: 'Pro', upgradeText: 'Quotations are available on Pro and above.' },
         { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
+        { path: "/delivery-challans", label: "Delivery Challans", icon: TruckIcon, roles: [] },
         { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
         { path: "/warranty", label: "Warranty", icon: ShieldCheckIcon, roles: [] },
         { path: "/customers", label: "Customers", icon: UsersIcon, roles: [] },
