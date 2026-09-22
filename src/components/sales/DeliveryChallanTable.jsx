@@ -13,9 +13,21 @@ import {
   DocumentCheckIcon,
   MagnifyingGlassIcon,
   ClipboardDocumentListIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  AdjustmentsHorizontalIcon,
+  ChevronDownIcon
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
+
+const COLUMN_OPTIONS = [
+  { id: "date", label: "Date" },
+  { id: "customer", label: "Customer" },
+  { id: "sales_order", label: "Ref Order" },
+  { id: "transport", label: "Transport / Vehicle" },
+  { id: "items", label: "Items" },
+  { id: "total_amount", label: "Total Value" },
+  { id: "status", label: "Status" },
+];
 
 export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess }) {
   const navigate = useNavigate();
@@ -23,6 +35,48 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
   const [search, setSearch] = useState("");
   const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "open", "invoiced", "cancelled"
   const [page, setPage] = useState(1);
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem("challan_table_columns");
+      if (saved) {
+        return {
+          date: true,
+          customer: true,
+          sales_order: true,
+          transport: true,
+          items: true,
+          total_amount: true,
+          status: true,
+          ...JSON.parse(saved),
+        };
+      }
+    } catch (e) {
+      console.error("Failed to load saved columns", e);
+    }
+    return {
+      date: true,
+      customer: true,
+      sales_order: true,
+      transport: true,
+      items: true,
+      total_amount: true,
+      status: true,
+    };
+  });
+
+  const toggleColumn = (id) => {
+    setVisibleColumns((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem("challan_table_columns", JSON.stringify(next));
+      } catch (e) {
+        console.error("Failed to save columns", e);
+      }
+      return next;
+    });
+  };
 
   const handleOpenSalesOrder = (salesOrder, salesOrderNumber) => {
     if (!salesOrder && !salesOrderNumber) return;
@@ -65,7 +119,13 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
       }
     },
     onError: (err) => {
-      toast.error(err?.response?.data?.detail || err?.response?.data?.error || "Failed to convert challan to invoice");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        err.message ||
+        "Failed to convert challan to invoice";
+      toast.error(msg);
     }
   });
 
@@ -114,7 +174,10 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
       const matchesSearch =
         challan.challan_number?.toLowerCase().includes(q) ||
         challan.customer_name?.toLowerCase().includes(q) ||
-        challan.vehicle_number?.toLowerCase().includes(q);
+        challan.vehicle_number?.toLowerCase().includes(q) ||
+        challan.sales_order_number?.toLowerCase().includes(q) ||
+        challan.sales_order_details?.order_number?.toLowerCase().includes(q) ||
+        String(challan.sales_order || "").toLowerCase().includes(q);
 
       if (!matchesSearch) return false;
 
@@ -132,6 +195,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
     { id: "invoiced", label: "Invoiced" },
     { id: "cancelled", label: "Cancelled" },
   ];
+
+  const visibleColumnCount = 2 + Object.values(visibleColumns).filter(Boolean).length;
 
   return (
     <div className="space-y-6">
@@ -154,16 +219,62 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
           ))}
         </div>
 
-        {/* Search */}
-        <div className="relative w-full md:w-72">
-          <MagnifyingGlassIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search challan, customer, vehicle..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500/50 bg-[#111] text-white text-sm placeholder-gray-500 outline-none"
-          />
+        {/* Search & Columns */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-72">
+            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search challan, order #, vehicle..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500/50 bg-[#111] text-white text-sm placeholder-gray-500 outline-none"
+            />
+          </div>
+
+          {/* Column Visibility Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowColumnDropdown((prev) => !prev)}
+              className="flex items-center gap-2 px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition-colors"
+              title="Toggle Columns"
+            >
+              <AdjustmentsHorizontalIcon className="w-4 h-4 text-cyan-400" />
+              <span className="hidden sm:inline">Columns</span>
+              <ChevronDownIcon className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+
+            {showColumnDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-20" 
+                  onClick={() => setShowColumnDropdown(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-[#161616] border border-white/15 rounded-xl shadow-2xl p-2 z-30 backdrop-blur-xl">
+                  <div className="px-2 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-white/10 mb-1">
+                    Toggle Columns
+                  </div>
+                  <div className="space-y-1">
+                    {COLUMN_OPTIONS.map((col) => (
+                      <label
+                        key={col.id}
+                        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer text-xs text-gray-200 select-none"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!visibleColumns[col.id]}
+                          onChange={() => toggleColumn(col.id)}
+                          className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                        />
+                        <span>{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -175,27 +286,41 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
               <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-l-lg">
                 Challan #
               </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Customer
-              </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Ref Order
-              </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Transport / Vehicle
-              </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Items
-              </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Total Value
-              </th>
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Status
-              </th>
+              {visibleColumns.date && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Date
+                </th>
+              )}
+              {visibleColumns.customer && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Customer
+                </th>
+              )}
+              {visibleColumns.sales_order && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Ref Order
+                </th>
+              )}
+              {visibleColumns.transport && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Transport / Vehicle
+                </th>
+              )}
+              {visibleColumns.items && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Items
+                </th>
+              )}
+              {visibleColumns.total_amount && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Total Value
+                </th>
+              )}
+              {visibleColumns.status && (
+                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+              )}
               <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg text-right">
                 Actions
               </th>
@@ -204,7 +329,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="9" className="px-6 py-12 text-center">
+                <td colSpan={visibleColumnCount} className="px-6 py-12 text-center">
                   <div className="flex justify-center items-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
                   </div>
@@ -212,7 +337,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
               </tr>
             ) : filteredChallans.length === 0 ? (
               <tr>
-                <td colSpan="9" className="px-6 py-12 text-center text-gray-400">
+                <td colSpan={visibleColumnCount} className="px-6 py-12 text-center text-gray-400">
                   No delivery challans found matching your criteria.
                 </td>
               </tr>
@@ -235,76 +360,90 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap text-gray-400">
-                      {challan.date ? format(new Date(challan.date), "MMM dd, yyyy") : "—"}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      <div className="font-medium text-white">{challan.customer_name}</div>
-                      {challan.customer_gstin && (
-                        <div className="text-[11px] text-gray-500 font-mono">
-                          {challan.customer_gstin}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      {challan.sales_order || challan.sales_order_number ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenSalesOrder(challan.sales_order, challan.sales_order_number);
-                          }}
-                          className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 hover:border-purple-400/50 transition-all font-mono text-xs font-semibold cursor-pointer shadow-sm shadow-purple-500/5"
-                          title={`Click to open Sales Order ${challan.sales_order_number || ''} in Sales Orders page`}
-                        >
-                          <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
-                          <span>{challan.sales_order_number || challan.sales_order_details?.order_number || `SO #${String(challan.sales_order).slice(0, 8)}`}</span>
-                          <ArrowTopRightOnSquareIcon className="w-3 h-3 text-purple-400/70 group-hover:text-purple-200 transition-colors" />
-                        </button>
-                      ) : (
-                        <span className="text-gray-500 text-xs italic">—</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      {challan.vehicle_number ? (
-                        <div className="text-sm text-gray-200 font-mono font-medium">
-                          {challan.vehicle_number}
-                        </div>
-                      ) : (
-                        <span className="text-gray-500 text-xs italic">Not specified</span>
-                      )}
-                      {challan.transport_mode && (
-                        <div className="text-[10px] uppercase text-gray-400 tracking-wider">
-                          Mode: {challan.transport_mode}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap text-gray-300">
-                      {challan.items?.length || 0} item{challan.items?.length === 1 ? "" : "s"}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap font-bold text-cyan-400">
-                      {getCurrencySymbol()}
-                      {Number(challan.total_amount || 0).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      {isInvoiced ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <DocumentCheckIcon className="w-3.5 h-3.5" />
-                          Invoiced
-                        </span>
-                      ) : challan.status === "cancelled" ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                          Cancelled
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                          Open / Dispatched
-                        </span>
-                      )}
-                    </td>
+                    {visibleColumns.date && (
+                      <td className="px-5 py-3.5 whitespace-nowrap text-gray-400">
+                        {challan.date ? format(new Date(challan.date), "MMM dd, yyyy") : "—"}
+                      </td>
+                    )}
+                    {visibleColumns.customer && (
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        <div className="font-medium text-white">{challan.customer_name}</div>
+                        {challan.customer_gstin && (
+                          <div className="text-[11px] text-gray-500 font-mono">
+                            {challan.customer_gstin}
+                          </div>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.sales_order && (
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        {challan.sales_order || challan.sales_order_number ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenSalesOrder(challan.sales_order, challan.sales_order_number);
+                            }}
+                            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 hover:border-purple-400/50 transition-all font-mono text-xs font-semibold cursor-pointer shadow-sm shadow-purple-500/5"
+                            title={`Click to open Sales Order ${challan.sales_order_number || ''} in Sales Orders page`}
+                          >
+                            <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+                            <span>{challan.sales_order_number || challan.sales_order_details?.order_number || `SO #${String(challan.sales_order).slice(0, 8)}`}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3 h-3 text-purple-400/70 group-hover:text-purple-200 transition-colors" />
+                          </button>
+                        ) : (
+                          <span className="text-gray-500 text-xs italic">—</span>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.transport && (
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        {challan.vehicle_number ? (
+                          <div className="text-sm text-gray-200 font-mono font-medium">
+                            {challan.vehicle_number}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-xs italic">Not specified</span>
+                        )}
+                        {challan.transport_mode && (
+                          <div className="text-[10px] uppercase text-gray-400 tracking-wider">
+                            Mode: {challan.transport_mode}
+                          </div>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.items && (
+                      <td className="px-5 py-3.5 whitespace-nowrap text-gray-300">
+                        {challan.items?.length || 0} item{challan.items?.length === 1 ? "" : "s"}
+                      </td>
+                    )}
+                    {visibleColumns.total_amount && (
+                      <td className="px-5 py-3.5 whitespace-nowrap font-bold text-cyan-400">
+                        {getCurrencySymbol()}
+                        {Number(challan.total_amount || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        {isInvoiced ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <DocumentCheckIcon className="w-3.5 h-3.5" />
+                            Invoiced
+                          </span>
+                        ) : challan.status === "cancelled" ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                            Cancelled
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            Open / Dispatched
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-5 py-3.5 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -406,18 +545,24 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-3 py-3 border-y border-white/5 text-xs">
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-bold">Customer</span>
-                    <span className="text-white font-medium truncate block">{challan.customer_name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-bold">Vehicle</span>
-                    <span className="text-white font-mono">{challan.vehicle_number || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-bold">Items</span>
-                    <span className="text-white">{challan.items?.length || 0} items</span>
-                  </div>
+                  {visibleColumns.customer && (
+                    <div>
+                      <span className="text-gray-500 block text-[10px] uppercase font-bold">Customer</span>
+                      <span className="text-white font-medium truncate block">{challan.customer_name}</span>
+                    </div>
+                  )}
+                  {visibleColumns.transport && (
+                    <div>
+                      <span className="text-gray-500 block text-[10px] uppercase font-bold">Vehicle</span>
+                      <span className="text-white font-mono">{challan.vehicle_number || "—"}</span>
+                    </div>
+                  )}
+                  {visibleColumns.items && (
+                    <div>
+                      <span className="text-gray-500 block text-[10px] uppercase font-bold">Items</span>
+                      <span className="text-white">{challan.items?.length || 0} items</span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-gray-500 block text-[10px] uppercase font-bold">E-Way Bill</span>
                     <span className="text-white font-mono">{challan.eway_bill_number || "—"}</span>
@@ -425,7 +570,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                 </div>
 
                 {/* Ref Sales Order (Mobile) */}
-                {(challan.sales_order || challan.sales_order_number) && (
+                {visibleColumns.sales_order && (challan.sales_order || challan.sales_order_number) && (
                   <div className="flex items-center justify-between p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
                     <span className="text-[10px] text-purple-300/80 font-bold uppercase tracking-wider flex items-center gap-1">
                       <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400" />

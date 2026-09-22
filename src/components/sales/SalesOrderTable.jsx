@@ -97,8 +97,13 @@ export default function SalesOrderTable({
                           <td className="px-6 py-4 whitespace-nowrap text-white">{order.customer_display_name || order.customer_name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-cyan-400 font-bold">{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded text-xs ${order.stage === 'completed' ? 'bg-green-500/20 text-green-400' : order.stage === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                  {order.stage || 'new'}
+                              <span className={`px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wider border ${
+                                order.stage === 'completed' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 
+                                order.stage === 'shipped' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 
+                                order.stage === 'cancelled' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 
+                                'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                              }`}>
+                                  {order.stage === 'shipped' ? 'Partially Shipped' : (order.stage || 'new')}
                               </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
@@ -166,16 +171,17 @@ export default function SalesOrderTable({
                       <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Customer</div>
                       <div className="text-xs font-bold text-white truncate">{order.customer_display_name || order.customer_name}</div>
                    </div>
-                   <div className="text-right">
-                      <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Status</div>
-                      <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
-                          order.stage === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                          order.stage === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
-                          'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                       }`}>
-                          {order.stage || 'new'}
-                      </div>
-                   </div>
+                    <div className="text-right">
+                       <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Status</div>
+                       <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
+                           order.stage === 'completed' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                           order.stage === 'shipped' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 
+                           order.stage === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
+                           'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        }`}>
+                           {order.stage === 'shipped' ? 'Partially Shipped' : (order.stage || 'new')}
+                       </div>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-2">

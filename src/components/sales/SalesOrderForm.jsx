@@ -413,9 +413,12 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({
+              id: item.id,
               product: item.product_name || item.product || "",
               product_id: item.product || null,
               quantity: item.quantity || "",
+              dispatched_quantity: Number(item.dispatched_quantity || 0),
+              pending_quantity: item.pending_quantity !== undefined ? Number(item.pending_quantity) : Math.max(0, Number(item.quantity || 0) - Number(item.dispatched_quantity || 0)),
               price: item.price || "",
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
@@ -424,6 +427,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
               product: "",
               product_id: null,
               quantity: "",
+              dispatched_quantity: 0,
+              pending_quantity: 0,
               price: "",
               amount: 0,
               unit: "pcs",
@@ -438,8 +443,10 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             submitLockRef.current = true;
             try {
                 const processedItems = values.items.map(item => ({
+                   ...(item.id ? { id: item.id } : {}),
                    product: item.product_id || item.product, // UUID or Name
                    quantity: Math.max(1, Number(item.quantity) || 1),
+                   ...(item.dispatched_quantity !== undefined ? { dispatched_quantity: Number(item.dispatched_quantity) } : {}),
                    price: Number(item.price || 0),
                    amount: Number(item.amount || 0),
                    unit: item.unit || "pcs",
@@ -500,6 +507,31 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      <div className="lg:col-span-4">
                                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
                                          <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                         {isEdit && item.id && (
+                                             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                     (item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
+                                                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                                         : (item.dispatched_quantity || 0) > 0
+                                                         ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                                         : "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                                 }`}>
+                                                     {(item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
+                                                         ? "Fulfilled"
+                                                         : (item.dispatched_quantity || 0) > 0
+                                                         ? "Partial"
+                                                         : "Pending"}
+                                                 </span>
+                                                 <span className="text-gray-400 text-[11px]">
+                                                     Dispatched: <strong className="text-white font-mono">{item.dispatched_quantity || 0}</strong> / {item.quantity || 0}
+                                                     {Number(item.dispatched_quantity || 0) > 0 && (
+                                                         <span className="text-amber-400 ml-1 font-mono">
+                                                             ({Math.max(0, Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))} pending)
+                                                         </span>
+                                                     )}
+                                                 </span>
+                                             </div>
+                                         )}
                                      </div>
 
                                      {/* Row 2: Qty & Price (Side-by-side on mobile, col-span-4 on desktop) */}
@@ -539,8 +571,9 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                          <button 
                                             type="button" 
                                             onClick={() => remove(index)} 
-                                            disabled={values.items.length === 1}
-                                            className="w-full py-3 lg:py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-30"
+                                            disabled={values.items.length === 1 || Number(item.dispatched_quantity || 0) > 0}
+                                            title={Number(item.dispatched_quantity || 0) > 0 ? "Cannot delete item with dispatched quantity" : "Remove Item"}
+                                            className="w-full py-3 lg:py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
                                          >
                                              Remove Item
                                          </button>
