@@ -106,7 +106,7 @@ export default function HRMSSettings() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
             <div>
               <label className={labelCls}>Loss of Pay (LOP) Formula Base</label>
               <select name="lop_calculation_rule" value={settings.lop_calculation_rule} onChange={handleChange} className={ic}>
@@ -119,6 +119,15 @@ export default function HRMSSettings() {
             <div>
               <label className={labelCls}>Overtime Pay Multiplier</label>
               <input type="number" step="0.1" name="overtime_multiplier" value={settings.overtime_multiplier} onChange={handleChange} className={ic} />
+            </div>
+
+            <div>
+              <label className={labelCls}>Net Salary Rounding</label>
+              <select name="salary_rounding" value={settings.salary_rounding || 'nearest_1'} onChange={handleChange} className={ic}>
+                <option value="nearest_1">Nearest ₹1 (Standard)</option>
+                <option value="nearest_10">Nearest ₹10</option>
+                <option value="exact_2">Exact 2 Decimals (No Rounding)</option>
+              </select>
             </div>
           </div>
 
