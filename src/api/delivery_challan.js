@@ -15,5 +15,18 @@ export const updateDeliveryChallan = (id, data) =>
 export const deleteDeliveryChallan = (id) => 
   api.delete(`/billing/delivery-challans/${id}/`).then(res => res.data);
 
+export const getNextDeliveryChallanNumber = (prefix = "DC-") =>
+  api.get(`/billing/delivery-challans/next-number/?prefix=${prefix}`).then(res => res.data);
+
+export const convertOrderToChallan = (orderId) =>
+  api.post(`/billing/sales-orders/${orderId}/convert_to_challan/`).then(res => res.data);
+
 export const convertToInvoice = (id) =>
   api.post(`/billing/delivery-challans/${id}/convert_to_invoice/`).then(res => res.data);
+
+export const getDeliveryChallanPdf = (id, templateData) => {
+  if (templateData) {
+    return api.post(`/billing/delivery-challans/${id}/pdf/`, { template: templateData }, { responseType: 'blob' });
+  }
+  return api.get(`/billing/delivery-challans/${id}/pdf/`, { responseType: 'blob' });
+};

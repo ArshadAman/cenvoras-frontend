@@ -21,6 +21,7 @@ import Payments from './pages/Payments'
 import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
 import SalesOrderList from './pages/SalesOrderList'
+import DeliveryChallanList from './pages/DeliveryChallanList'
 import ComingSoon from './pages/ComingSoon'
 import BOMList from './pages/inventory/BOMList'
 import StockJournalList from './pages/inventory/StockJournalList'
@@ -168,7 +169,7 @@ function App() {
         />
         <Route
           path="/delivery-challans"
-          element={isAuthenticated ? <ComingSoon /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><DeliveryChallanList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory"

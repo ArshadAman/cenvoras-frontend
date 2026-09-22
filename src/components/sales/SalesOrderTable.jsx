@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesOrders, deleteSalesOrder, convertToInvoice } from "../../api/sales_order";
+import { getSalesOrders, deleteSalesOrder } from "../../api/sales_order";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import Pagination from "../common/Pagination";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import SalesOrderConvertModal from "./SalesOrderConvertModal";
 
 export default function SalesOrderTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [convertOrder, setConvertOrder] = useState(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["salesOrders", search, page],
@@ -24,16 +26,9 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
-  const handleConvert = async (orderId) => {
-    if(!window.confirm("Convert this order to an Invoice?")) return;
-    try {
-        await convertToInvoice(orderId);
-        toast.success("Order converted to Invoice!");
-        queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
-    } catch (e) {
-        toast.error("Failed to convert order");
-    }
-  }
+  const handleConvert = (order) => {
+    setConvertOrder(order);
+  };
 
   const filteredOrders = orders.filter(order => 
     order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
@@ -80,7 +75,9 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
                                <button onClick={() => onEdit(order)} className="text-purple-400 hover:text-purple-300">Edit</button>
-                               <button onClick={() => handleConvert(order.id)} className="text-green-400 hover:text-green-300">Convert</button>
+                               {order.stage !== 'completed' && (
+                                 <button onClick={() => handleConvert(order)} className="text-green-400 hover:text-green-300">Convert</button>
+                               )}
                                <button onClick={() => onDelete(order)} className="text-red-400 hover:text-red-300">Delete</button>
                           </td>
                       </tr>
@@ -138,7 +135,9 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
 
                 <div className="flex flex-wrap gap-2 mt-2">
                   <button onClick={() => onEdit(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Edit</button>
-                  <button onClick={() => handleConvert(order.id)} className="flex-1 min-w-[60px] px-2 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Convert</button>
+                  {order.stage !== 'completed' && (
+                    <button onClick={() => handleConvert(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Convert</button>
+                  )}
                   <button onClick={() => onDelete(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Delete</button>
                 </div>
               </div>
@@ -148,6 +147,14 @@ export default function SalesOrderTable({ onEdit, onView, onDelete }) {
       </>
 
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
+
+      {convertOrder && (
+        <SalesOrderConvertModal
+          isOpen={!!convertOrder}
+          onClose={() => setConvertOrder(null)}
+          order={convertOrder}
+        />
+      )}
     </div>
   );
 }
