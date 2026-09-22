@@ -161,17 +161,40 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
             </div>
           </div>
 
+          <div>
+            <label className={labelCls}>Leave Classification *</label>
+            <div className="grid grid-cols-2 gap-3 mt-1">
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, is_paid: true }))}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
+                  form.is_paid
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                ✓ Paid Leave
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, is_paid: false }))}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
+                  !form.is_paid
+                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                Unpaid / Free Leave
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1.5">
+              {form.is_paid
+                ? "Paid leaves are capped at the annual entitlement quota. Once an employee exhausts their quota, additional paid leave cannot be taken."
+                : "Unpaid / Free leaves are unpaid (Leave Without Pay) and can be used once paid leave is exhausted."}
+            </p>
+          </div>
+
           <div className="space-y-3 pt-2">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="is_paid"
-                checked={form.is_paid}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-0"
-              />
-              <span className="text-sm text-gray-300">Paid Leave (Salaried)</span>
-            </label>
 
             <label className="flex items-center gap-3 cursor-pointer">
               <input

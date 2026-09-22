@@ -9,11 +9,13 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
   const [form, setForm] = useState({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
   const [saving, setSaving] = useState(false);
   const [showAddLeaveType, setShowAddLeaveType] = useState(false);
+  const [balances, setBalances] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
       setForm({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
       setShowAddLeaveType(false);
+      hrApi.getLeaveBalances().then(res => setBalances(res.data?.results || res.data || [])).catch(() => {});
     }
   }, [isOpen]);
 
@@ -31,8 +33,25 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
     setShowAddLeaveType(false);
   };
 
+  const selectedLt = leaveTypes.find((lt) => String(lt.id) === String(form.leave_type));
+  const currentYear = form.start_date ? new Date(form.start_date).getFullYear() : new Date().getFullYear();
+  const matchedBalance = balances.find((b) =>
+    String(b.employee) === String(form.employee) &&
+    String(b.leave_type) === String(form.leave_type) &&
+    Number(b.year) === currentYear
+  );
+  const availableQuota = matchedBalance
+    ? parseFloat(matchedBalance.balance)
+    : (selectedLt?.is_paid ? parseFloat(selectedLt?.annual_entitlement || 0) : null);
+  const isPaid = selectedLt?.is_paid;
+  const isQuotaExhausted = Boolean(form.employee && form.leave_type && isPaid && availableQuota !== null && availableQuota <= 0);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isQuotaExhausted) {
+      toast.error("Paid leave quota is fully exhausted. Additional paid leave cannot be taken.");
+      return;
+    }
     setSaving(true);
     try {
       await hrApi.createLeaveApplication(form);
@@ -91,10 +110,31 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
               <select required name="leave_type" value={form.leave_type} onChange={handleChange} className={inputCls}>
                 <option value="">Select Leave Type</option>
                 {leaveTypes.map((lt) => (
-                  <option key={lt.id} value={lt.id}>{lt.name}</option>
+                  <option key={lt.id} value={lt.id}>
+                    {lt.name} ({lt.is_paid ? 'Paid' : 'Unpaid/Free'})
+                  </option>
                 ))}
                 <option value="__add_new__" className="text-indigo-400 font-semibold">+ Add New Leave Type...</option>
               </select>
+              {form.employee && form.leave_type && (
+                <div className="flex items-center justify-between text-xs mt-1 px-1">
+                  <span className={isPaid ? (isQuotaExhausted ? "text-red-400 font-medium" : "text-emerald-400 font-medium") : "text-amber-400"}>
+                    {isPaid
+                      ? `Paid Quota: ${availableQuota !== null ? `${availableQuota} Days remaining` : 'Calculating...'}`
+                      : "Unpaid / Free Leave (no quota limit)"}
+                  </span>
+                  {isQuotaExhausted && (
+                    <span className="text-red-400 font-semibold uppercase text-[10px] tracking-wider bg-red-500/10 px-1.5 py-0.5 rounded">
+                      Quota Exhausted
+                    </span>
+                  )}
+                </div>
+              )}
+              {isQuotaExhausted && (
+                <div className="p-2.5 mt-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                  This employee has exhausted their paid leave quota (0 days remaining). Additional paid leave cannot be taken. Please apply for an Unpaid / Free Leave type instead.
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -114,8 +154,12 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
               <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
                 Cancel
               </button>
-              <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 transition disabled:opacity-50">
-                {saving ? 'Submitting...' : 'Submit Application'}
+              <button
+                type="submit"
+                disabled={saving || isQuotaExhausted}
+                className="px-5 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Submitting...' : isQuotaExhausted ? 'Quota Exhausted' : 'Submit Application'}
               </button>
             </div>
           </form>
