@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { TruckIcon, DocumentTextIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  TruckIcon, 
+  DocumentTextIcon, 
+  XMarkIcon, 
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon 
+} from '@heroicons/react/24/outline';
 import { convertOrderToChallan } from '../../api/delivery_challan';
 import { convertToInvoice } from '../../api/sales_order';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,15 +20,139 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
   const queryClient = useQueryClient();
   const [conversionType, setConversionType] = useState('challan'); // 'challan' or 'invoice'
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTransportFields, setShowTransportFields] = useState(false);
+
+  // Transport details for Delivery Challan
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [transportMode, setTransportMode] = useState('');
+  const [ewayBillNumber, setEwayBillNumber] = useState('');
+  const [notes, setNotes] = useState('');
+
+  // Selected items & dispatch quantities for Delivery Challan
+  const orderItems = useMemo(() => {
+    return Array.isArray(order?.items) ? order.items.filter((i) => Number(i.quantity) > 0) : [];
+  }, [order]);
+
+  const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+  const [dispatchQuantities, setDispatchQuantities] = useState({});
+
+  useEffect(() => {
+    if (!isOpen || !order) return;
+    // Default: select all order items with their current remaining quantities
+    const ids = new Set(orderItems.map((i) => i.id));
+    setSelectedItemIds(ids);
+
+    const initialQtys = {};
+    orderItems.forEach((i) => {
+      initialQtFormat(i);
+    });
+
+    function initialQtFormat(item) {
+      initialQtys[item.id] = Number(item.quantity) || 1;
+    }
+    setDispatchQuantities(initialQtys);
+    setVehicleNumber('');
+    setTransportMode('');
+    setEwayBillNumber('');
+    setNotes('');
+  }, [isOpen, order, orderItems]);
 
   if (!isOpen || !order) return null;
+
+  const toggleItem = (itemId) => {
+    setSelectedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllItems = () => {
+    if (selectedItemIds.size === orderItems.length) {
+      setSelectedItemIds(new Set());
+    } else {
+      setSelectedItemIds(new Set(orderItems.map((i) => i.id)));
+    }
+  };
+
+  const handleQuantityChange = (itemId, maxQty, val) => {
+    const parsed = parseInt(val, 10);
+    let qty = isNaN(parsed) ? '' : parsed;
+    if (typeof qty === 'number') {
+      if (qty < 1) qty = 1;
+      if (qty > maxQty) qty = maxQty;
+    }
+    setDispatchQuantities((prev) => ({
+      ...prev,
+      [itemId]: qty,
+    }));
+  };
+
+  // Calculate total dispatch amount for selected items and customized quantities
+  const dispatchSummary = useMemo(() => {
+    let total = 0;
+    let count = 0;
+    orderItems.forEach((item) => {
+      if (selectedItemIds.has(item.id)) {
+        const qty = Number(dispatchQuantities[item.id]) || 0;
+        const price = Number(item.price || 0);
+        const discount = Number(item.discount || 0);
+        const tax = Number(item.tax || 0);
+        const base = qty * price;
+        const discAmt = (base * discount) / 100;
+        const taxable = base - discAmt;
+        const taxAmt = (taxable * tax) / 100;
+        total += taxable + taxAmt;
+        count += 1;
+      }
+    });
+    return { total, count };
+  }, [orderItems, selectedItemIds, dispatchQuantities]);
 
   const handleConvert = async () => {
     setIsSubmitting(true);
     try {
       if (conversionType === 'challan') {
-        const res = await convertOrderToChallan(order.id);
-        toast.success(res?.message || 'Order converted to Delivery Challan successfully!');
+        if (selectedItemIds.size === 0) {
+          toast.warning('Please select at least one item to include in the Delivery Challan.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const itemsPayload = [];
+        for (const item of orderItems) {
+          if (selectedItemIds.has(item.id)) {
+            const qty = Number(dispatchQuantities[item.id]) || 0;
+            if (qty <= 0) {
+              toast.error(`Please enter a valid dispatch quantity for ${item.product_name || 'item'}.`);
+              setIsSubmitting(false);
+              return;
+            }
+            if (qty > item.quantity) {
+              toast.error(`Cannot dispatch ${qty} for ${item.product_name || 'item'}. Max available in order: ${item.quantity}.`);
+              setIsSubmitting(false);
+              return;
+            }
+            itemsPayload.push({
+              id: item.id,
+              quantity: qty,
+            });
+          }
+        }
+
+        const res = await convertOrderToChallan(order.id, {
+          items: itemsPayload,
+          vehicle_number: vehicleNumber,
+          transport_mode: transportMode,
+          eway_bill_number: ewayBillNumber,
+          notes: notes,
+        });
+
+        toast.success(res?.message || 'Delivery Challan created successfully!');
         queryClient.invalidateQueries({ queryKey: ['salesOrders'] });
         queryClient.invalidateQueries({ queryKey: ['deliveryChallans'] });
         onClose();
@@ -52,125 +183,283 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
         onClick={onClose} 
       />
 
-      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
-        <div className="relative w-full max-w-xl bg-[#18181b] border border-white/10 rounded-3xl shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7)] overflow-hidden">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-6">
+        <div className="relative w-full max-w-2xl bg-[#141416] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-up">
           
           {/* Header */}
-          <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/40 flex-shrink-0">
             <div>
-              <h3 className="text-white text-lg font-semibold tracking-tight">Convert Sales Order</h3>
+              <h3 className="text-white text-lg font-bold tracking-tight">Convert Sales Order</h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                Ref: <span className="text-cyan-400 font-semibold">{order.order_number}</span> &bull; {customerName}
+                Order: <span className="text-cyan-400 font-mono font-medium">{order.order_number}</span> &bull; {customerName}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
+              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="p-6 space-y-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex justify-between items-center text-sm">
-              <span className="text-gray-400">Order Total Amount</span>
-              <span className="text-lg font-bold text-white tracking-tight">
-                {getCurrencySymbol()}{Number(order.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 pt-1">
-              Select conversion target:
-            </p>
-
-            <div className="space-y-3">
+          <div className="p-6 space-y-5 overflow-y-auto flex-1">
+            
+            {/* Conversion Type Selector */}
+            <div className="grid grid-cols-2 gap-3">
               {/* Option 1: Delivery Challan */}
               <div
                 onClick={() => setConversionType('challan')}
-                className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-4 ${
+                className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
                   conversionType === 'challan'
-                    ? 'bg-blue-500/10 border-blue-500/60 shadow-lg shadow-blue-500/10'
-                    : 'bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/5'
+                    ? 'bg-blue-500/10 border-blue-500 shadow-md shadow-blue-500/10'
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
-                <div className={`p-2.5 rounded-xl ${conversionType === 'challan' ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
-                  <TruckIcon className="w-6 h-6" />
+                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'challan' ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                  <TruckIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-white">Delivery Challan (Dispatch Note)</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      Stock Dispatch
-                    </span>
+                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                    <span>Delivery Challan</span>
+                    <span className="text-[10px] text-blue-400 font-medium">Dispatch Note</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Dispatches goods to customer immediately. Deducts warehouse stock without impacting general ledger accounting. Can be billed to tax invoice later.
+                  <p className="text-[11px] text-gray-400 mt-1 leading-tight">
+                    Select items & dispatch quantities. Reduces stock; unfulfilled balance stays on order.
                   </p>
-                </div>
-                <div className="flex-shrink-0 pt-0.5">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    conversionType === 'challan' ? 'border-blue-500 bg-blue-500' : 'border-gray-500'
-                  }`}>
-                    {conversionType === 'challan' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
                 </div>
               </div>
 
               {/* Option 2: Direct Sales Invoice */}
               <div
                 onClick={() => setConversionType('invoice')}
-                className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-4 ${
+                className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
                   conversionType === 'invoice'
-                    ? 'bg-cyan-500/10 border-cyan-500/60 shadow-lg shadow-cyan-500/10'
-                    : 'bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/5'
+                    ? 'bg-cyan-500/10 border-cyan-500 shadow-md shadow-cyan-500/10'
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
                 }`}
               >
-                <div className={`p-2.5 rounded-xl ${conversionType === 'invoice' ? 'bg-cyan-500 text-white' : 'bg-white/10 text-gray-400'}`}>
-                  <DocumentTextIcon className="w-6 h-6" />
+                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'invoice' ? 'bg-cyan-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                  <DocumentTextIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-white">Sales Invoice (Tax Invoice)</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                      Direct Billing
-                    </span>
+                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                    <span>Sales Invoice</span>
+                    <span className="text-[10px] text-cyan-400 font-medium">Direct Billing</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Directly issue final GST tax invoice. Updates general ledger accounting, customer balance, and deducts inventory stock in one step.
+                  <p className="text-[11px] text-gray-400 mt-1 leading-tight">
+                    Immediately converts order into a final GST tax invoice with ledger accounting.
                   </p>
-                </div>
-                <div className="flex-shrink-0 pt-0.5">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    conversionType === 'invoice' ? 'border-cyan-500 bg-cyan-500' : 'border-gray-500'
-                  }`}>
-                    {conversionType === 'invoice' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Delivery Challan Items Selection & Quantity Customization */}
+            {conversionType === 'challan' && (
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                    <span>Select Items to Dispatch</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                      {selectedItemIds.size} of {orderItems.length} selected
+                    </span>
+                  </div>
+                  {orderItems.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={toggleAllItems}
+                      className="text-xs text-cyan-400 hover:text-cyan-300 font-medium px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 transition-all"
+                    >
+                      {selectedItemIds.size === orderItems.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  )}
+                </div>
+
+                {orderItems.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-gray-400 bg-white/5 rounded-xl border border-white/5">
+                    No items available in this sales order.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                    {orderItems.map((item) => {
+                      const isSelected = selectedItemIds.has(item.id);
+                      const currentQty = dispatchQuantities[item.id] !== undefined ? dispatchQuantities[item.id] : item.quantity;
+                      const maxQty = item.quantity;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`p-3 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-cyan-500/10 border-cyan-500/40'
+                              : 'bg-white/5 border-white/5 opacity-70 hover:opacity-100'
+                          }`}
+                        >
+                          {/* Item Left: Checkbox + Product Name */}
+                          <div 
+                            onClick={() => toggleItem(item.id)}
+                            className="flex items-center gap-3 cursor-pointer flex-1 min-w-0 select-none"
+                          >
+                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
+                              isSelected 
+                                ? 'bg-cyan-500 border-cyan-500 text-black' 
+                                : 'border-gray-500 bg-white/5'
+                            }`}>
+                              {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-xs font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                                {item.product_name}
+                              </p>
+                              <p className="text-[11px] text-gray-400">
+                                Order Qty: <strong className="text-gray-200">{maxQty} {item.unit || 'pcs'}</strong> &bull; Rate: {getCurrencySymbol()}{Number(item.price || 0).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Item Right: Quantity Input & Line Amount */}
+                          <div className="flex items-center justify-between sm:justify-end gap-3 pl-8 sm:pl-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11px] text-gray-400 font-medium">Dispatch Qty:</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max={maxQty}
+                                value={currentQty}
+                                disabled={!isSelected}
+                                onChange={(e) => handleQuantityChange(item.id, maxQty, e.target.value)}
+                                className="w-20 px-2.5 py-1.5 bg-[#111] border border-white/20 rounded-lg text-white text-xs text-center font-bold font-mono focus:border-cyan-400 focus:outline-none disabled:opacity-40"
+                              />
+                              <span className="text-[11px] text-gray-400">{item.unit || 'pcs'}</span>
+                            </div>
+
+                            <div className="text-right min-w-[70px]">
+                              <span className="text-xs font-bold text-cyan-400 font-mono">
+                                {getCurrencySymbol()}{(() => {
+                                  const q = Number(currentQty) || 0;
+                                  const p = Number(item.price || 0);
+                                  const d = Number(item.discount || 0);
+                                  const t = Number(item.tax || 0);
+                                  const base = q * p;
+                                  const discAmt = (base * d) / 100;
+                                  const taxable = base - discAmt;
+                                  const taxAmt = (taxable * t) / 100;
+                                  return (taxable + taxAmt).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Optional Transport Info Accordion */}
+                <div className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.02]">
+                  <button
+                    type="button"
+                    onClick={() => setShowTransportFields(!showTransportFields)}
+                    className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-gray-300 hover:text-white transition-colors"
+                  >
+                    <span>Optional Transport & Dispatch Details</span>
+                    {showTransportFields ? (
+                      <ChevronUpIcon className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+
+                  {showTransportFields && (
+                    <div className="p-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/20">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Vehicle No.</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. MH12AB1234"
+                          value={vehicleNumber}
+                          onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                          className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white uppercase font-mono outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Transport Mode</label>
+                        <input
+                          type="text"
+                          placeholder="Road, Air, Courier..."
+                          value={transportMode}
+                          onChange={(e) => setTransportMode(e.target.value)}
+                          className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">E-Way Bill No.</label>
+                        <input
+                          type="text"
+                          placeholder="12-digit number"
+                          value={ewayBillNumber}
+                          onChange={(e) => setEwayBillNumber(e.target.value)}
+                          className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Direct Sales Invoice info */}
+            {conversionType === 'invoice' && (
+              <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300">
+                <p className="font-semibold mb-1">Direct Full Order Conversion</p>
+                <p className="text-gray-300 leading-relaxed">
+                  This will convert all remaining items from Sales Order #{order.order_number} directly into a final Sales Invoice, deduct inventory stock, and update customer ledger balances.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex items-center justify-end gap-3">
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2.5 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConvert}
-              disabled={isSubmitting}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50"
-            >
-              {isSubmitting
-                ? 'Converting...'
-                : conversionType === 'challan'
-                ? 'Convert to Delivery Challan'
-                : 'Convert to Sales Invoice'}
-            </button>
+          <div className="px-6 py-4 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
+            <div className="text-xs">
+              <span className="text-gray-400 block text-[10px] uppercase font-bold">
+                {conversionType === 'challan' ? 'Challan Dispatch Value' : 'Total Order Value'}
+              </span>
+              <span className="text-cyan-400 font-bold text-base font-mono">
+                {getCurrencySymbol()}
+                {Number(
+                  conversionType === 'challan' ? dispatchSummary.total : (order.total_amount || 0)
+                ).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConvert}
+                disabled={isSubmitting || (conversionType === 'challan' && selectedItemIds.size === 0)}
+                className="flex-1 sm:flex-none px-5 py-2 text-xs font-bold text-black bg-cyan-500 hover:bg-cyan-400 rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    Converting...
+                  </>
+                ) : conversionType === 'challan' ? (
+                  `Create Delivery Challan (${selectedItemIds.size})`
+                ) : (
+                  'Convert to Sales Invoice'
+                )}
+              </button>
+            </div>
           </div>
 
         </div>
