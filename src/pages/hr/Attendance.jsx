@@ -20,9 +20,14 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
   }, [isOpen]);
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const selectedEmp = employees.find((e) => String(e.id) === String(form.employee));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (selectedEmp?.date_of_joining && form.date < selectedEmp.date_of_joining) {
+      toast.error(`Attendance cannot be marked before joining date (${selectedEmp.date_of_joining})`);
+      return;
+    }
     setSaving(true);
     try {
       await hrApi.createAttendance(form);
@@ -30,7 +35,8 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
       onSuccess();
       onClose();
     } catch (err) {
-      const msg = err.response?.data?.detail || err.response?.data?.non_field_errors?.[0] || "Failed to log attendance";
+      const data = err.response?.data;
+      const msg = data?.date?.[0] || data?.date || data?.detail || data?.non_field_errors?.[0] || "Failed to log attendance";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -62,7 +68,20 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Date *</label>
-            <input required type="date" name="date" value={form.date} onChange={handleChange} className={inputCls} />
+            <input
+              required
+              type="date"
+              name="date"
+              min={selectedEmp?.date_of_joining || ''}
+              value={form.date}
+              onChange={handleChange}
+              className={inputCls}
+            />
+            {selectedEmp?.date_of_joining && (
+              <p className="text-xs text-indigo-300/80 mt-1">
+                Joining Date: {selectedEmp.date_of_joining} (only from this date)
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Status *</label>

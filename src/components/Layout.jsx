@@ -33,6 +33,7 @@ import {
   CalendarDaysIcon,
   FolderIcon,
   AdjustmentsHorizontalIcon,
+  GiftIcon,
   TruckIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
@@ -163,7 +164,7 @@ export default function Layout({ children, onLogout }) {
         { path: "/hr/payroll", label: "Payroll", icon: CurrencyRupeeIcon, roles: [] },
         { path: "/hr/attendance", label: "Attendance", icon: ClockIcon, roles: [] },
         { path: "/hr/leave-applications", label: "Leave", icon: CalendarDaysIcon, roles: [] },
-        { path: "/hr/advances-loans", label: "Advances & Loans", icon: BanknotesIcon, roles: [] },
+        { path: "/hr/allowances-bonuses", label: "Allowances & Bonus", icon: GiftIcon, roles: [] },
         { path: "/hr/documents", label: "Documents", icon: FolderIcon, roles: [] },
         { path: "/hr/reports", label: "Reports", icon: BookOpenIcon, roles: [] },
         { path: "/hr/settings", label: "Settings", icon: AdjustmentsHorizontalIcon, roles: [] }

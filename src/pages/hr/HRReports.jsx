@@ -24,7 +24,7 @@ export default function HRReports() {
       const res = await hrApi.getHRReports({ type: reportType, year, month });
       setReportData(res.data);
     } catch (err) {
-      toast.error("Failed to generate HR report");
+      toast.error(err.response?.data?.detail || err.response?.data?.error || "Failed to generate HR report");
     } finally {
       setLoading(false);
     }

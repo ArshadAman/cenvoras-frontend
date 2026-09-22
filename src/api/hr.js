@@ -120,6 +120,13 @@ export const hrApi = {
   closeAdvanceLoan: (id) => api.post(`/hr/advances-loans/${id}/close/`),
   deleteAdvanceLoan: (id) => api.delete(`/hr/advances-loans/${id}/`),
 
+  // Allowances & Bonuses
+  getAllowancesBonuses: (params) => api.get('/hr/allowances-bonuses/', { params }),
+  createAllowanceBonus: (data) => api.post('/hr/allowances-bonuses/', data),
+  updateAllowanceBonus: (id, data) => api.put(`/hr/allowances-bonuses/${id}/`, data),
+  deleteAllowanceBonus: (id) => api.delete(`/hr/allowances-bonuses/${id}/`),
+  approveAllowanceBonus: (id) => api.post(`/hr/allowances-bonuses/${id}/approve/`),
+
   // Exceptions
   getExceptions: (params) => api.get('/hr/exceptions/', { params }),
   resolveException: (id) => api.post(`/hr/exceptions/${id}/resolve/`),

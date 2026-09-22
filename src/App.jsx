@@ -57,6 +57,7 @@ import PayrollRuns from './pages/hr/PayrollRuns'
 import Payslips from './pages/hr/Payslips'
 import HRDashboard from './pages/hr/HRDashboard'
 import AdvancesLoans from './pages/hr/AdvancesLoans'
+import AllowancesBonuses from './pages/hr/AllowancesBonuses'
 import HRDocuments from './pages/hr/HRDocuments'
 import HRMSSettings from './pages/hr/HRMSSettings'
 import HRReports from './pages/hr/HRReports'
@@ -326,8 +327,12 @@ function App() {
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
+          path="/hr/allowances-bonuses"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><AllowancesBonuses /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/hr/advances-loans"
-          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><AdvancesLoans /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+          element={<Navigate to="/hr/allowances-bonuses" replace />}
         />
         <Route
           path="/hr/documents"
