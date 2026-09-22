@@ -70,6 +70,7 @@ export const hrApi = {
   createPayrollRun: (data) => api.post('/hr/payroll-runs/', data),
   runPayroll: (id) => api.post(`/hr/payroll-runs/${id}/run/`),
   finalisePayroll: (id) => api.post(`/hr/payroll-runs/${id}/finalise/`),
+  downloadBankExport: (id) => api.get(`/hr/payroll-runs/${id}/bank_export/`, { responseType: 'blob' }),
 
   // Payslips
   getPayslips: (params) => api.get('/hr/payslips/', { params }),

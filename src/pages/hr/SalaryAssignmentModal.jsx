@@ -112,6 +112,53 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
             <input required type="number" step="0.01" name="monthly_ctc" value={form.monthly_ctc} onChange={handleChange} className={inputClass} placeholder="e.g. 50000" />
           </div>
 
+          {/* Live Component Breakdown Preview */}
+          {(() => {
+            const selectedStruct = structures.find(s => String(s.id) === String(form.salary_structure));
+            const ctc = parseFloat(form.monthly_ctc);
+            if (!selectedStruct || !ctc || ctc <= 0) return null;
+
+            const components = selectedStruct.components || [];
+            const basicComp = components.find(c => c.is_basic);
+            let basicVal = 0;
+            if (basicComp) {
+              basicVal = basicComp.component_type === 'fixed' 
+                ? parseFloat(basicComp.value) 
+                : ctc * (parseFloat(basicComp.value) / 100);
+            }
+
+            let totalEarnings = 0;
+            const previewRows = components.map(c => {
+              let val = 0;
+              if (c.component_type === 'fixed') val = parseFloat(c.value);
+              else if (c.component_type === 'pct_basic') val = basicVal * (parseFloat(c.value) / 100);
+              else val = ctc * (parseFloat(c.value) / 100);
+              
+              if (c.type !== 'deduction') totalEarnings += val;
+              return { name: c.name, type: c.type || 'earning', amount: val };
+            });
+
+            if (totalEarnings < ctc && !previewRows.some(r => r.name === 'Special Allowance')) {
+              previewRows.push({ name: 'Special Allowance (Balancing)', type: 'earning', amount: ctc - totalEarnings });
+            }
+
+            return (
+              <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-2">
+                <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">Estimated Component Breakdown</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {previewRows.map((r, i) => (
+                    <div key={i} className="flex justify-between p-2 rounded bg-black/30 border border-white/5">
+                      <span className={r.type === 'deduction' ? 'text-red-300' : 'text-gray-300'}>
+                        {r.name} {r.type === 'deduction' ? '(-)' : ''}
+                      </span>
+                      <span className="font-semibold text-white">₹{r.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
               Cancel

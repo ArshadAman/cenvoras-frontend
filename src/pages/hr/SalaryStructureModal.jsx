@@ -20,8 +20,8 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
           name: '',
           description: '',
           components: [
-            { name: 'Basic', component_type: 'pct_gross', is_basic: true, value: 40, order: 1 },
-            { name: 'HRA', component_type: 'pct_basic', is_basic: false, value: 40, order: 2 }
+            { name: 'Basic', type: 'earning', component_type: 'pct_gross', is_basic: true, value: 40, order: 1 },
+            { name: 'HRA', type: 'earning', component_type: 'pct_basic', is_basic: false, value: 50, order: 2 }
           ]
         });
       }
@@ -38,8 +38,9 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
     const newComponents = [...form.components];
     
     if (field === 'is_basic' && value === true) {
-      // Ensure only one component is basic
+      // Ensure only one component is basic and it must be an earning
       newComponents.forEach(c => c.is_basic = false);
+      newComponents[index].type = 'earning';
     }
     
     newComponents[index] = { ...newComponents[index], [field]: value };
@@ -51,7 +52,7 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
       ...prev,
       components: [
         ...prev.components,
-        { name: '', component_type: 'fixed', is_basic: false, value: 0, order: prev.components.length + 1 }
+        { name: '', type: 'earning', component_type: 'fixed', is_basic: false, value: 0, order: prev.components.length + 1 }
       ]
     }));
   };
@@ -122,11 +123,17 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
                   <div className="flex-1 w-full md:w-auto">
                     <input required type="text" value={comp.name} onChange={(e) => handleComponentChange(index, 'name', e.target.value)} placeholder="Component Name (e.g. HRA)" className={inputClass} />
                   </div>
-                  <div className="w-full md:w-40 shrink-0">
+                  <div className="w-full md:w-32 shrink-0">
+                    <select value={comp.type || 'earning'} onChange={(e) => handleComponentChange(index, 'type', e.target.value)} className={selectClass} disabled={comp.is_basic}>
+                      <option value="earning">Earning (+)</option>
+                      <option value="deduction">Deduction (-)</option>
+                    </select>
+                  </div>
+                  <div className="w-full md:w-36 shrink-0">
                     <select required value={comp.component_type} onChange={(e) => handleComponentChange(index, 'component_type', e.target.value)} className={selectClass}>
                       <option value="fixed">Fixed Amount</option>
                       <option value="pct_basic">% of Basic</option>
-                      <option value="pct_gross">% of Gross</option>
+                      <option value="pct_gross">% of Gross/CTC</option>
                     </select>
                   </div>
                   <div className="w-full md:w-32 shrink-0 relative">
