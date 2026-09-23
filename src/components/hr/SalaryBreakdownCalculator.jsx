@@ -8,12 +8,21 @@ import {
   ArrowTrendingUpIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  PlusIcon,
+  TrashIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
+// All 28 States and 8 Union Territories of India
 const INDIAN_STATES = [
-  'Karnataka', 'Maharashtra', 'Delhi', 'Tamil Nadu', 'Telangana',
-  'West Bengal', 'Gujarat', 'Uttar Pradesh', 'Kerala', 'Rajasthan',
-  'Haryana', 'Andhra Pradesh', 'Madhya Pradesh', 'Punjab', 'Bihar'
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+  'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
 export default function SalaryBreakdownCalculator({
@@ -25,16 +34,28 @@ export default function SalaryBreakdownCalculator({
   onChange = null,
   readOnly = false,
 }) {
-  const [monthlyCtc, setMonthlyCtc] = useState(initialMonthlyCtc || 50000);
+  const [monthlyCtc, setMonthlyCtc] = useState(Number(initialMonthlyCtc) || 50000);
   const [annualCtc, setAnnualCtc] = useState(
     initialMonthlyCtc ? Math.round(Number(initialMonthlyCtc) * 12) : 600000
   );
   const [taxRegime, setTaxRegime] = useState(initialTaxRegime || 'new');
   const [workState, setWorkState] = useState(initialWorkState || 'Karnataka');
+  
+  // Basic pay configuration (Wage Code: minimum 50%, no upper cap up to 90%)
   const [basicPct, setBasicPct] = useState(50);
-  const [hraPctOfBasic, setHraPctOfBasic] = useState(50); // 50% of basic = 25% CTC
+  const [hraPctOfBasic, setHraPctOfBasic] = useState(50); // 50% of Basic
 
-  // Old regime deductions
+  // Allowances Section (Fixed recurring components inside CTC)
+  const [showAllowancesSection, setShowAllowancesSection] = useState(false);
+  const [conveyance, setConveyance] = useState(0);
+  const [medical, setMedical] = useState(0);
+  const [customAllowances, setCustomAllowances] = useState([]);
+
+  // Ad-hoc / Variable Additions Section (Outside Contracted Fixed CTC: Spot Bonus, Overtime)
+  const [showAdHocSection, setShowAdHocSection] = useState(false);
+  const [adHocAdditions, setAdHocAdditions] = useState([]);
+
+  // Old tax regime declarations
   const [showOldRegimeFields, setShowOldRegimeFields] = useState(false);
   const [sec80c, setSec80c] = useState(initialTaxDeclarations?.section_80c || 0);
   const [sec80d, setSec80d] = useState(initialTaxDeclarations?.section_80d || 0);
@@ -45,9 +66,12 @@ export default function SalaryBreakdownCalculator({
 
   // Sync when initial props change
   useEffect(() => {
-    if (initialMonthlyCtc) {
-      setMonthlyCtc(Number(initialMonthlyCtc));
-      setAnnualCtc(Math.round(Number(initialMonthlyCtc) * 12));
+    if (initialMonthlyCtc !== undefined && initialMonthlyCtc !== null) {
+      const num = Number(initialMonthlyCtc);
+      if (!isNaN(num) && num > 0) {
+        setMonthlyCtc(num);
+        setAnnualCtc(Math.round(num * 12));
+      }
     }
   }, [initialMonthlyCtc]);
 
@@ -59,16 +83,18 @@ export default function SalaryBreakdownCalculator({
 
   // Handle monthly change
   const handleMonthlyChange = (e) => {
-    const val = parseFloat(e.target.value) || 0;
-    setMonthlyCtc(val);
-    setAnnualCtc(Math.round(val * 12));
+    const val = parseFloat(e.target.value);
+    const safeVal = isNaN(val) ? 0 : val;
+    setMonthlyCtc(safeVal);
+    setAnnualCtc(Math.round(safeVal * 12));
   };
 
   // Handle annual change
   const handleAnnualChange = (e) => {
-    const val = parseFloat(e.target.value) || 0;
-    setAnnualCtc(val);
-    setMonthlyCtc(Math.round((val / 12) * 100) / 100);
+    const val = parseFloat(e.target.value);
+    const safeVal = isNaN(val) ? 0 : val;
+    setAnnualCtc(safeVal);
+    setMonthlyCtc(Math.round((safeVal / 12) * 100) / 100);
   };
 
   // Quick preset CTCs
@@ -76,6 +102,42 @@ export default function SalaryBreakdownCalculator({
     const annual = lpa * 100000;
     setAnnualCtc(annual);
     setMonthlyCtc(Math.round((annual / 12) * 100) / 100);
+  };
+
+  // Custom Allowances management
+  const addCustomAllowance = () => {
+    setCustomAllowances(prev => [
+      ...prev,
+      { id: Date.now().toString(), name: 'Special Benefit', amount: 1000 }
+    ]);
+  };
+
+  const updateCustomAllowance = (id, field, value) => {
+    setCustomAllowances(prev =>
+      prev.map(item => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const removeCustomAllowance = (id) => {
+    setCustomAllowances(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Ad-hoc Additions management
+  const addAdHocAddition = () => {
+    setAdHocAdditions(prev => [
+      ...prev,
+      { id: Date.now().toString(), name: 'Spot Bonus', amount: 5000 }
+    ]);
+  };
+
+  const updateAdHocAddition = (id, field, value) => {
+    setAdHocAdditions(prev =>
+      prev.map(item => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const removeAdHocAddition = (id) => {
+    setAdHocAdditions(prev => prev.filter(item => item.id !== id));
   };
 
   // Fetch / Compute breakdown from backend
@@ -89,24 +151,47 @@ export default function SalaryBreakdownCalculator({
     try {
       const basicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
       const hraVal = Math.round(basicVal * (hraPctOfBasic / 100) * 100) / 100;
-      const specialAllowanceVal = Math.max(0, Math.round((monthlyCtc - (basicVal + hraVal)) * 100) / 100);
+
+      const components = {
+        'Basic': basicVal,
+        'HRA': hraVal,
+      };
+
+      if (Number(conveyance) > 0) {
+        components['Conveyance Allowance'] = Number(conveyance);
+      }
+      if (Number(medical) > 0) {
+        components['Medical Allowance'] = Number(medical);
+      }
+
+      customAllowances.forEach(ca => {
+        if (ca.name && Number(ca.amount) > 0) {
+          components[ca.name] = Number(ca.amount);
+        }
+      });
+
+      const adHocEarnings = {};
+      adHocAdditions.forEach(ah => {
+        if (ah.name && Number(ah.amount) > 0) {
+          adHocEarnings[ah.name] = Number(ah.amount);
+        }
+      });
 
       const payload = {
         monthly_ctc: monthlyCtc,
         tax_regime: taxRegime,
         work_state: workState,
-        components: {
-          'Basic': basicVal,
-          'HRA': hraVal,
-          'Special Allowance': specialAllowanceVal,
-        },
+        basic_pct: basicPct,
+        hra_pct: hraPctOfBasic,
+        components: components,
+        ad_hoc_earnings: adHocEarnings,
       };
 
       if (taxRegime === 'old') {
-        payload.tax_declaration = {
+        payload.declarations = {
           section_80c: Number(sec80c) || 0,
           section_80d: Number(sec80d) || 0,
-          home_loan_interest_24b: Number(sec24b) || 0,
+          section_24b_home_loan: Number(sec24b) || 0,
         };
       }
 
@@ -119,19 +204,9 @@ export default function SalaryBreakdownCalculator({
           annual_ctc: annualCtc,
           tax_regime: taxRegime,
           work_state: workState,
-          components: {
-            Basic: basicVal,
-            HRA: hraVal,
-            'Special Allowance': specialAllowanceVal,
-          },
-          tax_declaration: taxRegime === 'old' ? {
-            regime: 'old',
-            section_80c: Number(sec80c) || 0,
-            section_80d: Number(sec80d) || 0,
-            home_loan_interest_24b: Number(sec24b) || 0,
-          } : {
-            regime: 'new',
-          },
+          basic_pct: basicPct,
+          components: res.data?.earnings || components,
+          ad_hoc_earnings: adHocEarnings,
           breakdown: res.data,
         });
       }
@@ -140,7 +215,11 @@ export default function SalaryBreakdownCalculator({
     } finally {
       setLoading(false);
     }
-  }, [monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic, sec80c, sec80d, sec24b, onChange]);
+  }, [
+    monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic,
+    conveyance, medical, customAllowances, adHocAdditions,
+    sec80c, sec80d, sec24b, onChange
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -149,25 +228,44 @@ export default function SalaryBreakdownCalculator({
     return () => clearTimeout(timer);
   }, [calculateBreakdown]);
 
-  // Safe calculated numbers to prevent NaN
-  const monthlyNet = Number(breakdown?.monthly_net_take_home ?? breakdown?.net_take_home_monthly ?? 0);
-  const annualNet = Number(breakdown?.annual_net_take_home ?? breakdown?.net_take_home_annual ?? (monthlyNet * 12));
-  const monthlyGross = Number(breakdown?.monthly_gross ?? breakdown?.gross_salary ?? 0);
-  const annualGross = Number(breakdown?.annual_gross ?? (monthlyGross * 12));
-  const totalDeductions = Number(breakdown?.employee_deductions?.total_deductions ?? 0);
-  const monthlyTds = Number(breakdown?.tds_details?.monthly_tds ?? 0);
-  const employeePf = Number(breakdown?.employee_deductions?.employee_pf ?? 0);
-  const employeeEsi = Number(breakdown?.employee_deductions?.employee_esi ?? 0);
-  const pt = Number(breakdown?.employee_deductions?.professional_tax ?? 0);
-  const basic = Number(breakdown?.earnings?.basic ?? 0);
-  const hra = Number(breakdown?.earnings?.hra ?? 0);
-  const da = Number(breakdown?.earnings?.da ?? 0);
-  const specialAllowance = Number(breakdown?.earnings?.special_allowance ?? 0);
-  const stdDeduction = Number(breakdown?.tds_details?.standard_deduction ?? 0);
-  const taxableIncome = Number(breakdown?.tds_details?.taxable_income ?? breakdown?.tds_details?.net_taxable_income ?? 0);
-  const annualNetTax = Number(breakdown?.tds_details?.annual_net_tax ?? breakdown?.tds_details?.annual_tax ?? 0);
+  // Safe formatting helper to guarantee NaN never displays
+  const formatInr = (val, decimals = 2) => {
+    const n = Number(val);
+    if (isNaN(n) || !isFinite(n)) return '0.00';
+    return n.toLocaleString('en-IN', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  };
+
+  // Safe computed figures
+  const monthlyNet = (breakdown && !isNaN(Number(breakdown.monthly_net_take_home || breakdown.net_take_home_monthly)))
+    ? Number(breakdown.monthly_net_take_home || breakdown.net_take_home_monthly)
+    : 0;
+  const annualNet = (breakdown && !isNaN(Number(breakdown.annual_net_take_home || breakdown.net_take_home_annual)))
+    ? Number(breakdown.annual_net_take_home || breakdown.net_take_home_annual)
+    : monthlyNet * 12;
+  const monthlyGross = (breakdown && !isNaN(Number(breakdown.monthly_gross || breakdown.gross_salary)))
+    ? Number(breakdown.monthly_gross || breakdown.gross_salary)
+    : 0;
+  const annualGross = (breakdown && !isNaN(Number(breakdown.annual_gross)))
+    ? Number(breakdown.annual_gross)
+    : monthlyGross * 12;
+  const totalDeductions = (breakdown?.employee_deductions && !isNaN(Number(breakdown.employee_deductions.total_deductions)))
+    ? Number(breakdown.employee_deductions.total_deductions)
+    : 0;
+  const monthlyTds = (breakdown?.tds_details && !isNaN(Number(breakdown.tds_details.monthly_tds)))
+    ? Number(breakdown.tds_details.monthly_tds)
+    : 0;
+  const employeePf = Number(breakdown?.employee_deductions?.employee_pf || 0);
+  const employeeEsi = Number(breakdown?.employee_deductions?.employee_esi || 0);
+  const pt = Number(breakdown?.employee_deductions?.professional_tax || 0);
+  const stdDeduction = Number(breakdown?.tds_details?.standard_deduction || 0);
+  const taxableIncome = Number(breakdown?.tds_details?.taxable_income || breakdown?.tds_details?.net_taxable_income || 0);
+  const annualNetTax = Number(breakdown?.tds_details?.annual_net_tax || breakdown?.tds_details?.annual_tax || 0);
   const rebateApplied = Boolean(breakdown?.tds_details?.rebate_applied);
   const tdsReason = breakdown?.tds_details?.reason || '';
+  const adHocTotal = Number(breakdown?.ad_hoc_monthly_total || 0);
 
   const inputCls = "w-full rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors";
   const labelCls = "block text-xs font-semibold text-gray-300 mb-1.5";
@@ -280,8 +378,9 @@ export default function SalaryBreakdownCalculator({
             </div>
           </div>
 
-          {/* Component Sliders & Work State */}
+          {/* Basic Pay & State Controls */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            {/* Basic Salary Slider & Compliance */}
             <div>
               <div className="flex justify-between items-center text-xs mb-1.5">
                 <span className="font-medium text-gray-300">Basic Salary</span>
@@ -289,18 +388,44 @@ export default function SalaryBreakdownCalculator({
               </div>
               <input
                 type="range"
-                min="30"
-                max="60"
+                min="40"
+                max="85"
                 step="5"
                 value={basicPct}
                 onChange={(e) => setBasicPct(Number(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
-              <span className="text-[11px] text-gray-400 mt-1 block">
-                ₹{Math.round((monthlyCtc * basicPct) / 100).toLocaleString('en-IN')}/mo
-              </span>
+              <div className="flex items-center justify-between text-[11px] mt-1">
+                <span className="text-gray-400">
+                  ₹{Math.round((monthlyCtc * basicPct) / 100).toLocaleString('en-IN')}/mo
+                </span>
+                {basicPct >= 50 ? (
+                  <span className="text-emerald-400 font-medium">✓ Wage Code Compliant (≥50%)</span>
+                ) : (
+                  <span className="text-amber-400 font-medium">⚠ Below 50% Wage Code Floor</span>
+                )}
+              </div>
+              {/* Quick Basic Presets */}
+              <div className="flex items-center gap-1 mt-1.5 text-[10px]">
+                <span className="text-gray-500">Quick:</span>
+                {[50, 60, 70, 80].map(pct => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setBasicPct(pct)}
+                    className={`px-1.5 py-0.5 rounded border transition-colors ${
+                      basicPct === pct
+                        ? 'border-indigo-500/40 bg-indigo-500/20 text-indigo-300'
+                        : 'border-white/10 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* HRA (% of Basic) */}
             <div>
               <div className="flex justify-between items-center text-xs mb-1.5">
                 <span className="font-medium text-gray-300">HRA (% of Basic)</span>
@@ -315,14 +440,16 @@ export default function SalaryBreakdownCalculator({
                 onChange={(e) => setHraPctOfBasic(Number(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
-              <span className="text-[11px] text-gray-400 mt-1 block">
-                ₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo
-              </span>
+              <div className="flex items-center justify-between text-[11px] text-gray-400 mt-1">
+                <span>₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo</span>
+                <span className="text-[10px] text-gray-500">{hraPctOfBasic === 50 ? 'Metro (50%)' : 'Non-Metro (40%)'}</span>
+              </div>
             </div>
 
+            {/* Work State (All 36 States & UTs) */}
             <div>
               <label className={labelCls}>
-                Work State (PT Slabs)
+                Work State (Professional Tax)
               </label>
               <select
                 value={workState}
@@ -336,6 +463,164 @@ export default function SalaryBreakdownCalculator({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Expandable Allowances Section */}
+          <div className="border-t border-white/10 pt-3">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowAllowancesSection(!showAllowancesSection)}
+                className="flex items-center gap-2 text-xs font-semibold text-indigo-300 hover:text-indigo-200 transition"
+              >
+                <PlusIcon className={`w-3.5 h-3.5 transition-transform ${showAllowancesSection ? 'rotate-45' : ''}`} />
+                {showAllowancesSection ? 'Hide Fixed Allowances Configuration' : 'Configure Additional Fixed Allowances (Conveyance, Medical, Custom)'}
+              </button>
+              <span className="text-[11px] text-gray-400">
+                Special Allowance absorbs remainder to 100% CTC
+              </span>
+            </div>
+
+            {showAllowancesSection && (
+              <div className="mt-3 p-4 bg-white/[0.02] border border-white/10 rounded-xl space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Conveyance Allowance (₹/mo)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={conveyance || ''}
+                      onChange={(e) => setConveyance(parseFloat(e.target.value) || 0)}
+                      placeholder="e.g. 1600"
+                      className={inputCls}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Medical Allowance (₹/mo)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={medical || ''}
+                      onChange={(e) => setMedical(parseFloat(e.target.value) || 0)}
+                      placeholder="e.g. 1250"
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                {/* Custom Allowances List */}
+                {customAllowances.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    <span className="text-xs font-semibold text-gray-300 block">Custom Recurring Allowances:</span>
+                    {customAllowances.map((ca) => (
+                      <div key={ca.id} className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          value={ca.name}
+                          onChange={(e) => updateCustomAllowance(ca.id, 'name', e.target.value)}
+                          placeholder="Allowance Name (e.g. Internet Allowance)"
+                          className="flex-1 rounded-xl bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                        />
+                        <div className="relative w-36">
+                          <span className="absolute left-2.5 top-1.5 text-gray-500 text-xs">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="100"
+                            value={ca.amount || ''}
+                            onChange={(e) => updateCustomAllowance(ca.id, 'amount', parseFloat(e.target.value) || 0)}
+                            className="w-full rounded-xl bg-white/5 border border-white/10 pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            placeholder="Amount"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeCustomAllowance(ca.id)}
+                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={addCustomAllowance}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 text-xs font-medium transition"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Add Custom Allowance
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Ad-hoc / Variable Additions Section (Decoupled from Fixed CTC) */}
+          <div className="border-t border-white/10 pt-3">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowAdHocSection(!showAdHocSection)}
+                className="flex items-center gap-2 text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition"
+              >
+                <SparklesIcon className="w-3.5 h-3.5" />
+                {showAdHocSection ? 'Hide Ad-hoc / Variable Additions' : 'Add Ad-hoc / Variable Payout (Spot Bonus, Retention Bonus, Overtime)'}
+              </button>
+              <span className="text-[11px] text-gray-400">
+                Injected into monthly gross without modifying contractual base CTC
+              </span>
+            </div>
+
+            {showAdHocSection && (
+              <div className="mt-3 p-4 bg-emerald-500/[0.04] border border-emerald-500/20 rounded-xl space-y-3">
+                <p className="text-xs text-emerald-200/90">
+                  Ad-hoc earnings add to the employee's monthly gross earnings and are subjected to Section 192 TDS withholding, keeping the underlying contract CTC untouched.
+                </p>
+
+                {adHocAdditions.map((ah) => (
+                  <div key={ah.id} className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={ah.name}
+                      onChange={(e) => updateAdHocAddition(ah.id, 'name', e.target.value)}
+                      placeholder="e.g. Spot Bonus, Retention Bonus"
+                      className="flex-1 rounded-xl bg-black/40 border border-emerald-500/30 px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
+                    />
+                    <div className="relative w-36">
+                      <span className="absolute left-2.5 top-1.5 text-gray-500 text-xs">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="500"
+                        value={ah.amount || ''}
+                        onChange={(e) => updateAdHocAddition(ah.id, 'amount', parseFloat(e.target.value) || 0)}
+                        className="w-full rounded-xl bg-black/40 border border-emerald-500/30 pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-400"
+                        placeholder="Amount"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeAdHocAddition(ah.id)}
+                      className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addAdHocAddition}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 text-xs font-medium transition"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" /> Add Ad-hoc Earning
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Optional Old Regime Deductions Section */}
@@ -414,23 +699,30 @@ export default function SalaryBreakdownCalculator({
                 Monthly Net Take-Home
               </div>
               <div className="text-2xl font-bold mt-1 tracking-tight text-white">
-                ₹{monthlyNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{formatInr(monthlyNet)}
               </div>
               <div className="text-xs text-emerald-100/90 mt-1 font-medium">
-                Annual: ₹{annualNet.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                Annual: ₹{formatInr(annualNet, 0)}
               </div>
             </div>
 
             {/* Monthly Gross */}
             <div className="bg-white/[0.04] rounded-2xl p-4 border border-white/10 shadow-lg backdrop-blur-xl">
-              <div className="text-xs uppercase font-semibold tracking-wider text-gray-400">
-                Monthly Gross Pay
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase font-semibold tracking-wider text-gray-400">
+                  Monthly Gross Pay
+                </span>
+                {adHocTotal > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium">
+                    +₹{formatInr(adHocTotal, 0)} Ad-hoc
+                  </span>
+                )}
               </div>
               <div className="text-2xl font-bold mt-1 text-white tracking-tight">
-                ₹{monthlyGross.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{formatInr(monthlyGross)}
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                Annual Gross: ₹{annualGross.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                Annual Gross: ₹{formatInr(annualGross, 0)}
               </div>
             </div>
 
@@ -447,13 +739,32 @@ export default function SalaryBreakdownCalculator({
                 )}
               </div>
               <div className="text-2xl font-bold mt-1 text-rose-400 tracking-tight">
-                -₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                -₹{formatInr(totalDeductions)}
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                TDS: ₹{monthlyTds.toLocaleString('en-IN')} | PF: ₹{employeePf.toLocaleString('en-IN')}
+                TDS: ₹{formatInr(monthlyTds, 0)} | PF: ₹{formatInr(employeePf, 0)}
               </div>
             </div>
           </div>
+
+          {/* Contracted CTC vs Actual Realized CTC Banner if ad-hoc additions exist */}
+          {adHocTotal > 0 && (
+            <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-emerald-400" />
+                <span className="text-gray-300">
+                  Contracted Fixed CTC: <strong className="text-white">₹{formatInr(breakdown.contracted_monthly_ctc || monthlyCtc)}/mo</strong>
+                </span>
+                <span className="text-gray-500">•</span>
+                <span className="text-emerald-300">
+                  Ad-hoc Variable Additions: <strong className="text-emerald-400">+₹{formatInr(adHocTotal)}</strong>
+                </span>
+              </div>
+              <div className="text-gray-400">
+                Actual Payout Cost: <strong className="text-white">₹{formatInr(Number(breakdown.contracted_monthly_ctc || monthlyCtc) + adHocTotal)}</strong>
+              </div>
+            </div>
+          )}
 
           {/* Dynamic TDS Banner Explanation */}
           <div className={`p-4 rounded-2xl border backdrop-blur-xl flex items-start gap-3 ${
@@ -470,7 +781,7 @@ export default function SalaryBreakdownCalculator({
               </div>
               <div className="text-gray-300">{tdsReason}</div>
               <div className="text-[11px] text-gray-400 pt-0.5">
-                Standard Deduction: ₹{stdDeduction.toLocaleString('en-IN')} | Taxable Income: ₹{taxableIncome.toLocaleString('en-IN')} | Net Annual Tax: ₹{annualNetTax.toLocaleString('en-IN')} (incl. 4% Cess)
+                Standard Deduction: ₹{formatInr(stdDeduction, 0)} | Taxable Income: ₹{formatInr(taxableIncome, 0)} | Net Annual Tax: ₹{formatInr(annualNetTax, 0)} (incl. 4% Cess)
               </div>
             </div>
           </div>
@@ -486,36 +797,20 @@ export default function SalaryBreakdownCalculator({
                 <span className="text-xs font-medium text-gray-400">Monthly (₹)</span>
               </div>
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-gray-400">Basic Pay</span>
-                  <span className="font-semibold text-white">
-                    ₹{basic.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-gray-400">House Rent Allowance (HRA)</span>
-                  <span className="font-semibold text-white">
-                    ₹{hra.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-                {da > 0 && (
-                  <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-gray-400">Dearness Allowance (DA)</span>
+                {Object.entries(breakdown.earnings || {}).map(([key, val]) => (
+                  <div key={key} className="flex justify-between py-1 border-b border-white/5">
+                    <span className={key.startsWith('[Ad-hoc]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
+                      {key}
+                    </span>
                     <span className="font-semibold text-white">
-                      ₹{da.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₹{formatInr(val)}
                     </span>
                   </div>
-                )}
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-gray-400">Special Allowance (Balancing)</span>
-                  <span className="font-semibold text-white">
-                    ₹{specialAllowance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
+                ))}
                 <div className="flex justify-between pt-2 font-bold text-white text-sm">
                   <span>Gross Salary</span>
                   <span className="text-indigo-400">
-                    ₹{monthlyGross.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{formatInr(monthlyGross)}
                   </span>
                 </div>
               </div>
@@ -536,7 +831,7 @@ export default function SalaryBreakdownCalculator({
                     <span className="block text-[10px] text-gray-500">On Basic Salary</span>
                   </div>
                   <span className="font-semibold text-white">
-                    ₹{employeePf.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{formatInr(employeePf)}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-white/5">
@@ -545,7 +840,7 @@ export default function SalaryBreakdownCalculator({
                     <span className="block text-[10px] text-gray-500">If gross ≤ ₹21,000</span>
                   </div>
                   <span className="font-semibold text-white">
-                    ₹{employeeEsi.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{formatInr(employeeEsi)}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-white/5">
@@ -554,7 +849,7 @@ export default function SalaryBreakdownCalculator({
                     <span className="block text-[10px] text-gray-500">{workState} Slab</span>
                   </div>
                   <span className="font-semibold text-white">
-                    ₹{pt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{formatInr(pt)}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-white/5">
@@ -565,13 +860,13 @@ export default function SalaryBreakdownCalculator({
                     </span>
                   </div>
                   <span className={`font-semibold ${monthlyTds > 0 ? 'text-rose-400' : 'text-white'}`}>
-                    ₹{monthlyTds.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{formatInr(monthlyTds)}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 font-bold text-white text-sm">
                   <span>Total Deductions</span>
                   <span className="text-rose-400">
-                    ₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{formatInr(totalDeductions)}
                   </span>
                 </div>
               </div>

@@ -246,16 +246,33 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
   }, [isOpen, employee]);
 
   const sd = computedDetails;
-  const monthlyNet = Number(sd?.monthly_net_take_home ?? sd?.net_take_home_monthly ?? 0);
-  const annualNet = Number(sd?.annual_net_take_home ?? sd?.net_take_home_annual ?? (monthlyNet * 12));
-  const monthlyGross = Number(sd?.monthly_gross ?? sd?.gross_salary ?? 0);
-  const annualGross = Number(sd?.annual_gross ?? (monthlyGross * 12));
-  const totalDeductions = Number(sd?.employee_deductions?.total_deductions ?? 0);
-  const monthlyTds = Number(sd?.tds_details?.monthly_tds ?? 0);
-  const employeePf = Number(sd?.employee_deductions?.employee_pf ?? 0);
-  const employeeEsi = Number(sd?.employee_deductions?.employee_esi ?? 0);
-  const pt = Number(sd?.employee_deductions?.professional_tax ?? 0);
-  const annualNetTax = Number(sd?.tds_details?.annual_net_tax ?? sd?.tds_details?.annual_tax ?? 0);
+  const formatInr = (val, decimals = 2) => {
+    const n = Number(val);
+    if (isNaN(n) || !isFinite(n)) return '0.00';
+    return n.toLocaleString('en-IN', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  };
+
+  const monthlyNet = (sd && !isNaN(Number(sd.monthly_net_take_home || sd.net_take_home_monthly)))
+    ? Number(sd.monthly_net_take_home || sd.net_take_home_monthly)
+    : 0;
+  const annualNet = (sd && !isNaN(Number(sd.annual_net_take_home || sd.net_take_home_annual)))
+    ? Number(sd.annual_net_take_home || sd.net_take_home_annual)
+    : monthlyNet * 12;
+  const monthlyGross = (sd && !isNaN(Number(sd.monthly_gross || sd.gross_salary)))
+    ? Number(sd.monthly_gross || sd.gross_salary)
+    : 0;
+  const annualGross = (sd && !isNaN(Number(sd.annual_gross)))
+    ? Number(sd.annual_gross)
+    : monthlyGross * 12;
+  const totalDeductions = Number(sd?.employee_deductions?.total_deductions || 0);
+  const monthlyTds = Number(sd?.tds_details?.monthly_tds || 0);
+  const employeePf = Number(sd?.employee_deductions?.employee_pf || 0);
+  const employeeEsi = Number(sd?.employee_deductions?.employee_esi || 0);
+  const pt = Number(sd?.employee_deductions?.professional_tax || 0);
+  const annualNetTax = Number(sd?.tds_details?.annual_net_tax || sd?.tds_details?.annual_tax || 0);
   const rebateApplied = Boolean(sd?.tds_details?.rebate_applied);
   const tdsReason = sd?.tds_details?.reason || '';
 
@@ -297,20 +314,20 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-white">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">Monthly Take-Home</span>
                   <span className="text-xl font-bold text-emerald-300">
-                    ₹{monthlyNet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    ₹{formatInr(monthlyNet)}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    Annual: ₹{annualNet.toLocaleString('en-IN')}
+                    Annual: ₹{formatInr(annualNet, 0)}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Monthly Gross Pay</span>
                   <span className="text-xl font-bold text-white">
-                    ₹{monthlyGross.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    ₹{formatInr(monthlyGross)}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    Annual: ₹{annualGross.toLocaleString('en-IN')}
+                    Annual: ₹{formatInr(annualGross, 0)}
                   </span>
                 </div>
 
@@ -322,10 +339,10 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                     )}
                   </div>
                   <span className="text-xl font-bold text-red-400">
-                    -₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    -₹{formatInr(totalDeductions)}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    TDS: ₹{monthlyTds.toLocaleString('en-IN')}
+                    TDS: ₹{formatInr(monthlyTds, 0)}
                   </span>
                 </div>
               </div>
@@ -338,7 +355,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 </div>
                 <div>{tdsReason || 'Calculated based on projected annual gross liability.'}</div>
                 <div className="text-[11px] opacity-75 pt-1">
-                  Projected Annual Tax: ₹{annualNetTax.toLocaleString('en-IN')} | Tax Regime: {employee.tax_regime === 'old' ? 'OLD REGIME' : 'NEW REGIME'}
+                  Projected Annual Tax: ₹{formatInr(annualNetTax, 0)} | Tax Regime: {employee.tax_regime === 'old' ? 'OLD REGIME' : 'NEW REGIME'}
                 </div>
               </div>
 
@@ -352,13 +369,15 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                   </div>
                   {Object.entries(sd.earnings || {}).map(([comp, val]) => (
                     <div key={comp} className="flex justify-between text-xs py-1 border-b border-white/5">
-                      <span className="text-gray-400">{comp}</span>
-                      <span className="font-medium text-white">₹{Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <span className={comp.startsWith('[Ad-hoc]') || comp.startsWith('[Variable]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
+                        {comp}
+                      </span>
+                      <span className="font-medium text-white">₹{formatInr(val)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between text-xs pt-2 font-bold text-indigo-300">
                     <span>Total Gross</span>
-                    <span>₹{monthlyGross.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span>₹{formatInr(monthlyGross)}</span>
                   </div>
                 </div>
 
@@ -370,23 +389,23 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Provident Fund (PF)</span>
-                    <span className="font-medium text-white">₹{employeePf.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-white">₹{formatInr(employeePf)}</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Employee ESI</span>
-                    <span className="font-medium text-white">₹{employeeEsi.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-white">₹{formatInr(employeeEsi)}</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Professional Tax (PT)</span>
-                    <span className="font-medium text-white">₹{pt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-white">₹{formatInr(pt)}</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Income Tax (TDS)</span>
-                    <span className="font-medium text-red-400">₹{monthlyTds.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-red-400">₹{formatInr(monthlyTds)}</span>
                   </div>
                   <div className="flex justify-between text-xs pt-2 font-bold text-red-400">
                     <span>Total Deductions</span>
-                    <span>-₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span>-₹{formatInr(totalDeductions)}</span>
                   </div>
                 </div>
               </div>
