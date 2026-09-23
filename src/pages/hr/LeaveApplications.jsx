@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { hrApi } from "../../api/hr";
-import { PaperAirplaneIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { toast } from "react-toastify";
+import { PaperAirplaneIcon, PlusIcon, CheckIcon, XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { showErrorToast, showSuccessToast } from "../../utils/toastUtils";
 
 import LeaveTypeModal from "./LeaveTypeModal";
 
@@ -49,23 +49,17 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isQuotaExhausted) {
-      toast.error("Paid leave quota is fully exhausted. Additional paid leave cannot be taken.");
+      showErrorToast("Paid leave quota is fully exhausted. Additional paid leave cannot be taken.");
       return;
     }
     setSaving(true);
     try {
       await hrApi.createLeaveApplication(form);
-      toast.success("Leave application submitted");
+      showSuccessToast("Leave application submitted successfully");
       onSuccess();
       onClose();
     } catch (err) {
-      const errors = err.response?.data;
-      if (errors && typeof errors === 'object') {
-        const msg = Object.entries(errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v[0] : v}`).join('\n');
-        toast.error(msg);
-      } else {
-        toast.error("Failed to submit leave application");
-      }
+      showErrorToast(err, "Failed to submit leave application");
     } finally {
       setSaving(false);
     }
@@ -148,7 +142,7 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
             </div>
             <div>
               <label className={labelCls}>Reason</label>
-              <textarea name="reason" value={form.reason} onChange={handleChange} rows={3} className={inputCls + " resize-none"} placeholder="Optional reason..." />
+              <textarea name="reason" value={form.reason} onChange={handleChange} rows={3} className={inputCls + " resize-none"} placeholder="State reason for taking leave..." />
             </div>
             <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
               <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
@@ -175,12 +169,136 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
   );
 }
 
+// ─── Leave Request Details Modal ───────────────────────────────────────────────
+function LeaveDetailsModal({ isOpen, onClose, application, onApprove, onReject }) {
+  if (!isOpen || !application) return null;
+
+  const STATUS_STYLES = {
+    pending: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    approved: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    rejected: 'bg-red-500/20 text-red-300 border-red-500/30',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              <PaperAirplaneIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Leave Application Details</h2>
+              <p className="text-xs text-gray-400">Review employee leave request, reason, and approval status</p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+          {/* Employee & Status Card */}
+          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-white">{application.employee_name || application.employee}</h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Leave Type: <span className="font-semibold text-indigo-300">{application.leave_type_name || application.leave_type}</span>
+              </p>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${STATUS_STYLES[application.status] || 'bg-white/10 text-white'}`}>
+              {application.status}
+            </span>
+          </div>
+
+          {/* Duration & Impact Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
+            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+              <p className="text-[11px] text-gray-400">Start Date</p>
+              <p className="text-sm font-semibold text-white mt-1">{application.start_date}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+              <p className="text-[11px] text-gray-400">End Date</p>
+              <p className="text-sm font-semibold text-white mt-1">{application.end_date}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 col-span-2 sm:col-span-1">
+              <p className="text-[11px] text-indigo-300">Total Duration</p>
+              <p className="text-sm font-bold text-indigo-300 mt-1">{application.computed_days} Days</p>
+            </div>
+          </div>
+
+          {/* Excess / LWP notice */}
+          {parseFloat(application.lwp_days || 0) > 0 && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2">
+              <span className="font-bold">⚠️ Loss of Pay (LOP):</span>
+              <span>{application.lwp_days} of these days exceed the available quota and will be deducted as unpaid leave.</span>
+            </div>
+          )}
+
+          {/* Stated Reason */}
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300">Stated Reason</h4>
+              <span className="text-[11px] text-gray-500">Submitted by employee</span>
+            </div>
+            {application.reason ? (
+              <p className="text-sm text-gray-200 bg-black/40 p-3 rounded-lg border border-white/5 leading-relaxed whitespace-pre-wrap">
+                {application.reason}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 italic bg-black/20 p-3 rounded-lg">No reason specified for this application.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-white/10 flex items-center justify-between bg-white/[0.01]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-white/5 rounded-xl transition"
+          >
+            Close
+          </button>
+          {application.status === 'pending' && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onReject(application.id);
+                  onClose();
+                }}
+                className="px-4 py-2 text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition inline-flex items-center gap-1.5"
+              >
+                <XMarkIcon className="w-4 h-4" /> Reject Leave
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onApprove(application.id);
+                  onClose();
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition inline-flex items-center gap-1.5 shadow-lg shadow-emerald-500/20"
+              >
+                <CheckIcon className="w-4 h-4" /> Approve Leave
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LeaveApplications() {
   const [applications, setApplications] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLeave, setSelectedLeave] = useState(null);
 
   const fetchApplications = async () => {
     try {
@@ -188,7 +306,7 @@ export default function LeaveApplications() {
       const res = await hrApi.getLeaveApplications();
       setApplications(res.data?.results || res.data || []);
     } catch (error) {
-      toast.error("Failed to load leave applications");
+      showErrorToast(error, "Failed to load leave applications");
     } finally {
       setLoading(false);
     }
@@ -213,27 +331,27 @@ export default function LeaveApplications() {
   const handleApprove = async (id) => {
     try {
       await hrApi.approveLeave(id);
-      toast.success("Leave approved");
+      showSuccessToast("Leave application approved successfully");
       fetchApplications();
     } catch (error) {
-      toast.error("Failed to approve leave");
+      showErrorToast(error, "Failed to approve leave application");
     }
   };
 
   const handleReject = async (id) => {
     try {
       await hrApi.rejectLeave(id);
-      toast.success("Leave rejected");
+      showSuccessToast("Leave application marked as rejected");
       fetchApplications();
     } catch (error) {
-      toast.error("Failed to reject leave");
+      showErrorToast(error, "Failed to reject leave application");
     }
   };
 
   const STATUS_COLORS = {
-    pending: 'bg-yellow-500/10 text-yellow-400',
-    approved: 'bg-green-500/10 text-green-400',
-    rejected: 'bg-red-500/10 text-red-400',
+    pending: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    approved: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    rejected: 'bg-red-500/10 text-red-400 border border-red-500/20',
   };
 
   return (
@@ -247,11 +365,13 @@ export default function LeaveApplications() {
                 <PaperAirplaneIcon className="w-9 h-9 text-indigo-300" />
                 Leave Applications
               </h1>
-              <p className="text-white/65 text-sm mt-2">Review, approve, or reject employee leave requests.</p>
+              <p className="text-white/65 text-sm mt-2">
+                Review employee leave reasons, approve or reject requests, and view full details by clicking any request.
+              </p>
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300 shadow-lg shadow-indigo-500/20"
             >
               <PlusIcon className="h-4 w-4" />
               Apply for Leave
@@ -269,7 +389,7 @@ export default function LeaveApplications() {
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Type</th>
-                  <th className="px-6 py-4">Duration</th>
+                  <th className="px-6 py-4">Duration & Reason</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -281,25 +401,68 @@ export default function LeaveApplications() {
                   <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-400">No leave applications found</td></tr>
                 ) : (
                   applications.map((app) => (
-                    <tr key={app.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4">{app.employee_name || app.employee}</td>
-                      <td className="px-6 py-4">{app.leave_type_name || app.leave_type}</td>
-                      <td className="px-6 py-4">
-                        {app.start_date} → {app.end_date}<br />
-                        <span className="text-xs text-gray-500">{app.computed_days} days</span>
+                    <tr
+                      key={app.id}
+                      onClick={() => setSelectedLeave(app)}
+                      className="border-b border-white/10 hover:bg-white/5 cursor-pointer transition-colors"
+                      title="Click to view full application details and stated reason"
+                    >
+                      <td className="px-6 py-4 font-medium text-white">
+                        {app.employee_name || app.employee}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_COLORS[app.status] || 'bg-white/10 text-white'}`}>
+                        <span className="font-medium text-gray-200">{app.leave_type_name || app.leave_type}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-gray-200">
+                            {app.start_date} → {app.end_date} <span className="text-xs text-indigo-300 font-medium">({app.computed_days} {parseFloat(app.computed_days) === 1 ? 'day' : 'days'})</span>
+                          </p>
+                          {app.reason ? (
+                            <p className="text-xs text-gray-400 italic truncate max-w-xs mt-0.5">
+                              “{app.reason}”
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-gray-600 mt-0.5">No reason stated</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${STATUS_COLORS[app.status] || 'bg-white/10 text-white'}`}>
                           {app.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2">
+                      <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedLeave(app);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 text-xs font-medium inline-flex items-center gap-1 transition"
+                          title="View complete reason & details"
+                        >
+                          <EyeIcon className="w-3.5 h-3.5" /> Details
+                        </button>
                         {app.status === 'pending' && (
                           <>
-                            <button onClick={() => handleApprove(app.id)} className="p-1 rounded bg-green-500/10 text-green-400 hover:bg-green-500/20" title="Approve">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApprove(app.id);
+                              }}
+                              className="p-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition inline-flex items-center"
+                              title="Approve Leave"
+                            >
                               <CheckIcon className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleReject(app.id)} className="p-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20" title="Reject">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReject(app.id);
+                              }}
+                              className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition inline-flex items-center"
+                              title="Reject Leave"
+                            >
                               <XMarkIcon className="w-4 h-4" />
                             </button>
                           </>
@@ -321,6 +484,14 @@ export default function LeaveApplications() {
         employees={employees}
         leaveTypes={leaveTypes}
         onLeaveTypeAdded={(newLt) => setLeaveTypes((prev) => [...prev, newLt])}
+      />
+
+      <LeaveDetailsModal
+        isOpen={!!selectedLeave}
+        onClose={() => setSelectedLeave(null)}
+        application={selectedLeave}
+        onApprove={handleApprove}
+        onReject={handleReject}
       />
     </>
   );

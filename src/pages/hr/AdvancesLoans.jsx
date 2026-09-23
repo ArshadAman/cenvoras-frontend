@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { hrApi } from "../../api/hr";
 import {
   BanknotesIcon, PlusIcon, CheckBadgeIcon, XMarkIcon,
-  ArrowPathIcon, CurrencyRupeeIcon, CheckCircleIcon
+  ArrowPathIcon, CurrencyRupeeIcon, CheckCircleIcon, EyeIcon
 } from '@heroicons/react/24/outline';
-import { toast } from "react-toastify";
+import { showErrorToast, showSuccessToast } from "../../utils/toastUtils";
 
 function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({
@@ -34,12 +34,17 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await hrApi.createAdvanceLoan(form);
-      toast.success(`${form.type === 'advance' ? 'Salary advance' : 'Loan'} request submitted`);
+      const payload = {
+        ...form,
+        record_type: form.type,
+        original_amount: form.principal_amount,
+      };
+      await hrApi.createAdvanceLoan(payload);
+      showSuccessToast(`${form.type === 'advance' ? 'Salary advance' : 'Personal loan'} request submitted successfully`);
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit loan request');
+      showErrorToast(err, 'Failed to submit loan request');
     } finally {
       setSaving(false);
     }
@@ -96,7 +101,7 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
 
           <div>
             <label className="block text-sm text-gray-300 mb-1">Reason / Purpose</label>
-            <textarea rows={2} value={form.reason} onChange={e => setForm(p => ({ ...p, reason: e.target.value }))} className={ic + ' resize-none'} placeholder="Medical emergency / Home renovation" />
+            <textarea rows={2} value={form.reason} onChange={e => setForm(p => ({ ...p, reason: e.target.value }))} className={ic + ' resize-none'} placeholder="Medical emergency / Home renovation..." />
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
@@ -111,11 +116,156 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
   );
 }
 
+// ─── Loan Details & Schedule Modal ────────────────────────────────────────────
+function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
+  if (!isOpen || !loan) return null;
+
+  const principal = parseFloat(loan.principal_amount || loan.original_amount || 0);
+  const balance = parseFloat(loan.balance_amount || loan.outstanding_balance || 0);
+  const installment = parseFloat(loan.monthly_installment || 0);
+  const progress = principal > 0 ? Math.min(100, Math.round(((principal - balance) / principal) * 100)) : 100;
+  const loanType = loan.type || loan.record_type || 'advance';
+  const remainingInstallments = installment > 0 ? Math.ceil(balance / installment) : 0;
+
+  const STATUS_STYLES = {
+    active: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    requested: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    fully_recovered: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    closed: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              <BanknotesIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Advance / Loan Details</h2>
+              <p className="text-xs text-gray-400">Recovery progress, purpose, and repayment schedule</p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+          {/* Employee & Type */}
+          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-white">{loan.employee_name}</h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Disbursed on: <span className="text-gray-200">{loan.disbursement_date}</span>
+                {loan.disbursed_by_name && <span> • By: <span className="text-gray-200">{loan.disbursed_by_name}</span></span>}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
+                loanType === 'advance' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+              }`}>
+                {loanType === 'advance' ? 'Salary Advance' : 'Personal Loan'}
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider border ${STATUS_STYLES[loan.status] || 'bg-white/10 text-white'}`}>
+                {loan.status}
+              </span>
+            </div>
+          </div>
+
+          {/* Financial Breakdown */}
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+              <p className="text-[11px] text-gray-400">Principal</p>
+              <p className="text-base font-bold text-white mt-1">₹{principal.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+              <p className="text-[11px] text-indigo-300">Monthly Deduction</p>
+              <p className="text-base font-bold text-indigo-300 mt-1">₹{installment.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <p className="text-[11px] text-emerald-300">Balance</p>
+              <p className="text-base font-bold text-emerald-400 mt-1">₹{balance.toLocaleString('en-IN')}</p>
+            </div>
+          </div>
+
+          {/* Recovery Progress Bar */}
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-gray-400">Recovery Progress</span>
+              <span className="font-semibold text-emerald-400">{progress}% recovered ({remainingInstallments} installments remaining)</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+              <div className="bg-emerald-400 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+
+          {/* Stated Purpose */}
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300">Stated Purpose / Reason</h4>
+              <span className="text-[11px] text-gray-500">Recorded on application</span>
+            </div>
+            {loan.reason ? (
+              <p className="text-sm text-gray-200 bg-black/40 p-3 rounded-lg border border-white/5 leading-relaxed whitespace-pre-wrap">
+                {loan.reason}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 italic bg-black/20 p-3 rounded-lg">No specific reason provided for this disbursement.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-white/10 flex items-center justify-between bg-white/[0.01]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-white/5 rounded-xl transition"
+          >
+            Close
+          </button>
+          <div className="flex items-center gap-2">
+            {loan.status === 'requested' && (
+              <button
+                type="button"
+                onClick={() => {
+                  onApprove(loan.id);
+                  onClose();
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition inline-flex items-center gap-1.5 shadow-lg shadow-emerald-500/20"
+              >
+                <CheckBadgeIcon className="w-4 h-4" /> Approve & Activate
+              </button>
+            )}
+            {loan.status === 'active' && (
+              <button
+                type="button"
+                onClick={() => {
+                  onCloseLoan(loan.id);
+                  onClose();
+                }}
+                className="px-3.5 py-2 text-xs font-medium text-gray-300 hover:text-white bg-white/10 hover:bg-white/15 rounded-xl transition"
+              >
+                Close Loan (Write-off balance)
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdvancesLoans() {
   const [loans, setLoans] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState(null);
 
   const fetchLoans = async () => {
     try {
@@ -127,7 +277,7 @@ export default function AdvancesLoans() {
       setLoans(loanRes.data?.results || loanRes.data || []);
       setEmployees(empRes.data?.results || empRes.data || []);
     } catch (error) {
-      toast.error("Failed to load advances and loans");
+      showErrorToast(error, "Failed to load advances and loans");
     } finally {
       setLoading(false);
     }
@@ -140,10 +290,10 @@ export default function AdvancesLoans() {
   const handleApprove = async (id) => {
     try {
       await hrApi.approveAdvanceLoan(id);
-      toast.success("Advance/Loan approved and activated for payroll recovery");
+      showSuccessToast("Advance/Loan approved and scheduled for automated payroll deduction");
       fetchLoans();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to approve");
+      showErrorToast(err, "Failed to approve advance/loan");
     }
   };
 
@@ -151,16 +301,16 @@ export default function AdvancesLoans() {
     if (!window.confirm("Close this loan? Remaining balance will be set to ₹0.00.")) return;
     try {
       await hrApi.closeAdvanceLoan(id);
-      toast.success("Loan marked as closed");
+      showSuccessToast("Advance/Loan closed successfully");
       fetchLoans();
     } catch (err) {
-      toast.error("Failed to close loan");
+      showErrorToast(err, "Failed to close loan");
     }
   };
 
   const totalOutstanding = loans
     .filter(l => l.status === 'active')
-    .reduce((sum, l) => sum + parseFloat(l.balance_amount || 0), 0);
+    .reduce((sum, l) => sum + parseFloat(l.balance_amount || l.outstanding_balance || 0), 0);
 
   return (
     <>
@@ -175,7 +325,7 @@ export default function AdvancesLoans() {
                 Advances & Loans
               </h1>
               <p className="text-white/65 text-sm mt-2">
-                Manage employee salary advances, personal loans, and automated payroll recovery schedules.
+                Manage employee salary advances, personal loans, and automated payroll recovery schedules. Click any row to view stated reason and repayment details.
               </p>
             </div>
             <button
@@ -233,24 +383,35 @@ export default function AdvancesLoans() {
                   <tr><td colSpan="7" className="px-6 py-10 text-center text-gray-400">No advance or loan records found.</td></tr>
                 ) : (
                   loans.map(loan => {
-                    const principal = parseFloat(loan.principal_amount || 0);
-                    const balance = parseFloat(loan.balance_amount || 0);
+                    const principal = parseFloat(loan.principal_amount || loan.original_amount || 0);
+                    const balance = parseFloat(loan.balance_amount || loan.outstanding_balance || 0);
                     const progress = principal > 0 ? Math.min(100, Math.round(((principal - balance) / principal) * 100)) : 100;
+                    const loanType = loan.type || loan.record_type || 'advance';
 
                     return (
-                      <tr key={loan.id} className="border-b border-white/10 hover:bg-white/5">
+                      <tr
+                        key={loan.id}
+                        onClick={() => setSelectedLoan(loan)}
+                        className="border-b border-white/10 hover:bg-white/5 cursor-pointer transition-colors"
+                        title="Click to view complete details, repayment schedule, and purpose"
+                      >
                         <td className="px-6 py-4 font-medium text-white">
                           <p>{loan.employee_name}</p>
                           <p className="text-xs text-gray-400">Disbursed: {loan.disbursement_date}</p>
+                          {loan.reason && (
+                            <p className="text-xs text-gray-400 italic truncate max-w-xs mt-0.5">
+                              “{loan.reason}”
+                            </p>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                            loan.type === 'advance' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'
+                            loanType === 'advance' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'
                           }`}>
-                            {loan.type}
+                            {loanType}
                           </span>
                         </td>
-                        <td className="px-6 py-4">₹{principal.toLocaleString('en-IN')}</td>
+                        <td className="px-6 py-4 font-semibold text-white">₹{principal.toLocaleString('en-IN')}</td>
                         <td className="px-6 py-4">₹{parseFloat(loan.monthly_installment || 0).toLocaleString('en-IN')}/mo</td>
                         <td className="px-6 py-4">
                           <div>
@@ -270,10 +431,23 @@ export default function AdvancesLoans() {
                             {loan.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right space-x-2">
+                        <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLoan(loan);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 text-xs font-medium inline-flex items-center gap-1 transition"
+                            title="View details & purpose"
+                          >
+                            <EyeIcon className="w-3.5 h-3.5" /> Details
+                          </button>
                           {loan.status === 'requested' && (
                             <button
-                              onClick={() => handleApprove(loan.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApprove(loan.id);
+                              }}
                               className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-semibold"
                             >
                               Approve
@@ -281,7 +455,10 @@ export default function AdvancesLoans() {
                           )}
                           {loan.status === 'active' && (
                             <button
-                              onClick={() => handleClose(loan.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClose(loan.id);
+                              }}
                               className="px-2.5 py-1 rounded-lg bg-white/5 text-gray-400 hover:text-white text-xs font-medium"
                             >
                               Close
@@ -303,6 +480,14 @@ export default function AdvancesLoans() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchLoans}
         employees={employees}
+      />
+
+      <LoanDetailsModal
+        isOpen={!!selectedLoan}
+        onClose={() => setSelectedLoan(null)}
+        loan={selectedLoan}
+        onApprove={handleApprove}
+        onCloseLoan={handleClose}
       />
     </>
   );
