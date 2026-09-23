@@ -471,16 +471,31 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      setReason('');
+    }
+  }, [isOpen]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!reason.trim()) {
+      toast.error('Please enter a reason for reopening');
+      return;
+    }
     setSaving(true);
     try {
-      await hrApi.reopenPayroll(payrollRun.id, { reason });
+      await hrApi.reopenPayroll(payrollRun.id, { reason: reason.trim() });
       toast.success('Payroll reopened and accounting accrual reversed');
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to reopen');
+      const msg = err.response?.data?.error
+        || err.response?.data?.detail
+        || (Array.isArray(err.response?.data) ? err.response?.data[0] : null)
+        || (typeof err.response?.data === 'string' ? err.response?.data : null)
+        || 'Failed to reopen';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -820,7 +835,7 @@ export default function PayrollRuns() {
                         )}
 
                         {/* Reopen */}
-                        {['approved', 'locked'].includes(run.status) && (
+                        {['approved', 'paid', 'locked'].includes(run.status) && (
                           <button
                             onClick={() => setSelectedReopenRun(run)}
                             className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-medium inline-flex items-center gap-1"
