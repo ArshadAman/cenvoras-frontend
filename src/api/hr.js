@@ -23,6 +23,13 @@ export const hrApi = {
   deleteEmployee: (id) => api.delete(`/hr/employees/${id}/`),
   incrementSalary: (id, data) => api.post(`/hr/employees/${id}/increment_salary/`, data),
   getEmployeeSalaryHistory: (id) => api.get(`/hr/employees/${id}/salary_history/`),
+  calculateSalaryBreakdown: (data) => api.post('/hr/employees/calculate_salary_breakdown/', data),
+
+  // Tax Declarations
+  getTaxDeclarations: (params) => api.get('/hr/tax-declarations/', { params }),
+  createTaxDeclaration: (data) => api.post('/hr/tax-declarations/', data),
+  updateTaxDeclaration: (id, data) => api.put(`/hr/tax-declarations/${id}/`, data),
+  deleteTaxDeclaration: (id) => api.delete(`/hr/tax-declarations/${id}/`),
 
   // Attendance
   getAttendance: (params) => api.get('/hr/attendance/', { params }),

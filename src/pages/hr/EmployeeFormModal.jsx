@@ -3,6 +3,7 @@ import { hrApi } from '../../api/hr';
 import { getWarehouses } from '../../api/inventory';
 import { toast } from 'react-toastify';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
+import SalaryBreakdownCalculator from '../../components/hr/SalaryBreakdownCalculator';
 
 const EMPTY_FORM = {
   full_name: '',
@@ -16,7 +17,7 @@ const EMPTY_FORM = {
   date_of_joining: '',
   gender: 'M',
   employment_type: 'full_time',
-  work_state: '',
+  work_state: 'Karnataka',
   status: 'active',
   department_id: '',
   designation_id: '',
@@ -31,6 +32,7 @@ const EMPTY_FORM = {
   bank_ifsc: '',
   account_holder_name: '',
   upi_id: '',
+  tax_regime: 'new',
 };
 
 export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess }) {
@@ -41,6 +43,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [salaryConfig, setSalaryConfig] = useState(null);
 
   // Quick Add Department Modal state
   const [showAddDept, setShowAddDept] = useState(false);
@@ -68,7 +71,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           date_of_joining: employee.date_of_joining || '',
           gender: employee.gender || 'M',
           employment_type: employee.employment_type || 'full_time',
-          work_state: employee.work_state || '',
+          work_state: employee.work_state || 'Karnataka',
           status: employee.status || 'active',
           department_id: employee.department || '',
           designation_id: employee.designation || '',
@@ -83,9 +86,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           bank_ifsc: employee.bank_ifsc || '',
           account_holder_name: employee.account_holder_name || '',
           upi_id: employee.upi_id || '',
+          tax_regime: employee.tax_regime || 'new',
         });
+        if (employee.salary_details) {
+          setSalaryConfig({
+            monthly_ctc: Number(employee.salary_details.monthly_ctc || 50000),
+            tax_regime: employee.tax_regime || 'new',
+            components: employee.salary_details.earnings || {},
+          });
+        }
       } else {
         setFormData(EMPTY_FORM);
+        setSalaryConfig(null);
       }
     }
   }, [isOpen, employee]);
@@ -235,10 +247,24 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         bank_ifsc: formData.bank_ifsc ? formData.bank_ifsc.toUpperCase() : '',
         account_holder_name: formData.account_holder_name,
         upi_id: formData.upi_id?.trim() || null,
+        tax_regime: salaryConfig?.tax_regime || formData.tax_regime || 'new',
       };
 
       if (formData.personal_email) payload.personal_email = formData.personal_email;
       if (formData.personal_phone) payload.personal_phone = formData.personal_phone;
+
+      // Attach salary breakdown if configured
+      if (salaryConfig && salaryConfig.monthly_ctc > 0) {
+        payload.salary = {
+          monthly_ctc: salaryConfig.monthly_ctc,
+          components: salaryConfig.components || {},
+          effective_from: formData.date_of_joining || undefined,
+        };
+      }
+
+      if (salaryConfig && salaryConfig.tax_declaration) {
+        payload.tax_declaration = salaryConfig.tax_declaration;
+      }
 
       if (employee) {
         await hrApi.updateEmployee(employee.id, payload);
@@ -277,7 +303,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl my-8">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10 sticky top-0 bg-[#111116] z-10 rounded-t-2xl">
           <h2 className="text-xl font-semibold text-white">
             {employee ? `Edit Employee (${employee.employee_code})` : 'Add New Employee'}
@@ -288,12 +314,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-white/10 bg-white/[0.02] px-5 pt-3 gap-2">
+        <div className="flex border-b border-white/10 bg-white/[0.02] px-5 pt-3 gap-2 overflow-x-auto">
           {[
             { id: 'personal', label: 'Personal & Family' },
             { id: 'employment', label: 'Employment & Branch' },
             { id: 'statutory', label: 'Statutory (PF/ESI/PAN)' },
             { id: 'bank', label: 'Bank Details' },
+            { id: 'compensation', label: 'Compensation & Tax' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -531,6 +558,25 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             </div>
           )}
 
+          {/* TAB 5: COMPENSATION & TAX */}
+          {activeTab === 'compensation' && (
+            <div className="space-y-4 pt-1">
+              <SalaryBreakdownCalculator
+                initialMonthlyCtc={
+                  salaryConfig?.monthly_ctc ||
+                  (employee?.salary_details?.monthly_ctc ? Number(employee.salary_details.monthly_ctc) : 50000)
+                }
+                initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
+                initialWorkState={formData.work_state || 'Karnataka'}
+                initialComponents={salaryConfig?.components || employee?.salary_details?.earnings}
+                onChange={(calcData) => {
+                  setSalaryConfig(calcData);
+                  setFormData((prev) => ({ ...prev, tax_regime: calcData.tax_regime }));
+                }}
+              />
+            </div>
+          )}
+
           {/* Actions */}
           <div className="pt-4 flex justify-between items-center border-t border-white/10">
             <div className="flex gap-2">
@@ -538,7 +584,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <button
                   type="button"
                   onClick={() => {
-                    const tabs = ['personal', 'employment', 'statutory', 'bank'];
+                    const tabs = ['personal', 'employment', 'statutory', 'bank', 'compensation'];
                     const idx = tabs.indexOf(activeTab);
                     if (idx > 0) setActiveTab(tabs[idx - 1]);
                   }}
@@ -547,11 +593,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   ← Back
                 </button>
               )}
-              {activeTab !== 'bank' && (
+              {activeTab !== 'compensation' && (
                 <button
                   type="button"
                   onClick={() => {
-                    const tabs = ['personal', 'employment', 'statutory', 'bank'];
+                    const tabs = ['personal', 'employment', 'statutory', 'bank', 'compensation'];
                     const idx = tabs.indexOf(activeTab);
                     if (idx < tabs.length - 1) setActiveTab(tabs[idx + 1]);
                   }}
