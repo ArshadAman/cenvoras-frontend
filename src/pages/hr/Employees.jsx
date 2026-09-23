@@ -367,14 +367,31 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">Earnings Breakdown</span>
                     <span className="text-xs text-gray-500">Monthly</span>
                   </div>
-                  {Object.entries(sd.earnings || {}).map(([comp, val]) => (
-                    <div key={comp} className="flex justify-between text-xs py-1 border-b border-white/5">
-                      <span className={comp.startsWith('[Ad-hoc]') || comp.startsWith('[Variable]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
-                        {comp}
-                      </span>
-                      <span className="font-medium text-white">₹{formatInr(val)}</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const seen = new Set();
+                    const entries = [];
+                    for (const [comp, val] of Object.entries(sd.earnings || {})) {
+                      const norm = comp.toLowerCase().replace(/_/g, ' ').trim();
+                      if (seen.has(norm)) continue;
+                      seen.add(norm);
+
+                      let displayName = comp;
+                      if (norm === 'basic') displayName = 'Basic';
+                      else if (norm === 'hra') displayName = 'HRA';
+                      else if (norm === 'da') displayName = 'DA';
+                      else if (norm === 'special allowance') displayName = 'Special Allowance';
+
+                      entries.push({ comp: displayName, val });
+                    }
+                    return entries.map(({ comp, val }) => (
+                      <div key={comp} className="flex justify-between text-xs py-1 border-b border-white/5">
+                        <span className={comp.startsWith('[Ad-hoc]') || comp.startsWith('[Variable]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
+                          {comp}
+                        </span>
+                        <span className="font-medium text-white">₹{formatInr(val)}</span>
+                      </div>
+                    ));
+                  })()}
                   <div className="flex justify-between text-xs pt-2 font-bold text-indigo-300">
                     <span>Total Gross</span>
                     <span>₹{formatInr(monthlyGross)}</span>
