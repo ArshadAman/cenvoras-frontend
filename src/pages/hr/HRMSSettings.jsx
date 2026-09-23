@@ -85,7 +85,15 @@ export default function HRMSSettings() {
             Payroll & LOP Calculation Rules
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div>
+              <label className={labelCls}>Weekend / Off Days</label>
+              <select name="weekend_rule" value={settings.weekend_rule || 'sunday_only'} onChange={handleChange} className={ic}>
+                <option value="sunday_only">Sunday Only (6-Day Work Week)</option>
+                <option value="sat_sun">Saturday & Sunday (5-Day Work Week)</option>
+              </select>
+            </div>
+
             <div>
               <label className={labelCls}>Payroll Frequency</label>
               <select name="payroll_frequency" value={settings.payroll_frequency} onChange={handleChange} className={ic}>
@@ -109,8 +117,9 @@ export default function HRMSSettings() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
             <div>
               <label className={labelCls}>Loss of Pay (LOP) Formula Base</label>
-              <select name="lop_calculation_rule" value={settings.lop_calculation_rule} onChange={handleChange} className={ic}>
-                <option value="working_days">Working Days (Excluding Sundays)</option>
+              <select name="lop_calculation_rule" value={settings.lop_calculation_rule || 'working_days'} onChange={handleChange} className={ic}>
+                <option value="working_days">Working Days (Dynamic per Weekend Rule)</option>
+                <option value="working_days_5">5-Day Work Week (Always Exclude Sat & Sun)</option>
                 <option value="calendar_days">Total Calendar Days in Month (28-31)</option>
                 <option value="fixed_30">Fixed 30 Days Standard</option>
               </select>
@@ -123,10 +132,10 @@ export default function HRMSSettings() {
 
             <div>
               <label className={labelCls}>Net Salary Rounding</label>
-              <select name="salary_rounding" value={settings.salary_rounding || 'nearest_1'} onChange={handleChange} className={ic}>
-                <option value="nearest_1">Nearest ₹1 (Standard)</option>
-                <option value="nearest_10">Nearest ₹10</option>
-                <option value="exact_2">Exact 2 Decimals (No Rounding)</option>
+              <select name="salary_rounding" value={settings.salary_rounding || 'nearest_one'} onChange={handleChange} className={ic}>
+                <option value="nearest_one">Nearest ₹1 (Standard)</option>
+                <option value="nearest_ten">Nearest ₹10</option>
+                <option value="exact">Exact 2 Decimals (No Rounding)</option>
               </select>
             </div>
           </div>

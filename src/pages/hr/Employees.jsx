@@ -15,6 +15,7 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
   const [form, setForm] = useState({ new_salary: '', reason: '', effective_date: '' });
   const [currentSalary, setCurrentSalary] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (isOpen && employee) {
@@ -77,7 +78,6 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
 
   if (!isOpen || !employee) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
-  const [showPreview, setShowPreview] = useState(false);
   const numNew = parseFloat(form.new_salary || 0);
   const diff = currentSalary > 0 && numNew > 0 ? numNew - currentSalary : 0;
   const diffPct = currentSalary > 0 && numNew > 0 ? ((diff / currentSalary) * 100).toFixed(1) : null;
@@ -214,7 +214,50 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
 // ─── Salary Breakdown Modal ──────────────────────────────────────────────────
 function SalaryBreakdownModal({ isOpen, onClose, employee }) {
   if (!isOpen || !employee) return null;
-  const sd = employee.salary_details;
+  const [loading, setLoading] = useState(false);
+  const [computedDetails, setComputedDetails] = useState(employee.salary_details || null);
+
+  useEffect(() => {
+    if (isOpen && employee) {
+      if (employee.salary_details) {
+        setComputedDetails(employee.salary_details);
+      } else if (parseFloat(employee.current_ctc || 0) > 0) {
+        setLoading(true);
+        const monthly = parseFloat(employee.current_ctc);
+        const basic = Math.round(monthly * 0.5 * 100) / 100;
+        const hra = Math.round(basic * 0.5 * 100) / 100;
+        const special = Math.max(0, Math.round((monthly - (basic + hra)) * 100) / 100);
+        hrApi.calculateSalaryBreakdown({
+          monthly_ctc: monthly,
+          tax_regime: employee.tax_regime || 'new',
+          work_state: employee.work_state || 'Karnataka',
+          components: {
+            Basic: basic,
+            HRA: hra,
+            'Special Allowance': special,
+          }
+        }).then(res => {
+          setComputedDetails(res.data);
+        }).catch(() => {}).finally(() => setLoading(false));
+      } else {
+        setComputedDetails(null);
+      }
+    }
+  }, [isOpen, employee]);
+
+  const sd = computedDetails;
+  const monthlyNet = Number(sd?.monthly_net_take_home ?? sd?.net_take_home_monthly ?? 0);
+  const annualNet = Number(sd?.annual_net_take_home ?? sd?.net_take_home_annual ?? (monthlyNet * 12));
+  const monthlyGross = Number(sd?.monthly_gross ?? sd?.gross_salary ?? 0);
+  const annualGross = Number(sd?.annual_gross ?? (monthlyGross * 12));
+  const totalDeductions = Number(sd?.employee_deductions?.total_deductions ?? 0);
+  const monthlyTds = Number(sd?.tds_details?.monthly_tds ?? 0);
+  const employeePf = Number(sd?.employee_deductions?.employee_pf ?? 0);
+  const employeeEsi = Number(sd?.employee_deductions?.employee_esi ?? 0);
+  const pt = Number(sd?.employee_deductions?.professional_tax ?? 0);
+  const annualNetTax = Number(sd?.tds_details?.annual_net_tax ?? sd?.tds_details?.annual_tax ?? 0);
+  const rebateApplied = Boolean(sd?.tds_details?.rebate_applied);
+  const tdsReason = sd?.tds_details?.reason || '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
@@ -239,7 +282,11 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
         </div>
 
         <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-          {!sd ? (
+          {loading ? (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              Calculating salary breakdown and tax liability...
+            </div>
+          ) : !sd ? (
             <div className="text-center py-8 text-gray-400 text-sm">
               No active salary assignment configured for this employee.
             </div>
@@ -250,35 +297,35 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-white">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">Monthly Take-Home</span>
                   <span className="text-xl font-bold text-emerald-300">
-                    ₹{Number(sd.monthly_net_take_home || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    ₹{monthlyNet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    Annual: ₹{Number(sd.annual_net_take_home || 0).toLocaleString('en-IN')}
+                    Annual: ₹{annualNet.toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Monthly Gross Pay</span>
                   <span className="text-xl font-bold text-white">
-                    ₹{Number(sd.monthly_gross || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    ₹{monthlyGross.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    Annual: ₹{Number(sd.annual_gross || 0).toLocaleString('en-IN')}
+                    Annual: ₹{annualGross.toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Monthly Deductions</span>
-                    {sd.tds_details?.rebate_applied && (
+                    {rebateApplied && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium">87A Rebate</span>
                     )}
                   </div>
                   <span className="text-xl font-bold text-red-400">
-                    -₹{Number(sd.employee_deductions?.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    -₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    TDS: ₹{Number(sd.tds_details?.monthly_tds || 0).toLocaleString('en-IN')}
+                    TDS: ₹{monthlyTds.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
@@ -289,9 +336,9 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                   <InformationCircleIcon className="w-4 h-4 text-indigo-400" />
                   Statutory TDS Withholding Rationale (Sec 192)
                 </div>
-                <div>{sd.tds_details?.reason || 'Calculated based on projected annual gross liability.'}</div>
+                <div>{tdsReason || 'Calculated based on projected annual gross liability.'}</div>
                 <div className="text-[11px] opacity-75 pt-1">
-                  Projected Annual Tax: ₹{Number(sd.tds_details?.annual_net_tax || 0).toLocaleString('en-IN')} | Tax Regime: {sd.tds_details?.tax_regime?.toUpperCase()}
+                  Projected Annual Tax: ₹{annualNetTax.toLocaleString('en-IN')} | Tax Regime: {employee.tax_regime === 'old' ? 'OLD REGIME' : 'NEW REGIME'}
                 </div>
               </div>
 
@@ -311,7 +358,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                   ))}
                   <div className="flex justify-between text-xs pt-2 font-bold text-indigo-300">
                     <span>Total Gross</span>
-                    <span>₹{Number(sd.monthly_gross || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span>₹{monthlyGross.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 
@@ -323,23 +370,23 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Provident Fund (PF)</span>
-                    <span className="font-medium text-white">₹{Number(sd.employee_deductions?.employee_pf || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-white">₹{employeePf.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Employee ESI</span>
-                    <span className="font-medium text-white">₹{Number(sd.employee_deductions?.employee_esi || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-white">₹{employeeEsi.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Professional Tax (PT)</span>
-                    <span className="font-medium text-white">₹{Number(sd.employee_deductions?.professional_tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-white">₹{pt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Income Tax (TDS)</span>
-                    <span className="font-medium text-red-400">₹{Number(sd.tds_details?.monthly_tds || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-red-400">₹{monthlyTds.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-xs pt-2 font-bold text-red-400">
                     <span>Total Deductions</span>
-                    <span>-₹{Number(sd.employee_deductions?.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <span>-₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>
@@ -493,11 +540,15 @@ export default function Employees() {
                   <tr><td colSpan="7" className="px-6 py-4 text-center">No employees found</td></tr>
                 ) : (
                   employees.map(emp => (
-                    <tr key={emp.id} className="border-b border-white/10 hover:bg-white/5">
+                    <tr
+                      key={emp.id}
+                      onClick={() => setBreakdownEmp(emp)}
+                      className="border-b border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors group"
+                    >
                       <td className="px-6 py-4 font-medium text-white">{emp.employee_code}</td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-white">{emp.full_name}</p>
+                          <p className="font-medium text-white group-hover:text-indigo-300 transition-colors">{emp.full_name}</p>
                           <p className="text-xs text-gray-400">{emp.personal_email || emp.personal_phone || 'No direct contact'}</p>
                         </div>
                       </td>
@@ -517,16 +568,17 @@ export default function Employees() {
                               <span className="text-gray-500 font-normal text-xs">Not Set</span>
                             )}
                           </span>
-                          {emp.salary_details && (
-                            <button
-                              type="button"
-                              title="View Salary Breakdown & Tax"
-                              onClick={() => setBreakdownEmp(emp)}
-                              className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition"
-                            >
-                              <EyeIcon className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            title="View Salary Breakdown & Tax"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBreakdownEmp(emp);
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition"
+                          >
+                            <EyeIcon className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
                           <span className="text-[10px] text-gray-400">
@@ -548,7 +600,14 @@ export default function Employees() {
                           {emp.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2">
+                      <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          title="View Detailed Salary & Tax Report"
+                          onClick={() => setBreakdownEmp(emp)}
+                          className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition inline-flex items-center"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
                         <button
                           title="Revise / Increment Salary"
                           onClick={() => setIncrementEmp(emp)}
