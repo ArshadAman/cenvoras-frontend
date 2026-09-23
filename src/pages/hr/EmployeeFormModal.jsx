@@ -88,11 +88,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           upi_id: employee.upi_id || '',
           tax_regime: employee.tax_regime || 'new',
         });
-        if (employee.salary_details) {
+        const currentCtc = Number(employee.current_ctc || employee.salary_details?.monthly_ctc || 0);
+        const existingComponents = employee.salary_details?.earnings || employee.salary_details?.components || {};
+        if (currentCtc > 0 || employee.salary_details) {
           setSalaryConfig({
-            monthly_ctc: Number(employee.salary_details.monthly_ctc || 50000),
+            monthly_ctc: currentCtc > 0 ? currentCtc : Number(employee.salary_details?.monthly_ctc || 50000),
             tax_regime: employee.tax_regime || 'new',
-            components: employee.salary_details.earnings || {},
+            work_state: employee.work_state || 'Karnataka',
+            components: existingComponents,
           });
         }
       } else {
@@ -258,8 +261,10 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         payload.salary = {
           monthly_ctc: salaryConfig.monthly_ctc,
           components: salaryConfig.components || {},
-          effective_from: formData.date_of_joining || undefined,
         };
+        if (!employee && formData.date_of_joining) {
+          payload.salary.effective_from = formData.date_of_joining;
+        }
       }
 
       if (salaryConfig && salaryConfig.tax_declaration) {
@@ -564,14 +569,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <SalaryBreakdownCalculator
                 initialMonthlyCtc={
                   salaryConfig?.monthly_ctc ||
-                  (employee?.salary_details?.monthly_ctc ? Number(employee.salary_details.monthly_ctc) : 50000)
+                  Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
                 }
                 initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
-                initialWorkState={formData.work_state || 'Karnataka'}
-                initialComponents={salaryConfig?.components || employee?.salary_details?.earnings}
+                initialWorkState={salaryConfig?.work_state || formData.work_state || 'Karnataka'}
+                initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
                 onChange={(calcData) => {
                   setSalaryConfig(calcData);
-                  setFormData((prev) => ({ ...prev, tax_regime: calcData.tax_regime }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    tax_regime: calcData.tax_regime,
+                    work_state: calcData.work_state || prev.work_state,
+                  }));
                 }}
               />
             </div>
