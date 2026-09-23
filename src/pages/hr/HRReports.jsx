@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { hrApi } from "../../api/hr";
 import {
-  BookOpenIcon, ArrowDownTrayIcon, ArrowPathIcon
+  BookOpenIcon, ArrowDownTrayIcon, ArrowPathIcon, EyeIcon, InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import EmployeeDetailedReportModal from "../../components/hr/EmployeeDetailedReportModal";
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -17,6 +18,7 @@ export default function HRReports() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
   const fetchReport = async () => {
     try {
@@ -149,6 +151,13 @@ export default function HRReports() {
           <div className="p-16 text-center text-gray-400 text-sm">No report data generated.</div>
         ) : reportType === 'payroll_register' ? (
           <div className="overflow-x-auto">
+            <div className="px-5 py-3 bg-indigo-500/10 border-b border-white/10 flex items-center justify-between text-xs text-indigo-200">
+              <div className="flex items-center gap-2">
+                <InformationCircleIcon className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                <span>Click on any employee to view their full itemized payroll audit report with attendance proration, tax rationales, and banking details.</span>
+              </div>
+            </div>
+
             <table className="w-full text-sm text-left text-gray-300">
               <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
                 <tr>
@@ -160,17 +169,29 @@ export default function HRReports() {
                   <th className="px-5 py-4">Deductions</th>
                   <th className="px-5 py-4">Net Salary</th>
                   <th className="px-5 py-4">Employer Contr.</th>
+                  <th className="px-4 py-4 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {(!reportData.records || reportData.records.length === 0) ? (
-                  <tr><td colSpan="8" className="px-5 py-10 text-center text-gray-400">No payslips found for this cycle.</td></tr>
+                  <tr><td colSpan="9" className="px-5 py-10 text-center text-gray-400">No payslips found for this cycle.</td></tr>
                 ) : (
                   reportData.records.map((r, i) => (
-                    <tr key={i} className="border-b border-white/10 hover:bg-white/5">
+                    <tr
+                      key={i}
+                      onClick={() => setSelectedRecord(r)}
+                      className="border-b border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors group"
+                    >
                       <td className="px-5 py-4 font-medium text-white">
-                        <p>{r.employee_name}</p>
-                        <p className="text-xs text-gray-400">{r.employee_code}</p>
+                        <p className="group-hover:text-indigo-300 transition-colors font-semibold">{r.employee_name}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs text-gray-400">{r.employee_code}</span>
+                          {r.tax_regime && (
+                            <span className="text-[9px] px-1 py-0.2 rounded bg-white/5 text-gray-400 border border-white/10 uppercase font-mono">
+                              {r.tax_regime}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <p className="text-white">{r.department}</p>
@@ -187,6 +208,18 @@ export default function HRReports() {
                       <td className="px-5 py-4 text-red-400">₹{parseFloat(r.total_deductions).toLocaleString('en-IN')}</td>
                       <td className="px-5 py-4 font-bold text-emerald-400">₹{parseFloat(r.net_salary).toLocaleString('en-IN')}</td>
                       <td className="px-5 py-4 text-xs text-indigo-300">₹{parseFloat(r.employer_contribution).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRecord(r);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 transition"
+                        >
+                          <EyeIcon className="w-3.5 h-3.5" /> Details
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -276,6 +309,15 @@ export default function HRReports() {
           </div>
         )}
       </section>
+
+      {/* Employee Detailed Audit Report Modal */}
+      <EmployeeDetailedReportModal
+        isOpen={!!selectedRecord}
+        onClose={() => setSelectedRecord(null)}
+        record={selectedRecord}
+        monthName={MONTHS[month - 1]}
+        year={year}
+      />
     </div>
   );
 }
