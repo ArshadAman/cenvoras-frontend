@@ -40,86 +40,164 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
 
         {/* Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
-          {/* Attendance Stats */}
-          {payslip.attendance_summary && (
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">
-                Attendance & Working Days
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-2 rounded-lg bg-white/5 border border-white/5">
-                  <p className="text-[11px] text-gray-400">Working Days</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{payslip.attendance_summary.working_days ?? '—'}</p>
+          {/* Attendance & Leave Summary */}
+          {(() => {
+            const attendance = payslip.attendance_summary || {
+              working_days: payslip.total_working_days ?? 26,
+              present_days: payslip.present_days ?? '—',
+              paid_leaves: payslip.paid_leave_days ?? 0,
+              unpaid_leaves: payslip.lop_days ?? 0,
+            };
+            const unpaidDays = parseFloat(attendance.unpaid_leaves || 0);
+            const lopAmt = parseFloat(payslip.lop_amount || 0);
+
+            return (
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attendance & Working Days</h4>
+                  <span className="text-xs text-gray-400">Monthly Standard: <span className="text-white font-semibold">{attendance.working_days} Days</span></span>
                 </div>
-                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <p className="text-[11px] text-emerald-400">Present Days</p>
-                  <p className="text-sm font-semibold text-emerald-300 mt-0.5">{payslip.attendance_summary.present_days ?? '—'}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div className="p-2 rounded-lg bg-white/5 border border-white/5">
+                    <p className="text-[11px] text-gray-400">Working Days</p>
+                    <p className="text-sm font-semibold text-white mt-0.5">{attendance.working_days ?? '—'}</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <p className="text-[11px] text-emerald-400">Present Days</p>
+                    <p className="text-sm font-semibold text-emerald-300 mt-0.5">{attendance.present_days ?? '—'}</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <p className="text-[11px] text-blue-400">Paid Leaves</p>
+                    <p className="text-sm font-semibold text-blue-300 mt-0.5">{attendance.paid_leaves ?? 0}</p>
+                  </div>
+                  <div className={`p-2 rounded-lg border ${unpaidDays > 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5 border-white/5'}`}>
+                    <p className={`text-[11px] ${unpaidDays > 0 ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>Loss of Pay (LOP)</p>
+                    <p className={`text-sm font-semibold mt-0.5 ${unpaidDays > 0 ? 'text-red-300' : 'text-gray-400'}`}>{unpaidDays} days</p>
+                  </div>
                 </div>
-                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <p className="text-[11px] text-blue-400">Paid Leaves</p>
-                  <p className="text-sm font-semibold text-blue-300 mt-0.5">{payslip.attendance_summary.paid_leaves ?? 0}</p>
-                </div>
-                <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <p className="text-[11px] text-red-400">Loss of Pay (LOP)</p>
-                  <p className="text-sm font-semibold text-red-300 mt-0.5">{payslip.attendance_summary.unpaid_leaves ?? 0} days</p>
-                </div>
+
+                {unpaidDays > 0 && (
+                  <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300 space-y-1">
+                    <div className="flex items-center justify-between font-semibold">
+                      <span>Loss of Pay (LOP) Applied: {unpaidDays} Day(s)</span>
+                      {lopAmt > 0 && <span>Amount Docked: ₹{lopAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>}
+                    </div>
+                    <p className="text-[11px] text-red-300/80 leading-relaxed">
+                      Salary prorated based on attendance. Unpaid leaves or absences are docked from gross compensation.
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Earnings & Deductions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Earnings */}
-            <div className="p-4 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/20 space-y-3">
-              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Earnings</span>
-                <span className="text-xs font-bold text-emerald-400">₹{parseFloat(payslip.gross_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="space-y-2 max-h-56 overflow-y-auto">
-                {payslip.earnings_breakdown && Object.entries(payslip.earnings_breakdown).length > 0 ? (
-                  Object.entries(payslip.earnings_breakdown).map(([k, v]) => (
-                    <div key={k} className="flex justify-between items-center text-xs">
-                      <span className="text-gray-300 capitalize">{k.replace(/_/g, ' ')}</span>
-                      <span className="font-medium text-white">₹{parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-gray-500">No earnings recorded</p>
-                )}
-              </div>
-            </div>
+          {(() => {
+            const earningsMap = payslip.earnings_breakdown
+              && Object.keys(payslip.earnings_breakdown).length > 0
+                ? payslip.earnings_breakdown
+                : (payslip.earnings && Object.keys(payslip.earnings).length > 0
+                    ? payslip.earnings
+                    : (parseFloat(payslip.gross_salary || 0) > 0 ? { 'Gross Base Salary': payslip.gross_salary } : {}));
 
-            {/* Deductions with Detailed Explanations */}
-            <div className="p-4 rounded-xl bg-red-500/[0.03] border border-red-500/20 space-y-3">
-              <div className="flex items-center justify-between border-b border-red-500/20 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-red-400">Deductions & Reasons</span>
-                <span className="text-xs font-bold text-red-400">₹{parseFloat(payslip.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="space-y-2.5 max-h-56 overflow-y-auto">
-                {payslip.deductions_breakdown && Object.entries(payslip.deductions_breakdown).length > 0 ? (
-                  Object.entries(payslip.deductions_breakdown).map(([k, v]) => {
-                    const amt = parseFloat(v || 0);
-                    const reason = payslip.deduction_reasons?.[k];
-                    return (
-                      <div key={k} className="p-2 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-red-300 capitalize">{k.replace(/_/g, ' ')}</span>
-                          <span className="font-semibold text-red-400">₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+            const rawDeductions = payslip.deductions_breakdown
+              && Object.keys(payslip.deductions_breakdown).length > 0
+                ? payslip.deductions_breakdown
+                : (payslip.deductions || {});
+
+            const deductionsMap = { ...rawDeductions };
+
+            if (parseFloat(payslip.employee_pf || 0) > 0 && !deductionsMap['PF'] && !deductionsMap['Provident Fund (PF)']) {
+              deductionsMap['Provident Fund (PF)'] = payslip.employee_pf;
+            }
+            if (parseFloat(payslip.employee_esi || 0) > 0 && !deductionsMap['ESI']) {
+              deductionsMap['State Insurance (ESI)'] = payslip.employee_esi;
+            }
+            if (parseFloat(payslip.tds || 0) > 0 && !deductionsMap['TDS'] && !deductionsMap['Income Tax (TDS)']) {
+              deductionsMap['Income Tax (TDS)'] = payslip.tds;
+            }
+            if (parseFloat(payslip.professional_tax || 0) > 0 && !deductionsMap['PT'] && !deductionsMap['Professional Tax (PT)']) {
+              deductionsMap['Professional Tax (PT)'] = payslip.professional_tax;
+            }
+            if (parseFloat(payslip.advance_recovery || 0) > 0 && !deductionsMap['Salary Advance Recovery']) {
+              deductionsMap['Salary Advance Recovery'] = payslip.advance_recovery;
+            }
+            if (parseFloat(payslip.loan_recovery || 0) > 0 && !deductionsMap['Loan Recovery']) {
+              deductionsMap['Loan Recovery'] = payslip.loan_recovery;
+            }
+            if (parseFloat(payslip.lop_amount || 0) > 0 && !deductionsMap['Loss of Pay (LOP)']) {
+              deductionsMap['Loss of Pay (LOP)'] = payslip.lop_amount;
+            }
+            if (Object.keys(deductionsMap).length === 0 && parseFloat(payslip.total_deductions || 0) > 0) {
+              deductionsMap['Statutory & Other Deductions'] = payslip.total_deductions;
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Earnings */}
+                <div className="p-4 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/20 space-y-3">
+                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Earnings</span>
+                    <span className="text-xs font-bold text-emerald-400">₹{parseFloat(payslip.gross_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
+                    {Object.entries(earningsMap).length > 0 ? (
+                      Object.entries(earningsMap).map(([k, v]) => (
+                        <div key={k} className="flex justify-between items-center text-xs">
+                          <span className="text-gray-300 capitalize">{k.replace(/_/g, ' ')}</span>
+                          <span className="font-medium text-white">₹{parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        {reason && (
-                          <p className="text-[11px] text-gray-400 leading-relaxed italic bg-black/30 p-1.5 rounded">
-                            💡 {reason}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-xs text-gray-500">No deductions applied</p>
-                )}
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-500">No earnings recorded</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Deductions with Detailed Explanations */}
+                <div className="p-4 rounded-xl bg-red-500/[0.03] border border-red-500/20 space-y-3">
+                  <div className="flex items-center justify-between border-b border-red-500/20 pb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-400">Deductions & Explanations</span>
+                    <span className="text-xs font-bold text-red-400">₹{parseFloat(payslip.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="space-y-2.5 max-h-56 overflow-y-auto">
+                    {Object.entries(deductionsMap).length > 0 ? (
+                      Object.entries(deductionsMap).map(([k, v]) => {
+                        const amt = parseFloat(v || 0);
+                        const rawReason = payslip.deduction_reasons?.[k];
+                        let reason = typeof rawReason === 'object' && rawReason !== null ? (rawReason.reason || rawReason.amount) : rawReason;
+                        if (!reason) {
+                          if (k.includes('PF') || k.includes('Provident')) reason = "Employee statutory 12% contribution on Basic salary";
+                          else if (k.includes('ESI')) reason = "Employee statutory 0.75% contribution on gross";
+                          else if (k.includes('TDS') || k.includes('Tax')) reason = "Monthly income tax withholding deducted under Section 192";
+                          else if (k.includes('PT') || k.includes('Professional')) reason = "State statutory Professional Tax slab deduction";
+                          else if (k.includes('Advance')) reason = "Monthly installment deducted for active salary advance";
+                          else if (k.includes('Loan')) reason = "Monthly personal loan recovery installment";
+                          else if (k.includes('Loss of Pay') || k.includes('LOP')) reason = `${payslip.lop_days || 0} day(s) unpaid leave / absence docked from salary`;
+                        }
+
+                        return (
+                          <div key={k} className="p-2.5 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-semibold text-red-300 capitalize">{k.replace(/_/g, ' ')}</span>
+                              <span className="font-semibold text-red-400">₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            {reason && (
+                              <p className="text-[11px] text-gray-300 leading-relaxed italic bg-black/40 p-1.5 rounded border border-white/5">
+                                💡 {reason}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-xs text-gray-500">No deductions applied for this employee</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Employer Statutory Benefits */}
           {payslip.employer_contributions && Object.keys(payslip.employer_contributions).length > 0 && (
