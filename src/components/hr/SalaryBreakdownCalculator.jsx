@@ -797,16 +797,33 @@ export default function SalaryBreakdownCalculator({
                 <span className="text-xs font-medium text-gray-400">Monthly (₹)</span>
               </div>
               <div className="space-y-2 text-xs">
-                {Object.entries(breakdown.earnings || {}).map(([key, val]) => (
-                  <div key={key} className="flex justify-between py-1 border-b border-white/5">
-                    <span className={key.startsWith('[Ad-hoc]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
-                      {key}
-                    </span>
-                    <span className="font-semibold text-white">
-                      ₹{formatInr(val)}
-                    </span>
-                  </div>
-                ))}
+                {(() => {
+                  const seen = new Set();
+                  const entries = [];
+                  for (const [key, val] of Object.entries(breakdown.earnings || {})) {
+                    const norm = key.toLowerCase().replace(/_/g, ' ').trim();
+                    if (seen.has(norm)) continue;
+                    seen.add(norm);
+
+                    let displayName = key;
+                    if (norm === 'basic') displayName = 'Basic';
+                    else if (norm === 'hra') displayName = 'HRA';
+                    else if (norm === 'da') displayName = 'DA';
+                    else if (norm === 'special allowance') displayName = 'Special Allowance';
+
+                    entries.push({ key: displayName, val });
+                  }
+                  return entries.map(({ key, val }) => (
+                    <div key={key} className="flex justify-between py-1 border-b border-white/5">
+                      <span className={key.startsWith('[Ad-hoc]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
+                        {key}
+                      </span>
+                      <span className="font-semibold text-white">
+                        ₹{formatInr(val)}
+                      </span>
+                    </div>
+                  ));
+                })()}
                 <div className="flex justify-between pt-2 font-bold text-white text-sm">
                   <span>Gross Salary</span>
                   <span className="text-indigo-400">
