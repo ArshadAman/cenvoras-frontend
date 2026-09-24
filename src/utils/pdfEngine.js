@@ -19,8 +19,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
 
   const {
     filename = 'invoice.pdf',
-    quality = 0.95,
+    quality = 0.98,
     scale = 3.5,
+    imageFormat = 'PNG',
     onProgress = null,
   } = options;
 
@@ -33,22 +34,27 @@ export async function generatePixelPerfectPDF(element, options = {}) {
 
   // Ensure element styles are ready for capture
   const containerRect = element.getBoundingClientRect();
+  const unscaledWidth = element.offsetWidth || containerRect.width;
+  const unscaledHeight = element.scrollHeight || containerRect.height;
 
   // Find all table rows to calculate non-destructive page break boundaries
   const rowElements = Array.from(element.querySelectorAll('table tbody tr'));
   const rowBoundaries = rowElements.map((row) => {
     const rect = row.getBoundingClientRect();
+    const topRel = containerRect.height > 0 ? (rect.top - containerRect.top) / containerRect.height : 0;
+    const botRel = containerRect.height > 0 ? (rect.bottom - containerRect.top) / containerRect.height : 0;
     return {
-      top: rect.top - containerRect.top,
-      bottom: rect.bottom - containerRect.top,
-      height: rect.height,
+      top: topRel * unscaledHeight,
+      bottom: botRel * unscaledHeight,
+      height: (botRel - topRel) * unscaledHeight,
     };
   });
 
   // Table header element if present
   const theadElement = element.querySelector('table thead');
   const theadRect = theadElement ? theadElement.getBoundingClientRect() : null;
-  const theadHeight = theadRect ? theadRect.height : 0;
+  const theadHeight = containerRect.height > 0 && theadRect ? (theadRect.height / containerRect.height) * unscaledHeight : (theadRect ? theadRect.height : 0);
+  const theadTop = containerRect.height > 0 && theadRect ? ((theadRect.top - containerRect.top) / containerRect.height) * unscaledHeight : 0;
 
   if (onProgress) onProgress(30, 'Rendering high-resolution vector canvas (300+ DPI)...');
 
@@ -117,9 +123,10 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     // Draw original canvas content
     ctx.drawImage(canvas, 0, 0);
 
-    // Compress to JPEG with specified quality (0.95 delivers razor-sharp text)
-    const jpegData = singleCanvas.toDataURL('image/jpeg', quality);
-    pdf.addImage(jpegData, 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'SLOW');
+    // Compress to lossless PNG (zero-artifact razor-sharp text) or high-quality JPEG
+    const isPng = imageFormat?.toUpperCase() === 'PNG';
+    const imgData = isPng ? singleCanvas.toDataURL('image/png') : singleCanvas.toDataURL('image/jpeg', quality);
+    pdf.addImage(imgData, isPng ? 'PNG' : 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'SLOW');
 
     // Attach invisible text layer for selectability and searchability
     addSelectableTextLayer(pdf, element, containerRect, pdfWidthMm, pdfHeightMm);
@@ -127,10 +134,10 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     // -------------------------------------------------------------
     // Multi-Page Layout with Smart Row-Boundary Slicing (ZERO CUT ROWS)
     // -------------------------------------------------------------
-    const scaleFactor = canvas.width / containerRect.width;
+    const scaleFactor = canvas.width / (unscaledWidth || 1);
     const splitPoints = calculateSmartSplitPoints(
       rowBoundaries,
-      containerRect.height,
+      unscaledHeight,
       pageCanvasHeight / scaleFactor,
       scaleFactor
     );
@@ -158,7 +165,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
 
       // On pages 2+, if we have a table header, repeat it at top of page
       if (pageIndex > 0 && theadElement && theadHeight > 0) {
-        const theadCanvasY = theadRect.top - containerRect.top;
+        const theadCanvasY = theadTop;
         const theadCanvasHeight = theadHeight * scaleFactor;
         
         ctx.drawImage(
@@ -188,8 +195,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         Math.round(sliceHeight * scaleFactor)
       );
 
-      const pageJpeg = pageCanvas.toDataURL('image/jpeg', quality);
-      pdf.addImage(pageJpeg, 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'SLOW');
+      const isPng = imageFormat?.toUpperCase() === 'PNG';
+      const pageImg = isPng ? pageCanvas.toDataURL('image/png') : pageCanvas.toDataURL('image/jpeg', quality);
+      pdf.addImage(pageImg, isPng ? 'PNG' : 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'SLOW');
 
       currentY = splitY;
     }
