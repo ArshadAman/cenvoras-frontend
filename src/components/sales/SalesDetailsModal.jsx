@@ -134,8 +134,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     `,
   });
 
-  // High-Quality PDF Download: Vector PDF (~20KB, infinite zoom clarity) or Theme Replica (300+ DPI)
-  const handleDownloadPDF = async (engine = 'vector') => {
+  // High-Quality PDF Download: Pixel-Perfect (336 DPI lossless PNG, 100% exact replica) or Backend ReportLab
+  const handleDownloadPDF = async (engine = 'pixel-perfect') => {
     if (!printRef.current || !invoiceDetails) return;
     setDownloadingPDF(true);
     setPdfMenuOpen(false);
@@ -148,11 +148,32 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     try {
       const targetElement = printRef.current?.querySelector('[data-print-target]') || printRef.current;
 
+      if (engine === 'backend') {
+        let blob;
+        if (isDeliveryChallan) {
+          blob = await getDeliveryChallanPdf(invoiceDetails.id);
+        } else if (isQuotation) {
+          blob = await downloadQuotationPDF(invoiceDetails.id);
+        } else {
+          blob = await downloadSalesInvoicePDF(invoiceDetails.id);
+        }
+
+        const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(blobUrl);
+
+        toast.success(`${docTypeLabel} server PDF downloaded`);
+        return;
+      }
+
       if (engine === 'vector' && invoiceDetails.id && targetElement) {
         try {
-          // Serialize the exact on-screen preview DOM with all embedded Tailwind & theme styles
           const serializedHtml = serializeInvoiceHtml(targetElement);
-
           const payload = {
             html: serializedHtml,
             template: previewTemplate || {},
@@ -176,22 +197,22 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           link.remove();
           window.URL.revokeObjectURL(blobUrl);
 
-          toast.success(`${docTypeLabel} pixel-perfect vector PDF downloaded (~20KB, crystal clear)`);
+          toast.success(`${docTypeLabel} pixel-perfect PDF downloaded (~20KB, crystal clear)`);
           return;
         } catch (apiError) {
-          console.warn('Backend vector PDF download failed, falling back to 300+ DPI client engine:', apiError);
+          console.warn('Backend vector PDF download unavailable, rendering via 336 DPI pixel-perfect engine:', apiError);
         }
       }
 
-      // High-PPI Client Engine (300+ DPI Retina print quality)
+      // Default & Primary: Pixel-Perfect Client Engine (336 DPI Retina print quality, 100% exact replica of on-screen template)
       if (targetElement) {
         await generatePixelPerfectPDF(targetElement, {
           filename,
-          quality: 0.95,
           scale: 3.5,
+          imageFormat: 'PNG',
         });
 
-        toast.success(`${docTypeLabel} high-resolution PDF downloaded successfully`);
+        toast.success(`${docTypeLabel} pixel-perfect PDF downloaded successfully`);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -366,9 +387,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               <div ref={pdfMenuRef} className="relative inline-flex items-stretch rounded-lg shadow-sm">
                 <button
                   disabled={downloadingPDF}
-                  onClick={() => handleDownloadPDF('vector')}
+                  onClick={() => handleDownloadPDF('pixel-perfect')}
                   className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-l-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 border-r border-green-500/20"
-                  title="Download Ultra-Clear Vector PDF (~20KB, infinite zoom clarity)"
+                  title="Download Pixel-Perfect PDF (100% exact replica of preview, 336 DPI print quality)"
                 >
                   {downloadingPDF ? (
                     <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Generating...</>
@@ -388,22 +409,22 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 {pdfMenuOpen && (
                   <div className="absolute top-full left-0 mt-1 w-64 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                     <button
-                      onClick={() => handleDownloadPDF('vector')}
+                      onClick={() => handleDownloadPDF('pixel-perfect')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
                     >
                       <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Vector PDF (Pixel-Perfect)
+                        <span>⚡</span> Pixel-Perfect PDF (Recommended)
                       </span>
-                      <span className="text-[11px] text-gray-400">~20KB, exact 1:1 preview replica, razor sharp</span>
+                      <span className="text-[11px] text-gray-400">100% exact replica of preview, 336 DPI lossless clarity</span>
                     </button>
                     <button
-                      onClick={() => handleDownloadPDF('theme')}
+                      onClick={() => handleDownloadPDF('backend')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
                     >
-                      <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
-                        <span>🎨</span> Client Snapshot (300+ DPI)
+                      <span className="font-semibold text-gray-400 flex items-center gap-1.5">
+                        <span>📄</span> Classic Server PDF
                       </span>
-                      <span className="text-[11px] text-gray-400">Direct high-res client fallback engine</span>
+                      <span className="text-[11px] text-gray-500">Standard backend ReportLab format</span>
                     </button>
                   </div>
                 )}
@@ -451,8 +472,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               </div>
             ) : previewTemplate ? (
               <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center pb-10">
-                <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100" ref={printRef} data-print-target>
-                  <div className="w-[210mm] min-h-[297mm] bg-white">
+                <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100 print:scale-100 print:transform-none" ref={printRef}>
+                  <div className="w-[210mm] min-h-[297mm] bg-white" data-print-target>
                     <InvoicePreview
                       invoice={enrichedInvoice}
                       template={previewTemplate}
