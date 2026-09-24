@@ -134,8 +134,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     `,
   });
 
-  // High-Quality PDF Download: Pixel-Perfect (336 DPI lossless PNG, 100% exact replica) or Backend ReportLab
-  const handleDownloadPDF = async (engine = 'pixel-perfect') => {
+  // High-Quality PDF Download: Vector PDF (Chrome vector, exact replica) or Client Engine (336 DPI)
+  const handleDownloadPDF = async (engine = 'vector') => {
     if (!printRef.current || !invoiceDetails) return;
     setDownloadingPDF(true);
     setPdfMenuOpen(false);
@@ -387,9 +387,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               <div ref={pdfMenuRef} className="relative inline-flex items-stretch rounded-lg shadow-sm">
                 <button
                   disabled={downloadingPDF}
-                  onClick={() => handleDownloadPDF('pixel-perfect')}
+                  onClick={() => handleDownloadPDF('vector')}
                   className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-l-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 border-r border-green-500/20"
-                  title="Download Pixel-Perfect PDF (100% exact replica of preview, 336 DPI print quality)"
+                  title="Download Vector PDF (100% exact replica of preview, infinite zoom clarity)"
                 >
                   {downloadingPDF ? (
                     <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Generating...</>
@@ -409,13 +409,22 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 {pdfMenuOpen && (
                   <div className="absolute top-full left-0 mt-1 w-64 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                     <button
-                      onClick={() => handleDownloadPDF('pixel-perfect')}
+                      onClick={() => handleDownloadPDF('vector')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
                     >
                       <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Pixel-Perfect PDF (Recommended)
+                        <span>⚡</span> Vector PDF (Recommended)
                       </span>
-                      <span className="text-[11px] text-gray-400">100% exact replica of preview, 336 DPI lossless clarity</span>
+                      <span className="text-[11px] text-gray-400">~30KB, exact 1:1 preview replica, razor sharp</span>
+                    </button>
+                    <button
+                      onClick={() => handleDownloadPDF('client')}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                    >
+                      <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
+                        <span>🎨</span> Client Snapshot (336 DPI)
+                      </span>
+                      <span className="text-[11px] text-gray-400">Direct high-res browser fallback engine</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('backend')}

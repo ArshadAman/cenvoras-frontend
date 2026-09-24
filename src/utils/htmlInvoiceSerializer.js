@@ -1,3 +1,5 @@
+import compiledTailwindStyles from '../index.css?inline';
+
 /**
  * htmlInvoiceSerializer.js
  * 
@@ -11,25 +13,29 @@
 export function serializeInvoiceHtml(element) {
   if (!element) return '';
 
-  // 1. Collect all CSS stylesheets and style tags from document.head
+  // 1. Collect any runtime dynamic CSS stylesheets and style tags from document.head
   let collectedStyles = '';
 
-  const styleElements = document.querySelectorAll('style, link[rel="stylesheet"]');
-  styleElements.forEach((el) => {
-    if (el.tagName.toLowerCase() === 'style') {
-      collectedStyles += `\n${el.innerHTML}`;
-    } else if (el.tagName.toLowerCase() === 'link') {
-      try {
-        const sheet = el.sheet;
-        if (sheet) {
-          const rules = Array.from(sheet.cssRules || []).map((r) => r.cssText).join('\n');
-          collectedStyles += `\n${rules}`;
+  try {
+    const styleElements = document.querySelectorAll('style, link[rel="stylesheet"]');
+    styleElements.forEach((el) => {
+      if (el.tagName.toLowerCase() === 'style' && el.innerHTML) {
+        collectedStyles += `\n${el.innerHTML}`;
+      } else if (el.tagName.toLowerCase() === 'link') {
+        try {
+          const sheet = el.sheet;
+          if (sheet && sheet.cssRules) {
+            const rules = Array.from(sheet.cssRules || []).map((r) => r.cssText).join('\n');
+            collectedStyles += `\n${rules}`;
+          }
+        } catch (e) {
+          // Cross-origin or restricted stylesheet access
         }
-      } catch (e) {
-        // Cross-origin stylesheet access fallback
       }
-    }
-  });
+    });
+  } catch (err) {
+    // Non-fatal fallback
+  }
 
   // 2. Clone the element to safely modify styles without altering the live UI
   const cloned = element.cloneNode(true);
@@ -43,21 +49,30 @@ export function serializeInvoiceHtml(element) {
   cloned.style.margin = '0 auto';
   cloned.style.boxShadow = 'none';
 
+  // Ensure any inner elements with scale transforms are unscaled
+  const scaledNodes = cloned.querySelectorAll('[style*="transform"], [style*="scale"]');
+  scaledNodes.forEach((node) => {
+    node.style.transform = 'none';
+    node.style.webkitTransform = 'none';
+  });
+
   // Remove any print-hidden or interactive elements from cloned DOM
   const hiddenElements = cloned.querySelectorAll('.print-hidden, button, [data-no-print]');
   hiddenElements.forEach((el) => el.remove());
 
-  // 3. Assemble complete standalone HTML
+  // 3. Assemble complete standalone HTML with compile-time embedded Tailwind CSS
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Invoice</title>
+  <!-- Fallback Tailwind CSS runtime engine -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @page {
       size: A4 portrait;
-      margin: 10mm;
+      margin: 0;
     }
     *, *::before, *::after {
       box-sizing: border-box;
@@ -73,11 +88,14 @@ export function serializeInvoiceHtml(element) {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+    /* Compiled project Tailwind CSS */
+    ${compiledTailwindStyles}
+    /* Runtime captured styles */
     ${collectedStyles}
   </style>
 </head>
 <body style="background-color: #ffffff; margin: 0; padding: 0;">
-  <div style="width: 210mm; margin: 0 auto; box-sizing: border-box; background-color: #ffffff;">
+  <div style="width: 210mm; min-height: 297mm; margin: 0 auto; box-sizing: border-box; background-color: #ffffff;">
     ${cloned.outerHTML}
   </div>
 </body>
