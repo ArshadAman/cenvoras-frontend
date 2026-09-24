@@ -23,6 +23,7 @@ import { getActiveTemplate } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
+import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
@@ -145,16 +146,25 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     const filename = `${filePrefix}-${fileNum}.pdf`;
 
     try {
-      if (engine === 'vector' && invoiceDetails.id) {
+      const targetElement = printRef.current?.querySelector('[data-print-target]') || printRef.current;
+
+      if (engine === 'vector' && invoiceDetails.id && targetElement) {
         try {
+          // Serialize the exact on-screen preview DOM with all embedded Tailwind & theme styles
+          const serializedHtml = serializeInvoiceHtml(targetElement);
+
+          const payload = {
+            html: serializedHtml,
+            template: previewTemplate || {},
+          };
+
           let blob;
-          const templatePayload = previewTemplate || {};
           if (isDeliveryChallan) {
-            blob = await getDeliveryChallanPdf(invoiceDetails.id, templatePayload);
+            blob = await getDeliveryChallanPdf(invoiceDetails.id, payload);
           } else if (isQuotation) {
-            blob = await downloadQuotationPDF(invoiceDetails.id, templatePayload);
+            blob = await downloadQuotationPDF(invoiceDetails.id, payload);
           } else {
-            blob = await downloadSalesInvoicePDF(invoiceDetails.id, templatePayload);
+            blob = await downloadSalesInvoicePDF(invoiceDetails.id, payload);
           }
 
           const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
@@ -166,7 +176,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           link.remove();
           window.URL.revokeObjectURL(blobUrl);
 
-          toast.success(`${docTypeLabel} vector PDF downloaded (~20KB, crystal clear)`);
+          toast.success(`${docTypeLabel} pixel-perfect vector PDF downloaded (~20KB, crystal clear)`);
           return;
         } catch (apiError) {
           console.warn('Backend vector PDF download failed, falling back to 300+ DPI client engine:', apiError);
@@ -174,14 +184,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       }
 
       // High-PPI Client Engine (300+ DPI Retina print quality)
-      const targetElement = printRef.current.querySelector('[data-print-target]') || printRef.current;
-      await generatePixelPerfectPDF(targetElement, {
-        filename,
-        quality: 0.95,
-        scale: 3.5,
-      });
+      if (targetElement) {
+        await generatePixelPerfectPDF(targetElement, {
+          filename,
+          quality: 0.95,
+          scale: 3.5,
+        });
 
-      toast.success(`${docTypeLabel} high-resolution PDF downloaded successfully`);
+        toast.success(`${docTypeLabel} high-resolution PDF downloaded successfully`);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF. Please try again.');
@@ -381,18 +392,18 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
                     >
                       <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Vector PDF (Odoo Style)
+                        <span>⚡</span> Vector PDF (Pixel-Perfect)
                       </span>
-                      <span className="text-[11px] text-gray-400">~20KB, crystal clear on 1000% zoom</span>
+                      <span className="text-[11px] text-gray-400">~20KB, exact 1:1 preview replica, razor sharp</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('theme')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
                     >
                       <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
-                        <span>🎨</span> Theme Snapshot (300+ DPI)
+                        <span>🎨</span> Client Snapshot (300+ DPI)
                       </span>
-                      <span className="text-[11px] text-gray-400">Exact visual match with 300+ DPI print quality</span>
+                      <span className="text-[11px] text-gray-400">Direct high-res client fallback engine</span>
                     </button>
                   </div>
                 )}
