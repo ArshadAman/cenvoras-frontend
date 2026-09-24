@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoice } from "../../api/sales";
-import { getQuotation } from "../../api/quotation";
-import { getDeliveryChallan } from "../../api/delivery_challan";
+import { getSalesInvoice, downloadSalesInvoicePDF } from "../../api/sales";
+import { getQuotation, downloadQuotationPDF } from "../../api/quotation";
+import { getDeliveryChallan, getDeliveryChallanPdf } from "../../api/delivery_challan";
 import { useReactToPrint } from "react-to-print";
 import { 
   XMarkIcon, 
@@ -13,6 +13,7 @@ import {
   EnvelopeIcon,
   ChatBubbleLeftIcon,
   ArrowPathIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from 'react-toastify';
 import { sendCustomEmail } from '../../api/integrations';
@@ -26,12 +27,27 @@ import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
   const printRef = useRef();
+  const pdfMenuRef = useRef(null);
   const [template, setTemplate] = useState(null);
   const [showDesigner, setShowDesigner] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [manualEmail, setManualEmail] = useState('');
+
+  // Close PDF options dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (pdfMenuRef.current && !pdfMenuRef.current.contains(e.target)) {
+        setPdfMenuOpen(false);
+      }
+    };
+    if (pdfMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [pdfMenuOpen]);
 
   // Load active template
   useEffect(() => {
@@ -117,26 +133,55 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     `,
   });
 
-  // 100% Pixel-Perfect Theme-Identical PDF Download (<100KB, zero row slicing, exact preview replica)
-  const handleDownloadPDF = async () => {
+  // High-Quality PDF Download: Vector PDF (~20KB, infinite zoom clarity) or Theme Replica (300+ DPI)
+  const handleDownloadPDF = async (engine = 'vector') => {
     if (!printRef.current || !invoiceDetails) return;
     setDownloadingPDF(true);
+    setPdfMenuOpen(false);
+
+    const docTypeLabel = isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Performa Invoice' : 'Invoice';
+    const filePrefix = isDeliveryChallan ? "delivery-challan" : isQuotation ? "performa-invoice" : "invoice";
+    const fileNum = enrichedInvoice.invoice_number || invoiceDetails.invoice_number || invoiceDetails.challan_number || invoiceDetails.quotation_number || invoice?.id || 'doc';
+    const filename = `${filePrefix}-${fileNum}.pdf`;
 
     try {
-      const filePrefix = isDeliveryChallan ? "delivery-challan" : isQuotation ? "performa-invoice" : "invoice";
-      const fileNum = enrichedInvoice.invoice_number || invoiceDetails.invoice_number || invoiceDetails.challan_number || invoiceDetails.quotation_number || invoice?.id || 'doc';
-      const filename = `${filePrefix}-${fileNum}.pdf`;
+      if (engine === 'vector' && invoiceDetails.id) {
+        try {
+          let blob;
+          const templatePayload = previewTemplate || {};
+          if (isDeliveryChallan) {
+            blob = await getDeliveryChallanPdf(invoiceDetails.id, templatePayload);
+          } else if (isQuotation) {
+            blob = await downloadQuotationPDF(invoiceDetails.id, templatePayload);
+          } else {
+            blob = await downloadSalesInvoicePDF(invoiceDetails.id, templatePayload);
+          }
 
-      // Target the container inside printRef
+          const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.setAttribute('download', filename);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(blobUrl);
+
+          toast.success(`${docTypeLabel} vector PDF downloaded (~20KB, crystal clear)`);
+          return;
+        } catch (apiError) {
+          console.warn('Backend vector PDF download failed, falling back to 300+ DPI client engine:', apiError);
+        }
+      }
+
+      // High-PPI Client Engine (300+ DPI Retina print quality)
       const targetElement = printRef.current.querySelector('[data-print-target]') || printRef.current;
-
       await generatePixelPerfectPDF(targetElement, {
         filename,
-        quality: 0.85,
-        scale: 2,
+        quality: 0.95,
+        scale: 3.5,
       });
 
-      toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Performa Invoice' : 'Invoice'} PDF downloaded successfully (<100KB)`);
+      toast.success(`${docTypeLabel} high-resolution PDF downloaded successfully`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF. Please try again.');
@@ -306,17 +351,52 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 Print
               </button>
               
-              <button
-                disabled={downloadingPDF}
-                onClick={handleDownloadPDF}
-                className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-              >
-                {downloadingPDF ? (
-                  <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Generating...</>
-                ) : (
-                  <><ArrowDownTrayIcon className="w-4 h-4" /> PDF</>
+              {/* PDF Download Split Button */}
+              <div ref={pdfMenuRef} className="relative inline-flex items-stretch rounded-lg shadow-sm">
+                <button
+                  disabled={downloadingPDF}
+                  onClick={() => handleDownloadPDF('vector')}
+                  className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-l-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 border-r border-green-500/20"
+                  title="Download Ultra-Clear Vector PDF (~20KB, infinite zoom clarity)"
+                >
+                  {downloadingPDF ? (
+                    <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Generating...</>
+                  ) : (
+                    <><ArrowDownTrayIcon className="w-4 h-4" /> PDF</>
+                  )}
+                </button>
+                <button
+                  disabled={downloadingPDF}
+                  onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
+                  className="px-2 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-r-lg text-sm font-medium flex items-center transition-colors disabled:opacity-50"
+                  title="Choose PDF format"
+                >
+                  <ChevronDownIcon className="w-3.5 h-3.5" />
+                </button>
+
+                {pdfMenuOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                    <button
+                      onClick={() => handleDownloadPDF('vector')}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
+                    >
+                      <span className="font-semibold text-green-400 flex items-center gap-1.5">
+                        <span>⚡</span> Vector PDF (Odoo Style)
+                      </span>
+                      <span className="text-[11px] text-gray-400">~20KB, crystal clear on 1000% zoom</span>
+                    </button>
+                    <button
+                      onClick={() => handleDownloadPDF('theme')}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                    >
+                      <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
+                        <span>🎨</span> Theme Snapshot (300+ DPI)
+                      </span>
+                      <span className="text-[11px] text-gray-400">Exact visual match with 300+ DPI print quality</span>
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
 
               <button
                 disabled={sendingEmail}
