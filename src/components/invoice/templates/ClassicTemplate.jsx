@@ -59,22 +59,29 @@ const InvoicePreview = forwardRef(({
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
   
-  // Calculate totals
+  // Calculate totals factoring in discounts
   const subtotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity || 0);
     const price = parseFloat(item.price || 0);
-    return sum + (qty * price);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    return sum + (lineBase - (lineBase * discount) / 100);
   }, 0);
   
   const taxTotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity || 0);
     const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
     const tax = parseFloat(item.tax || 0);
-    return sum + ((qty * price * tax) / 100);
+    const lineBase = qty * price;
+    const taxable = lineBase - (lineBase * discount) / 100;
+    return sum + ((taxable * tax) / 100);
   }, 0);
   
   const grandTotal = subtotal + taxTotal;
-  const finalTotal = grandTotal + roundOff;
+  const finalTotal = invoice.total_amount != null
+    ? parseFloat(invoice.total_amount)
+    : Number((grandTotal + roundOff).toFixed(2));
   
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';

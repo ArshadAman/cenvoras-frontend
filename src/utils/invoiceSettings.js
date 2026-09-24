@@ -408,16 +408,35 @@ export const numberToWords = (num) => {
 };
 
 export const amountInWords = (amount) => {
-  const rupees = Math.floor(amount);
-  const paise = Math.round((amount - rupees) * 100);
-  
-  let result = numberToWords(rupees) + ' Rupees';
-  if (paise > 0) {
-    result += ' and ' + numberToWords(paise) + ' Paise';
+  if (amount == null || isNaN(amount)) return 'Zero Rupees Only';
+
+  // Round to 2 decimal places to eliminate IEEE-754 floating-point artifacts (e.g. 251999.99999999997)
+  const cleanAmount = Math.round((Number(amount) || 0) * 100) / 100;
+  if (cleanAmount === 0) return 'Zero Rupees Only';
+
+  const isNegative = cleanAmount < 0;
+  const absAmount = Math.abs(cleanAmount);
+  const rupees = Math.floor(absAmount);
+  const paise = Math.round((absAmount - rupees) * 100);
+
+  let result = '';
+  if (isNegative) result += 'Minus ';
+
+  if (rupees > 0) {
+    result += numberToWords(rupees) + (rupees === 1 ? ' Rupee' : ' Rupees');
   }
+
+  if (paise > 0) {
+    const paiseUnit = paise === 1 ? ' Paisa' : ' Paise';
+    if (rupees > 0) {
+      result += ' and ' + numberToWords(paise) + paiseUnit;
+    } else {
+      result += numberToWords(paise) + paiseUnit;
+    }
+  }
+
   result += ' Only';
-  
-  return result;
+  return result.trim();
 };
 
 export default {

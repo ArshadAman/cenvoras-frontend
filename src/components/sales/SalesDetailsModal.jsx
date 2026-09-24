@@ -163,6 +163,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         </tr>`
       ).join('');
 
+      const roundOff = parseFloat(invoiceDetails.round_off || 0) || 0;
+      const roundOffRow = roundOff !== 0
+        ? `<tr><td colspan="3" style="padding:8px;text-align:right;color:#666;">Round Off:</td><td style="padding:8px;text-align:right;">${roundOff >= 0 ? '+' : ''}${getCurrencySymbol()}${roundOff.toFixed(2)}</td></tr>`
+        : '';
+
       const body =
         `<div style="font-family:Arial,sans-serif;max-width:600px;">` +
         `<h2 style="color:#333;">Invoice from ${businessName}</h2>` +
@@ -179,7 +184,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         `<th style="padding:8px;text-align:right;">Amount</th>` +
         `</tr></thead>` +
         `<tbody>${itemRows}</tbody>` +
-        `<tfoot><tr style="background:#f5f5f5;font-weight:bold;">` +
+        `<tfoot>` +
+        `${roundOffRow}` +
+        `<tr style="background:#f5f5f5;font-weight:bold;">` +
         `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
         `<td style="padding:8px;text-align:right;">${getCurrencySymbol()}${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
         `</tr></tfoot>` +
