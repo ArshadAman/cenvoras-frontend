@@ -24,9 +24,12 @@ export const convertOrderToChallan = (orderId, data = {}) =>
 export const convertToInvoice = (id) =>
   api.post(`/billing/delivery-challans/${id}/convert_to_invoice/`).then(res => res.data);
 
-export const getDeliveryChallanPdf = (id, templateData) => {
-  if (templateData) {
-    return api.post(`/billing/delivery-challans/${id}/pdf/`, { template: templateData }, { responseType: 'blob' });
+export const getDeliveryChallanPdf = (id, payload) => {
+  if (payload) {
+    const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
+      ? payload
+      : { template: payload };
+    return api.post(`/billing/delivery-challans/${id}/pdf/`, body, { responseType: 'blob' });
   }
   return api.get(`/billing/delivery-challans/${id}/pdf/`, { responseType: 'blob' });
 };

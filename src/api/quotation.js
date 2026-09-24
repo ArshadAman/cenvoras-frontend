@@ -25,9 +25,12 @@ export const convertQuotationToSalesOrder = (id, approvedItemIds = []) =>
     })
     .then((res) => res.data);
 
-export const downloadQuotationPDF = (id, templateData) => {
-  if (templateData) {
-    return api.post(`/billing/quotations/${id}/pdf/`, { template: templateData }, { responseType: 'blob' })
+export const downloadQuotationPDF = (id, payload) => {
+  if (payload) {
+    const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
+      ? payload
+      : { template: payload };
+    return api.post(`/billing/quotations/${id}/pdf/`, body, { responseType: 'blob' })
       .then((res) => res.data);
   }
   return api.get(`/billing/quotations/${id}/pdf/`, { responseType: 'blob' })
