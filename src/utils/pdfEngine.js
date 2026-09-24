@@ -19,8 +19,8 @@ export async function generatePixelPerfectPDF(element, options = {}) {
 
   const {
     filename = 'invoice.pdf',
-    quality = 0.85,
-    scale = 2,
+    quality = 0.95,
+    scale = 3.5,
     onProgress = null,
   } = options;
 
@@ -50,9 +50,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   const theadRect = theadElement ? theadElement.getBoundingClientRect() : null;
   const theadHeight = theadRect ? theadRect.height : 0;
 
-  if (onProgress) onProgress(30, 'Rendering high-resolution vector canvas...');
+  if (onProgress) onProgress(30, 'Rendering high-resolution vector canvas (300+ DPI)...');
 
-  // Capture the live DOM element with html2canvas
+  // Capture the live DOM element with html2canvas at Retina/300+ DPI scale
   const canvas = await html2canvas(element, {
     scale: scale,
     useCORS: true,
@@ -73,6 +73,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         clonedTarget.style.maxWidth = '210mm';
         clonedTarget.style.margin = '0 auto';
         clonedTarget.style.boxShadow = 'none';
+        clonedTarget.style.webkitFontSmoothing = 'antialiased';
+        clonedTarget.style.mozOsxFontSmoothing = 'grayscale';
+        clonedTarget.style.textRendering = 'geometricPrecision';
       }
 
       // Hide any interactive or print-hidden buttons
@@ -114,9 +117,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     // Draw original canvas content
     ctx.drawImage(canvas, 0, 0);
 
-    // Compress to JPEG with specified quality (0.85 delivers ~50KB - 80KB)
+    // Compress to JPEG with specified quality (0.95 delivers razor-sharp text)
     const jpegData = singleCanvas.toDataURL('image/jpeg', quality);
-    pdf.addImage(jpegData, 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'FAST');
+    pdf.addImage(jpegData, 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'SLOW');
 
     // Attach invisible text layer for selectability and searchability
     addSelectableTextLayer(pdf, element, containerRect, pdfWidthMm, pdfHeightMm);
@@ -186,7 +189,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       );
 
       const pageJpeg = pageCanvas.toDataURL('image/jpeg', quality);
-      pdf.addImage(pageJpeg, 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'FAST');
+      pdf.addImage(pageJpeg, 'JPEG', 0, 0, pdfWidthMm, pdfHeightMm, undefined, 'SLOW');
 
       currentY = splitY;
     }
