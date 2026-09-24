@@ -21,9 +21,26 @@ const LegendTemplate = forwardRef(({
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
   
-  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
-  const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
-  const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+  const subtotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    return sum + (lineBase - (lineBase * discount) / 100);
+  }, 0);
+  const taxTotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const tax = parseFloat(item.tax || 0);
+    const lineBase = qty * price;
+    const taxable = lineBase - (lineBase * discount) / 100;
+    return sum + ((taxable * tax) / 100);
+  }, 0);
+  const finalTotal = invoice.total_amount != null
+    ? parseFloat(invoice.total_amount)
+    : Number((subtotal + taxTotal + roundOff).toFixed(2));
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
@@ -169,6 +186,12 @@ const LegendTemplate = forwardRef(({
                      <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">CGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                      <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">SGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                    </>
+                 )}
+                 {roundOff !== 0 && (
+                   <tr className="w-full flex justify-between px-3 py-1">
+                     <td className="font-semibold">Round Off</td>
+                     <td>{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</td>
+                   </tr>
                  )}
                  <tr className="w-full flex justify-between px-3 py-2 border-t-2 border-b-2 bg-gray-100" style={{ borderColor }}>
                    <td className="font-bold text-lg">Total Amount</td>

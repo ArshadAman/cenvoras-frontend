@@ -450,36 +450,59 @@ export default function SalesTable({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-white">
                     {getCurrencySymbol()}{(() => {
-                      // Calculate untaxed amount from items
+                      // Calculate untaxed amount from items factoring in discounts
                       const untaxedAmount = invoice.items?.reduce((sum, item) => {
                         const quantity = parseFloat(item.quantity || 0);
                         const price = parseFloat(item.price || 0);
-                        return sum + (quantity * price);
+                        const discount = parseFloat(item.discount || 0);
+                        const lineBase = quantity * price;
+                        return sum + (lineBase - (lineBase * discount) / 100);
                       }, 0) || 0;
-                      return Number(untaxedAmount).toLocaleString();
+                      return Number(untaxedAmount).toLocaleString('en-IN', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      });
                     })()}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-bold text-cyan-400">
-                    {getCurrencySymbol()}{(() => {
-                      // Calculate total amount including tax
-                      const calculations = invoice.items?.reduce((acc, item) => {
-                        const quantity = parseFloat(item.quantity || 0);
-                        const price = parseFloat(item.price || 0);
-                        const tax = parseFloat(item.tax || 0);
-                        const subtotal = quantity * price;
-                        const taxAmount = (subtotal * tax) / 100;
-                        return {
-                          untaxed: acc.untaxed + subtotal,
-                          taxAmount: acc.taxAmount + taxAmount
-                        };
-                      }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
-                      
-                      const totalWithTax = calculations.untaxed + calculations.taxAmount;
-                      return Number(totalWithTax).toLocaleString();
-                    })()}
-                  </div>
+                  {(() => {
+                    const roundOff = parseFloat(invoice.round_off || 0) || 0;
+                    const calculations = invoice.items?.reduce((acc, item) => {
+                      const quantity = parseFloat(item.quantity || 0);
+                      const price = parseFloat(item.price || 0);
+                      const discount = parseFloat(item.discount || 0);
+                      const tax = parseFloat(item.tax || 0);
+                      const lineBase = quantity * price;
+                      const taxable = lineBase - (lineBase * discount) / 100;
+                      const taxAmount = (taxable * tax) / 100;
+                      return {
+                        taxable: acc.taxable + taxable,
+                        taxAmount: acc.taxAmount + taxAmount
+                      };
+                    }, { taxable: 0, taxAmount: 0 }) || { taxable: 0, taxAmount: 0 };
+
+                    const computedTotal = calculations.taxable + calculations.taxAmount + roundOff;
+                    const totalAmountWithTax = invoice.total_amount != null
+                      ? parseFloat(invoice.total_amount)
+                      : computedTotal;
+
+                    return (
+                      <div>
+                        <div className="text-sm font-bold text-cyan-400">
+                          {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })}
+                        </div>
+                        {roundOff !== 0 && (
+                          <div className="text-[11px] text-amber-300 font-medium">
+                            Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
@@ -603,24 +626,43 @@ export default function SalesTable({
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-black text-cyan-400">
-                  {getCurrencySymbol()}{(() => {
-                    const calculations = invoice.items?.reduce((acc, item) => {
-                      const quantity = parseFloat(item.quantity || 0);
-                      const price = parseFloat(item.price || 0);
-                      const tax = parseFloat(item.tax || 0);
-                      const subtotal = quantity * price;
-                      const taxAmount = (subtotal * tax) / 100;
-                      return {
-                        untaxed: acc.untaxed + subtotal,
-                        taxAmount: acc.taxAmount + taxAmount
-                      };
-                    }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
-                    
-                    const totalWithTax = calculations.untaxed + calculations.taxAmount;
-                    return Number(totalWithTax).toLocaleString();
-                  })()}
-                </div>
+                {(() => {
+                  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+                  const calculations = invoice.items?.reduce((acc, item) => {
+                    const quantity = parseFloat(item.quantity || 0);
+                    const price = parseFloat(item.price || 0);
+                    const discount = parseFloat(item.discount || 0);
+                    const tax = parseFloat(item.tax || 0);
+                    const lineBase = quantity * price;
+                    const taxable = lineBase - (lineBase * discount) / 100;
+                    const taxAmount = (taxable * tax) / 100;
+                    return {
+                      taxable: acc.taxable + taxable,
+                      taxAmount: acc.taxAmount + taxAmount
+                    };
+                  }, { taxable: 0, taxAmount: 0 }) || { taxable: 0, taxAmount: 0 };
+
+                  const computedTotal = calculations.taxable + calculations.taxAmount + roundOff;
+                  const totalAmountWithTax = invoice.total_amount != null
+                    ? parseFloat(invoice.total_amount)
+                    : computedTotal;
+
+                  return (
+                    <div>
+                      <div className="text-lg font-black text-cyan-400">
+                        {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </div>
+                      {roundOff !== 0 && (
+                        <div className="text-[10px] text-amber-300 font-bold text-right">
+                          Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className={`mt-1 inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black tracking-tighter ${
                   invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                   invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
