@@ -17,7 +17,6 @@ import { getAccounts } from '../../api/ledger';
 import { subDays } from 'date-fns';
 import { useLoadingPolicy } from '../../hooks/useLoadingPolicy';
 import TableSkeleton from '../common/TableSkeleton';
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { ArrowTopRightOnSquareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { downloadPartnerStatementPdf } from '../../api/ledger';
@@ -222,7 +221,7 @@ const LedgerTable = ({
       // Check if the date is valid
       if (isNaN(date.getTime())) return '-';
       return format(date, 'dd/MM/yyyy');
-    } catch (error) {
+    } catch {
       console.warn('Invalid date format:', dateString);
       return '-';
     }
@@ -605,7 +604,7 @@ const LedgerTable = ({
                   </div>
                 ))
               ) : (
-                ledgerEntries.map((entry, index) => (
+                ledgerEntries.map((entry) => (
                   <div key={entry.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-3">
@@ -849,10 +848,33 @@ const LedgerTable = ({
                     🧾 Purchase Bill #{viewEntry.purchase_bill_number}
                   </span>
                 )}
-                {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs bg-gray-500/10 text-gray-400 border border-gray-500/20">
-                    📝 Manual Entry
-                  </span>
+                {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && !viewEntry.payment && (
+                  <div className="w-full flex items-center gap-2 mt-4 pt-3 border-t border-white/5">
+                    {onEdit && (
+                      <button
+                        onClick={() => {
+                          const e = viewEntry;
+                          setViewEntry(null);
+                          onEdit(e);
+                        }}
+                        className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white rounded-lg transition"
+                      >
+                        Edit Entry
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => {
+                          const e = viewEntry;
+                          setViewEntry(null);
+                          onDelete(e);
+                        }}
+                        className="px-3 py-1.5 text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg transition"
+                      >
+                        Delete Entry
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
