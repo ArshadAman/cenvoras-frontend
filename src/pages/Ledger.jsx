@@ -22,8 +22,7 @@ import {
   BookOpenIcon,
   MagnifyingGlassIcon 
 } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
-import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { getCurrencySymbol } from '../utils/currency';
 
 const Ledger = () => {
   const [activeTab, setActiveTab] = useState('customers'); // 'customers' | 'vendors' | 'general'
@@ -96,13 +95,27 @@ const Ledger = () => {
     setShowEditForm(true);
   };
 
+  const handleEditSuccess = () => {
+    setShowEditForm(false);
+    setSelectedEntry(null);
+  };
+
   const handleDeleteEntry = (entry) => {
     setSelectedEntry(entry);
     setShowDeleteDialog(true);
   };
 
+  const handleDeleteSuccess = () => {
+    setShowDeleteDialog(false);
+    setSelectedEntry(null);
+  };
+
   const handleBulkSelect = (entryIds) => {
     setSelectedEntries(entryIds);
+  };
+
+  const clearSelection = () => {
+    setSelectedEntries([]);
   };
 
   return (
@@ -282,6 +295,12 @@ const Ledger = () => {
               >
                 Clear Filter
               </button>
+            )}
+            {selectedVendorData?.outstanding_balance > 0 && (
+              <div className="ml-auto flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-2">
+                <span className="text-xs text-orange-400 font-medium">Outstanding Payable:</span>
+                <span className="text-orange-300 font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedVendorData.outstanding_balance).toLocaleString('en-IN')}</span>
+              </div>
             )}
           </div>
         )}
