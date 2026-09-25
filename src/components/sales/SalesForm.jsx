@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
@@ -16,7 +16,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; /
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, onProductSearchChange, showDescription = true, onCreateNewProduct, onSelectProduct }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, onCreateNewProduct, onSelectProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -27,7 +27,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
 
   // Sync inputValue with Formik values when items change or shift on deletion
   useEffect(() => {
-    setInputValue(values.items[idx]?.product || "");
+    const formVal = values.items[idx]?.product || "";
+    if (formVal !== inputValue) {
+      setInputValue(formVal);
+    }
   }, [values.items[idx]?.product]);
 
   const updateDropdownPosition = () => {
@@ -109,9 +112,6 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
-    if (onProductSearchChange) {
-      onProductSearchChange(value.trim());
-    }
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
@@ -642,19 +642,9 @@ export default function SalesForm({
   const isEdit = !!editData && !!editData.id;
   const formikRef = React.useRef(null);
   const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
-  const [productSearch, setProductSearch] = useState("");
-  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
   const [productCreationState, setProductCreationState] = useState(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedProductSearch((productSearch || "").trim());
-    }, 220);
-
-    return () => clearTimeout(timer);
-  }, [productSearch]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -689,12 +679,11 @@ export default function SalesForm({
   
   // Lifted state: Fetch products and customers once at top level
   const { data: productsResult } = useQuery({ 
-      queryKey: ["products", debouncedProductSearch], 
+      queryKey: ["products"], 
       queryFn: () => getProducts({
-        ...(debouncedProductSearch ? { search: debouncedProductSearch } : {}),
         ordering: "name",
       }),
-      enabled: isOpen && canAccessInventory && debouncedProductSearch.length >= 2,
+      enabled: isOpen && canAccessInventory,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
@@ -912,6 +901,15 @@ export default function SalesForm({
     enabled: !isEdit && isOpen
   });
 
+  useEffect(() => {
+    if (!isEdit && nextInvData?.next_number && formikRef.current) {
+      const currentVal = formikRef.current.values?.invoice_number;
+      if (!currentVal) {
+        formikRef.current.setFieldValue('invoice_number', nextInvData.next_number);
+      }
+    }
+  }, [nextInvData?.next_number, isEdit]);
+
   const extractErrorMessage = (error, defaultMsg) => {
     const data = error.response?.data;
     if (!data) return error.message || defaultMsg;
@@ -1019,6 +1017,100 @@ export default function SalesForm({
     onClose();
   };
 
+  const initialValues = useMemo(() => ({
+    // Required fields
+    customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
+    // Use fetched next number or edit data
+    invoice_number: editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
+    invoice_date: (editData?.invoice_date || editData?.date)
+      ? new Date(editData.invoice_date || editData.date).toISOString().split('T')[0] 
+      : new Date().toLocaleDateString('sv-SE'),
+    
+    // Optional customer fields (for Customer record creation)
+    customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
+    customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
+    customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
+    customer_gstin: editData?.customer_gstin || "",
+    delivery_address: editData?.delivery_address || "",
+    vehicle_number: editData?.vehicle_number || "",
+    transport_mode: editData?.transport_mode || "",
+    eway_bill_number: editData?.eway_bill_number || "",
+    
+    // Optional invoice fields
+    due_date: editData?.due_date || "",
+    po_number: editData?.po_number || "",
+    po_date: editData?.po_date || "",
+    challan_number: editData?.challan_number || "",
+    challan_date: editData?.challan_date || "",
+    gst_treatment: editData?.gst_treatment || "registered",
+    place_of_supply: editData?.place_of_supply || "",
+    warehouse: editData?.warehouse || "",
+    journal: editData?.journal || "Sales",
+    total_amount: editData?.total_amount || null,
+    
+    items: (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
+      const qty = item.quantity || 1;
+      const price = Number(item.price || 0) || 0;
+      const itemAmount = qty * price;
+      const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
+      const productName = item.product_name || item.product_detail?.name || (typeof item.product === 'string' && !isUUID(item.product) ? item.product : "");
+      const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
+      return {
+        _key: item.id || `item-edit-${productId || idx}`,
+        product: productName,
+        product_id: productId,
+        description: item.description || item.product_description || item.product_detail?.description || "",
+        product_description: item.description || item.product_description || item.product_detail?.description || "",
+        quantity: qty,
+        free_quantity: item.free_quantity || 0,
+        batch: batchId,
+        price: price,
+        amount: itemAmount,
+        unit: item.unit || "pcs",
+        hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
+        discount: item.discount || 0,
+        tax: item.tax || 0,
+        isExistingProduct: !!productId,
+      };
+    }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
+        const qty = item.quantity || 1;
+        const price = Number(item.price || 0) || 0;
+        return {
+            _key: `item-ai-${idx}`,
+            product: item.product_name || "",
+            product_id: null,
+            description: item.description || item.product_description || "",
+            product_description: item.description || item.product_description || "",
+            quantity: qty,
+            free_quantity: 0,
+            batch: "",
+            price: price,
+            amount: qty * price,
+            unit: "pcs",
+            hsn_sac_code: "",
+            discount: 0,
+            tax: 0,
+            isExistingProduct: false,
+        };
+    }) : [{
+      _key: 'item-initial-0',
+      product: "",
+      product_id: null,
+      description: "",
+      product_description: "",
+      quantity: 1,
+      free_quantity: 0,
+      batch: "",
+      price: 0,
+      amount: 0,
+      unit: "pcs",
+      hsn_sac_code: "",
+      discount: 0,
+      tax: 0,
+      isExistingProduct: false,
+    }],
+  }), [editData?.id, aiDraftData]);
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -1050,100 +1142,8 @@ export default function SalesForm({
         
         <Formik
           innerRef={formikRef}
-          initialValues={{
-            // Required fields
-            customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
-            // Use fetched next number or edit data
-            invoice_number: editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
-            invoice_date: (editData?.invoice_date || editData?.date)
-              ? new Date(editData.invoice_date || editData.date).toISOString().split('T')[0] 
-              : new Date().toLocaleDateString('sv-SE'),
-            
-            // Optional customer fields (for Customer record creation)
-            customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
-            customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
-            customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
-            customer_gstin: editData?.customer_gstin || "",
-            delivery_address: editData?.delivery_address || "",
-            vehicle_number: editData?.vehicle_number || "",
-            transport_mode: editData?.transport_mode || "",
-            eway_bill_number: editData?.eway_bill_number || "",
-            
-            // Optional invoice fields
-            due_date: editData?.due_date || "",
-            po_number: editData?.po_number || "",
-            po_date: editData?.po_date || "",
-            challan_number: editData?.challan_number || "",
-            challan_date: editData?.challan_date || "",
-            gst_treatment: editData?.gst_treatment || "registered",
-            place_of_supply: editData?.place_of_supply || "", // New field
-            warehouse: editData?.warehouse || "", // New field
-            journal: editData?.journal || "Sales",
-            total_amount: editData?.total_amount || null,
-            
-            items: (editData?.items && editData.items.length > 0) ? editData.items.map(item => {
-              const qty = item.quantity || 1;
-              const price = Number(item.price || 0) || 0;
-              const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
-              const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
-              const productName = item.product_name || item.product_detail?.name || (typeof item.product === 'string' && !isUUID(item.product) ? item.product : "");
-              const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
-              return {
-                _key: item.id || `item-${Math.random().toString(36).substring(2, 9)}`,
-                product: productName,
-                product_id: productId,
-                description: item.description || item.product_description || item.product_detail?.description || "",
-                product_description: item.description || item.product_description || item.product_detail?.description || "",
-                quantity: qty,
-                free_quantity: item.free_quantity || 0,
-                batch: batchId,
-                price: price,
-                amount: itemAmount, // This should always be qty * price before tax/discount
-                unit: item.unit || "pcs",
-                hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
-                discount: item.discount || 0,
-                tax: item.tax || 0,
-                isExistingProduct: !!productId,
-              };
-            }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map(item => {
-                const qty = item.quantity || 1;
-                const price = Number(item.price || 0) || 0;
-                return {
-                    _key: `item-${Math.random().toString(36).substring(2, 9)}`,
-                    product: item.product_name || "",
-                    product_id: null,
-                    description: item.description || item.product_description || "",
-                    product_description: item.description || item.product_description || "",
-                    quantity: qty,
-                    free_quantity: 0,
-                    batch: "",
-                    price: price,
-                    amount: qty * price,
-                    unit: "pcs",
-                    hsn_sac_code: "",
-                    discount: 0,
-                    tax: 0,
-                    isExistingProduct: false,
-                };
-            }) : [{
-              _key: `item-${Math.random().toString(36).substring(2, 9)}`,
-              product: "",
-              product_id: null,
-              description: "",
-              product_description: "",
-              quantity: 1,
-              free_quantity: 0,
-              batch: "",
-              price: 0,
-              amount: 0, // Required field
-              unit: "pcs",
-              hsn_sac_code: "",
-              discount: 0,
-              tax: 0,
-              isExistingProduct: false,
-            }]
-          }}
-          enableReinitialize={true}
+          initialValues={initialValues}
+          enableReinitialize={isEdit}
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
             const isDraft = forceDraft || submitActionRef.current === "draft";
             
@@ -1696,7 +1696,6 @@ export default function SalesForm({
                                                    setFieldValue={setFieldValue}
                                                    products={products}
                                                    onInputChange={() => handleAutoAddRow(index)}
-                                                   onProductSearchChange={setProductSearch}
                                                    showDescription={itemSettings.show_item_description}
                                                    onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                    onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
@@ -1881,7 +1880,6 @@ export default function SalesForm({
                                             setFieldValue={setFieldValue}
                                             products={products}
                                             onInputChange={() => handleAutoAddRow(index)}
-                                            onProductSearchChange={setProductSearch}
                                             showDescription={itemSettings.show_item_description}
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                             onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
