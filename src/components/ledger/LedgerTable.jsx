@@ -223,6 +223,39 @@ const LedgerTable = ({
     }
   };
 
+  const getCleanReference = (entry) => {
+    if (!entry) return '-';
+    let ref = (entry.reference || '').trim();
+    
+    // Strip raw UUID from strings like "Payment Received <uuid>"
+    ref = ref.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '').trim();
+
+    if (entry.payment) {
+      if (entry.sales_invoice_number) {
+        return `Receipt (${entry.sales_invoice_number})`;
+      }
+      if (entry.purchase_bill_number) {
+        return `Payment (${entry.purchase_bill_number})`;
+      }
+      return ref || 'Payment Receipt';
+    }
+
+    if (entry.sales_invoice_number) {
+      return entry.sales_invoice_number;
+    }
+    if (entry.purchase_bill_number) {
+      return entry.purchase_bill_number;
+    }
+    if (entry.credit_note_number) {
+      return `Credit Note #${entry.credit_note_number}`;
+    }
+    if (entry.debit_note_number) {
+      return `Debit Note #${entry.debit_note_number}`;
+    }
+
+    return ref || '-';
+  };
+
   if (loadingPolicy.visible) {
     return (
       <div className="bento-card p-4">
@@ -502,18 +535,23 @@ const LedgerTable = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                        {entry.sales_invoice ? (
+                        {entry.payment ? (
+                          <Link to="/payments" className="text-emerald-400 hover:text-emerald-300 hover:underline font-medium inline-flex items-center gap-1" title="View Payments">
+                            <span>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                          </Link>
+                        ) : entry.sales_invoice ? (
                           <Link to="/sales" className="text-cyan-400 hover:text-cyan-300 hover:underline font-medium inline-flex items-center gap-1" title="View Sales Invoices">
-                            <span>{entry.reference || entry.sales_invoice_number || 'Invoice'}</span>
+                            <span>{getCleanReference(entry)}</span>
                             <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                           </Link>
                         ) : entry.purchase_bill ? (
                           <Link to="/purchases" className="text-orange-400 hover:text-orange-300 hover:underline font-medium inline-flex items-center gap-1" title="View Purchase Bills">
-                            <span>{entry.reference || entry.purchase_bill_number || 'Bill'}</span>
+                            <span>{getCleanReference(entry)}</span>
                             <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                           </Link>
                         ) : (
-                          <span className="font-mono text-gray-300">{entry.reference || '-'}</span>
+                          <span className="font-mono text-gray-300">{getCleanReference(entry)}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-white">
@@ -621,7 +659,7 @@ const LedgerTable = ({
                             {entry.customer_name || entry.vendor_name || entry.account_name || 'N/A'}
                           </div>
                           <div className="text-xs text-gray-400 font-mono">
-                            {formatDate(entry.date)} &bull; {entry.reference || '-'}
+                            {formatDate(entry.date)} &bull; {getCleanReference(entry)}
                           </div>
                         </div>
                       </div>
@@ -805,7 +843,7 @@ const LedgerTable = ({
               </div>
               <div className="bg-white/5 rounded-xl p-3">
                 <div className="text-xs text-gray-500 mb-1">Reference</div>
-                <div className="text-white font-medium">{viewEntry.reference || '—'}</div>
+                <div className="text-white font-medium">{getCleanReference(viewEntry)}</div>
               </div>
               <div className="bg-white/5 rounded-xl p-3 col-span-2">
                 <div className="text-xs text-gray-500 mb-1">Account</div>
