@@ -185,9 +185,9 @@ const GenzTemplate = forwardRef(({
                    </span>
                  </div>
                )}
-               <div className="flex justify-between items-center text-xl">
-                 <span className="font-extrabold text-gray-900">Total Due</span>
-                 <span style={{ color: primaryColor }} className="font-black text-2xl">
+               <div className="flex justify-between items-center text-sm">
+                 <span className="font-extrabold text-gray-900 whitespace-nowrap">Total Due</span>
+                 <span style={{ color: primaryColor }} className="font-black font-mono text-base whitespace-nowrap">
                    {getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                  </span>
                </div>

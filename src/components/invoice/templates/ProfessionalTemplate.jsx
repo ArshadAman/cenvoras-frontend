@@ -210,9 +210,9 @@ const ProfessionalTemplate = forwardRef(({
                 </span>
               </div>
             )}
-            <div className="flex justify-between p-4 bg-gray-50 text-base">
-              <span className="font-bold text-gray-900">Total</span>
-              <span className="font-bold text-indigo-600">{getCurrencySymbol()}{finalTotal.toFixed(2)}</span>
+            <div className="flex justify-between p-3.5 bg-gray-50 text-sm">
+              <span className="font-bold text-gray-900 whitespace-nowrap">Total</span>
+              <span className="font-bold font-mono text-indigo-600 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toFixed(2)}</span>
             </div>
           </div>
           {sections.showAmountInWords && (
