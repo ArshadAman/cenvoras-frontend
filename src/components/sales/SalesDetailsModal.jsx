@@ -388,17 +388,21 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               <div ref={pdfMenuRef} className="relative inline-flex items-stretch rounded-lg shadow-sm">
                 <button
                   disabled={downloadingPDF}
-                  onClick={() => handlePrint()}
+                  onClick={() => handleDownloadPDF('vector')}
                   className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-l-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 border-r border-green-500/20"
-                  title="Save as Vector PDF (Native Browser - 15KB crystal-clear vector, zero server load)"
+                  title="Download Vector PDF directly to your device"
                 >
-                  <ArrowDownTrayIcon className="w-4 h-4" /> PDF
+                  {downloadingPDF ? (
+                    <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Downloading...</>
+                  ) : (
+                    <><ArrowDownTrayIcon className="w-4 h-4" /> PDF</>
+                  )}
                 </button>
                 <button
                   disabled={downloadingPDF}
                   onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
                   className="px-2 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-r-lg text-sm font-medium flex items-center transition-colors disabled:opacity-50"
-                  title="Choose PDF format"
+                  title="Choose PDF download format"
                 >
                   <ChevronDownIcon className="w-3.5 h-3.5" />
                 </button>
@@ -406,22 +410,13 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 {pdfMenuOpen && (
                   <div className="absolute top-full left-0 mt-1 w-68 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                     <button
-                      onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
+                      onClick={() => handleDownloadPDF('vector')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
                     >
                       <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Save as Vector PDF (Native - 15KB)
+                        <span>⚡</span> Download Vector PDF (Direct File)
                       </span>
-                      <span className="text-[11px] text-gray-400">Zero wait, infinite zoom clarity (Select 'Save as PDF')</span>
-                    </button>
-                    <button
-                      onClick={() => handleDownloadPDF('vector')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
-                    >
-                      <span className="font-semibold text-purple-400 flex items-center gap-1.5">
-                        <span>☁️</span> Download via Server Engine (API)
-                      </span>
-                      <span className="text-[11px] text-gray-400">Direct file download via Headless Chromium</span>
+                      <span className="text-[11px] text-gray-400">~20KB, crystal-clear vector file download</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('client')}
@@ -430,7 +425,16 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                       <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
                         <span>🎨</span> Direct Canvas Download (~45KB)
                       </span>
-                      <span className="text-[11px] text-gray-400">Instant file download fallback without print dialog</span>
+                      <span className="text-[11px] text-gray-400">Instant client file download fallback</span>
+                    </button>
+                    <button
+                      onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                    >
+                      <span className="font-semibold text-purple-400 flex items-center gap-1.5">
+                        <span>🖨️</span> Open System Print Dialog
+                      </span>
+                      <span className="text-[11px] text-gray-400">Print or choose destination printer</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('backend')}
