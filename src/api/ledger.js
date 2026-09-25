@@ -191,12 +191,62 @@ export const getGeneralLedgerEntries = async (params = {}) => {
     if (params.page_size) queryString.append('page_size', params.page_size);
     if (params.ordering) queryString.append('ordering', params.ordering);
     if (params.customer) queryString.append('customer', params.customer);
+    if (params.vendor) queryString.append('vendor', params.vendor);
 
     const response = await api.get(`/ledger/general-ledger-entries/?${queryString}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching general ledger entries:', error);
     throw createUserFriendlyError(error, 'Failed to load general ledger entries. Please try again.');
+  }
+};
+
+// Get partner statement (Customer or Vendor Sub-Ledger)
+export const getPartnerStatement = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams();
+    if (params.partner_type) queryString.append('partner_type', params.partner_type);
+    if (params.partner_id) queryString.append('partner_id', params.partner_id);
+    if (params.date_from) queryString.append('date_from', params.date_from);
+    if (params.date_to) queryString.append('date_to', params.date_to);
+    if (params.page) queryString.append('page', params.page);
+    if (params.page_size) queryString.append('page_size', params.page_size);
+
+    const response = await api.get(`/ledger/partner-statement/?${queryString}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching partner statement:', error);
+    throw createUserFriendlyError(error, 'Failed to load partner statement.');
+  }
+};
+
+// Download Vector PDF Statement via Warm Chromium CDP
+export const downloadPartnerStatementPdf = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams();
+    if (params.partner_type) queryString.append('partner_type', params.partner_type);
+    if (params.partner_id) queryString.append('partner_id', params.partner_id);
+    if (params.date_from) queryString.append('date_from', params.date_from);
+    if (params.date_to) queryString.append('date_to', params.date_to);
+
+    const response = await api.get(`/ledger/partner-statement/pdf/?${queryString}`, {
+      responseType: 'blob'
+    });
+
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeName = (params.partner_name || params.partner_type || 'Statement').replace(/\s+/g, '_');
+    link.setAttribute('download', `Statement_${safeName}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('Error downloading statement PDF:', error);
+    throw createUserFriendlyError(error, 'Failed to download statement PDF.');
   }
 };
 
