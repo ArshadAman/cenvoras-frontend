@@ -144,11 +144,15 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               className="w-full bg-[#111] border border-white/10 rounded px-2 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-xs"
               autoComplete="off"
               onKeyDown={(e) => {
-                if (e.key === 'Tab' || (e.key === 'Enter' && !showDropdown)) {
-                  e.preventDefault();
-                  const nextInput = e.target.closest('.grid').querySelector(`input[name="items.${idx}.quantity"]`);
-                  if (nextInput) nextInput.focus();
+                if (e.key === 'Tab') {
+                  if (showDropdown && filteredProducts.length > 0 && selectedIndex >= 0) {
+                    selectProduct(filteredProducts[selectedIndex]);
+                  }
+                  setShowDropdown(false);
+                  setSelectedIndex(-1);
+                  return;
                 }
+
                 // Handle dropdown navigation
                 if (showDropdown && filteredProducts.length > 0) {
                   const displayLimit = Math.min(filteredProducts.length, 50);
@@ -166,6 +170,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     setShowDropdown(false);
                     setSelectedIndex(-1);
                   }
+                } else if (e.key === 'Escape') {
+                  setShowDropdown(false);
+                  setSelectedIndex(-1);
                 }
               }}
             />
@@ -1748,6 +1755,7 @@ export default function SalesForm({
                                                   disabled={values.items.length === 1}
                                                   className="text-gray-500 hover:text-red-400 transition-colors p-1.5 disabled:opacity-30"
                                                   title="Remove Item"
+                                                  tabIndex={-1}
                                                 >
                                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -1923,6 +1931,7 @@ export default function SalesForm({
                                               onClick={() => remove(index)}
                                               disabled={values.items.length === 1}
                                               className="px-6 py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+                                              tabIndex={-1}
                                           >
                                               Remove
                                           </button>
