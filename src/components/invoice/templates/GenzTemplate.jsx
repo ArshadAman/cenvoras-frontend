@@ -102,27 +102,41 @@ const GenzTemplate = forwardRef(({
 
         {/* Thick Styling Table */}
         <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm mb-10">
-          <table className="w-full text-left">
+          <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
             <thead style={{ backgroundColor: '#f8fafc' }}>
-              <tr>
-                {visibleColumns.map(col => (
-                  <th key={col.id} className="px-6 py-2 text-xs font-bold text-gray-600 uppercase tracking-widest">{col.label}</th>
-                ))}
+              <tr className="border-b border-gray-200">
+                {visibleColumns.map((col) => {
+                  const isNum = ['price', 'amount'].includes(col.id);
+                  const isDesc = col.id === 'description';
+                  const alignClass = isDesc ? 'text-left px-5' : isNum ? 'text-right px-5' : 'text-center px-3';
+                  const colWidth = col.id === 'serial' ? '8%' : col.id === 'description' ? '38%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '10%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '8%' : '14%';
+                  return (
+                    <th key={col.id} className={`py-3 text-xs font-bold text-gray-600 uppercase tracking-widest ${alignClass}`} style={{ width: colWidth }}>{col.label}</th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {items.map((item, idx) => (
                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                   {visibleColumns.map(col => {
+                    const isNum = ['price', 'amount'].includes(col.id);
+                    const isDesc = col.id === 'description';
+                    const alignClass = isDesc ? 'text-left px-5' : isNum ? 'text-right px-5 font-mono font-medium' : 'text-center px-3';
                     let val = '';
                     if(col.id==='serial') val = idx+1;
-                    else if(col.id==='description') val = <div className="py-1"><p className="font-bold text-gray-900 text-base">{item.product_name || item.product}</p><p className="text-xs text-gray-400 mt-0.5">{item.hsn_sac_code ? `{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} ${item.hsn_sac_code}` : ''}</p></div>;
-                    else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-3 py-1 rounded-full">{item.quantity}</span>;
-                    else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN')}`;
+                    else if(col.id==='description') val = (
+                      <div className="py-1">
+                        <p className="font-bold text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
+                        {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
+                      </div>
+                    );
+                    else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-2.5 py-0.5 rounded-full text-xs">{item.quantity}</span>;
+                    else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toFixed(2)}`;
                     else if(col.id==='tax') val = `${item.tax||0}%`;
-                    else if(col.id==='amount') val = <span className="font-bold">{getCurrencySymbol()}{(item.quantity * item.price).toLocaleString('en-IN')}</span>;
+                    else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                     else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                    return <td key={col.id} className="px-6 py-1.5 align-middle text-gray-800">{val}</td>;
+                    return <td key={col.id} className={`py-3 align-middle text-gray-800 text-xs ${alignClass}`}>{val}</td>;
                   })}
                 </tr>
               ))}

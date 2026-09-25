@@ -204,15 +204,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         }
       }
 
-      // Default & Primary: Pixel-Perfect Client Engine (336 DPI Retina print quality, 100% exact replica of on-screen template)
       if (targetElement) {
         await generatePixelPerfectPDF(targetElement, {
           filename,
-          scale: 3.5,
-          imageFormat: 'PNG',
+          scale: 2.5,
+          imageFormat: 'JPEG',
+          quality: 0.92,
         });
 
-        toast.success(`${docTypeLabel} pixel-perfect PDF downloaded successfully`);
+        toast.success(`${docTypeLabel} PDF downloaded successfully`);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
