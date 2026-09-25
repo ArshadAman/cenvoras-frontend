@@ -84,10 +84,10 @@ const LegendTemplate = forwardRef(({
         {/* Info Blocks Grid */}
         <div className="flex border-b" style={{ borderColor }}>
           <div className="w-1/2 p-3 border-r" style={{ borderColor }}>
-             <p className="font-bold uppercase mb-1">Customer Details:</p>
-             <p className="font-bold">{customerName}</p>
-             {invoice.customer_gstin && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
-             <p className="whitespace-pre-line mt-1 leading-snug">{billingAddress}</p>
+             <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Customer Details:</p>
+             <p className="font-semibold text-gray-900">{customerName}</p>
+             {invoice.customer_gstin && <p className="font-medium text-xs mt-0.5">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
+             <p className="whitespace-pre-line mt-0.5 text-xs text-gray-600 leading-snug">{billingAddress}</p>
           </div>
           <div className="w-1/2 flex flex-col justify-between">
              <div className="flex border-b flex-1" style={{ borderColor }}>
@@ -177,8 +177,8 @@ const LegendTemplate = forwardRef(({
               <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
                 Total items: {items.length}
               </td>
-              <td className="border-r border-gray-200 text-right px-3 text-xs uppercase tracking-wider font-semibold text-gray-700">Subtotal</td>
-              <td className="text-right px-3 text-xs font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+              <td className="border-r border-gray-200 text-right px-3 text-xs uppercase tracking-wider font-semibold text-gray-700 whitespace-nowrap">Subtotal</td>
+              <td className="text-right px-3 text-xs font-mono font-bold text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
             </tr>
           </tbody>
         </table>
@@ -187,10 +187,10 @@ const LegendTemplate = forwardRef(({
         <div className="flex flex-1">
           <div className="w-3/5 p-3 border-r flex flex-col justify-between" style={{ borderColor }}>
              <div>
-               <p className="italic mb-2">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
+               <p className="italic mb-2 text-xs">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
                {sections.showBankDetails && (
                  <div>
-                    <h4 className="font-bold border-b border-gray-300 inline-block mb-1">Bank Details:</h4>
+                    <h4 className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Bank Details:</h4>
                     <table className="text-xs">
                       <tbody>
                         <tr><td className="pr-4 py-0.5">Bank:</td><td className="font-semibold">{content.bankDetails?.bankName}</td></tr>
@@ -205,10 +205,10 @@ const LegendTemplate = forwardRef(({
              
              {sections.showTerms && (
                <div className="mt-4">
-                 <p className="font-bold border-b border-gray-300 inline-block mb-1">Notes:</p>
-                 <p className="mb-2">{content.footerNote}</p>
-                 <p className="font-bold border-b border-gray-300 inline-block mb-1">Terms & Conditions:</p>
-                 <ul className="list-decimal pl-4 space-y-0.5">
+                 <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Notes:</p>
+                 <p className="mb-2 text-xs">{content.footerNote}</p>
+                 <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Terms & Conditions:</p>
+                 <ul className="list-decimal pl-4 space-y-0.5 text-xs">
                    {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
                  </ul>
                </div>
@@ -217,29 +217,39 @@ const LegendTemplate = forwardRef(({
           
           {/* Totals Block */}
           <div className="w-2/5 flex flex-col justify-between">
-             <table className="w-full text-right p-3 block text-sm">
-               <tbody className="w-full block">
-                 <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">Taxable Amount</td><td>{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                 {isIGST ? (
-                   <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">IGST</td><td>{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                 ) : (
-                   <>
-                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">CGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">SGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                   </>
-                 )}
-                 {roundOff !== 0 && (
-                   <tr className="w-full flex justify-between px-3 py-1">
-                     <td className="font-semibold">Round Off</td>
-                     <td>{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</td>
-                   </tr>
-                 )}
-                 <tr className="w-full flex justify-between px-3 py-2 border-t-2 border-b-2 bg-gray-100" style={{ borderColor }}>
-                   <td className="font-bold text-lg">Total Amount</td>
-                   <td className="font-bold text-lg">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-                 </tr>
-               </tbody>
-             </table>
+             <div className="p-3 text-xs space-y-1">
+               <div className="flex justify-between items-center py-0.5">
+                 <span className="font-semibold text-gray-700 whitespace-nowrap">Taxable Amount</span>
+                 <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               </div>
+               {isIGST ? (
+                 <div className="flex justify-between items-center py-0.5">
+                   <span className="font-semibold text-gray-700 whitespace-nowrap">IGST</span>
+                   <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 </div>
+               ) : (
+                 <>
+                   <div className="flex justify-between items-center py-0.5">
+                     <span className="font-semibold text-gray-700 whitespace-nowrap">CGST</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   </div>
+                   <div className="flex justify-between items-center py-0.5">
+                     <span className="font-semibold text-gray-700 whitespace-nowrap">SGST</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   </div>
+                 </>
+               )}
+               {roundOff !== 0 && (
+                 <div className="flex justify-between items-center py-0.5">
+                   <span className="font-semibold text-gray-700 whitespace-nowrap">Round Off</span>
+                   <span className="font-mono text-gray-900 whitespace-nowrap">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
+                 </div>
+               )}
+               <div className="flex justify-between items-center px-2 py-2 border-t-2 border-b-2 bg-gray-100 font-bold mt-1" style={{ borderColor }}>
+                 <span className="text-xs uppercase tracking-wider text-gray-900 whitespace-nowrap">Total Amount</span>
+                 <span className="text-sm font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               </div>
+             </div>
              
              {sections.showSignature && (
                <div className="p-3 text-right text-xs">

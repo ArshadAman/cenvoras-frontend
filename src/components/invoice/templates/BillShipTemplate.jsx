@@ -210,9 +210,9 @@ const BillShipTemplate = forwardRef(({
                  <span className="font-bold text-gray-900">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
                </div>
              )}
-             <div className="flex justify-between text-lg font-bold text-gray-900 py-3 border-t-2 border-b-2 border-gray-800 mt-2">
-               <span>Grand Total</span>
-               <span>{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+             <div className="flex justify-between text-sm font-bold text-gray-900 py-2.5 border-t-2 border-b-2 border-gray-800 mt-2">
+               <span className="whitespace-nowrap">Grand Total</span>
+               <span className="font-mono whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
              </div>
              <div className="flex justify-end mt-2">
                 <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-extrabold uppercase">✔ Amount Due</span>
