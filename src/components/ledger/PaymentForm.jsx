@@ -6,11 +6,25 @@ import { recordClientPayment } from "../../api/ledger";
 import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { 
+  MagnifyingGlassIcon, 
+  BanknotesIcon, 
+  DevicePhoneMobileIcon, 
+  BuildingLibraryIcon, 
+  DocumentTextIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
+import { getCurrencySymbol } from '../../utils/currency';
+
+const PAYMENT_MODES = {
+  cash: { label: 'Cash', icon: BanknotesIcon, color: 'text-green-400', bg: 'bg-green-500/10' },
+  upi: { label: 'UPI', icon: DevicePhoneMobileIcon, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  cheque: { label: 'Cheque', icon: DocumentTextIcon, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+};
 
 // Customer Autocomplete for payment form
-function PaymentCustomerAutocomplete({ values, setFieldValue }) {
+function PaymentCustomerAutocomplete({ setFieldValue }) {
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -124,6 +138,8 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     customer: resolvedCustomer?.id || '',
     customer_name: resolvedCustomer?.name || initialInvoice?.customer_name || '',
     amount: initialInvoice ? invoiceOutstanding : '',
+    mode: 'cash',
+    reference: '',
     description: initialInvoice
       ? `Payment for invoice ${initialInvoice.invoice_number}`
       : 'Payment received',
@@ -133,12 +149,13 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
 
   const recordPaymentMutation = useMutation({
     mutationFn: recordClientPayment,
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["salesAnalytics"] });
       queryClient.invalidateQueries({ queryKey: ["overdueSalesInvoicesSummary"] });
       queryClient.invalidateQueries({ queryKey: ["clientLedger"] });
       queryClient.invalidateQueries({ queryKey: ["ledgerStats"] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success("Payment recorded successfully!");
       if (onSuccess) onSuccess();
     },
@@ -152,6 +169,8 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     const paymentData = {
       customer: values.customer,
       amount: parseFloat(values.amount),
+      mode: values.mode || 'cash',
+      reference: values.reference || '',
       description: values.description || "Payment received",
       date: values.date,
       invoice: values.invoice || undefined,
@@ -171,7 +190,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       onSubmit={handleSubmit}
     >
       {({ values, setFieldValue, isSubmitting }) => (
-        <Form className="space-y-5">
+        <Form className="space-y-4">
           {initialInvoice ? (
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
@@ -200,56 +219,107 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
           <Field name="invoice" type="hidden" />
           <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
 
-          {/* Amount */}
-          <div>
-            <label className={labelClass}>Payment Amount *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
-              <Field
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                className={`${inputClass} pl-7`}
-                placeholder="0.00"
-              />
+          {/* Amount and Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Amount Paid *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
+                <Field
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  className={`${inputClass} pl-7`}
+                  placeholder="0.00"
+                />
+              </div>
+              <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
             </div>
-            <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
+
+            <div>
+              <label className={labelClass}>Date *</label>
+              <Field
+                id="date"
+                name="date"
+                type="date"
+                className={inputClass}
+              />
+              <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+            </div>
           </div>
 
+          {/* Total Due & Remaining Card */}
           {initialInvoice && (
-            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
+            <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
+              <div>
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
+                <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
+                <div className={`text-base font-bold ${Math.max(roundTo3(invoiceOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                  {getCurrencySymbol()}{formatAmount(Math.max(roundTo3(invoiceOutstanding) - roundTo3(values.amount || 0), 0))}
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* Date */}
+          {/* Payment Mode Selection */}
           <div>
-            <label className={labelClass}>Payment Date *</label>
-            <Field
-              id="date"
-              name="date"
-              type="date"
-              className={inputClass}
-            />
-            <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+            <label className={labelClass}>Payment Mode</label>
+            <div className="grid grid-cols-4 gap-2">
+              {Object.entries(PAYMENT_MODES).map(([key, modeItem]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFieldValue('mode', key)}
+                  className={`p-3 rounded-xl border text-center transition-all ${
+                    values.mode === key
+                      ? `${modeItem.bg} border-white/30 ring-2 ring-white/20`
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  {React.createElement(modeItem.icon, {
+                    className: `w-5 h-5 mx-auto mb-1 ${values.mode === key ? modeItem.color : 'text-gray-400'}`
+                  })}
+                  <span className={`text-xs font-medium ${values.mode === key ? 'text-white' : 'text-gray-400'}`}>
+                    {modeItem.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Description */}
+          {/* Reference (Optional) */}
           <div>
-            <label className={labelClass}>Description</label>
+            <label className={labelClass}>Reference (Optional)</label>
+            <Field
+              id="reference"
+              name="reference"
+              type="text"
+              className={inputClass}
+              placeholder="Cheque No / UPI Transaction ID"
+            />
+          </div>
+
+          {/* Notes (Optional) */}
+          <div>
+            <label className={labelClass}>Notes (Optional)</label>
             <Field
               id="description"
               name="description"
               as="textarea"
               rows={2}
               className={inputClass}
-              placeholder="Payment description (optional)"
+              placeholder="Any additional details..."
             />
             <ErrorMessage name="description" component="div" className="mt-1 text-xs text-red-400" />
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
             <button
               type="button"
               onClick={onCancel}
@@ -260,7 +330,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
             <button
               type="submit"
               disabled={isSubmitting || recordPaymentMutation.isLoading}
-              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20"
+              className="btn-primary py-2.5 px-6 shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
             >
               {isSubmitting || recordPaymentMutation.isLoading ? (
                 <span className="flex items-center gap-2">
@@ -271,7 +341,10 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                   Recording...
                 </span>
               ) : (
-                "Record Payment"
+                <>
+                  <CheckCircleIcon className="w-5 h-5 text-white" />
+                  <span>Record Payment</span>
+                </>
               )}
             </button>
           </div>
