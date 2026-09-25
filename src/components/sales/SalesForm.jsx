@@ -25,6 +25,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const wrapperRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
 
+  // Sync inputValue with Formik values when items change or shift on deletion
+  useEffect(() => {
+    setInputValue(values.items[idx]?.product || "");
+  }, [values.items[idx]?.product]);
+
   const updateDropdownPosition = () => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -502,6 +507,8 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   );
 }
 
+const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.trim());
+
 const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
@@ -905,6 +912,42 @@ export default function SalesForm({
     enabled: !isEdit && isOpen
   });
 
+  const extractErrorMessage = (error, defaultMsg) => {
+    const data = error.response?.data;
+    if (!data) return error.message || defaultMsg;
+    if (typeof data === "string") return data;
+    if (data.detail) return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+    if (data.error) return typeof data.error === "string" ? data.error : JSON.stringify(data.error);
+    if (data.message) return typeof data.message === "string" ? data.message : JSON.stringify(data.message);
+    if (Array.isArray(data) && data.length > 0) {
+      return typeof data[0] === "string" ? data[0] : JSON.stringify(data[0]);
+    }
+    if (typeof data === "object") {
+      const messages = [];
+      for (const [key, val] of Object.entries(data)) {
+        if (Array.isArray(val)) {
+          const itemErrors = val
+            .map((v) => {
+              if (typeof v === "object" && v !== null) {
+                return Object.entries(v)
+                  .map(([k, subv]) => `${k}: ${Array.isArray(subv) ? subv.join(", ") : subv}`)
+                  .join("; ");
+              }
+              return String(v);
+            })
+            .filter(Boolean);
+          messages.push(`${key !== "non_field_errors" ? key + ": " : ""}${itemErrors.join(", ")}`);
+        } else if (typeof val === "string") {
+          messages.push(`${key !== "non_field_errors" ? key + ": " : ""}${val}`);
+        } else if (typeof val === "object" && val !== null) {
+          messages.push(`${key}: ${JSON.stringify(val)}`);
+        }
+      }
+      if (messages.length > 0) return messages.join(" | ");
+    }
+    return error.message || defaultMsg;
+  };
+
   const createMutation = useMutation({
     mutationFn: createDocument,
     onSuccess: () => {
@@ -922,9 +965,10 @@ export default function SalesForm({
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
           toast.error(
-            error.response?.data?.message ||
-            error.message ||
-            `Failed to create ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
+            extractErrorMessage(
+              error,
+              `Failed to create ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
+            )
           );
       }
     },
@@ -947,9 +991,10 @@ export default function SalesForm({
           toast.error(error.response?.data?.error || "Invoice number already exists!");
       } else {
           toast.error(
-            error.response?.data?.message ||
-            error.message ||
-            `Failed to update ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
+            extractErrorMessage(
+              error,
+              `Failed to update ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
+            )
           );
       }
     },
@@ -1009,7 +1054,7 @@ export default function SalesForm({
             // Required fields
             customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
             // Use fetched next number or edit data
-            invoice_number: editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
+            invoice_number: editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
             invoice_date: (editData?.invoice_date || editData?.date)
               ? new Date(editData.invoice_date || editData.date).toISOString().split('T')[0] 
               : new Date().toLocaleDateString('sv-SE'),
@@ -1041,9 +1086,10 @@ export default function SalesForm({
               const price = Number(item.price || 0) || 0;
               const itemAmount = qty * price; // Always calculate fresh: quantity * price, no tax/discount
               const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
-              const productName = (typeof item.product === 'string' ? item.product : item.product_name || item.product_detail?.name || "");
+              const productName = item.product_name || item.product_detail?.name || (typeof item.product === 'string' && !isUUID(item.product) ? item.product : "");
               const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
               return {
+                _key: item.id || `item-${Math.random().toString(36).substring(2, 9)}`,
                 product: productName,
                 product_id: productId,
                 description: item.description || item.product_description || item.product_detail?.description || "",
@@ -1063,6 +1109,7 @@ export default function SalesForm({
                 const qty = item.quantity || 1;
                 const price = Number(item.price || 0) || 0;
                 return {
+                    _key: `item-${Math.random().toString(36).substring(2, 9)}`,
                     product: item.product_name || "",
                     product_id: null,
                     description: item.description || item.product_description || "",
@@ -1079,6 +1126,7 @@ export default function SalesForm({
                     isExistingProduct: false,
                 };
             }) : [{
+              _key: `item-${Math.random().toString(36).substring(2, 9)}`,
               product: "",
               product_id: null,
               description: "",
@@ -1135,14 +1183,23 @@ export default function SalesForm({
                   await SalesSchema.validate(valuesToValidate, { abortEarly: false });
                 } catch (err) {
                   const errors = {};
+                  const docLabel = isDeliveryChallan ? 'Challan' : isQuotation ? 'Quotation' : 'Invoice';
                   err.inner?.forEach(e => {
-                    errors[e.path] = e.message;
+                    let msg = e.message;
+                    if (msg.includes('Invoice number')) {
+                      msg = msg.replace('Invoice number', `${docLabel} number`);
+                    }
+                    if (msg.includes('Invoice date')) {
+                      msg = msg.replace('Invoice date', `${docLabel} date`);
+                    }
+                    errors[e.path] = msg;
                   });
                   setErrors(errors);
                   
                   // Show the first error in a toast for better UX
                   if (err.inner?.length > 0) {
-                    toast.error(err.inner[0].message);
+                    const firstMsg = Object.values(errors)[0] || err.inner[0].message;
+                    toast.error(firstMsg);
                   }
                   
                   setSubmitting(false);
@@ -1184,9 +1241,14 @@ export default function SalesForm({
                 ? Number((finalTotal - totalAmount).toFixed(2))
                 : 0;
 
+              const isFormalAutoSeq = values.invoice_number?.startsWith(invoicePrefix) ||
+                values.invoice_number?.startsWith('INV-') ||
+                values.invoice_number?.startsWith('QT-') ||
+                values.invoice_number?.startsWith('DC-');
+
               const formData = {
                 customer_name: values.customer_name,
-                invoice_number: values.invoice_number,
+                invoice_number: (!isEdit && isDraft && isFormalAutoSeq) ? "" : values.invoice_number,
                 invoice_date: values.invoice_date,
                 due_date: values.due_date || null,
                 po_number: values.po_number || null,
@@ -1214,6 +1276,11 @@ export default function SalesForm({
                   vehicle_number: values.vehicle_number || null,
                   transport_mode: values.transport_mode || null,
                   eway_bill_number: values.eway_bill_number || null,
+                }),
+                // Quotation specific fields
+                ...(isQuotation && {
+                  quotation_number: values.invoice_number,
+                  quotation_date: values.invoice_date,
                 }),
               };
 
@@ -1551,6 +1618,8 @@ export default function SalesForm({
                           if (!nextRowExists) {
                             // Add new empty row
                             push({
+                              _key: `item-${Math.random().toString(36).substring(2, 9)}`,
+                              product: "",
                               product_name: "",
                               product_id: null,
                               description: "",
@@ -1614,7 +1683,7 @@ export default function SalesForm({
                                     const productBatches = getProductBatchesForItem(item);
 
                                     return (
-                                      <div key={index} className="border-b border-white/10">
+                                      <div key={item._key || index} className="border-b border-white/10">
                                         <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                           {desktopColumns.map((col) => {
                                            if (col.key === "product") {
@@ -1802,7 +1871,7 @@ export default function SalesForm({
                                   {values.items.map((item, index) => {
                                     const productBatches = getProductBatchesForItem(item);
                                     return (
-                                      <div key={`mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
+                                      <div key={item._key ? `mobile-${item._key}` : `mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
                                       {/* Row 1: Product */}
                                       <div className="w-full">
                                           <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
@@ -1972,6 +2041,8 @@ export default function SalesForm({
                           <button
                             type="button"
                             onClick={() => push({
+                              _key: `item-${Math.random().toString(36).substring(2, 9)}`,
+                              product: "",
                               product_name: "",
                               product_id: null,
                               description: "",

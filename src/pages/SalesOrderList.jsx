@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import SalesOrderTable from "../components/sales/SalesOrderTable";
 import SalesOrderForm from "../components/sales/SalesOrderForm";
+import SalesDetailsModal from "../components/sales/SalesDetailsModal";
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -16,6 +17,7 @@ export default function SalesOrderList() {
 
   const [showForm, setShowForm] = useState(false);
   const [editOrder, setEditOrder] = useState(null);
+  const [viewOrder, setViewOrder] = useState(null);
 
   // Auto-open referenced order if navigated from Delivery Challan
   useEffect(() => {
@@ -90,7 +92,7 @@ export default function SalesOrderList() {
         <div className="bento-card p-3 sm:p-6">
           <SalesOrderTable
             onEdit={handleEdit}
-            onView={(order) => console.log("View", order)}
+            onView={(order) => setViewOrder(order)}
             onDelete={handleDelete}
             initialSearch={targetOrderNumber || ""}
             highlightedOrderId={targetOrderId || null}
@@ -108,7 +110,14 @@ export default function SalesOrderList() {
         />
       )}
 
-      
+      {viewOrder && (
+        <SalesDetailsModal
+          isOpen={!!viewOrder}
+          onClose={() => setViewOrder(null)}
+          invoice={viewOrder}
+          documentType="proforma"
+        />
+      )}
     </>
   );
 }

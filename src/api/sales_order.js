@@ -17,3 +17,15 @@ export const deleteSalesOrder = (id) =>
 
 export const convertToInvoice = (id, data = {}) =>
   api.post(`/billing/sales-orders/${id}/convert_to_invoice/`, data).then(res => res.data);
+
+export const downloadSalesOrderPDF = (id, payload) => {
+  if (payload) {
+    const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
+      ? payload
+      : { template: payload };
+    return api.post(`/billing/sales-orders/${id}/pdf/`, body, { responseType: 'blob' })
+      .then(res => res.data);
+  }
+  return api.get(`/billing/sales-orders/${id}/pdf/`, { responseType: 'blob' })
+    .then(res => res.data);
+};
