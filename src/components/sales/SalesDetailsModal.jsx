@@ -200,7 +200,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           toast.success(`${docTypeLabel} pixel-perfect PDF downloaded (~20KB, crystal clear)`);
           return;
         } catch (apiError) {
-          console.warn('Backend vector PDF download unavailable, rendering via 336 DPI pixel-perfect engine:', apiError);
+          console.warn('Backend vector PDF download unavailable (501), generating direct fallback:', apiError);
+          toast.info('Server Chromium updating on api.cenvora.app. Generating direct download (or select "Save as Vector PDF").', { autoClose: 4000 });
         }
       }
 
@@ -413,18 +414,27 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
                     >
                       <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Vector PDF (Recommended)
+                        <span>⚡</span> Ultra-Clear Vector PDF (Recommended)
                       </span>
-                      <span className="text-[11px] text-gray-400">~30KB, exact 1:1 preview replica, razor sharp</span>
+                      <span className="text-[11px] text-gray-400">~25KB, infinite zoom clarity, razor sharp</span>
+                    </button>
+                    <button
+                      onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                    >
+                      <span className="font-semibold text-purple-400 flex items-center gap-1.5">
+                        <span>🖨️</span> Save as Vector PDF (Native Browser)
+                      </span>
+                      <span className="text-[11px] text-gray-400">15KB native vector output (Select 'Save as PDF')</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('client')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
                     >
                       <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
-                        <span>🎨</span> Client Snapshot (336 DPI)
+                        <span>🎨</span> Direct Client Download (~45KB)
                       </span>
-                      <span className="text-[11px] text-gray-400">Direct high-res browser fallback engine</span>
+                      <span className="text-[11px] text-gray-400">Instant file download without print dialog</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('backend')}
