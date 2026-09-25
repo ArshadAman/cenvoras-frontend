@@ -187,13 +187,13 @@ const Ledger = () => {
 
         {/* Dynamic Partner Selector */}
         {activeTab === 'customers' && (
-          <div className="bento-card !p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="bento-card !p-4 !overflow-visible relative z-30 flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex items-center gap-2 shrink-0">
               <UsersIcon className="w-5 h-5 text-purple-400" />
               <span className="text-sm font-semibold text-gray-300">Filter by Customer:</span>
             </div>
             <div className="relative flex-1 w-full md:max-w-sm">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 z-10" />
               <input
                 type="text"
                 placeholder="Search customer..."
@@ -207,12 +207,18 @@ const Ledger = () => {
                 onFocus={() => setShowCustomerDropdown(true)}
                 className="w-full pl-9 pr-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
               />
+              {showCustomerDropdown && (
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowCustomerDropdown(false)} 
+                />
+              )}
               {showCustomerDropdown && filteredCustomers.length > 0 && (
-                <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-52 overflow-y-auto">
+                <div className="absolute left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-white/15 rounded-xl shadow-2xl max-h-52 overflow-y-auto">
                   {filteredCustomers.slice(0, 20).map(c => (
                     <div
                       key={c.id}
-                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/5 border-b border-white/5"
+                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/10 border-b border-white/5 transition-colors"
                       onClick={() => {
                         setSelectedCustomer(c.id);
                         setSelectedCustomerName(c.name);
@@ -247,13 +253,13 @@ const Ledger = () => {
         )}
 
         {activeTab === 'vendors' && (
-          <div className="bento-card !p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="bento-card !p-4 !overflow-visible relative z-30 flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex items-center gap-2 shrink-0">
               <BuildingOfficeIcon className="w-5 h-5 text-orange-400" />
               <span className="text-sm font-semibold text-gray-300">Filter by Vendor:</span>
             </div>
             <div className="relative flex-1 w-full md:max-w-sm">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 z-10" />
               <input
                 type="text"
                 placeholder="Search vendor / supplier..."
@@ -267,12 +273,18 @@ const Ledger = () => {
                 onFocus={() => setShowVendorDropdown(true)}
                 className="w-full pl-9 pr-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-orange-500/50"
               />
+              {showVendorDropdown && (
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowVendorDropdown(false)} 
+                />
+              )}
               {showVendorDropdown && filteredVendors.length > 0 && (
-                <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-52 overflow-y-auto">
+                <div className="absolute left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-white/15 rounded-xl shadow-2xl max-h-52 overflow-y-auto">
                   {filteredVendors.slice(0, 20).map(v => (
                     <div
                       key={v.id}
-                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/5 border-b border-white/5"
+                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/10 border-b border-white/5 transition-colors"
                       onClick={() => {
                         setSelectedVendor(v.id);
                         setSelectedVendorName(v.name);
