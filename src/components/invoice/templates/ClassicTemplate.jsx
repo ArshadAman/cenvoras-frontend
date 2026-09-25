@@ -389,21 +389,22 @@ const InvoicePreview = forwardRef(({
                     return (
                       <td 
                         key={col.id}
-                        className="px-2 py-1 border"
+                        className="px-2 py-1 border align-top"
                         style={{ 
                           textAlign: col.align || 'left',
                           borderColor: colors.tableBorder,
                           fontSize: `${typography.bodySize || 11}px`,
                           wordBreak: col.id === 'description' ? 'break-word' : 'normal',
                           whiteSpace: col.id === 'description' ? 'normal' : 'nowrap',
+                          verticalAlign: 'top',
                         }}
                       >
                         {col.id === 'description' ? (
                           <div>
                             <div>{item.product_detail?.name || item.product_name || item.product || ''}</div>
-                            {invoiceSettings.show_item_description !== false && (item.product_detail?.description || item.product_description) ? (
-                              <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666' }}>
-                                {item.product_detail?.description || item.product_description}
+                            {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
+                              <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', wordBreak: 'break-word' }}>
+                                {item.description || item.product_description || item.product_detail?.description}
                               </div>
                             ) : null}
                             {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (

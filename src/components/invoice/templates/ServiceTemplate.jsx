@@ -133,12 +133,19 @@ const ServiceTemplate = forwardRef(({
                 let val = '';
                 let isNumeric = false;
                 if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = (
-                  <div className="py-3">
-                    <div className="font-bold text-gray-900 text-sm">{item.product_name || item.product}</div>
-                    {item.description && <div className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{item.description}</div>}
-                  </div>
-                );
+                else if(col.id==='description') {
+                  const desc = item.description || item.product_description || item.product_detail?.description;
+                  val = (
+                    <div className="py-2">
+                      <div className="font-bold text-gray-900 text-sm">{item.product_name || item.product}</div>
+                      {desc && (
+                        <div className="text-[11px] text-gray-500 mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          {desc}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
                 else if(col.id==='hsn') val = item.hsn_sac_code || item.hsn_code || '-';
                 else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
                 else if(col.id==='price') { val = `${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
@@ -146,12 +153,13 @@ const ServiceTemplate = forwardRef(({
                 else if(col.id==='amount') { val = `${getCurrencySymbol()}${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                 
                 return (
-                  <th 
+                  <td 
                     key={col.id} 
-                    className={`py-3 px-2 text-[12px] font-medium text-gray-700 ${isNumeric ? 'text-right' : ''}`}
+                    className={`py-2 px-2 text-[12px] font-medium text-gray-700 align-top ${isNumeric ? 'text-right' : ''}`}
+                    style={{ verticalAlign: 'top' }}
                   >
                     {val}
-                  </th>
+                  </td>
                 );
               })}
             </tr>

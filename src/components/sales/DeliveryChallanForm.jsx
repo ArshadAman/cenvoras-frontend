@@ -18,6 +18,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.description`, product.description || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.price ?? 0); // Optional for Challan but good to have
     setFieldValue(`items.${idx}.isExistingProduct`, true);
@@ -29,6 +31,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     const value = e.target.value;
     setInputValue(value);
     setFieldValue(`items.${idx}.product`, value);
+    setFieldValue(`items.${idx}.description`, "");
+    setFieldValue(`items.${idx}.product_description`, "");
     
     if (value.trim()) {
       const filtered = products.filter(product =>
@@ -53,6 +57,23 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               placeholder="Product name"
               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm"
               autoComplete="off"
+            />
+            <textarea
+              rows={1}
+              value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFieldValue(`items.${idx}.description`, val);
+                setFieldValue(`items.${idx}.product_description`, val);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+              }}
+              onFocus={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+              }}
+              placeholder="Enter a description / note..."
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-blue-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
@@ -140,9 +161,11 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
             items: editData?.items?.map(item => ({
               product: item.product_name || item.product || "",
               product_id: item.product || null,
+              description: item.description || item.product_description || "",
+              product_description: item.description || item.product_description || "",
               quantity: item.quantity || 1,
               unit: item.unit || "pcs",
-            })) || [{ product: "", quantity: 1, unit: "pcs" }]
+            })) || [{ product: "", product_id: null, description: "", product_description: "", quantity: 1, unit: "pcs" }]
           }}
           validationSchema={DeliveryChallanSchema}
           onSubmit={async (values, { setSubmitting }) => {
@@ -154,6 +177,8 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                 notes: values.notes,
                 items: values.items.map(item => ({
                     product: item.product_id || item.product,
+                    description: (item.description || item.product_description || "").trim(),
+                    product_description: (item.description || item.product_description || "").trim(),
                     quantity: Number(item.quantity),
                     unit: item.unit
                 }))
@@ -207,7 +232,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", quantity: 1, unit: "pcs" })} className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, description: "", product_description: "", quantity: 1, unit: "pcs" })} className="text-blue-400 hover:text-blue-300 text-sm font-medium">
                                 + Add Item
                             </button>
                         </div>

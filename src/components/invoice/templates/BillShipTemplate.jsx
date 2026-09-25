@@ -127,24 +127,32 @@ const BillShipTemplate = forwardRef(({
               const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
               let val = '';
               if(col.id==='serial') val = idx+1;
-              else if(col.id==='description') val = (
-                <div className="py-2">
-                  <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
-                  {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                    <div className="text-[10px] text-gray-500 mt-1 font-medium">
-                      {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
-                      {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
-                      {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                    </div>
-                  ) : null}
-                </div>
-              );
+              else if(col.id==='description') {
+                const desc = item.description || item.product_description || item.product_detail?.description;
+                val = (
+                  <div className="py-1">
+                    <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
+                    {desc && (
+                      <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                        {desc}
+                      </div>
+                    )}
+                    {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                      <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                        {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
+                        {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                        {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              }
               else if(col.id==='quantity') val = item.quantity;
               else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
               else if(col.id==='tax') val = `${item.tax||0}%`;
               else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
               else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-              return <td key={col.id} className={`py-1 ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`}>{val}</td>;
+              return <td key={col.id} className={`py-1 align-top ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`} style={{ verticalAlign: 'top' }}>{val}</td>;
             })}
             </tr>
           ))}

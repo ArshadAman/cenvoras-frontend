@@ -72,6 +72,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
         product: item.product_detail?.id || item.product_id || item.product, // Extract exact UUID
         batch: item.batch_id || item.batch || null,
         hsn_sac_code: item.hsn_sac_code,
+        description: item.description || item.product_description || "",
         quantity: parseFloat(item.return_qty),
         unit: item.unit,
         price: parseFloat(item.price),
