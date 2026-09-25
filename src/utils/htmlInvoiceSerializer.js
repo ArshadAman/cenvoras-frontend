@@ -40,7 +40,11 @@ export function serializeInvoiceHtml(element) {
   // 2. Clone the element to safely modify styles without altering the live UI
   const cloned = element.cloneNode(true);
 
-  // Reset preview modal scaling transforms so it renders at full standard A4 width
+  // Strip preview modal scaling classes and transform styles so it renders at standard A4 size
+  cloned.className = (cloned.className || '')
+    .replace(/scale-\[[^\]]+\]/g, '')
+    .replace(/origin-[a-z-]+/g, '')
+    .replace(/shadow-[a-z0-9]+/g, '');
   cloned.style.transform = 'none';
   cloned.style.webkitTransform = 'none';
   cloned.style.width = '210mm';
@@ -67,8 +71,6 @@ export function serializeInvoiceHtml(element) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Invoice</title>
-  <!-- Fallback Tailwind CSS runtime engine -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @page {
       size: A4 portrait;
@@ -95,9 +97,7 @@ export function serializeInvoiceHtml(element) {
   </style>
 </head>
 <body style="background-color: #ffffff; margin: 0; padding: 0;">
-  <div style="width: 210mm; min-height: 297mm; margin: 0 auto; box-sizing: border-box; background-color: #ffffff;">
-    ${cloned.outerHTML}
-  </div>
+  ${cloned.outerHTML}
 </body>
 </html>`;
 }
