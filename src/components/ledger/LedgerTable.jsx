@@ -18,8 +18,21 @@ import { subDays } from 'date-fns';
 import { useLoadingPolicy } from '../../hooks/useLoadingPolicy';
 import TableSkeleton from '../common/TableSkeleton';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { ArrowTopRightOnSquareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
+import { downloadPartnerStatementPdf } from '../../api/ledger';
+import { toast } from 'react-toastify';
 
-const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, customerFilter = '' }) => {
+const LedgerTable = ({ 
+  onEdit, 
+  onDelete, 
+  selectedEntries = [], 
+  onBulkSelect, 
+  customerFilter = '', 
+  vendorFilter = '',
+  activeTab = 'customers',
+  selectedPartnerName = ''
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -27,6 +40,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
   const [viewEntry, setViewEntry] = useState(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [dateFilter, setDateFilter] = useState({
     startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd')
@@ -45,6 +59,9 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const receivableAccount = accounts.find(
     (account) => account.code === '1200' || /accounts?\s+receivable/i.test(account.name || '')
   );
+  const payableAccount = accounts.find(
+    (account) => account.code === '2001' || /accounts?\s+payable/i.test(account.name || '')
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 350);
@@ -52,14 +69,18 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   }, [searchTerm]);
 
   useEffect(() => {
-    if (!selectedAccount && receivableAccount?.id) {
+    if (activeTab === 'customers' && receivableAccount?.id && !selectedAccount) {
       setSelectedAccount(receivableAccount.id);
+    } else if (activeTab === 'vendors' && payableAccount?.id && !selectedAccount) {
+      setSelectedAccount(payableAccount.id);
+    } else if (activeTab === 'general' && (selectedAccount === receivableAccount?.id || selectedAccount === payableAccount?.id)) {
+      setSelectedAccount('');
     }
-  }, [selectedAccount, receivableAccount]);
+  }, [activeTab, receivableAccount, payableAccount]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedAccount, dateFilter.startDate, dateFilter.endDate, customerFilter]);
+  }, [debouncedSearchTerm, selectedAccount, dateFilter.startDate, dateFilter.endDate, customerFilter, vendorFilter, activeTab]);
 
   const {
     data: ledgerData,
@@ -72,7 +93,8 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
       account: selectedAccount,
-      customer: customerFilter,
+      customer: activeTab === 'customers' ? customerFilter : '',
+      vendor: activeTab === 'vendors' ? vendorFilter : '',
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -82,7 +104,8 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
       account: selectedAccount,
-      customer: customerFilter,
+      customer: activeTab === 'customers' ? customerFilter : '',
+      vendor: activeTab === 'vendors' ? vendorFilter : '',
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -93,6 +116,53 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const totalCount = ledgerData?.count || 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
   const loadingPolicy = useLoadingPolicy(isLoading);
+
+  const applyDatePreset = (preset) => {
+    const today = new Date();
+    let start, end;
+    if (preset === 'today') {
+      start = format(today, 'yyyy-MM-dd');
+      end = format(today, 'yyyy-MM-dd');
+    } else if (preset === 'this_month') {
+      start = format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd');
+      end = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
+    } else if (preset === 'this_quarter') {
+      const qMonth = Math.floor(today.getMonth() / 3) * 3;
+      start = format(new Date(today.getFullYear(), qMonth, 1), 'yyyy-MM-dd');
+      end = format(new Date(today.getFullYear(), qMonth + 3, 0), 'yyyy-MM-dd');
+    } else if (preset === 'this_fy') {
+      const fyStartYear = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+      start = format(new Date(fyStartYear, 3, 1), 'yyyy-MM-dd');
+      end = format(new Date(fyStartYear + 1, 2, 31), 'yyyy-MM-dd');
+    } else if (preset === 'all_time') {
+      start = '';
+      end = '';
+    }
+    setDateFilter({ startDate: start, endDate: end });
+  };
+
+  const handleDownloadPdf = async () => {
+    const partnerId = activeTab === 'vendors' ? vendorFilter : customerFilter;
+    if (!partnerId) {
+      toast.info("Please select a specific customer or vendor to download their statement PDF.");
+      return;
+    }
+    try {
+      setIsDownloadingPdf(true);
+      await downloadPartnerStatementPdf({
+        partner_type: activeTab === 'vendors' ? 'vendor' : 'customer',
+        partner_id: partnerId,
+        partner_name: selectedPartnerName,
+        date_from: dateFilter?.startDate,
+        date_to: dateFilter?.endDate,
+      });
+      toast.success("Statement PDF downloaded successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to download statement PDF");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -200,53 +270,138 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
 
   return (
     <>
-    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
+    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-2xl overflow-hidden">
+      <div className="p-4 sm:p-6">
         {/* Filters Toolbar */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <input
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 min-w-[200px]"
-            placeholder="Search descriptions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select
-            value={selectedAccount}
-            onChange={(e) => setSelectedAccount(e.target.value)}
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          >
-            <option value="" className="bg-[#1a2341] text-white">All Accounts</option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id} className="bg-[#1a2341] text-white">
-                {account.code} - {account.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={dateFilter.startDate}
-            onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          />
-          <input
-            type="date"
-            value={dateFilter.endDate}
-            onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          />
-          <button
-            onClick={() => {
-               setSearchTerm('');
-               setSelectedAccount(receivableAccount?.id || '');
-               setDateFilter({
-                 startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-                 endDate: format(new Date(), 'yyyy-MM-dd')
-               });
-            }}
-            className="px-3 py-1.5 bg-gray-500/30 text-white border border-gray-300/50 rounded hover:bg-gray-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
-          >
-            Clear Filters
-          </button>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="border border-white/20 rounded-xl px-3.5 py-2 text-sm bg-white/5 backdrop-filter backdrop-blur-10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 min-w-[220px]"
+              placeholder="Search descriptions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {activeTab === 'general' && (
+              <select
+                value={selectedAccount}
+                onChange={(e) => setSelectedAccount(e.target.value)}
+                className="border border-white/20 rounded-xl px-3.5 py-2 text-sm bg-[#151515] text-white focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+              >
+                <option value="">All Accounts</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.code} - {account.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-xl p-1">
+              <input
+                type="date"
+                value={dateFilter.startDate}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                className="bg-transparent text-white text-xs px-2 py-1 outline-none cursor-pointer"
+              />
+              <span className="text-gray-400 text-xs">to</span>
+              <input
+                type="date"
+                value={dateFilter.endDate}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                className="bg-transparent text-white text-xs px-2 py-1 outline-none cursor-pointer"
+              />
+            </div>
+            <button
+              onClick={() => {
+                 setSearchTerm('');
+                 if (activeTab === 'customers') setSelectedAccount(receivableAccount?.id || '');
+                 else if (activeTab === 'vendors') setSelectedAccount(payableAccount?.id || '');
+                 else setSelectedAccount('');
+                 setDateFilter({
+                   startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+                   endDate: format(new Date(), 'yyyy-MM-dd')
+                 });
+              }}
+              className="px-3 py-2 bg-white/5 text-gray-300 border border-white/10 rounded-xl hover:bg-white/10 hover:text-white transition text-xs font-semibold"
+            >
+              Reset
+            </button>
+          </div>
+
+          {/* Quick Date Presets & PDF Download */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+              <button
+                onClick={() => applyDatePreset('this_month')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => applyDatePreset('this_quarter')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+              >
+                Quarter
+              </button>
+              <button
+                onClick={() => applyDatePreset('this_fy')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+              >
+                This FY
+              </button>
+              <button
+                onClick={() => applyDatePreset('all_time')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+              >
+                All
+              </button>
+            </div>
+
+            {(customerFilter || vendorFilter) && (
+              <button
+                onClick={handleDownloadPdf}
+                disabled={isDownloadingPdf}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 transition text-xs font-bold disabled:opacity-50"
+                title="Download Vector PDF Statement"
+              >
+                <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+                <span>{isDownloadingPdf ? 'Generating...' : 'Statement PDF'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Sub-Ledger KPI Balance Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
+            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Opening Balance</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-white mt-1 flex items-center gap-1.5">
+              <span>{formatCurrency(ledgerData?.opening_balance || 0)}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.opening_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                {ledgerData?.opening_balance_type || 'Dr'}
+              </span>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
+            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Period Debits (Dr)</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-rose-400 mt-1">
+              {formatCurrency(ledgerData?.period_debit_total || 0)}
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
+            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Period Credits (Cr)</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-emerald-400 mt-1">
+              {formatCurrency(ledgerData?.period_credit_total || 0)}
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Closing Balance</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-emerald-300 mt-1 flex items-center gap-1.5">
+              <span>{formatCurrency(ledgerData?.closing_balance || 0)}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.closing_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                {ledgerData?.closing_balance_type || 'Dr'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {ledgerEntries.length === 0 ? (
@@ -258,7 +413,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
             </div>
             <h3 className="mt-2 text-lg font-bold text-white">No ledger entries</h3>
             <p className="mt-2 text-sm text-gray-400 max-w-sm mx-auto">
-              No entries found matching your criteria. Try adjusting your filters or record a new payment.
+              No entries found matching your criteria. Try adjusting your filters or record a new transaction.
             </p>
           </div>
         ) : (
@@ -294,7 +449,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                       className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('account_name')}
                     >
-                      Account {getSortIcon('account_name')}
+                      Account / Entity {getSortIcon('account_name')}
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                       Reference
@@ -307,14 +462,17 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                       className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('debit')}
                     >
-                      Debit {getSortIcon('debit')}
+                      Debit (Dr) {getSortIcon('debit')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('credit')}
                     >
-                      Credit {getSortIcon('credit')}
+                      Credit (Cr) {getSortIcon('credit')}
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Running Balance
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
                       Source
@@ -337,19 +495,31 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm  text-white drop-shadow-lg">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white drop-shadow-lg font-mono">
                         {formatDate(entry.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm  text-white drop-shadow-lg">
-                          {entry.account_code} - {entry.account_name}
+                        <div className="text-sm font-semibold text-white drop-shadow-lg">
+                          {entry.customer_name ? entry.customer_name : (entry.vendor_name ? entry.vendor_name : `${entry.account_code || ''} ${entry.account_name || ''}`)}
                         </div>
-                        <div className="text-xs text-cyan-300  capitalize">
-                          {entry.account_type}
+                        <div className="text-xs text-cyan-300 capitalize">
+                          {entry.account_name} ({entry.account_type})
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm  text-white drop-shadow-lg">
-                        {entry.reference || '-'}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {entry.sales_invoice ? (
+                          <Link to="/sales" className="text-cyan-400 hover:text-cyan-300 hover:underline font-medium inline-flex items-center gap-1" title="View Sales Invoices">
+                            <span>{entry.reference || entry.sales_invoice_number || 'Invoice'}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                          </Link>
+                        ) : entry.purchase_bill ? (
+                          <Link to="/purchases" className="text-orange-400 hover:text-orange-300 hover:underline font-medium inline-flex items-center gap-1" title="View Purchase Bills">
+                            <span>{entry.reference || entry.purchase_bill_number || 'Bill'}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                          </Link>
+                        ) : (
+                          <span className="font-mono text-gray-300">{entry.reference || '-'}</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm text-white">
                         <button
@@ -369,63 +539,53 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={` drop-shadow-lg text-lg ${entry.debit > 0 ? 'text-red-300' : 'text-white'}`}>
+                        <div className={`drop-shadow-lg font-mono font-bold text-base ${entry.debit > 0 ? 'text-rose-400' : 'text-gray-500'}`}>
                           {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
                         </div>
-                        {entry.debit > 0 && (
-                          <div className="text-xs text-cyan-300 ">
-                            Debit
-                          </div>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={` drop-shadow-lg text-lg ${entry.credit > 0 ? 'text-green-300' : 'text-white'}`}>
+                        <div className={`drop-shadow-lg font-mono font-bold text-base ${entry.credit > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
                           {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                         </div>
-                        {entry.credit > 0 && (
-                          <div className="text-xs text-cyan-300 ">
-                            Credit
-                          </div>
-                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <div className="font-mono font-bold text-white flex items-center justify-end gap-1.5">
+                          <span>{formatCurrency(entry.running_balance || 0)}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                            {entry.running_balance_type || 'Dr'}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                         {entry.sales_invoice_number && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-400/40 text-blue-100 backdrop-filter backdrop-blur-10 border-2 border-blue-300 mr-2 drop-shadow-lg">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                             📄 Sales #{entry.sales_invoice_number}
                           </span>
                         )}
                         {entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-orange-400/40 text-orange-100 backdrop-filter backdrop-blur-10 border-2 border-orange-300 mr-2 drop-shadow-lg">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30">
                             🧾 Purchase #{entry.purchase_bill_number}
                           </span>
                         )}
-                        {!entry.sales_invoice_number && !entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-400/40 text-green-100 backdrop-filter backdrop-blur-10 border-2 border-green-300 drop-shadow-lg">
+                        {entry.payment && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            💳 Payment
+                          </span>
+                        )}
+                        {!entry.sales_invoice_number && !entry.purchase_bill_number && !entry.payment && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
                             📝 Manual Entry
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => onEdit && onEdit(entry)}
-                            className="text-white dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 p-1 rounded"
-                            title="Edit entry"
-                          >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => onDelete && onDelete(entry)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded"
-                            title="Delete entry"
-                          >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setViewEntry(entry)}
+                          className="text-gray-400 hover:text-cyan-300 p-1.5 rounded-lg hover:bg-white/5 transition"
+                          title="View Details"
+                        >
+                          <DocumentTextIcon className="w-5 h-5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -462,58 +622,58 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                           className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                         />
                         <div>
-                          <div className="text-lg font-semibold text-white">
-                            {entry.customer_name || entry.customer?.name || 'N/A'}
+                          <div className="text-base font-bold text-white">
+                            {entry.customer_name || entry.vendor_name || entry.account_name || 'N/A'}
                           </div>
-                          <div className="text-sm text-white/70">
-                            {formatDate(entry.date)}
+                          <div className="text-xs text-gray-400 font-mono">
+                            {formatDate(entry.date)} &bull; {entry.reference || '-'}
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Card Content */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Account:</span>
-                        <span className="text-sm font-medium text-white">{entry.account_name || entry.account?.name || 'N/A'}</span>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-gray-300">
+                        <span>Account:</span>
+                        <span className="font-medium text-white">{entry.account_name}</span>
                       </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Description:</span>
-                        <span className="text-sm text-white text-right">{entry.description || 'N/A'}</span>
+                      <div className="flex justify-between items-start text-gray-300">
+                        <span>Description:</span>
+                        <span className="font-medium text-white text-right max-w-[200px] truncate">{entry.description || '-'}</span>
                       </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Amount:</span>
-                        <span className={`text-lg font-semibold ${
-                          entry.entry_type === 'credit' ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {entry.entry_type === 'credit' ? '+' : '-'}{getCurrencySymbol()}{Number(entry.amount || 0).toLocaleString()}
+                      <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                        <span className="text-gray-400">Transaction:</span>
+                        <span className="font-mono font-bold text-sm">
+                          {entry.debit > 0 ? (
+                            <span className="text-rose-400">Dr {formatCurrency(entry.debit)}</span>
+                          ) : (
+                            <span className="text-emerald-400">Cr {formatCurrency(entry.credit)}</span>
+                          )}
                         </span>
                       </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Balance:</span>
-                        <span className="text-sm font-medium text-[#7fd3f7]">
-                          {getCurrencySymbol()}{Number(entry.running_balance || 0).toLocaleString()}
+                      <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                        <span className="text-gray-400">Running Balance:</span>
+                        <span className="font-mono font-bold text-white text-sm flex items-center gap-1">
+                          <span>{formatCurrency(entry.running_balance || 0)}</span>
+                          <span className={`text-[10px] px-1 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                            {entry.running_balance_type || 'Dr'}
+                          </span>
                         </span>
                       </div>
                     </div>
 
                     {/* Card Actions */}
-                    <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-end">
                       <button
-                        onClick={() => onEdit(entry)}
-                        className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                        onClick={() => setViewEntry(entry)}
+                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-cyan-300 border border-white/10 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onDelete(entry)}
-                        className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                      >
-                        Delete
+                        <DocumentTextIcon className="w-4 h-4" />
+                        <span>View Details</span>
                       </button>
                     </div>
                   </div>
