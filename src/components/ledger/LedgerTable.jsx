@@ -67,19 +67,15 @@ const LedgerTable = ({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (activeTab === 'customers' && receivableAccount?.id && !selectedAccount) {
-      setSelectedAccount(receivableAccount.id);
-    } else if (activeTab === 'vendors' && payableAccount?.id && !selectedAccount) {
-      setSelectedAccount(payableAccount.id);
-    } else if (activeTab === 'general' && (selectedAccount === receivableAccount?.id || selectedAccount === payableAccount?.id)) {
-      setSelectedAccount('');
-    }
-  }, [activeTab, receivableAccount, payableAccount]);
+  const effectiveAccount = activeTab === 'customers'
+    ? (receivableAccount?.id || '')
+    : activeTab === 'vendors'
+    ? (payableAccount?.id || '')
+    : selectedAccount;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedAccount, dateFilter.startDate, dateFilter.endDate, customerFilter, vendorFilter, activeTab]);
+  }, [debouncedSearchTerm, effectiveAccount, dateFilter.startDate, dateFilter.endDate, customerFilter, vendorFilter, activeTab]);
 
   const {
     data: ledgerData,
@@ -91,7 +87,7 @@ const LedgerTable = ({
       description: debouncedSearchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      account: selectedAccount,
+      account: effectiveAccount,
       customer: activeTab === 'customers' ? customerFilter : '',
       vendor: activeTab === 'vendors' ? vendorFilter : '',
       page: currentPage,
@@ -102,7 +98,7 @@ const LedgerTable = ({
       description: debouncedSearchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      account: selectedAccount,
+      account: effectiveAccount,
       customer: activeTab === 'customers' ? customerFilter : '',
       vendor: activeTab === 'vendors' ? vendorFilter : '',
       page: currentPage,

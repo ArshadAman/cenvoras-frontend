@@ -22,6 +22,7 @@ import {
   BookOpenIcon,
   MagnifyingGlassIcon 
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 import { getCurrencySymbol } from '../utils/currency';
 
 const Ledger = () => {
