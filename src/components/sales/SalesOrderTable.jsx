@@ -107,6 +107,7 @@ export default function SalesOrderTable({
                               </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
+                               <button onClick={() => onView && onView(order)} className="text-blue-400 hover:text-blue-300" title="View Proforma Invoice">View</button>
                                <button onClick={() => onEdit(order)} className="text-purple-400 hover:text-purple-300">Edit</button>
                                {order.stage !== 'completed' && (
                                  <button onClick={() => handleConvert(order)} className="text-green-400 hover:text-green-300">Convert</button>
@@ -185,6 +186,7 @@ export default function SalesOrderTable({
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-2">
+                  <button onClick={() => onView && onView(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">View</button>
                   <button onClick={() => onEdit(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Edit</button>
                   {order.stage !== 'completed' && (
                     <button onClick={() => handleConvert(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Convert</button>

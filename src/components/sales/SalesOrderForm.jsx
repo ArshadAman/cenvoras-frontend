@@ -18,6 +18,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
+  useEffect(() => {
+    setInputValue(values.items[idx]?.product || "");
+  }, [values.items[idx]?.product]);
+
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);

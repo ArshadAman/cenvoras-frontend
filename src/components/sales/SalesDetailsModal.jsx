@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoice, downloadSalesInvoicePDF } from "../../api/sales";
 import { getQuotation, downloadQuotationPDF } from "../../api/quotation";
 import { getDeliveryChallan, getDeliveryChallanPdf } from "../../api/delivery_challan";
+import { getSalesOrder, downloadSalesOrderPDF } from "../../api/sales_order";
 import { useReactToPrint } from "react-to-print";
 import { 
   XMarkIcon, 
@@ -60,15 +61,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
+  const isSalesOrder = documentType === "sales_order" || documentType === "proforma";
 
-  // Fetch invoice/quotation/challan details
+  // Fetch invoice/quotation/challan/sales order details
   const { data: invoiceDetails = {}, isLoading } = useQuery({
-    queryKey: [isDeliveryChallan ? "deliveryChallan" : isQuotation ? "quotation" : "salesInvoice", invoice?.id],
-    queryFn: () => isDeliveryChallan
-      ? getDeliveryChallan(invoice?.id)
-      : isQuotation
-      ? getQuotation(invoice?.id)
-      : getSalesInvoice(invoice?.id),
+    queryKey: [
+      isDeliveryChallan
+        ? "deliveryChallan"
+        : isQuotation
+        ? "quotation"
+        : isSalesOrder
+        ? "salesOrder"
+        : "salesInvoice",
+      invoice?.id,
+    ],
+    queryFn: () =>
+      isDeliveryChallan
+        ? getDeliveryChallan(invoice?.id)
+        : isQuotation
+        ? getQuotation(invoice?.id)
+        : isSalesOrder
+        ? getSalesOrder(invoice?.id)
+        : getSalesInvoice(invoice?.id),
     enabled: isOpen && !!invoice?.id,
   });
 
@@ -85,7 +99,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         ...template,
         content: {
           ...(template?.content || {}),
-          invoiceTitle: "PERFORMA INVOICE",
+          invoiceTitle: "QUOTATION",
         },
       }
     : isDeliveryChallan
@@ -96,20 +110,54 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           invoiceTitle: "DELIVERY CHALLAN",
         },
       }
+    : isSalesOrder
+    ? {
+        ...template,
+        content: {
+          ...(template?.content || {}),
+          invoiceTitle: "PROFORMA INVOICE",
+        },
+      }
     : template;
 
   const enrichedInvoice = {
     ...invoiceDetails,
-    invoice_number: invoiceDetails.invoice_number || invoiceDetails.challan_number || invoice?.challan_number || invoice?.invoice_number || '',
-    invoice_date: invoiceDetails.invoice_date || invoiceDetails.date || invoice?.date || invoice?.invoice_date || '',
-    customer_name: invoiceDetails.customer_name || invoiceDetails.customer?.name || invoice?.customer_name || '',
-    po_number: invoiceDetails.po_number || invoiceDetails.sales_order_number || invoice?.sales_order_number || (invoiceDetails.sales_order_details?.order_number ? `SO #${invoiceDetails.sales_order_details.order_number}` : '') || '',
+    invoice_number:
+      invoiceDetails.quotation_number ||
+      invoiceDetails.order_number ||
+      invoiceDetails.invoice_number ||
+      invoiceDetails.challan_number ||
+      invoice?.order_number ||
+      invoice?.quotation_number ||
+      invoice?.challan_number ||
+      invoice?.invoice_number ||
+      '',
+    invoice_date:
+      invoiceDetails.invoice_date ||
+      invoiceDetails.date ||
+      invoice?.date ||
+      invoice?.invoice_date ||
+      '',
+    customer_name:
+      invoiceDetails.customer_name ||
+      invoiceDetails.customer_display_name ||
+      invoiceDetails.customer?.name ||
+      invoice?.customer_name ||
+      '',
+    po_number:
+      invoiceDetails.po_number ||
+      invoiceDetails.sales_order_number ||
+      invoice?.sales_order_number ||
+      (invoiceDetails.sales_order_details?.order_number
+        ? `SO #${invoiceDetails.sales_order_details.order_number}`
+        : '') ||
+      '',
   };
 
   // Print functionality with anti-slicing CSS rules
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `${isDeliveryChallan ? "Delivery-Challan" : isQuotation ? "Performa-Invoice" : "Invoice"}-${enrichedInvoice.invoice_number || invoice?.id}`,
+    documentTitle: `${isDeliveryChallan ? "Delivery-Challan" : isQuotation ? "Quotation" : isSalesOrder ? "Proforma-Invoice" : "Invoice"}-${enrichedInvoice.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
         size: A4;
@@ -140,9 +188,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     setDownloadingPDF(true);
     setPdfMenuOpen(false);
 
-    const docTypeLabel = isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Performa Invoice' : 'Invoice';
-    const filePrefix = isDeliveryChallan ? "delivery-challan" : isQuotation ? "performa-invoice" : "invoice";
-    const fileNum = enrichedInvoice.invoice_number || invoiceDetails.invoice_number || invoiceDetails.challan_number || invoiceDetails.quotation_number || invoice?.id || 'doc';
+    const docTypeLabel = isDeliveryChallan
+      ? 'Delivery Challan'
+      : isQuotation
+      ? 'Quotation'
+      : isSalesOrder
+      ? 'Proforma Invoice'
+      : 'Invoice';
+    const filePrefix = isDeliveryChallan
+      ? "delivery-challan"
+      : isQuotation
+      ? "quotation"
+      : isSalesOrder
+      ? "proforma-invoice"
+      : "invoice";
+    const fileNum =
+      enrichedInvoice.invoice_number ||
+      invoiceDetails.order_number ||
+      invoiceDetails.quotation_number ||
+      invoiceDetails.invoice_number ||
+      invoiceDetails.challan_number ||
+      invoice?.id ||
+      'doc';
     const filename = `${filePrefix}-${fileNum}.pdf`;
 
     try {
@@ -154,6 +221,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           blob = await getDeliveryChallanPdf(invoiceDetails.id);
         } else if (isQuotation) {
           blob = await downloadQuotationPDF(invoiceDetails.id);
+        } else if (isSalesOrder) {
+          blob = await downloadSalesOrderPDF(invoiceDetails.id);
         } else {
           blob = await downloadSalesInvoicePDF(invoiceDetails.id);
         }
@@ -184,6 +253,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
             blob = await getDeliveryChallanPdf(invoiceDetails.id, payload);
           } else if (isQuotation) {
             blob = await downloadQuotationPDF(invoiceDetails.id, payload);
+          } else if (isSalesOrder) {
+            blob = await downloadSalesOrderPDF(invoiceDetails.id, payload);
           } else {
             blob = await downloadSalesInvoicePDF(invoiceDetails.id, payload);
           }
@@ -352,7 +423,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-white/10 bg-black/50 gap-4">
             <div className="flex justify-between items-center w-full sm:w-auto">
               <div>
-                <h2 className="text-lg font-bold text-white">{isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Performa Invoice Preview" : "Invoice Preview"}</h2>
+                <h2 className="text-lg font-bold text-white">{isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}</h2>
                 <p className="text-xs text-gray-400">
                   {enrichedInvoice.invoice_number || 'Loading...'}
                   {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}

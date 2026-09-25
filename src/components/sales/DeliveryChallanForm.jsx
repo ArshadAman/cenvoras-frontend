@@ -15,6 +15,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
 
+  useEffect(() => {
+    setInputValue(values.items[idx]?.product || "");
+  }, [values.items[idx]?.product]);
+
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
