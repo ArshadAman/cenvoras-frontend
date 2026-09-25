@@ -243,21 +243,26 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                     <tbody className="divide-y divide-white/5">
                       {bill.items?.map((item, index) => (
                         <tr key={index} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5 align-top">
                             <div className="text-sm font-bold text-white">{item.product_detail?.name || item.product}</div>
+                            {(item.description || item.product_description) && (
+                              <div className="text-xs text-gray-400 mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                                {item.description || item.product_description}
+                              </div>
+                            )}
                             {item.hsn_sac_code && (
                               <div className="text-[8px] font-black text-gray-600 mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>
                             )}
                           </td>
-                          <td className="px-6 py-5 text-center">
+                          <td className="px-6 py-5 text-center align-top">
                             <div className="text-sm font-bold text-white">{item.quantity}</div>
                             <div className="text-[10px] text-gray-500 uppercase">{item.unit}</div>
                             {item.free_quantity > 0 && <span className="text-[9px] font-black text-green-500 uppercase tracking-tighter mt-1 block">+{item.free_quantity} Free</span>}
                           </td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-300">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">{parseFloat(item.discount || 0).toFixed(1)}%</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500">{getCurrencySymbol()}{parseFloat(item.tax || 0).toFixed(2)}</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm font-black text-white">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-300 align-top">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{parseFloat(item.discount || 0).toFixed(1)}%</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{getCurrencySymbol()}{parseFloat(item.tax || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm font-black text-white align-top">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -271,6 +276,11 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                       <div className="flex justify-between items-start">
                         <div className="max-w-[70%]">
                           <div className="text-sm font-black text-white leading-tight">{item.product_detail?.name || item.product}</div>
+                          {(item.description || item.product_description) && (
+                            <div className="text-xs text-gray-400 mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                              {item.description || item.product_description}
+                            </div>
+                          )}
                           {item.hsn_sac_code && <div className="text-[8px] font-black text-gray-600 mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>}
                         </div>
                         <div className="text-right">

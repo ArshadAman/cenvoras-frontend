@@ -21,6 +21,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.purchase_price ?? product.price ?? 0);
+    setFieldValue(`items.${idx}.description`, product.description || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     const quantity = values.items[idx]?.quantity || 1;
     const amount = quantity * (product.purchase_price ?? product.price ?? 0);
     setFieldValue(`items.${idx}.amount`, amount);
@@ -40,6 +42,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
+    setFieldValue(`items.${idx}.description`, "");
+    setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
 
     if (value.trim()) {
@@ -65,6 +69,23 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               placeholder="Product name"
               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
               autoComplete="off"
+            />
+            <textarea
+              rows={1}
+              value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFieldValue(`items.${idx}.description`, val);
+                setFieldValue(`items.${idx}.product_description`, val);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+              }}
+              onFocus={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+              }}
+              placeholder="Enter a description / note..."
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-cyan-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
             />
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
@@ -282,6 +303,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             items: editData?.items?.map(item => ({
               product: item.product_display_name || item.product_name || item.product || "",
               product_id: item.product || null,
+              description: item.description || item.product_description || "",
+              product_description: item.description || item.product_description || "",
               quantity: item.quantity || 1,
               price: item.price || 0,
               amount: item.amount || (item.quantity * item.price) || 0,
@@ -290,6 +313,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             })) || [{
               product: "",
               product_id: null,
+              description: "",
+              product_description: "",
               quantity: 1,
               price: 0,
               amount: 0,
@@ -307,6 +332,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                const processedItems = values.items.map(item => ({
                   product: item.product_id, // PrimaryKeyRelatedField expects ID
                   product_name: item.product,
+                  description: (item.description || item.product_description || "").trim(),
+                  product_description: (item.description || item.product_description || "").trim(),
                   quantity: Math.max(1, Number(item.quantity) || 1),
                   price: Number(item.price),
                   amount: Number(item.amount),
@@ -402,7 +429,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", quantity: 1, price: 0, amount: 0, unit: "pcs" })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, description: "", product_description: "", quantity: 1, price: 0, amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
                                 + Add Item
                             </button>
                         </div>

@@ -151,7 +151,7 @@ const LegendTemplate = forwardRef(({
           </thead>
           <tbody>
             {items.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-200 h-8">
+              <tr key={idx} className="border-b border-gray-200">
               {visibleColumns.map((col, cIdx) => {
                 const isLast = cIdx === visibleColumns.length - 1;
                 const isNum = ['price', 'amount'].includes(col.id);
@@ -159,14 +159,26 @@ const LegendTemplate = forwardRef(({
                 const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
                 let val = '';
                 if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = <div className="font-medium text-gray-900 leading-tight">{item.product_name || item.product}</div>;
+                else if(col.id==='description') {
+                  const desc = item.description || item.product_description || item.product_detail?.description;
+                  val = (
+                    <div className="leading-tight py-0.5">
+                      <div className="font-medium text-gray-900">{item.product_name || item.product}</div>
+                      {desc && (
+                        <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          {desc}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
                 else if(col.id==='quantity') val = item.quantity;
                 else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
                 else if(col.id==='tax') val = `${item.tax||0}%`;
                 else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                 return (
-                  <td key={col.id} className={`py-2 text-xs text-gray-800 ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`}>
+                  <td key={col.id} className={`py-2 text-xs text-gray-800 align-top ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`} style={{ verticalAlign: 'top' }}>
                     {val}
                   </td>
                 );

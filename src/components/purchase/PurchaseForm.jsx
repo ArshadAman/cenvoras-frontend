@@ -89,6 +89,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.purchase_price`, product.purchase_price ?? product.price ?? 0);
     setFieldValue(`items.${idx}.hsn_code`, product.hsn_code || product.hsn_sac_code || "");
+    setFieldValue(`items.${idx}.description`, product.description || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.discount`, product.discount ?? 0);
     setFieldValue(`items.${idx}.tax`, product.tax ?? 0);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
@@ -102,6 +104,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
     setFieldValue(`items.${idx}.product_name`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
+    setFieldValue(`items.${idx}.description`, "");
+    setFieldValue(`items.${idx}.product_description`, "");
 
     if (value.trim()) {
       const filtered = products.filter(product =>
@@ -135,6 +139,23 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
               placeholder="Product name"
               className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
+            />
+            <textarea
+              rows={1}
+              value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFieldValue(`items.${idx}.description`, val);
+                setFieldValue(`items.${idx}.product_description`, val);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+              }}
+              onFocus={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+              }}
+              placeholder="Enter a description / note..."
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-cyan-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
@@ -362,6 +383,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             items: bill?.items?.map(item => ({
               product_name: item.product_detail?.name || item.product_name || "",
               product_id: item.product_detail?.id || item.product_id || null,
+              description: item.description || item.product_description || item.product_detail?.description || "",
+              product_description: item.description || item.product_description || item.product_detail?.description || "",
               quantity: item.quantity || 1,
               free_quantity: item.free_quantity || 0,
               unit: item.unit || "pcs",
@@ -378,6 +401,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             })) || [{
               product_name: "",
               product_id: null,
+              description: "",
+              product_description: "",
               quantity: 1,
               free_quantity: 0,
               unit: "pcs",
@@ -431,6 +456,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                   product: item.isExistingProduct && item.product_id ? item.product_id : item.product_name.trim(),
                   hsn_sac_code: item.hsn_code || "",
                   unit: item.unit || "pcs",
+                  description: (item.description || item.product_description || "").trim(),
+                  product_description: (item.description || item.product_description || "").trim(),
                   quantity,
                   free_quantity,
                   price,
@@ -684,6 +711,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                             onClick={() => push({
                                 product_name: "",
                                 product_id: null,
+                                description: "",
+                                product_description: "",
                                 quantity: 1,
                                 free_quantity: 0,
                                 unit: "pcs",

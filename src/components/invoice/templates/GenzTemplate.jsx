@@ -125,18 +125,26 @@ const GenzTemplate = forwardRef(({
                     const alignClass = isDesc ? 'text-left px-5' : isNum ? 'text-right px-5 font-mono font-medium' : 'text-center px-3';
                     let val = '';
                     if(col.id==='serial') val = idx+1;
-                    else if(col.id==='description') val = (
-                      <div className="py-1">
-                        <p className="font-bold text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
-                        {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
-                      </div>
-                    );
+                    else if(col.id==='description') {
+                      const desc = item.description || item.product_description || item.product_detail?.description;
+                      val = (
+                        <div className="py-1">
+                          <p className="font-bold text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
+                          {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
+                          {desc && (
+                            <p className="text-[11px] text-gray-500 whitespace-pre-line mt-1 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                              {desc}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }
                     else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-2.5 py-0.5 rounded-full text-xs">{item.quantity}</span>;
                     else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toFixed(2)}`;
                     else if(col.id==='tax') val = `${item.tax||0}%`;
                     else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                     else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                    return <td key={col.id} className={`py-3 align-middle text-gray-800 text-xs ${alignClass}`}>{val}</td>;
+                    return <td key={col.id} className={`py-3 align-top text-gray-800 text-xs ${alignClass}`} style={{ verticalAlign: 'top' }}>{val}</td>;
                   })}
                 </tr>
               ))}

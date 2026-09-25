@@ -83,6 +83,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     const amount = quantity * initialPrice;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
+    setFieldValue(`items.${idx}.description`, product.description || "");
     setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.discount`, 0);
     setFieldValue(`items.${idx}.tax`, product.tax || 0);
@@ -109,6 +110,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
+    setFieldValue(`items.${idx}.description`, "");
     setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
     if (!value.trim()) {
@@ -179,10 +181,26 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
             )}
-            {showDescription && !!values.items[idx]?.product_description && (
-              <small className="block mt-1 text-[11px] text-gray-500 leading-tight">
-                {values.items[idx].product_description}
-              </small>
+            {showDescription && (
+              <div className="mt-1">
+                <textarea
+                  rows={1}
+                  value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFieldValue(`items.${idx}.description`, val);
+                    setFieldValue(`items.${idx}.product_description`, val);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                  }}
+                  placeholder="Enter a description / note..."
+                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-cyan-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic"
+                />
+              </div>
             )}
           </div>
         )}
@@ -1028,7 +1046,8 @@ export default function SalesForm({
               return {
                 product: productName,
                 product_id: productId,
-                product_description: item.product_detail?.description || item.product_description || "",
+                description: item.description || item.product_description || item.product_detail?.description || "",
+                product_description: item.description || item.product_description || item.product_detail?.description || "",
                 quantity: qty,
                 free_quantity: item.free_quantity || 0,
                 batch: batchId,
@@ -1046,7 +1065,8 @@ export default function SalesForm({
                 return {
                     product: item.product_name || "",
                     product_id: null,
-                    product_description: "",
+                    description: item.description || item.product_description || "",
+                    product_description: item.description || item.product_description || "",
                     quantity: qty,
                     free_quantity: 0,
                     batch: "",
@@ -1061,6 +1081,7 @@ export default function SalesForm({
             }) : [{
               product: "",
               product_id: null,
+              description: "",
               product_description: "",
               quantity: 1,
               free_quantity: 0,
@@ -1150,6 +1171,8 @@ export default function SalesForm({
                   amount: amount,
                   unit: item.unit || null,
                   hsn_sac_code: itemSettings.show_item_hsn ? (item.hsn_sac_code || null) : null,
+                  description: (item.description || item.product_description || "").trim(),
+                  product_description: (item.description || item.product_description || "").trim(),
                   discount: itemSettings.show_item_discount ? discount : 0,
                   tax: itemSettings.show_item_tax ? tax : 0,
                 };
@@ -1530,6 +1553,7 @@ export default function SalesForm({
                             push({
                               product_name: "",
                               product_id: null,
+                              description: "",
                               product_description: "",
                               quantity: 1,
                               free_quantity: 0,
@@ -1950,6 +1974,7 @@ export default function SalesForm({
                             onClick={() => push({
                               product_name: "",
                               product_id: null,
+                              description: "",
                               product_description: "",
                               quantity: 1,
                               free_quantity: 0,
