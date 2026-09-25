@@ -118,27 +118,38 @@ const ProfessionalTemplate = forwardRef(({
       </div>
 
       {/* Items Table */}
-      <table className="w-full text-left border-collapse mb-8">
+      <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
         <thead>
           <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
-            {visibleColumns.map(col => (
-              <th key={col.id} className="px-2 text-xs font-bold uppercase tracking-wider">{col.label}</th>
-            ))}
+            {visibleColumns.map((col) => {
+              const isNum = ['price', 'amount'].includes(col.id);
+              const isDesc = col.id === 'description';
+              const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
+              const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '10%' : '14%';
+              return (
+                <th key={col.id} className={`py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 ${alignClass}`} style={{ width: colWidth }}>
+                  {col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {items.map((item, idx) => (
             <tr key={idx} className="h-auto hover:bg-gray-50 transition-colors">
               {visibleColumns.map(col => {
+                const isNum = ['price', 'amount'].includes(col.id);
+                const isDesc = col.id === 'description';
+                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono font-medium' : 'text-center px-2';
                 let val = '';
                 if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = item.product_name || item.product;
+                else if(col.id==='description') val = <div className="leading-tight">{item.product_name || item.product}</div>;
                 else if(col.id==='quantity') val = item.quantity;
                 else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toFixed(2)}`;
                 else if(col.id==='tax') val = `${item.tax||0}%`;
                 else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="px-2 py-1.5 font-medium text-gray-800">{val}</td>;
+                return <td key={col.id} className={`py-2.5 text-xs text-gray-800 ${alignClass}`}>{val}</td>;
               })}
             </tr>
           ))}

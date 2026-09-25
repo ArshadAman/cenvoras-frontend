@@ -89,55 +89,96 @@ const LegendTemplate = forwardRef(({
              {invoice.customer_gstin && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
              <p className="whitespace-pre-line mt-1 leading-snug">{billingAddress}</p>
           </div>
-          <div className="w-1/2">
-             <div className="flex border-b" style={{ borderColor }}>
-                <div className="w-1/2 p-2 border-r" style={{ borderColor }}>
-                   <p className="font-bold">Invoice #:</p>
-                   <p>{invoiceNumber}</p>
+          <div className="w-1/2 flex flex-col justify-between">
+             <div className="flex border-b flex-1" style={{ borderColor }}>
+                <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
+                   <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Invoice #</p>
+                   <p className="font-semibold text-gray-900">{invoiceNumber}</p>
                 </div>
-                <div className="w-1/2 p-2">
-                   <p className="font-bold">Date:</p>
-                   <p>{invoiceDate}</p>
+                <div className="w-1/2 p-2.5 flex flex-col justify-center">
+                   <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Date</p>
+                   <p className="font-semibold text-gray-900">{invoiceDate}</p>
                 </div>
              </div>
-             <div className="p-2">
-                <p className="font-bold">Place of Supply:</p>
-                <p>{invoice.place_of_supply || 'Same State'}</p>
+             <div className="flex flex-1">
+                <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
+                   <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
+                   <p className="font-semibold text-gray-900">{invoice.place_of_supply || 'Same State'}</p>
+                </div>
+                <div className="w-1/2 p-2.5 flex flex-col justify-center">
+                   {invoice.due_date ? (
+                     <>
+                       <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Due Date</p>
+                       <p className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>
+                     </>
+                   ) : invoice.po_number ? (
+                     <>
+                       <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">PO #</p>
+                       <p className="font-semibold text-gray-900">{invoice.po_number}</p>
+                     </>
+                   ) : (
+                     <>
+                       <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Payment Terms</p>
+                       <p className="font-semibold text-gray-900">Due on Receipt</p>
+                     </>
+                   )}
+                </div>
              </div>
           </div>
         </div>
 
         {/* Legend Table */}
-        <table className="w-full text-center border-b" style={{ borderColor }}>
+        <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
           <thead>
-            <tr style={{ backgroundColor: colors.primary, color: '#fff' }}>
-              {visibleColumns.map(col => (
-                <th key={col.id} className="p-1 border-r border-white font-normal">{col.label}</th>
-              ))}
+            <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
+              {visibleColumns.map((col, idx) => {
+                const isLast = idx === visibleColumns.length - 1;
+                const isNum = ['price', 'amount'].includes(col.id);
+                const isDesc = col.id === 'description';
+                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
+                const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '10%' : '14%';
+                return (
+                  <th 
+                    key={col.id} 
+                    className={`py-2 text-[11px] font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
+                    style={{ width: colWidth }}
+                  >
+                    {col.label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {items.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-200">
-              {visibleColumns.map(col => {
+              <tr key={idx} className="border-b border-gray-200 h-8">
+              {visibleColumns.map((col, cIdx) => {
+                const isLast = cIdx === visibleColumns.length - 1;
+                const isNum = ['price', 'amount'].includes(col.id);
+                const isDesc = col.id === 'description';
+                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
                 let val = '';
                 if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = <div className="text-left font-semibold">{item.product_name || item.product}</div>;
+                else if(col.id==='description') val = <div className="font-medium text-gray-900 leading-tight">{item.product_name || item.product}</div>;
                 else if(col.id==='quantity') val = item.quantity;
                 else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
                 else if(col.id==='tax') val = `${item.tax||0}%`;
                 else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                 else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="py-1 px-2 border-r border-gray-200">{val}</td>;
+                return (
+                  <td key={col.id} className={`py-2 text-xs text-gray-800 ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`}>
+                    {val}
+                  </td>
+                );
               })}
               </tr>
             ))}
-            <tr className="font-bold h-8 align-middle">
-              <td colSpan={visibleColumns.length - 2} className="text-left px-2 border-r border-gray-200">
+            <tr className="font-bold h-9 bg-gray-50/50">
+              <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
                 Total items: {items.length}
               </td>
-              <td className="border-r border-gray-200">Subtotal</td>
-              <td>{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+              <td className="border-r border-gray-200 text-right px-3 text-xs uppercase tracking-wider font-semibold text-gray-700">Subtotal</td>
+              <td className="text-right px-3 text-xs font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
             </tr>
           </tbody>
         </table>

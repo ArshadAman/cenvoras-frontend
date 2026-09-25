@@ -100,23 +100,36 @@ const BillShipTemplate = forwardRef(({
         </div>
       </div>
 
-      <table className="w-full text-center mb-6">
+      <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
         <thead>
-          <tr className="border-y border-gray-400 bg-gray-50 h-8">
-            {visibleColumns.map(col => (
-              <th key={col.id} className="px-2 text-xs font-bold uppercase tracking-widest border-r border-gray-300 last:border-0 text-gray-600">{col.label}</th>
-            ))}
+          <tr className="border-y border-gray-400 bg-gray-50 h-9">
+            {visibleColumns.map((col, idx) => {
+              const isLast = idx === visibleColumns.length - 1;
+              const isNum = ['price', 'amount'].includes(col.id);
+              const isDesc = col.id === 'description';
+              const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
+              const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '10%' : '14%';
+              return (
+                <th key={col.id} className={`py-2 text-xs font-bold uppercase tracking-widest text-gray-700 ${alignClass} ${!isLast ? 'border-r border-gray-300' : ''}`} style={{ width: colWidth }}>
+                  {col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
           {items.map((item, idx) => (
             <tr key={idx} className="border-b border-gray-200">
-            {visibleColumns.map(col => {
+            {visibleColumns.map((col, cIdx) => {
+              const isLast = cIdx === visibleColumns.length - 1;
+              const isNum = ['price', 'amount'].includes(col.id);
+              const isDesc = col.id === 'description';
+              const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
               let val = '';
               if(col.id==='serial') val = idx+1;
               else if(col.id==='description') val = (
-                <div className="text-left py-2">
-                  <div className="font-semibold text-gray-900">{item.product_detail?.name || item.product_name || item.product}</div>
+                <div className="py-2">
+                  <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                   {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
                     <div className="text-[10px] text-gray-500 mt-1 font-medium">
                       {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
@@ -131,7 +144,7 @@ const BillShipTemplate = forwardRef(({
               else if(col.id==='tax') val = `${item.tax||0}%`;
               else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
               else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-              return <td key={col.id} className="px-2 border-r border-gray-200 last:border-0 align-middle py-0.5">{val}</td>;
+              return <td key={col.id} className={`py-1 ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`}>{val}</td>;
             })}
             </tr>
           ))}

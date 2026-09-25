@@ -19,9 +19,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
 
   const {
     filename = 'invoice.pdf',
-    quality = 0.98,
-    scale = 3.5,
-    imageFormat = 'PNG',
+    quality = 0.92,
+    scale = 2.5,
+    imageFormat = 'JPEG',
     onProgress = null,
   } = options;
 
