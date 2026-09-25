@@ -388,15 +388,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               <div ref={pdfMenuRef} className="relative inline-flex items-stretch rounded-lg shadow-sm">
                 <button
                   disabled={downloadingPDF}
-                  onClick={() => handleDownloadPDF('vector')}
+                  onClick={() => handlePrint()}
                   className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-l-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 border-r border-green-500/20"
-                  title="Download Vector PDF (100% exact replica of preview, infinite zoom clarity)"
+                  title="Save as Vector PDF (Native Browser - 15KB crystal-clear vector, zero server load)"
                 >
-                  {downloadingPDF ? (
-                    <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Generating...</>
-                  ) : (
-                    <><ArrowDownTrayIcon className="w-4 h-4" /> PDF</>
-                  )}
+                  <ArrowDownTrayIcon className="w-4 h-4" /> PDF
                 </button>
                 <button
                   disabled={downloadingPDF}
@@ -408,33 +404,33 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 </button>
 
                 {pdfMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute top-full left-0 mt-1 w-68 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                     <button
-                      onClick={() => handleDownloadPDF('vector')}
+                      onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
                     >
                       <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Ultra-Clear Vector PDF (Recommended)
+                        <span>⚡</span> Save as Vector PDF (Native - 15KB)
                       </span>
-                      <span className="text-[11px] text-gray-400">~25KB, infinite zoom clarity, razor sharp</span>
+                      <span className="text-[11px] text-gray-400">Zero wait, infinite zoom clarity (Select 'Save as PDF')</span>
                     </button>
                     <button
-                      onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
+                      onClick={() => handleDownloadPDF('vector')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
                     >
                       <span className="font-semibold text-purple-400 flex items-center gap-1.5">
-                        <span>🖨️</span> Save as Vector PDF (Native Browser)
+                        <span>☁️</span> Download via Server Engine (API)
                       </span>
-                      <span className="text-[11px] text-gray-400">15KB native vector output (Select 'Save as PDF')</span>
+                      <span className="text-[11px] text-gray-400">Direct file download via Headless Chromium</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('client')}
                       className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
                     >
                       <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
-                        <span>🎨</span> Direct Client Download (~45KB)
+                        <span>🎨</span> Direct Canvas Download (~45KB)
                       </span>
-                      <span className="text-[11px] text-gray-400">Instant file download without print dialog</span>
+                      <span className="text-[11px] text-gray-400">Instant file download fallback without print dialog</span>
                     </button>
                     <button
                       onClick={() => handleDownloadPDF('backend')}
