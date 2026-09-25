@@ -5,10 +5,10 @@ import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesC
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
-import { ArrowDownTrayIcon, EyeIcon, PencilSquareIcon, TrashIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, EyeIcon, PencilSquareIcon, TrashIcon, CurrencyDollarIcon, BanknotesIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import PaymentForm from "../ledger/PaymentForm";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getCurrencySymbol } from '../../utils/currency';
 
 export default function SalesTable({
   onEdit,
@@ -775,16 +775,17 @@ export default function SalesTable({
       {paymentInvoice && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={closePaymentModal} />
-          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex justify-between items-center mb-4">
+          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-5">
               <div>
-                <h2 className="text-xl font-bold text-white">Record Payment</h2>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <BanknotesIcon className="w-6 h-6 text-green-400" />
+                  Record Payment
+                </h2>
                 <p className="text-xs text-gray-400 mt-1">Invoice #{paymentInvoice.invoice_number}</p>
               </div>
-              <button onClick={closePaymentModal} className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={closePaymentModal} className="text-gray-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5">
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
             <PaymentForm
