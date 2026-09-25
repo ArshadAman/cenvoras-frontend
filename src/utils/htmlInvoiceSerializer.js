@@ -86,9 +86,12 @@ export function serializeInvoiceHtml(element) {
       padding: 0;
       background-color: #ffffff;
       color: #1f2937;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', 'Noto Sans', 'Liberation Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+    .font-mono, [class*="font-mono"], code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;
     }
     /* Compiled project Tailwind CSS */
     ${compiledTailwindStyles}
