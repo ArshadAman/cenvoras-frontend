@@ -84,17 +84,17 @@ export default function PurchaseOrders() {
 
   return (
     <>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
+      <div className="p-4 md:p-6 space-y-5 animate-fade-up">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Purchase Orders</h1>
-            <p className="text-gray-400 text-sm">Manage vendor orders before they arrive.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-white mb-0.5">Purchase Orders</h1>
+            <p className="text-gray-400 text-xs">Manage vendor orders before they arrive.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
              <button
                onClick={() => setShowForm(true)}
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-black border-none"
+               className="btn-primary text-xs py-2 px-3.5 shadow-lg shadow-cyan-500/20 flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-black border-none"
              >
                <PlusIcon className="w-4 h-4"/> New Purchase Order
              </button>

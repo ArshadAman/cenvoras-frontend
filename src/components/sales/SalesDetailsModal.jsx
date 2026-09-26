@@ -122,6 +122,26 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
   const enrichedInvoice = {
     ...invoiceDetails,
+    document_type: documentType,
+    is_delivery_challan: isDeliveryChallan,
+    challan_number:
+      invoiceDetails.challan_number ||
+      invoice?.challan_number ||
+      (isDeliveryChallan ? invoiceDetails.invoice_number || invoice?.invoice_number : ''),
+    challan_date:
+      invoiceDetails.date ||
+      invoiceDetails.challan_date ||
+      invoice?.date ||
+      invoice?.challan_date ||
+      '',
+    vehicle_number: invoiceDetails.vehicle_number || invoice?.vehicle_number || '',
+    transport_mode: invoiceDetails.transport_mode || invoice?.transport_mode || '',
+    transporter_name: invoiceDetails.transporter_name || invoice?.transporter_name || '',
+    sales_order_number:
+      invoiceDetails.sales_order_number ||
+      invoice?.sales_order_number ||
+      invoiceDetails.sales_order_details?.order_number ||
+      '',
     invoice_number:
       invoiceDetails.quotation_number ||
       invoiceDetails.order_number ||

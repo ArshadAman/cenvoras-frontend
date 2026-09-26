@@ -5,10 +5,28 @@ import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesC
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
-import { ArrowDownTrayIcon, EyeIcon, PencilSquareIcon, TrashIcon, CurrencyDollarIcon, BanknotesIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { 
+  ArrowDownTrayIcon, 
+  EyeIcon, 
+  PencilSquareIcon, 
+  TrashIcon, 
+  CurrencyDollarIcon, 
+  BanknotesIcon, 
+  XMarkIcon,
+  AdjustmentsHorizontalIcon,
+  ChevronDownIcon
+} from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import PaymentForm from "../ledger/PaymentForm";
 import { getCurrencySymbol } from '../../utils/currency';
+
+const COLUMN_OPTIONS = [
+  { id: "customer", label: "Customer" },
+  { id: "untaxed_amount", label: "Amount (Before Tax)" },
+  { id: "total_amount", label: "Total Amount" },
+  { id: "status", label: "Status" },
+  { id: "items", label: "Items" },
+];
 
 export default function SalesTable({
   onEdit,
@@ -27,6 +45,52 @@ export default function SalesTable({
   const [statusFilterTab, setStatusFilterTab] = useState(initialStatusFilter); // "all", "final", "draft"
   const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: "invoice_date", direction: "desc" });
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_table_columns");
+      if (saved) {
+        return {
+          customer: true,
+          untaxed_amount: true,
+          total_amount: true,
+          status: true,
+          items: true,
+          ...JSON.parse(saved),
+        };
+      }
+    } catch (e) {
+      console.error("Failed to load saved columns", e);
+    }
+    return {
+      customer: true,
+      untaxed_amount: true,
+      total_amount: true,
+      status: true,
+      items: true,
+    };
+  });
+
+  const toggleColumn = (id) => {
+    setVisibleColumns((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem("sales_table_columns", JSON.stringify(next));
+      } catch (e) {
+        console.error("Failed to save columns", e);
+      }
+      return next;
+    });
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
   const [isExporting, setIsExporting] = useState(false);
   const [paymentInvoice, setPaymentInvoice] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -149,11 +213,33 @@ export default function SalesTable({
       return matchesSearch && matchesDate && matchesAmount && matchesCustomer && matchesOverdue;
     })
     .sort((a, b) => {
-      // Frontend ordering
-      if (ordering === "-invoice_date") return new Date(b.invoice_date) - new Date(a.invoice_date);
-      if (ordering === "invoice_date") return new Date(a.invoice_date) - new Date(b.invoice_date);
-      if (ordering === "-total_amount") return Number(b.total_amount) - Number(a.total_amount);
-      if (ordering === "total_amount") return Number(a.total_amount) - Number(b.total_amount);
+      const { key, direction } = sortConfig;
+      const factor = direction === "asc" ? 1 : -1;
+      if (key === "invoice_date") {
+        return factor * (new Date(a.invoice_date || 0) - new Date(b.invoice_date || 0));
+      }
+      if (key === "invoice_number") {
+        return factor * String(a.invoice_number || "").localeCompare(String(b.invoice_number || ""), undefined, { numeric: true });
+      }
+      if (key === "customer_name") {
+        return factor * String(a.customer_name || "").localeCompare(String(b.customer_name || ""));
+      }
+      if (key === "total_amount") {
+        return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+      }
+      if (key === "untaxed_amount") {
+        const getUntaxed = (inv) => inv.items?.reduce((sum, item) => {
+          const q = parseFloat(item.quantity || 0);
+          const p = parseFloat(item.price || 0);
+          const d = parseFloat(item.discount || 0);
+          const base = q * p;
+          return sum + (base - (base * d) / 100);
+        }, 0) || 0;
+        return factor * (getUntaxed(a) - getUntaxed(b));
+      }
+      if (key === "status") {
+        return factor * String(a.status || "").localeCompare(String(b.status || ""));
+      }
       return 0;
     });
 
@@ -315,10 +401,53 @@ export default function SalesTable({
             {isExporting ? 'Exporting...' : 'Export CSV'}
           </button>
 
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors"
+              title="Customize Columns"
+            >
+              <AdjustmentsHorizontalIcon className="w-4 h-4 text-cyan-400" />
+              <span>Columns</span>
+              <ChevronDownIcon className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+            {showColumnDropdown && (
+              <div className="absolute right-0 mt-2 w-52 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">
+                  Visible Columns
+                </div>
+                <div className="space-y-1.5">
+                  {COLUMN_OPTIONS.map((col) => (
+                    <label
+                      key={col.id}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer text-xs text-gray-200 select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns[col.id]}
+                        onChange={() => toggleColumn(col.id)}
+                        className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50"
+                      />
+                      <span>{col.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <select
             value={ordering}
-            onChange={(e) => setOrdering(e.target.value)}
-              className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-[#111] backdrop-filter backdrop-blur-10 text-white text-sm"
+            onChange={(e) => {
+              const val = e.target.value;
+              setOrdering(val);
+              if (val === "-invoice_date") setSortConfig({ key: "invoice_date", direction: "desc" });
+              else if (val === "invoice_date") setSortConfig({ key: "invoice_date", direction: "asc" });
+              else if (val === "-total_amount") setSortConfig({ key: "total_amount", direction: "desc" });
+              else if (val === "total_amount") setSortConfig({ key: "total_amount", direction: "asc" });
+            }}
+            className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-[#111] backdrop-filter backdrop-blur-10 text-white text-sm"
           >
             <option value="-invoice_date" className="bg-[#1a2341] text-white">Newest First</option>
             <option value="invoice_date" className="bg-[#1a2341] text-white">Oldest First</option>
@@ -385,25 +514,75 @@ export default function SalesTable({
                     className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Invoice Details
+                <th 
+                  onClick={() => handleSort("invoice_date")}
+                  className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Invoice Details</span>
+                    {sortConfig.key === "invoice_date" && (
+                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Amount (Before Tax)
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Total Amount (With Tax)
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Items
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
+                {visibleColumns.customer && (
+                  <th 
+                    onClick={() => handleSort("customer_name")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Customer</span>
+                      {sortConfig.key === "customer_name" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.untaxed_amount && (
+                  <th 
+                    onClick={() => handleSort("untaxed_amount")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Amount (Before Tax)</span>
+                      {sortConfig.key === "untaxed_amount" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.total_amount && (
+                  <th 
+                    onClick={() => handleSort("total_amount")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Total Amount (With Tax)</span>
+                      {sortConfig.key === "total_amount" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.status && (
+                  <th 
+                    onClick={() => handleSort("status")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Status</span>
+                      {sortConfig.key === "status" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.items && (
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Items
+                  </th>
+                )}
+                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
                   Actions
                 </th>
               </tr>
@@ -431,7 +610,7 @@ export default function SalesTable({
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
                     onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 cursor-pointer"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -442,96 +621,108 @@ export default function SalesTable({
                     {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-white">
-                    {invoice.customer_name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white">
-                    {getCurrencySymbol()}{(() => {
-                      // Calculate untaxed amount from items factoring in discounts
-                      const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                {visibleColumns.customer && (
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-white">
+                      {invoice.customer_name}
+                    </div>
+                  </td>
+                )}
+                {visibleColumns.untaxed_amount && (
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-white">
+                      {getCurrencySymbol()}{(() => {
+                        // Calculate untaxed amount from items factoring in discounts
+                        const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                          const quantity = parseFloat(item.quantity || 0);
+                          const price = parseFloat(item.price || 0);
+                          const discount = parseFloat(item.discount || 0);
+                          const lineBase = quantity * price;
+                          return sum + (lineBase - (lineBase * discount) / 100);
+                        }, 0) || 0;
+                        return Number(untaxedAmount).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        });
+                      })()}
+                    </div>
+                  </td>
+                )}
+                {visibleColumns.total_amount && (
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {(() => {
+                      const roundOff = parseFloat(invoice.round_off || 0) || 0;
+                      const calculations = invoice.items?.reduce((acc, item) => {
                         const quantity = parseFloat(item.quantity || 0);
                         const price = parseFloat(item.price || 0);
                         const discount = parseFloat(item.discount || 0);
+                        const tax = parseFloat(item.tax || 0);
                         const lineBase = quantity * price;
-                        return sum + (lineBase - (lineBase * discount) / 100);
-                      }, 0) || 0;
-                      return Number(untaxedAmount).toLocaleString('en-IN', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      });
-                    })()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {(() => {
-                    const roundOff = parseFloat(invoice.round_off || 0) || 0;
-                    const calculations = invoice.items?.reduce((acc, item) => {
-                      const quantity = parseFloat(item.quantity || 0);
-                      const price = parseFloat(item.price || 0);
-                      const discount = parseFloat(item.discount || 0);
-                      const tax = parseFloat(item.tax || 0);
-                      const lineBase = quantity * price;
-                      const taxable = lineBase - (lineBase * discount) / 100;
-                      const taxAmount = (taxable * tax) / 100;
-                      return {
-                        taxable: acc.taxable + taxable,
-                        taxAmount: acc.taxAmount + taxAmount
-                      };
-                    }, { taxable: 0, taxAmount: 0 }) || { taxable: 0, taxAmount: 0 };
+                        const taxable = lineBase - (lineBase * discount) / 100;
+                        const taxAmount = (taxable * tax) / 100;
+                        return {
+                          taxable: acc.taxable + taxable,
+                          taxAmount: acc.taxAmount + taxAmount
+                        };
+                      }, { taxable: 0, taxAmount: 0 }) || { taxable: 0, taxAmount: 0 };
 
-                    const computedTotal = calculations.taxable + calculations.taxAmount + roundOff;
-                    const totalAmountWithTax = invoice.total_amount != null
-                      ? parseFloat(invoice.total_amount)
-                      : computedTotal;
+                      const computedTotal = calculations.taxable + calculations.taxAmount + roundOff;
+                      const totalAmountWithTax = invoice.total_amount != null
+                        ? parseFloat(invoice.total_amount)
+                        : computedTotal;
 
-                    return (
-                      <div>
-                        <div className="text-sm font-bold text-cyan-400">
-                          {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
-                        </div>
-                        {roundOff !== 0 && (
-                          <div className="text-[11px] text-amber-300 font-medium">
-                            Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                      return (
+                        <div>
+                          <div className="text-sm font-bold text-cyan-400">
+                            {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                   <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                      'bg-gray-500/20 text-gray-400'
-                   }`}>
-                      {invoice.status || 'final'}
-                   </span>
-                   <div className="mt-2">
-                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                      invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                      'bg-red-500/20 text-red-400 border border-red-500/30'
-                    }`}>
-                      {invoice.payment_status || 'pending'}
-                    </span>
-                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                  {invoice.items?.length || 0} items
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex flex-wrap gap-2">
+                          {roundOff !== 0 && (
+                            <div className="text-[11px] text-amber-300 font-medium">
+                              Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </td>
+                )}
+                {visibleColumns.status && (
+                  <td className="px-6 py-4 whitespace-nowrap">
+                     <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                        invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                        invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                        'bg-gray-500/20 text-gray-400'
+                     }`}>
+                        {invoice.status || 'final'}
+                     </span>
+                     <div className="mt-2">
+                      <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                        invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                        invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                        'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}>
+                        {invoice.payment_status || 'pending'}
+                      </span>
+                     </div>
+                  </td>
+                )}
+                {visibleColumns.items && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                    {invoice.items?.length || 0} items
+                  </td>
+                )}
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                  <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => onView(invoice)}
-                      className="px-3 py-1 bg-white/5 text-gray-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
+                      title={`View ${docLabel}`}
+                      className="p-2 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/15 hover:text-white transition-colors"
                     >
-                      View
+                      <EyeIcon className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
@@ -543,30 +734,32 @@ export default function SalesTable({
                       disabled={!canEditInvoice(invoice)}
                       title={editInvoiceTooltip(invoice)}
                       aria-disabled={!canEditInvoice(invoice)}
-                      className={`px-3 py-1 border rounded transition-colors ${
+                      className={`p-2 border rounded-lg transition-colors ${
                         canEditInvoice(invoice)
-                          ? 'bg-white/5 text-cyan-300 border-white/10 hover:bg-white/10'
-                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                          ? 'bg-white/5 text-cyan-300 border-white/10 hover:bg-white/15'
+                          : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
                       }`}
                     >
-                      Edit
+                      <PencilSquareIcon className="w-4 h-4" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => openPaymentForInvoice(invoice)}
-                      disabled={!canRecordPayment(invoice)}
-                      title={canRecordPayment(invoice)
-                        ? 'Record payment for this invoice'
-                        : 'Available only for final invoices with pending or partial payment status.'}
-                      aria-disabled={!canRecordPayment(invoice)}
-                      className={`px-3 py-1 border rounded transition-colors ${
-                        canRecordPayment(invoice)
-                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20'
-                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
-                      }`}
-                    >
-                      Record Payment
-                    </button>
+                    {documentType !== "quotation" && (
+                      <button
+                        type="button"
+                        onClick={() => openPaymentForInvoice(invoice)}
+                        disabled={!canRecordPayment(invoice)}
+                        title={canRecordPayment(invoice)
+                          ? 'Record payment for this invoice'
+                          : 'Available only for final invoices with pending or partial payment status.'}
+                        aria-disabled={!canRecordPayment(invoice)}
+                        className={`p-2 border rounded-lg transition-colors ${
+                          canRecordPayment(invoice)
+                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/25'
+                            : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
+                        }`}
+                      >
+                        <BanknotesIcon className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
@@ -577,13 +770,13 @@ export default function SalesTable({
                       disabled={!canDeleteInvoice(invoice)}
                       title={getDeleteTooltip(invoice)}
                       aria-disabled={!canDeleteInvoice(invoice)}
-                      className={`px-3 py-1 border rounded transition-colors ${
+                      className={`p-2 border rounded-lg transition-colors ${
                         canDeleteInvoice(invoice)
-                          ? 'bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20'
-                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                          ? 'bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/25'
+                          : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
                       }`}
                     >
-                      Delete
+                      <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </td>

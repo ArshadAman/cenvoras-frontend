@@ -3,7 +3,7 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
-import { createProduct } from "../../api/inventory";
+import { createProduct, updateProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
@@ -14,6 +14,8 @@ import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getAllUnits, saveCustomUnit } from '../../utils/units';
+import { DocumentTextIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, onCreateNewProduct, onSelectProduct }) {
@@ -557,7 +559,7 @@ const SalesSchema = Yup.object().shape({
   ).min(1, "At least one item is required"),
 });
 
-const units = ["pcs", "kg", "ltr", "box", "meter"];
+const units = DEFAULT_UNITS;
 
 const DEFAULT_ITEM_SETTINGS = {
   show_item_description: true,
@@ -831,6 +833,63 @@ export default function SalesForm({
       ...invoiceSettings,
       [key]: nextValue,
     });
+  };
+
+  const [availableUnits, setAvailableUnits] = useState(getAllUnits);
+  const [showDocNote, setShowDocNote] = useState(false);
+  const [catalogSyncModal, setCatalogSyncModal] = useState(null);
+
+  const handleAddCustomUnit = (unit) => {
+    saveCustomUnit(unit);
+    setAvailableUnits(getAllUnits());
+  };
+
+  const handleUpdateCatalogItem = async () => {
+    if (!catalogSyncModal) return;
+    try {
+      const { product_id, price, hsn_sac_code, tax, description } = catalogSyncModal;
+      await updateProduct(product_id, {
+        sale_price: Number(price) || 0,
+        hsn_sac_code: hsn_sac_code || null,
+        tax: Number(tax) || 0,
+        description: description || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Catalog item updated successfully!");
+      setCatalogSyncModal(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || "Failed to update catalog product");
+    }
+  };
+
+  const handleSaveAsNewCatalogItem = async () => {
+    if (!catalogSyncModal) return;
+    try {
+      const { name, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
+      const newName = window.prompt("Enter new product name:", `${name} (New)`);
+      if (!newName || !newName.trim()) return;
+
+      const created = await createProduct({
+        name: newName.trim(),
+        sale_price: Number(price) || 0,
+        cost_price: Number(price) || 0,
+        unit: unit || "pcs",
+        tax: Number(tax) || 0,
+        hsn_sac_code: hsn_sac_code || null,
+        description: description || null,
+        stock: 0,
+      });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      if (formikRef.current && typeof catalogSyncModal.idx === 'number') {
+        const itemPath = `items.${catalogSyncModal.idx}`;
+        formikRef.current.setFieldValue(`${itemPath}.product`, created.name);
+        formikRef.current.setFieldValue(`${itemPath}.product_id`, created.id);
+      }
+      toast.success(`Saved new product "${created.name}" in catalog!`);
+      setCatalogSyncModal(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || "Failed to create new catalog product");
+    }
   };
 
   const handleCreateInventoryProduct = (productName, idx) => {
@@ -1261,8 +1320,9 @@ export default function SalesForm({
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : finalSubmitStatus,
-                total_amount: finalTotal.toString(),
-                round_off: roundOffValue.toString(),
+                total_amount: Number(finalTotal).toFixed(2),
+                round_off: Number(roundOffValue).toFixed(2),
+                notes: values.notes || "",
                 items: processedItems,
                 // Optional customer fields for new record creation
                 ...(values.customer_email && { customer_email: values.customer_email }),
@@ -1781,13 +1841,26 @@ export default function SalesForm({
                                           if (col.key === "unit") {
                                             return (
                                               <div key={col.key}>
-                                                <Field name={`items.${index}.unit`}>
-                                                  {({ field }) => (
-                                                    <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200">
-                                                      {units.map((u) => <option key={u} value={u}>{u}</option>)}
-                                                    </select>
-                                                  )}
-                                                </Field>
+                                                <select
+                                                  value={item.unit || "pcs"}
+                                                  onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === "__custom__") {
+                                                      const custom = window.prompt("Enter custom unit name (e.g. roll, pkt, bundle):");
+                                                      if (custom && custom.trim()) {
+                                                        const clean = custom.trim().toLowerCase();
+                                                        handleAddCustomUnit(clean);
+                                                        setFieldValue(`items.${index}.unit`, clean);
+                                                      }
+                                                    } else {
+                                                      setFieldValue(`items.${index}.unit`, val);
+                                                    }
+                                                  }}
+                                                  className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                >
+                                                  {availableUnits.map((u) => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
+                                                  <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
+                                                </select>
                                               </div>
                                             );
                                           }
@@ -1799,7 +1872,7 @@ export default function SalesForm({
                                                    name={`items.${index}.price`}
                                                    type="number"
                                                    min="0"
-                                                   step="any"
+                                                   step="0.0001"
                                                    className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
                                                    onChange={(e) => {
                                                      const price = e.target.value;
@@ -1825,7 +1898,7 @@ export default function SalesForm({
                                           if (col.key === "tax") {
                                             return (
                                               <div key={col.key}>
-                                                <Field name={`items.${index}.tax`} type="number" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                                <Field name={`items.${index}.tax`} type="number" step="1" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
                                               </div>
                                             );
                                           }
@@ -1840,12 +1913,32 @@ export default function SalesForm({
 
                                           if (col.key === "action") {
                                             return (
-                                              <div key={col.key} className="flex justify-center">
+                                              <div key={col.key} className="flex items-center justify-center gap-1">
+                                                {item.product_id && canAccessInventory && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => setCatalogSyncModal({
+                                                      idx: index,
+                                                      product_id: item.product_id,
+                                                      name: item.product,
+                                                      price: item.price,
+                                                      hsn_sac_code: item.hsn_sac_code,
+                                                      tax: item.tax,
+                                                      description: item.description || item.product_description || "",
+                                                      unit: item.unit || "pcs",
+                                                    })}
+                                                    className="text-gray-500 hover:text-cyan-400 transition-colors p-1"
+                                                    title="Sync with Catalog (Update or Save New Product)"
+                                                    tabIndex={-1}
+                                                  >
+                                                    <ArrowPathIcon className="h-4 w-4" />
+                                                  </button>
+                                                )}
                                                 <button
                                                   type="button"
                                                   onClick={() => remove(index)}
                                                   disabled={values.items.length === 1}
-                                                  className="text-gray-500 hover:text-red-400 transition-colors p-1.5 disabled:opacity-30"
+                                                  className="text-gray-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30"
                                                   title="Remove Item"
                                                   tabIndex={-1}
                                                 >
@@ -1943,13 +2036,26 @@ export default function SalesForm({
                                           </div>
                                           <div>
                                               <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Unit</label>
-                                              <Field name={`items.${index}.unit`}>
-                                                {({ field }) => (
-                                                  <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-2 py-2.5 text-white text-sm text-center">
-                                                    {units.map((u) => <option key={u} value={u}>{u}</option>)}
-                                                  </select>
-                                                )}
-                                              </Field>
+                                              <select
+                                                value={item.unit || "pcs"}
+                                                onChange={(e) => {
+                                                  const val = e.target.value;
+                                                  if (val === "__custom__") {
+                                                    const custom = window.prompt("Enter custom unit name (e.g. roll, pkt, bundle):");
+                                                    if (custom && custom.trim()) {
+                                                      const clean = custom.trim().toLowerCase();
+                                                      handleAddCustomUnit(clean);
+                                                      setFieldValue(`items.${index}.unit`, clean);
+                                                    }
+                                                  } else {
+                                                    setFieldValue(`items.${index}.unit`, val);
+                                                  }
+                                                }}
+                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-2 py-2.5 text-white text-sm text-center"
+                                              >
+                                                {availableUnits.map((u) => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
+                                                <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
+                                              </select>
                                           </div>
                                           <div>
                                               <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
@@ -1957,7 +2063,7 @@ export default function SalesForm({
                                                  name={`items.${index}.price`}
                                                  type="number"
                                                  min="0"
-                                                 step="any"
+                                                 step="0.0001"
                                                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-right font-mono"
                                                  onChange={(e) => {
                                                    const price = e.target.value;
@@ -2036,34 +2142,58 @@ export default function SalesForm({
                           })()}
                         
                         <div className="mt-4 flex justify-start">
-                          <button
-                            type="button"
-                            onClick={() => push({
-                              _key: `item-${Math.random().toString(36).substring(2, 9)}`,
-                              product: "",
-                              product_name: "",
-                              product_id: null,
-                              description: "",
-                              product_description: "",
-                              quantity: 1,
-                              free_quantity: 0,
-                              batch: "",
-                              unit: "pcs",
-                              price: 0,
-                              discount: 0,
-                              tax: 0,
-                              hsn_sac_code: "",
-                              tax_rate: 0,
-                              amount: 0,
-                              isExistingProduct: false,
-                            })}
-                            className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            Add Item
-                          </button>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => push({
+                                product: "",
+                                product_id: null,
+                                description: "",
+                                product_description: "",
+                                quantity: 1,
+                                free_quantity: 0,
+                                batch: "",
+                                unit: "pcs",
+                                price: 0,
+                                discount: 0,
+                                tax: 0,
+                                hsn_sac_code: "",
+                                tax_rate: 0,
+                                amount: 0,
+                                isExistingProduct: false,
+                              })}
+                              className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                              Add Item
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowDocNote(!showDocNote)}
+                              className="px-3.5 py-2 border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <DocumentTextIcon className="w-4 h-4 text-cyan-400" />
+                              <span>{showDocNote ? "Hide Note" : "+ Add Note"}</span>
+                            </button>
+                          </div>
+
+                          {(showDocNote || values.notes) && (
+                            <div className="mt-3 p-4 bg-white/5 border border-white/10 rounded-xl">
+                              <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-semibold text-gray-300">Document Notes & Terms</label>
+                                <span className="text-[10px] text-gray-500">Will appear in the printed bill footer</span>
+                              </div>
+                              <Field
+                                as="textarea"
+                                name="notes"
+                                rows={2}
+                                placeholder="Enter delivery instructions, terms & conditions, client reference, or remarks..."
+                                className="w-full bg-[#111] border border-white/10 rounded-lg p-2.5 text-xs text-white placeholder-gray-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                              />
+                            </div>
+                          )}
                         </div>
                         </div>
                       );
@@ -2191,6 +2321,52 @@ export default function SalesForm({
               </Form>
             );
           }}
+        
+        {/* Catalog Sync Prompt Modal */}
+        {catalogSyncModal && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-[#18181b] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400">
+                  <ArrowPathIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Sync Catalog Product</h3>
+                  <p className="text-xs text-gray-400">"{catalogSyncModal.name}"</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                You modified item details for this line. Would you like to update the existing catalog master record or save this configuration as a new product in your inventory?
+              </p>
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleUpdateCatalogItem}
+                  className="w-full py-2.5 px-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
+                >
+                  <span>Update Catalog Item</span>
+                  <span className="text-[10px] text-cyan-400/70">Overwrites master price/HSN/tax</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAsNewCatalogItem}
+                  className="w-full py-2.5 px-4 bg-purple-500/20 border border-purple-500/40 hover:bg-purple-500/30 text-purple-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
+                >
+                  <span>Save as New Product</span>
+                  <span className="text-[10px] text-purple-400/70">Creates new catalog variant</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCatalogSyncModal(null)}
+                  className="w-full py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white text-xs rounded-xl transition-colors text-center"
+                >
+                  Keep For This Invoice Only
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         </Formik>
 
         {productCreationState && (

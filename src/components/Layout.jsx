@@ -35,12 +35,31 @@ import {
   AdjustmentsHorizontalIcon,
   GiftIcon,
   TruckIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
+  const [collapsedSections, setCollapsedSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sidebar_collapsed_sections");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleSection = (title) => {
+    setCollapsedSections((prev) => {
+      const updated = { ...prev, [title]: !prev[title] };
+      try {
+        localStorage.setItem("sidebar_collapsed_sections", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
   const handleSignOut = () => {
     if (onLogout) {
       onLogout();
@@ -328,66 +347,81 @@ export default function Layout({ children, onLogout }) {
         </div>
         
         {/* Navigation — scrollable middle section */}
-        <nav className="flex-1 min-h-0 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
-          {filteredGroups.map((group, groupIdx) => (
-            <div key={groupIdx} className="space-y-1">
-              {/* Category Header */}
-              <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-3">
-                {group.title}
-              </h3>
-              
-              {/* Category Items */}
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
+        <nav className="flex-1 min-h-0 px-4 py-6 space-y-5 overflow-y-auto custom-scrollbar">
+          {filteredGroups.map((group, groupIdx) => {
+            const hasActiveItem = group.items.some((item) => location.pathname === item.path);
+            const isCollapsed = !hasActiveItem && Boolean(collapsedSections[group.title]);
 
-                const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-                }`;
+            return (
+              <div key={groupIdx} className="space-y-1">
+                {/* Category Header */}
+                <button
+                  type="button"
+                  onClick={() => toggleSection(group.title)}
+                  className="w-full flex items-center justify-between px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500/90 hover:text-gray-200 transition-colors group mb-1 cursor-pointer select-none"
+                  title={isCollapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
+                >
+                  <span>{group.title}</span>
+                  <ChevronDownIcon
+                    className={`w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 transition-transform duration-200 ${
+                      isCollapsed ? "-rotate-90" : "rotate-0"
+                    }`}
+                  />
+                </button>
                 
-                if (isLocked) {
+                {/* Category Items */}
+                {!isCollapsed && group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
+
+                  const baseClass = `flex items-center gap-3 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                  }`;
+                  
+                  if (isLocked) {
+                    return (
+                      <button
+                        key={item.path}
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                        title={lockDescription}
+                        onClick={() => setUpgradeModal({
+                          open: true,
+                          title: 'Upgrade required',
+                          featureName: item.label,
+                          description: item.upgradeText || lockDescription,
+                          targetPlanName: item.upgradePlan || 'Pro',
+                          targetPlanCode: resolvePlanCode(item.upgradePlan),
+                          ctaLabel: '',
+                          subtitle: '',
+                        })}
+                        className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
+                      >
+                        <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                        <span className="text-sm flex-1">{item.label}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                      </button>
+                    );
+                  }
+
                   return (
-                    <button
+                    <Link 
                       key={item.path}
-                      type="button"
-                      disabled
-                      aria-disabled="true"
-                      title={lockDescription}
-                      onClick={() => setUpgradeModal({
-                        open: true,
-                        title: 'Upgrade required',
-                        featureName: item.label,
-                        description: item.upgradeText || lockDescription,
-                        targetPlanName: item.upgradePlan || 'Pro',
-                        targetPlanCode: resolvePlanCode(item.upgradePlan),
-                        ctaLabel: '',
-                        subtitle: '',
-                      })}
-                      className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
+                      to={item.path} 
+                      className={baseClass}
                     >
                       <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                      <span className="text-sm flex-1">{item.label}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
-                    </button>
+                      <span className="text-sm">{item.label}</span>
+                    </Link>
                   );
-                }
-
-                return (
-                  <Link 
-                    key={item.path}
-                    to={item.path} 
-                    className={baseClass}
-                  >
-                    <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                })}
+              </div>
+            );
+          })}
         </nav>
         
         {/* Bottom section — always visible, never scrolls away */}
@@ -491,78 +525,92 @@ export default function Layout({ children, onLogout }) {
               </button>
             </div>
             
-            <nav className="flex-1 min-h-0 px-4 py-6 space-y-6 overflow-y-auto custom-scrollbar">
-              {filteredGroups.map((group, groupIdx) => (
-                <div key={groupIdx} className="space-y-1">
-                  <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-2">
-                    {group.title}
-                  </h3>
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
-                    const baseClass = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                    }`;
-                    
-                    if (isLocked) {
-                      return (
-                        <button
-                          key={item.path}
-                          type="button"
-                          disabled
-                          aria-disabled="true"
-                          title={lockDescription}
-                          onClick={() => setUpgradeModal({
-                            open: true,
-                            title: 'Upgrade required',
-                            featureName: item.label,
-                            description: item.upgradeText || lockDescription,
-                            targetPlanName: item.upgradePlan || 'Pro',
-                            targetPlanCode: resolvePlanCode(item.upgradePlan),
-                            ctaLabel: '',
-                            subtitle: '',
-                          })}
-                          className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
-                        >
-                          <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                          <span className="text-sm flex-1">{item.label}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
-                        </button>
-                      );
-                    }
+            <nav className="flex-1 min-h-0 px-4 py-6 space-y-4 overflow-y-auto custom-scrollbar">
+              {filteredGroups.map((group, groupIdx) => {
+                const hasActiveItem = group.items.some((item) => location.pathname === item.path);
+                const isCollapsed = !hasActiveItem && Boolean(collapsedSections[group.title]);
 
-                    if (item.isComingSoon) {
+                return (
+                  <div key={groupIdx} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(group.title)}
+                      className="w-full flex items-center justify-between px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500/90 hover:text-gray-200 transition-colors group mb-1 cursor-pointer select-none"
+                    >
+                      <span>{group.title}</span>
+                      <ChevronDownIcon
+                        className={`w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 transition-transform duration-200 ${
+                          isCollapsed ? "-rotate-90" : "rotate-0"
+                        }`}
+                      />
+                    </button>
+                    {!isCollapsed && group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
+                      const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                          : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                      }`;
+                      
+                      if (isLocked) {
+                        return (
+                          <button
+                            key={item.path}
+                            type="button"
+                            disabled
+                            aria-disabled="true"
+                            title={lockDescription}
+                            onClick={() => setUpgradeModal({
+                              open: true,
+                              title: 'Upgrade required',
+                              featureName: item.label,
+                              description: item.upgradeText || lockDescription,
+                              targetPlanName: item.upgradePlan || 'Pro',
+                              targetPlanCode: resolvePlanCode(item.upgradePlan),
+                              ctaLabel: '',
+                              subtitle: '',
+                            })}
+                            className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
+                          >
+                            <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                            <span className="text-sm flex-1">{item.label}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                          </button>
+                        );
+                      }
+
+                      if (item.isComingSoon) {
+                        return (
+                          <Link 
+                            key={item.label}
+                            to="/coming-soon"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={baseClass}
+                          >
+                            <Icon className="w-5 h-5 text-gray-500" />
+                            <span className="text-sm flex-1">{item.label}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">Soon</span>
+                          </Link>
+                        );
+                      }
+
                       return (
                         <Link 
-                          key={item.label}
-                          to="/coming-soon"
+                          key={item.path}
+                          to={item.path} 
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={baseClass}
                         >
-                          <Icon className="w-5 h-5 text-gray-500" />
-                          <span className="text-sm flex-1">{item.label}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">Soon</span>
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                          <span className="text-sm">{item.label}</span>
                         </Link>
                       );
-                    }
-
-                    return (
-                      <Link 
-                        key={item.path}
-                        to={item.path} 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={baseClass}
-                      >
-                        <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                        <span className="text-sm">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+                    })}
+                  </div>
+                );
+              })}
             </nav>
 
             {/* Bottom section — always pinned */}

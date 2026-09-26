@@ -86,6 +86,12 @@ const InvoicePreview = forwardRef(({
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
   
+  const isDeliveryChallan = 
+    invoice.document_type === 'delivery_challan' || 
+    invoice.is_delivery_challan || 
+    content.invoiceTitle === 'DELIVERY CHALLAN' || 
+    Boolean(invoice.challan_number && !invoice.invoice_number);
+
   // Dynamic styles
   const paperStyle = {
     fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif',
@@ -95,6 +101,9 @@ const InvoicePreview = forwardRef(({
     color: colors.text || '#333333',
     transform: `scale(${scale})`,
     transformOrigin: 'top left',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '297mm',
   };
   
   const headerStyle = {
@@ -147,7 +156,7 @@ const InvoicePreview = forwardRef(({
   };
 
   const getColumnLabel = (col) => {
-    if (col.id === 'serial') return 'S. No';
+    if (col.id === 'serial') return 'Sl.';
     return col.label;
   };
   
@@ -302,17 +311,57 @@ const InvoicePreview = forwardRef(({
         )}
       </div>
       
-      {/* Invoice Details Row */}
+      {/* Invoice / Challan Details Row */}
       <div className="flex justify-between mb-4 text-sm">
         <div className="space-y-1">
-          <div><span className="font-medium">Invoice #:</span> <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span></div>
-          <div><span className="font-medium">Date:</span> {invoiceDate}</div>
-          {poNumber && <div><span className="font-medium">PO:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
-          {challanNumber && <div><span className="font-medium">Challan:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
+          <div>
+            <span className="font-medium">{isDeliveryChallan ? 'Challan #:' : 'Invoice #:'}</span>{' '}
+            <span className="font-bold" style={{ color: colors.primary }}>
+              {isDeliveryChallan ? (challanNumber || invoiceNumber) : invoiceNumber}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium">{isDeliveryChallan ? 'Challan Date:' : 'Date:'}</span>{' '}
+            {isDeliveryChallan ? (challanDate || invoiceDate) : invoiceDate}
+          </div>
+          {isDeliveryChallan ? (
+            (invoice.sales_order_number || poNumber) && (
+              <div>
+                <span className="font-medium">Ref Order:</span>{' '}
+                {invoice.sales_order_number || poNumber}
+              </div>
+            )
+          ) : (
+            <>
+              {poNumber && <div><span className="font-medium">PO:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
+              {challanNumber && <div><span className="font-medium">Challan:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
+            </>
+          )}
         </div>
         <div className="text-right space-y-1">
-          {sections.showDueDate && dueDate && (
-            <div><span className="font-medium">Due Date:</span> {dueDate}</div>
+          {isDeliveryChallan ? (
+            <>
+              {invoice.vehicle_number && (
+                <div>
+                  <span className="font-medium">Vehicle No:</span>{' '}
+                  <span className="font-mono font-bold text-gray-800">{invoice.vehicle_number}</span>
+                </div>
+              )}
+              {invoice.transport_mode && (
+                <div>
+                  <span className="font-medium">Transport Mode:</span> {invoice.transport_mode}
+                </div>
+              )}
+              {invoice.transporter_name && (
+                <div>
+                  <span className="font-medium">Transporter:</span> {invoice.transporter_name}
+                </div>
+              )}
+            </>
+          ) : (
+            sections.showDueDate && dueDate && (
+              <div><span className="font-medium">Due Date:</span> {dueDate}</div>
+            )
           )}
         </div>
       </div>
@@ -321,274 +370,349 @@ const InvoicePreview = forwardRef(({
       
       {/* Items Table */}
       <div className="mb-5">
-        <table 
-          className="w-full border-collapse"
-          style={{ 
-            borderRadius: styles.borderRadius || 0,
-            overflow: 'hidden',
-            tableLayout: 'fixed',
-          }}
-        >
-          <colgroup>
-            {visibleColumns.map((col) => (
-              <col key={col.id} style={{ width: getColumnWidth(col.id) }} />
-            ))}
-          </colgroup>
-          <thead style={{ display: 'table-header-group' }}>
-            <tr style={tableHeaderStyle}>
-              {visibleColumns.map(col => (
-                <th 
-                  key={col.id}
-                  className="px-3 py-2 font-bold border"
-                  style={{ 
-                    width: getColumnWidth(col.id),
-                    textAlign: col.align || 'left',
-                    borderColor: colors.tableBorder,
-                    fontSize: `${typography.smallSize || 10}px`,
-                  }}
-                >
-                  {getColumnLabel(col)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.length > 0 ? items.map((item, index) => {
-              const qty = parseFloat(item.quantity || 0);
-              const price = parseFloat(item.price || 0);
-              const tax = parseFloat(item.tax || 0);
-              const discount = parseFloat(item.discount || 0);
-              const amount = qty * price;
-              
-              return (
-                <tr 
-                  key={index}
-                  style={{
-                    backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
-                      ? colors.tableStripe 
-                      : 'transparent',
-                  }}
-                >
-                  {visibleColumns.map(col => {
-                    let value = '';
-                    switch(col.id) {
-                      case 'serial': value = index + 1; break;
-                      case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
-                      case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
-                      case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;
-                      case 'quantity': value = qty; break;
-                      case 'free_qty': value = item.free_quantity || 0; break;
-                      case 'unit': value = item.unit || 'pcs'; break;
-                      case 'price': value = `${getCurrencySymbol()}${price.toFixed(2)}`; break;
-                      case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
-                      case 'tax': value = `${tax}%`; break;
-                      case 'amount': value = `${getCurrencySymbol()}${amount.toFixed(2)}`; break;
-                      default: value = '';
-                    }
-                    
-                    return (
-                      <td 
-                        key={col.id}
-                        className="px-2 py-1 border align-top"
-                        style={{ 
-                          textAlign: col.align || 'left',
-                          borderColor: colors.tableBorder,
-                          fontSize: `${typography.bodySize || 11}px`,
-                          wordBreak: col.id === 'description' ? 'break-word' : 'normal',
-                          whiteSpace: col.id === 'description' ? 'normal' : 'nowrap',
-                          verticalAlign: 'top',
-                        }}
-                      >
-                        {col.id === 'description' ? (
-                          <div>
-                            <div>{item.product_detail?.name || item.product_name || item.product || ''}</div>
-                            {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
-                              <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', wordBreak: 'break-word' }}>
-                                {item.description || item.product_description || item.product_detail?.description}
-                              </div>
-                            ) : null}
-                            {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                              <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', fontWeight: 500 }}>
-                                {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
-                                {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
-                                {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : value}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            }) : (
-              <tr>
-                <td 
-                  colSpan={visibleColumns.length}
-                  className="text-center py-8 text-gray-400"
-                >
-                  No items added yet
-                </td>
+        {isDeliveryChallan ? (
+          <table 
+            className="w-full border-collapse"
+            style={{ 
+              borderRadius: styles.borderRadius || 0,
+              overflow: 'hidden',
+              tableLayout: 'fixed',
+            }}
+          >
+            <thead style={{ display: 'table-header-group' }}>
+              <tr style={tableHeaderStyle}>
+                <th className="px-3 py-2 font-bold border text-center" style={{ width: '8%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Sl.</th>
+                <th className="px-3 py-2 font-bold border text-left" style={{ width: '48%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Item & Description</th>
+                <th className="px-3 py-2 font-bold border text-center" style={{ width: '14%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Qty</th>
+                <th className="px-3 py-2 font-bold border text-left" style={{ width: '15%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Make</th>
+                <th className="px-3 py-2 font-bold border text-left" style={{ width: '15%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Pack Size</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* Bottom Section - Bank Details & Totals */}
-      <div className="flex justify-between gap-6 mb-2">
-        {/* Bank Details - Left */}
-        {sections.showBankDetails && (
-          <div className="flex-1">
-            <h4 
-              className="font-bold mb-2 pb-1"
-              style={{ 
-                color: colors.secondary,
-                fontSize: `${typography.sectionTitleSize || 12}px`,
-                borderBottom: `1px solid ${colors.tableBorder}`,
-              }}
-            >
-              Our Bank Details:
-            </h4>
-            <div className="space-y-1 text-sm" style={{ color: colors.lightText }}>
-              {content.bankDetails?.bankName && (
-                <p><span className="font-medium">Bank Name:</span> {content.bankDetails.bankName}</p>
-              )}
-              {content.bankDetails?.accountNumber && (
-                <p><span className="font-medium">Account Number:</span> {content.bankDetails.accountNumber}</p>
-              )}
-              {content.bankDetails?.ifscCode && (
-                <p><span className="font-medium">NEFT/IFSC Code:</span> {content.bankDetails.ifscCode}</p>
-              )}
-              {content.bankDetails?.accountHolder && (
-                <p><span className="font-medium">Name:</span> {content.bankDetails.accountHolder}</p>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* Totals - Right */}
-        <div className="w-80">
-          <table className="w-full border-collapse text-sm">
+            </thead>
             <tbody>
-              <tr>
-                <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
-                  Untaxed Amount
-                </td>
-                <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                  {getCurrencySymbol()}{subtotal.toFixed(2)}
-                </td>
-              </tr>
-              {isIGST ? (
-                <tr>
-                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
-                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
-                </tr>
-              ) : (
-                <>
-                  <tr>
-                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+              {items.length > 0 ? items.map((item, index) => {
+                const qty = item.quantity || 0;
+                const unit = item.unit || 'pcs';
+                const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
+                const desc = item.description || item.product_description || item.product_detail?.description;
+                return (
+                  <tr 
+                    key={index}
+                    style={{
+                      backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
+                        ? colors.tableStripe 
+                        : 'transparent',
+                    }}
+                  >
+                    <td className="px-2 py-2 border text-center align-top font-medium" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                      {index + 1}
+                    </td>
+                    <td className="px-3 py-2 border align-top" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                      <div className="font-semibold text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                      {desc && (
+                        <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-relaxed" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
+                          {desc}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-2 py-2 border text-center align-top font-semibold text-gray-900" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                      {qty} {unit}
+                    </td>
+                    <td className="px-2 py-2 border align-top text-gray-700" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                      {make}
+                    </td>
+                    <td className="px-2 py-2 border align-top text-gray-700" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                      {packSize}
+                    </td>
                   </tr>
-                  <tr>
-                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
-                  </tr>
-                </>
-              )}
-              {roundOff !== 0 && (
+                );
+              }) : (
                 <tr>
-                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
-                    Round Off
-                  </td>
-                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                    {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                  <td colSpan={5} className="text-center py-8 text-gray-400">
+                    No items added yet
                   </td>
                 </tr>
               )}
-              <tr style={totalRowStyle}>
-                <td className="px-3 py-3 border font-bold">
-                  Grand Total
-                </td>
-                <td className="px-3 py-3 border text-right font-bold text-lg">
-                  {getCurrencySymbol()}{finalTotal.toFixed(2)}
-                </td>
-              </tr>
             </tbody>
           </table>
+        ) : (
+          <table 
+            className="w-full border-collapse"
+            style={{ 
+              borderRadius: styles.borderRadius || 0,
+              overflow: 'hidden',
+              tableLayout: 'fixed',
+            }}
+          >
+            <colgroup>
+              {visibleColumns.map((col) => (
+                <col key={col.id} style={{ width: getColumnWidth(col.id) }} />
+              ))}
+            </colgroup>
+            <thead style={{ display: 'table-header-group' }}>
+              <tr style={tableHeaderStyle}>
+                {visibleColumns.map(col => (
+                  <th 
+                    key={col.id}
+                    className="px-3 py-2 font-bold border"
+                    style={{ 
+                      width: getColumnWidth(col.id),
+                      textAlign: col.align || 'left',
+                      borderColor: colors.tableBorder,
+                      fontSize: `${typography.smallSize || 10}px`,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {getColumnLabel(col)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.length > 0 ? items.map((item, index) => {
+                const qty = parseFloat(item.quantity || 0);
+                const price = parseFloat(item.price || 0);
+                const tax = parseFloat(item.tax || 0);
+                const discount = parseFloat(item.discount || 0);
+                const amount = qty * price;
+                
+                return (
+                  <tr 
+                    key={index}
+                    style={{
+                      backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
+                        ? colors.tableStripe 
+                        : 'transparent',
+                    }}
+                  >
+                    {visibleColumns.map(col => {
+                      let value = '';
+                      switch(col.id) {
+                        case 'serial': value = index + 1; break;
+                        case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
+                        case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
+                        case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;
+                        case 'quantity': value = qty; break;
+                        case 'free_qty': value = item.free_quantity || 0; break;
+                        case 'unit': value = item.unit || 'pcs'; break;
+                        case 'price': value = `${getCurrencySymbol()}${price.toFixed(2)}`; break;
+                        case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
+                        case 'tax': value = `${Math.round(tax)}%`; break;
+                        case 'amount': value = `${getCurrencySymbol()}${amount.toFixed(2)}`; break;
+                        default: value = '';
+                      }
+                      
+                      return (
+                        <td 
+                          key={col.id}
+                          className="px-2 py-1 border align-top"
+                          style={{ 
+                            textAlign: col.align || 'left',
+                            borderColor: colors.tableBorder,
+                            fontSize: `${typography.bodySize || 11}px`,
+                            wordBreak: col.id === 'description' ? 'break-word' : 'normal',
+                            whiteSpace: col.id === 'description' ? 'normal' : 'nowrap',
+                            verticalAlign: 'top',
+                          }}
+                        >
+                          {col.id === 'description' ? (
+                            <div>
+                              <div>{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                              {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
+                                <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', wordBreak: 'break-word' }}>
+                                  {item.description || item.product_description || item.product_detail?.description}
+                                </div>
+                              ) : null}
+                              {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                                <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', fontWeight: 500 }}>
+                                  {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
+                                  {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                                  {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : value}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              }) : (
+                <tr>
+                  <td 
+                    colSpan={visibleColumns.length}
+                    className="text-center py-8 text-gray-400"
+                  >
+                    No items added yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+      
+      {/* Bottom Section - Bank Details & Totals (Hidden for Delivery Challans) */}
+      {!isDeliveryChallan && (
+        <div className="flex justify-between gap-6 mb-2">
+          {/* Bank Details - Left */}
+          {sections.showBankDetails && (
+            <div className="flex-1">
+              <h4 
+                className="font-bold mb-2 pb-1"
+                style={{ 
+                  color: colors.secondary,
+                  fontSize: `${typography.sectionTitleSize || 12}px`,
+                  borderBottom: `1px solid ${colors.tableBorder}`,
+                }}
+              >
+                Our Bank Details:
+              </h4>
+              <div className="space-y-1 text-sm" style={{ color: colors.lightText }}>
+                {content.bankDetails?.bankName && (
+                  <p><span className="font-medium">Bank Name:</span> {content.bankDetails.bankName}</p>
+                )}
+                {content.bankDetails?.accountNumber && (
+                  <p><span className="font-medium">Account Number:</span> {content.bankDetails.accountNumber}</p>
+                )}
+                {content.bankDetails?.ifscCode && (
+                  <p><span className="font-medium">NEFT/IFSC Code:</span> {content.bankDetails.ifscCode}</p>
+                )}
+                {content.bankDetails?.accountHolder && (
+                  <p><span className="font-medium">Name:</span> {content.bankDetails.accountHolder}</p>
+                )}
+              </div>
+            </div>
+          )}
           
-          {/* Amount in Words */}
-          {sections.showAmountInWords && (
-            <div className="mt-3 text-xs text-right" style={{ color: colors.lightText }}>
-              <span className="font-medium">Total amount in words:</span>
-              <br />
-              <span className="font-semibold" style={{ color: colors.text }}>
-                {amountInWords(finalTotal)}
-              </span>
+          {/* Totals - Right */}
+          <div className="w-80">
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                <tr>
+                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                    Untaxed Amount
+                  </td>
+                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
+                    {getCurrencySymbol()}{subtotal.toFixed(2)}
+                  </td>
+                </tr>
+                {isIGST ? (
+                  <tr>
+                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
+                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
+                  </tr>
+                ) : (
+                  <>
+                    <tr>
+                      <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
+                      <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
+                      <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                    </tr>
+                  </>
+                )}
+                {roundOff !== 0 && (
+                  <tr>
+                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                      Round Off
+                    </td>
+                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
+                      {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
+                <tr style={totalRowStyle}>
+                  <td className="px-3 py-3 border font-bold">
+                    Grand Total
+                  </td>
+                  <td className="px-3 py-3 border text-right font-bold text-lg">
+                    {getCurrencySymbol()}{finalTotal.toFixed(2)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            {/* Amount in Words */}
+            {sections.showAmountInWords && (
+              <div className="mt-3 text-xs text-right" style={{ color: colors.lightText }}>
+                <span className="font-medium">Total amount in words:</span>
+                <br />
+                <span className="font-semibold" style={{ color: colors.text }}>
+                  {amountInWords(finalTotal)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Bottom Anchored Footer Section */}
+      <div className="mt-auto">
+        {/* Terms & Signature Row */}
+        <div className="flex justify-between gap-6 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
+          {/* Terms */}
+          {sections.showTerms && content.termsAndConditions?.length > 0 && (
+            <div className="flex-1">
+              <h4 
+                className="font-bold mb-2"
+                style={{ 
+                  color: colors.secondary,
+                  fontSize: `${typography.sectionTitleSize || 12}px`,
+                }}
+              >
+                Terms & Conditions
+              </h4>
+              <ul className="space-y-1 text-xs" style={{ color: colors.lightText }}>
+                {content.termsAndConditions.map((term, i) => (
+                  <li key={i}>• {term}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* Signature */}
+          {sections.showSignature && (
+            <div className="w-48 text-center ml-auto">
+              <div 
+                className="border-b-2 mb-2 h-16"
+                style={{ borderColor: colors.text }}
+              />
+              <p className="text-xs font-medium" style={{ color: colors.secondary }}>
+                {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+              </p>
             </div>
           )}
         </div>
-      </div>
-      
-      {/* Terms & Signature Row */}
-      <div className="flex justify-between gap-6 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
-        {/* Terms */}
-        {sections.showTerms && content.termsAndConditions?.length > 0 && (
-          <div className="flex-1">
-            <h4 
-              className="font-bold mb-2"
-              style={{ 
-                color: colors.secondary,
-                fontSize: `${typography.sectionTitleSize || 12}px`,
-              }}
-            >
-              Terms & Conditions
-            </h4>
-            <ul className="space-y-1 text-xs" style={{ color: colors.lightText }}>
-              {content.termsAndConditions.map((term, i) => (
-                <li key={i}>• {term}</li>
-              ))}
-            </ul>
+        
+        {/* Footer Note */}
+        {content.footerNote && (
+          <div 
+            className="text-center mt-6 pt-3 text-xs"
+            style={{ 
+              color: colors.lightText,
+              borderTop: `1px dashed ${colors.tableBorder}`,
+            }}
+          >
+            {content.footerNote}
           </div>
         )}
         
-        {/* Signature */}
-        {sections.showSignature && (
-          <div className="w-48 text-center">
-            <div 
-              className="border-b-2 mb-2 h-16"
-              style={{ borderColor: colors.text }}
-            />
-            <p className="text-xs font-medium" style={{ color: colors.secondary }}>
-              {content.signatureLabel || 'Authorized Signatory'}
-            </p>
+        <div className="mt-3 pt-2 text-center text-[10px] text-gray-500 font-medium">
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
+        </div>
+        
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
           </div>
         )}
       </div>
-      
-      {/* Footer */}
-      {content.footerNote && (
-        <div 
-          className="text-center mt-8 pt-4 text-xs"
-          style={{ 
-            color: colors.lightText,
-            borderTop: `1px dashed ${colors.tableBorder}`,
-          }}
-        >
-          {content.footerNote}
-        </div>
-      )}
-      
-      <div className="mt-4 pt-2 text-center text-[10px] text-gray-500 font-medium">
-        This is a computer generated digital invoice and does not require a signature.
-      </div>
-      
-      {showWatermarkFooter && (
-        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
-          Made with Cenvora: Built for Modern Businesses<br />
-          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
-        </div>
-      )}
     </div>
   );
 });

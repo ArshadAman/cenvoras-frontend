@@ -7,11 +7,30 @@ import {
   CalendarIcon, 
   ChartBarIcon, 
   ShoppingBagIcon,
-  ExclamationTriangleIcon 
+  ExclamationTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from "@heroicons/react/24/outline";
 
 export default function SalesSummary() {
   const [dateFilter, setDateFilter] = useState("today"); // "today", "month", "custom"
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sales_analytics_collapsed") === "true";
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sales_analytics_collapsed", String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   const formatLocalDate = (dateObj) => {
     const y = dateObj.getFullYear();
@@ -133,40 +152,57 @@ export default function SalesSummary() {
     <div className="space-y-6 mb-8 mt-2">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#111] border border-white/10">
          <div className="flex items-center gap-4">
-             <h3 className="text-white font-medium">Analytics Filter</h3>
-             <select 
-               className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
-               value={dateFilter}
-               onChange={e => setDateFilter(e.target.value)}
-             >
-                <option value="today">Today</option>
-                <option value="month">This Month</option>
-                <option value="custom">Custom Date Range</option>
-             </select>
+             <h3 className="text-white font-medium">Sales Analytics</h3>
+             {!isCollapsed && (
+               <select 
+                 className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                 value={dateFilter}
+                 onChange={e => setDateFilter(e.target.value)}
+               >
+                  <option value="today">Today</option>
+                  <option value="month">This Month</option>
+                  <option value="custom">Custom Date Range</option>
+               </select>
+             )}
          </div>
 
-         {dateFilter === "custom" && (
-             <div className="flex items-center gap-2">
-                <input 
-                  type="date"
-                  min={minDate}
-                  max={maxDate}
-                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
-                  value={customRange.start}
-                  onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
-                />
-                <span className="text-gray-500">to</span>
-                <input 
-                  type="date"
-                  min={customRange.start || minDate}
-                  max={maxDate}
-                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
-                  value={customRange.end}
-                  onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
-                />
-             </div>
+         <div className="flex items-center gap-3">
+           <button
+             type="button"
+             onClick={toggleCollapse}
+             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer"
+             title={isCollapsed ? "Expand Analytics" : "Collapse Analytics to reclaim space"}
+           >
+             <span>{isCollapsed ? "Show Analytics" : "Hide Analytics"}</span>
+             {isCollapsed ? <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUpIcon className="w-3.5 h-3.5 text-gray-400" />}
+           </button>
+         </div>
+
+         {!isCollapsed && dateFilter === "custom" && (
+           <div className="flex items-center gap-2">
+              <input 
+                type="date"
+                min={minDate}
+                max={maxDate}
+                className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                value={customRange.start}
+                onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+              />
+              <span className="text-gray-500">to</span>
+              <input 
+                type="date"
+                min={customRange.start || minDate}
+                max={maxDate}
+                className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
+                value={customRange.end}
+                onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+              />
+           </div>
          )}
       </div>
+
+      {!isCollapsed && (
+        <>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -261,6 +297,8 @@ export default function SalesSummary() {
            )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

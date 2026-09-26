@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ArrowsUpDownIcon,
+} from '@heroicons/react/24/outline';
 import {
   convertQuotationToSalesOrder,
   deleteQuotation,
@@ -14,6 +19,8 @@ export default function QuotationTable({ onEdit, onView }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [convertTarget, setConvertTarget] = useState(null);
+  const [sortField, setSortField] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const { data, isLoading } = useQuery({
     queryKey: ['quotations', search, status],
@@ -21,6 +28,43 @@ export default function QuotationTable({ onEdit, onView }) {
   });
 
   const rows = Array.isArray(data) ? data : data?.results || data?.data || [];
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      let valA = '';
+      let valB = '';
+      if (sortField === 'number') {
+        valA = a.quotation_number || a.invoice_number || '';
+        valB = b.quotation_number || b.invoice_number || '';
+      } else if (sortField === 'date') {
+        const timeA = new Date(a.quotation_date || a.invoice_date || 0).getTime();
+        const timeB = new Date(b.quotation_date || b.invoice_date || 0).getTime();
+        return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+      } else if (sortField === 'customer') {
+        valA = (a.customer_name || '').toLowerCase();
+        valB = (b.customer_name || '').toLowerCase();
+      } else if (sortField === 'amount') {
+        const numA = Number(a.total_amount || 0);
+        const numB = Number(b.total_amount || 0);
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      } else if (sortField === 'status') {
+        valA = (a.status || '').toLowerCase();
+        valB = (b.status || '').toLowerCase();
+      }
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [rows, sortField, sortOrder]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteQuotation,
@@ -88,17 +132,77 @@ export default function QuotationTable({ onEdit, onView }) {
           <div className="hidden lg:block overflow-x-auto">
             <table className="min-w-full text-sm border-separate border-spacing-y-2">
               <thead>
-                <tr>
-                  <th className="px-4 py-2 text-left text-gray-400">Quotation #</th>
-                  <th className="px-4 py-2 text-left text-gray-400">Date</th>
-                  <th className="px-4 py-2 text-left text-gray-400">Customer</th>
-                  <th className="px-4 py-2 text-left text-gray-400">Amount</th>
-                  <th className="px-4 py-2 text-left text-gray-400">Status</th>
-                  <th className="px-4 py-2 text-left text-gray-400">Actions</th>
+                <tr className="border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  <th
+                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    onClick={() => handleSort('number')}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Quotation #</span>
+                      {sortField === 'number' ? (
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : (
+                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    onClick={() => handleSort('date')}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Date</span>
+                      {sortField === 'date' ? (
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : (
+                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    onClick={() => handleSort('customer')}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Customer</span>
+                      {sortField === 'customer' ? (
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : (
+                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    onClick={() => handleSort('amount')}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Amount</span>
+                      {sortField === 'amount' ? (
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : (
+                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Status</span>
+                      {sortField === 'status' ? (
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : (
+                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-gray-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((q) => (
+                {sortedRows.map((q) => (
                   <tr key={q.id} className="border-b border-white/5">
                     <td className="px-4 py-3 text-white font-medium">{q.quotation_number || q.invoice_number}</td>
                     <td className="px-4 py-3 text-gray-300">{q.quotation_date || q.invoice_date}</td>
@@ -143,12 +247,12 @@ export default function QuotationTable({ onEdit, onView }) {
 
           {/* Mobile Card Layout */}
           <div className="lg:hidden space-y-3 px-2">
-            {rows.length === 0 ? (
+            {sortedRows.length === 0 ? (
               <div className="text-center py-12 text-gray-400 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
                 No quotations found.
               </div>
             ) : (
-              rows.map((q) => (
+              sortedRows.map((q) => (
                 <div key={q.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">
                   <div className="flex items-start justify-between mb-4">
                     <div>
