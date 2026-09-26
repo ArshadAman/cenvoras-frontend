@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDeliveryChallans, deleteDeliveryChallan, convertToInvoice } from "../../api/delivery_challan";
+import { getDeliveryChallans, deleteDeliveryChallan, convertToInvoice, bulkConvertToInvoice } from "../../api/delivery_challan";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { 
@@ -15,7 +15,8 @@ import {
   ClipboardDocumentListIcon,
   ArrowTopRightOnSquareIcon,
   AdjustmentsHorizontalIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  CurrencyRupeeIcon
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
 
@@ -36,6 +37,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
   const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "open", "invoiced", "cancelled"
   const [page, setPage] = useState(1);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const [selectedChallans, setSelectedChallans] = useState(new Set());
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
 
   const [visibleColumns, setVisibleColumns] = useState(() => {
     try {
@@ -129,6 +132,70 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
     }
   });
 
+  const bulkConvertMutation = useMutation({
+    mutationFn: bulkConvertToInvoice,
+    onSuccess: (resp) => {
+      toast.success(resp?.message || `Successfully converted ${selectedChallans.size} Challans to Invoice!`);
+      setSelectedChallans(new Set());
+      queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+      queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      if (onConvertSuccess) {
+        onConvertSuccess(resp);
+      }
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        err.message ||
+        "Failed to convert challans";
+      toast.error(msg);
+    }
+  });
+
+  const handleBulkConvert = () => {
+    if (selectedChallans.size === 0) return;
+    const selectedList = filteredChallans.filter((c) => selectedChallans.has(c.id));
+    const alreadyBilled = selectedList.filter((c) => c.is_billed || c.status === "invoiced");
+    if (alreadyBilled.length > 0) {
+      toast.error(`Challan(s) ${alreadyBilled.map((c) => c.challan_number).join(", ")} have already been converted.`);
+      return;
+    }
+    const customerKeys = new Set(selectedList.map((c) => c.customer?.id || c.customer_name || ""));
+    if (customerKeys.size > 1) {
+      toast.error("Please select Delivery Challans for the same customer to convert into a single Sales Invoice.");
+      return;
+    }
+    if (window.confirm(`Convert ${selectedChallans.size} selected Delivery Challans into a single consolidated Sales Invoice?`)) {
+      bulkConvertMutation.mutate(Array.from(selectedChallans));
+    }
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedChallans.size === filteredChallans.length && filteredChallans.length > 0) {
+      setSelectedChallans(new Set());
+    } else {
+      setSelectedChallans(new Set(filteredChallans.map((c) => c.id)));
+    }
+  };
+
+  const toggleSelectChallan = (id) => {
+    setSelectedChallans((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleConvert = (challan) => {
     if (challan.is_billed || challan.status === 'invoiced') {
       toast.info("This challan has already been converted to an invoice.");
@@ -187,7 +254,25 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
       if (statusFilterTab === "cancelled") return challan.status === "cancelled";
       return true;
     })
-    .sort((a, b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at));
+    .sort((a, b) => {
+      const dir = sortConfig.direction === "asc" ? 1 : -1;
+      if (sortConfig.key === "date") {
+        return (new Date(a.date || a.created_at) - new Date(b.date || b.created_at)) * dir;
+      }
+      if (sortConfig.key === "challan_number") {
+        return String(a.challan_number || "").localeCompare(String(b.challan_number || "")) * dir;
+      }
+      if (sortConfig.key === "customer_name") {
+        return String(a.customer_name || "").localeCompare(String(b.customer_name || "")) * dir;
+      }
+      if (sortConfig.key === "total_amount") {
+        return (Number(a.total_amount || 0) - Number(b.total_amount || 0)) * dir;
+      }
+      if (sortConfig.key === "status") {
+        return String(a.status || "").localeCompare(String(b.status || "")) * dir;
+      }
+      return 0;
+    });
 
   const statusTabs = [
     { id: "all", label: "All Challans" },
@@ -196,27 +281,42 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
     { id: "cancelled", label: "Cancelled" },
   ];
 
-  const visibleColumnCount = 2 + Object.values(visibleColumns).filter(Boolean).length;
+  const visibleColumnCount = 3 + Object.values(visibleColumns).filter(Boolean).length;
 
   return (
     <div className="space-y-6">
       {/* Controls Header */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-white/5 border border-white/10 rounded-xl overflow-x-auto no-scrollbar">
-          {statusTabs.map((tab) => (
+        {/* Status Filter Tabs & Bulk Actions */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 p-1 bg-white/5 border border-white/10 rounded-xl overflow-x-auto no-scrollbar">
+            {statusTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilterTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  statusFilterTab === tab.id
+                    ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/20"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {selectedChallans.size > 0 && (
             <button
-              key={tab.id}
-              onClick={() => setStatusFilterTab(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                statusFilterTab === tab.id
-                  ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
+              type="button"
+              onClick={handleBulkConvert}
+              disabled={bulkConvertMutation.isLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all cursor-pointer animate-fade-in"
+              title="Convert selected delivery challans into a single consolidated Sales Invoice"
             >
-              {tab.label}
+              <CurrencyRupeeIcon className="w-4 h-4" />
+              <span>Convert to Invoice ({selectedChallans.size})</span>
             </button>
-          ))}
+          )}
         </div>
 
         {/* Search & Columns */}
@@ -283,17 +383,50 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
         <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
             <tr className="bg-white/5 border-b border-white/10 text-left">
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-l-lg">
-                Challan #
+              <th className="px-4 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-l-lg w-10 text-center">
+                <input
+                  type="checkbox"
+                  checked={filteredChallans.length > 0 && selectedChallans.size === filteredChallans.length}
+                  onChange={toggleSelectAll}
+                  className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                  title="Select All"
+                />
+              </th>
+              <th
+                onClick={() => handleSort("challan_number")}
+                className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Challan #</span>
+                  {sortConfig.key === "challan_number" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
               {visibleColumns.date && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Date
+                <th
+                  onClick={() => handleSort("date")}
+                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Date</span>
+                    {sortConfig.key === "date" && (
+                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
                 </th>
               )}
               {visibleColumns.customer && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Customer
+                <th
+                  onClick={() => handleSort("customer_name")}
+                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Customer</span>
+                    {sortConfig.key === "customer_name" && (
+                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
                 </th>
               )}
               {visibleColumns.sales_order && (
@@ -312,13 +445,29 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                 </th>
               )}
               {visibleColumns.total_amount && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Total Value
+                <th
+                  onClick={() => handleSort("total_amount")}
+                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Total Value</span>
+                    {sortConfig.key === "total_amount" && (
+                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
                 </th>
               )}
               {visibleColumns.status && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Status
+                <th
+                  onClick={() => handleSort("status")}
+                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Status</span>
+                    {sortConfig.key === "status" && (
+                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
                 </th>
               )}
               <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg text-right">
@@ -344,11 +493,22 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
             ) : (
               filteredChallans.map((challan) => {
                 const isInvoiced = challan.is_billed || challan.status === "invoiced";
+                const isSelected = selectedChallans.has(challan.id);
                 return (
                   <tr
                     key={challan.id}
-                    className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors"
+                    className={`bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors ${
+                      isSelected ? "bg-cyan-500/5" : ""
+                    }`}
                   >
+                    <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectChallan(challan.id)}
+                        className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <div className="font-bold text-white flex items-center gap-1.5">
                         <TruckIcon className="w-4 h-4 text-cyan-400" />
@@ -505,20 +665,31 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
         ) : (
           filteredChallans.map((challan) => {
             const isInvoiced = challan.is_billed || challan.status === "invoiced";
+            const isSelected = selectedChallans.has(challan.id);
             return (
               <div
                 key={challan.id}
-                className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 space-y-4 hover:bg-white/10 transition-all"
+                className={`bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border p-4 space-y-4 hover:bg-white/10 transition-all ${
+                  isSelected ? "border-cyan-500/50 bg-cyan-500/5" : "border-white/10"
+                }`}
               >
                 {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-base font-bold text-white flex items-center gap-1.5">
-                      <TruckIcon className="w-4 h-4 text-cyan-400" />
-                      #{challan.challan_number}
-                    </div>
-                    <div className="text-[11px] text-gray-400">
-                      {challan.date ? format(new Date(challan.date), "dd MMM, yyyy") : "—"}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelectChallan(challan.id)}
+                      className="mt-1 rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-base font-bold text-white flex items-center gap-1.5">
+                        <TruckIcon className="w-4 h-4 text-cyan-400" />
+                        #{challan.challan_number}
+                      </div>
+                      <div className="text-[11px] text-gray-400">
+                        {challan.date ? format(new Date(challan.date), "dd MMM, yyyy") : "—"}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">

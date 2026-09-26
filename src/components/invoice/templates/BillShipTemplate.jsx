@@ -49,6 +49,12 @@ const BillShipTemplate = forwardRef(({
   const planCode = businessInfo.plan_code || 'free';
   const showWatermarkFooter = planCode !== 'business';
 
+  const isDeliveryChallan = 
+    invoice.document_type === 'delivery_challan' || 
+    invoice.is_delivery_challan || 
+    content.invoiceTitle === 'DELIVERY CHALLAN' || 
+    Boolean(invoice.challan_number && !invoice.invoice_number);
+
   const primaryColor = colors.primary || '#facc15'; // yellow theme border
   const visibleColumns = columns.filter(col => col.show !== false);
 
@@ -60,7 +66,9 @@ const BillShipTemplate = forwardRef(({
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
         fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left',
-        border: `4px solid ${colors.accent || '#3b82f6'}`, borderRadius: '16px' // bold outer border
+        border: `4px solid ${colors.accent || '#3b82f6'}`, borderRadius: '16px',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Header Strip */}
@@ -76,11 +84,30 @@ const BillShipTemplate = forwardRef(({
            </div>
         </div>
         <div className="text-right">
-           <h2 className="text-xl font-bold tracking-widest">{content.invoiceTitle || 'TAX INVOICE'}</h2>
+           <h2 className="text-xl font-bold tracking-widest">{content.invoiceTitle || (isDeliveryChallan ? 'DELIVERY CHALLAN' : 'TAX INVOICE')}</h2>
            <p className="text-xs font-semibold text-gray-500 uppercase mt-1">Original for Recipient</p>
-           <p className="text-sm font-bold mt-3">Invoice #: {invoiceNumber}</p>
-           <p className="text-sm">Invoice Date: {invoiceDate}</p>
-           {invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>}
+           <p className="text-sm font-bold mt-3">
+             {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
+           </p>
+           <p className="text-sm">
+             {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'} {isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}
+           </p>
+           {isDeliveryChallan ? (
+             <>
+               {(invoice.sales_order_number || invoice.po_number) && (
+                 <p className="text-sm text-gray-800 font-semibold mt-1">
+                   Ref Order: {invoice.sales_order_number || invoice.po_number}
+                 </p>
+               )}
+               {invoice.vehicle_number && (
+                 <p className="text-sm font-mono font-bold text-gray-900 mt-1">
+                   Vehicle: {invoice.vehicle_number}
+                 </p>
+               )}
+             </>
+           ) : (
+             invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>
+           )}
         </div>
       </div>
 
@@ -100,153 +127,212 @@ const BillShipTemplate = forwardRef(({
         </div>
       </div>
 
-      <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
-        <thead>
-          <tr className="border-y border-gray-400 bg-gray-50 h-9">
-            {visibleColumns.map((col, idx) => {
-              const isLast = idx === visibleColumns.length - 1;
-              const isNum = ['price', 'amount'].includes(col.id);
-              const isDesc = col.id === 'description';
-              const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
-              const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '10%' : '14%';
+      {/* Items Table */}
+      {isDeliveryChallan ? (
+        <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
+          <thead>
+            <tr className="border-y border-gray-400 bg-gray-50 h-9">
+              <th className="py-2 text-xs font-bold uppercase tracking-widest text-gray-700 text-center px-2 border-r border-gray-300" style={{ width: '8%', whiteSpace: 'nowrap' }}>Sl.</th>
+              <th className="py-2 text-xs font-bold uppercase tracking-widest text-gray-700 text-left px-3 border-r border-gray-300" style={{ width: '48%', whiteSpace: 'nowrap' }}>Item & Description</th>
+              <th className="py-2 text-xs font-bold uppercase tracking-widest text-gray-700 text-center px-2 border-r border-gray-300" style={{ width: '14%', whiteSpace: 'nowrap' }}>Qty</th>
+              <th className="py-2 text-xs font-bold uppercase tracking-widest text-gray-700 text-left px-3 border-r border-gray-300" style={{ width: '15%', whiteSpace: 'nowrap' }}>Make</th>
+              <th className="py-2 text-xs font-bold uppercase tracking-widest text-gray-700 text-left px-3" style={{ width: '15%', whiteSpace: 'nowrap' }}>Pack Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => {
+              const qty = item.quantity || 0;
+              const unit = item.unit || 'pcs';
+              const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+              const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
+              const desc = item.description || item.product_description || item.product_detail?.description;
               return (
-                <th key={col.id} className={`py-2 text-xs font-bold uppercase tracking-widest text-gray-700 ${alignClass} ${!isLast ? 'border-r border-gray-300' : ''}`} style={{ width: colWidth }}>
-                  {col.label}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, idx) => (
-            <tr key={idx} className="border-b border-gray-200">
-            {visibleColumns.map((col, cIdx) => {
-              const isLast = cIdx === visibleColumns.length - 1;
-              const isNum = ['price', 'amount'].includes(col.id);
-              const isDesc = col.id === 'description';
-              const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
-              let val = '';
-              if(col.id==='serial') val = idx+1;
-              else if(col.id==='description') {
-                const desc = item.description || item.product_description || item.product_detail?.description;
-                val = (
-                  <div className="py-1">
+                <tr key={idx} className="border-b border-gray-200">
+                  <td className="py-2 align-top text-center px-2 border-r border-gray-200 text-xs font-medium">{idx + 1}</td>
+                  <td className="py-2 align-top text-left px-3 border-r border-gray-200">
                     <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                     {desc && (
                       <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
-                    {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                      <div className="text-[10px] text-gray-500 mt-1 font-medium">
-                        {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
-                        {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
-                        {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              }
-              else if(col.id==='quantity') val = item.quantity;
-              else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
-              else if(col.id==='tax') val = `${item.tax||0}%`;
-              else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
-              else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-              return <td key={col.id} className={`py-1 align-top ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`} style={{ verticalAlign: 'top' }}>{val}</td>;
+                  </td>
+                  <td className="py-2 align-top text-center px-2 border-r border-gray-200 text-xs font-bold text-gray-900">{qty} {unit}</td>
+                  <td className="py-2 align-top text-left px-3 border-r border-gray-200 text-xs text-gray-700">{make}</td>
+                  <td className="py-2 align-top text-left px-3 text-xs text-gray-700">{packSize}</td>
+                </tr>
+              );
             })}
+          </tbody>
+        </table>
+      ) : (
+        <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
+          <thead>
+            <tr className="border-y border-gray-400 bg-gray-50 h-9">
+              {visibleColumns.map((col, idx) => {
+                const isLast = idx === visibleColumns.length - 1;
+                const isNum = ['price', 'amount'].includes(col.id);
+                const isDesc = col.id === 'description';
+                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
+                const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '10%' : '14%';
+                return (
+                  <th key={col.id} className={`py-2 text-xs font-bold uppercase tracking-widest text-gray-700 ${alignClass} ${!isLast ? 'border-r border-gray-300' : ''}`} style={{ width: colWidth, whiteSpace: 'nowrap' }}>
+                    {col.id === 'serial' ? 'Sl.' : col.label}
+                  </th>
+                );
+              })}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <tr key={idx} className="border-b border-gray-200">
+              {visibleColumns.map((col, cIdx) => {
+                const isLast = cIdx === visibleColumns.length - 1;
+                const isNum = ['price', 'amount'].includes(col.id);
+                const isDesc = col.id === 'description';
+                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
+                let val = '';
+                if(col.id==='serial') val = idx+1;
+                else if(col.id==='description') {
+                  const desc = item.description || item.product_description || item.product_detail?.description;
+                  val = (
+                    <div className="py-1">
+                      <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
+                      {desc && (
+                        <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          {desc}
+                        </div>
+                      )}
+                      {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                        <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                          {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
+                          {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                          {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }
+                else if(col.id==='quantity') val = item.quantity;
+                else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
+                else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
+                else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
+                else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+                return <td key={col.id} className={`py-1 align-top ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`} style={{ verticalAlign: 'top' }}>{val}</td>;
+              })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
-      <div className="flex justify-between border-t border-gray-400 pt-6">
-        <div className="w-1/2 pr-6 border-r border-gray-200">
-           {sections.showBankDetails && (
-             <div className="mb-6">
-                <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-900 underline underline-offset-4 decoration-gray-300">Bank Details:</p>
-                <div className="text-xs text-gray-700">
-                  <p><span className="font-semibold inline-block w-20">Bank:</span> {content.bankDetails?.bankName}</p>
-                  <p><span className="font-semibold inline-block w-20">Account #:</span> {content.bankDetails?.accountNumber}</p>
-                  <p><span className="font-semibold inline-block w-20">IFSC:</span> {content.bankDetails?.ifscCode}</p>
-                  <p><span className="font-semibold inline-block w-20">Branch:</span> {content.bankDetails?.accountHolder}</p>
-                </div>
-             </div>
-           )}
-           <div className="text-xs">
-              <p className="font-medium text-gray-600 mb-1">Total items / qty : {items.length} / {items.reduce((acc, curr) => acc + (parseFloat(curr.quantity)||0), 0)}</p>
-              <p className="font-bold text-gray-900">Total amount (in words): <em>INR {amountInWords(finalTotal)}</em></p>
-           </div>
-
-           {sections.showTerms && (
-             <div className="mt-6">
-                <p className="font-bold text-xs text-gray-900 tracking-wider">Notes:</p>
-                <p className="text-xs text-gray-700 mb-4">{content.footerNote}</p>
-                <p className="font-bold text-xs text-gray-900 tracking-wider">Terms and Conditions:</p>
-                <ol className="text-xs text-gray-600 list-decimal pl-4 space-y-1 mt-1">
-                  {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                </ol>
-             </div>
-           )}
-        </div>
-
-        <div className="w-1/2 pl-6 flex flex-col justify-between">
-           <div>
-             <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
-               <span>Taxable Amount</span>
-               <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
-             </div>
-             {isIGST ? (
-               <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
-                 <span>IGST</span>
-                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
-               </div>
-             ) : (
-               <>
-                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
-                   <span>CGST</span>
-                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
-                 </div>
-                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
-                   <span>SGST</span>
-                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
-                 </div>
-               </>
-             )}
-             {roundOff !== 0 && (
-               <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
-                 <span>Round Off</span>
-                 <span className="font-bold text-gray-900">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
+      {/* Totals & Notes Section (Hidden for Delivery Challans) */}
+      {!isDeliveryChallan && (
+        <div className="flex justify-between border-t border-gray-400 pt-6">
+          <div className="w-1/2 pr-6 border-r border-gray-200">
+             {sections.showBankDetails && (
+               <div className="mb-6">
+                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-900 underline underline-offset-4 decoration-gray-300">Bank Details:</p>
+                  <div className="text-xs text-gray-700">
+                    <p><span className="font-semibold inline-block w-20">Bank:</span> {content.bankDetails?.bankName}</p>
+                    <p><span className="font-semibold inline-block w-20">Account #:</span> {content.bankDetails?.accountNumber}</p>
+                    <p><span className="font-semibold inline-block w-20">IFSC:</span> {content.bankDetails?.ifscCode}</p>
+                    <p><span className="font-semibold inline-block w-20">Branch:</span> {content.bankDetails?.accountHolder}</p>
+                  </div>
                </div>
              )}
-             <div className="flex justify-between text-sm font-bold text-gray-900 py-2.5 border-t-2 border-b-2 border-gray-800 mt-2">
-               <span className="whitespace-nowrap">Grand Total</span>
-               <span className="font-mono whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+             <div className="text-xs">
+                <p className="font-medium text-gray-600 mb-1">Total items / qty : {items.length} / {items.reduce((acc, curr) => acc + (parseFloat(curr.quantity)||0), 0)}</p>
+                <p className="font-bold text-gray-900">Total amount (in words): <em>INR {amountInWords(finalTotal)}</em></p>
              </div>
-             <div className="flex justify-end mt-2">
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-extrabold uppercase">✔ Amount Due</span>
-             </div>
-           </div>
 
-           {sections.showSignature && (
-             <div className="text-right mt-16">
-                <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
-                <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
-                  {content.signatureLabel || 'Authorized Signatory'}
-                </div>
+             {sections.showTerms && (
+               <div className="mt-6">
+                  <p className="font-bold text-xs text-gray-900 tracking-wider">Notes:</p>
+                  <p className="text-xs text-gray-700 mb-4">{content.footerNote}</p>
+                  <p className="font-bold text-xs text-gray-900 tracking-wider">Terms and Conditions:</p>
+                  <ol className="text-xs text-gray-600 list-decimal pl-4 space-y-1 mt-1">
+                    {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
+                  </ol>
+               </div>
+             )}
+          </div>
+
+          <div className="w-1/2 pl-6 flex flex-col justify-between">
+             <div>
+               <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                 <span>Taxable Amount</span>
+                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               </div>
+               {isIGST ? (
+                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                   <span>IGST</span>
+                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 </div>
+               ) : (
+                 <>
+                   <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                     <span>CGST</span>
+                     <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   </div>
+                   <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                     <span>SGST</span>
+                     <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   </div>
+                 </>
+               )}
+               {roundOff !== 0 && (
+                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                   <span>Round Off</span>
+                   <span className="font-bold text-gray-900">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
+                 </div>
+               )}
+               <div className="flex justify-between text-sm font-bold text-gray-900 py-2.5 border-t-2 border-b-2 border-gray-800 mt-2">
+                 <span className="whitespace-nowrap">Grand Total</span>
+                 <span className="font-mono whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+               </div>
+               <div className="flex justify-end mt-2">
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-extrabold uppercase">✔ Amount Due</span>
+               </div>
              </div>
-           )}
-        </div>
-      </div>
-      <div className="mt-6 text-center text-[10px] text-gray-500 font-medium">
-        This is a computer generated digital invoice and does not require a signature.
-      </div>
-      
-      {showWatermarkFooter && (
-        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: Built for Modern Businesses<br />
-          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+
+             {sections.showSignature && (
+               <div className="text-right mt-16">
+                  <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
+                  <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
+                    {content.signatureLabel || 'Authorized Signatory'}
+                  </div>
+               </div>
+             )}
+          </div>
         </div>
       )}
+
+      {/* Bottom Anchored Footer */}
+      <div className="mt-auto">
+        {isDeliveryChallan && sections.showSignature && (
+          <div className="flex justify-end pt-8 mb-4">
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-600 mb-8">For {companyName}</p>
+              <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
+                {content.signatureLabel || 'Received By / Signatory'}
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="mt-4 text-center text-[10px] text-gray-500 font-medium">
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
+        </div>
+        
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+          </div>
+        )}
+      </div>
     </div>
   );
 });

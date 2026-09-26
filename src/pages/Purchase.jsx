@@ -53,28 +53,28 @@ export default function Purchase() {
 
   return (
     <>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
+      <div className="p-4 md:p-6 space-y-5 animate-fade-up">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
            <div>
-             <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-                <ShoppingBagIcon className="w-8 h-8 text-purple-400" />
+             <h1 className="text-2xl font-bold tracking-tight text-white mb-0.5 flex items-center gap-2.5">
+                <ShoppingBagIcon className="w-6 h-6 text-purple-400" />
                 Purchase Bills
              </h1>
-             <p className="text-gray-400 text-sm">Track procurement and supplier relationships.</p>
+             <p className="text-gray-400 text-xs">Track procurement and supplier relationships.</p>
            </div>
            
-           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+           <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
               <button
                 onClick={() => setShowUpload(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 shadow-sm uppercase tracking-widest"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/10 shadow-sm uppercase tracking-widest"
               >
                 <DocumentArrowUpIcon className="h-4 w-4" />
                 <span>Upload CSV</span>
               </button>
               <button
                 onClick={() => setShowForm(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-purple-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-400 shadow-lg shadow-purple-500/20 uppercase tracking-widest"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-purple-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-purple-400 shadow-lg shadow-purple-500/20 uppercase tracking-widest"
               >
                 <PlusIcon className="h-4 w-4" />
                 <span>New Purchase</span>

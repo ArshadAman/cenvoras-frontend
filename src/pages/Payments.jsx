@@ -537,6 +537,7 @@ export default function Payments({ onLogout }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'month'
+  const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc', 'date-asc', 'amount-desc', 'amount-asc', 'customer-asc'
 
   const invalidatePaymentRelatedQueries = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: ['payments'] }),
@@ -627,6 +628,27 @@ export default function Payments({ onLogout }) {
       (dateFilter === 'month' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear());
     return matchesSearch && matchesMode && matchesDate;
   });
+
+  const sortedAndFilteredPayments = useMemo(() => {
+    return [...filteredPayments].sort((a, b) => {
+      if (sortBy === 'date-desc') {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      if (sortBy === 'date-asc') {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      if (sortBy === 'amount-desc') {
+        return Number(b.amount || 0) - Number(a.amount || 0);
+      }
+      if (sortBy === 'amount-asc') {
+        return Number(a.amount || 0) - Number(b.amount || 0);
+      }
+      if (sortBy === 'customer-asc') {
+        return (a.customer_name || '').localeCompare(b.customer_name || '');
+      }
+      return 0;
+    });
+  }, [filteredPayments, sortBy]);
   
   // Calculate stats
   const todayTotal = (payments || [])
@@ -726,26 +748,43 @@ export default function Payments({ onLogout }) {
             />
           </div>
           
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                filterMode === 'all' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              All
-            </button>
-            {Object.entries(PAYMENT_MODES).map(([key, { label, color }]) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
               <button
-                key={key}
-                onClick={() => setFilterMode(key)}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  filterMode === key ? `bg-white/10 ${color}` : 'text-gray-400 hover:text-white'
+                onClick={() => setFilterMode('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  filterMode === 'all' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'
                 }`}
               >
-                {label}
+                All
               </button>
-            ))}
+              {Object.entries(PAYMENT_MODES).map(([key, { label, color }]) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterMode(key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    filterMode === key ? `bg-white/10 ${color} shadow-sm` : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-gray-400 hidden sm:inline">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+              >
+                <option value="date-desc">Date (Newest First)</option>
+                <option value="date-asc">Date (Oldest First)</option>
+                <option value="amount-desc">Amount (High to Low)</option>
+                <option value="amount-asc">Amount (Low to High)</option>
+                <option value="customer-asc">Customer (A to Z)</option>
+              </select>
+            </div>
           </div>
         </div>
         
@@ -764,7 +803,7 @@ export default function Payments({ onLogout }) {
               </div>
             ))}
           </div>
-        ) : filteredPayments.length === 0 ? (
+        ) : sortedAndFilteredPayments.length === 0 ? (
           <div className="text-center py-16">
             <BanknotesIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No payments found</h3>
@@ -786,7 +825,7 @@ export default function Payments({ onLogout }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPayments.map((payment) => (
+            {sortedAndFilteredPayments.map((payment) => (
               <PaymentCard 
                 key={payment.id} 
                 payment={payment} 

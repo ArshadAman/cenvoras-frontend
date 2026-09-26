@@ -8,6 +8,8 @@ import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getAllUnits, saveCustomUnit } from '../../utils/units';
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -296,11 +298,11 @@ const PurchaseSchema = Yup.object().shape({
   ).min(1),
 });
 
-const units = ["pcs", "kg", "ltr", "box", "meter"];
-
 export default function PurchaseForm({ bill, onClose, onSubmit }) {
   const queryClient = useQueryClient();
   const isEdit = !!bill;
+  const [availableUnits, setAvailableUnits] = useState(getAllUnits);
+  const [showDocNote, setShowDocNote] = useState(false);
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
   const warehouses = Array.isArray(warehousesResult)
     ? warehousesResult
@@ -490,7 +492,8 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                 vendor_gstin: values.vendor_gstin || null,
                 gst_treatment: values.gst_treatment || null,
                 journal: values.journal,
-                total_amount: Number(totalAmount.toFixed(2)),
+                total_amount: Number(Number(totalAmount).toFixed(2)),
+                notes: values.notes || "",
                 items: processedItems
               };
               
@@ -700,40 +703,68 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                              values={values}
                              setFieldValue={setFieldValue}
                              remove={remove}
-                             units={units}
+                             units={availableUnits}
+                             onAddCustomUnit={(u) => {
+                               saveCustomUnit(u);
+                               setAvailableUnits(getAllUnits());
+                             }}
                              products={products}
                            />
                         ))}
 
-                         <div className="pt-6">
+                         <div className="pt-6 flex flex-wrap items-center gap-3">
                             <button
-                            type="button"
-                            onClick={() => push({
-                                product_name: "",
-                                product_id: null,
-                                description: "",
-                                product_description: "",
-                                quantity: 1,
-                                free_quantity: 0,
-                                unit: "pcs",
-                                batch_number: "",
-                                expiry_date: "",
-                                purchase_price: 0,
-                                discount: 0,
-                                tax: 0,
-                                hsn_code: "",
-                                tax_rate: 0,
-                                amount: 0,
-                                isExistingProduct: false,
-                            })}
-                            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-all text-xs font-bold uppercase tracking-widest"
+                              type="button"
+                              onClick={() => push({
+                                  product_name: "",
+                                  product_id: null,
+                                  description: "",
+                                  product_description: "",
+                                  quantity: 1,
+                                  free_quantity: 0,
+                                  unit: "pcs",
+                                  batch_number: "",
+                                  expiry_date: "",
+                                  purchase_price: 0,
+                                  discount: 0,
+                                  tax: 0,
+                                  hsn_code: "",
+                                  tax_rate: 0,
+                                  amount: 0,
+                                  isExistingProduct: false,
+                              })}
+                              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-all text-xs font-bold uppercase tracking-widest"
                             >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-cyan-500">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            Add New Line Item
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-cyan-500">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                              Add New Line Item
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowDocNote(!showDocNote)}
+                              className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-all text-xs font-bold uppercase tracking-widest cursor-pointer"
+                            >
+                              <DocumentTextIcon className="w-4 h-4 text-cyan-400" />
+                              <span>{showDocNote ? "Hide Note" : "+ Add Note"}</span>
                             </button>
                          </div>
+
+                         {(showDocNote || values.notes) && (
+                           <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                             <div className="flex items-center justify-between mb-2">
+                               <label className="text-xs font-semibold text-gray-300">Bill Notes & Remarks</label>
+                               <span className="text-[10px] text-gray-500">Internal notes & vendor terms</span>
+                             </div>
+                             <Field
+                               as="textarea"
+                               name="notes"
+                               rows={2}
+                               placeholder="Enter purchase bill notes, delivery terms, payment terms, or remarks..."
+                               className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-3 text-xs text-white placeholder-gray-600 focus:ring-1 focus:ring-cyan-500 outline-none"
+                             />
+                           </div>
+                         )}
                      </div>
                    )}
                  </FieldArray>
@@ -795,7 +826,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
   );
 }
 
-function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, products }) {
+function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAddCustomUnit, products }) {
   const quantity = Number(item.quantity) || 0;
   const price = Number(item.purchase_price) || 0;
   const discount = Number(item.discount) || 0;
@@ -873,13 +904,26 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
           </div>
           <div className="space-y-1.5">
               <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Unit</label>
-              <Field name={`items.${idx}.unit`}>
-                  {({ field }) => (
-                  <select {...field} className="w-full h-[42px] bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase appearance-none text-center">
-                      {units.map(u => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
-                  </select>
-                  )}
-              </Field>
+              <select
+                value={item.unit || "pcs"}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "__custom__") {
+                    const custom = window.prompt("Enter custom unit name (e.g. roll, pkt, bundle):");
+                    if (custom && custom.trim()) {
+                      const clean = custom.trim().toLowerCase();
+                      if (onAddCustomUnit) onAddCustomUnit(clean);
+                      setFieldValue(`items.${idx}.unit`, clean);
+                    }
+                  } else {
+                    setFieldValue(`items.${idx}.unit`, val);
+                  }
+                }}
+                className="w-full h-[42px] bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 text-white font-bold focus:ring-1 focus:ring-cyan-500 outline-none text-[10px] uppercase text-center"
+              >
+                {units.map(u => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
+                <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
+              </select>
           </div>
       </div>
 
@@ -891,7 +935,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
                   name={`items.${idx}.purchase_price`}
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="0.0001"
                   className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-3 py-3 text-right text-white font-black focus:ring-1 focus:ring-cyan-500 outline-none text-xs tabular-nums"
               />
           </div>
@@ -901,7 +945,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, prod
           </div>
           <div className="col-span-3 space-y-1.5">
               <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Tax%</label>
-              <Field name={`items.${idx}.tax`} type="number" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+              <Field name={`items.${idx}.tax`} type="number" step="1" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
           </div>
       </div>
 

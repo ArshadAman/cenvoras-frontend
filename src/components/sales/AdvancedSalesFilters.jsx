@@ -28,11 +28,31 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
     });
   };
 
+  const handleFinancialYearChange = (fy) => {
+    if (!fy) {
+      onChange({
+        ...filters,
+        financialYear: "",
+      });
+      return;
+    }
+    const [startYear] = fy.split("-");
+    const y = parseInt(startYear, 10);
+    const start = `${y}-04-01`;
+    const end = `${y + 1}-03-31`;
+    onChange({
+      ...filters,
+      financialYear: fy,
+      dateRange: { start, end },
+    });
+  };
+
   const clearFilters = () => {
     onChange({
       dateRange: { start: "", end: "" },
       amountRange: { min: "", max: "" },
       customer: "",
+      financialYear: "",
       status: "all",
       hasOverdue: false,
     });
@@ -64,6 +84,22 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Financial Year */}
+        <div className="space-y-2">
+          <label className={labelClass}>Financial Year</label>
+          <select
+            value={filters.financialYear || ""}
+            onChange={(e) => handleFinancialYearChange(e.target.value)}
+            className={inputClass}
+          >
+            <option value="" className="bg-[#111] text-gray-400">All Financial Years</option>
+            <option value="2026-2027" className="bg-[#111] text-white">FY 2026-27 (Apr 2026 - Mar 2027)</option>
+            <option value="2025-2026" className="bg-[#111] text-white">FY 2025-26 (Apr 2025 - Mar 2026)</option>
+            <option value="2024-2025" className="bg-[#111] text-white">FY 2024-25 (Apr 2024 - Mar 2025)</option>
+            <option value="2023-2024" className="bg-[#111] text-white">FY 2023-24 (Apr 2023 - Mar 2024)</option>
+          </select>
+        </div>
+
         {/* Date Range */}
         <div className="space-y-2">
           <label className={labelClass}>Date Range</label>
