@@ -55,8 +55,14 @@ const BillShipTemplate = forwardRef(({
     content.invoiceTitle === 'DELIVERY CHALLAN' || 
     Boolean(invoice.challan_number && !invoice.invoice_number);
 
-  const primaryColor = colors.primary || '#facc15'; // yellow theme border
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   return (
     <div 
@@ -141,6 +147,15 @@ const BillShipTemplate = forwardRef(({
           </thead>
           <tbody>
             {items.map((item, idx) => {
+              if (item.row_type === 'note') {
+                return (
+                  <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
+                    <td colSpan={5} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                      Note: {item.description || item.product_description || item.product || ''}
+                    </td>
+                  </tr>
+                );
+              }
               const qty = item.quantity || 0;
               const unit = item.unit || 'pcs';
               const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
@@ -174,7 +189,7 @@ const BillShipTemplate = forwardRef(({
                 const isNum = ['price', 'amount'].includes(col.id);
                 const isDesc = col.id === 'description';
                 const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
-                const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '10%' : '14%';
+                const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
                 return (
                   <th key={col.id} className={`py-2 text-xs font-bold uppercase tracking-widest text-gray-700 ${alignClass} ${!isLast ? 'border-r border-gray-300' : ''}`} style={{ width: colWidth, whiteSpace: 'nowrap' }}>
                     {col.id === 'serial' ? 'Sl.' : col.label}
@@ -184,46 +199,57 @@ const BillShipTemplate = forwardRef(({
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-200">
-              {visibleColumns.map((col, cIdx) => {
-                const isLast = cIdx === visibleColumns.length - 1;
-                const isNum = ['price', 'amount'].includes(col.id);
-                const isDesc = col.id === 'description';
-                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
-                let val = '';
-                if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') {
-                  const desc = item.description || item.product_description || item.product_detail?.description;
-                  val = (
-                    <div className="py-1">
-                      <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
-                      {desc && (
-                        <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
-                          {desc}
-                        </div>
-                      )}
-                      {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                        <div className="text-[10px] text-gray-500 mt-1 font-medium">
-                          {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
-                          {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
-                          {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                }
-                else if(col.id==='quantity') val = item.quantity;
-                else if(col.id==='price') {
-                  const p = parseFloat(item.price||0);
-                  const pStr = p.toString();
-                  const decCount = (pStr.split('.')[1] || '').length;
-                  const decimals = Math.min(Math.max(2, decCount), 4);
-                  val = p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
-                }
-                else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
-                else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
-                else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+            {items.map((item, idx) => {
+              if (item.row_type === 'note') {
+                return (
+                  <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
+                    <td colSpan={visibleColumns.length} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                      Note: {item.description || item.product_description || item.product || ''}
+                    </td>
+                  </tr>
+                );
+              }
+              return (
+                <tr key={idx} className="border-b border-gray-200">
+                {visibleColumns.map((col, cIdx) => {
+                  const isLast = cIdx === visibleColumns.length - 1;
+                  const isNum = ['price', 'amount'].includes(col.id);
+                  const isDesc = col.id === 'description';
+                  const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
+                  let val = '';
+                  if(col.id==='serial') val = idx+1;
+                  else if(col.id==='description') {
+                    const desc = item.description || item.product_description || item.product_detail?.description;
+                    val = (
+                      <div className="py-1">
+                        <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
+                        {desc && (
+                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                            {desc}
+                          </div>
+                        )}
+                        {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                          <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                            {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
+                            {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }
+                  else if(col.id==='quantity') val = item.quantity;
+                  else if(col.id==='price') {
+                    const p = parseFloat(item.price||0);
+                    const pStr = p.toString();
+                    const decCount = (pStr.split('.')[1] || '').length;
+                    const decimals = Math.min(Math.max(2, decCount), 4);
+                    val = p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
+                  }
+                  else if(col.id==='discount') val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-';
+                  else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
+                  else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                 return (
                   <td 
                     key={col.id} 
@@ -242,7 +268,8 @@ const BillShipTemplate = forwardRef(({
                 );
               })}
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       )}

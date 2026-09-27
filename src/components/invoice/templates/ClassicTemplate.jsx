@@ -122,13 +122,15 @@ const InvoicePreview = forwardRef(({
     color: '#111827',
   };
   
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+
   // Get visible columns
   const visibleColumns = columns
     .filter(col => col.show !== false)
     .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
     .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
     .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
-    .filter(col => invoiceSettings.show_item_discount !== false || col.id !== 'discount')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   const preferredWidths = {
@@ -390,6 +392,15 @@ const InvoicePreview = forwardRef(({
             </thead>
             <tbody>
               {items.length > 0 ? items.map((item, index) => {
+                if (item.row_type === 'note') {
+                  return (
+                    <tr key={index} style={{ backgroundColor: '#fbfbfb' }}>
+                      <td colSpan={5} className="px-3 py-1.5 border text-left text-xs text-slate-700 italic font-medium" style={{ borderColor: colors.tableBorder }}>
+                        Note: {item.description || item.product_description || item.product || ''}
+                      </td>
+                    </tr>
+                  );
+                }
                 const qty = item.quantity || 0;
                 const unit = item.unit || 'pcs';
                 const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
@@ -470,6 +481,19 @@ const InvoicePreview = forwardRef(({
             </thead>
             <tbody>
               {items.length > 0 ? items.map((item, index) => {
+                if (item.row_type === 'note') {
+                  return (
+                    <tr key={index} style={{ backgroundColor: '#fbfbfb' }}>
+                      <td
+                        colSpan={visibleColumns.length}
+                        className="border px-3 py-1.5 text-xs text-slate-700 italic text-left font-medium"
+                        style={{ borderColor: colors.tableBorder }}
+                      >
+                        Note: {item.description || item.product_description || item.product || ''}
+                      </td>
+                    </tr>
+                  );
+                }
                 const qty = parseFloat(item.quantity || 0);
                 const price = parseFloat(item.price || 0);
                 const tax = parseFloat(item.tax || 0);

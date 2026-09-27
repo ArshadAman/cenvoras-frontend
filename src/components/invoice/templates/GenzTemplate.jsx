@@ -58,7 +58,14 @@ const GenzTemplate = forwardRef(({
 
   const primaryColor = colors.primary || '#4285F4';
 
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   return (
     <div 
@@ -145,6 +152,13 @@ const GenzTemplate = forwardRef(({
                   const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
                   const desc = item.description || item.product_description || item.product_detail?.description;
                   return (
+                    item.row_type === 'note' ? (
+                      <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
+                        <td colSpan={5} className="py-2.5 px-5 text-left text-xs text-gray-700 italic font-medium">
+                          Note: {item.description || item.product_description || item.product || ''}
+                        </td>
+                      </tr>
+                    ) : (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3 align-top text-gray-800 text-xs text-center px-3">{idx + 1}</td>
                       <td className="py-3 align-top text-gray-800 text-xs text-left px-5">
@@ -161,6 +175,7 @@ const GenzTemplate = forwardRef(({
                       <td className="py-3 align-top text-gray-700 text-xs text-left px-5">{make}</td>
                       <td className="py-3 align-top text-gray-700 text-xs text-left px-5">{packSize}</td>
                     </tr>
+                    )
                   );
                 })}
               </tbody>
@@ -173,7 +188,7 @@ const GenzTemplate = forwardRef(({
                     const isNum = ['price', 'amount'].includes(col.id);
                     const isDesc = col.id === 'description';
                     const alignClass = isDesc ? 'text-left px-5' : isNum ? 'text-right px-5' : 'text-center px-3';
-                    const colWidth = col.id === 'serial' ? '8%' : col.id === 'description' ? '38%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '10%' : col.id === 'price' ? '14%' : col.id === 'tax' ? '8%' : '14%';
+                    const colWidth = col.id === 'serial' ? '8%' : col.id === 'description' ? '38%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '8%' : '14%';
                     return (
                       <th key={col.id} className={`py-3 text-xs font-bold text-gray-600 uppercase tracking-widest ${alignClass}`} style={{ width: colWidth, whiteSpace: 'nowrap' }}>
                         {col.id === 'serial' ? 'Sl.' : col.label}
@@ -183,7 +198,17 @@ const GenzTemplate = forwardRef(({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {items.map((item, idx) => (
+                {items.map((item, idx) => {
+                  if (item.row_type === 'note') {
+                    return (
+                      <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
+                        <td colSpan={visibleColumns.length} className="py-2.5 px-5 text-left text-xs text-gray-700 italic font-medium">
+                          Note: {item.description || item.product_description || item.product || ''}
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return (
                   <tr key={idx} className="hover:bg-gray-50 transition-colors">
                     {visibleColumns.map(col => {
                       const isNum = ['price', 'amount'].includes(col.id);
@@ -213,6 +238,7 @@ const GenzTemplate = forwardRef(({
                         const decimals = Math.min(Math.max(2, decCount), 4);
                         val = `${getCurrencySymbol()}${p.toFixed(decimals)}`;
                       }
+                      else if(col.id==='discount') val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-';
                       else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                       else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                       else if(col.id==='hsn') val = item.hsn_sac_code || '-';
@@ -234,7 +260,8 @@ const GenzTemplate = forwardRef(({
                       );
                     })}
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           )}

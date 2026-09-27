@@ -22,6 +22,7 @@ import { getCurrencySymbol } from '../../utils/currency';
 
 const COLUMN_OPTIONS = [
   { id: "customer", label: "Customer" },
+  { id: "po_number", label: "Purchase Order" },
   { id: "untaxed_amount", label: "Amount (Before Tax)" },
   { id: "total_amount", label: "Total Amount" },
   { id: "status", label: "Status" },
@@ -53,6 +54,7 @@ export default function SalesTable({
       if (saved) {
         return {
           customer: true,
+          po_number: true,
           untaxed_amount: true,
           total_amount: true,
           status: true,
@@ -65,6 +67,7 @@ export default function SalesTable({
     }
     return {
       customer: true,
+      po_number: true,
       untaxed_amount: true,
       total_amount: true,
       status: true,
@@ -237,6 +240,9 @@ export default function SalesTable({
         }, 0) || 0;
         return factor * (getUntaxed(a) - getUntaxed(b));
       }
+      if (key === "po_number") {
+        return factor * String(a.po_number || "").localeCompare(String(b.po_number || ""));
+      }
       if (key === "status") {
         return factor * String(a.status || "").localeCompare(String(b.status || ""));
       }
@@ -317,32 +323,104 @@ export default function SalesTable({
       selected_ids: selectedIds.length > 0 ? selectedIds.join(',') : undefined,
     };
 
-    try {
-      setIsExporting(true);
-      const queued = await exportSalesInvoicesCsv(params);
-      const taskId = queued?.task_id;
-      if (!taskId) {
-        throw new Error('Unable to start CSV export.');
-      }
+    setIsExporting(true);
+    let downloaded = false;
 
-      toast.info('Sales CSV export queued. Preparing download...');
-      await waitForSalesCsvJob(taskId);
-      const blob = await downloadSalesCsv(taskId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('Sales CSV exported successfully.');
-    } catch (error) {
-      console.error('CSV export error:', error);
-      toast.error('Unable to export sales CSV.');
-    } finally {
-      setIsExporting(false);
+    // 1. Try background task
+    try {
+      const queued = await exportSalesInvoicesCsv(params);
+      if (queued instanceof Blob) {
+        const url = window.URL.createObjectURL(queued);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success('Sales CSV exported successfully.');
+        downloaded = true;
+      } else if (queued?.task_id) {
+        toast.info('Sales CSV export queued. Preparing download...');
+        await waitForSalesCsvJob(queued.task_id);
+        const blob = await downloadSalesCsv(queued.task_id);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success('Sales CSV exported successfully.');
+        downloaded = true;
+      }
+    } catch (apiError) {
+      console.warn('Background CSV job failed, attempting direct sync download...', apiError);
     }
+
+    // 2. If not downloaded yet, try direct synchronous export (?direct=1)
+    if (!downloaded) {
+      try {
+        const blob = await exportSalesInvoicesCsv({ ...params, direct: 1 });
+        if (blob instanceof Blob) {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+          toast.success('Sales CSV exported successfully.');
+          downloaded = true;
+        }
+      } catch (directErr) {
+        console.warn('Direct export failed, attempting client-side CSV fallback...', directErr);
+      }
+    }
+
+    // 3. Fallback to client-side CSV generation
+    if (!downloaded) {
+      try {
+        const dataToExport = selectedIds.length > 0
+          ? filteredInvoices.filter(inv => selectedIds.includes(inv.id))
+          : filteredInvoices;
+
+        if (!dataToExport || dataToExport.length === 0) {
+          toast.warn('No invoices to export.');
+          return;
+        }
+
+        const headers = ['Invoice No', 'Date', 'Customer', 'Purchase Order', 'Status', 'Payment Status', 'Subtotal', 'Round Off', 'Total Amount'];
+        const rows = dataToExport.map(inv => [
+          `"${inv.invoice_number || ''}"`,
+          `"${inv.invoice_date || ''}"`,
+          `"${(inv.customer_name || '').replace(/"/g, '""')}"`,
+          `"${inv.po_number || ''}"`,
+          `"${inv.status || ''}"`,
+          `"${inv.payment_status || ''}"`,
+          `"${inv.untaxed_amount || ''}"`,
+          `"${inv.round_off || '0.00'}"`,
+          `"${inv.total_amount || '0.00'}"`
+        ]);
+
+        const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Sales CSV exported successfully.');
+      } catch (fallbackErr) {
+        console.error('All CSV export attempts failed:', fallbackErr);
+        toast.error('Unable to export sales CSV.');
+      }
+    }
+
+    setIsExporting(false);
   };
 
   // Removed global isLoading return to avoid unmounting search bar
@@ -515,11 +593,22 @@ export default function SalesTable({
                   />
                 </th>
                 <th 
+                  onClick={() => handleSort("invoice_number")}
+                  className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Invoice No.</span>
+                    {sortConfig.key === "invoice_number" && (
+                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
+                </th>
+                <th 
                   onClick={() => handleSort("invoice_date")}
                   className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span>Invoice Details</span>
+                    <span>Date</span>
                     {sortConfig.key === "invoice_date" && (
                       <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
@@ -533,6 +622,19 @@ export default function SalesTable({
                     <div className="flex items-center gap-1.5">
                       <span>Customer</span>
                       {sortConfig.key === "customer_name" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.po_number && (
+                  <th 
+                    onClick={() => handleSort("po_number")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Purchase Order</span>
+                      {sortConfig.key === "po_number" && (
                         <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
@@ -590,7 +692,7 @@ export default function SalesTable({
             <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="8" className="px-6 py-12 text-center">
+                <td colSpan="10" className="px-6 py-12 text-center">
                   <div className="flex justify-center items-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
                   </div>
@@ -598,7 +700,7 @@ export default function SalesTable({
               </tr>
             ) : filteredInvoices.length === 0 ? (
               <tr>
-                <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
+                <td colSpan="10" className="px-6 py-12 text-center text-gray-400">
                   No invoices found matching your criteria.
                 </td>
               </tr>
@@ -617,14 +719,23 @@ export default function SalesTable({
                   <div className="text-sm font-medium text-white">
                     #{invoice.invoice_number}
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-400">
-                    {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
+                    {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'MMM dd, yyyy') : '-'}
                   </div>
                 </td>
                 {visibleColumns.customer && (
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-white">
                       {invoice.customer_name}
+                    </div>
+                  </td>
+                )}
+                {visibleColumns.po_number && (
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-300">
+                      {invoice.po_number || '-'}
                     </div>
                   </td>
                 )}
@@ -691,22 +802,24 @@ export default function SalesTable({
                 )}
                 {visibleColumns.status && (
                   <td className="px-6 py-4 whitespace-nowrap">
-                     <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                        invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                        invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                        'bg-gray-500/20 text-gray-400'
-                     }`}>
-                        {invoice.status || 'final'}
-                     </span>
-                     <div className="mt-2">
-                      <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                        invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                        invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                        'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}>
-                        {invoice.payment_status || 'pending'}
-                      </span>
-                     </div>
+                    {(() => {
+                      const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
+                      if (isDraft) {
+                        return (
+                          <span className="px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                            Draft
+                          </span>
+                        );
+                      }
+                      const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
+                      return (
+                        <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                          isPaid ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}>
+                          {isPaid ? 'Paid' : 'Not Paid'}
+                        </span>
+                      );
+                    })()}
                   </td>
                 )}
                 {visibleColumns.items && (
@@ -856,13 +969,6 @@ export default function SalesTable({
                     </div>
                   );
                 })()}
-                <div className={`mt-1 inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black tracking-tighter ${
-                  invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                  invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                  'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}>
-                  {invoice.payment_status || 'pending'}
-                </div>
               </div>
             </div>
 
@@ -871,16 +977,30 @@ export default function SalesTable({
                <div>
                   <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Customer</div>
                   <div className="text-xs font-bold text-white truncate">{invoice.customer_name}</div>
+                  {invoice.po_number && (
+                    <div className="text-[10px] text-gray-400 mt-0.5">PO: {invoice.po_number}</div>
+                  )}
                </div>
                <div className="text-right">
                   <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Status</div>
-                  <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
-                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                      'bg-gray-500/20 text-gray-400'
-                   }`}>
-                      {invoice.status || 'final'}
-                  </div>
+                  {(() => {
+                    const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
+                    if (isDraft) {
+                      return (
+                        <div className="inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                          Draft
+                        </div>
+                      );
+                    }
+                    const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
+                    return (
+                      <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
+                        isPaid ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}>
+                        {isPaid ? 'Paid' : 'Not Paid'}
+                      </div>
+                    );
+                  })()}
                </div>
             </div>
 

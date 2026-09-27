@@ -36,8 +36,13 @@ export const uploadSalesCsv = (formData, options = {}) =>
     onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 
-export const exportSalesInvoicesCsv = params =>
-  api.get("/billing/sales-invoices/export-csv/", { params }).then(res => res.data);
+export const exportSalesInvoicesCsv = params => {
+  const config = { params };
+  if (params?.direct) {
+    config.responseType = "blob";
+  }
+  return api.get("/billing/sales-invoices/export-csv/", config).then(res => res.data);
+};
 
 export const getSalesCsvJobStatus = taskId =>
   api.get(`/billing/sales-invoices/csv-jobs/${taskId}/`).then(res => res.data);
