@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getCurrencySymbol } from '../../utils/currency';
 import {useQuery } from "@tanstack/react-query";
 import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
@@ -17,7 +17,7 @@ export default function SalesSummary() {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       return localStorage.getItem("sales_analytics_collapsed") === "true";
-    } catch (e) {
+    } catch {
       return false;
     }
   });
@@ -27,7 +27,9 @@ export default function SalesSummary() {
       const next = !prev;
       try {
         localStorage.setItem("sales_analytics_collapsed", String(next));
-      } catch (e) {}
+      } catch {
+        // ignore storage error
+      }
       return next;
     });
   };

@@ -35,7 +35,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilterTab, setStatusFilterTab] = useState("all"); // "all", "open", "invoiced", "cancelled"
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const [selectedChallans, setSelectedChallans] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
