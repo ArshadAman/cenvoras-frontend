@@ -227,15 +227,29 @@ const ServiceTemplate = forwardRef(({
                   }
                   else if(col.id==='hsn') val = item.hsn_sac_code || item.hsn_code || '-';
                   else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
-                  else if(col.id==='price') { val = `${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
+                  else if(col.id==='price') {
+                    const p = parseFloat(item.price||0);
+                    const pStr = p.toString();
+                    const decCount = (pStr.split('.')[1] || '').length;
+                    const decimals = Math.min(Math.max(2, decCount), 4);
+                    val = `${getCurrencySymbol()}${p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals })}`;
+                    isNumeric = true;
+                  }
                   else if(col.id==='tax') { val = `${Math.round(item.tax||0)}%`; isNumeric = true; }
                   else if(col.id==='amount') { val = `${getCurrencySymbol()}${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                   
                   return (
                     <td 
                       key={col.id} 
-                      className={`py-2 px-2 text-[12px] font-medium text-gray-700 align-top ${isNumeric ? 'text-right' : ''}`}
-                      style={{ verticalAlign: 'top' }}
+                      className="align-top font-medium text-gray-700"
+                      style={{ 
+                        padding: 0,
+                        margin: 0,
+                        lineHeight: 1,
+                        fontSize: '12px',
+                        textAlign: col.id === 'description' ? 'left' : 'center',
+                        verticalAlign: 'top',
+                      }}
                     >
                       {val}
                     </td>

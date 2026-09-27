@@ -27,7 +27,26 @@ export const createProduct = (data) => {
   return api.post("/inventory/products/", backendData).then(res => res.data);
 };
 
+export const patchProduct = (id, data) => {
+  const payload = {};
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.sale_price !== undefined) payload.sale_price = data.sale_price;
+  if (data.cost_price !== undefined) payload.cost_price = data.cost_price;
+  if (data.price !== undefined) payload.price = data.price;
+  if (data.hsn_sac_code !== undefined) payload.hsn_sac_code = data.hsn_sac_code;
+  if (data.hsn_code !== undefined) payload.hsn_sac_code = data.hsn_code;
+  if (data.tax !== undefined) payload.tax = parseFloat(data.tax) || 0;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.unit !== undefined) payload.unit = data.unit;
+  if (data.stock !== undefined) payload.stock = parseInt(data.stock) || 0;
+  return api.patch(`/inventory/products/${id}/`, payload).then(res => res.data);
+};
+
 export const updateProduct = (id, data) => {
+  // If only partial fields are provided (missing name/unit), use PATCH
+  if (!data.name || !data.unit) {
+    return patchProduct(id, data);
+  }
   // Map frontend fields to backend schema
   const backendData = {
     name: data.name,

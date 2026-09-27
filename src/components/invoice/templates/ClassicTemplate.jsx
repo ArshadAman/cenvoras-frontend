@@ -495,7 +495,13 @@ const InvoicePreview = forwardRef(({
                         case 'quantity': value = qty; break;
                         case 'free_qty': value = item.free_quantity || 0; break;
                         case 'unit': value = item.unit || 'pcs'; break;
-                        case 'price': value = `${getCurrencySymbol()}${price.toFixed(2)}`; break;
+                        case 'price': {
+                          const pStr = price.toString();
+                          const decCount = (pStr.split('.')[1] || '').length;
+                          const decimals = Math.min(Math.max(2, decCount), 4);
+                          value = `${getCurrencySymbol()}${price.toFixed(decimals)}`;
+                          break;
+                        }
                         case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
                         case 'tax': value = `${Math.round(tax)}%`; break;
                         case 'amount': value = `${getCurrencySymbol()}${amount.toFixed(2)}`; break;
@@ -505,11 +511,14 @@ const InvoicePreview = forwardRef(({
                       return (
                         <td 
                           key={col.id}
-                          className="px-2 py-1 border align-top"
+                          className="border align-top"
                           style={{ 
-                            textAlign: col.align || 'left',
+                            padding: 0,
+                            margin: 0,
+                            lineHeight: 1,
+                            fontSize: '12px',
+                            textAlign: col.id === 'description' ? 'left' : 'center',
                             borderColor: colors.tableBorder,
-                            fontSize: `${typography.bodySize || 11}px`,
                             wordBreak: col.id === 'description' ? 'break-word' : 'normal',
                             whiteSpace: col.id === 'description' ? 'normal' : 'nowrap',
                             verticalAlign: 'top',
