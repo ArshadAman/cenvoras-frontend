@@ -5,7 +5,7 @@ import { createProduct, updateProduct } from "../../api/inventory";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getCurrencySymbol } from '../../utils/currency';
 
 const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
 
@@ -34,11 +34,14 @@ const productSchema = Yup.object().shape({
     .nullable()
     .test("is-decimal-or-empty", "Cost price must be a valid decimal number", (value) => {
       if (value === null || value === undefined || value === "") return true;
-      return /^\d+(\.\d{1,2})?$/.test(value);
+      return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
     }),
   sale_price: Yup.string()
     .required("Sale price is required")
-    .matches(/^\d+(\.\d{1,2})?$/, "Sale price must be a valid decimal number"),
+    .test("is-decimal", "Sale price must be a valid decimal number", (value) => {
+      if (value === null || value === undefined || value === "") return false;
+      return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
+    }),
   stock: Yup.number()
     .required("Stock is required")
     .integer("Stock must be a whole number")
@@ -99,7 +102,7 @@ export default function ProductForm({ product, onClose }) {
     unit: product?.unit || "pcs",
     secondary_unit: product?.secondary_unit || "",
     conversion_factor: product?.conversion_factor || 1,
-    cost_price: product?.cost_price || product?.price || product?.purchase_price || product?.unit_price || "",
+    cost_price: product?.cost_price ?? product?.price ?? product?.purchase_price ?? product?.unit_price ?? "",
     sale_price: product?.sale_price ?? "",
     stock: product?.stock || product?.current_stock || "",
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
