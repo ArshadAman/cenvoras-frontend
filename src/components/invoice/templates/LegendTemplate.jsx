@@ -234,12 +234,29 @@ const LegendTemplate = forwardRef(({
                     );
                   }
                   else if(col.id==='quantity') val = item.quantity;
-                  else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  else if(col.id==='price') {
+                    const p = parseFloat(item.price||0);
+                    const pStr = p.toString();
+                    const decCount = (pStr.split('.')[1] || '').length;
+                    const decimals = Math.min(Math.max(2, decCount), 4);
+                    val = p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
+                  }
                   else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                   else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                   return (
-                    <td key={col.id} className={`py-2 text-xs text-gray-800 align-top ${alignClass} ${!isLast ? 'border-r border-gray-200' : ''}`} style={{ verticalAlign: 'top' }}>
+                    <td 
+                      key={col.id} 
+                      className={`align-top ${!isLast ? 'border-r border-gray-200' : ''}`} 
+                      style={{ 
+                        padding: 0, 
+                        margin: 0, 
+                        lineHeight: 1, 
+                        fontSize: '12px', 
+                        textAlign: isDesc ? 'left' : 'center', 
+                        verticalAlign: 'top' 
+                      }}
+                    >
                       {val}
                     </td>
                   );

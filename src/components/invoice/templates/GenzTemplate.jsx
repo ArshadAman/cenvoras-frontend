@@ -206,11 +206,32 @@ const GenzTemplate = forwardRef(({
                         );
                       }
                       else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-2.5 py-0.5 rounded-full text-xs">{item.quantity}</span>;
-                      else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toFixed(2)}`;
+                      else if(col.id==='price') {
+                        const p = parseFloat(item.price||0);
+                        const pStr = p.toString();
+                        const decCount = (pStr.split('.')[1] || '').length;
+                        const decimals = Math.min(Math.max(2, decCount), 4);
+                        val = `${getCurrencySymbol()}${p.toFixed(decimals)}`;
+                      }
                       else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                       else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                       else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                      return <td key={col.id} className={`py-3 align-top text-gray-800 text-xs ${alignClass}`} style={{ verticalAlign: 'top' }}>{val}</td>;
+                      return (
+                        <td 
+                          key={col.id} 
+                          className="align-top text-gray-800" 
+                          style={{ 
+                            padding: 0, 
+                            margin: 0, 
+                            lineHeight: 1, 
+                            fontSize: '12px', 
+                            textAlign: isDesc ? 'left' : 'center', 
+                            verticalAlign: 'top' 
+                          }}
+                        >
+                          {val}
+                        </td>
+                      );
                     })}
                   </tr>
                 ))}

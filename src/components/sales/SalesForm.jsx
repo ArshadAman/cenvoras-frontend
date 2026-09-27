@@ -3,7 +3,7 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers } from "../../api/customers";
-import { createProduct, updateProduct } from "../../api/inventory";
+import { createProduct, patchProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
-import { DocumentTextIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ArrowPathIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, onCreateNewProduct, onSelectProduct }) {
@@ -846,18 +846,30 @@ export default function SalesForm({
   const handleUpdateCatalogItem = async () => {
     if (!catalogSyncModal) return;
     try {
-      const { product_id, price, hsn_sac_code, tax, description } = catalogSyncModal;
-      await updateProduct(product_id, {
+      const { product_id, name, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
+      if (!product_id) {
+        toast.info("This is a new custom item. Use 'Save as New Product' to add it to your catalog.");
+        return;
+      }
+      await patchProduct(product_id, {
+        name: name || undefined,
         sale_price: Number(price) || 0,
         hsn_sac_code: hsn_sac_code || null,
         tax: Number(tax) || 0,
         description: description || null,
+        unit: unit || undefined,
       });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Catalog item updated successfully!");
       setCatalogSyncModal(null);
     } catch (err) {
-      toast.error(err?.response?.data?.message || err.message || "Failed to update catalog product");
+      const data = err?.response?.data;
+      const msg = data
+        ? (typeof data === 'object'
+            ? Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+            : String(data))
+        : err.message || "Failed to update catalog product";
+      toast.error(msg);
     }
   };
 
@@ -865,7 +877,8 @@ export default function SalesForm({
     if (!catalogSyncModal) return;
     try {
       const { name, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
-      const newName = window.prompt("Enter new product name:", `${name} (New)`);
+      const defaultName = name?.trim() ? name.trim() : "New Product";
+      const newName = window.prompt("Enter product name to save in catalog:", defaultName);
       if (!newName || !newName.trim()) return;
 
       const created = await createProduct({
@@ -883,11 +896,20 @@ export default function SalesForm({
         const itemPath = `items.${catalogSyncModal.idx}`;
         formikRef.current.setFieldValue(`${itemPath}.product`, created.name);
         formikRef.current.setFieldValue(`${itemPath}.product_id`, created.id);
+        formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
+        if (created.hsn_sac_code) formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, created.hsn_sac_code);
+        if (created.unit) formikRef.current.setFieldValue(`${itemPath}.unit`, created.unit);
       }
       toast.success(`Saved new product "${created.name}" in catalog!`);
       setCatalogSyncModal(null);
     } catch (err) {
-      toast.error(err?.response?.data?.message || err.message || "Failed to create new catalog product");
+      const data = err?.response?.data;
+      const msg = data
+        ? (typeof data === 'object'
+            ? Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+            : String(data))
+        : err.message || "Failed to create new catalog product";
+      toast.error(msg);
     }
   };
 
@@ -1777,6 +1799,49 @@ export default function SalesForm({
                                                    onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                    onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                                  />
+                                                 {canAccessInventory && item.product?.trim() && (
+                                                   <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                                     {item.product_id ? (
+                                                       <button
+                                                         type="button"
+                                                         onClick={() => setCatalogSyncModal({
+                                                           idx: index,
+                                                           product_id: item.product_id,
+                                                           name: item.product,
+                                                           price: item.price,
+                                                           hsn_sac_code: item.hsn_sac_code,
+                                                           tax: item.tax,
+                                                           description: item.description || item.product_description || "",
+                                                           unit: item.unit || "pcs",
+                                                         })}
+                                                         className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-1.5 py-0.5 rounded transition-colors"
+                                                         title="Update master catalog item with these values"
+                                                       >
+                                                         <ArrowPathIcon className="w-3 h-3" />
+                                                         <span>Update Catalog</span>
+                                                       </button>
+                                                     ) : (
+                                                       <button
+                                                         type="button"
+                                                         onClick={() => setCatalogSyncModal({
+                                                           idx: index,
+                                                           product_id: null,
+                                                           name: item.product,
+                                                           price: item.price,
+                                                           hsn_sac_code: item.hsn_sac_code,
+                                                           tax: item.tax,
+                                                           description: item.description || item.product_description || "",
+                                                           unit: item.unit || "pcs",
+                                                         })}
+                                                         className="inline-flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-1.5 py-0.5 rounded transition-colors"
+                                                         title="Save this line item as a new product in your catalog"
+                                                       >
+                                                         <PlusIcon className="w-3 h-3" />
+                                                         <span>Save to Catalog</span>
+                                                       </button>
+                                                     )}
+                                                   </div>
+                                                 )}
                                                  {matchedScheme && (
                                                    <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded w-fit">
                                                      <span>🎁</span>
@@ -1931,12 +1996,12 @@ export default function SalesForm({
                                           if (col.key === "action") {
                                             return (
                                               <div key={col.key} className="flex items-center justify-center gap-1">
-                                                {item.product_id && canAccessInventory && (
+                                                {canAccessInventory && item.product?.trim() && (
                                                   <button
                                                     type="button"
                                                     onClick={() => setCatalogSyncModal({
                                                       idx: index,
-                                                      product_id: item.product_id,
+                                                      product_id: item.product_id || null,
                                                       name: item.product,
                                                       price: item.price,
                                                       hsn_sac_code: item.hsn_sac_code,
@@ -1944,8 +2009,8 @@ export default function SalesForm({
                                                       description: item.description || item.product_description || "",
                                                       unit: item.unit || "pcs",
                                                     })}
-                                                    className="text-gray-500 hover:text-cyan-400 transition-colors p-1"
-                                                    title="Sync with Catalog (Update or Save New Product)"
+                                                    className="text-gray-400 hover:text-cyan-400 transition-colors p-1"
+                                                    title={item.product_id ? "Update Catalog Item" : "Save as New Product in Catalog"}
                                                     tabIndex={-1}
                                                   >
                                                     <ArrowPathIcon className="h-4 w-4" />
@@ -1994,6 +2059,47 @@ export default function SalesForm({
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                             onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                           />
+                                          {canAccessInventory && item.product?.trim() && (
+                                            <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                              {item.product_id ? (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setCatalogSyncModal({
+                                                    idx: index,
+                                                    product_id: item.product_id,
+                                                    name: item.product,
+                                                    price: item.price,
+                                                    hsn_sac_code: item.hsn_sac_code,
+                                                    tax: item.tax,
+                                                    description: item.description || item.product_description || "",
+                                                    unit: item.unit || "pcs",
+                                                  })}
+                                                  className="inline-flex items-center gap-1.5 text-xs text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-2 py-1 rounded-lg transition-colors font-medium"
+                                                >
+                                                  <ArrowPathIcon className="w-3.5 h-3.5" />
+                                                  <span>Update Catalog Item</span>
+                                                </button>
+                                              ) : (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setCatalogSyncModal({
+                                                    idx: index,
+                                                    product_id: null,
+                                                    name: item.product,
+                                                    price: item.price,
+                                                    hsn_sac_code: item.hsn_sac_code,
+                                                    tax: item.tax,
+                                                    description: item.description || item.product_description || "",
+                                                    unit: item.unit || "pcs",
+                                                  })}
+                                                  className="inline-flex items-center gap-1.5 text-xs text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-2 py-1 rounded-lg transition-colors font-medium"
+                                                >
+                                                  <PlusIcon className="w-3.5 h-3.5" />
+                                                  <span>Save to Catalog</span>
+                                                </button>
+                                              )}
+                                            </div>
+                                          )}
                                           {(() => {
                                             const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                             if (!matchedScheme) return null;
@@ -2350,35 +2456,39 @@ export default function SalesForm({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">Sync Catalog Product</h3>
-                  <p className="text-xs text-gray-400">"{catalogSyncModal.name}"</p>
+                  <p className="text-xs text-gray-400">"{catalogSyncModal.name || 'Custom Product'}"</p>
                 </div>
               </div>
               <p className="text-xs text-gray-300 leading-relaxed">
-                You modified item details for this line. Would you like to update the existing catalog master record or save this configuration as a new product in your inventory?
+                {catalogSyncModal.product_id
+                  ? "You modified item details for this catalog line. Would you like to update the existing catalog master record or save this configuration as a new product in your inventory?"
+                  : "This custom item is not yet in your inventory catalog. Would you like to save it as a new product in your catalog so you can reuse it in future invoices?"}
               </p>
               <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleUpdateCatalogItem}
-                  className="w-full py-2.5 px-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
-                >
-                  <span>Update Catalog Item</span>
-                  <span className="text-[10px] text-cyan-400/70">Overwrites master price/HSN/tax</span>
-                </button>
+                {catalogSyncModal.product_id && (
+                  <button
+                    type="button"
+                    onClick={handleUpdateCatalogItem}
+                    className="w-full py-2.5 px-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>Update Catalog Item</span>
+                    <span className="text-[10px] text-cyan-400/70">Overwrites master price/HSN/tax</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleSaveAsNewCatalogItem}
                   className="w-full py-2.5 px-4 bg-purple-500/20 border border-purple-500/40 hover:bg-purple-500/30 text-purple-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
                 >
                   <span>Save as New Product</span>
-                  <span className="text-[10px] text-purple-400/70">Creates new catalog variant</span>
+                  <span className="text-[10px] text-purple-400/70">Creates new catalog master product</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setCatalogSyncModal(null)}
                   className="w-full py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white text-xs rounded-xl transition-colors text-center"
                 >
-                  Keep For This Invoice Only
+                  Keep For This Document Only
                 </button>
               </div>
             </div>
