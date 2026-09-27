@@ -115,12 +115,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     const value = e.target.value;
     setInputValue(value);
     setFieldValue(`items.${idx}.product`, value);
-    setFieldValue(`items.${idx}.isExistingProduct`, false);
-    setFieldValue(`items.${idx}.product_id`, null);
-    setFieldValue(`items.${idx}.description`, "");
-    setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
+
     if (!value.trim()) {
+      setFieldValue(`items.${idx}.isExistingProduct`, false);
+      setFieldValue(`items.${idx}.product_id`, null);
       setShowDropdown(false);
       return;
     }
@@ -860,6 +859,10 @@ export default function SalesForm({
         unit: unit || undefined,
       });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      if (formikRef.current && typeof catalogSyncModal.idx === 'number') {
+        const itemPath = `items.${catalogSyncModal.idx}`;
+        if (name) formikRef.current.setFieldValue(`${itemPath}.product`, name);
+      }
       toast.success("Catalog item updated successfully!");
       setCatalogSyncModal(null);
     } catch (err) {
@@ -1319,6 +1322,7 @@ export default function SalesForm({
                 
                 return {
                   product: item.product_id || item.product, // Pass UUID if available, else name
+                  product_name: (item.product || '').trim(),
                   quantity: quantity,
                   free_quantity: itemSettings.show_item_free_quantity ? (Number(item.free_quantity) || 0) : 0,
                   ...(itemSettings.show_item_batch && item.batch ? { batch: item.batch } : {}),
@@ -2472,7 +2476,7 @@ export default function SalesForm({
                     className="w-full py-2.5 px-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
                   >
                     <span>Update Catalog Item</span>
-                    <span className="text-[10px] text-cyan-400/70">Overwrites master price/HSN/tax</span>
+                    <span className="text-[10px] text-cyan-400/70">Overwrites master name/price/HSN/tax</span>
                   </button>
                 )}
                 <button
