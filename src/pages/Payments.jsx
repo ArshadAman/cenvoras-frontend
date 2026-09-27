@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useLoadingPolicy } from '../hooks/useLoadingPolicy';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import {
   BanknotesIcon,
   PlusIcon,
@@ -21,7 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import api from '../api/api';
-import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { getCurrencySymbol } from '../utils/currency';
 
 const roundTo3 = (value) => {
   const num = Number(value || 0);
@@ -526,8 +525,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 }
 
 // Main Payments Page
-export default function Payments({ onLogout }) {
-  const navigate = useNavigate();
+export default function Payments() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDueModalOpen, setIsDueModalOpen] = useState(false);

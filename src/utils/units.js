@@ -15,7 +15,7 @@ export const getStoredCustomUnits = () => {
   try {
     const raw = localStorage.getItem("cenvora_custom_units");
     return raw ? JSON.parse(raw) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -30,7 +30,9 @@ export const saveCustomUnit = (unit) => {
       const next = [...current, clean];
       localStorage.setItem("cenvora_custom_units", JSON.stringify(next));
     }
-  } catch (e) {}
+  } catch {
+    // ignore storage errors
+  }
 };
 
 export const getAllUnits = () => {

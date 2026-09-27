@@ -39,11 +39,11 @@ export default function SalesTable({
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("-invoice_date"); // default: newest first
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [statusFilterTab, setStatusFilterTab] = useState(initialStatusFilter); // "all", "final", "draft"
-  const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
+  const [dateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: "invoice_date", direction: "desc" });

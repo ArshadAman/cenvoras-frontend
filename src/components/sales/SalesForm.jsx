@@ -13,7 +13,7 @@ import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import { DocumentTextIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
@@ -558,8 +558,6 @@ const SalesSchema = Yup.object().shape({
     (items) => !items || items.every((i) => (Number(i?.quantity) || 0) + (Number(i?.free_quantity) || 0) > 0)
   ).min(1, "At least one item is required"),
 });
-
-const units = DEFAULT_UNITS;
 
 const DEFAULT_ITEM_SETTINGS = {
   show_item_description: true,

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getProducts } from '../../api/inventory';
 import Barcode from 'react-barcode';
 import { useReactToPrint } from 'react-to-print';
+import { format } from 'date-fns';
 import { PrinterIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 

@@ -45,7 +45,8 @@ export default function Layout({ children, onLogout }) {
   const [collapsedSections, setCollapsedSections] = useState(() => {
     try {
       const saved = localStorage.getItem("sidebar_collapsed_sections");
-      return saved ? JSON.parse(saved) : {};
+      const parsed = saved ? JSON.parse(saved) : {};
+      return (parsed && typeof parsed === 'object') ? parsed : {};
     } catch {
       return {};
     }
@@ -53,7 +54,8 @@ export default function Layout({ children, onLogout }) {
 
   const toggleSection = (title) => {
     setCollapsedSections((prev) => {
-      const updated = { ...prev, [title]: !prev[title] };
+      const safePrev = (prev && typeof prev === 'object') ? prev : {};
+      const updated = { ...safePrev, [title]: !safePrev[title] };
       try {
         localStorage.setItem("sidebar_collapsed_sections", JSON.stringify(updated));
       } catch {}
@@ -350,7 +352,7 @@ export default function Layout({ children, onLogout }) {
         <nav className="flex-1 min-h-0 px-4 py-6 space-y-5 overflow-y-auto custom-scrollbar">
           {filteredGroups.map((group, groupIdx) => {
             const hasActiveItem = group.items.some((item) => location.pathname === item.path);
-            const isCollapsed = !hasActiveItem && Boolean(collapsedSections[group.title]);
+            const isCollapsed = !hasActiveItem && Boolean(collapsedSections?.[group.title]);
 
             return (
               <div key={groupIdx} className="space-y-1">
@@ -528,7 +530,7 @@ export default function Layout({ children, onLogout }) {
             <nav className="flex-1 min-h-0 px-4 py-6 space-y-4 overflow-y-auto custom-scrollbar">
               {filteredGroups.map((group, groupIdx) => {
                 const hasActiveItem = group.items.some((item) => location.pathname === item.path);
-                const isCollapsed = !hasActiveItem && Boolean(collapsedSections[group.title]);
+                const isCollapsed = !hasActiveItem && Boolean(collapsedSections?.[group.title]);
 
                 return (
                   <div key={groupIdx} className="space-y-1">
