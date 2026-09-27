@@ -163,18 +163,18 @@ const BillShipTemplate = forwardRef(({
               const desc = item.description || item.product_description || item.product_detail?.description;
               return (
                 <tr key={idx} className="border-b border-gray-200">
-                  <td className="py-2 align-top text-center px-2 border-r border-gray-200 text-xs font-medium">{idx + 1}</td>
-                  <td className="py-2 align-top text-left px-3 border-r border-gray-200">
-                    <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
+                  <td className="align-middle text-center border-r border-gray-200 text-xs font-medium" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td className="align-middle text-left border-r border-gray-200" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                    <div className="font-normal text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                     {desc && (
                       <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
                   </td>
-                  <td className="py-2 align-top text-center px-2 border-r border-gray-200 text-xs font-bold text-gray-900">{qty} {unit}</td>
-                  <td className="py-2 align-top text-left px-3 border-r border-gray-200 text-xs text-gray-700">{make}</td>
-                  <td className="py-2 align-top text-left px-3 text-xs text-gray-700">{packSize}</td>
+                  <td className="align-middle text-center border-r border-gray-200 text-xs font-bold text-gray-900" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
+                  <td className="align-middle text-left border-r border-gray-200 text-xs text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
+                  <td className="align-middle text-left text-xs text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
                 </tr>
               );
             })}
@@ -222,7 +222,7 @@ const BillShipTemplate = forwardRef(({
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
                       <div className="py-1">
-                        <div className="font-semibold text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
+                        <div className="font-normal text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                         {desc && (
                           <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
@@ -246,21 +246,24 @@ const BillShipTemplate = forwardRef(({
                     const decimals = Math.min(Math.max(2, decCount), 4);
                     val = p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
                   }
-                  else if(col.id==='discount') val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-';
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                  }
                   else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                   else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                 return (
                   <td 
                     key={col.id} 
-                    className={`align-top ${!isLast ? 'border-r border-gray-200' : ''}`} 
+                    className={`align-middle ${!isLast ? 'border-r border-gray-200' : ''}`} 
                     style={{ 
-                      padding: 0,
+                      padding: '1px 8px',
                       margin: 0,
-                      lineHeight: 1,
+                      lineHeight: 1.2,
                       fontSize: '12px',
-                      textAlign: isDesc ? 'left' : 'center',
-                      verticalAlign: 'top',
+                      textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
+                      verticalAlign: 'middle',
                     }}
                   >
                     {val}
@@ -291,7 +294,7 @@ const BillShipTemplate = forwardRef(({
              )}
              <div className="text-xs">
                 <p className="font-medium text-gray-600 mb-1">Total items / qty : {items.length} / {items.reduce((acc, curr) => acc + (parseFloat(curr.quantity)||0), 0)}</p>
-                <p className="font-bold text-gray-900">Total amount (in words): <em>INR {amountInWords(finalTotal)}</em></p>
+                <p className="text-sm font-medium text-gray-800">Total amount (in words): <em>INR {amountInWords(finalTotal)}</em></p>
              </div>
 
              {sections.showTerms && (
@@ -308,29 +311,29 @@ const BillShipTemplate = forwardRef(({
 
           <div className="w-1/2 pl-6 flex flex-col justify-between">
              <div>
-               <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+               <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                  <span>Taxable Amount</span>
                  <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                </div>
                {isIGST ? (
-                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                    <span>IGST</span>
                    <span className="font-bold text-gray-900">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                  </div>
                ) : (
                  <>
-                   <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                   <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                      <span>CGST</span>
                      <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                    </div>
-                   <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                   <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                      <span>SGST</span>
                      <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                    </div>
                  </>
                )}
                {roundOff !== 0 && (
-                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-2 items-center">
+                 <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                    <span>Round Off</span>
                    <span className="font-bold text-gray-900">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
                  </div>

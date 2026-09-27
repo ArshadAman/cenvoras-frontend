@@ -160,20 +160,20 @@ const GenzTemplate = forwardRef(({
                       </tr>
                     ) : (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-3 align-top text-gray-800 text-xs text-center px-3">{idx + 1}</td>
-                      <td className="py-3 align-top text-gray-800 text-xs text-left px-5">
-                        <p className="font-bold text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
+                      <td className="align-middle text-gray-800 text-xs text-center" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                      <td className="align-middle text-gray-800 text-xs text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                        <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
                         {desc && (
-                          <p className="text-[11px] text-gray-500 whitespace-pre-line mt-1 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </p>
                         )}
                       </td>
-                      <td className="py-3 align-top text-gray-900 text-xs text-center px-3 font-bold">
-                        <span className="bg-gray-100 px-2.5 py-0.5 rounded-full">{qty} {unit}</span>
+                      <td className="align-middle text-gray-900 text-xs text-center font-bold" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full">{qty} {unit}</span>
                       </td>
-                      <td className="py-3 align-top text-gray-700 text-xs text-left px-5">{make}</td>
-                      <td className="py-3 align-top text-gray-700 text-xs text-left px-5">{packSize}</td>
+                      <td className="align-middle text-gray-700 text-xs text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
+                      <td className="align-middle text-gray-700 text-xs text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
                     </tr>
                     )
                   );
@@ -220,7 +220,7 @@ const GenzTemplate = forwardRef(({
                         const desc = item.description || item.product_description || item.product_detail?.description;
                         val = (
                           <div className="py-1">
-                            <p className="font-bold text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
+                            <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
                             {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
                             {desc && (
                               <p className="text-[11px] text-gray-500 whitespace-pre-line mt-1 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
@@ -238,21 +238,24 @@ const GenzTemplate = forwardRef(({
                         const decimals = Math.min(Math.max(2, decCount), 4);
                         val = `${getCurrencySymbol()}${p.toFixed(decimals)}`;
                       }
-                      else if(col.id==='discount') val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-';
+                      else if(col.id==='discount') {
+                        const discNum = parseFloat(item.discount || 0);
+                        val = discNum > 0 ? `${discNum}%` : '-';
+                      }
                       else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                       else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                       else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                       return (
                         <td 
                           key={col.id} 
-                          className="align-top text-gray-800" 
+                          className="align-middle text-gray-800" 
                           style={{ 
-                            padding: 0, 
+                            padding: '1px 8px', 
                             margin: 0, 
-                            lineHeight: 1, 
+                            lineHeight: 1.2, 
                             fontSize: '12px', 
-                            textAlign: isDesc ? 'left' : 'center', 
-                            verticalAlign: 'top' 
+                            textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                            verticalAlign: 'middle' 
                           }}
                         >
                           {val}
@@ -317,7 +320,7 @@ const GenzTemplate = forwardRef(({
                    </span>
                  </div>
                  {sections.showAmountInWords && (
-                   <p className="text-gray-400 text-right mt-2 text-xs font-medium">
+                   <p className="text-gray-700 text-right mt-2 text-sm font-medium italic">
                      {amountInWords(finalTotal)}
                    </p>
                  )}

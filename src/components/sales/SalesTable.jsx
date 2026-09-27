@@ -29,6 +29,19 @@ const COLUMN_OPTIONS = [
   { id: "items", label: "Items" },
 ];
 
+const DEFAULT_COLUMN_WIDTHS = {
+  checkbox: 44,
+  invoice_number: 125,
+  invoice_date: 105,
+  customer: 190,
+  po_number: 130,
+  untaxed_amount: 130,
+  total_amount: 145,
+  status: 95,
+  items: 75,
+  actions: 145,
+};
+
 export default function SalesTable({
   onEdit,
   onView,
@@ -93,6 +106,71 @@ export default function SalesTable({
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
+
+  const [colWidths, setColWidths] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cenvoras_sales_table_col_widths");
+      if (saved) {
+        return { ...DEFAULT_COLUMN_WIDTHS, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.error("Failed to load saved column widths", e);
+    }
+    return DEFAULT_COLUMN_WIDTHS;
+  });
+
+  const handleMouseDownResize = (e, colKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = colWidths[colKey] || DEFAULT_COLUMN_WIDTHS[colKey] || 100;
+
+    const onMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const minWidth = colKey === "checkbox" ? 36 : 50;
+      const newWidth = Math.max(minWidth, startWidth + deltaX);
+      setColWidths((prev) => {
+        const updated = { ...prev, [colKey]: newWidth };
+        try {
+          localStorage.setItem("cenvoras_sales_table_col_widths", JSON.stringify(updated));
+        } catch (err) {
+          console.error("Failed to save column widths", err);
+        }
+        return updated;
+      });
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const handleDoubleClickReset = (colKey) => {
+    setColWidths((prev) => {
+      const updated = { ...prev, [colKey]: DEFAULT_COLUMN_WIDTHS[colKey] };
+      try {
+        localStorage.setItem("cenvoras_sales_table_col_widths", JSON.stringify(updated));
+      } catch (err) {
+        console.error("Failed to save column widths", err);
+      }
+      return updated;
+    });
+  };
+
+  const renderResizeHandle = (colKey) => (
+    <div
+      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-cyan-400/50 active:bg-cyan-400 transition-colors z-20 group"
+      onMouseDown={(e) => handleMouseDownResize(e, colKey)}
+      onDoubleClick={() => handleDoubleClickReset(colKey)}
+      title="Drag to resize, double-click to reset"
+    >
+      <div className="w-0.5 h-full mx-auto bg-transparent group-hover:bg-cyan-400/70" />
+    </div>
+  );
 
   const [isExporting, setIsExporting] = useState(false);
   const [paymentInvoice, setPaymentInvoice] = useState(null);
@@ -581,111 +659,133 @@ export default function SalesTable({
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border-separate border-spacing-y-2">
+          <table className="w-full table-fixed text-sm border-separate border-spacing-y-2">
+            <colgroup>
+              <col style={{ width: `${colWidths.checkbox}px` }} />
+              <col style={{ width: `${colWidths.invoice_number}px` }} />
+              <col style={{ width: `${colWidths.invoice_date}px` }} />
+              {visibleColumns.customer && <col style={{ width: `${colWidths.customer}px` }} />}
+              {visibleColumns.po_number && <col style={{ width: `${colWidths.po_number}px` }} />}
+              {visibleColumns.untaxed_amount && <col style={{ width: `${colWidths.untaxed_amount}px` }} />}
+              {visibleColumns.total_amount && <col style={{ width: `${colWidths.total_amount}px` }} />}
+              {visibleColumns.status && <col style={{ width: `${colWidths.status}px` }} />}
+              {visibleColumns.items && <col style={{ width: `${colWidths.items}px` }} />}
+              <col style={{ width: `${colWidths.actions}px` }} />
+            </colgroup>
             <thead>
               <tr className="bg-white/5 border-b border-white/10">
-                <th className="px-6 py-4 text-left rounded-l-lg">
+                <th className="relative px-3 py-3 text-left rounded-l-lg select-none">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
+                  {renderResizeHandle("checkbox")}
                 </th>
                 <th 
                   onClick={() => handleSort("invoice_number")}
-                  className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 truncate">
                     <span>Invoice No.</span>
                     {sortConfig.key === "invoice_number" && (
                       <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
+                  {renderResizeHandle("invoice_number")}
                 </th>
                 <th 
                   onClick={() => handleSort("invoice_date")}
-                  className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 truncate">
                     <span>Date</span>
                     {sortConfig.key === "invoice_date" && (
                       <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
+                  {renderResizeHandle("invoice_date")}
                 </th>
                 {visibleColumns.customer && (
                   <th 
                     onClick={() => handleSort("customer_name")}
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Customer</span>
                       {sortConfig.key === "customer_name" && (
                         <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("customer")}
                   </th>
                 )}
                 {visibleColumns.po_number && (
                   <th 
                     onClick={() => handleSort("po_number")}
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Purchase Order</span>
                       {sortConfig.key === "po_number" && (
                         <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("po_number")}
                   </th>
                 )}
                 {visibleColumns.untaxed_amount && (
                   <th 
                     onClick={() => handleSort("untaxed_amount")}
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Amount (Before Tax)</span>
                       {sortConfig.key === "untaxed_amount" && (
                         <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("untaxed_amount")}
                   </th>
                 )}
                 {visibleColumns.total_amount && (
                   <th 
                     onClick={() => handleSort("total_amount")}
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Total Amount (With Tax)</span>
                       {sortConfig.key === "total_amount" && (
                         <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("total_amount")}
                   </th>
                 )}
                 {visibleColumns.status && (
                   <th 
                     onClick={() => handleSort("status")}
-                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Status</span>
                       {sortConfig.key === "status" && (
                         <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("status")}
                   </th>
                 )}
                 {visibleColumns.items && (
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    Items
+                  <th className="relative px-3.5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider select-none">
+                    <div className="truncate">Items</div>
+                    {renderResizeHandle("items")}
                   </th>
                 )}
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
-                  Actions
+                <th className="relative px-3.5 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg select-none">
+                  <span>Actions</span>
+                  {renderResizeHandle("actions")}
                 </th>
               </tr>
             </thead>
@@ -707,7 +807,7 @@ export default function SalesTable({
             ) : (
               filteredInvoices.map((invoice) => (
               <tr key={invoice.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
@@ -715,33 +815,33 @@ export default function SalesTable({
                     className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 cursor-pointer"
                   />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white">
+                <td className="px-3.5 py-3 whitespace-nowrap">
+                  <div className="text-sm font-medium text-white truncate" title={`#${invoice.invoice_number}`}>
                     #{invoice.invoice_number}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-400">
+                <td className="px-3.5 py-3 whitespace-nowrap">
+                  <div className="text-sm text-gray-400 truncate">
                     {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'MMM dd, yyyy') : '-'}
                   </div>
                 </td>
                 {visibleColumns.customer && (
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-white">
+                  <td className="px-3.5 py-3 whitespace-nowrap">
+                    <div className="text-sm text-white truncate" title={invoice.customer_name}>
                       {invoice.customer_name}
                     </div>
                   </td>
                 )}
                 {visibleColumns.po_number && (
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-300">
+                  <td className="px-3.5 py-3 whitespace-nowrap">
+                    <div className="text-sm text-gray-300 truncate" title={invoice.po_number || '-'}>
                       {invoice.po_number || '-'}
                     </div>
                   </td>
                 )}
                 {visibleColumns.untaxed_amount && (
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-white">
+                  <td className="px-3.5 py-3 whitespace-nowrap">
+                    <div className="text-sm font-medium text-white truncate">
                       {getCurrencySymbol()}{(() => {
                         // Calculate untaxed amount from items factoring in discounts
                         const untaxedAmount = invoice.items?.reduce((sum, item) => {
@@ -760,7 +860,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.total_amount && (
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3.5 py-3 whitespace-nowrap">
                     {(() => {
                       const roundOff = parseFloat(invoice.round_off || 0) || 0;
                       const calculations = invoice.items?.reduce((acc, item) => {
@@ -783,7 +883,7 @@ export default function SalesTable({
                         : computedTotal;
 
                       return (
-                        <div>
+                        <div className="truncate">
                           <div className="text-sm font-bold text-cyan-400">
                             {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
                               minimumFractionDigits: 2,
@@ -801,7 +901,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.status && (
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3.5 py-3 whitespace-nowrap">
                     {(() => {
                       const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
                       if (isDraft) {
@@ -823,11 +923,11 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.items && (
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  <td className="px-3.5 py-3 whitespace-nowrap text-sm text-gray-400 truncate">
                     {invoice.items?.length || 0} items
                   </td>
                 )}
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                <td className="px-3.5 py-3 whitespace-nowrap text-sm font-medium text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       type="button"

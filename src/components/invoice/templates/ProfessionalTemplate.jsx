@@ -69,6 +69,38 @@ const ProfessionalTemplate = forwardRef(({
     .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
+  const getColumnWidth = (columnId) => {
+    switch (columnId) {
+      case 'serial': return '25px';
+      case 'description': return '380px';
+      case 'hsn': return '79px';
+      case 'quantity': return '50px';
+      case 'price': return '100px';
+      case 'discount': return '40px';
+      case 'tax': return '45px';
+      case 'amount': return '100px';
+      default: return 'auto';
+    }
+  };
+
+  const getHeaderFontSize = (columnId) => {
+    return columnId === 'serial' ? '16px' : '14px';
+  };
+
+  const getHeaderLabel = (col) => {
+    switch (col.id) {
+      case 'serial': return 'Sl.';
+      case 'description': return 'DESCRIPTION';
+      case 'hsn': return 'HSNC';
+      case 'quantity': return 'QTY';
+      case 'price': return 'UNIT PRICE';
+      case 'discount': return 'DISC.%';
+      case 'tax': return 'TAX';
+      case 'amount': return 'AMOUNT';
+      default: return col.label?.toUpperCase() || '';
+    }
+  };
+
   return (
     <div 
       ref={ref}
@@ -178,18 +210,18 @@ const ProfessionalTemplate = forwardRef(({
               const desc = item.description || item.product_description || item.product_detail?.description;
               return (
                 <tr key={idx} className="h-auto hover:bg-gray-50 transition-colors">
-                  <td className="py-2.5 text-xs text-gray-800 text-center px-2 align-top">{idx + 1}</td>
-                  <td className="py-2.5 text-xs text-gray-800 text-left px-3 align-top">
-                    <div className="font-semibold text-gray-900">{item.product_name || item.product}</div>
+                  <td className="text-xs text-gray-800 text-center px-2 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td className="text-xs text-gray-800 text-left px-3 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                    <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                     {desc && (
                       <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
                   </td>
-                  <td className="py-2.5 text-xs text-gray-900 font-bold text-center px-2 align-top">{qty} {unit}</td>
-                  <td className="py-2.5 text-xs text-gray-700 text-left px-3 align-top">{make}</td>
-                  <td className="py-2.5 text-xs text-gray-700 text-left px-3 align-top">{packSize}</td>
+                  <td className="text-xs text-gray-900 font-medium text-center px-2 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
+                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
+                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
                 </tr>
               );
             })}
@@ -199,17 +231,19 @@ const ProfessionalTemplate = forwardRef(({
         <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
-              {visibleColumns.map((col) => {
-                const isNum = ['price', 'amount'].includes(col.id);
-                const isDesc = col.id === 'description';
-                const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
-                const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
-                return (
-                  <th key={col.id} className={`py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 ${alignClass}`} style={{ width: colWidth, whiteSpace: 'nowrap' }}>
-                    {col.id === 'serial' ? 'Sl.' : col.label}
-                  </th>
-                );
-              })}
+              {visibleColumns.map((col) => (
+                <th 
+                  key={col.id} 
+                  className="py-2.5 px-1 text-center font-bold text-gray-900" 
+                  style={{ 
+                    width: getColumnWidth(col.id), 
+                    fontSize: getHeaderFontSize(col.id),
+                    whiteSpace: 'nowrap' 
+                  }}
+                >
+                  <strong>{getHeaderLabel(col)}</strong>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -217,7 +251,7 @@ const ProfessionalTemplate = forwardRef(({
               if (item.row_type === 'note') {
                 return (
                   <tr key={idx} className="bg-gray-50/50">
-                    <td colSpan={visibleColumns.length} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                    <td colSpan={visibleColumns.length} className="py-1 px-3 text-left text-xs text-gray-700 italic font-medium align-middle" style={{ verticalAlign: 'middle' }}>
                       Note: {item.description || item.product_description || item.product || ''}
                     </td>
                   </tr>
@@ -235,7 +269,7 @@ const ProfessionalTemplate = forwardRef(({
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
                       <div className="leading-tight py-0.5">
-                        <div className="font-semibold text-gray-900">{item.product_name || item.product}</div>
+                        <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                         {desc && (
                           <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
@@ -252,21 +286,24 @@ const ProfessionalTemplate = forwardRef(({
                     const decimals = Math.min(Math.max(2, decCount), 4);
                     val = `${getCurrencySymbol()}${p.toFixed(decimals)}`;
                   }
-                  else if(col.id==='discount') val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-';
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                  }
                   else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                   else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                   return (
                     <td 
                       key={col.id} 
-                      className="align-top" 
+                      className="align-middle" 
                       style={{ 
-                        padding: 0, 
+                        padding: '1px 8px', 
                         margin: 0, 
-                        lineHeight: 1, 
+                        lineHeight: 1.2, 
                         fontSize: '12px', 
-                        textAlign: isDesc ? 'left' : 'center', 
-                        verticalAlign: 'top' 
+                        textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                        verticalAlign: 'middle' 
                       }}
                     >
                       {val}
@@ -306,42 +343,42 @@ const ProfessionalTemplate = forwardRef(({
 
           <div className="w-1/3">
             <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+              <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
                 <span className="text-gray-600">Subtotal</span>
                 <span className="font-bold">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
               </div>
               {isIGST ? (
-                <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
                   <span className="text-gray-600">IGST</span>
                   <span className="font-bold">{getCurrencySymbol()}{taxTotal.toFixed(2)}</span>
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                  <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
                     <span className="text-gray-600">CGST</span>
                     <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                  <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
                     <span className="text-gray-600">SGST</span>
                     <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
                   </div>
                 </>
               )}
               {roundOff !== 0 && (
-                <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
+                <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
                   <span className="text-gray-600">Round Off</span>
                   <span className="font-bold text-gray-700">
                     {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between p-3.5 bg-gray-50 text-sm">
+              <div className="flex justify-between px-3 py-2 bg-gray-50 text-sm">
                 <span className="font-bold text-gray-900 whitespace-nowrap">Total</span>
                 <span className="font-bold font-mono text-indigo-600 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toFixed(2)}</span>
               </div>
             </div>
             {sections.showAmountInWords && (
-              <p className="text-xs text-right mt-3 text-gray-500 italic">
+              <p className="text-sm font-medium text-right mt-2 text-gray-700 italic">
                 {amountInWords(finalTotal)}
               </p>
             )}

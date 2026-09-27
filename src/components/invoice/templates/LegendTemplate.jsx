@@ -187,18 +187,18 @@ const LegendTemplate = forwardRef(({
                 const desc = item.description || item.product_description || item.product_detail?.description;
                 return (
                   <tr key={idx} className="border-b border-gray-200">
-                    <td className="py-2 text-xs text-gray-800 align-top text-center px-2 border-r border-gray-200 font-medium">{idx + 1}</td>
-                    <td className="py-2 text-xs text-gray-800 align-top text-left px-3 border-r border-gray-200">
-                      <div className="font-semibold text-gray-900 leading-tight">{item.product_name || item.product}</div>
+                    <td className="text-xs text-gray-800 align-middle text-center border-r border-gray-200 font-medium" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                    <td className="text-xs text-gray-800 align-middle text-left border-r border-gray-200" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                      <div className="font-normal text-gray-900 leading-tight">{item.product_name || item.product}</div>
                       {desc && (
                         <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                           {desc}
                         </div>
                       )}
                     </td>
-                    <td className="py-2 text-xs text-gray-900 align-top text-center px-2 border-r border-gray-200 font-bold">{qty} {unit}</td>
-                    <td className="py-2 text-xs text-gray-700 align-top text-left px-3 border-r border-gray-200">{make}</td>
-                    <td className="py-2 text-xs text-gray-700 align-top text-left px-3">{packSize}</td>
+                    <td className="text-xs text-gray-900 align-middle text-center border-r border-gray-200 font-bold" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
+                    <td className="text-xs text-gray-700 align-middle text-left border-r border-gray-200" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
+                    <td className="text-xs text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
                   </tr>
                 );
               })}
@@ -250,7 +250,7 @@ const LegendTemplate = forwardRef(({
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
                       <div className="leading-tight py-0.5">
-                        <div className="font-medium text-gray-900">{item.product_name || item.product}</div>
+                        <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                         {desc && (
                           <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
@@ -267,21 +267,24 @@ const LegendTemplate = forwardRef(({
                     const decimals = Math.min(Math.max(2, decCount), 4);
                     val = p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
                   }
-                  else if(col.id==='discount') val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-';
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                  }
                   else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
                   else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                   return (
                     <td 
                       key={col.id} 
-                      className={`align-top ${!isLast ? 'border-r border-gray-200' : ''}`} 
+                      className={`align-middle ${!isLast ? 'border-r border-gray-200' : ''}`} 
                       style={{ 
-                        padding: 0, 
+                        padding: '1px 8px', 
                         margin: 0, 
-                        lineHeight: 1, 
+                        lineHeight: 1.2, 
                         fontSize: '12px', 
-                        textAlign: isDesc ? 'left' : 'center', 
-                        verticalAlign: 'top' 
+                        textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                        verticalAlign: 'middle' 
                       }}
                     >
                       {val}
@@ -307,7 +310,7 @@ const LegendTemplate = forwardRef(({
           <div className="flex flex-1">
             <div className="w-3/5 p-3 border-r flex flex-col justify-between" style={{ borderColor }}>
                <div>
-                 <p className="italic mb-2 text-xs">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
+                 <p className="italic mb-2 text-sm font-medium text-gray-800">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
                  {sections.showBankDetails && (
                    <div>
                       <h4 className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Bank Details:</h4>

@@ -188,18 +188,18 @@ const ServiceTemplate = forwardRef(({
               const desc = item.description || item.product_description || item.product_detail?.description;
               return (
                 <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-                  <td className="py-2.5 px-2 text-[12px] font-medium text-gray-700 align-top text-center">{idx + 1}</td>
-                  <td className="py-2.5 px-3 text-[12px] font-medium text-gray-700 align-top text-left">
-                    <div className="font-bold text-gray-900 text-sm">{item.product_name || item.product}</div>
+                  <td className="text-[12px] font-medium text-gray-700 align-middle text-center" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td className="text-[12px] font-medium text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                    <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
                     {desc && (
-                      <div className="text-[11px] text-gray-500 mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                      <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
                   </td>
-                  <td className="py-2.5 px-2 text-[12px] font-bold text-gray-900 align-top text-center">{qty} {unit}</td>
-                  <td className="py-2.5 px-3 text-[12px] text-gray-700 align-top text-left">{make}</td>
-                  <td className="py-2.5 px-3 text-[12px] text-gray-700 align-top text-left">{packSize}</td>
+                  <td className="text-[12px] font-bold text-gray-900 align-middle text-center" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
+                  <td className="text-[12px] text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
+                  <td className="text-[12px] text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
                 </tr>
               );
             })}
@@ -243,7 +243,7 @@ const ServiceTemplate = forwardRef(({
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
                       <div className="py-2">
-                        <div className="font-bold text-gray-900 text-sm">{item.product_name || item.product}</div>
+                        <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
                         {desc && (
                           <div className="text-[11px] text-gray-500 mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
@@ -262,21 +262,25 @@ const ServiceTemplate = forwardRef(({
                     val = `${getCurrencySymbol()}${p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals })}`;
                     isNumeric = true;
                   }
-                  else if(col.id==='discount') { val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-'; isNumeric = true; }
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                    isNumeric = true;
+                  }
                   else if(col.id==='tax') { val = `${Math.round(item.tax||0)}%`; isNumeric = true; }
                   else if(col.id==='amount') { val = `${getCurrencySymbol()}${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                   
                   return (
                     <td 
                       key={col.id} 
-                      className="align-top font-medium text-gray-700"
+                      className="align-middle font-medium text-gray-700"
                       style={{ 
-                        padding: 0,
+                        padding: '1px 8px',
                         margin: 0,
-                        lineHeight: 1,
+                        lineHeight: 1.2,
                         fontSize: '12px',
-                        textAlign: col.id === 'description' ? 'left' : 'center',
-                        verticalAlign: 'top',
+                        textAlign: col.id === 'description' ? 'left' : ['price', 'amount'].includes(col.id) ? 'right' : 'center',
+                        verticalAlign: 'middle',
                       }}
                     >
                       {val}
@@ -306,9 +310,9 @@ const ServiceTemplate = forwardRef(({
               </div>
             )}
             
-            <div className="border border-gray-300 p-2 text-xs bg-gray-50 border-dashed rounded">
+            <div className="border border-gray-300 p-2 text-sm bg-gray-50 border-dashed rounded">
                <span className="font-bold">Total amount (in words): </span>
-               <span>{amountInWords(finalTotal)}</span>
+               <span className="italic font-medium">{amountInWords(finalTotal)}</span>
             </div>
           </div>
 
