@@ -415,24 +415,24 @@ const InvoicePreview = forwardRef(({
                         : 'transparent',
                     }}
                   >
-                    <td className="px-2 py-2 border text-center align-top font-medium" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border text-center align-middle font-medium" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {index + 1}
                     </td>
-                    <td className="px-3 py-2 border align-top" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
-                      <div className="font-semibold text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                    <td className="border align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                      <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
                       {desc && (
-                        <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-relaxed" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
+                        <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-relaxed font-normal" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
                           {desc}
                         </div>
                       )}
                     </td>
-                    <td className="px-2 py-2 border text-center align-top font-semibold text-gray-900" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border text-center align-middle font-semibold text-gray-900" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {qty} {unit}
                     </td>
-                    <td className="px-2 py-2 border align-top text-gray-700" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border align-middle text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {make}
                     </td>
-                    <td className="px-2 py-2 border align-top text-gray-700" style={{ borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border align-middle text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {packSize}
                     </td>
                   </tr>
@@ -532,25 +532,27 @@ const InvoicePreview = forwardRef(({
                         default: value = '';
                       }
                       
+                      const isDesc = col.id === 'description';
+                      const isNum = col.id === 'price' || col.id === 'amount';
                       return (
                         <td 
                           key={col.id}
-                          className="border align-top"
+                          className="border align-middle"
                           style={{ 
-                            padding: 0,
+                            padding: '1px 8px',
                             margin: 0,
-                            lineHeight: 1,
+                            lineHeight: 1.2,
                             fontSize: '12px',
-                            textAlign: col.id === 'description' ? 'left' : 'center',
+                            textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
                             borderColor: colors.tableBorder,
-                            wordBreak: col.id === 'description' ? 'break-word' : 'normal',
-                            whiteSpace: col.id === 'description' ? 'normal' : 'nowrap',
-                            verticalAlign: 'top',
+                            wordBreak: isDesc ? 'break-word' : 'normal',
+                            whiteSpace: isDesc ? 'normal' : 'nowrap',
+                            verticalAlign: 'middle',
                           }}
                         >
                           {col.id === 'description' ? (
                             <div>
-                              <div>{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                              <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
                               {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
                                 <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', wordBreak: 'break-word' }}>
                                   {item.description || item.product_description || item.product_detail?.description}
@@ -623,45 +625,45 @@ const InvoicePreview = forwardRef(({
             <table className="w-full border-collapse text-sm">
               <tbody>
                 <tr>
-                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                  <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>
                     Untaxed Amount
                   </td>
-                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
+                  <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>
                     {getCurrencySymbol()}{subtotal.toFixed(2)}
                   </td>
                 </tr>
                 {isIGST ? (
                   <tr>
-                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
+                    <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
+                    <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
                   </tr>
                 ) : (
                   <>
                     <tr>
-                      <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
-                      <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                      <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
+                      <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
-                      <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                      <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
+                      <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
                     </tr>
                   </>
                 )}
                 {roundOff !== 0 && (
                   <tr>
-                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                    <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>
                       Round Off
                     </td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
+                    <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>
                       {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
                     </td>
                   </tr>
                 )}
                 <tr style={totalRowStyle}>
-                  <td className="px-3 py-3 border font-bold">
+                  <td className="px-3 py-2 border font-bold">
                     Grand Total
                   </td>
-                  <td className="px-3 py-3 border text-right font-bold text-lg">
+                  <td className="px-3 py-2 border text-right font-bold text-lg">
                     {getCurrencySymbol()}{finalTotal.toFixed(2)}
                   </td>
                 </tr>
@@ -670,10 +672,10 @@ const InvoicePreview = forwardRef(({
             
             {/* Amount in Words */}
             {sections.showAmountInWords && (
-              <div className="mt-3 text-xs text-right" style={{ color: colors.lightText }}>
+              <div className="mt-2 text-sm text-right" style={{ color: colors.lightText }}>
                 <span className="font-medium">Total amount in words:</span>
                 <br />
-                <span className="font-semibold" style={{ color: colors.text }}>
+                <span className="font-medium italic" style={{ color: colors.text }}>
                   {amountInWords(finalTotal)}
                 </span>
               </div>

@@ -59,6 +59,24 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
   }, [isOpen]);
 
+  // Close on Escape key press
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (showDesigner) {
+          setShowDesigner(false);
+        } else if (emailPromptOpen) {
+          setEmailPromptOpen(false);
+        } else {
+          onClose?.();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, showDesigner, emailPromptOpen, onClose]);
+
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
   const isSalesOrder = documentType === "sales_order" || documentType === "proforma";
