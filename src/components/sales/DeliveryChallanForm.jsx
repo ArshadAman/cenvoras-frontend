@@ -35,8 +35,6 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     const value = e.target.value;
     setInputValue(value);
     setFieldValue(`items.${idx}.product`, value);
-    setFieldValue(`items.${idx}.description`, "");
-    setFieldValue(`items.${idx}.product_description`, "");
     
     if (value.trim()) {
       const filtered = products.filter(product =>
@@ -45,6 +43,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       setFilteredProducts(filtered);
       setShowDropdown(filtered.length > 0);
     } else {
+      setFieldValue(`items.${idx}.isExistingProduct`, false);
       setShowDropdown(false);
     }
   };
