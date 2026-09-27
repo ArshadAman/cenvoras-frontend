@@ -712,20 +712,21 @@ export default function SalesForm({
     const prodId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
     const prodName = (typeof item.product === 'string' ? item.product : item.product_name || item.product_detail?.name || "").trim().toLowerCase();
 
-    return stockPoints
-      ?.filter((sp) => {
+    return (Array.isArray(stockPoints) ? stockPoints : [])
+      .filter((sp) => {
+        if (!sp) return false;
         const spProdId = sp.product_id || sp.batch?.product || sp.product;
         const spProdName = (sp.product_name || "").trim().toLowerCase();
         const idMatch = prodId && spProdId && String(prodId) === String(spProdId);
         const nameMatch = prodName && spProdName && prodName === spProdName;
         return (idMatch || nameMatch) && Number(sp.quantity || 0) > 0;
       })
-      ?.map((sp) => {
+      .map((sp) => {
         const batchId = typeof sp.batch === 'object' ? sp.batch?.id : (sp.batch || sp.id);
         const batchNum = sp.batch_number || sp.batch?.batch_number || 'Batch';
         const qty = sp.quantity || 0;
         return { id: batchId, name: batchNum, qty };
-      }) || [];
+      });
   };
 
   const { data: invoiceSettings } = useQuery({
@@ -1074,99 +1075,117 @@ export default function SalesForm({
     onClose();
   };
 
-  const initialValues = useMemo(() => ({
-    // Required fields
-    customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
-    // Use fetched next number or edit data
-    invoice_number: editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
-    invoice_date: (editData?.invoice_date || editData?.date)
-      ? new Date(editData.invoice_date || editData.date).toISOString().split('T')[0] 
-      : new Date().toLocaleDateString('sv-SE'),
-    
-    // Optional customer fields (for Customer record creation)
-    customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
-    customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
-    customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
-    customer_gstin: editData?.customer_gstin || "",
-    delivery_address: editData?.delivery_address || "",
-    vehicle_number: editData?.vehicle_number || "",
-    transport_mode: editData?.transport_mode || "",
-    eway_bill_number: editData?.eway_bill_number || "",
-    
-    // Optional invoice fields
-    due_date: editData?.due_date || "",
-    po_number: editData?.po_number || "",
-    po_date: editData?.po_date || "",
-    challan_number: editData?.challan_number || "",
-    challan_date: editData?.challan_date || "",
-    gst_treatment: editData?.gst_treatment || "registered",
-    place_of_supply: editData?.place_of_supply || "",
-    warehouse: editData?.warehouse || "",
-    journal: editData?.journal || "Sales",
-    total_amount: editData?.total_amount || null,
-    
-    items: (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
-      const qty = item.quantity || 1;
-      const price = Number(item.price || 0) || 0;
-      const itemAmount = qty * price;
-      const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : null);
-      const productName = item.product_name || item.product_detail?.name || (typeof item.product === 'string' && !isUUID(item.product) ? item.product : "");
-      const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
-      return {
-        _key: item.id || `item-edit-${productId || idx}`,
-        product: productName,
-        product_id: productId,
-        description: item.description || item.product_description || item.product_detail?.description || "",
-        product_description: item.description || item.product_description || item.product_detail?.description || "",
-        quantity: qty,
-        free_quantity: item.free_quantity || 0,
-        batch: batchId,
-        price: price,
-        amount: itemAmount,
-        unit: item.unit || "pcs",
-        hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
-        discount: item.discount || 0,
-        tax: item.tax || 0,
-        isExistingProduct: !!productId,
-      };
-    }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
-        const qty = item.quantity || 1;
+  const safeDateStr = (raw) => {
+    if (!raw) return "";
+    try {
+      if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.trim())) {
+        return raw.trim();
+      }
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().split('T')[0];
+    } catch {
+      return "";
+    }
+  };
+
+  const initialValues = useMemo(() => {
+    const rawInvoiceDate = editData?.invoice_date || editData?.quotation_date || editData?.challan_date || editData?.date;
+    const parsedInvoiceDate = safeDateStr(rawInvoiceDate) || new Date().toLocaleDateString('sv-SE');
+
+    return {
+      // Required fields
+      customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
+      // Use fetched next number or edit data
+      invoice_number: editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
+      invoice_date: parsedInvoiceDate,
+      
+      // Optional customer fields (for Customer record creation)
+      customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
+      customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
+      customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
+      customer_gstin: editData?.customer_gstin || "",
+      delivery_address: editData?.delivery_address || "",
+      vehicle_number: editData?.vehicle_number || "",
+      transport_mode: editData?.transport_mode || "",
+      eway_bill_number: editData?.eway_bill_number || "",
+      
+      // Optional invoice fields
+      due_date: safeDateStr(editData?.due_date),
+      po_number: editData?.po_number || "",
+      po_date: safeDateStr(editData?.po_date),
+      challan_number: editData?.challan_number || "",
+      challan_date: safeDateStr(editData?.challan_date),
+      gst_treatment: editData?.gst_treatment || "registered",
+      place_of_supply: editData?.place_of_supply || "",
+      warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || ""),
+      journal: editData?.journal || (isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
+      total_amount: editData?.total_amount || null,
+      notes: editData?.notes || "",
+      
+      items: (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
+        const qty = Number(item.quantity) || 1;
         const price = Number(item.price || 0) || 0;
+        const itemAmount = Number(item.amount) || (qty * price);
+        const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : (isUUID(item.product) ? item.product : null));
+        const productName = item.product_name || item.product_detail?.name || (typeof item.product === 'string' && !isUUID(item.product) ? item.product : (item.product_detail?.name || ""));
+        const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
         return {
-            _key: `item-ai-${idx}`,
-            product: item.product_name || "",
-            product_id: null,
-            description: item.description || item.product_description || "",
-            product_description: item.description || item.product_description || "",
-            quantity: qty,
-            free_quantity: 0,
-            batch: "",
-            price: price,
-            amount: qty * price,
-            unit: "pcs",
-            hsn_sac_code: "",
-            discount: 0,
-            tax: 0,
-            isExistingProduct: false,
+          _key: item.id || `item-edit-${productId || idx}`,
+          product: productName,
+          product_id: productId,
+          description: item.description || item.product_description || item.product_detail?.description || "",
+          product_description: item.description || item.product_description || item.product_detail?.description || "",
+          quantity: qty,
+          free_quantity: Number(item.free_quantity) || 0,
+          batch: batchId,
+          price: price,
+          amount: itemAmount,
+          unit: item.unit || "pcs",
+          hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
+          discount: Number(item.discount) || 0,
+          tax: Number(item.tax) || 0,
+          isExistingProduct: !!productId,
         };
-    }) : [{
-      _key: 'item-initial-0',
-      product: "",
-      product_id: null,
-      description: "",
-      product_description: "",
-      quantity: 1,
-      free_quantity: 0,
-      batch: "",
-      price: 0,
-      amount: 0,
-      unit: "pcs",
-      hsn_sac_code: "",
-      discount: 0,
-      tax: 0,
-      isExistingProduct: false,
-    }],
-  }), [editData?.id, aiDraftData]);
+      }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
+          const qty = Number(item.quantity) || 1;
+          const price = Number(item.price || 0) || 0;
+          return {
+              _key: `item-ai-${idx}`,
+              product: item.product_name || "",
+              product_id: null,
+              description: item.description || item.product_description || "",
+              product_description: item.description || item.product_description || "",
+              quantity: qty,
+              free_quantity: 0,
+              batch: "",
+              price: price,
+              amount: qty * price,
+              unit: "pcs",
+              hsn_sac_code: "",
+              discount: 0,
+              tax: 0,
+              isExistingProduct: false,
+          };
+      }) : [{
+        _key: 'item-initial-0',
+        product: "",
+        product_id: null,
+        description: "",
+        product_description: "",
+        quantity: 1,
+        free_quantity: 0,
+        batch: "",
+        price: 0,
+        amount: 0,
+        unit: "pcs",
+        hsn_sac_code: "",
+        discount: 0,
+        tax: 0,
+        isExistingProduct: false,
+      }],
+    };
+  }, [editData?.id, aiDraftData, nextInvData?.next_number]);
 
   if (!isOpen) return null;
 
@@ -2319,7 +2338,8 @@ export default function SalesForm({
               </Form>
             );
           }}
-        
+        </Formik>
+
         {/* Catalog Sync Prompt Modal */}
         {catalogSyncModal && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -2364,8 +2384,6 @@ export default function SalesForm({
             </div>
           </div>
         )}
-
-        </Formik>
 
         {productCreationState && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
