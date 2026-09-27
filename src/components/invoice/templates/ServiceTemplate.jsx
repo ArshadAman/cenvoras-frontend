@@ -62,11 +62,19 @@ const ServiceTemplate = forwardRef(({
     hsn: '12%',
     quantity: '8%',
     price: '15%',
+    discount: '8%',
     tax: '10%',
     amount: '18%',
   };
 
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   return (
     <div 
@@ -164,6 +172,15 @@ const ServiceTemplate = forwardRef(({
           </thead>
           <tbody>
             {items.map((item, idx) => {
+              if (item.row_type === 'note') {
+                return (
+                  <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
+                    <td colSpan={5} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                      Note: {item.description || item.product_description || item.product || ''}
+                    </td>
+                  </tr>
+                );
+              }
               const qty = item.quantity || 0;
               const unit = item.unit || 'pcs';
               const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
@@ -196,7 +213,7 @@ const ServiceTemplate = forwardRef(({
                 <th 
                   key={col.id} 
                   className={`py-3 px-2 text-[11px] font-black text-gray-900 uppercase tracking-widest ${
-                    ['quantity', 'price', 'amount', 'tax'].includes(col.id) ? 'text-right' : ''
+                    ['quantity', 'price', 'amount', 'tax', 'discount'].includes(col.id) ? 'text-right' : ''
                   }`}
                   style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap' }}
                 >
@@ -206,7 +223,17 @@ const ServiceTemplate = forwardRef(({
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => (
+            {items.map((item, idx) => {
+              if (item.row_type === 'note') {
+                return (
+                  <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
+                    <td colSpan={visibleColumns.length} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                      Note: {item.description || item.product_description || item.product || ''}
+                    </td>
+                  </tr>
+                );
+              }
+              return (
               <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
                 {visibleColumns.map(col => {
                   let val = '';
@@ -235,6 +262,7 @@ const ServiceTemplate = forwardRef(({
                     val = `${getCurrencySymbol()}${p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals })}`;
                     isNumeric = true;
                   }
+                  else if(col.id==='discount') { val = Number(item.discount || 0) > 0 ? `${item.discount}%` : '-'; isNumeric = true; }
                   else if(col.id==='tax') { val = `${Math.round(item.tax||0)}%`; isNumeric = true; }
                   else if(col.id==='amount') { val = `${getCurrencySymbol()}${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
                   
@@ -256,7 +284,8 @@ const ServiceTemplate = forwardRef(({
                   );
                 })}
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       )}

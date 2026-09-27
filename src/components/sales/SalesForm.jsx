@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
-import { DocumentTextIcon, ArrowPathIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ArrowPathIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, DocumentPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, onCreateNewProduct, onSelectProduct }) {
@@ -537,13 +537,27 @@ const SalesSchema = Yup.object().shape({
   // Items array - at least one item required
   items: Yup.array().of(
     Yup.object().shape({
-      // Required item fields
-      product: Yup.string().required("Product is required").min(1),
-      quantity: Yup.number().required("Quantity is required").min(0),
+      row_type: Yup.string().nullable(),
+      // Required item fields for regular items
+      product: Yup.string().when('row_type', {
+        is: 'note',
+        then: () => Yup.string().nullable(),
+        otherwise: () => Yup.string().required("Product is required").min(1),
+      }),
+      quantity: Yup.number().when('row_type', {
+        is: 'note',
+        then: () => Yup.number().nullable(),
+        otherwise: () => Yup.number().required("Quantity is required").min(0),
+      }),
       free_quantity: Yup.number().nullable().min(0),
-      batch: Yup.string().nullable(), // Make batch optional for now, or required if needed
-      price: Yup.number().required("Price is required").min(0),
-      amount: Yup.number().required("Amount is required").min(0),
+      batch: Yup.string().nullable(),
+      price: Yup.number().when('row_type', {
+        is: 'note',
+        then: () => Yup.number().nullable(),
+        otherwise: () => Yup.number().required("Price is required").min(0),
+      }),
+      amount: Yup.number().nullable(),
+      description: Yup.string().nullable(),
       
       // Optional item fields
       hsn_sac_code: Yup.string().nullable(),
@@ -554,7 +568,7 @@ const SalesSchema = Yup.object().shape({
   ).test(
     "has-positive-qty",
     "Each item must have either quantity or free quantity greater than 0",
-    (items) => !items || items.every((i) => (Number(i?.quantity) || 0) + (Number(i?.free_quantity) || 0) > 0)
+    (items) => !items || items.every((i) => i?.row_type === 'note' || (Number(i?.quantity) || 0) + (Number(i?.free_quantity) || 0) > 0)
   ).min(1, "At least one item is required"),
 });
 
@@ -1085,7 +1099,9 @@ export default function SalesForm({
     if (isEdit && formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
       const values = formikRef.current.values || {};
       const cleanedItems = (values.items || []).filter((item) =>
-        (item?.product && item.product.trim() !== '') || item?.product_id
+        item.row_type === 'note'
+          ? Boolean(item?.description && item.description.trim())
+          : ((item?.product && item.product.trim() !== '') || item?.product_id)
       );
 
       const hasCustomerName = !!(values.customer_name && values.customer_name.trim());
@@ -1149,7 +1165,8 @@ export default function SalesForm({
       notes: editData?.notes || "",
       
       items: (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
-        const qty = Number(item.quantity) || 1;
+        const isNote = item.row_type === 'note' || (!item.product && !!item.description);
+        const qty = Number(item.quantity) || (isNote ? 0 : 1);
         const price = Number(item.price || 0) || 0;
         const itemAmount = Number(item.amount) || (qty * price);
         const productId = item.product_id || item.product_detail?.id || (typeof item.product === 'object' ? item.product?.id : (isUUID(item.product) ? item.product : null));
@@ -1157,20 +1174,21 @@ export default function SalesForm({
         const batchId = typeof item.batch === 'object' ? item.batch?.id : (item.batch || "");
         return {
           _key: item.id || `item-edit-${productId || idx}`,
-          product: productName,
-          product_id: productId,
+          row_type: isNote ? 'note' : 'item',
+          product: isNote ? "" : productName,
+          product_id: isNote ? null : productId,
           description: item.description || item.product_description || item.product_detail?.description || "",
           product_description: item.description || item.product_description || item.product_detail?.description || "",
-          quantity: qty,
-          free_quantity: Number(item.free_quantity) || 0,
-          batch: batchId,
-          price: price,
-          amount: itemAmount,
-          unit: item.unit || "pcs",
-          hsn_sac_code: item.hsn_sac_code || item.hsn_code || "",
-          discount: Number(item.discount) || 0,
-          tax: Number(item.tax) || 0,
-          isExistingProduct: !!productId,
+          quantity: isNote ? 0 : qty,
+          free_quantity: isNote ? 0 : (Number(item.free_quantity) || 0),
+          batch: isNote ? "" : batchId,
+          price: isNote ? 0 : price,
+          amount: isNote ? 0 : itemAmount,
+          unit: isNote ? "" : (item.unit || "pcs"),
+          hsn_sac_code: isNote ? "" : (item.hsn_sac_code || item.hsn_code || ""),
+          discount: isNote ? 0 : (Number(item.discount) || 0),
+          tax: isNote ? 0 : (Number(item.tax) || 0),
+          isExistingProduct: !isNote && !!productId,
         };
       }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
           const qty = Number(item.quantity) || 1;
@@ -1250,7 +1268,9 @@ export default function SalesForm({
             
             // Clean up empty product rows before processing/validation
             const cleanedItems = values.items.filter(item => 
-              (item.product && item.product.trim() !== '') || item.product_id
+              item.row_type === 'note'
+                ? Boolean(item.description && item.description.trim())
+                : ((item.product && item.product.trim() !== '') || item.product_id)
             );
             const valuesToValidate = { ...values, items: cleanedItems };
 
@@ -1271,7 +1291,7 @@ export default function SalesForm({
                 }
 
                 if (itemSettings.show_item_batch && itemSettings.require_item_batch) {
-                  const missingBatchRow = cleanedItems.findIndex((item) => !item.batch);
+                  const missingBatchRow = cleanedItems.findIndex((item) => item.row_type !== 'note' && !item.batch);
                   if (missingBatchRow >= 0) {
                     toast.error(`Batch is required for row ${missingBatchRow + 1}.`);
                     setSubmitting(false);
@@ -1310,6 +1330,23 @@ export default function SalesForm({
             
             try {
               const processedItems = cleanedItems.map(item => {
+                if (item.row_type === 'note') {
+                  return {
+                    row_type: 'note',
+                    product: null,
+                    product_name: 'Note',
+                    quantity: 0,
+                    free_quantity: 0,
+                    price: 0,
+                    amount: 0,
+                    unit: null,
+                    hsn_sac_code: null,
+                    description: (item.description || item.product_description || "").trim(),
+                    product_description: (item.description || item.product_description || "").trim(),
+                    discount: 0,
+                    tax: 0,
+                  };
+                }
                 const quantity = Number(item.quantity) || 1;
                 const price = Number(item.price) || 0;
                 const discount = Number(item.discount) || 0;
@@ -1321,6 +1358,7 @@ export default function SalesForm({
                 const amount = Number((taxableAmount + taxAmount).toFixed(2));
                 
                 return {
+                  row_type: 'item',
                   product: item.product_id || item.product, // Pass UUID if available, else name
                   product_name: (item.product || '').trim(),
                   quantity: quantity,
@@ -1703,7 +1741,7 @@ export default function SalesForm({
                     </div>
                   )}
                   <FieldArray name="items">
-                    {({ push, remove }) => {
+                    {({ push, remove, swap, insert }) => {
                       // Function to auto-add new row when user starts typing in the last row
                       const handleAutoAddRow = (currentIndex) => {
                         const isLastRow = currentIndex === values.items.length - 1;
@@ -1722,6 +1760,7 @@ export default function SalesForm({
                             // Add new empty row
                             push({
                               _key: `item-${Math.random().toString(36).substring(2, 9)}`,
+                              row_type: "item",
                               product: "",
                               product_name: "",
                               product_id: null,
@@ -1757,7 +1796,7 @@ export default function SalesForm({
                               { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
                               { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
                               { key: "amount", label: "Amount", show: true, width: "130px", minWidth: 130 },
-                              { key: "action", label: "", show: true, width: "44px", minWidth: 44 },
+                              { key: "action", label: "", show: true, width: "110px", minWidth: 110 },
                             ].filter((col) => col.show);
 
                             const gridTemplateColumns = desktopColumns.map((col) => col.width).join(" ");
@@ -1783,6 +1822,84 @@ export default function SalesForm({
 
                                 <div className="hidden md:block overflow-x-auto">
                                   {values.items.map((item, index) => {
+                                    if (item.row_type === 'note') {
+                                      return (
+                                        <div key={item._key || index} className="border-b border-amber-500/20 bg-amber-500/5 px-3 py-2 flex items-center gap-2" style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                          <div className="flex items-center gap-0.5 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={() => swap(index, index - 1)}
+                                              disabled={index === 0}
+                                              className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
+                                              title="Move Up"
+                                              tabIndex={-1}
+                                            >
+                                              <ArrowUpIcon className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => swap(index, index + 1)}
+                                              disabled={index === values.items.length - 1}
+                                              className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
+                                              title="Move Down"
+                                              tabIndex={-1}
+                                            >
+                                              <ArrowDownIcon className="w-3.5 h-3.5" />
+                                            </button>
+                                          </div>
+                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-wider shrink-0">
+                                            <DocumentTextIcon className="w-3.5 h-3.5" />
+                                            <span>Note</span>
+                                          </div>
+                                          <div className="flex-1">
+                                            <Field
+                                              as="textarea"
+                                              name={`items.${index}.description`}
+                                              rows={1}
+                                              placeholder="Enter note or section title (e.g. Terms for items above, scope of work, warranty details...)"
+                                              className="w-full bg-[#111] border border-amber-500/30 focus:border-amber-400 rounded-lg px-3 py-1.5 text-xs text-amber-100 placeholder-gray-500 focus:ring-1 focus:ring-amber-400 outline-none resize-y"
+                                            />
+                                          </div>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={() => insert(index + 1, {
+                                                _key: `note-${Math.random().toString(36).substring(2, 9)}`,
+                                                row_type: 'note',
+                                                product: null,
+                                                product_name: 'Note',
+                                                description: '',
+                                                product_description: '',
+                                                quantity: 0,
+                                                free_quantity: 0,
+                                                batch: '',
+                                                unit: '',
+                                                price: 0,
+                                                discount: 0,
+                                                tax: 0,
+                                                amount: 0,
+                                              })}
+                                              className="p-1 text-gray-400 hover:text-amber-300 transition-colors"
+                                              title="Add Note Below"
+                                              tabIndex={-1}
+                                            >
+                                              <DocumentPlusIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => remove(index)}
+                                              disabled={values.items.length === 1}
+                                              className="text-gray-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30"
+                                              title="Remove Note"
+                                              tabIndex={-1}
+                                            >
+                                              <TrashIcon className="h-4 w-4" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
                                     const productBatches = getProductBatchesForItem(item);
 
                                     return (
@@ -1999,7 +2116,51 @@ export default function SalesForm({
 
                                           if (col.key === "action") {
                                             return (
-                                              <div key={col.key} className="flex items-center justify-center gap-1">
+                                              <div key={col.key} className="flex items-center justify-center gap-0.5">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => swap(index, index - 1)}
+                                                  disabled={index === 0}
+                                                  className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
+                                                  title="Move Up"
+                                                  tabIndex={-1}
+                                                >
+                                                  <ArrowUpIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => swap(index, index + 1)}
+                                                  disabled={index === values.items.length - 1}
+                                                  className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
+                                                  title="Move Down"
+                                                  tabIndex={-1}
+                                                >
+                                                  <ArrowDownIcon className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => insert(index + 1, {
+                                                    _key: `note-${Math.random().toString(36).substring(2, 9)}`,
+                                                    row_type: 'note',
+                                                    product: null,
+                                                    product_name: 'Note',
+                                                    description: '',
+                                                    product_description: '',
+                                                    quantity: 0,
+                                                    free_quantity: 0,
+                                                    batch: '',
+                                                    unit: '',
+                                                    price: 0,
+                                                    discount: 0,
+                                                    tax: 0,
+                                                    amount: 0,
+                                                  })}
+                                                  className="p-1 text-gray-400 hover:text-amber-300 transition-colors"
+                                                  title="Add Note Below"
+                                                  tabIndex={-1}
+                                                >
+                                                  <DocumentPlusIcon className="w-3.5 h-3.5" />
+                                                </button>
                                                 {canAccessInventory && item.product?.trim() && (
                                                   <button
                                                     type="button"
@@ -2017,7 +2178,7 @@ export default function SalesForm({
                                                     title={item.product_id ? "Update Catalog Item" : "Save as New Product in Catalog"}
                                                     tabIndex={-1}
                                                   >
-                                                    <ArrowPathIcon className="h-4 w-4" />
+                                                    <ArrowPathIcon className="h-3.5 w-3.5" />
                                                   </button>
                                                 )}
                                                 <button
@@ -2028,9 +2189,7 @@ export default function SalesForm({
                                                   title="Remove Item"
                                                   tabIndex={-1}
                                                 >
-                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                  </svg>
+                                                  <TrashIcon className="h-3.5 w-3.5" />
                                                 </button>
                                               </div>
                                             );
@@ -2047,6 +2206,58 @@ export default function SalesForm({
 
                                 <div className="lg:hidden space-y-4">
                                   {values.items.map((item, index) => {
+                                    if (item.row_type === 'note') {
+                                      return (
+                                        <div
+                                          key={item._key ? `mobile-${item._key}` : `mobile-${index}`}
+                                          className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex flex-col gap-3"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
+                                              <DocumentTextIcon className="w-4 h-4 text-amber-400" />
+                                              Note Row #{index + 1}
+                                            </span>
+                                            <div className="flex items-center gap-1">
+                                              <button
+                                                type="button"
+                                                disabled={index === 0}
+                                                onClick={() => swap(index, index - 1)}
+                                                className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
+                                                title="Move Up"
+                                              >
+                                                <ArrowUpIcon className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                disabled={index === values.items.length - 1}
+                                                onClick={() => swap(index, index + 1)}
+                                                className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
+                                                title="Move Down"
+                                              >
+                                                <ArrowDownIcon className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => remove(index)}
+                                                disabled={values.items.length === 1}
+                                                className="p-1.5 text-red-400 hover:text-red-300 disabled:opacity-20"
+                                                title="Remove Note"
+                                              >
+                                                <TrashIcon className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <Field
+                                            as="textarea"
+                                            name={`items.${index}.description`}
+                                            rows={2}
+                                            placeholder="Enter section header, remarks, or notes..."
+                                            className="w-full bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-2.5 text-amber-100 placeholder-gray-500 text-xs focus:ring-1 focus:ring-amber-400 outline-none"
+                                          />
+                                        </div>
+                                      );
+                                    }
+
                                     const productBatches = getProductBatchesForItem(item);
                                     return (
                                       <div key={item._key ? `mobile-${item._key}` : `mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
@@ -2242,7 +2453,7 @@ export default function SalesForm({
                                           </div>
                                       )}
 
-                                      {/* Row 4: Amount & Remove */}
+                                      {/* Row 4: Amount & Actions */}
                                       <div className="flex items-center justify-between pt-4 border-t border-white/10">
                                           <div>
                                               <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Subtotal</label>
@@ -2250,15 +2461,58 @@ export default function SalesForm({
                                                   {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
                                           </div>
-                                          <button
+                                          <div className="flex items-center gap-1">
+                                            <button
+                                              type="button"
+                                              disabled={index === 0}
+                                              onClick={() => swap(index, index - 1)}
+                                              className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
+                                              title="Move Up"
+                                            >
+                                              <ArrowUpIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              disabled={index === values.items.length - 1}
+                                              onClick={() => swap(index, index + 1)}
+                                              className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
+                                              title="Move Down"
+                                            >
+                                              <ArrowDownIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => insert(index + 1, {
+                                                _key: `note-${Math.random().toString(36).substring(2, 9)}`,
+                                                row_type: 'note',
+                                                product: null,
+                                                product_name: 'Note',
+                                                description: '',
+                                                product_description: '',
+                                                quantity: 0,
+                                                free_quantity: 0,
+                                                batch: '',
+                                                unit: '',
+                                                price: 0,
+                                                discount: 0,
+                                                tax: 0,
+                                                amount: 0,
+                                              })}
+                                              className="p-1.5 text-gray-400 hover:text-amber-300"
+                                              title="Add Note Below"
+                                            >
+                                              <DocumentPlusIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
                                               type="button"
                                               onClick={() => remove(index)}
                                               disabled={values.items.length === 1}
-                                              className="px-6 py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+                                              className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
                                               tabIndex={-1}
-                                          >
+                                            >
                                               Remove
-                                          </button>
+                                            </button>
+                                          </div>
                                       </div>
                                      </div>
                                     );
@@ -2298,11 +2552,34 @@ export default function SalesForm({
                             </button>
                             <button
                               type="button"
+                              onClick={() => push({
+                                _key: `note-${Math.random().toString(36).substring(2, 9)}`,
+                                row_type: 'note',
+                                product: null,
+                                product_name: 'Note',
+                                description: '',
+                                product_description: '',
+                                quantity: 0,
+                                free_quantity: 0,
+                                batch: '',
+                                unit: '',
+                                price: 0,
+                                discount: 0,
+                                tax: 0,
+                                amount: 0,
+                              })}
+                              className="px-4 py-2 border border-amber-500/30 hover:border-amber-400/50 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-sm text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                            >
+                              <DocumentPlusIcon className="w-4 h-4 text-amber-400" />
+                              <span>+ Add Note</span>
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setShowDocNote(!showDocNote)}
                               className="px-3.5 py-2 border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                             >
                               <DocumentTextIcon className="w-4 h-4 text-cyan-400" />
-                              <span>{showDocNote ? "Hide Note" : "+ Add Note"}</span>
+                              <span>{showDocNote ? "Hide Document Terms" : "+ Terms & Remarks"}</span>
                             </button>
                           </div>
 
@@ -2391,7 +2668,7 @@ export default function SalesForm({
                       )}
                     </div>
                     <div className="text-right text-xs text-gray-500 mt-1 uppercase tracking-wide">
-                      {grandTotal > 0 ? "Amount Payble" : ""}
+                      {grandTotal > 0 ? "Amount Payable" : ""}
                     </div>
                   </div>
                 </div>
@@ -2400,9 +2677,7 @@ export default function SalesForm({
                 {/* Actions */}
                 <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
                   <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
-                    {isQuotation
-                      ? "Closing modal automatically saves as quotation draft."
-                      : "Closing modal automatically saves as draft. Or use Save Draft."}
+                    Closing this window automatically saves as a draft. Or click Save Draft.
                   </div>
                   {!forceDraft && (
                     <button
