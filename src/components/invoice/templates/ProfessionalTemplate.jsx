@@ -34,6 +34,8 @@ const ProfessionalTemplate = forwardRef(({
   const bankUpi = businessInfo.bank_upi_id || '';
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
+  
+  const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const subtotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity || 0);
     const price = parseFloat(item.price || 0);
@@ -171,10 +173,10 @@ const ProfessionalTemplate = forwardRef(({
                     <p className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
                   </div>
                 )}
-                {invoice.challan_number && (
+                {(invoice.delivery_challan_number || invoice.challan_number) && (
                   <div>
                     <p className="text-xs text-gray-500 font-semibold mb-0.5">Challan No</p>
-                    <p className="font-bold text-gray-900">{invoice.challan_number}</p>
+                    <p className="font-bold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</p>
                   </div>
                 )}
               </>
