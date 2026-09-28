@@ -22,6 +22,14 @@ const GenzTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const subtotal = items.reduce((sum, item) => {
@@ -86,7 +94,16 @@ const GenzTemplate = forwardRef(({
           {sections.showLogo && template.branding?.logo && (
              <img src={template.branding.logo} alt="Logo" className="h-12 bg-white p-1 rounded-xl" />
           )}
-          <h1 className="text-3xl font-extrabold tracking-tight">{companyName}</h1>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">{companyName}</h1>
+            <div className="text-xs text-white/90 mt-1 flex flex-wrap gap-x-3 gap-y-0.5 font-medium">
+              {sections.showGST && businessInfo.gstin && <span>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</span>}
+              {businessInfo.pan_number && <span>PAN: {businessInfo.pan_number}</span>}
+              {businessInfo.gem_id && <span>GeM: {businessInfo.gem_id}</span>}
+              {businessInfo.drug_license_number && <span>DL: {businessInfo.drug_license_number}</span>}
+            </div>
+            {companyAddress && <p className="text-xs text-white/80 mt-1 whitespace-pre-line leading-relaxed">{companyAddress}</p>}
+          </div>
         </div>
         <h2 className="text-3xl font-bold opacity-90">{content.invoiceTitle || (isDeliveryChallan ? 'DELIVERY CHALLAN' : 'TAX INVOICE')}</h2>
       </div>
@@ -127,7 +144,28 @@ const GenzTemplate = forwardRef(({
                   </div>
                 )}
               </>
-            ) : null}
+            ) : (
+              <>
+                {invoice.due_date && (
+                  <div className="flex justify-between mt-2">
+                    <span className="text-gray-500 font-semibold">Due Date</span>
+                    <span className="font-bold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span>
+                  </div>
+                )}
+                {(invoice.po_number || invoice.sales_order_number) && (
+                  <div className="flex justify-between mt-2">
+                    <span className="text-gray-500 font-semibold">PO / Order #</span>
+                    <span className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span>
+                  </div>
+                )}
+                {invoice.delivery_challan_number && (
+                  <div className="flex justify-between mt-2">
+                    <span className="text-gray-500 font-semibold">Challan #</span>
+                    <span className="font-bold text-gray-900">{invoice.delivery_challan_number}</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -272,15 +310,35 @@ const GenzTemplate = forwardRef(({
 
         {/* Totals Section (Hidden for Delivery Challans) */}
         {!isDeliveryChallan && (
-          <div className="flex justify-between pb-10">
-            {sections.showTerms && (
-               <div className="w-1/2 pr-8">
-                 <h3 className="font-bold text-gray-900 mb-3">Terms & Conditions</h3>
-                 <ul className="text-gray-500 text-sm space-y-2 list-disc pl-4">
-                   {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                 </ul>
-               </div>
-            )}
+          <div className="flex justify-between pb-10 gap-8">
+            <div className="w-1/2 space-y-4">
+              {sections.showBankDetails && hasBankDetails && (
+                <div className="rounded-2xl bg-gray-50 p-5 border border-gray-100 flex items-start gap-4">
+                  <div className="text-xs text-gray-700 leading-relaxed flex-1">
+                    <h3 className="font-bold text-gray-900 mb-2">Bank & Payment Details</h3>
+                    {bankName && <p><span className="font-medium text-gray-500">Bank:</span> {bankName}</p>}
+                    {bankAccount && <p><span className="font-medium text-gray-500">Account #:</span> {bankAccount}</p>}
+                    {bankIfsc && <p><span className="font-medium text-gray-500">IFSC:</span> {bankIfsc}</p>}
+                    {bankBranch && <p><span className="font-medium text-gray-500">Branch:</span> {bankBranch}</p>}
+                    {bankUpi && <p><span className="font-medium text-gray-500">UPI/VPA:</span> {bankUpi}</p>}
+                  </div>
+                  {bankQr && (
+                    <div className="flex flex-col items-center">
+                      <img src={bankQr} alt="Payment QR" className="w-16 h-16 object-contain rounded-lg border border-gray-200 p-0.5 bg-white shadow-sm" />
+                      <span className="text-[9px] text-gray-500 mt-1 font-semibold">Scan to Pay</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {sections.showTerms && content.termsAndConditions?.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-2">Terms & Conditions</h3>
+                  <ul className="text-gray-500 text-xs space-y-1 list-disc pl-4">
+                    {content.termsAndConditions.map((t, i) => <li key={i}>{t}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
             
             <div className="w-1/2">
               <div className="rounded-2xl bg-gray-50 p-6 border border-gray-100">

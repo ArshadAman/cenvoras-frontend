@@ -21,6 +21,14 @@ const BillShipTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const subtotal = items.reduce((sum, item) => {
@@ -85,7 +93,11 @@ const BillShipTemplate = forwardRef(({
            )}
            <div>
              <h1 className="font-extrabold text-xl mb-1">{companyName}</h1>
-             {sections.showGST && <p className="font-bold text-xs uppercase text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+             <p className="whitespace-pre-line text-xs text-gray-600 mb-1">{companyAddress}</p>
+             {sections.showGST && businessInfo.gstin && <p className="font-bold text-xs uppercase text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+             {(businessInfo.pan_number || businessInfo.pan) && <p className="font-bold text-xs uppercase text-gray-700">PAN: {businessInfo.pan_number || businessInfo.pan}</p>}
+             {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p className="text-xs text-gray-700">GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
+             {(businessInfo.dl_number || invoice.dl_number) && <p className="text-xs text-gray-700">DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
              {invoice.customer_phone && <p className="font-bold text-xs text-gray-700 mt-1">Contact: {invoice.customer_phone}</p>}
            </div>
         </div>
@@ -112,7 +124,19 @@ const BillShipTemplate = forwardRef(({
                )}
              </>
            ) : (
-             invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>
+             <>
+               {(invoice.po_number || invoice.sales_order_number) && (
+                 <p className="text-sm text-gray-800 font-semibold mt-1">
+                   PO / Order: {invoice.po_number || invoice.sales_order_number}
+                 </p>
+               )}
+               {invoice.challan_number && (
+                 <p className="text-sm text-gray-800 font-semibold mt-1">
+                   Challan: {invoice.challan_number}
+                 </p>
+               )}
+               {invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>}
+             </>
            )}
         </div>
       </div>
@@ -281,14 +305,27 @@ const BillShipTemplate = forwardRef(({
       {!isDeliveryChallan && (
         <div className="flex justify-between border-t border-gray-400 pt-6">
           <div className="w-1/2 pr-6 border-r border-gray-200">
-             {sections.showBankDetails && (
+             {sections.showBankDetails && hasBankDetails && (
                <div className="mb-6">
                   <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-900 underline underline-offset-4 decoration-gray-300">Bank Details:</p>
-                  <div className="text-xs text-gray-700">
-                    <p><span className="font-semibold inline-block w-20">Bank:</span> {content.bankDetails?.bankName}</p>
-                    <p><span className="font-semibold inline-block w-20">Account #:</span> {content.bankDetails?.accountNumber}</p>
-                    <p><span className="font-semibold inline-block w-20">IFSC:</span> {content.bankDetails?.ifscCode}</p>
-                    <p><span className="font-semibold inline-block w-20">Branch:</span> {content.bankDetails?.accountHolder}</p>
+                  <div className="flex items-start justify-between gap-3 text-xs text-gray-700 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                    <div className="space-y-0.5">
+                      {bankName && <p><span className="font-semibold inline-block w-20">Bank:</span> {bankName}</p>}
+                      {bankAccount && <p><span className="font-semibold inline-block w-20">Account #:</span> <span className="font-mono">{bankAccount}</span></p>}
+                      {bankIfsc && <p><span className="font-semibold inline-block w-20">IFSC:</span> <span className="font-mono">{bankIfsc}</span></p>}
+                      {bankBranch && <p><span className="font-semibold inline-block w-20">Branch:</span> {bankBranch}</p>}
+                      {bankUpi && <p><span className="font-semibold inline-block w-20">UPI / VPA:</span> <span className="font-mono">{bankUpi}</span></p>}
+                    </div>
+                    {sections.showQRCode !== false && bankQr && (
+                      <div className="text-center flex-shrink-0">
+                        <img 
+                          src={bankQr} 
+                          alt="Scan & Pay" 
+                          className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                        />
+                        <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                      </div>
+                    )}
                   </div>
                </div>
              )}

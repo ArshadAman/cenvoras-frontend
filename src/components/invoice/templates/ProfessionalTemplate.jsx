@@ -26,8 +26,14 @@ const ProfessionalTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
-  
-  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   const subtotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity || 0);
     const price = parseFloat(item.price || 0);
@@ -71,14 +77,14 @@ const ProfessionalTemplate = forwardRef(({
 
   const getColumnWidth = (columnId) => {
     switch (columnId) {
-      case 'serial': return '25px';
-      case 'description': return '380px';
-      case 'hsn': return '79px';
-      case 'quantity': return '50px';
-      case 'price': return '100px';
-      case 'discount': return '40px';
-      case 'tax': return '45px';
-      case 'amount': return '100px';
+      case 'serial': return '30px';
+      case 'description': return 'auto';
+      case 'hsn': return '75px';
+      case 'quantity': return '55px';
+      case 'price': return '95px';
+      case 'discount': return '50px';
+      case 'tax': return '50px';
+      case 'amount': return '95px';
       default: return 'auto';
     }
   };
@@ -124,6 +130,9 @@ const ProfessionalTemplate = forwardRef(({
           <div className="text-gray-600 space-y-0.5">
             <p className="whitespace-pre-line">{companyAddress}</p>
             {sections.showGST && companyGST && <p><strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {companyGST}</p>}
+            {(businessInfo.pan_number || businessInfo.pan) && <p><strong>PAN:</strong> {businessInfo.pan_number || businessInfo.pan}</p>}
+            {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p><strong>GeM ID:</strong> {businessInfo.gem_id || invoice.gem_id}</p>}
+            {(businessInfo.dl_number || invoice.dl_number) && <p><strong>DL No:</strong> {businessInfo.dl_number || invoice.dl_number}</p>}
           </div>
         </div>
         <div className="text-right w-1/2">
@@ -143,7 +152,7 @@ const ProfessionalTemplate = forwardRef(({
               <>
                 {(invoice.sales_order_number || invoice.po_number) && (
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Ref Order</p>
+                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Ref Order / PO</p>
                     <p className="font-bold text-gray-900">{invoice.sales_order_number || invoice.po_number}</p>
                   </div>
                 )}
@@ -154,7 +163,22 @@ const ProfessionalTemplate = forwardRef(({
                   </div>
                 )}
               </>
-            ) : null}
+            ) : (
+              <>
+                {(invoice.po_number || invoice.sales_order_number) && (
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold mb-0.5">PO / Order No</p>
+                    <p className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
+                  </div>
+                )}
+                {invoice.challan_number && (
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Challan No</p>
+                    <p className="font-bold text-gray-900">{invoice.challan_number}</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -321,13 +345,27 @@ const ProfessionalTemplate = forwardRef(({
       {!isDeliveryChallan && (
         <div className="flex justify-between">
           <div className="w-1/2 pr-8">
-            {sections.showBankDetails && (
+            {sections.showBankDetails && hasBankDetails && (
                <div className="mb-6">
-                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-500">Bank Details</p>
-                  <div className="text-xs text-gray-700 bg-gray-50 p-4 rounded-lg">
-                    <p><span className="font-semibold w-16 inline-block">Bank:</span> {content.bankDetails?.bankName}</p>
-                    <p><span className="font-semibold w-16 inline-block">A/C No:</span> {content.bankDetails?.accountNumber}</p>
-                    <p><span className="font-semibold w-16 inline-block">IFSC:</span> {content.bankDetails?.ifscCode}</p>
+                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-500">Bank & Payment Details</p>
+                  <div className="text-xs text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-start justify-between gap-4">
+                    <div className="space-y-0.5">
+                      {bankName && <p><span className="font-semibold w-16 inline-block">Bank:</span> {bankName}</p>}
+                      {bankAccount && <p><span className="font-semibold w-16 inline-block">A/C No:</span> <span className="font-mono">{bankAccount}</span></p>}
+                      {bankIfsc && <p><span className="font-semibold w-16 inline-block">IFSC:</span> <span className="font-mono">{bankIfsc}</span></p>}
+                      {bankBranch && <p><span className="font-semibold w-16 inline-block">Branch:</span> {bankBranch}</p>}
+                      {bankUpi && <p><span className="font-semibold w-16 inline-block">UPI:</span> <span className="font-mono">{bankUpi}</span></p>}
+                    </div>
+                    {sections.showQRCode !== false && bankQr && (
+                      <div className="text-center flex-shrink-0">
+                        <img 
+                          src={bankQr} 
+                          alt="Payment QR" 
+                          className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                        />
+                        <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                      </div>
+                    )}
                   </div>
                </div>
             )}

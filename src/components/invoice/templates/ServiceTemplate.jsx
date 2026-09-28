@@ -20,6 +20,14 @@ const ServiceTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const subtotal = items.reduce((sum, item) => {
@@ -96,6 +104,9 @@ const ServiceTemplate = forwardRef(({
           )}
           <h1 className="font-bold text-2xl mb-1 uppercase tracking-tight" style={{ color: primaryColor }}>{companyName}</h1>
           {sections.showGST && businessInfo.gstin && <p className="font-bold text-[10px] text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+          {businessInfo.pan_number && <p className="font-bold text-[10px] text-gray-700">PAN: {businessInfo.pan_number}</p>}
+          {businessInfo.gem_id && <p className="font-bold text-[10px] text-gray-700">GeM ID: {businessInfo.gem_id}</p>}
+          {businessInfo.drug_license_number && <p className="font-bold text-[10px] text-gray-700">DL No: {businessInfo.drug_license_number}</p>}
           <p className="whitespace-pre-line text-gray-600 text-[11px] mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
           {(businessInfo.phone || businessInfo.email) && (
             <p className="text-gray-600 text-[11px] mt-1 font-medium">
@@ -152,7 +163,8 @@ const ServiceTemplate = forwardRef(({
           ) : (
             <>
               {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
-              {invoice.po_number && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">PO Number:</span> <span className="font-semibold text-gray-900">{invoice.po_number}</span></div>}
+              {(invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
+              {invoice.delivery_challan_number && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900">{invoice.delivery_challan_number}</span></div>}
             </>
           )}
         </div>
@@ -298,15 +310,22 @@ const ServiceTemplate = forwardRef(({
       {!isDeliveryChallan ? (
         <div className="flex justify-between mt-auto pt-6">
           <div className="w-1/2 pr-8">
-            {sections.showBankDetails && (
-              <div className="mb-4">
-                <p className="font-bold text-gray-900 mb-1">Bank Details:</p>
-                <div className="text-xs text-gray-700 leading-relaxed">
-                  {content.bankDetails?.bankName && <p>Bank: {content.bankDetails.bankName}</p>}
-                  {content.bankDetails?.accountNumber && <p>Account #: {content.bankDetails.accountNumber}</p>}
-                  {content.bankDetails?.ifscCode && <p>IFSC: {content.bankDetails.ifscCode}</p>}
-                  {content.bankDetails?.accountHolder && <p>Branch: {content.bankDetails.accountHolder}</p>}
+            {sections.showBankDetails && hasBankDetails && (
+              <div className="mb-4 flex items-start gap-4">
+                <div className="text-xs text-gray-700 leading-relaxed flex-1">
+                  <p className="font-bold text-gray-900 mb-1">Bank Details:</p>
+                  {bankName && <p>Bank: {bankName}</p>}
+                  {bankAccount && <p>Account #: {bankAccount}</p>}
+                  {bankIfsc && <p>IFSC: {bankIfsc}</p>}
+                  {bankBranch && <p>Branch: {bankBranch}</p>}
+                  {bankUpi && <p>UPI/VPA: {bankUpi}</p>}
                 </div>
+                {bankQr && (
+                  <div className="flex flex-col items-center">
+                    <img src={bankQr} alt="Payment QR" className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5" />
+                    <span className="text-[9px] text-gray-500 mt-0.5 font-medium">Scan & Pay</span>
+                  </div>
+                )}
               </div>
             )}
             

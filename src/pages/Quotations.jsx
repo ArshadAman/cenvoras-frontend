@@ -18,16 +18,27 @@ export default function Quotations() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const businessInfo = userProfile?.profile
+  const billingProfile = userProfile?.billing_profile || userProfile?.profile;
+  const businessInfo = billingProfile
     ? {
-        business_name: userProfile.profile.business_name,
-        business_address: userProfile.profile.business_address,
-        phone: userProfile.profile.phone,
-        email: userProfile.profile.email,
-        gstin: userProfile.profile.gstin,
-        gem_id: userProfile.profile.gem_id,
-        dl_number: userProfile.profile.dl_number,
-        gin_number: userProfile.profile.gin_number,
+        business_name: billingProfile.business_name,
+        business_address: billingProfile.business_address,
+        phone: billingProfile.phone,
+        email: billingProfile.email,
+        gstin: billingProfile.gstin,
+        pan_number: billingProfile.pan_number,
+        gem_id: billingProfile.gem_id,
+        dl_number: billingProfile.dl_number,
+        state: billingProfile.state,
+        city: billingProfile.city,
+        country: billingProfile.country,
+        trn: billingProfile.trn,
+        bank_name: billingProfile.bank_name,
+        bank_account_number: billingProfile.bank_account_number,
+        bank_ifsc_code: billingProfile.bank_ifsc_code,
+        bank_branch: billingProfile.bank_branch,
+        bank_upi_id: billingProfile.bank_upi_id,
+        bank_qr_code: billingProfile.bank_qr_code,
       }
     : {};
 
