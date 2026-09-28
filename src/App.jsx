@@ -67,6 +67,7 @@ import EmployeePortal from './pages/employee/EmployeePortal'
 
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
+import GSTShieldPage from './pages/reports/GSTShieldPage'
 import GSTAndHSNGuide from './pages/GSTAndHSNGuide'
 import TaxRegister from './pages/reports/TaxRegister'
 import CreditNoteList from './pages/CreditNoteList'
@@ -252,6 +253,10 @@ function App() {
         <Route
           path="/reports/tax-register"
           element={isAuthenticated ? <TaxRegister /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/gst-shield"
+          element={isAuthenticated ? <GSTShieldPage /> : <Navigate to="/" replace />}
         />
         <Route
           path="/credit-notes"
