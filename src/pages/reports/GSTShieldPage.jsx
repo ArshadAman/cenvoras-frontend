@@ -131,7 +131,7 @@ export default function GSTShieldPage() {
       await downloadCAAuditPack(fromDate, toDate, format);
       toast.success(`${format.toUpperCase()} downloaded successfully!`);
     } catch (err) {
-      toast.error('Export generation failed.');
+      toast.error(err.message || 'Export generation failed.');
     }
   };
 
@@ -263,10 +263,10 @@ export default function GSTShieldPage() {
             <CodeBracketIcon className="w-4 h-4" /> Govt JSON (.json)
           </button>
           <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 rounded-lg text-xs font-semibold transition-colors"
+            onClick={() => handleDownload('pdf')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg text-xs font-semibold transition-colors"
           >
-            <PrinterIcon className="w-4 h-4" /> Print PDF
+            <PrinterIcon className="w-4 h-4" /> Executive PDF (.pdf)
           </button>
         </div>
       </div>
