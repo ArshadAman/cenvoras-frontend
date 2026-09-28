@@ -9,10 +9,19 @@ import {
   TruckIcon,
   ArrowLeftIcon,
   ChartBarIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
 export default function GSTDashboard() {
   const features = [
+    {
+      title: "GST Shield & 2B Reconciliation",
+      description: "Automated GSTR-2B matching, payment-withholding locks, vendor risk scores, and CA Audit Pack.",
+      icon: ShieldCheckIcon,
+      link: "/reports/gst-shield",
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/10",
+    },
     {
       title: "HSN Summary",
       description: "HSN/SAC-wise tax summary for GSTR-1 filing. View taxable value, CGST, SGST, IGST breakups.",
