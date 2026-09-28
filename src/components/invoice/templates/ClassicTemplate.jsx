@@ -33,8 +33,17 @@ const InvoicePreview = forwardRef(({
   const companyPhone = businessInfo.phone || '';
   const companyEmail = businessInfo.email || '';
   const companyGST = businessInfo.gstin || businessInfo.gst || '';
+  const companyPAN = businessInfo.pan_number || businessInfo.pan || '';
   const companyGEM = businessInfo.gem_id || '';
   const companyDL = businessInfo.dl_number || '';
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   // Invoice data
   const items = invoice.items || [];
@@ -208,6 +217,7 @@ const InvoicePreview = forwardRef(({
                 </p>
               )}
               {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}</p>}
+              {companyPAN && <p className="font-medium">PAN: {companyPAN}</p>}
               {sections.showGEMID && companyGEM && <p className="font-medium">GEM ID- {companyGEM}</p>}
               {companyDL && <p className="font-medium">DL No- {companyDL}</p>}
             </div>
@@ -591,8 +601,8 @@ const InvoicePreview = forwardRef(({
       {!isDeliveryChallan && (
         <div className="flex justify-between gap-6 mb-2">
           {/* Bank Details - Left */}
-          {sections.showBankDetails && (
-            <div className="flex-1">
+          {sections.showBankDetails && hasBankDetails && (
+            <div className="flex-1 mr-8">
               <h4 
                 className="font-bold mb-2 pb-1"
                 style={{ 
@@ -603,18 +613,33 @@ const InvoicePreview = forwardRef(({
               >
                 Our Bank Details:
               </h4>
-              <div className="space-y-1 text-sm" style={{ color: colors.lightText }}>
-                {content.bankDetails?.bankName && (
-                  <p><span className="font-medium">Bank Name:</span> {content.bankDetails.bankName}</p>
-                )}
-                {content.bankDetails?.accountNumber && (
-                  <p><span className="font-medium">Account Number:</span> {content.bankDetails.accountNumber}</p>
-                )}
-                {content.bankDetails?.ifscCode && (
-                  <p><span className="font-medium">NEFT/IFSC Code:</span> {content.bankDetails.ifscCode}</p>
-                )}
-                {content.bankDetails?.accountHolder && (
-                  <p><span className="font-medium">Name:</span> {content.bankDetails.accountHolder}</p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1 text-sm" style={{ color: colors.lightText }}>
+                  {bankName && (
+                    <p><span className="font-medium">Bank Name:</span> {bankName}</p>
+                  )}
+                  {bankAccount && (
+                    <p><span className="font-medium">Account Number:</span> <span className="font-mono">{bankAccount}</span></p>
+                  )}
+                  {bankIfsc && (
+                    <p><span className="font-medium">NEFT/IFSC Code:</span> <span className="font-mono">{bankIfsc}</span></p>
+                  )}
+                  {bankBranch && (
+                    <p><span className="font-medium">Branch:</span> {bankBranch}</p>
+                  )}
+                  {bankUpi && (
+                    <p><span className="font-medium">UPI / VPA:</span> <span className="font-mono">{bankUpi}</span></p>
+                  )}
+                </div>
+                {sections.showQRCode !== false && bankQr && (
+                  <div className="text-center flex-shrink-0">
+                    <img 
+                      src={bankQr} 
+                      alt="Scan to Pay" 
+                      className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                    />
+                    <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                  </div>
                 )}
               </div>
             </div>

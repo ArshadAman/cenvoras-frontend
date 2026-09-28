@@ -20,8 +20,9 @@ import { toast } from 'react-toastify';
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
-import { getActiveTemplate } from "../../utils/invoiceSettings";
+import { getActiveTemplate, setActiveTemplate, getInvoiceTemplates } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
+import { getUserProfile } from "../../api/users";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
@@ -37,6 +38,42 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [manualEmail, setManualEmail] = useState('');
+
+  // Fetch user profile to ensure business & bank details are always populated
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const billingProfile = userProfile?.billing_profile || userProfile?.profile || {};
+  const effectiveBusinessInfo = {
+    business_name: billingProfile.business_name,
+    business_address: billingProfile.business_address,
+    phone: billingProfile.phone,
+    email: billingProfile.email,
+    gstin: billingProfile.gstin,
+    pan_number: billingProfile.pan_number,
+    gem_id: billingProfile.gem_id,
+    dl_number: billingProfile.dl_number,
+    state: billingProfile.state,
+    city: billingProfile.city,
+    country: billingProfile.country,
+    trn: billingProfile.trn,
+    bank_name: billingProfile.bank_name,
+    bank_account_number: billingProfile.bank_account_number,
+    bank_ifsc_code: billingProfile.bank_ifsc_code,
+    bank_branch: billingProfile.bank_branch,
+    bank_upi_id: billingProfile.bank_upi_id,
+    bank_qr_code: billingProfile.bank_qr_code,
+    ...businessInfo,
+  };
+
+  const handleTemplateSwitch = (targetId) => {
+    setActiveTemplate(targetId);
+    setTemplate(getActiveTemplate());
+  };
 
   // Close PDF options dropdown when clicking outside
   useEffect(() => {
@@ -459,7 +496,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-white/10 bg-black/50 gap-4">
-            <div className="flex justify-between items-center w-full sm:w-auto">
+            <div className="flex justify-between items-center w-full sm:w-auto gap-4">
               <div>
                 <h2 className="text-lg font-bold text-white">{isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}</h2>
                 <p className="text-xs text-gray-400">
@@ -467,9 +504,27 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
                 </p>
               </div>
+
+              {/* Instant Template Switcher Dropdown */}
+              <div className="flex items-center gap-1.5 ml-1">
+                <span className="text-xs text-gray-400 hidden md:inline">Theme:</span>
+                <select
+                  value={template?.id || 'classic'}
+                  onChange={(e) => handleTemplateSwitch(e.target.value)}
+                  className="bg-[#1a1a2e] hover:bg-[#252542] border border-cyan-500/30 text-cyan-300 text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer transition-colors shadow-sm"
+                  title="Switch template instantly without reopening"
+                >
+                  {getInvoiceTemplates().map((t) => (
+                    <option key={t.id} value={t.id} className="bg-gray-900 text-white">
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <button
                 onClick={onClose}
-                className="sm:hidden p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="sm:hidden p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors ml-auto"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
@@ -605,7 +660,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                     <InvoicePreview
                       invoice={enrichedInvoice}
                       template={previewTemplate}
-                      businessInfo={businessInfo}
+                      businessInfo={effectiveBusinessInfo}
                       invoiceSettings={invoiceSettings || {}}
                     />
                   </div>
@@ -629,8 +684,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       {/* Template Designer Modal */}
       <InvoiceTemplateDesigner
         isOpen={showDesigner}
-        onClose={() => setShowDesigner(false)}
-        businessInfo={businessInfo}
+        onClose={() => {
+          setShowDesigner(false);
+          setTemplate(getActiveTemplate());
+        }}
+        businessInfo={effectiveBusinessInfo}
       />
     </>,
     document.body

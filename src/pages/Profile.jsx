@@ -16,7 +16,9 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   XMarkIcon,
-  KeyIcon
+  KeyIcon,
+  BuildingLibraryIcon,
+  QrCodeIcon
 } from '@heroicons/react/24/outline';
 import Select from 'react-select';
 import { State, City } from 'country-state-city';
@@ -322,12 +324,19 @@ const Profile = ({ onLogout }) => {
     business_name: '',
     business_address: '',
     gstin: '',
+    pan_number: '',
     trn: '',
     country: 'IN',
     gem_id: '',
     dl_number: '',
     state: '',
-    city: ''
+    city: '',
+    bank_name: '',
+    bank_account_number: '',
+    bank_ifsc_code: '',
+    bank_branch: '',
+    bank_upi_id: '',
+    bank_qr_code: ''
   });
   const [selectedTargetPlanCode, setSelectedTargetPlanCode] = useState('free');
   const [selectedBillingCycle, setSelectedBillingCycle] = useState('monthly');
@@ -393,13 +402,20 @@ const Profile = ({ onLogout }) => {
         phone: profile.phone || '',
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
-          gstin: profile.gstin || '',
-          trn: profile.trn || '',
-          country: profile.country || 'IN',
-          gem_id: profile.gem_id || '',
-          dl_number: profile.dl_number || '',
-          state: profile.state || '',
-          city: profile.city || ''
+        gstin: profile.gstin || '',
+        pan_number: profile.pan_number || '',
+        trn: profile.trn || '',
+        country: profile.country || 'IN',
+        gem_id: profile.gem_id || '',
+        dl_number: profile.dl_number || '',
+        state: profile.state || '',
+        city: profile.city || '',
+        bank_name: profile.bank_name || '',
+        bank_account_number: profile.bank_account_number || '',
+        bank_ifsc_code: profile.bank_ifsc_code || '',
+        bank_branch: profile.bank_branch || '',
+        bank_upi_id: profile.bank_upi_id || '',
+        bank_qr_code: profile.bank_qr_code || ''
       }));
     }
   }, [userProfile]);
@@ -536,7 +552,7 @@ const Profile = ({ onLogout }) => {
     const { name, value } = e.target;
     
     // Format GSTIN to uppercase
-    if (name === 'gstin') {
+    if (name === 'gstin' || name === 'pan_number' || name === 'bank_ifsc_code') {
       setFormData(prev => ({
         ...prev,
         [name]: value.toUpperCase()
@@ -549,15 +565,58 @@ const Profile = ({ onLogout }) => {
     }
   };
 
+  const profile = userProfile?.profile || {};
+  const bankFieldsChanged = Boolean(
+    (formData.bank_name || '') !== (profile.bank_name || '') ||
+    (formData.bank_account_number || '') !== (profile.bank_account_number || '') ||
+    (formData.bank_ifsc_code || '') !== (profile.bank_ifsc_code || '') ||
+    (formData.bank_branch || '') !== (profile.bank_branch || '') ||
+    (formData.bank_upi_id || '') !== (profile.bank_upi_id || '') ||
+    (formData.bank_qr_code || '') !== (profile.bank_qr_code || '')
+  );
+
+  const handleQrUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG, JPG, etc.)');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('QR code image size must be less than 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormData(prev => ({
+        ...prev,
+        bank_qr_code: reader.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveQr = () => {
+    setFormData(prev => ({
+      ...prev,
+      bank_qr_code: ''
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Submitting profile update...', formData);
-    const originalEmail = String(userProfile?.profile?.email || '').trim().toLowerCase();
+    const originalEmail = String(profile.email || '').trim().toLowerCase();
     const updatedEmail = String(formData.email || '').trim().toLowerCase();
     const isEmailChanged = !!updatedEmail && updatedEmail !== originalEmail;
 
     if (isEmailChanged && !String(formData.current_password || '').trim()) {
       toast.error('Current password is required to change email');
+      return;
+    }
+
+    if (bankFieldsChanged && !String(formData.current_password || '').trim()) {
+      toast.error('Current password is required to update bank details');
       return;
     }
 
@@ -571,14 +630,21 @@ const Profile = ({ onLogout }) => {
       business_address: formData.business_address,
       country: formData.country,
       gstin: formData.gstin,
+      pan_number: formData.pan_number,
       trn: formData.trn,
       gem_id: formData.gem_id,
       dl_number: formData.dl_number,
       state: formData.state,
-      city: formData.city
+      city: formData.city,
+      bank_name: formData.bank_name,
+      bank_account_number: formData.bank_account_number,
+      bank_ifsc_code: formData.bank_ifsc_code,
+      bank_branch: formData.bank_branch,
+      bank_upi_id: formData.bank_upi_id,
+      bank_qr_code: formData.bank_qr_code
     };
 
-    if (isEmailChanged) {
+    if (isEmailChanged || bankFieldsChanged) {
       updateData.current_password = formData.current_password;
     }
 
@@ -589,22 +655,29 @@ const Profile = ({ onLogout }) => {
     setIsEditing(false);
     // Reset form data
     if (userProfile && userProfile.profile) {
-      const profile = userProfile.profile;
+      const p = userProfile.profile;
       setFormData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        email: profile.email || '',
+        first_name: p.first_name || '',
+        last_name: p.last_name || '',
+        email: p.email || '',
         current_password: '',
-        phone: profile.phone || '',
-        business_name: profile.business_name || '',
-        business_address: profile.business_address || '',
-        country: profile.country || 'IN',
-        gstin: profile.gstin || '',
-        trn: profile.trn || '',
-        gem_id: profile.gem_id || '',
-        dl_number: profile.dl_number || '',
-        state: profile.state || '',
-        city: profile.city || ''
+        phone: p.phone || '',
+        business_name: p.business_name || '',
+        business_address: p.business_address || '',
+        country: p.country || 'IN',
+        gstin: p.gstin || '',
+        pan_number: p.pan_number || '',
+        trn: p.trn || '',
+        gem_id: p.gem_id || '',
+        dl_number: p.dl_number || '',
+        state: p.state || '',
+        city: p.city || '',
+        bank_name: p.bank_name || '',
+        bank_account_number: p.bank_account_number || '',
+        bank_ifsc_code: p.bank_ifsc_code || '',
+        bank_branch: p.bank_branch || '',
+        bank_upi_id: p.bank_upi_id || '',
+        bank_qr_code: p.bank_qr_code || ''
       });
     }
   };
@@ -1122,6 +1195,25 @@ const Profile = ({ onLogout }) => {
                         </div>
                       </div>
                     )}
+                    {isAdmin && (formData.gstin || formData.pan_number) && (
+                      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                        <DocumentTextIcon className="h-4 w-4 text-cyan-300" />
+                        <span className="text-xs">
+                          {formData.gstin && `GST: ${formData.gstin}`}
+                          {formData.gstin && formData.pan_number && ' • '}
+                          {formData.pan_number && `PAN: ${formData.pan_number}`}
+                        </span>
+                      </div>
+                    )}
+                    {isAdmin && formData.bank_name && (
+                      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                        <BuildingLibraryIcon className="h-4 w-4 text-cyan-300" />
+                        <div className="text-xs">
+                          <p className="font-semibold text-white">{formData.bank_name}</p>
+                          <p className="text-white/50 font-mono">A/C: {formData.bank_account_number || '—'}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -1361,16 +1453,28 @@ const Profile = ({ onLogout }) => {
                         </div>
 
                         {formData.country === 'IN' && (
-                          <input
-                            type="text"
-                            name="gstin"
-                            value={formData.gstin}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
-                            placeholder="GSTIN"
-                            maxLength={15}
-                          />
+                          <>
+                            <input
+                              type="text"
+                              name="gstin"
+                              value={formData.gstin}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isPending}
+                              className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                              placeholder="GSTIN (optional)"
+                              maxLength={15}
+                            />
+                            <input
+                              type="text"
+                              name="pan_number"
+                              value={formData.pan_number}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isPending}
+                              className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 uppercase"
+                              placeholder="Business PAN (e.g. ABCDE1234F)"
+                              maxLength={10}
+                            />
+                          </>
                         )}
                         {formData.country === 'AE' && (
                           <input
@@ -1440,6 +1544,146 @@ const Profile = ({ onLogout }) => {
                         className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
                         placeholder="Business address"
                       />
+                    </div>
+                    )}
+
+                    {isAdmin && (
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                      <div className="mb-4 flex items-center justify-between">
+                        <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                          <BuildingLibraryIcon className="h-4 w-4" />
+                          Bank & Payment Details
+                        </h4>
+                        <span className="text-[11px] text-white/50">Stored securely in database for invoice templates</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Bank Name</label>
+                          <input
+                            type="text"
+                            name="bank_name"
+                            value={formData.bank_name}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                            placeholder="e.g. HDFC Bank, State Bank of India"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Number</label>
+                          <input
+                            type="text"
+                            name="bank_account_number"
+                            value={formData.bank_account_number}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 font-mono"
+                            placeholder="e.g. 50100234567890"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">IFSC Code</label>
+                          <input
+                            type="text"
+                            name="bank_ifsc_code"
+                            value={formData.bank_ifsc_code}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 uppercase font-mono"
+                            placeholder="e.g. HDFC0001234"
+                            maxLength={11}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Branch Name</label>
+                          <input
+                            type="text"
+                            name="bank_branch"
+                            value={formData.bank_branch}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                            placeholder="e.g. Indiranagar, Bangalore"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
+                          <input
+                            type="text"
+                            name="bank_upi_id"
+                            value={formData.bank_upi_id}
+                            onChange={handleInputChange}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                            placeholder="e.g. business@okaxis"
+                          />
+                        </div>
+
+                        {/* Payment QR Code Upload */}
+                        <div>
+                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Payment QR Code (Optional)</label>
+                          <div className="flex items-center gap-3">
+                            {formData.bank_qr_code ? (
+                              <div className="relative group flex-shrink-0">
+                                <img
+                                  src={formData.bank_qr_code}
+                                  alt="Payment QR"
+                                  className="w-16 h-16 rounded-xl border border-white/10 object-contain bg-white p-1 shadow-md"
+                                />
+                                {isEditing && (
+                                  <button
+                                    type="button"
+                                    onClick={handleRemoveQr}
+                                    className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-1 hover:bg-red-500 shadow-md transition-colors"
+                                    title="Remove QR Code"
+                                  >
+                                    <XMarkIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            ) : null}
+                            {isEditing && (
+                              <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.02] px-4 py-3 text-xs text-white/70 hover:border-cyan-400 hover:text-white transition-all">
+                                <QrCodeIcon className="w-4 h-4 text-cyan-400" />
+                                <span>{formData.bank_qr_code ? 'Change QR Image' : 'Upload QR Image (PNG/JPG)'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleQrUpload}
+                                  className="hidden"
+                                  disabled={updateProfileMutation.isPending}
+                                />
+                              </label>
+                            )}
+                            {!isEditing && !formData.bank_qr_code && (
+                              <span className="text-xs text-white/40 italic">No QR code uploaded</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Password confirmation prompt for bank details */}
+                      {isEditing && bankFieldsChanged && (
+                        <div className="mt-5 rounded-xl border border-amber-400/40 bg-amber-500/10 p-4">
+                          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
+                            Confirm Current Password (Required to save bank details)
+                          </label>
+                          <input
+                            type="password"
+                            name="current_password"
+                            value={formData.current_password}
+                            onChange={handleInputChange}
+                            disabled={updateProfileMutation.isPending}
+                            className="w-full rounded-xl border border-amber-400/40 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-300/70 focus:outline-none disabled:opacity-60"
+                            placeholder="Enter your current password to authorize bank updates"
+                          />
+                        </div>
+                      )}
                     </div>
                     )}
 

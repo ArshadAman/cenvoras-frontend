@@ -20,6 +20,14 @@ const LegendTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const subtotal = items.reduce((sum, item) => {
@@ -87,6 +95,9 @@ const LegendTemplate = forwardRef(({
               <h1 className="font-bold text-lg mb-0.5" style={{ color: colors.primary }}>{companyName}</h1>
               <p className="whitespace-pre-line leading-snug">{companyAddress}</p>
               {sections.showGST && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin || '-'}</p>}
+              {(businessInfo.pan_number || businessInfo.pan) && <p className="font-bold">PAN: {businessInfo.pan_number || businessInfo.pan}</p>}
+              {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p className="text-xs">GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
+              {(businessInfo.dl_number || invoice.dl_number) && <p className="text-xs">DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
               {invoice.customer_phone && <p>Mobile: {invoice.customer_phone}</p>}
             </div>
           </div>
@@ -132,17 +143,20 @@ const LegendTemplate = forwardRef(({
                     <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
                        <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
                        <p className="font-semibold text-gray-900">{invoice.place_of_supply || 'Same State'}</p>
+                       {invoice.challan_number && (
+                         <p className="text-[10px] text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{invoice.challan_number}</span></p>
+                       )}
                     </div>
                     <div className="w-1/2 p-2.5 flex flex-col justify-center">
-                       {invoice.due_date ? (
+                       {invoice.po_number || invoice.sales_order_number ? (
+                         <>
+                           <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">PO / Order #</p>
+                           <p className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
+                         </>
+                       ) : invoice.due_date ? (
                          <>
                            <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Due Date</p>
                            <p className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>
-                         </>
-                       ) : invoice.po_number ? (
-                         <>
-                           <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">PO #</p>
-                           <p className="font-semibold text-gray-900">{invoice.po_number}</p>
                          </>
                        ) : (
                          <>
@@ -298,8 +312,10 @@ const LegendTemplate = forwardRef(({
                 <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
                   Total items: {items.length}
                 </td>
-                <td className="border-r border-gray-200 text-right px-3 text-xs uppercase tracking-wider font-semibold text-gray-700 whitespace-nowrap">Subtotal</td>
-                <td className="text-right px-3 text-xs font-mono font-bold text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                <td colSpan={2} className="text-right px-3 text-xs">
+                  <span className="uppercase tracking-wider font-semibold text-gray-700 mr-3">Subtotal</span>
+                  <span className="font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -311,17 +327,30 @@ const LegendTemplate = forwardRef(({
             <div className="w-3/5 p-3 border-r flex flex-col justify-between" style={{ borderColor }}>
                <div>
                  <p className="italic mb-2 text-sm font-medium text-gray-800">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
-                 {sections.showBankDetails && (
-                   <div>
-                      <h4 className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Bank Details:</h4>
-                      <table className="text-xs">
-                        <tbody>
-                          <tr><td className="pr-4 py-0.5">Bank:</td><td className="font-semibold">{content.bankDetails?.bankName}</td></tr>
-                          <tr><td className="pr-4 py-0.5">Account #:</td><td className="font-semibold">{content.bankDetails?.accountNumber}</td></tr>
-                          <tr><td className="pr-4 py-0.5">IFSC:</td><td className="font-semibold">{content.bankDetails?.ifscCode}</td></tr>
-                          <tr><td className="pr-4 py-0.5">Branch:</td><td className="font-semibold">{content.bankDetails?.accountHolder}</td></tr>
-                        </tbody>
-                      </table>
+                 {sections.showBankDetails && hasBankDetails && (
+                   <div className="flex items-start justify-between gap-3 mt-2 bg-gray-50/60 p-2.5 rounded border border-gray-100">
+                     <div>
+                       <h4 className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Bank Details:</h4>
+                       <table className="text-xs">
+                         <tbody>
+                           {bankName && <tr><td className="pr-4 py-0.5 text-gray-600">Bank:</td><td className="font-semibold">{bankName}</td></tr>}
+                           {bankAccount && <tr><td className="pr-4 py-0.5 text-gray-600">Account #:</td><td className="font-semibold font-mono">{bankAccount}</td></tr>}
+                           {bankIfsc && <tr><td className="pr-4 py-0.5 text-gray-600">IFSC:</td><td className="font-semibold font-mono">{bankIfsc}</td></tr>}
+                           {bankBranch && <tr><td className="pr-4 py-0.5 text-gray-600">Branch:</td><td className="font-semibold">{bankBranch}</td></tr>}
+                           {bankUpi && <tr><td className="pr-4 py-0.5 text-gray-600">UPI / VPA:</td><td className="font-semibold font-mono">{bankUpi}</td></tr>}
+                         </tbody>
+                       </table>
+                     </div>
+                     {sections.showQRCode !== false && bankQr && (
+                       <div className="text-center flex-shrink-0">
+                         <img 
+                           src={bankQr} 
+                           alt="Scan & Pay" 
+                           className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                         />
+                         <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                       </div>
+                     )}
                    </div>
                  )}
                </div>

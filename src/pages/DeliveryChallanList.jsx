@@ -42,10 +42,19 @@ export default function DeliveryChallanList() {
         phone: billingProfile.phone,
         email: billingProfile.email,
         gstin: billingProfile.gstin,
+        pan_number: billingProfile.pan_number,
         gem_id: billingProfile.gem_id,
-        state: billingProfile.state,
         dl_number: billingProfile.dl_number,
-        gin_number: billingProfile.gin_number,
+        state: billingProfile.state,
+        city: billingProfile.city,
+        country: billingProfile.country,
+        trn: billingProfile.trn,
+        bank_name: billingProfile.bank_name,
+        bank_account_number: billingProfile.bank_account_number,
+        bank_ifsc_code: billingProfile.bank_ifsc_code,
+        bank_branch: billingProfile.bank_branch,
+        bank_upi_id: billingProfile.bank_upi_id,
+        bank_qr_code: billingProfile.bank_qr_code,
       }
     : {};
 
