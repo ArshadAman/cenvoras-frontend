@@ -194,139 +194,131 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
         </button>
       </div>
 
-      {/* BULLETPROOF CENTERED CA AUDIT PACK MODAL (Enterprise 2x2 Grid, Zero Awkward Wrapping) */}
+      {/* COMPACT ENTERPRISE CA AUDIT PACK MODAL (Zero-Scroll, Fits Entire Screen, Contextual Tooltips) */}
       {modalOpen && (
         <div 
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
           onClick={() => setModalOpen(false)}
         >
           <div 
-            className="bg-[#111318] border border-white/15 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-5 animate-scale-up"
+            className="bg-[#111318] border border-white/15 rounded-2xl p-5 w-full max-w-xl shadow-2xl space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-white/10 pb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
-                    <ShieldCheckIcon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">
+            {/* Modal Header - Compact single-row */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                  <ShieldCheckIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-tight">
                     Download CA Audit Pack
                   </h3>
+                  <p className="text-[11px] text-gray-400">
+                    Reconciliation workbooks and filing reports for your Accountant
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  Export complete reconciliation workbooks, tax registers, and filing payloads for your Accountant.
-                </p>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                title="Close modal"
+                title="Close"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Date Range Selector & Presets */}
-            <div className="bg-gray-900/80 border border-white/10 rounded-xl p-3.5 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <CalendarDaysIcon className="w-4 h-4 text-emerald-400" />
-                  Audit Period
-                </span>
-                {/* Quick Presets */}
-                <div className="flex items-center gap-1.5 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFromDate(monthStartStr);
-                      setToDate(todayStr);
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white font-medium transition-all"
-                  >
-                    This Month
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const lastMonthFirst = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-                      const lastMonthLast = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
-                      setFromDate(lastMonthFirst);
-                      setToDate(lastMonthLast);
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white font-medium transition-all"
-                  >
-                    Last Month
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const quarterMonth = Math.floor(today.getMonth() / 3) * 3;
-                      const qStart = new Date(today.getFullYear(), quarterMonth, 1).toISOString().split('T')[0];
-                      setFromDate(qStart);
-                      setToDate(todayStr);
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white font-medium transition-all"
-                  >
-                    This Quarter
-                  </button>
-                </div>
+            {/* Date Range Selector & Presets - Sleek single-row toolbar */}
+            <div className="bg-gray-900/70 border border-white/10 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <CalendarDaysIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Period:</span>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="bg-black/60 border border-white/15 rounded-lg px-2.5 py-1 text-white text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+                <span className="text-gray-500">to</span>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="bg-black/60 border border-white/15 rounded-lg px-2.5 py-1 text-white text-xs focus:outline-none focus:border-emerald-500 transition-colors"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">From Date</label>
-                  <input
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    className="w-full bg-black/60 border border-white/15 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">To Date</label>
-                  <input
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    className="w-full bg-black/60 border border-white/15 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
+              <div className="flex items-center gap-1.5 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFromDate(monthStartStr);
+                    setToDate(todayStr);
+                  }}
+                  className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition-all whitespace-nowrap"
+                >
+                  This Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const lastMonthFirst = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+                    const lastMonthLast = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
+                    setFromDate(lastMonthFirst);
+                    setToDate(lastMonthLast);
+                  }}
+                  className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition-all whitespace-nowrap"
+                >
+                  Last Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const quarterMonth = Math.floor(today.getMonth() / 3) * 3;
+                    const qStart = new Date(today.getFullYear(), quarterMonth, 1).toISOString().split('T')[0];
+                    setFromDate(qStart);
+                    setToDate(todayStr);
+                  }}
+                  className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition-all whitespace-nowrap"
+                >
+                  Quarter
+                </button>
               </div>
             </div>
 
-            {/* 4 Multi-Format Options - 2x2 Clean Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* 4 Compact Format Tiles (2x2 Grid, No Bloat, Hover Tooltip) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* Option 1: Multi-Tab Excel */}
               <div
                 role="button"
                 tabIndex={0}
+                title="Multi-Tab Excel (.xlsx): Includes GSTR-3B Computation, GSTR-1 Sales, 2B Purchases, Defaulter Schedule & TDS summary."
                 onClick={() => !downloadingFormat && handleDownloadFormat('xlsx')}
-                className="relative flex flex-col justify-between p-4 rounded-xl bg-emerald-950/20 hover:bg-emerald-900/30 border border-emerald-500/30 hover:border-emerald-500/60 transition-all cursor-pointer group text-left shadow-lg hover:shadow-emerald-950/50 hover:scale-[1.01]"
+                className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 hover:border-emerald-500/50 transition-all cursor-pointer group hover:scale-[1.01]"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                      <TableCellsIcon className="w-5 h-5" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <TableCellsIcon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors whitespace-nowrap">
+                        Excel Workbook
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
+                        .XLSX
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
-                      RECOMMENDED
-                    </span>
+                    <div className="text-[11px] text-gray-400 group-hover:text-gray-300 transition-colors truncate">
+                      Multi-tab 3B & 2B audit pack
+                    </div>
                   </div>
-                  <div className="font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">
-                    Excel Audit Pack
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                    3B computation, GSTR-1 sales, 2B inward, and defaulters schedule.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs font-semibold text-emerald-400">
-                  <span>Multi-Tab .xlsx</span>
+                <div className="pl-2 shrink-0">
                   {downloadingFormat === 'xlsx' ? (
                     <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <DocumentArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                    <DocumentArrowDownIcon className="w-4 h-4 text-emerald-400 group-hover:translate-y-0.5 transition-transform" />
                   )}
                 </div>
               </div>
@@ -335,31 +327,33 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               <div
                 role="button"
                 tabIndex={0}
+                title="Executive Summary (.pdf): Printable A4 document with company letterhead, tax totals, audit charts, and CA attestation."
                 onClick={() => !downloadingFormat && handleDownloadFormat('pdf')}
-                className="relative flex flex-col justify-between p-4 rounded-xl bg-rose-950/20 hover:bg-rose-900/30 border border-rose-500/30 hover:border-rose-500/60 transition-all cursor-pointer group text-left shadow-lg hover:shadow-rose-950/50 hover:scale-[1.01]"
+                className="flex items-center justify-between p-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 hover:border-rose-500/50 transition-all cursor-pointer group hover:scale-[1.01]"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
-                      <PrinterIcon className="w-5 h-5" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                    <PrinterIcon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors whitespace-nowrap">
+                        Executive Summary
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 whitespace-nowrap">
+                        .PDF
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 whitespace-nowrap">
-                      PRINT READY
-                    </span>
+                    <div className="text-[11px] text-gray-400 group-hover:text-gray-300 transition-colors truncate">
+                      Printable summary & CA sign-off
+                    </div>
                   </div>
-                  <div className="font-bold text-sm text-white group-hover:text-rose-300 transition-colors">
-                    Executive Summary
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Formatted report with company letterhead, tax totals, and audit charts.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-rose-500/20 flex items-center justify-between text-xs font-semibold text-rose-400">
-                  <span>Printable .pdf</span>
+                <div className="pl-2 shrink-0">
                   {downloadingFormat === 'pdf' ? (
                     <div className="w-4 h-4 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <DocumentArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                    <DocumentArrowDownIcon className="w-4 h-4 text-rose-400 group-hover:translate-y-0.5 transition-transform" />
                   )}
                 </div>
               </div>
@@ -368,31 +362,33 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               <div
                 role="button"
                 tabIndex={0}
+                title="Govt Portal Payload (.json): Official NIC-compliant payload ready for direct 1-click filing on gst.gov.in."
                 onClick={() => !downloadingFormat && handleDownloadFormat('json')}
-                className="relative flex flex-col justify-between p-4 rounded-xl bg-purple-950/20 hover:bg-purple-900/30 border border-purple-500/30 hover:border-purple-500/60 transition-all cursor-pointer group text-left shadow-lg hover:shadow-purple-950/50 hover:scale-[1.01]"
+                className="flex items-center justify-between p-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 hover:border-purple-500/50 transition-all cursor-pointer group hover:scale-[1.01]"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
-                      <CodeBracketIcon className="w-5 h-5" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
+                    <CodeBracketIcon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors whitespace-nowrap">
+                        Govt Portal Upload
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
+                        .JSON
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
-                      GST.GOV.IN
-                    </span>
+                    <div className="text-[11px] text-gray-400 group-hover:text-gray-300 transition-colors truncate">
+                      Direct 1-click filing on gst.gov.in
+                    </div>
                   </div>
-                  <div className="font-bold text-sm text-white group-hover:text-purple-300 transition-colors">
-                    Govt Portal Payload
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                    NIC-compliant JSON ready for direct 1-click upload on official portal.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-purple-500/20 flex items-center justify-between text-xs font-semibold text-purple-400">
-                  <span>Direct Upload .json</span>
+                <div className="pl-2 shrink-0">
                   {downloadingFormat === 'json' ? (
                     <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <DocumentArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                    <DocumentArrowDownIcon className="w-4 h-4 text-purple-400 group-hover:translate-y-0.5 transition-transform" />
                   )}
                 </div>
               </div>
@@ -401,31 +397,33 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               <div
                 role="button"
                 tabIndex={0}
+                title="Accounting Registers (.csv): Flat registers formatted for import into Tally Prime, Busy, Zoho, and spreadsheets."
                 onClick={() => !downloadingFormat && handleDownloadFormat('csv')}
-                className="relative flex flex-col justify-between p-4 rounded-xl bg-sky-950/20 hover:bg-sky-900/30 border border-sky-500/30 hover:border-sky-500/60 transition-all cursor-pointer group text-left shadow-lg hover:shadow-sky-950/50 hover:scale-[1.01]"
+                className="flex items-center justify-between p-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 hover:border-sky-500/50 transition-all cursor-pointer group hover:scale-[1.01]"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform">
-                      <DocumentTextIcon className="w-5 h-5" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+                    <DocumentTextIcon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors whitespace-nowrap">
+                        Accounting CSV
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap">
+                        .CSV
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap">
-                      TALLY / ERP
-                    </span>
+                    <div className="text-[11px] text-gray-400 group-hover:text-gray-300 transition-colors truncate">
+                      Tally Prime & Busy compatible
+                    </div>
                   </div>
-                  <div className="font-bold text-sm text-white group-hover:text-sky-300 transition-colors">
-                    Accounting CSV Registers
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Standard flat CSV registers for direct import into Tally, Busy & Excel.
-                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-sky-500/20 flex items-center justify-between text-xs font-semibold text-sky-400">
-                  <span>Raw Flat .csv</span>
+                <div className="pl-2 shrink-0">
                   {downloadingFormat === 'csv' ? (
                     <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <DocumentArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                    <DocumentArrowDownIcon className="w-4 h-4 text-sky-400 group-hover:translate-y-0.5 transition-transform" />
                   )}
                 </div>
               </div>
