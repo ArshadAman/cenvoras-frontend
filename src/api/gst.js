@@ -46,25 +46,42 @@ export const downloadCAAuditPack = async (from, to, exportFormat = 'xlsx', repor
   if (exportFormat) params.append('export', exportFormat);
   if (reportType) params.append('type', reportType);
 
-  const response = await api.get(`/billing/gst/ca-audit-pack/?${params.toString()}`, {
-    responseType: 'blob'
-  });
+  try {
+    const response = await api.get(`/billing/gst/ca-audit-pack/?${params.toString()}`, {
+      responseType: 'blob'
+    });
 
-  const mimeMap = {
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    csv: 'text/csv',
-    json: 'application/json'
-  };
+    const mimeMap = {
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      pdf: 'application/pdf',
+      csv: 'text/csv',
+      json: 'application/json'
+    };
 
-  const blob = new Blob([response.data], { type: mimeMap[exportFormat] || 'application/octet-stream' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `CA_Audit_Pack_${from || 'start'}_to_${to || 'now'}.${exportFormat}`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
+    const sanitizedFrom = (from || 'start').replace(/[\/\\]/g, '-');
+    const sanitizedTo = (to || 'now').replace(/[\/\\]/g, '-');
+
+    const blob = new Blob([response.data], { type: mimeMap[exportFormat] || 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CA_Audit_Pack_${sanitizedFrom}_to_${sanitizedTo}.${exportFormat}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    if (error.response && error.response.data instanceof Blob) {
+      try {
+        const text = await error.response.data.text();
+        const json = JSON.parse(text);
+        throw new Error(json.error || 'Server failed to generate report');
+      } catch (e) {
+        // If not json, rethrow original
+      }
+    }
+    throw error;
+  }
 };
 
 // ==================== RETURNS ====================

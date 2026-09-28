@@ -68,7 +68,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
       setModalOpen(false);
     } catch (err) {
       console.error('Download CA Pack failed:', err);
-      if (onDownloadReport) onDownloadReport();
+      alert(err.message || 'Failed to generate report. Please try again.');
     } finally {
       setDownloadingFormat(null);
     }
@@ -335,10 +335,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => {
-                  setModalOpen(false);
-                  navigate('/reports/gst-shield?print=true');
-                }}
+                onClick={() => !downloadingFormat && handleDownloadFormat('pdf')}
                 className="relative flex flex-col justify-between p-4 rounded-xl bg-rose-950/20 hover:bg-rose-900/30 border border-rose-500/30 hover:border-rose-500/60 transition-all cursor-pointer group text-left shadow-lg hover:shadow-rose-950/50 hover:scale-[1.01]"
               >
                 <div>
@@ -359,7 +356,11 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                 </div>
                 <div className="mt-4 pt-3 border-t border-rose-500/20 flex items-center justify-between text-xs font-semibold text-rose-400">
                   <span>Printable .pdf</span>
-                  <DocumentArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                  {downloadingFormat === 'pdf' ? (
+                    <div className="w-4 h-4 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <DocumentArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                  )}
                 </div>
               </div>
 
