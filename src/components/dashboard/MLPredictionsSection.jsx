@@ -38,7 +38,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   const salesForecast = data?.sales_forecast || {};
   const restockData = data?.restock_predictions || {};
   const forecast = salesForecast.forecast || [];
-  const restockItems = restockData.predictions || [];
+  const restockItems = (restockData.predictions || []).filter(item => item.days_to_reorder <= 30 && item.suggested_qty > 0);
 
   const formatCurrency = (value) => {
     if (!value) return `${getCurrencySymbol()}0`;
@@ -261,7 +261,11 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 text-xs text-gray-400">
                       <ClockIcon className="w-3 h-3" />
-                      Stockout: {new Date(item.stockout_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                      Stockout: {new Date(item.stockout_date).toLocaleDateString('en-IN', {
+                        month: 'short',
+                        day: 'numeric',
+                        ...(new Date(item.stockout_date).getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {})
+                      })}
                     </div>
                     <div className={`text-xs ${colors.text}`}>
                       Order: {item.suggested_qty} units
