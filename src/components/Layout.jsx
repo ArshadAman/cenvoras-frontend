@@ -36,12 +36,48 @@ import {
   GiftIcon,
   TruckIcon,
   ChevronDownIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sidebar_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) {
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const [collapsedSections, setCollapsedSections] = useState(() => {
     try {
       const saved = localStorage.getItem("sidebar_collapsed_sections");
@@ -327,144 +363,304 @@ export default function Layout({ children, onLogout }) {
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-72 glass-sidebar z-50 h-screen sticky top-0">
+      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen sticky top-0 transition-[width] duration-300 ease-in-out select-none overflow-x-hidden ${
+        isSidebarCollapsed ? 'w-20' : 'w-72'
+      }`}>
         
-        {/* Logo Area */}
-        <div className="h-24 flex items-center px-6 border-b border-white/5">
-          <div className="flex items-center justify-between w-full gap-2">
-            <Link to="/" className="flex items-center">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
-            </Link>
-            <span
-              className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-                isVipAccess
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                  : 'bg-white/10 text-gray-300 border-white/10'
-              }`}
-              title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
-            >
-              {isVipAccess ? 'VIP Access' : `${currentPlanName} Plan`}
-            </span>
-          </div>
+        {/* Logo & Collapse Header Area */}
+        <div className={`h-20 flex items-center border-b border-white/5 transition-all duration-300 shrink-0 ${
+          isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-5'
+        }`}>
+          {!isSidebarCollapsed ? (
+            <div className="flex items-center justify-between w-full gap-2 overflow-hidden">
+              <Link to="/" className="flex items-center min-w-0" title="Cenvora Home">
+                <img 
+                  src="/cenvora-logo-backgrond-removed.png" 
+                  alt="Cenvora Logo" 
+                  className="w-[145px] h-auto object-contain transform origin-left transition-transform duration-300" 
+                />
+              </Link>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border truncate max-w-[85px] ${
+                    isVipAccess
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                      : 'bg-white/10 text-gray-300 border-white/10'
+                  }`}
+                  title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+                >
+                  {isVipAccess ? 'VIP' : currentPlanName}
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                  title="Collapse sidebar (Ctrl+B)"
+                  aria-label="Collapse sidebar"
+                >
+                  <ChevronDoubleLeftIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-1 w-full py-1">
+              <Link to="/" className="flex items-center justify-center hover:opacity-80 transition-opacity" title="Cenvora Home">
+                <img 
+                  src="/pwa-192x192.png" 
+                  alt="Cenvora" 
+                  className="w-8 h-8 rounded-lg object-contain shadow-sm border border-white/10" 
+                />
+              </Link>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer"
+                title="Expand sidebar (Ctrl+B)"
+                aria-label="Expand sidebar"
+              >
+                <ChevronDoubleRightIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
         
         {/* Navigation — scrollable middle section */}
-        <nav className="flex-1 min-h-0 px-4 py-6 space-y-5 overflow-y-auto custom-scrollbar">
+        <nav className={`flex-1 min-h-0 py-4 space-y-4 overflow-y-auto custom-scrollbar transition-all duration-300 ${
+          isSidebarCollapsed ? 'px-2' : 'px-3.5'
+        }`}>
           {filteredGroups.map((group, groupIdx) => {
             const hasActiveItem = group.items.some((item) => location.pathname === item.path);
             const isCollapsed = !hasActiveItem && Boolean(collapsedSections?.[group.title]);
 
             return (
               <div key={groupIdx} className="space-y-1">
-                {/* Category Header */}
-                <button
-                  type="button"
-                  onClick={() => toggleSection(group.title)}
-                  className="w-full flex items-center justify-between px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500/90 hover:text-gray-200 transition-colors group mb-1 cursor-pointer select-none"
-                  title={isCollapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
-                >
-                  <span>{group.title}</span>
-                  <ChevronDownIcon
-                    className={`w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 transition-transform duration-200 ${
-                      isCollapsed ? "-rotate-90" : "rotate-0"
-                    }`}
-                  />
-                </button>
+                {/* Category Header or Divider */}
+                {!isSidebarCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(group.title)}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500/90 hover:text-gray-200 transition-colors group mb-1 cursor-pointer select-none"
+                    title={isCollapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
+                  >
+                    <span className="truncate">{group.title}</span>
+                    <ChevronDownIcon
+                      className={`w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 transition-transform duration-200 shrink-0 ${
+                        isCollapsed ? "-rotate-90" : "rotate-0"
+                      }`}
+                    />
+                  </button>
+                ) : (
+                  groupIdx > 0 && <div className="border-t border-white/5 my-2 mx-1" />
+                )}
                 
-                {/* Category Items */}
-                {!isCollapsed && group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
+                {/* Category Items with Smooth Accordion Transition */}
+                <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                  isCollapsed && !isSidebarCollapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+                }`}>
+                  <div className="overflow-hidden space-y-1">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
 
-                  const baseClass = `flex items-center gap-3 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-                  }`;
-                  
-                  if (isLocked) {
-                    return (
-                      <button
-                        key={item.path}
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        title={lockDescription}
-                        onClick={() => setUpgradeModal({
-                          open: true,
-                          title: 'Upgrade required',
-                          featureName: item.label,
-                          description: item.upgradeText || lockDescription,
-                          targetPlanName: item.upgradePlan || 'Pro',
-                          targetPlanCode: resolvePlanCode(item.upgradePlan),
-                          ctaLabel: '',
-                          subtitle: '',
-                        })}
-                        className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
-                      >
-                        <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                        <span className="text-sm flex-1">{item.label}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
-                      </button>
-                    );
-                  }
+                      if (isSidebarCollapsed) {
+                        // Collapsed Rail Item with Floating Tooltip
+                        if (isLocked) {
+                          return (
+                            <button
+                              key={item.path}
+                              type="button"
+                              disabled
+                              aria-disabled="true"
+                              title={lockDescription}
+                              onClick={() => setUpgradeModal({
+                                open: true,
+                                title: 'Upgrade required',
+                                featureName: item.label,
+                                description: item.upgradeText || lockDescription,
+                                targetPlanName: item.upgradePlan || 'Pro',
+                                targetPlanCode: resolvePlanCode(item.upgradePlan),
+                                ctaLabel: '',
+                                subtitle: '',
+                              })}
+                              className="relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 opacity-60 cursor-not-allowed text-gray-500 hover:bg-white/[0.02]"
+                            >
+                              <Icon className="w-5 h-5 shrink-0 text-gray-500" />
+                              <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
+                                <span>{item.label}</span>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                              </div>
+                            </button>
+                          );
+                        }
 
-                  return (
-                    <Link 
-                      key={item.path}
-                      to={item.path} 
-                      className={baseClass}
-                    >
-                      <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                      <span className="text-sm">{item.label}</span>
-                    </Link>
-                  );
-                })}
+                        return (
+                          <Link 
+                            key={item.path}
+                            to={item.path} 
+                            className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
+                              isActive
+                                ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 ring-1 ring-white/20'
+                                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
+                            }`}
+                            title={item.label}
+                          >
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
+                            <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
+                              <span>{item.label}</span>
+                            </div>
+                          </Link>
+                        );
+                      }
+
+                      // Expanded Sidebar Item
+                      const baseClass = `flex items-center gap-3 px-3.5 py-2 rounded-xl font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                          : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                      }`;
+                      
+                      if (isLocked) {
+                        return (
+                          <button
+                            key={item.path}
+                            type="button"
+                            disabled
+                            aria-disabled="true"
+                            title={lockDescription}
+                            onClick={() => setUpgradeModal({
+                              open: true,
+                              title: 'Upgrade required',
+                              featureName: item.label,
+                              description: item.upgradeText || lockDescription,
+                              targetPlanName: item.upgradePlan || 'Pro',
+                              targetPlanCode: resolvePlanCode(item.upgradePlan),
+                              ctaLabel: '',
+                              subtitle: '',
+                            })}
+                            className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
+                          >
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                            <span className="text-sm flex-1 truncate">{item.label}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shrink-0">{lockLabel}</span>
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <Link 
+                          key={item.path}
+                          to={item.path} 
+                          className={baseClass}
+                          title={item.label}
+                        >
+                          <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                          <span className="text-sm truncate flex-1">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             );
           })}
         </nav>
         
         {/* Bottom section — always visible, never scrolls away */}
-        <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/5 space-y-2">
-          <Link
-            to="/contact"
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
-              location.pathname === '/contact'
-                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-            }`}
-          >
-            <ChatBubbleLeftRightIcon className={`w-5 h-5 transition-colors duration-200 ${
-              location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'
-            }`} />
-            <span className="text-sm flex-1">Contact Us</span>
-          </Link>
+        <div className={`flex-shrink-0 pt-2 pb-4 border-t border-white/5 space-y-1.5 transition-all duration-300 ${
+          isSidebarCollapsed ? 'px-2 flex flex-col items-center' : 'px-3.5'
+        }`}>
+          {!isSidebarCollapsed ? (
+            <>
+              <Link
+                to="/contact"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/contact'
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                }`}
+                title="Contact Us"
+              >
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
+                  location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'
+                }`} />
+                <span className="text-sm flex-1 truncate">Contact Us</span>
+              </Link>
 
-          {/* Coming Soon Button */}
-          <Link
-            to="/coming-soon"
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
-              location.pathname === '/coming-soon'
-                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-            }`}
-          >
-            <BeakerIcon className={`w-5 h-5 transition-colors duration-200 ${
-              location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'
-            }`} />
-            <span className="text-sm flex-1">Coming Soon</span>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
-          </Link>
+              {/* Coming Soon Button */}
+              <Link
+                to="/coming-soon"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/coming-soon'
+                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                }`}
+                title="Coming Soon"
+              >
+                <BeakerIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
+                  location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'
+                }`} />
+                <span className="text-sm flex-1 truncate">Coming Soon</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase shrink-0">New</span>
+              </Link>
 
-          {/* Sign Out */}
-          <button
-            onClick={handleSignOut}
-            className="w-full px-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2"
-          >
-            Sign Out
-          </button>
+              {/* Sign Out */}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full px-3.5 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer"
+                title="Sign Out"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5 shrink-0" />
+                <span>Sign Out</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/contact"
+                className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
+                  location.pathname === '/contact'
+                    ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 ring-1 ring-white/20'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
+                }`}
+                title="Contact Us"
+              >
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
+                  Contact Us
+                </div>
+              </Link>
+
+              <Link
+                to="/coming-soon"
+                className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
+                  location.pathname === '/coming-soon'
+                    ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 ring-1 ring-white/20'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
+                }`}
+                title="Coming Soon"
+              >
+                <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-1.5">
+                  <span>Coming Soon</span>
+                  <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">NEW</span>
+                </div>
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="relative group/nav flex items-center justify-center w-full p-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 cursor-pointer"
+                title="Sign Out"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5 shrink-0" />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-red-300 text-xs font-medium rounded-lg shadow-2xl border border-red-500/20 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
+                  Sign Out
+                </div>
+              </button>
+            </>
+          )}
         </div>
       </aside>
 
