@@ -1,14 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
   MagnifyingGlassIcon, 
-  ClipboardDocumentCheckIcon, 
-  SparklesIcon, 
-  BoltIcon, 
-  CheckCircleIcon,
-  TagIcon,
-  BookOpenIcon,
   DocumentDuplicateIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
@@ -59,54 +53,50 @@ export default function GSTAndHSNGuide() {
   });
 
   const popularCategories = [
-    { label: 'Electronics & Mobile', query: '8517' },
-    { label: 'Computer Software & IT', query: '9983' },
-    { label: 'Textiles & Garments', query: '6203' },
-    { label: 'Pharmaceuticals & Drugs', query: '3004' },
-    { label: 'Iron, Steel & Metals', query: '7214' },
-    { label: 'Food, Grain & Spices', query: '1006' },
+    { label: 'Mobile & Electronics', query: '8517' },
+    { label: 'Computer Software', query: '9983' },
+    { label: 'Garments & Clothing', query: '6203' },
+    { label: 'Medicines', query: '3004' },
+    { label: 'Iron & Steel', query: '7214' },
+    { label: 'Grains & Food', query: '1006' },
   ];
 
-  const handleCopy = (code, desc) => {
+  const handleCopy = (code) => {
     navigator.clipboard.writeText(code);
-    toast.success(`HSN Code ${code} copied to clipboard!`);
+    toast.success(`HSN Code ${code} copied!`);
   };
 
   const content = (
-    <div className="max-w-6xl mx-auto px-6 py-12">
-      {/* Hero Header */}
-      <div className="text-center max-w-3xl mx-auto mb-12">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-mono uppercase tracking-wider mb-4">
-          <BookOpenIcon className="w-4 h-4" />
-          Statutory GST & HSN/SAC Master Directory
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-          Instant HSN Code & GST Rate Lookup
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      {/* Header */}
+      <div className="text-center max-w-2xl mx-auto mb-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          HSN Code & GST Rate Finder
         </h1>
-        <p className="mt-4 text-sm sm:text-base text-gray-400 leading-relaxed">
-          Search over 15,000+ Harmonized System of Nomenclature (HSN) and Service Accounting Codes (SAC) with corresponding CGST, SGST, and IGST tax slabs.
+        <p className="mt-2 text-sm text-zinc-400">
+          Search over 15,000+ HSN and SAC codes with their applicable GST tax slabs.
         </p>
       </div>
 
-      {/* Search Console */}
-      <div className="max-w-3xl mx-auto bg-[#0c1017] border border-white/10 rounded-2xl p-6 shadow-2xl mb-10">
-        <div className="flex gap-3 mb-4">
+      {/* Search Box */}
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 mb-8">
+        <div className="flex gap-2 mb-4">
           <button
             onClick={() => setSearchType('hsn')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               searchType === 'hsn'
-                ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
-                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-white text-zinc-950 font-semibold'
+                : 'bg-zinc-900 text-zinc-400 hover:text-white'
             }`}
           >
             Search by HSN / Product Name
           </button>
           <button
             onClick={() => setSearchType('gst')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
               searchType === 'gst'
-                ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
-                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-white text-zinc-950 font-semibold'
+                : 'bg-zinc-900 text-zinc-400 hover:text-white'
             }`}
           >
             Search by Category / Tax Slab
@@ -114,23 +104,22 @@ export default function GSTAndHSNGuide() {
         </div>
 
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder={
               searchType === 'hsn'
-                ? 'Type 2+ characters: e.g. 8517, mobile, cotton, medicine...'
-                : 'Search category: e.g. software, textile, dairy, metal...'
+                ? 'Type 2+ letters or numbers: e.g. 8517, mobile, cotton, steel...'
+                : 'Search category: e.g. software, medicine, transport, dairy...'
             }
-            className="w-full bg-[#07090e] border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-cyan-400 transition-colors"
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-500 transition-colors"
           />
         </div>
 
-        {/* Quick Suggestion Pills */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-500 font-mono">Popular:</span>
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
+          <span>Popular:</span>
           {popularCategories.map((cat, idx) => (
             <button
               key={idx}
@@ -138,7 +127,7 @@ export default function GSTAndHSNGuide() {
                 setSearchType('hsn');
                 setSearchTerm(cat.query);
               }}
-              className="px-2.5 py-1 bg-white/5 hover:bg-cyan-500/20 hover:text-cyan-300 text-gray-400 rounded-lg text-xs font-mono transition-colors border border-white/5"
+              className="px-2 py-0.5 bg-zinc-900 hover:bg-zinc-800 hover:text-zinc-200 text-zinc-400 rounded transition-colors"
             >
               {cat.label} ({cat.query})
             </button>
@@ -146,42 +135,42 @@ export default function GSTAndHSNGuide() {
         </div>
       </div>
 
-      {/* Results Area */}
-      <div className="max-w-4xl mx-auto">
+      {/* Results */}
+      <div>
         {(hsnLoading || gstLoading) && (
-          <div className="p-12 text-center text-gray-400 text-sm font-mono animate-pulse">
-            Querying official GST master directory...
+          <div className="p-8 text-center text-xs text-zinc-500">
+            Searching directory...
           </div>
         )}
 
         {searchType === 'hsn' && hsnResults?.length > 0 && (
-          <div className="space-y-3 mb-12">
-            <div className="text-xs font-mono uppercase text-gray-500 font-bold mb-2">
-              Found {hsnResults.length} matching codes:
+          <div className="space-y-2 mb-10">
+            <div className="text-xs text-zinc-500 mb-2">
+              Found {hsnResults.length} matching items:
             </div>
             {hsnResults.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-[#0c1017] border border-white/5 rounded-xl p-4 flex items-start justify-between gap-4 hover:border-cyan-500/30 transition-all group"
+                className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 flex items-start justify-between gap-4"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold font-mono text-cyan-400">
+                    <span className="text-sm font-bold font-mono text-white">
                       HSN {item.code || item.hsn_code}
                     </span>
                     {item.gst_rate && (
-                      <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-md font-mono">
+                      <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 text-emerald-400 text-xs rounded font-medium">
                         GST {item.gst_rate}%
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-300 mt-1 leading-relaxed">
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                     {item.desc || item.description || item.name}
                   </p>
                 </div>
                 <button
-                  onClick={() => handleCopy(item.code || item.hsn_code, item.desc)}
-                  className="px-3 py-1.5 bg-white/5 hover:bg-cyan-400 hover:text-black text-gray-300 text-xs font-mono rounded-lg transition-all flex items-center gap-1.5 shrink-0 border border-white/10"
+                  onClick={() => handleCopy(item.code || item.hsn_code)}
+                  className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded transition-colors flex items-center gap-1 shrink-0"
                 >
                   <DocumentDuplicateIcon className="w-3.5 h-3.5" />
                   <span>Copy</span>
@@ -192,88 +181,84 @@ export default function GSTAndHSNGuide() {
         )}
 
         {searchType === 'gst' && gstResults?.length > 0 && (
-          <div className="space-y-3 mb-12">
-            <div className="text-xs font-mono uppercase text-gray-500 font-bold mb-2">
-              Matching GST Rate Slabs:
+          <div className="space-y-2 mb-10">
+            <div className="text-xs text-zinc-500 mb-2">
+              Matching GST tax slabs:
             </div>
             {gstResults.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-[#0c1017] border border-white/5 rounded-xl p-4 flex items-start justify-between gap-4 hover:border-cyan-500/30 transition-all"
+                className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 flex items-start justify-between gap-4"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold text-white">
+                    <span className="text-sm font-bold text-white">
                       {item.category || item.name}
                     </span>
-                    <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs rounded-md font-mono">
-                      Rate: {item.rate || item.gst_rate}%
+                    <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded font-medium">
+                      {item.rate || item.gst_rate}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-400 mt-1">{item.description || item.sub_category}</p>
+                  <p className="text-xs text-zinc-400 mt-1">{item.description || item.sub_category}</p>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* GST Slab Reference Guide Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-16">
-          <div className="bg-[#0c1017] border border-white/5 p-5 rounded-2xl">
-            <div className="text-2xl font-extrabold text-white font-mono">0%</div>
-            <div className="text-xs font-semibold text-cyan-300 mt-1">Exempt / Nil Rated</div>
-            <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
-              Unprocessed food grains, milk, fresh vegetables, salt, educational books, and healthcare services.
+        {/* GST Slab Reference */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-12">
+          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
+            <div className="text-xl font-bold text-white">0%</div>
+            <div className="text-xs font-medium text-zinc-400 mt-0.5">Nil Rated / Exempt</div>
+            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+              Fresh vegetables, grains, milk, salt, and basic healthcare.
             </p>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 p-5 rounded-2xl">
-            <div className="text-2xl font-extrabold text-white font-mono">5%</div>
-            <div className="text-xs font-semibold text-cyan-300 mt-1">Essential Commodities</div>
-            <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
-              Packaged food items, footwear under ₹1,000, coal, medicines, economy transport, and tea.
+          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
+            <div className="text-xl font-bold text-white">5%</div>
+            <div className="text-xs font-medium text-zinc-400 mt-0.5">Essentials</div>
+            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+              Packaged foods, basic footwear, tea, spices, and medicines.
             </p>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 p-5 rounded-2xl">
-            <div className="text-2xl font-extrabold text-white font-mono">12% / 18%</div>
-            <div className="text-xs font-semibold text-cyan-300 mt-1">Standard Goods & IT</div>
-            <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
-              IT software, computers, consumer electronics, capital goods, financial services, telecom, restaurants.
+          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
+            <div className="text-xl font-bold text-white">12% / 18%</div>
+            <div className="text-xs font-medium text-zinc-400 mt-0.5">Standard Goods</div>
+            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+              Electronics, computers, IT services, capital goods, and restaurants.
             </p>
           </div>
-          <div className="bg-[#0c1017] border border-white/5 p-5 rounded-2xl">
-            <div className="text-2xl font-extrabold text-white font-mono">28%</div>
-            <div className="text-xs font-semibold text-cyan-300 mt-1">Luxury & Demerit</div>
-            <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
-              Automobiles, air conditioners, high-end consumer appliances, aerated drinks with cess.
+          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
+            <div className="text-xl font-bold text-white">28%</div>
+            <div className="text-xs font-medium text-zinc-400 mt-0.5">Luxury Goods</div>
+            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+              Air conditioners, automobiles, and luxury consumer goods.
             </p>
           </div>
         </div>
 
-        {/* Conversion Banner */}
-        <div className="rounded-3xl border border-cyan-500/30 bg-gradient-to-r from-cyan-950/40 via-[#0d1620] to-[#07090e] p-8 md:p-10 text-center relative overflow-hidden shadow-2xl">
-          <div className="relative z-10 max-w-2xl mx-auto">
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Tired of looking up HSN codes manually on every bill?
-            </h3>
-            <p className="text-gray-300 text-sm mt-3 leading-relaxed">
-              Cenvora ERP automatically remembers HSN codes, auto-splits CGST/SGST/IGST, and generates audit-ready GSTR-1 summaries in seconds.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                to="/signup"
-                className="w-full sm:w-auto px-6 py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-cyan-400/20"
-              >
-                Test Invoicing on Cloud Sandbox
-              </Link>
-              <a
-                href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20am%20looking%20for%20an%20automated%20GST%20billing%20solution."
-                target="_blank"
-                rel="noreferrer"
-                className="w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/10 transition-all"
-              >
-                Inquire on WhatsApp
-              </a>
-            </div>
+        {/* Bottom Callout */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-center">
+          <h3 className="text-lg font-bold text-white">
+            Auto-fill HSN codes on every bill with Cenvora
+          </h3>
+          <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+            Cenvora remembers your product HSN codes and automatically applies the correct CGST, SGST, or IGST rate.
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <Link
+              to="/signup"
+              className="px-4 py-2 bg-white text-zinc-950 font-semibold text-xs rounded-lg hover:bg-zinc-200 transition-colors"
+            >
+              Start 14-Day Free Trial
+            </Link>
+            <Link
+              to="/#pricing"
+              className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-300 font-medium text-xs rounded-lg hover:text-white transition-colors"
+            >
+              View Perpetual Pricing
+            </Link>
           </div>
         </div>
       </div>
@@ -281,29 +266,27 @@ export default function GSTAndHSNGuide() {
   );
 
   if (isAuthenticated) {
-    return <div className="min-h-screen bg-[#07080b] text-white pt-24">{content}</div>;
+    return <div className="min-h-screen bg-black text-white pt-24">{content}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#07080b] text-white relative selection:bg-cyan-500/30 selection:text-white">
+    <div className="min-h-screen bg-black text-white">
       <Seo
-        title="HSN Code & GST Rate Finder | India Tax Directory | Cenvora"
-        description="Search HSN codes, SAC service accounting codes, and GST tax rate slabs. Free lookup directory for Indian businesses and accountants."
+        title="HSN Code & GST Rate Finder | Cenvora"
+        description="Search HSN codes, SAC service accounting codes, and GST tax rate slabs for Indian businesses."
         canonicalPath="/gst-hsn-guide"
       />
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-20"></div>
-      
+
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
-          { label: 'Perpetual Pricing', href: '/#pricing' },
-          { label: 'HSN Directory', href: '/gst-hsn-guide' },
-          { label: 'Privacy', href: '/privacy' },
-          { label: 'Terms', href: '/terms' },
+          { label: 'Features', href: '/#features' },
+          { label: 'Pricing', href: '/#pricing' },
+          { label: 'Contact', href: '/contact' },
         ]}
       />
 
-      <div className="relative z-10 pt-28 sm:pt-36 pb-20">
+      <div className="pt-28 sm:pt-36 pb-20">
         {content}
       </div>
     </div>

@@ -2,16 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   HomeIcon, 
-  UserPlusIcon, 
-  ArrowRightOnRectangleIcon,
-  ShieldCheckIcon,
-  DocumentTextIcon,
-  MapIcon,
-  BookOpenIcon,
-  CurrencyRupeeIcon,
-  ServerStackIcon,
-  EnvelopeIcon,
-  CheckCircleIcon
+  MapIcon, 
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
@@ -23,105 +14,91 @@ export default function Sitemap() {
 
   const sitemapGroups = [
     {
-      category: 'Core Platform & Architecture',
+      category: 'Main Pages',
       links: [
-        { title: 'Home / Overview', path: '/', desc: 'Perpetual license overview, architecture, and live screen demos.', status: '200 OK' },
-        { title: 'Architecture Modules', path: '/#features', desc: 'Detailed breakdown of sales, batch inventory, accounting & HR.', status: '200 OK' },
-        { title: 'Rent vs Own ROI Calculator', path: '/#roi-calculator', desc: 'Interactive financial comparison of recurring SaaS vs Perpetual License.', status: '200 OK' },
+        { title: 'Home / Overview', path: '/', desc: 'Product overview, screenshots, and core benefits.' },
+        { title: 'Features Explorer', path: '/#features', desc: 'Detailed breakdown of sales, stock management, accounting, and staff roles.' },
+        { title: 'Rent vs Own Calculator', path: '/#why-own', desc: 'Interactive comparison between monthly SaaS and one-time perpetual ownership.' },
+        { title: 'Perpetual Pricing', path: '/#pricing', desc: 'Hosted Standard, White-Label Custom Domain, and Enterprise plans.' },
       ]
     },
     {
-      category: 'Commercial & Perpetual License',
+      category: 'Free Business Tools',
       links: [
-        { title: 'Perpetual Pricing Matrix', path: '/#pricing', desc: 'Hosted Standard (₹1L), White-Label Custom Domain (₹1.5L), and Enterprise BYOC.', status: '200 OK' },
-        { title: 'Executive Enterprise Contact', path: '/contact', desc: 'Book direct architecture walkthrough, WhatsApp desk, and sales engineering.', status: '200 OK' },
+        { title: 'HSN & GST Code Lookup', path: '/gst-hsn-guide', desc: 'Search 15,000+ HSN codes and GST tax rate slabs.' },
       ]
     },
     {
-      category: 'Statutory GST & Reference Tools',
+      category: 'Support & Inquiries',
       links: [
-        { title: 'HSN & SAC Code Master Directory', path: '/gst-hsn-guide', desc: '15,000+ searchable HSN codes and GST slab references.', status: '200 OK' },
+        { title: 'Contact Us', path: '/contact', desc: 'Book a live screen demo or chat with our team on WhatsApp.' },
       ]
     },
     {
-      category: 'Legal, Compliance & Data Sovereignty',
+      category: 'Legal & Privacy',
       links: [
-        { title: 'Privacy Policy & DPDP Act 2023', path: '/privacy', desc: 'Data sovereignty guarantees, database isolation, and zero-monetization clauses.', status: '200 OK' },
-        { title: 'Terms of Service & License Grant', path: '/terms', desc: 'Perpetual software license agreement, flat ₹12k/yr AMC scope, and SLA terms.', status: '200 OK' },
+        { title: 'Privacy Policy', path: '/privacy', desc: 'DPDP Act compliance, data safety, and zero advertising monetization.' },
+        { title: 'Terms of Service', path: '/terms', desc: 'Perpetual software license agreement and AMC maintenance terms.' },
       ]
     },
     {
-      category: 'User Access & Cloud Sandbox',
+      category: 'User Portals',
       links: [
-        { title: 'Operator / Admin Login', path: '/login', desc: 'Secure authentication gateway for authorized enterprise tenant operators.', status: '200 OK' },
-        { title: '14-Day Cloud Sandbox Registration', path: '/signup', desc: 'Test drive Cenvora ERP with full sample data before perpetual deployment.', status: '200 OK' },
+        { title: 'Sign In', path: '/login', desc: 'Log in to your Cenvora account.' },
+        { title: 'Start 14-Day Free Trial', path: '/signup', desc: 'Try Cenvora free for 14 days with zero obligation.' },
       ]
     }
   ];
 
   return (
-    <div className="min-h-screen font-sans text-white bg-[#07080b] selection:bg-cyan-500/30 selection:text-white">
+    <div className="min-h-screen font-sans text-white bg-black">
       <Seo
-        title="Public Sitemap & Route Directory | Cenvora ERP"
-        description="Comprehensive index of public pages, commercial architecture guides, statutory tax reference directories, and user portals on Cenvora."
+        title="Sitemap | Cenvora"
+        description="Directory of all public pages, tools, and pricing plans on Cenvora."
         canonicalPath="/sitemap"
       />
-      
-      {/* Background Texture Grid */}
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-20"></div>
 
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
-          { label: 'Perpetual Pricing', href: '/#pricing' },
-          { label: 'HSN Directory', href: '/gst-hsn-guide' },
-          { label: 'Privacy', href: '/privacy' },
+          { label: 'Features', href: '/#features' },
+          { label: 'Pricing', href: '/#pricing' },
+          { label: 'HSN Lookup', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
         ]}
       />
 
-      <main className="relative z-10 mx-auto max-w-5xl px-6 pb-24 pt-32 sm:pt-40">
-        <div className="mb-12 border-b border-white/10 pb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1 text-xs font-mono text-cyan-300 uppercase tracking-wider mb-4">
-            <MapIcon className="w-4 h-4" />
-            Static Route Map
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white flex items-center gap-4">
-            System Sitemap & Directory
+      <main className="mx-auto max-w-4xl px-6 pb-20 pt-32 sm:pt-40">
+        <div className="mb-10 border-b border-zinc-800 pb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            Sitemap
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-gray-400">
-            Complete structural index of all public endpoints, statutory tools, legal covenants, and cloud sandbox portals.
+          <p className="mt-2 text-xs text-zinc-400">
+            A complete list of public pages on Cenvora.
           </p>
         </div>
 
-        {/* Sitemap Groups */}
-        <div className="space-y-10">
+        <div className="space-y-8">
           {sitemapGroups.map((group, gIdx) => (
-            <div key={gIdx} className="bg-[#0c1017] border border-white/10 rounded-2xl p-6 sm:p-8">
-              <h2 className="text-base font-bold text-white font-mono uppercase tracking-wider mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+            <div key={gIdx} className="bg-zinc-950 border border-zinc-800/80 rounded-2xl p-6">
+              <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
                 {group.category}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {group.links.map((link, lIdx) => (
                   <Link
                     key={lIdx}
                     to={link.path}
-                    className="p-4 bg-[#07090e] border border-white/5 rounded-xl hover:border-cyan-500/40 hover:bg-white/[0.02] transition-all group flex flex-col justify-between"
+                    className="p-3.5 bg-zinc-900/60 border border-zinc-800/60 rounded-xl hover:bg-zinc-900 hover:border-zinc-700 transition-colors flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
-                          {link.title}
-                        </span>
-                        <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px] rounded">
-                          {link.status}
-                        </span>
+                      <div className="text-sm font-semibold text-white">
+                        {link.title}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{link.desc}</p>
+                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{link.desc}</p>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-white/5 font-mono text-[11px] text-gray-500 flex items-center gap-1 group-hover:text-cyan-400 transition-colors">
-                      <span>GET</span> {link.path} &rarr;
+                    <div className="mt-3 text-[11px] font-mono text-zinc-500">
+                      {link.path}
                     </div>
                   </Link>
                 ))}
@@ -130,10 +107,9 @@ export default function Sitemap() {
           ))}
         </div>
 
-        {/* Back Link */}
-        <div className="mt-12 text-center">
-          <Link to="/" className="text-xs font-mono text-gray-500 hover:text-cyan-400 transition-colors">
-            &larr; Back to Cenvora Home
+        <div className="mt-12 text-center text-xs text-zinc-600">
+          <Link to="/" className="hover:text-zinc-400 transition-colors">
+            &larr; Back to Cenvora homepage
           </Link>
         </div>
       </main>
