@@ -423,26 +423,30 @@ const InvoicePreview = forwardRef(({
                       backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
                         ? colors.tableStripe 
                         : 'transparent',
+                      paddingTop: '0.6px',
+                      paddingBottom: '0.6px',
+                      margin: 0,
+                      lineHeight: 1.2,
                     }}
                   >
-                    <td className="border text-center align-middle font-medium" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border text-center align-middle font-medium" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {index + 1}
                     </td>
-                    <td className="border align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
                       {desc && (
-                        <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-relaxed font-normal" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
+                        <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-tight font-normal" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
                           {desc}
                         </div>
                       )}
                     </td>
-                    <td className="border text-center align-middle font-semibold text-gray-900" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border text-center align-middle font-semibold text-gray-900" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {qty} {unit}
                     </td>
-                    <td className="border align-middle text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border align-middle text-gray-700" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {make}
                     </td>
-                    <td className="border align-middle text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
+                    <td className="border align-middle text-gray-700" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {packSize}
                     </td>
                   </tr>
@@ -517,6 +521,10 @@ const InvoicePreview = forwardRef(({
                       backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
                         ? colors.tableStripe 
                         : 'transparent',
+                      paddingTop: '0.6px',
+                      paddingBottom: '0.6px',
+                      margin: 0,
+                      lineHeight: 1.2,
                     }}
                   >
                     {visibleColumns.map(col => {
@@ -549,7 +557,10 @@ const InvoicePreview = forwardRef(({
                           key={col.id}
                           className="border align-middle"
                           style={{ 
-                            padding: '1px 8px',
+                            paddingTop: '0.6px',
+                            paddingBottom: '0.6px',
+                            paddingLeft: '8px',
+                            paddingRight: '8px',
                             margin: 0,
                             lineHeight: 1.2,
                             fontSize: '12px',
@@ -564,12 +575,12 @@ const InvoicePreview = forwardRef(({
                             <div>
                               <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
                               {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
-                                <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', wordBreak: 'break-word' }}>
+                                <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
                                   {item.description || item.product_description || item.product_detail?.description}
                                 </div>
                               ) : null}
                               {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                                <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', fontWeight: 500 }}>
+                                <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
                                   {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
                                   {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
                                   {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}

@@ -186,19 +186,19 @@ const BillShipTemplate = forwardRef(({
               const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
               const desc = item.description || item.product_description || item.product_detail?.description;
               return (
-                <tr key={idx} className="border-b border-gray-200">
-                  <td className="align-middle text-center border-r border-gray-200 text-xs font-medium" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
-                  <td className="align-middle text-left border-r border-gray-200" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-200">
+                  <td className="align-middle text-center border-r border-gray-200 text-xs font-medium" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td className="align-middle text-left border-r border-gray-200" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                     <div className="font-normal text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                     {desc && (
-                      <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                      <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
                   </td>
-                  <td className="align-middle text-center border-r border-gray-200 text-xs font-bold text-gray-900" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
-                  <td className="align-middle text-left border-r border-gray-200 text-xs text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
-                  <td className="align-middle text-left text-xs text-gray-700" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
+                  <td className="align-middle text-center border-r border-gray-200 text-xs font-bold text-gray-900" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{qty} {unit}</td>
+                  <td className="align-middle text-left border-r border-gray-200 text-xs text-gray-700" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
+                  <td className="align-middle text-left text-xs text-gray-700" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
                 </tr>
               );
             })}
@@ -234,7 +234,7 @@ const BillShipTemplate = forwardRef(({
                 );
               }
               return (
-                <tr key={idx} className="border-b border-gray-200">
+                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-200">
                 {visibleColumns.map((col, cIdx) => {
                   const isLast = cIdx === visibleColumns.length - 1;
                   const isNum = ['price', 'amount'].includes(col.id);
@@ -245,15 +245,15 @@ const BillShipTemplate = forwardRef(({
                   else if(col.id==='description') {
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
-                      <div className="py-1">
+                      <div className="py-0">
                         <div className="font-normal text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                         {desc && (
-                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
                         {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                          <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
                             {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
                             {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
                             {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -282,7 +282,10 @@ const BillShipTemplate = forwardRef(({
                     key={col.id} 
                     className={`align-middle ${!isLast ? 'border-r border-gray-200' : ''}`} 
                     style={{ 
-                      padding: '1px 8px',
+                      paddingTop: '0.6px',
+                      paddingBottom: '0.6px',
+                      paddingLeft: '8px',
+                      paddingRight: '8px',
                       margin: 0,
                       lineHeight: 1.2,
                       fontSize: '12px',

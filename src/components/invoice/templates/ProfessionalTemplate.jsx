@@ -235,19 +235,19 @@ const ProfessionalTemplate = forwardRef(({
               const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
               const desc = item.description || item.product_description || item.product_detail?.description;
               return (
-                <tr key={idx} className="h-auto hover:bg-gray-50 transition-colors">
-                  <td className="text-xs text-gray-800 text-center px-2 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
-                  <td className="text-xs text-gray-800 text-left px-3 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="h-auto hover:bg-gray-50 transition-colors">
+                  <td className="text-xs text-gray-800 text-center px-2 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td className="text-xs text-gray-800 text-left px-3 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                     <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                     {desc && (
-                      <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                      <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
                   </td>
-                  <td className="text-xs text-gray-900 font-medium text-center px-2 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
-                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
-                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
+                  <td className="text-xs text-gray-900 font-medium text-center px-2 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{qty} {unit}</td>
+                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
+                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
                 </tr>
               );
             })}
@@ -284,7 +284,7 @@ const ProfessionalTemplate = forwardRef(({
                 );
               }
               return (
-              <tr key={idx} className="h-auto hover:bg-gray-50 transition-colors">
+              <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="h-auto hover:bg-gray-50 transition-colors">
                 {visibleColumns.map(col => {
                   const isNum = ['price', 'amount'].includes(col.id);
                   const isDesc = col.id === 'description';
@@ -294,10 +294,10 @@ const ProfessionalTemplate = forwardRef(({
                   else if(col.id==='description') {
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
-                      <div className="leading-tight py-0.5">
+                      <div className="leading-tight py-0">
                         <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                         {desc && (
-                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
@@ -324,7 +324,10 @@ const ProfessionalTemplate = forwardRef(({
                       key={col.id} 
                       className="align-middle" 
                       style={{ 
-                        padding: '1px 8px', 
+                        paddingTop: '0.6px',
+                        paddingBottom: '0.6px',
+                        paddingLeft: '8px', 
+                        paddingRight: '8px',
                         margin: 0, 
                         lineHeight: 1.2, 
                         fontSize: '12px', 
