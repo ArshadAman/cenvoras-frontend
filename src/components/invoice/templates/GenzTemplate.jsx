@@ -197,21 +197,21 @@ const GenzTemplate = forwardRef(({
                         </td>
                       </tr>
                     ) : (
-                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                      <td className="align-middle text-gray-800 text-xs text-center" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
-                      <td className="align-middle text-gray-800 text-xs text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                    <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="hover:bg-gray-50 transition-colors">
+                      <td className="align-middle text-gray-800 text-xs text-center" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
+                      <td className="align-middle text-gray-800 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                         <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
                         {desc && (
-                          <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </p>
                         )}
                       </td>
-                      <td className="align-middle text-gray-900 text-xs text-center font-bold" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                      <td className="align-middle text-gray-900 text-xs text-center font-bold" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full">{qty} {unit}</span>
                       </td>
-                      <td className="align-middle text-gray-700 text-xs text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
-                      <td className="align-middle text-gray-700 text-xs text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
+                      <td className="align-middle text-gray-700 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
+                      <td className="align-middle text-gray-700 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
                     </tr>
                     )
                   );
@@ -247,7 +247,7 @@ const GenzTemplate = forwardRef(({
                     );
                   }
                   return (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                  <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="hover:bg-gray-50 transition-colors">
                     {visibleColumns.map(col => {
                       const isNum = ['price', 'amount'].includes(col.id);
                       const isDesc = col.id === 'description';
@@ -257,11 +257,11 @@ const GenzTemplate = forwardRef(({
                       else if(col.id==='description') {
                         const desc = item.description || item.product_description || item.product_detail?.description;
                         val = (
-                          <div className="py-1">
+                          <div className="py-0">
                             <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
                             {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
                             {desc && (
-                              <p className="text-[11px] text-gray-500 whitespace-pre-line mt-1 leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                              <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                                 {desc}
                               </p>
                             )}
@@ -288,7 +288,10 @@ const GenzTemplate = forwardRef(({
                           key={col.id} 
                           className="align-middle text-gray-800" 
                           style={{ 
-                            padding: '1px 8px', 
+                            paddingTop: '0.6px',
+                            paddingBottom: '0.6px',
+                            paddingLeft: '8px', 
+                            paddingRight: '8px',
                             margin: 0, 
                             lineHeight: 1.2, 
                             fontSize: '12px', 

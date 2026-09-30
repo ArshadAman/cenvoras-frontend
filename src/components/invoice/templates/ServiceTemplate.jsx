@@ -199,19 +199,19 @@ const ServiceTemplate = forwardRef(({
               const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
               const desc = item.description || item.product_description || item.product_detail?.description;
               return (
-                <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-                  <td className="text-[12px] font-medium text-gray-700 align-middle text-center" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{idx + 1}</td>
-                  <td className="text-[12px] font-medium text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>
+                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-100 hover:bg-gray-50/50">
+                  <td className="text-[12px] font-medium text-gray-700 align-middle text-center" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td className="text-[12px] font-medium text-gray-700 align-middle text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                     <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
                     {desc && (
-                      <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                      <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
                       </div>
                     )}
                   </td>
-                  <td className="text-[12px] font-bold text-gray-900 align-middle text-center" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{qty} {unit}</td>
-                  <td className="text-[12px] text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{make}</td>
-                  <td className="text-[12px] text-gray-700 align-middle text-left" style={{ padding: '1px 8px', verticalAlign: 'middle' }}>{packSize}</td>
+                  <td className="text-[12px] font-bold text-gray-900 align-middle text-center" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{qty} {unit}</td>
+                  <td className="text-[12px] text-gray-700 align-middle text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
+                  <td className="text-[12px] text-gray-700 align-middle text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
                 </tr>
               );
             })}
@@ -246,7 +246,7 @@ const ServiceTemplate = forwardRef(({
                 );
               }
               return (
-              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
+              <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-100 hover:bg-gray-50/50">
                 {visibleColumns.map(col => {
                   let val = '';
                   let isNumeric = false;
@@ -254,10 +254,10 @@ const ServiceTemplate = forwardRef(({
                   else if(col.id==='description') {
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
-                      <div className="py-2">
+                      <div className="py-0">
                         <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
                         {desc && (
-                          <div className="text-[11px] text-gray-500 mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
@@ -287,7 +287,10 @@ const ServiceTemplate = forwardRef(({
                       key={col.id} 
                       className="align-middle font-medium text-gray-700"
                       style={{ 
-                        padding: '1px 8px',
+                        paddingTop: '0.6px',
+                        paddingBottom: '0.6px',
+                        paddingLeft: '8px',
+                        paddingRight: '8px',
                         margin: 0,
                         lineHeight: 1.2,
                         fontSize: '12px',
