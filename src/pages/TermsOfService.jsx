@@ -1,5 +1,12 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { 
+  DocumentTextIcon, 
+  KeyIcon, 
+  ServerStackIcon, 
+  CheckCircleIcon,
+  ShieldCheckIcon 
+} from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
 
@@ -8,90 +15,200 @@ export default function TermsOfService() {
     window.scrollTo(0, 0);
   }, []);
 
+  const sections = [
+    { id: 'license-grant', title: '1. Grant of Perpetual Software License' },
+    { id: 'amc-scope', title: '2. Annual Maintenance Contract (AMC) & Hosting' },
+    { id: 'data-ownership', title: '3. Client Data Sovereignty & Portability' },
+    { id: 'acceptable-use', title: '4. Acceptable Use, IT Act & BNS Compliance' },
+    { id: 'hardware-specs', title: '5. Hardware, Printers & Client Environment' },
+    { id: 'liability', title: '6. Limitation of Liability & Warranty Scope' },
+    { id: 'termination', title: '7. Contract Termination & AMC Expiry' },
+    { id: 'governing-law', title: '8. Governing Law & Dispute Resolution' },
+  ];
+
   return (
-    <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+    <div className="min-h-screen font-sans text-white bg-[#07080b] selection:bg-cyan-500/30 selection:text-white">
       <Seo
-        title="Terms of Service"
-        description="Review the terms for using Cenvora's billing, inventory, GST, and account services."
+        title="Terms of Service & Perpetual License Agreement | Cenvora"
+        description="Review the commercial terms, perpetual software license grant, AMC scope, and legal compliance obligations for Cenvora ERP deployments."
         canonicalPath="/terms"
       />
-      {/* Background Texture Grid */}
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
-      
+
+      {/* Grid Pattern Texture */}
+      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-20"></div>
+
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
-          { label: 'HSN Code', href: '/gst-hsn-guide' },
+          { label: 'Perpetual Pricing', href: '/#pricing' },
+          { label: 'HSN Directory', href: '/gst-hsn-guide' },
+          { label: 'Privacy Policy', href: '/privacy' },
           { label: 'Contact', href: '/contact' },
-          { label: 'Privacy', href: '/privacy' },
         ]}
       />
 
-      <main className="pt-40 pb-20 relative z-10 max-w-3xl mx-auto px-6">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-8 text-white">Terms of Service</h1>
-        <p className="text-gray-400 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
+      <main className="relative z-10 mx-auto max-w-5xl px-6 pb-24 pt-32 sm:pt-40">
+        {/* Document Header */}
+        <div className="border-b border-white/10 pb-8 mb-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1 text-xs font-mono text-cyan-300 uppercase tracking-wider mb-4">
+            <DocumentTextIcon className="w-4 h-4" />
+            Commercial Agreement & Perpetual License
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
+            Software License & Commercial Terms
+          </h1>
+          <p className="mt-3 text-sm sm:text-base text-gray-400 font-mono">
+            Effective Date: January 1, 2026 • Commercial Revision: 4.2
+          </p>
+        </div>
 
-        <div className="space-y-8 text-gray-300 leading-relaxed">
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">1. Agreement to Terms</h2>
-            <p>By accessing or using Cenvora, you agree to be bound by these Terms. If you disagree with any part of the terms, then you may not access the Service. These Terms apply to all visitors, users, and others who access or use the Service.</p>
-          </section>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Quick Index Sidebar */}
+          <aside className="hidden lg:block lg:col-span-4">
+            <div className="sticky top-28 bg-[#0c1017] border border-white/10 rounded-2xl p-5 shadow-xl">
+              <div className="text-xs font-mono uppercase text-gray-400 font-bold mb-4 tracking-wider">
+                Agreement Clauses
+              </div>
+              <nav className="space-y-2">
+                {sections.map((sec) => (
+                  <a
+                    key={sec.id}
+                    href={`#${sec.id}`}
+                    className="block text-xs text-gray-400 hover:text-cyan-300 transition-colors py-1 truncate"
+                  >
+                    {sec.title}
+                  </a>
+                ))}
+              </nav>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">2. Subscriptions & Billing</h2>
-            <ul className="list-disc pl-6 space-y-2 text-gray-400">
-              <li>Some parts of the Service are billed on a subscription basis. You will be billed in advance on a recurring and periodic basis (monthly or annually).</li>
-              <li>A valid payment method is required to process the payment for your Subscription.</li>
-              <li>You may cancel your Subscription at any time, but no refunds will be provided for the remaining duration of the billing cycle.</li>
-            </ul>
-          </section>
+              <div className="mt-6 pt-4 border-t border-white/5 space-y-2 text-xs font-mono text-gray-400">
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <KeyIcon className="w-4 h-4" />
+                  <span>Perpetual License Model</span>
+                </div>
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <CheckCircleIcon className="w-4 h-4" />
+                  <span>Flat ₹12k/yr Base AMC</span>
+                </div>
+              </div>
+            </div>
+          </aside>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">3. Accounts</h2>
-            <p>When you create an account with us, you must provide us with information that is accurate, complete, and current at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service. You are responsible for safeguarding the password that you use to access the Service.</p>
-          </section>
-          
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">4. Acceptable Use, BNS & IT Act Compliance</h2>
-            <p className="text-sm mb-2">You agree to use Cenvora strictly in compliance with all applicable Indian laws, including but not limited to the Information Technology Act, 2000, and the Bharatiya Nyaya Sanhita, 2023 (BNS). You explicitly agree NOT to use the Service to upload, post, transmit, or otherwise make available any Content that:</p>
-            <ul className="list-disc pl-6 space-y-1 text-sm text-gray-400">
-                <li>Constitutes forgery, cheating, or financial fraud under the Bharatiya Nyaya Sanhita (BNS) provisions.</li>
-                <li>Involves unauthorized access, identity theft, or data manipulation punishable under Sections 43, 66, 66C, and 66D of the Information Technology Act, 2000.</li>
-                <li>Is grossly harmful, defamatory, obscene, pornographic, pedophilic, invasive of another's privacy, or promotes money laundering or gambling.</li>
-            </ul>
-            <p className="text-sm mt-2 font-medium text-red-400">Any violation of these provisions constitutes a severe breach of these Terms. Cenvora reserves the right to immediately terminate your account, freeze your data, and report the offense to cyber crime authorities or law enforcement agencies without prior notice.</p>
-          </section>
+          {/* Main Legal Content */}
+          <div className="lg:col-span-8 space-y-12 text-sm sm:text-base text-gray-300 leading-relaxed font-light">
+            {/* Clause 1 */}
+            <section id="license-grant" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">01.</span> Grant of Perpetual Software License
+              </h2>
+              <p className="mb-3">
+                Upon payment of the agreed one-time license fee (such as the Hosted Standard license fee of ₹1,00,000, White-Label Custom Domain fee of ₹1,50,000, or Enterprise Bespoke fee), Cenvora grants you a non-exclusive, perpetual, non-transferable license to deploy, operate, and utilize the software for your internal enterprise business operations.
+              </p>
+              <div className="bg-[#0c1017] border border-white/10 rounded-xl p-4 my-3 text-xs sm:text-sm">
+                <p className="text-gray-300">
+                  <strong>Zero Per-User Seat Penalties:</strong> You are authorized to create unlimited user accounts, cashier logins, and operational roles within your licensed instance without incurring per-seat monthly license fees.
+                </p>
+              </div>
+            </section>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">5. Data Protection (DPDP Act 2023)</h2>
-            <p className="text-sm">By utilizing Cenvora to store your customers' or third-party data, you acknowledge that you remain the "Data Fiduciary" regarding that data under the Digital Personal Data Protection Act, 2023 (DPDP). Cenvora acts merely as a "Data Processor." You represent and warrant that you have obtained lawful, clear, and specific consent from all individuals whose personal data you input into our systems. You shall hold Cenvora completely harmless against any complaints or penalties levied by the Data Protection Board of India resulting from your failure to obtain such consent.</p>
-          </section>
+            {/* Clause 2 */}
+            <section id="amc-scope" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">02.</span> Annual Maintenance Contract (AMC) & Hosting
+              </h2>
+              <p className="mb-3">
+                To guarantee uninterrupted regulatory compliance and platform security, Cenvora operates under a transparent, cost-pegged maintenance model:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-gray-400 text-xs sm:text-sm">
+                <li><strong className="text-gray-200">Base Software AMC (Flat ₹12,000/year):</strong> Covers continuous statutory GST rate updates, UAE VAT formula adjustments, security patches, database integrity maintenance, and direct WhatsApp priority support.</li>
+                <li><strong className="text-gray-200">Infrastructure Hosting:</strong> For Hosted Standard, cloud hosting is bundled at ~₹500/mo (₹6,000/yr), bringing total ongoing to ₹18,000/yr. For White-Label Custom Domain, dedicated container hosting is bundled at ~₹1,000/mo (₹12,000/yr), bringing total ongoing to ₹24,000/yr. For Enterprise BYOC, server hosting is paid by the client directly to their cloud provider (₹0 hosting fee to Cenvora).</li>
+                <li><strong className="text-gray-200">Renewal Cycle:</strong> The AMC is invoiced annually in advance. Renewal is optional but required to receive automated software version upgrades and official technical support.</li>
+              </ul>
+            </section>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">6. Intermediary Status & Safe Harbour (Sec 79 IT Act)</h2>
-            <p className="text-sm">Cenvora is strictly a technology platform and acts purely as an "Intermediary" under Section 2(1)(w) and Section 79 of the Information Technology Act, 2000, and the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. We hold ZERO liability for the accuracy, legality, or GST compliance of any invoices, ledgers, or business data generated by you. We exercise no editorial control over your data. If you manipulate ledgers to evade taxes, the sole legal and penal liability lies exclusively with you and your business entity.</p>
-          </section>
+            {/* Clause 3 */}
+            <section id="data-ownership" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">03.</span> Client Data Sovereignty & Portability
+              </h2>
+              <p>
+                All data, customer lists, inventory valuation numbers, invoice documents, and transaction logs stored within your Cenvora instance remain exclusively your intellectual and corporate property. Cenvora will never claim ownership, place commercial liens, or withhold your database. You retain the right to export full database backups at any time.
+              </p>
+            </section>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">7. Limitation of Liability & Data Loss</h2>
-            <p className="text-sm mb-4">While we implement automated off-site database backups every 24 hours to protect against catastrophic system failures, Cenvora is provided strictly on an "AS IS" and "AS AVAILABLE" basis. In no event shall Cenvora, nor its founders, directors, employees, or partners, be liable for any direct, indirect, incidental, special, consequential, or punitive damages under civil or criminal law. You explicitly acknowledge that up to 24 hours of data may be unrecoverable in the event of an intra-day catastrophic failure, hardware crash, or cyber attack, and you assume 100% of all risk associated with such potential data loss.</p>
-          </section>
+            {/* Clause 4 */}
+            <section id="acceptable-use" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">04.</span> Acceptable Use, IT Act & BNS Compliance
+              </h2>
+              <p className="mb-2">
+                You agree to use Cenvora strictly in compliance with all applicable Indian and international laws, including but not limited to the Information Technology Act, 2000, and the Bharatiya Nyaya Sanhita, 2023 (BNS). You explicitly agree NOT to use the software to:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-gray-400 text-xs sm:text-sm">
+                <li>Generate fraudulent, fictitious, or forged tax invoices intended to evade lawful tax liabilities under GST or UAE VAT legislation.</li>
+                <li>Engage in unauthorized data interception, tampering with audit trails, or cyber-attacks prohibited under Sections 43 and 66 of the Information Technology Act, 2000.</li>
+                <li>Store illegal, illicit, or malicious payloads within invoice attachment fields.</li>
+              </ul>
+            </section>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">8. Absolute Indemnification</h2>
-            <p className="text-sm">You hereby agree to defend, indemnify and indefinitely hold harmless Cenvora, its affiliates, employees, and officers from and against any and all claims, FIRs (First Information Reports), civil suits, damages, obligations, losses, liabilities, costs or debt, and expenses (including but not limited to lawyer's fees), resulting directly or indirectly from a) your use and access of the Service; b) any fraudulent or unlawful act committed by you or your staff using our software; c) any breach of the BNS, IT Act, DPDP Act, or GST laws by you.</p>
-          </section>
+            {/* Clause 5 */}
+            <section id="hardware-specs" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">05.</span> Hardware, Printers & Client Environment
+              </h2>
+              <p>
+                Cenvora ERP runs as a modern cloud/web progressive application compatible with standard web browsers (Google Chrome, Microsoft Edge, Safari, Firefox). The client is responsible for maintaining their local hardware (barcode scanners, desktop computers, tablets) and thermal receipt printers (standard 80mm ESC/POS or A4/A5 laser printers).
+              </p>
+            </section>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">9. Governing Law & Exclusive Jurisdiction</h2>
-            <p className="text-sm">These Terms shall be governed and construed exclusively in accordance with the laws of India. Any disputes, civil suits, or criminal proceedings arising out of or relating to these Terms, the Service, or data breaches shall be subject to the exclusive jurisdiction of the competent courts located in New Delhi, India. You hereby waive any right to object to such jurisdiction.</p>
-          </section>
-          
-          <section className="pt-8 border-t border-white/10 mt-12">
-             <Link to="/" className="text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-2">
-                &larr; Back to Home
-             </Link>
-          </section>
+            {/* Clause 6 */}
+            <section id="liability" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">06.</span> Limitation of Liability & Warranty Scope
+              </h2>
+              <p>
+                Cenvora ERP is designed to assist businesses with computational accuracy, record-keeping, and operational efficiency. However, the final verification of tax filings (GSTR-1, GSTR-3B, or VAT returns) filed with government authorities remains the sole responsibility of the client and their certified tax practitioners. In no event shall Cenvora's aggregate liability exceed the total maintenance and license fees paid by the client in the twelve (12) months preceding the claim.
+              </p>
+            </section>
+
+            {/* Clause 7 */}
+            <section id="termination" className="scroll-mt-32">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">07.</span> Contract Termination & AMC Expiry
+              </h2>
+              <p>
+                Should you elect not to renew the Annual Maintenance Contract upon expiration:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-gray-400 text-xs sm:text-sm mt-2">
+                <li>Your perpetual license to the installed software version remains valid indefinitely.</li>
+                <li>Access to historical records and local data exports continues without interruption.</li>
+                <li>New feature releases, statutory GST formula patches, and technical support SLAs will cease until an AMC renewal is executed.</li>
+              </ul>
+            </section>
+
+            {/* Clause 8 */}
+            <section id="governing-law" className="scroll-mt-32 pt-4 border-t border-white/10">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">08.</span> Governing Law & Dispute Resolution
+              </h2>
+              <p>
+                This Agreement shall be governed by and construed in accordance with the laws of India. Any legal dispute, arbitration, or proceedings arising under this Agreement shall be subject to the exclusive jurisdiction of the competent courts of India.
+              </p>
+              <div className="mt-4 font-mono text-xs text-gray-400">
+                Questions regarding commercial terms or contracts: <a href="mailto:support@cenvora.app" className="text-cyan-400 hover:underline">support@cenvora.app</a>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Back Link */}
+        <div className="mt-16 pt-8 border-t border-white/10 flex justify-between items-center text-xs text-gray-500">
+          <Link to="/" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+            &larr; Back to Cenvora Home
+          </Link>
+          <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">
+            Read Privacy Policy &rarr;
+          </Link>
         </div>
       </main>
     </div>
