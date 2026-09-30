@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import useEscKey from "../hooks/useEscStack";
 import VendorTable from "../components/vendors/VendorTable";
 import VendorForm from "../components/vendors/VendorForm";
 import VendorDetailsModal from "../components/vendors/VendorDetailsModal";
@@ -8,10 +10,19 @@ import "react-toastify/dist/ReactToastify.css";
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Vendors() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editVendor, setEditVendor] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
   const [deleteVendor, setDeleteVendor] = useState(null);
+
+  // Hierarchical ESC key navigation:
+  // 1. Idle on section list -> Esc redirects to Professional Dashboard (/dashboard)
+  useEscKey(() => navigate('/dashboard'), !showForm && !showDetails && !deleteVendor, 0);
+  // 2. View details modal -> Esc closes details
+  useEscKey(() => setShowDetails(null), Boolean(showDetails), 10);
+  // 3. Delete dialog -> Esc closes dialog
+  useEscKey(() => setDeleteVendor(null), Boolean(deleteVendor), 20);
 
   const handleEdit = (vendor) => {
     setEditVendor(vendor);

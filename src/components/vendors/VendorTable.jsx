@@ -8,20 +8,35 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 export default function VendorTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [ordering, setOrdering] = useState("-created_at"); // default: newest first
   const [page, setPage] = useState(1);
   const [selectedVendors, setSelectedVendors] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["vendors", search, ordering, page],
-    queryFn: () => getVendors({ search, ordering, page }),
+    queryKey: ["vendors", debouncedSearch, ordering, page],
+    queryFn: () => getVendors({ search: debouncedSearch, ordering, page }),
     keepPreviousData: true,
   });
 
   const vendors = data?.results || data || [];
   const totalCount = data?.count || vendors.length;
   const totalPages = data?.total_pages || Math.ceil(totalCount / 10);
+
+  const handleSort = (field) => {
+    setOrdering(prev => {
+      if (prev === field) return `-${field}`;
+      if (prev === `-${field}`) return field;
+      return field;
+    });
+    setPage(1);
+  };
 
   // Handle individual vendor selection
   const handleVendorSelect = (vendorId, isSelected) => {
@@ -208,14 +223,38 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
                   className="rounded border-gray-300 dark:border-gray-600"
                 />
               </th>
-                            <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                Name
+                            <th 
+                onClick={() => handleSort("name")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Name</span>
+                  {(ordering === "name" || ordering === "-name") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "name" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                Contact
+              <th 
+                onClick={() => handleSort("email")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Contact</span>
+                  {(ordering === "email" || ordering === "-email") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "email" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                GSTIN
+              <th 
+                onClick={() => handleSort("gstin")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>GSTIN</span>
+                  {(ordering === "gstin" || ordering === "-gstin") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Category
@@ -223,8 +262,16 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Credit Limit
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                Created
+              <th 
+                onClick={() => handleSort("created_at")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Created</span>
+                  {(ordering === "created_at" || ordering === "-created_at") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Actions
@@ -285,7 +332,7 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-cyan-300 font-medium drop-shadow-lg">
-                      {format(new Date(vendor.created_at), 'MMM dd, yyyy')}
+                      {vendor.created_at ? format(new Date(vendor.created_at), 'dd/MM/yyyy') : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">

@@ -10,6 +10,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import DateInputField from "../common/DateInputField";
+import useEscKey from "../../hooks/useEscStack";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -80,6 +82,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product_name || "");
+
+  useEscKey(() => setShowDropdown(false), showDropdown, 30);
 
   useEffect(() => {
     setInputValue(values.items[idx]?.product_name || "");
@@ -193,6 +197,8 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.vendor_name || "");
 
+  useEscKey(() => setShowDropdown(false), showDropdown, 30);
+
   useEffect(() => {
     setInputValue(values.vendor_name || "");
   }, [values.vendor_name]);
@@ -212,8 +218,12 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
     setFieldValue("vendor_name", value);
 
     if (value.trim()) {
-      const filtered = vendors.filter(v =>
-        v.name?.toLowerCase().includes(value.toLowerCase())
+      const query = value.toLowerCase();
+      const filtered = (vendors || []).filter(v =>
+        v.name?.toLowerCase().includes(query) ||
+        (v.gstin && v.gstin.toLowerCase().includes(query)) ||
+        (v.email && v.email.toLowerCase().includes(query)) ||
+        (v.phone && v.phone.includes(query))
       );
       setFilteredVendors(filtered);
       setShowDropdown(filtered.length > 0);
@@ -225,15 +235,20 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
   return (
     <div className="relative">
       <Field name="vendor_name">
-        {({ field, meta }) => (
+        {({ field }) => (
           <div>
             <input
               {...field}
+              id="vendor_name"
               value={inputValue}
               onChange={handleInputChange}
               onFocus={() => {
                 if (inputValue.trim()) {
-                   const filtered = vendors.filter(v => v.name?.toLowerCase().includes(inputValue.toLowerCase()));
+                   const query = inputValue.toLowerCase();
+                   const filtered = (vendors || []).filter(v => 
+                     v.name?.toLowerCase().includes(query) ||
+                     (v.gstin && v.gstin.toLowerCase().includes(query))
+                   );
                    if (filtered.length > 0) {
                       setFilteredVendors(filtered);
                       setShowDropdown(true);
@@ -242,29 +257,45 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
               }}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               placeholder="Enter vendor name to search or create new"
-              className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
+              className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              data-1p-ignore="true"
             />
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-10 bg-[#1a1a1a] border border-white/10 rounded-md shadow-lg w-full max-h-40 overflow-y-auto mt-1">
+        <div className="absolute z-50 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-64 overflow-y-auto mt-1.5 backdrop-blur-xl">
           {filteredVendors.slice(0, 50).map(vendor => (
             <div
               key={vendor.id}
-              className="px-3 py-3 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors"
-              onClick={() => selectVendor(vendor)}
+              className="px-4 py-3 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectVendor(vendor);
+              }}
             >
-              <div className="font-bold text-cyan-400">{vendor.name}</div>
-              <div className="text-gray-500 text-xs mt-1 flex gap-3">
-                 {vendor.gstin && <span>GSTIN: {vendor.gstin}</span>}
-                 {vendor.address && <span className="truncate max-w-[200px]">{vendor.address}</span>}
+              <div className="font-semibold text-white flex items-center justify-between">
+                <span>{vendor.name}</span>
+                {vendor.gstin && (
+                  <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 font-mono">
+                    GST: {vendor.gstin}
+                  </span>
+                )}
+              </div>
+              <div className="text-gray-400 text-xs mt-1 flex items-center gap-3">
+                 {vendor.phone && <span>📞 {vendor.phone}</span>}
+                 {vendor.email && <span className="truncate">✉️ {vendor.email}</span>}
+                 {vendor.address && <span className="truncate max-w-[250px] text-gray-500">📍 {vendor.address}</span>}
               </div>
             </div>
           ))}
           {filteredVendors.length === 0 && (
-             <div className="px-3 py-3 text-sm text-gray-500 italic">
+             <div className="px-4 py-3 text-sm text-gray-500 italic">
                 No saved vendors found. A new one will be created.
              </div>
           )}
@@ -323,6 +354,9 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
 
+  // Register hierarchical ESC key navigation for this form
+  useEscKey(onClose, isOpen, 10);
+
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -331,17 +365,10 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
         const submitBtn = document.querySelector('button[type="submit"]');
         if(submitBtn) submitBtn.click();
       }
-      if (e.key === "Escape") {
-        const isDropdownOpen = document.querySelector('.absolute.z-10');
-        if (!isDropdownOpen) {
-           e.preventDefault();
-           onClose();
-        }
-      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
@@ -549,7 +576,11 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                       <Field
                         name="bill_number"
                         placeholder="e.g. PUR/2024/001"
-                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        data-1p-ignore="true"
+                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20"
                       />
                       <ErrorMessage name="bill_number" component="div" className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium" />
                     </div>
@@ -558,10 +589,12 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                       <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
                         Bill Date <span className="text-red-500">*</span>
                       </label>
-                      <Field
+                      <DateInputField
                         name="bill_date"
-                        type="date"
-                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 [color-scheme:dark]"
+                        value={values.bill_date}
+                        onChange={(e) => setFieldValue('bill_date', e.target.value)}
+                        placeholder="DD/MM/YYYY"
+                        className="!bg-[#0a0a0a]/50 !py-3"
                       />
                     </div>
 
@@ -592,10 +625,12 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                       <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest group-focus-within:text-cyan-500 transition-colors">
                         Due Date
                       </label>
-                      <Field
+                      <DateInputField
                         name="due_date"
-                        type="date"
-                        className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 [color-scheme:dark]"
+                        value={values.due_date}
+                        onChange={(e) => setFieldValue('due_date', e.target.value)}
+                        placeholder="DD/MM/YYYY"
+                        className="!bg-[#0a0a0a]/50 !py-3"
                       />
                     </div>
                   </div>

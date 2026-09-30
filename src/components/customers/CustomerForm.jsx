@@ -6,6 +6,7 @@ import { createCustomer, updateCustomer } from "../../api/customers";
 import { toast } from "react-toastify";
 import { INDIAN_STATES } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from "../../hooks/useEscStack";
 
 const customerSchema = Yup.object().shape({
   name: Yup.string()
@@ -27,6 +28,7 @@ const customerSchema = Yup.object().shape({
 });
 
 export default function CustomerForm({ isOpen, onClose, editData = null }) {
+  useEscKey(onClose, isOpen, 10);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
 

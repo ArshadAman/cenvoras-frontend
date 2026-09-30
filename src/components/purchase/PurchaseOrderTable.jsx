@@ -12,19 +12,40 @@ import {
 export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders = [], isLoading }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortConfig, setSortConfig] = useState({ key: "created_at", direction: "desc" });
+
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
-      const matchesSearch = 
-        order.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.vendor_display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [orders, searchTerm, statusFilter]);
+    return orders
+      .filter(order => {
+        const matchesSearch = 
+          order.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.vendor_display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+        
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        const { key, direction } = sortConfig;
+        const factor = direction === "asc" ? 1 : -1;
+        if (key === "po_number") return factor * String(a.po_number || "").localeCompare(String(b.po_number || ""), undefined, { numeric: true });
+        if (key === "created_at") return factor * (new Date(a.created_at || 0) - new Date(b.created_at || 0));
+        if (key === "vendor") return factor * String(a.vendor_display_name || a.vendor_name || "").localeCompare(String(b.vendor_display_name || b.vendor_name || ""));
+        if (key === "amount") return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+        if (key === "status") return factor * String(a.status || "").localeCompare(String(b.status || ""));
+        return 0;
+      });
+  }, [orders, searchTerm, statusFilter, sortConfig]);
 
   if (isLoading) {
     return (
@@ -67,10 +88,50 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-gray-400">
             <tr>
-              <th className="px-6 py-4 font-medium">Order Details</th>
-              <th className="px-6 py-4 font-medium">Vendor</th>
-              <th className="px-6 py-4 font-medium text-right">Amount</th>
-              <th className="px-6 py-4 font-medium text-center">Status</th>
+              <th 
+                onClick={() => handleSort("po_number")}
+                className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Order Details</span>
+                  {sortConfig.key === "po_number" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort("vendor")}
+                className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Vendor</span>
+                  {sortConfig.key === "vendor" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort("amount")}
+                className="px-6 py-4 font-medium text-right cursor-pointer hover:text-white select-none transition-colors"
+              >
+                <div className="flex items-center justify-end gap-1.5">
+                  <span>Amount</span>
+                  {sortConfig.key === "amount" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort("status")}
+                className="px-6 py-4 font-medium text-center cursor-pointer hover:text-white select-none transition-colors"
+              >
+                <div className="flex items-center justify-center gap-1.5">
+                  <span>Status</span>
+                  {sortConfig.key === "status" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -87,14 +148,14 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                   <td className="px-6 py-4">
                     <div className="font-medium text-cyan-400">{order.po_number || "Draft"}</div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {order.created_at ? format(new Date(order.created_at), "MMM d, yyyy") : "N/A"}
+                      {order.created_at ? format(new Date(order.created_at), "dd/MM/yyyy") : "N/A"}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-medium text-white">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
                     {order.expected_date && (
                       <div className="text-xs text-gray-500 mt-1">
-                        Expected: {format(new Date(order.expected_date), "MMM d, yyyy")}
+                        Expected: {format(new Date(order.expected_date), "dd/MM/yyyy")}
                       </div>
                     )}
                   </td>

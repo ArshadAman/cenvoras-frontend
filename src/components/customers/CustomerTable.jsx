@@ -29,6 +29,15 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
   const totalCount = data?.count || customers.length;
   const totalPages = data?.total_pages || Math.ceil(totalCount / 10);
 
+  const handleSort = (field) => {
+    setOrdering(prev => {
+      if (prev === field) return `-${field}`;
+      if (prev === `-${field}`) return field;
+      return field;
+    });
+    setPage(1);
+  };
+
   // Handle individual customer selection
   const handleCustomerSelect = (customerId, isSelected) => {
     const newSelected = new Set(selectedCustomers);
@@ -216,14 +225,38 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                   className="rounded border-gray-300 dark:border-gray-600"
                 />
               </th>
-                            <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                Name
+              <th 
+                onClick={() => handleSort("name")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Name</span>
+                  {(ordering === "name" || ordering === "-name") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "name" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                Contact
+              <th 
+                onClick={() => handleSort("email")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Contact</span>
+                  {(ordering === "email" || ordering === "-email") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "email" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                GSTIN
+              <th 
+                onClick={() => handleSort("gstin")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>GSTIN</span>
+                  {(ordering === "gstin" || ordering === "-gstin") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Category
@@ -231,8 +264,16 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Credit Limit
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
-                Created
+              <th 
+                onClick={() => handleSort("created_at")}
+                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Created</span>
+                  {(ordering === "created_at" || ordering === "-created_at") && (
+                    <span className="text-cyan-400 font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
                 Actions
@@ -293,7 +334,7 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-cyan-300 font-medium drop-shadow-lg">
-                      {format(new Date(customer.created_at), 'MMM dd, yyyy')}
+                      {customer.created_at ? format(new Date(customer.created_at), 'dd/MM/yyyy') : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
