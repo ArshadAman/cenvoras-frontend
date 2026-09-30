@@ -1,4 +1,6 @@
 import React from "react";
+import DateInputField from "../common/DateInputField";
+import { XMarkIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
   const handleChange = (field, value) => {
@@ -58,120 +60,115 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
     });
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
-
   return (
-    <div className="mb-6 p-6 bento-card border border-white/10 relative">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-white">Advanced Filters</h3>
-        <div className="flex gap-4">
-          <button
-            onClick={clearFilters}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            Clear All
-          </button>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Financial Year */}
-        <div className="space-y-2">
-          <label className={labelClass}>Financial Year</label>
-          <select
-            value={filters.financialYear || ""}
-            onChange={(e) => handleFinancialYearChange(e.target.value)}
-            className={inputClass}
-          >
-            <option value="" className="bg-[#111] text-gray-400">All Financial Years</option>
-            <option value="2026-2027" className="bg-[#111] text-white">FY 2026-27 (Apr 2026 - Mar 2027)</option>
-            <option value="2025-2026" className="bg-[#111] text-white">FY 2025-26 (Apr 2025 - Mar 2026)</option>
-            <option value="2024-2025" className="bg-[#111] text-white">FY 2024-25 (Apr 2024 - Mar 2025)</option>
-            <option value="2023-2024" className="bg-[#111] text-white">FY 2023-24 (Apr 2023 - Mar 2024)</option>
-          </select>
-        </div>
-
-        {/* Date Range */}
-        <div className="space-y-2">
-          <label className={labelClass}>Date Range</label>
-          <div className="flex gap-2">
-            <input
-              type="date"
-              placeholder="From date"
-              value={filters.dateRange.start}
-              onChange={(e) => handleDateRangeChange("start", e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="date"
-              placeholder="To date"
-              value={filters.dateRange.end}
-              onChange={(e) => handleDateRangeChange("end", e.target.value)}
-              className={inputClass}
-            />
+    <div className="mb-4 p-3 rounded-2xl bg-[#0f0f10]/95 border border-white/10 backdrop-blur-xl shadow-xl transition-all duration-300 animate-fade-in">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        
+        {/* Left side: Single-line filter controls */}
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+          
+          {/* Financial Year */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">FY:</span>
+            <select
+              value={filters.financialYear || ""}
+              onChange={(e) => handleFinancialYearChange(e.target.value)}
+              className="bg-black/50 text-white text-xs border border-white/10 rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+            >
+              <option value="" className="bg-[#111] text-gray-400">All Financial Years</option>
+              <option value="2026-2027" className="bg-[#111] text-white">FY 2026-27</option>
+              <option value="2025-2026" className="bg-[#111] text-white">FY 2025-26</option>
+              <option value="2024-2025" className="bg-[#111] text-white">FY 2024-25</option>
+              <option value="2023-2024" className="bg-[#111] text-white">FY 2023-24</option>
+            </select>
           </div>
-        </div>
 
-        {/* Amount Range */}
-        <div className="space-y-2">
-          <label className={labelClass}>Amount Range</label>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Min"
-              value={filters.amountRange.min}
-              onChange={(e) => handleAmountRangeChange("min", e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              value={filters.amountRange.max}
-              onChange={(e) => handleAmountRangeChange("max", e.target.value)}
-              className={inputClass}
-            />
-          </div>
-        </div>
+          <div className="h-4 w-px bg-white/10 hidden sm:block"></div>
 
-        {/* Customer */}
-        <div className="space-y-2">
-          <label className={labelClass}>Customer</label>
-          <input
-            type="text"
-            placeholder="Customer name"
-            value={filters.customer}
-            onChange={(e) => handleChange("customer", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        {/* Special Filters */}
-        <div className="space-y-2">
-          <label className={labelClass}>Special Filters</label>
-          <div className="flex items-center h-10">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                id="hasOverdue"
-                checked={filters.hasOverdue}
-                onChange={(e) => handleChange("hasOverdue", e.target.checked)}
-                className="w-4 h-4 rounded border-white/10 bg-white/5 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-gray-900 cursor-pointer"
+          {/* Date Range with dd/mm/yyyy */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date:</span>
+            <div className="w-28">
+              <DateInputField
+                value={filters.dateRange.start}
+                onChange={(e) => handleDateRangeChange("start", e.target.value)}
+                placeholder="From"
               />
-              <span className="ml-3 text-sm text-gray-300">
-                Show overdue bills only
-              </span>
-            </label>
+            </div>
+            <span className="text-gray-500">-</span>
+            <div className="w-28">
+              <DateInputField
+                value={filters.dateRange.end}
+                onChange={(e) => handleDateRangeChange("end", e.target.value)}
+                placeholder="To"
+              />
+            </div>
+          </div>
+
+          <div className="h-4 w-px bg-white/10 hidden sm:block"></div>
+
+          {/* Amount Range */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Amount:</span>
+            <div className="relative w-24">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">₹</span>
+              <input
+                type="number"
+                placeholder="Min"
+                value={filters.amountRange.min}
+                onChange={(e) => handleAmountRangeChange("min", e.target.value)}
+                className="w-full bg-black/50 border border-white/10 rounded-xl pl-6 pr-2 py-1.5 text-white placeholder-gray-500 focus:ring-1 focus:ring-cyan-500/50 outline-none text-xs"
+              />
+            </div>
+            <span className="text-gray-500">-</span>
+            <div className="relative w-24">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">₹</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={filters.amountRange.max}
+                onChange={(e) => handleAmountRangeChange("max", e.target.value)}
+                className="w-full bg-black/50 border border-white/10 rounded-xl pl-6 pr-2 py-1.5 text-white placeholder-gray-500 focus:ring-1 focus:ring-cyan-500/50 outline-none text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="h-4 w-px bg-white/10 hidden sm:block"></div>
+
+          {/* Customer Search Filter */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer:</span>
+            <input
+              type="text"
+              placeholder="Name..."
+              value={filters.customer}
+              onChange={(e) => handleChange("customer", e.target.value)}
+              className="w-32 bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-white placeholder-gray-500 focus:ring-1 focus:ring-cyan-500/50 outline-none text-xs"
+            />
           </div>
         </div>
+
+        {/* Right side: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-colors"
+            title="Reset all filters"
+          >
+            <ArrowPathIcon className="w-3 h-3" />
+            <span>Clear</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            title="Close filter bar"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+
       </div>
     </div>
   );
