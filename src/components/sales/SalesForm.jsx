@@ -8,14 +8,14 @@ import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory";
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
 import { getUserProfile } from "../../api/users";
-import { INDIAN_STATES } from "../../utils/constants"; // Added imports
+import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants"; // Added imports
 import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
-import { DocumentTextIcon, ArrowPathIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, DocumentPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import DateInputField from "../common/DateInputField";
 import useEscKey from "../../hooks/useEscStack";
 
@@ -290,6 +290,17 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setFieldValue('customer_gstin', customer.gstin || '');
     // Auto-fill delivery address same as customer address
     setFieldValue('delivery_address', customer.address || '');
+
+    // Auto-fetch place of supply from GSTIN (first 2 digits)
+    if (customer.gstin && customer.gstin.length >= 2) {
+      const stateCode = customer.gstin.substring(0, 2);
+      if (GST_STATE_CODE_MAP[stateCode]) {
+        setFieldValue('place_of_supply', GST_STATE_CODE_MAP[stateCode]);
+      }
+    } else if (customer.state) {
+      setFieldValue('place_of_supply', customer.state);
+    }
+
     setInputValue(customer.name);
     setShowDropdown(false);
     setSelectedIndex(-1);
@@ -630,8 +641,12 @@ export default function SalesForm({
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
 
-  // Register hierarchical ESC key navigation for this form
-  useEscKey(onClose, isOpen, 10);
+  const handleBeforeCloseRef = React.useRef(null);
+  const [draggedRowIndex, setDraggedRowIndex] = useState(null);
+  const [dragOverRowIndex, setDragOverRowIndex] = useState(null);
+
+  // Register hierarchical ESC key navigation for this form (auto-saves draft if data entered)
+  useEscKey(() => (handleBeforeCloseRef.current ? handleBeforeCloseRef.current() : onClose()), isOpen, 10);
 
   // Keyboard Shortcuts Logic
   useEffect(() => {
@@ -1078,7 +1093,11 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
-      toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
+      if (submitActionRef.current === 'draft') {
+        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
+      } else {
+        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
+      }
       onClose();
     },
     onError: (error) => {
@@ -1104,7 +1123,11 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
-      toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
+      if (submitActionRef.current === 'draft') {
+        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
+      } else {
+        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
+      }
       onClose();
     },
     onError: (error) => {
@@ -1122,7 +1145,7 @@ export default function SalesForm({
   });
 
   const handleBeforeClose = async () => {
-    if (isEdit && formikRef.current && formikRef.current.dirty && !createMutation.isPending && !updateMutation.isPending) {
+    if (formikRef.current && !createMutation.isPending && !updateMutation.isPending) {
       const values = formikRef.current.values || {};
       const cleanedItems = (values.items || []).filter((item) =>
         item.row_type === 'note'
@@ -1133,14 +1156,19 @@ export default function SalesForm({
       const hasCustomerName = !!(values.customer_name && values.customer_name.trim());
       const hasAtLeastOneItem = cleanedItems.length > 0;
 
-      // Only auto-save draft on close when minimum draft payload is available.
-      if (hasCustomerName && hasAtLeastOneItem) {
+      // Auto-save draft on close (Esc or backdrop click) whenever customer or item data has been entered
+      if (hasCustomerName || hasAtLeastOneItem) {
+        if (!hasCustomerName) {
+          formikRef.current.setFieldValue('customer_name', 'Draft Customer');
+        }
         submitActionRef.current = 'draft';
         await formikRef.current.submitForm();
+        return;
       }
     }
     onClose();
   };
+  handleBeforeCloseRef.current = handleBeforeClose;
 
   const safeDateStr = (raw) => {
     if (!raw) return "";
@@ -1183,6 +1211,28 @@ export default function SalesForm({
       po_date: safeDateStr(editData?.po_date),
       challan_number: editData?.challan_number || "",
       challan_date: safeDateStr(editData?.challan_date),
+      delivery_challans: (() => {
+        if (Array.isArray(editData?.delivery_challans) && editData.delivery_challans.length > 0) {
+          return editData.delivery_challans.map(c => ({
+            challan_number: c.challan_number || '',
+            challan_date: safeDateStr(c.challan_date) || '',
+          }));
+        }
+        if (editData?.challan_number) {
+          const numbers = String(editData.challan_number).split(',').map(s => s.trim()).filter(Boolean);
+          if (numbers.length > 1) {
+            return numbers.map(num => ({
+              challan_number: num,
+              challan_date: safeDateStr(editData.challan_date) || '',
+            }));
+          }
+          return [{
+            challan_number: editData.challan_number,
+            challan_date: safeDateStr(editData.challan_date) || '',
+          }];
+        }
+        return [{ challan_number: '', challan_date: '' }];
+      })(),
       gst_treatment: editData?.gst_treatment || "registered",
       place_of_supply: editData?.place_of_supply || "",
       warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || ""),
@@ -1412,6 +1462,13 @@ export default function SalesForm({
                 values.invoice_number?.startsWith('QT-') ||
                 values.invoice_number?.startsWith('DC-');
 
+              const serializedChallanNumber = Array.isArray(values.delivery_challans)
+                ? values.delivery_challans.map(c => c.challan_number?.trim()).filter(Boolean).join(', ')
+                : (values.challan_number || null);
+              const serializedChallanDate = Array.isArray(values.delivery_challans)
+                ? (values.delivery_challans.find(c => c.challan_date)?.challan_date || values.challan_date || null)
+                : (values.challan_date || null);
+
               const formData = {
                 customer_name: values.customer_name,
                 invoice_number: (!isEdit && isDraft && isFormalAutoSeq) ? "" : values.invoice_number,
@@ -1419,11 +1476,11 @@ export default function SalesForm({
                 due_date: values.due_date || null,
                 po_number: values.po_number || null,
                 po_date: values.po_date || null,
-                challan_number: values.challan_number || null,
-                challan_date: values.challan_date || null,
+                challan_number: serializedChallanNumber || null,
+                challan_date: serializedChallanDate || null,
                 delivery_address: values.delivery_address || null,
                 gst_treatment: values.gst_treatment || null,
-                place_of_supply: values.place_of_supply || null,
+                place_of_supply: values.place_of_supply || (values.customer_gstin && values.customer_gstin.length >= 2 ? GST_STATE_CODE_MAP[values.customer_gstin.substring(0, 2)] : null) || null,
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : finalSubmitStatus,
@@ -1519,153 +1576,178 @@ export default function SalesForm({
               >
                 <div className="flex-1 overflow-y-auto p-0">
                   <div className="p-6 sm:p-8 space-y-8">
-                  {/* Header Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  
-                    {/* Customer Autocomplete */}
-                    <div className="relative">
-                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Customer *
-                      </label>
-                      <CustomerAutocomplete 
+                  {/* Header Columns: Billing Details & Shipping Details */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Column 1: Billing Details */}
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Billing Details</h3>
+                        </div>
+                        <span className="text-[10px] text-gray-500 font-mono">CUSTOMER & INVOICE</span>
+                      </div>
+
+                      {/* Customer Autocomplete */}
+                      <div className="relative">
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                          Customer *
+                        </label>
+                        <CustomerAutocomplete 
                           values={values} 
                           setFieldValue={setFieldValue} 
                           customers={customers} 
-                      />
-                      <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
-                      {isQuotation && (values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
-                        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-gray-300 space-y-1">
-                          {values.customer_address && <div><span className="text-gray-500">Address:</span> {values.customer_address}</div>}
-                          {values.customer_phone && <div><span className="text-gray-500">Phone:</span> {values.customer_phone}</div>}
-                          {values.customer_email && <div><span className="text-gray-500">Email:</span> {values.customer_email}</div>}
-                          {values.customer_gstin && <div><span className="text-gray-500">GSTIN:</span> {values.customer_gstin}</div>}
-                        </div>
-                      )}
-                    </div>
+                        />
+                        <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
+                        {(values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
+                          <div className="mt-3 rounded-xl border border-white/10 bg-[#141416] p-3 text-xs text-gray-300 space-y-1.5">
+                            {values.customer_gstin && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-500 font-medium">GSTIN:</span>
+                                <span className="font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded text-[11px] font-semibold">{values.customer_gstin}</span>
+                              </div>
+                            )}
+                            {values.customer_address && (
+                              <div className="text-gray-400 flex items-start gap-1">
+                                <span className="text-gray-500 shrink-0">Address:</span>
+                                <span className="text-gray-300">{values.customer_address}</span>
+                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-4 text-gray-400 pt-1 border-t border-white/5">
+                              {values.customer_phone && <div><span className="text-gray-500">Phone:</span> {values.customer_phone}</div>}
+                              {values.customer_email && <div><span className="text-gray-500">Email:</span> {values.customer_email}</div>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        {isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
-                      </label>
-                      <Field
-                        name="invoice_number"
-                        type="text"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        spellCheck="false"
-                        data-1p-ignore="true"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
-                      </label>
-                      <DateInputField
-                        name="invoice_date"
-                        value={values.invoice_date}
-                        onChange={(e) => setFieldValue('invoice_date', e.target.value)}
-                        placeholder="DD/MM/YYYY"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                         Warehouse
-                      </label>
-                      <Field
-                        name="warehouse"
-                        as="select"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setFieldValue('warehouse', val);
-                          setSelectedWarehouseId(val);
-                        }}
-                      >
-                        <option value="">Select Warehouse</option>
-                        {warehouses?.map(w => (
-                           <option key={w.id} value={w.id}>{w.name}</option>
-                        ))}
-                      </Field>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Place of Supply
-                      </label>
-                      <Field
-                        name="place_of_supply"
-                        as="select"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                      >
-                        <option value="">Select State</option>
-                        {INDIAN_STATES.map(s => (
-                          <option key={s.code} value={s.code}>{s.name}</option>
-                        ))}
-                      </Field>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Due Date
-                      </label>
-                      <DateInputField
-                        name="due_date"
-                        value={values.due_date}
-                        onChange={(e) => setFieldValue('due_date', e.target.value)}
-                        placeholder="DD/MM/YYYY"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Address & Additional Fields */}
-                  <div className="grid grid-cols-1 gap-6">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                        Shipping Address
-                      </label>
-                      <Field
-                        name="delivery_address"
-                        as="textarea"
-                        rows="3"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                        placeholder="123 Shipping Address, City, State"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Optional PO / Challan / Transport Details */}
-                  {!isQuotation && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Purchase Order</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Invoice Number, Invoice Date & Due Date */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                         <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Number</label>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                            {isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
+                          </label>
                           <Field
-                            name="po_number"
-                            as="textarea"
-                            rows="1"
-                            className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                            placeholder="Enter PO"
+                            name="invoice_number"
+                            type="text"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck="false"
+                            data-1p-ignore="true"
+                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
+                            placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
                           />
+                          <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
                         </div>
+
                         <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                            {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
+                          </label>
                           <DateInputField
-                            name="po_date"
-                            value={values.po_date}
-                            onChange={(e) => setFieldValue('po_date', e.target.value)}
+                            name="invoice_date"
+                            value={values.invoice_date}
+                            onChange={(e) => setFieldValue('invoice_date', e.target.value)}
                             placeholder="DD/MM/YYYY"
                           />
+                          <ErrorMessage name="invoice_date" component="div" className="text-red-400 text-xs mt-1" />
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                          Due Date
+                        </label>
+                        <DateInputField
+                          name="due_date"
+                          value={values.due_date}
+                          onChange={(e) => setFieldValue('due_date', e.target.value)}
+                          placeholder="DD/MM/YYYY"
+                        />
                       </div>
                     </div>
 
-                    {isDeliveryChallan ? (
-                      <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Transport & Vehicle Details</div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Column 2: Shipping Details */}
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Shipping Details</h3>
+                        </div>
+                        {values.customer_address && (
+                          <button
+                            type="button"
+                            onClick={() => setFieldValue('delivery_address', values.customer_address)}
+                            className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium transition-colors flex items-center gap-1"
+                          >
+                            <span>Copy from Billing</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                          Shipping Address
+                        </label>
+                        <Field
+                          name="delivery_address"
+                          as="textarea"
+                          rows="2"
+                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+                          placeholder="123 Shipping Address, City, State, PIN"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+                            Place of Supply
+                          </label>
+                          {values.place_of_supply && values.customer_gstin && (
+                            <span className="text-[10px] text-emerald-400 font-mono">
+                              Auto-detected from GSTIN
+                            </span>
+                          )}
+                        </div>
+                        <Field
+                          name="place_of_supply"
+                          as="select"
+                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map(s => (
+                            <option key={s.code} value={s.code}>{s.name} ({s.code})</option>
+                          ))}
+                        </Field>
+                      </div>
+
+                      {/* Purchase Order Details */}
+                      {!isQuotation && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Number</label>
+                            <Field
+                              name="po_number"
+                              type="text"
+                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
+                              placeholder="e.g. PO-8921"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
+                            <DateInputField
+                              name="po_date"
+                              value={values.po_date}
+                              onChange={(e) => setFieldValue('po_date', e.target.value)}
+                              placeholder="DD/MM/YYYY"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Transport & Vehicle Details if Delivery Challan */}
+                      {isDeliveryChallan && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-white/5">
                           <div>
                             <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">Vehicle #</label>
                             <Field
@@ -1694,33 +1776,77 @@ export default function SalesForm({
                             />
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Delivery Challan</div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan</label>
-                            <Field
-                              name="challan_number"
-                              as="textarea"
-                              rows="1"
-                              className="w-full resize-y min-h-[40px] max-h-32 bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                              placeholder="Enter challan details"
-                            />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Multiple Delivery Challans Section (For Invoices) */}
+                  {!isDeliveryChallan && !isQuotation && (
+                    <FieldArray name="delivery_challans">
+                      {({ push: pushChallan, remove: removeChallan }) => (
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                            <div className="flex items-center gap-2">
+                              <DocumentPlusIcon className="w-4 h-4 text-cyan-400" />
+                              <span className="text-xs font-bold uppercase tracking-wider text-gray-200">
+                                Delivery Challans
+                              </span>
+                              <span className="text-[11px] text-gray-500 font-mono">
+                                ({values.delivery_challans?.length || 0} attached)
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => pushChallan({ challan_number: '', challan_date: '' })}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold border border-cyan-500/30 transition-colors"
+                            >
+                              <PlusIcon className="w-3.5 h-3.5" />
+                              <span>Add Challan</span>
+                            </button>
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Challan Date</label>
-                            <Field
-                              name="challan_date"
-                              type="date"
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-                            />
+
+                          <div className="space-y-2.5">
+                            {(values.delivery_challans || []).map((ch, chIdx) => (
+                              <div key={chIdx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-center bg-[#111]/60 p-3 rounded-xl border border-white/5">
+                                <div>
+                                  <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">
+                                    Challan Number #{chIdx + 1}
+                                  </label>
+                                  <Field
+                                    name={`delivery_challans.${chIdx}.challan_number`}
+                                    type="text"
+                                    placeholder="e.g. DC-2026-001"
+                                    className="w-full bg-[#161618] border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">
+                                    Challan Date (DD/MM/YYYY)
+                                  </label>
+                                  <DateInputField
+                                    name={`delivery_challans.${chIdx}.challan_date`}
+                                    value={ch.challan_date}
+                                    onChange={(e) => setFieldValue(`delivery_challans.${chIdx}.challan_date`, e.target.value)}
+                                    placeholder="DD/MM/YYYY"
+                                  />
+                                </div>
+                                <div className="sm:pt-5 flex items-center justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeChallan(chIdx)}
+                                    disabled={values.delivery_challans.length <= 1}
+                                    className="p-2 text-gray-400 hover:text-red-400 disabled:opacity-20 hover:bg-white/5 rounded-lg transition-colors"
+                                    title="Remove Challan"
+                                  >
+                                    <TrashIcon className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </FieldArray>
                   )}
                 </div>
 
@@ -1818,7 +1944,8 @@ export default function SalesForm({
                         <div className="space-y-2">
                           {(() => {
                             const desktopColumns = [
-                              { key: "product", label: "Product", show: true, width: "minmax(340px, 1fr)", minWidth: 340 },
+                              { key: "drag", label: "", show: true, width: "36px", minWidth: 36 },
+                              { key: "product", label: "Product", show: true, width: "minmax(320px, 1fr)", minWidth: 320 },
                               { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "120px", minWidth: 120 },
                               { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px", minWidth: 140 },
                               { key: "quantity", label: "Quantity", show: true, width: "80px", minWidth: 80 },
@@ -1828,7 +1955,7 @@ export default function SalesForm({
                               { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
                               { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
                               { key: "amount", label: "Amount", show: true, width: "130px", minWidth: 130 },
-                              { key: "action", label: "", show: true, width: "110px", minWidth: 110 },
+                              { key: "action", label: "", show: true, width: "70px", minWidth: 70 },
                             ].filter((col) => col.show);
 
                             const gridTemplateColumns = desktopColumns.map((col) => col.width).join(" ");
@@ -1856,28 +1983,51 @@ export default function SalesForm({
                                   {values.items.map((item, index) => {
                                     if (item.row_type === 'note') {
                                       return (
-                                        <div key={item._key || index} className="border-b border-amber-500/20 bg-amber-500/5 px-3 py-2 flex items-center gap-2" style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}>
-                                          <div className="flex items-center gap-0.5 shrink-0">
-                                            <button
-                                              type="button"
-                                              onClick={() => swap(index, index - 1)}
-                                              disabled={index === 0}
-                                              className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
-                                              title="Move Up"
-                                              tabIndex={-1}
-                                            >
-                                              <ArrowUpIcon className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => swap(index, index + 1)}
-                                              disabled={index === values.items.length - 1}
-                                              className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
-                                              title="Move Down"
-                                              tabIndex={-1}
-                                            >
-                                              <ArrowDownIcon className="w-3.5 h-3.5" />
-                                            </button>
+                                        <div
+                                          key={item._key || index}
+                                          draggable
+                                          onDragStart={(e) => {
+                                            e.dataTransfer.setData('text/plain', String(index));
+                                            e.dataTransfer.effectAllowed = 'move';
+                                            setDraggedRowIndex(index);
+                                          }}
+                                          onDragOver={(e) => {
+                                            e.preventDefault();
+                                            e.dataTransfer.dropEffect = 'move';
+                                            if (dragOverRowIndex !== index) {
+                                              setDragOverRowIndex(index);
+                                            }
+                                          }}
+                                          onDragLeave={() => {
+                                            if (dragOverRowIndex === index) {
+                                              setDragOverRowIndex(null);
+                                            }
+                                          }}
+                                          onDrop={(e) => {
+                                            e.preventDefault();
+                                            const fromIdx = draggedRowIndex !== null ? draggedRowIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+                                            if (!isNaN(fromIdx) && fromIdx !== index && fromIdx >= 0 && fromIdx < values.items.length) {
+                                              swap(fromIdx, index);
+                                            }
+                                            setDraggedRowIndex(null);
+                                            setDragOverRowIndex(null);
+                                          }}
+                                          onDragEnd={() => {
+                                            setDraggedRowIndex(null);
+                                            setDragOverRowIndex(null);
+                                          }}
+                                          className={[
+                                            "border-b border-amber-500/20 bg-amber-500/5 px-3 py-2 flex items-center gap-2 transition-all duration-150",
+                                            draggedRowIndex === index ? "opacity-35 bg-amber-950/40 ring-1 ring-amber-500/50" : "",
+                                            dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-amber-400 bg-amber-500/10" : "",
+                                          ].join(" ")}
+                                          style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}
+                                        >
+                                          <div
+                                            className="flex items-center justify-center cursor-grab active:cursor-grabbing text-amber-500/70 hover:text-amber-300 p-1 rounded hover:bg-white/10 transition-colors select-none shrink-0"
+                                            title="Hold and drag to reorder row"
+                                          >
+                                            <Bars3Icon className="w-4 h-4" />
                                           </div>
                                           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-wider shrink-0">
                                             <DocumentTextIcon className="w-3.5 h-3.5" />
@@ -1935,9 +2085,59 @@ export default function SalesForm({
                                     const productBatches = getProductBatchesForItem(item);
 
                                     return (
-                                      <div key={item._key || index} className="border-b border-white/10">
+                                      <div
+                                        key={item._key || index}
+                                        draggable
+                                        onDragStart={(e) => {
+                                          e.dataTransfer.setData('text/plain', String(index));
+                                          e.dataTransfer.effectAllowed = 'move';
+                                          setDraggedRowIndex(index);
+                                        }}
+                                        onDragOver={(e) => {
+                                          e.preventDefault();
+                                          e.dataTransfer.dropEffect = 'move';
+                                          if (dragOverRowIndex !== index) {
+                                            setDragOverRowIndex(index);
+                                          }
+                                        }}
+                                        onDragLeave={() => {
+                                          if (dragOverRowIndex === index) {
+                                            setDragOverRowIndex(null);
+                                          }
+                                        }}
+                                        onDrop={(e) => {
+                                          e.preventDefault();
+                                          const fromIdx = draggedRowIndex !== null ? draggedRowIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+                                          if (!isNaN(fromIdx) && fromIdx !== index && fromIdx >= 0 && fromIdx < values.items.length) {
+                                            swap(fromIdx, index);
+                                          }
+                                          setDraggedRowIndex(null);
+                                          setDragOverRowIndex(null);
+                                        }}
+                                        onDragEnd={() => {
+                                          setDraggedRowIndex(null);
+                                          setDragOverRowIndex(null);
+                                        }}
+                                        className={[
+                                          "border-b border-white/10 transition-all duration-150",
+                                          draggedRowIndex === index ? "opacity-35 bg-cyan-950/40 ring-1 ring-cyan-500/50" : "hover:bg-white/[0.02]",
+                                          dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-cyan-400 bg-cyan-500/10" : "",
+                                        ].join(" ")}
+                                      >
                                         <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                           {desktopColumns.map((col) => {
+                                           if (col.key === "drag") {
+                                             return (
+                                               <div key={col.key} className="flex items-center justify-center pt-2.5">
+                                                 <div
+                                                   className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-cyan-400 p-1 rounded hover:bg-white/10 transition-colors select-none"
+                                                   title="Hold and drag to reorder row"
+                                                 >
+                                                   <Bars3Icon className="w-4 h-4" />
+                                                 </div>
+                                               </div>
+                                             );
+                                           }
                                            if (col.key === "product") {
                                              const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                              return (
@@ -2151,26 +2351,6 @@ export default function SalesForm({
                                               <div key={col.key} className="flex items-center justify-center gap-0.5">
                                                 <button
                                                   type="button"
-                                                  onClick={() => swap(index, index - 1)}
-                                                  disabled={index === 0}
-                                                  className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
-                                                  title="Move Up"
-                                                  tabIndex={-1}
-                                                >
-                                                  <ArrowUpIcon className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => swap(index, index + 1)}
-                                                  disabled={index === values.items.length - 1}
-                                                  className="p-1 text-gray-400 hover:text-white disabled:opacity-20 transition-colors"
-                                                  title="Move Down"
-                                                  tabIndex={-1}
-                                                >
-                                                  <ArrowDownIcon className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                  type="button"
                                                   onClick={() => insert(index + 1, {
                                                     _key: `note-${Math.random().toString(36).substring(2, 9)}`,
                                                     row_type: 'note',
@@ -2250,24 +2430,6 @@ export default function SalesForm({
                                               Note Row #{index + 1}
                                             </span>
                                             <div className="flex items-center gap-1">
-                                              <button
-                                                type="button"
-                                                disabled={index === 0}
-                                                onClick={() => swap(index, index - 1)}
-                                                className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
-                                                title="Move Up"
-                                              >
-                                                <ArrowUpIcon className="w-4 h-4" />
-                                              </button>
-                                              <button
-                                                type="button"
-                                                disabled={index === values.items.length - 1}
-                                                onClick={() => swap(index, index + 1)}
-                                                className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
-                                                title="Move Down"
-                                              >
-                                                <ArrowDownIcon className="w-4 h-4" />
-                                              </button>
                                               <button
                                                 type="button"
                                                 onClick={() => remove(index)}
@@ -2494,24 +2656,6 @@ export default function SalesForm({
                                               </div>
                                           </div>
                                           <div className="flex items-center gap-1">
-                                            <button
-                                              type="button"
-                                              disabled={index === 0}
-                                              onClick={() => swap(index, index - 1)}
-                                              className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
-                                              title="Move Up"
-                                            >
-                                              <ArrowUpIcon className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              disabled={index === values.items.length - 1}
-                                              onClick={() => swap(index, index + 1)}
-                                              className="p-1.5 text-gray-400 hover:text-white disabled:opacity-20"
-                                              title="Move Down"
-                                            >
-                                              <ArrowDownIcon className="w-4 h-4" />
-                                            </button>
                                             <button
                                               type="button"
                                               onClick={() => insert(index + 1, {

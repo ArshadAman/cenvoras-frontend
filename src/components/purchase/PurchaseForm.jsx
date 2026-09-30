@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/purchase";
@@ -354,8 +354,35 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
 
-  // Register hierarchical ESC key navigation for this form
-  useEscKey(onClose, isOpen, 10);
+  const formikRef = useRef(null);
+
+  const handleBeforeClose = async () => {
+    if (formikRef.current) {
+      const values = formikRef.current.values || {};
+      const validItems = (values.items || []).filter(item => 
+        item.product_name && item.product_name.trim() !== ''
+      );
+      const hasVendor = !!(values.vendor_name && values.vendor_name.trim());
+      const hasItems = validItems.length > 0;
+
+      // Auto-save on exit if user entered bill details
+      if (hasVendor && hasItems) {
+        try {
+          if (!values.bill_number) {
+            formikRef.current.setFieldValue('bill_number', `PB-DRAFT-${Date.now().toString().slice(-4)}`);
+          }
+          await formikRef.current.submitForm();
+          return;
+        } catch {
+          // If save fails, fallback to close
+        }
+      }
+    }
+    onClose();
+  };
+
+  // Register hierarchical ESC key navigation for this form (auto-saves on exit if data entered)
+  useEscKey(handleBeforeClose, isOpen, 10);
 
   // Keyboard Shortcuts Logic
   useEffect(() => {
@@ -372,7 +399,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={handleBeforeClose}></div>
       <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-white/10 bg-[#0c0c0e] overflow-hidden">
         
         {/* Header */}
@@ -388,7 +415,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleBeforeClose}
             className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -398,6 +425,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
         </div>
 
         <Formik
+          innerRef={formikRef}
           initialValues={{
             bill_number: bill?.bill_number || "",
             bill_date: bill?.bill_date || new Date().toLocaleDateString('sv-SE'),

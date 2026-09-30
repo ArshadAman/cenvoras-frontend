@@ -14,7 +14,8 @@ import {
   BanknotesIcon, 
   XMarkIcon,
   AdjustmentsHorizontalIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import PaymentForm from "../ledger/PaymentForm";
@@ -593,23 +594,23 @@ export default function SalesTable({
             )}
           </div>
 
-          <select
-            value={ordering}
-            onChange={(e) => {
-              const val = e.target.value;
-              setOrdering(val);
-              if (val === "-invoice_date") setSortConfig({ key: "invoice_date", direction: "desc" });
-              else if (val === "invoice_date") setSortConfig({ key: "invoice_date", direction: "asc" });
-              else if (val === "-total_amount") setSortConfig({ key: "total_amount", direction: "desc" });
-              else if (val === "total_amount") setSortConfig({ key: "total_amount", direction: "asc" });
-            }}
-            className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-[#111] backdrop-filter backdrop-blur-10 text-white text-sm"
+          {/* Show overdue Bills only Quick Toggle */}
+          <button
+            type="button"
+            onClick={() => setAdvancedFilters(prev => ({ ...prev, hasOverdue: !prev.hasOverdue }))}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${
+              advancedFilters.hasOverdue
+                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm shadow-rose-900/30 ring-1 ring-rose-500/40'
+                : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10 hover:text-white'
+            }`}
+            title="Filter to show only overdue bills"
           >
-            <option value="-invoice_date" className="bg-[#1a2341] text-white">Newest First</option>
-            <option value="invoice_date" className="bg-[#1a2341] text-white">Oldest First</option>
-            <option value="-total_amount" className="bg-[#1a2341] text-white">Highest Amount</option>
-            <option value="total_amount" className="bg-[#1a2341] text-white">Lowest Amount</option>
-          </select>
+            <ExclamationTriangleIcon className={`w-3.5 h-3.5 ${advancedFilters.hasOverdue ? 'text-rose-400' : 'text-gray-400'}`} />
+            <span>Show overdue Bills only</span>
+            {advancedFilters.hasOverdue && (
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
+            )}
+          </button>
           
           {selectedInvoices.size > 0 && (
             <button
@@ -805,9 +806,11 @@ export default function SalesTable({
                 </td>
               </tr>
             ) : (
-              filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="px-3 py-3 whitespace-nowrap">
+              filteredInvoices.map((invoice) => {
+                const compactRowStyle = { paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 };
+                return (
+              <tr key={invoice.id} style={compactRowStyle} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td style={compactRowStyle} className="px-3 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
@@ -815,32 +818,32 @@ export default function SalesTable({
                     className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 cursor-pointer"
                   />
                 </td>
-                <td className="px-3.5 py-3 whitespace-nowrap">
+                <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                   <div className="text-sm font-medium text-white truncate" title={`#${invoice.invoice_number}`}>
                     #{invoice.invoice_number}
                   </div>
                 </td>
-                <td className="px-3.5 py-3 whitespace-nowrap">
+                <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                   <div className="text-sm text-gray-400 truncate">
                     {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </td>
                 {visibleColumns.customer && (
-                  <td className="px-3.5 py-3 whitespace-nowrap">
+                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                     <div className="text-sm text-white truncate" title={invoice.customer_name}>
                       {invoice.customer_name}
                     </div>
                   </td>
                 )}
                 {visibleColumns.po_number && (
-                  <td className="px-3.5 py-3 whitespace-nowrap">
+                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                     <div className="text-sm text-gray-300 truncate" title={invoice.po_number || '-'}>
                       {invoice.po_number || '-'}
                     </div>
                   </td>
                 )}
                 {visibleColumns.untaxed_amount && (
-                  <td className="px-3.5 py-3 whitespace-nowrap">
+                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                     <div className="text-sm font-medium text-white truncate">
                       {getCurrencySymbol()}{(() => {
                         // Calculate untaxed amount from items factoring in discounts
@@ -860,7 +863,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.total_amount && (
-                  <td className="px-3.5 py-3 whitespace-nowrap">
+                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                     {(() => {
                       const roundOff = parseFloat(invoice.round_off || 0) || 0;
                       const calculations = invoice.items?.reduce((acc, item) => {
@@ -901,19 +904,19 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.status && (
-                  <td className="px-3.5 py-3 whitespace-nowrap">
+                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
                     {(() => {
                       const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
                       if (isDraft) {
                         return (
-                          <span className="px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                          <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
                             Draft
                           </span>
                         );
                       }
                       const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
                       return (
-                        <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
+                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
                           isPaid ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
                         }`}>
                           {isPaid ? 'Paid' : 'Not Paid'}
@@ -923,19 +926,19 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.items && (
-                  <td className="px-3.5 py-3 whitespace-nowrap text-sm text-gray-400 truncate">
+                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap text-sm text-gray-400 truncate">
                     {invoice.items?.length || 0} items
                   </td>
                 )}
-                <td className="px-3.5 py-3 whitespace-nowrap text-sm font-medium text-right">
-                  <div className="flex items-center justify-end gap-1.5">
+                <td style={compactRowStyle} className="px-3.5 whitespace-nowrap text-sm font-medium text-right">
+                  <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
                       onClick={() => onView(invoice)}
                       title={`View ${docLabel}`}
-                      className="p-2 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/15 hover:text-white transition-colors"
+                      className="p-1 bg-white/5 text-gray-300 border border-white/10 rounded-md hover:bg-white/15 hover:text-white transition-colors"
                     >
-                      <EyeIcon className="w-4 h-4" />
+                      <EyeIcon className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
@@ -947,13 +950,13 @@ export default function SalesTable({
                       disabled={!canEditInvoice(invoice)}
                       title={editInvoiceTooltip(invoice)}
                       aria-disabled={!canEditInvoice(invoice)}
-                      className={`p-2 border rounded-lg transition-colors ${
+                      className={`p-1 border rounded-md transition-colors ${
                         canEditInvoice(invoice)
                           ? 'bg-white/5 text-cyan-300 border-white/10 hover:bg-white/15'
                           : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
                       }`}
                     >
-                      <PencilSquareIcon className="w-4 h-4" />
+                      <PencilSquareIcon className="w-3.5 h-3.5" />
                     </button>
                     {documentType !== "quotation" && (
                       <button
@@ -964,13 +967,13 @@ export default function SalesTable({
                           ? 'Record payment for this invoice'
                           : 'Available only for final invoices with pending or partial payment status.'}
                         aria-disabled={!canRecordPayment(invoice)}
-                        className={`p-2 border rounded-lg transition-colors ${
+                        className={`p-1 border rounded-md transition-colors ${
                           canRecordPayment(invoice)
                             ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/25'
                             : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
                         }`}
                       >
-                        <BanknotesIcon className="w-4 h-4" />
+                        <BanknotesIcon className="w-3.5 h-3.5" />
                       </button>
                     )}
                     <button
@@ -983,18 +986,20 @@ export default function SalesTable({
                       disabled={!canDeleteInvoice(invoice)}
                       title={getDeleteTooltip(invoice)}
                       aria-disabled={!canDeleteInvoice(invoice)}
-                      className={`p-2 border rounded-lg transition-colors ${
+                      className={`p-1 border rounded-md transition-colors ${
                         canDeleteInvoice(invoice)
                           ? 'bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/25'
                           : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
                       }`}
                     >
-                      <TrashIcon className="w-4 h-4" />
+                      <TrashIcon className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </td>
               </tr>
-            )))}
+                );
+              })
+            )}
           </tbody>
         </table>
         </div>
