@@ -38,14 +38,36 @@ export default function SalesOrderTable({
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
+
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
   const handleConvert = (order) => {
     setConvertOrder(order);
   };
 
-  const filteredOrders = orders.filter(order => 
-    order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
-    (order.customer_display_name || order.customer_name || '')?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredOrders = orders
+    .filter(order => 
+      order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
+      (order.customer_display_name || order.customer_name || '')?.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      const { key, direction } = sortConfig;
+      const factor = direction === "asc" ? 1 : -1;
+      if (key === "date") return factor * (new Date(a.date || 0) - new Date(b.date || 0));
+      if (key === "order_number") return factor * String(a.order_number || "").localeCompare(String(b.order_number || ""), undefined, { numeric: true });
+      if (key === "customer") return factor * String(a.customer_display_name || a.customer_name || "").localeCompare(String(b.customer_display_name || b.customer_name || ""));
+      if (key === "amount") return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+      if (key === "status") return factor * String(a.stage || "").localeCompare(String(b.stage || ""));
+      return 0;
+    });
 
   return (
     <div className="lg:bg-white/5 lg:backdrop-filter lg:backdrop-blur-20 rounded-lg lg:shadow p-0 lg:p-6 lg:border lg:border-white/10 bg-transparent border-none shadow-none backdrop-blur-none">
@@ -65,11 +87,61 @@ export default function SalesOrderTable({
           <table className="min-w-full text-sm border-separate border-spacing-y-2">
               <thead>
                 <tr className="bg-white/5 border-b border-white/10">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Order #</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                  <th 
+                    onClick={() => handleSort("order_number")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Order #</span>
+                      {sortConfig.key === "order_number" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort("date")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Date</span>
+                      {sortConfig.key === "date" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort("customer")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Customer</span>
+                      {sortConfig.key === "customer" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort("amount")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Amount</span>
+                      {sortConfig.key === "amount" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort("status")}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Status</span>
+                      {sortConfig.key === "status" && (
+                        <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -93,7 +165,7 @@ export default function SalesOrderTable({
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-400">{format(new Date(order.date), 'MMM dd, yyyy')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-400">{order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-white">{order.customer_display_name || order.customer_name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-cyan-400 font-bold">{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
                            <td className="px-6 py-4 whitespace-nowrap">
@@ -153,13 +225,7 @@ export default function SalesOrderTable({
                       )}
                     </div>
                     <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
-                      {(() => {
-                        try {
-                          return format(new Date(order.date), 'dd MMM, yyyy');
-                        } catch (e) {
-                          return order.date || '';
-                        }
-                      })()}
+                      {order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}
                     </div>
                   </div>
                   <div className="text-right">

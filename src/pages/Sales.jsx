@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import useEscKey from "../hooks/useEscStack";
 import SalesTable from "../components/sales/SalesTable";
 import SalesForm from "../components/sales/SalesForm";
 import SalesDetailsModal from "../components/sales/SalesDetailsModal";
@@ -20,6 +21,7 @@ const normalizePrefix = (value) => {
 export default function Sales({ documentType = "invoice" }) {
   const isQuotation = documentType === "quotation";
   const location = useLocation();
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editInvoice, setEditInvoice] = useState(null);
   const [aiDraftData, setAiDraftData] = useState(null);
@@ -27,6 +29,16 @@ export default function Sales({ documentType = "invoice" }) {
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [invoicePrefix, setInvoicePrefix] = useState(DEFAULT_INVOICE_PREFIX);
+
+  // Hierarchical ESC key navigation:
+  // 1. Idle on section list -> Esc redirects to Professional Dashboard (/dashboard)
+  useEscKey(() => navigate('/dashboard'), !showForm && !showDetails && !deleteInvoice && !showUpload, 0);
+  // 2. View details modal -> Esc closes details
+  useEscKey(() => setShowDetails(null), Boolean(showDetails), 10);
+  // 3. Delete dialog -> Esc closes dialog
+  useEscKey(() => setDeleteInvoice(null), Boolean(deleteInvoice), 20);
+  // 4. Upload dialog -> Esc closes upload
+  useEscKey(() => setShowUpload(false), Boolean(showUpload), 10);
 
   // Fetch user profile for invoice customization
   const { data: userProfile } = useQuery({

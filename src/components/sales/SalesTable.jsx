@@ -822,7 +822,7 @@ export default function SalesTable({
                 </td>
                 <td className="px-3.5 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-400 truncate">
-                    {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'MMM dd, yyyy') : '-'}
+                    {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </td>
                 {visibleColumns.customer && (
@@ -1027,7 +1027,7 @@ export default function SalesTable({
                     #{invoice.invoice_number}
                   </div>
                   <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
-                    {format(new Date(invoice.invoice_date), 'dd MMM, yyyy')}
+                    {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </div>
               </div>

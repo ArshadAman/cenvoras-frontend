@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import useEscKey from "../hooks/useEscStack";
 import CustomerTable from "../components/customers/CustomerTable";
 import CustomerForm from "../components/customers/CustomerForm";
 import CustomerDetailsModal from "../components/customers/CustomerDetailsModal";
@@ -8,10 +10,19 @@ import "react-toastify/dist/ReactToastify.css";
 import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Customers() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editCustomer, setEditCustomer] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
   const [deleteCustomer, setDeleteCustomer] = useState(null);
+
+  // Hierarchical ESC key navigation:
+  // 1. Idle on section list -> Esc redirects to Professional Dashboard (/dashboard)
+  useEscKey(() => navigate('/dashboard'), !showForm && !showDetails && !deleteCustomer, 0);
+  // 2. View details modal -> Esc closes details
+  useEscKey(() => setShowDetails(null), Boolean(showDetails), 10);
+  // 3. Delete dialog -> Esc closes dialog
+  useEscKey(() => setDeleteCustomer(null), Boolean(deleteCustomer), 20);
 
   const handleEdit = (customer) => {
     setEditCustomer(customer);

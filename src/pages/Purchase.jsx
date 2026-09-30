@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import useEscKey from "../hooks/useEscStack";
 import PurchaseTable from "../components/purchase/PurchaseTable";
 import PurchaseForm from "../components/purchase/PurchaseForm";
 import PurchaseDetailsModal from "../components/purchase/PurchaseDetailsModal";
@@ -9,11 +11,22 @@ import "react-toastify/dist/ReactToastify.css";
 import { ShoppingBagIcon, DocumentArrowUpIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Purchase() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editBill, setEditBill] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
   const [deleteBill, setDeleteBill] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+
+  // Hierarchical ESC key navigation:
+  // 1. Idle on section list -> Esc redirects to Professional Dashboard (/dashboard)
+  useEscKey(() => navigate('/dashboard'), !showForm && !showDetails && !deleteBill && !showUpload, 0);
+  // 2. View details modal -> Esc closes details
+  useEscKey(() => setShowDetails(null), Boolean(showDetails), 10);
+  // 3. Delete dialog -> Esc closes dialog
+  useEscKey(() => setDeleteBill(null), Boolean(deleteBill), 20);
+  // 4. Upload dialog -> Esc closes upload
+  useEscKey(() => setShowUpload(false), Boolean(showUpload), 10);
 
   const handleEdit = (bill) => {
     setEditBill(bill);

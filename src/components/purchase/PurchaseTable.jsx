@@ -28,6 +28,16 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
     status: "all",
     hasOverdue: false,
   });
+  const [sortConfig, setSortConfig] = useState({ key: "bill_date", direction: "desc" });
+
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["purchaseBills", page, limit],
@@ -123,11 +133,20 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       return matchesSearch && matchesDate && matchesAmount && matchesVendor && matchesJournal && matchesGST && matchesOverdue;
     })
     .sort((a, b) => {
-      // Frontend ordering
-      if (ordering === "-bill_date") return new Date(b.bill_date) - new Date(a.bill_date);
-      if (ordering === "bill_date") return new Date(a.bill_date) - new Date(b.bill_date);
-      if (ordering === "-total_amount") return Number(b.total_amount) - Number(a.total_amount);
-      if (ordering === "total_amount") return Number(a.total_amount) - Number(b.total_amount);
+      const { key, direction } = sortConfig;
+      const factor = direction === "asc" ? 1 : -1;
+      if (key === "bill_date") {
+        return factor * (new Date(a.bill_date || 0) - new Date(b.bill_date || 0));
+      }
+      if (key === "bill_number") {
+        return factor * String(a.bill_number || "").localeCompare(String(b.bill_number || ""), undefined, { numeric: true });
+      }
+      if (key === "vendor_name") {
+        return factor * String(a.vendor_name || "").localeCompare(String(b.vendor_name || ""));
+      }
+      if (key === "total_amount") {
+        return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+      }
       return 0;
     });
 
@@ -351,11 +370,51 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                   className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                 />
               </th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Bill Number</th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Bill Date</th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Vendor</th>
+              <th 
+                onClick={() => handleSort("bill_number")} 
+                className="text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Bill Number</span>
+                  {sortConfig.key === "bill_number" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort("bill_date")} 
+                className="text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Bill Date</span>
+                  {sortConfig.key === "bill_date" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort("vendor_name")} 
+                className="text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span>Vendor</span>
+                  {sortConfig.key === "vendor_name" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
               <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Items</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Amount</th>
+              <th 
+                onClick={() => handleSort("total_amount")} 
+                className="text-right py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+              >
+                <div className="flex items-center justify-end gap-1.5">
+                  <span>Total Amount</span>
+                  {sortConfig.key === "total_amount" && (
+                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+              </th>
               <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
             </tr>
           </thead>
@@ -387,7 +446,9 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     <td className="py-3 px-4 font-semibold text-white drop-shadow-lg">
                       {bill.bill_number}
                     </td>
-                    <td className="py-3 px-4 text-white drop-shadow-lg">{bill.bill_date}</td>
+                    <td className="py-3 px-4 text-white drop-shadow-lg">
+                      {bill.bill_date ? format(new Date(bill.bill_date), 'dd/MM/yyyy') : '-'}
+                    </td>
                     <td className="py-3 px-4 text-white drop-shadow-lg">{bill.vendor_name}</td>
                     <td className="py-3 px-4">
                       {bill.items && bill.items.length > 0 ? (
@@ -509,7 +570,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                       {bill.bill_number}
                     </div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                      {format(new Date(bill.bill_date), 'MMM dd, yyyy')}
+                      {bill.bill_date ? format(new Date(bill.bill_date), 'dd/MM/yyyy') : '-'}
                     </div>
                   </div>
                 </div>

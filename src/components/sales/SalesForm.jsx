@@ -16,6 +16,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; /
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import { DocumentTextIcon, ArrowPathIcon, PlusIcon, ArrowUpIcon, ArrowDownIcon, DocumentPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import DateInputField from "../common/DateInputField";
+import useEscKey from "../../hooks/useEscStack";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, onCreateNewProduct, onSelectProduct }) {
@@ -26,6 +28,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
+
+  useEscKey(() => setShowDropdown(false), showDropdown, 30);
 
   // Sync inputValue with Formik values when items change or shift on deletion
   useEffect(() => {
@@ -269,6 +273,9 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
 
+  useEscKey(() => setShowDropdown(false), showDropdown, 30);
+  useEscKey(() => setShowNewCustomerModal(false), showNewCustomerModal, 20);
+
   // Sync inputValue with Formik values
   useEffect(() => {
     setInputValue(values.customer_name || "");
@@ -295,8 +302,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setSelectedIndex(-1);
 
     if (value.trim()) {
-      const filtered = customers.filter(customer =>
-        customer.name.toLowerCase().includes(value.toLowerCase())
+      const query = value.toLowerCase();
+      const filtered = (customers || []).filter(customer =>
+        customer.name?.toLowerCase().includes(query) ||
+        (customer.email && customer.email.toLowerCase().includes(query)) ||
+        (customer.phone && customer.phone.includes(query)) ||
+        (customer.gstin && customer.gstin.toLowerCase().includes(query))
       );
       setFilteredCustomers(filtered);
       setShowDropdown(true);
@@ -312,6 +323,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
           <div>
             <input
               name="customer_name"
+              id="customer_name"
               value={inputValue}
               onChange={handleInputChange}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
@@ -320,6 +332,11 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   setShowDropdown(true);
                 }
               }}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              data-1p-ignore="true"
               onKeyDown={(e) => {
                 if (showDropdown) {
                   const displayLimit = Math.min(filteredCustomers.length, 50);
@@ -338,7 +355,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                     } else {
                       // "Add New Customer" option
                       setShowNewCustomerModal(true);
-                       setShowDropdown(false);
+                      setShowDropdown(false);
                     }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -357,7 +374,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1.5 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-64 overflow-y-auto backdrop-blur-xl">
           {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
@@ -366,12 +383,24 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
-              onClick={() => selectCustomer(customer)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectCustomer(customer);
+              }}
             >
-              <div className="font-medium">{customer.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
-                {customer.email && `${customer.email} | `}
-                {customer.address} {customer.gstin && `| GSTIN: ${customer.gstin}`}
+              <div className="font-semibold text-white flex items-center justify-between">
+                <span>{customer.name}</span>
+                {customer.gstin && (
+                  <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 font-mono">
+                    GST: {customer.gstin}
+                  </span>
+                )}
+              </div>
+              <div className="text-gray-400 text-xs mt-1 flex items-center gap-3 truncate">
+                {customer.phone && <span>📞 {customer.phone}</span>}
+                {customer.email && <span className="truncate">✉️ {customer.email}</span>}
+                {customer.address && <span className="truncate text-gray-500">📍 {customer.address}</span>}
               </div>
             </div>
           ))}
@@ -387,7 +416,9 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 setShowNewCustomerModal(true);
                 setShowDropdown(false);
               }}
@@ -598,6 +629,10 @@ export default function SalesForm({
 }) {
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
+
+  // Register hierarchical ESC key navigation for this form
+  useEscKey(onClose, isOpen, 10);
+
   // Keyboard Shortcuts Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -608,15 +643,6 @@ export default function SalesForm({
         if(submitBtn) {
             submitBtn.click();
             toast.info(`Saving ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
-        }
-      }
-      
-      // Esc to Close
-      if (e.key === "Escape") {
-        const isDropdownOpen = document.querySelector('.absolute.z-10'); // Basic check if any autocomplete is open
-        if (!isDropdownOpen) {
-             e.preventDefault();
-             onClose();
         }
       }
 
@@ -1524,6 +1550,10 @@ export default function SalesForm({
                       <Field
                         name="invoice_number"
                         type="text"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        data-1p-ignore="true"
                         className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                         placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
                       />
@@ -1533,10 +1563,11 @@ export default function SalesForm({
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                         {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                       </label>
-                      <Field
+                      <DateInputField
                         name="invoice_date"
-                        type="date"
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        value={values.invoice_date}
+                        onChange={(e) => setFieldValue('invoice_date', e.target.value)}
+                        placeholder="DD/MM/YYYY"
                       />
                     </div>
                     <div>
@@ -1578,11 +1609,11 @@ export default function SalesForm({
                       <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
                         Due Date
                       </label>
-                      <Field
+                      <DateInputField
                         name="due_date"
-                        type="date"
-                        min={new Date().toLocaleDateString('sv-SE')}
-                        className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                        value={values.due_date}
+                        onChange={(e) => setFieldValue('due_date', e.target.value)}
+                        placeholder="DD/MM/YYYY"
                       />
                     </div>
                   </div>
@@ -1621,10 +1652,11 @@ export default function SalesForm({
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
-                          <Field
+                          <DateInputField
                             name="po_date"
-                            type="date"
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            value={values.po_date}
+                            onChange={(e) => setFieldValue('po_date', e.target.value)}
+                            placeholder="DD/MM/YYYY"
                           />
                         </div>
                       </div>

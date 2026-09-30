@@ -6,6 +6,7 @@ import { createVendor, updateVendor } from "../../api/vendors";
 import { toast } from "react-toastify";
 import { INDIAN_STATES } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from "../../hooks/useEscStack";
 
 const vendorSchema = Yup.object().shape({
   name: Yup.string()
@@ -27,6 +28,7 @@ const vendorSchema = Yup.object().shape({
 });
 
 export default function VendorForm({ isOpen, onClose, editData = null }) {
+  useEscKey(onClose, isOpen, 10);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
 

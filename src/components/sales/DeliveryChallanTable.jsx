@@ -522,7 +522,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                     </td>
                     {visibleColumns.date && (
                       <td className="px-5 py-3.5 whitespace-nowrap text-gray-400">
-                        {challan.date ? format(new Date(challan.date), "MMM dd, yyyy") : "—"}
+                        {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </td>
                     )}
                     {visibleColumns.customer && (
@@ -688,7 +688,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                         #{challan.challan_number}
                       </div>
                       <div className="text-[11px] text-gray-400">
-                        {challan.date ? format(new Date(challan.date), "dd MMM, yyyy") : "—"}
+                        {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </div>
                     </div>
                   </div>
