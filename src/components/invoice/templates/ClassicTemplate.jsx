@@ -780,7 +780,7 @@ const InvoicePreview = forwardRef(({
         {showWatermarkFooter && (
           <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
             Made with Cenvora: Built for Modern Businesses<br />
-            <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
           </div>
         )}
       </div>

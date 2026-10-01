@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-base font-bold text-white mb-2">6. Contact Our Team</h2>
             <p>
               If you have any questions about how your data is handled, please contact our team at{' '}
-              <a href="mailto:support@cenvora.app" className="text-white underline">support@cenvora.app</a> or message us on WhatsApp at{' '}
+              <a href="mailto:support@cenvora.co.in" className="text-white underline">support@cenvora.co.in</a> or message us on WhatsApp at{' '}
               <span className="text-emerald-400 font-mono">+91 7205289643</span>.
             </p>
           </section>

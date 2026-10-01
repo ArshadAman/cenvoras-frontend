@@ -97,7 +97,7 @@ export default function ContactUs() {
 
           {/* Card 3: Email */}
           <a
-            href="mailto:support@cenvora.app"
+            href="mailto:support@cenvora.co.in"
             className="p-6 rounded-2xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 transition-colors flex flex-col justify-between"
           >
             <div>
@@ -109,7 +109,7 @@ export default function ContactUs() {
                 For formal quotations, contracts, or partnership inquiries.
               </p>
               <div className="mt-4 font-mono font-semibold text-sm text-zinc-300">
-                support@cenvora.app
+                support@cenvora.co.in
               </div>
             </div>
             <div className="mt-6 pt-3 border-t border-zinc-900 flex items-center gap-1 text-xs text-zinc-300 font-medium">
