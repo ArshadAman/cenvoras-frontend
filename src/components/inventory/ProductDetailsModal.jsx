@@ -103,6 +103,16 @@ export default function ProductDetailsModal({ productId, onClose }) {
                         <span className="font-medium text-gray-400">Category:</span>
                         <span>{product.category || 'Uncategorized'}</span>
                       </div>
+                      {product.manufacturer && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-400">Manufacturer:</span>
+                          <span className="text-white font-medium">{product.manufacturer}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-400">GST Rate:</span>
+                        <span>{product.tax ? `${product.tax}%` : '0%'}</span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-400">Unit:</span>
                         <span>{product.unit}</span>
@@ -115,6 +125,25 @@ export default function ProductDetailsModal({ productId, onClose }) {
                         <span className="font-medium text-gray-400">Sale Price:</span>
                         <span className="font-bold text-blue-400">{salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}</span>
                       </div>
+                      {product.meta?.storage_condition && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-400">Storage:</span>
+                          <span className="text-cyan-300">{product.meta.storage_condition}</span>
+                        </div>
+                      )}
+                      {product.meta?.expiry_date && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-400">Expiry Date:</span>
+                          <span className="text-amber-300 font-mono">
+                            {(() => {
+                              const parts = String(product.meta.expiry_date).split('-');
+                              return parts.length === 3 && parts[0].length === 4
+                                ? `${parts[2]}/${parts[1]}/${parts[0]}`
+                                : product.meta.expiry_date;
+                            })()}
+                          </span>
+                        </div>
+                      )}
                       {product.supplier && (
                         <div className="flex justify-between">
                           <span className="font-medium text-gray-400">Supplier:</span>
