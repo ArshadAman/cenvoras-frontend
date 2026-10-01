@@ -81,7 +81,7 @@ export default function TermsOfService() {
             <h2 className="text-base font-bold text-white mb-2">6. Questions</h2>
             <p>
               For any questions regarding commercial terms or agreements, please reach out to us at{' '}
-              <a href="mailto:support@cenvora.app" className="text-white underline">support@cenvora.app</a>.
+              <a href="mailto:support@cenvora.co.in" className="text-white underline">support@cenvora.co.in</a>.
             </p>
           </section>
         </div>
