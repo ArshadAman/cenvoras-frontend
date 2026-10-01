@@ -39,6 +39,10 @@ function createCardTexture({ title, subtitle, badge, badgeColor, value, status, 
   ctx.fillStyle = accentColor || '#38BDF8';
   ctx.fillRect(32, 28, 48, 4);
 
+  // Top Border Line
+  ctx.fillStyle = '#38BDF8';
+  ctx.fillRect(0, 0, 512, 2);
+
   // Badge
   if (badge) {
     ctx.fillStyle = badgeColor || 'rgba(14, 165, 233, 0.2)';
@@ -46,33 +50,33 @@ function createCardTexture({ title, subtitle, badge, badgeColor, value, status, 
     ctx.roundRect ? ctx.roundRect(320, 24, 160, 32, 16) : ctx.rect(320, 24, 160, 32);
     ctx.fill();
     ctx.fillStyle = accentColor || '#38BDF8';
-    ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+    ctx.font = '600 14px Outfit, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(badge, 400, 46);
   }
 
   // Title
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 28px Outfit, system-ui, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(title, 32, 90);
 
   // Subtitle
   ctx.fillStyle = '#94A3B8';
-  ctx.font = '16px system-ui, -apple-system, sans-serif';
+  ctx.font = '16px Outfit, system-ui, sans-serif';
   ctx.fillText(subtitle, 32, 126);
 
   // Value / Metric Highlight
   if (value) {
     ctx.fillStyle = '#F8FAFC';
-    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 36px Outfit, system-ui, sans-serif';
     ctx.fillText(value, 32, 210);
   }
 
   // Status / Footer Info
   if (status) {
     ctx.fillStyle = '#34D399';
-    ctx.font = '600 15px system-ui, -apple-system, sans-serif';
+    ctx.font = '600 15px Outfit, system-ui, sans-serif';
     ctx.fillText(`● ${status}`, 32, 264);
   }
 
@@ -113,7 +117,7 @@ export default function HeroPrismCanvas() {
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
@@ -210,6 +214,40 @@ export default function HeroPrismCanvas() {
       cardMeshes.push(mesh);
     });
 
+    // Star field
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 200;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      const theta = 2 * Math.PI * Math.random();
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 15;
+      starPositions[i] = r * Math.sin(phi) * Math.cos(theta);
+      starPositions[i + 1] = r * Math.sin(phi) * Math.sin(theta);
+      starPositions[i + 2] = r * Math.cos(phi);
+    }
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.02,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending,
+    });
+    const starField = new THREE.Points(starGeometry, starMaterial);
+    scene.add(starField);
+
+    // Ambient ring
+    const ringGeometry = new THREE.TorusGeometry(3.5, 0.012, 8, 120);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      opacity: 0.15,
+      transparent: true,
+    });
+    const ambientRing = new THREE.Mesh(ringGeometry, ringMaterial);
+    ambientRing.position.z = -1;
+    scene.add(ambientRing);
+
     // 5. Ambient Floating Particles in 3D Space
     const particleCount = 60;
     const particleGeometry = new THREE.BufferGeometry();
@@ -294,6 +332,10 @@ export default function HeroPrismCanvas() {
       // Subtle particle drift
       particleSystem.rotation.y = elapsedTime * 0.02;
 
+      // Background animations
+      starField.rotation.y += 0.003;
+      ambientRing.rotation.z += 0.001;
+
       renderer.render(scene, camera);
     };
 
@@ -318,6 +360,10 @@ export default function HeroPrismCanvas() {
       cardGeometry.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
+      starGeometry.dispose();
+      starMaterial.dispose();
+      ringGeometry.dispose();
+      ringMaterial.dispose();
       renderer.dispose();
     };
   }, []);
