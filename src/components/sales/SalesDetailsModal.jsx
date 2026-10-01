@@ -347,7 +347,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           return;
         } catch (apiError) {
           console.warn('Backend vector PDF download unavailable (501), generating direct fallback:', apiError);
-          toast.info('Server Chromium updating on api.cenvora.app. Generating direct download (or select "Save as Vector PDF").', { autoClose: 4000 });
+          toast.info('Server Chromium updating on api.cenvora.co.in. Generating direct download (or select "Save as Vector PDF").', { autoClose: 4000 });
         }
       }
 
