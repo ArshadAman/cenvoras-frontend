@@ -1,18 +1,38 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createProduct, updateProduct } from "../../api/inventory";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
 
 const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
+
+const GST_RATES = [
+  { value: 0, label: "0% (Exempt / Nil)" },
+  { value: 3, label: "3% (Gold / Precious Metals)" },
+  { value: 5, label: "5% (Essential Goods)" },
+  { value: 12, label: "12% (Standard Goods)" },
+  { value: 18, label: "18% (Standard Rate)" },
+  { value: 28, label: "28% (Luxury Goods)" },
+  { value: 40, label: "40% (Sin / Cess Goods)" },
+];
+
+const STORAGE_PRESETS = [
+  "Room Temperature (RT)",
+  "2°C - 8°C",
+  "-20°C",
+  "-80°C",
+];
 
 const productSchema = Yup.object().shape({
   name: Yup.string()
     .required("Product name is required")
     .max(255, "Name must be 255 characters or less"),
+  manufacturer: Yup.string()
+    .max(255, "Manufacturer must be 255 characters or less")
+    .nullable(),
   description: Yup.string().nullable(),
   tax: Yup.number()
     .min(0, "Tax cannot be negative")
@@ -53,16 +73,154 @@ const productSchema = Yup.object().shape({
     .integer("Warranty must be a whole number")
     .min(0, "Warranty must be positive"),
   meta: Yup.object().shape({
-    expiry_date: Yup.date().nullable().typeError("Invalid date"),
-    secondary_stock: Yup.number().nullable(),
-    mandi_tax: Yup.number().nullable(),
-    is_h1: Yup.boolean(),
-    is_narcotic: Yup.boolean(),
-    is_new_launch: Yup.boolean(),
-    temperature: Yup.string().max(50, "Temperature must be 50 characters or less").nullable(),
+    expiry_date: Yup.string().nullable(),
     storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
   }),
 });
+
+// Helper component for DD/MM/YYYY Expiry Date input
+function FormattedDateInput({ value, onChange, className }) {
+  // Convert ISO (YYYY-MM-DD) to DD/MM/YYYY for display
+  const isoToDisplay = (isoStr) => {
+    if (!isoStr) return "";
+    const parts = String(isoStr).split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      const [y, m, d] = parts;
+      return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return isoStr;
+  };
+
+  // Convert DD/MM/YYYY to ISO (YYYY-MM-DD)
+  const displayToIso = (dispStr) => {
+    if (!dispStr) return "";
+    const clean = dispStr.trim();
+    const parts = clean.split(/[/.-]/);
+    if (parts.length === 3) {
+      let [d, m, y] = parts;
+      if (y.length === 2) y = `20${y}`;
+      if (y.length === 4 && d.length <= 2 && m.length <= 2) {
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+    }
+    return dispStr;
+  };
+
+  const [displayText, setDisplayText] = useState(() => isoToDisplay(value));
+  const hiddenDateRef = React.useRef(null);
+
+  useEffect(() => {
+    setDisplayText(isoToDisplay(value));
+  }, [value]);
+
+  const handleTextChange = (e) => {
+    const raw = e.target.value;
+    setDisplayText(raw);
+    const iso = displayToIso(raw);
+    onChange(iso);
+  };
+
+  const handleNativePickerChange = (e) => {
+    const isoVal = e.target.value;
+    onChange(isoVal);
+    setDisplayText(isoToDisplay(isoVal));
+  };
+
+  return (
+    <div className="relative flex items-center">
+      <input
+        type="text"
+        value={displayText}
+        onChange={handleTextChange}
+        placeholder="dd/mm/yyyy"
+        className={`${className} pr-10 font-mono`}
+      />
+      <button
+        type="button"
+        onClick={() => hiddenDateRef.current?.showPicker ? hiddenDateRef.current.showPicker() : hiddenDateRef.current?.focus()}
+        className="absolute right-3 p-1 text-gray-400 hover:text-cyan-400 transition-colors"
+        title="Open calendar"
+      >
+        <CalendarIcon className="w-5 h-5" />
+      </button>
+      <input
+        ref={hiddenDateRef}
+        type="date"
+        value={value || ""}
+        onChange={handleNativePickerChange}
+        className="sr-only"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
+// Storage Condition Dropdown + Custom Field Component
+function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
+  const isPreset = STORAGE_PRESETS.includes(value);
+  const initialMode = value ? (isPreset ? value : "custom") : "";
+  const [selectedOption, setSelectedOption] = useState(initialMode);
+  const [customText, setCustomText] = useState(isPreset ? "" : (value || ""));
+
+  useEffect(() => {
+    if (STORAGE_PRESETS.includes(value)) {
+      setSelectedOption(value);
+      setCustomText("");
+    } else if (value) {
+      setSelectedOption("custom");
+      setCustomText(value);
+    } else {
+      setSelectedOption("");
+      setCustomText("");
+    }
+  }, [value]);
+
+  const handleSelectChange = (e) => {
+    const opt = e.target.value;
+    setSelectedOption(opt);
+    if (opt === "custom") {
+      onChange(customText);
+    } else {
+      onChange(opt);
+    }
+  };
+
+  const handleCustomChange = (e) => {
+    const text = e.target.value;
+    setCustomText(text);
+    onChange(text);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className={labelClass}>Storage Condition</label>
+      <select
+        value={selectedOption}
+        onChange={handleSelectChange}
+        className={inputClass}
+      >
+        <option value="">Select storage condition...</option>
+        {STORAGE_PRESETS.map((preset) => (
+          <option key={preset} value={preset}>
+            {preset}
+          </option>
+        ))}
+        <option value="custom">Custom...</option>
+      </select>
+
+      {selectedOption === "custom" && (
+        <input
+          type="text"
+          value={customText}
+          onChange={handleCustomChange}
+          placeholder="e.g. Store below 25°C, protect from light"
+          className={`${inputClass} animate-fade-in text-sm`}
+          autoFocus
+        />
+      )}
+    </div>
+  );
+}
 
 export default function ProductForm({ product, onClose }) {
   const queryClient = useQueryClient();
@@ -96,8 +254,9 @@ export default function ProductForm({ product, onClose }) {
 
   const initialValues = {
     name: product?.name || "",
+    manufacturer: product?.manufacturer || "",
     description: product?.description || "",
-    tax: product?.tax || "",
+    tax: product?.tax != null && product?.tax !== "" ? Number(product.tax) : 0,
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
     unit: product?.unit || "pcs",
     secondary_unit: product?.secondary_unit || "",
@@ -110,36 +269,20 @@ export default function ProductForm({ product, onClose }) {
     meta: {
       barcode: product?.barcode || product?.meta?.barcode || "",
       expiry_date: product?.meta?.expiry_date || "",
-      secondary_stock: product?.meta?.secondary_stock || "",
-      mandi_tax: product?.meta?.mandi_tax || "",
-      is_h1: product?.meta?.is_h1 || false,
-      is_narcotic: product?.meta?.is_narcotic || false,
-      is_new_launch: product?.meta?.is_new_launch || false,
-      temperature: product?.meta?.temperature || "",
       storage_condition: product?.meta?.storage_condition || "",
     },
   };
 
   const handleSubmit = (values, { setSubmitting }) => {
-    const metaData = {
-      is_h1: values.meta.is_h1,
-      is_narcotic: values.meta.is_narcotic,
-      is_new_launch: values.meta.is_new_launch,
-    };
+    const metaData = {};
 
     if (values.meta.barcode?.trim()) metaData.barcode = values.meta.barcode;
     if (values.meta.expiry_date) metaData.expiry_date = values.meta.expiry_date;
-    if (values.meta.secondary_stock !== "" && values.meta.secondary_stock !== null) {
-      metaData.secondary_stock = parseFloat(values.meta.secondary_stock);
-    }
-    if (values.meta.mandi_tax !== "" && values.meta.mandi_tax !== null) {
-      metaData.mandi_tax = parseFloat(values.meta.mandi_tax);
-    }
-    if (values.meta.temperature?.trim()) metaData.temperature = values.meta.temperature;
     if (values.meta.storage_condition?.trim()) metaData.storage_condition = values.meta.storage_condition;
 
     const productData = {
       name: values.name,
+      manufacturer: values.manufacturer?.trim() || null,
       description: values.description || null,
       tax: values.tax ? parseFloat(values.tax) : 0,
       hsn_sac_code: values.hsn_sac_code || null,
@@ -162,7 +305,7 @@ export default function ProductForm({ product, onClose }) {
     setSubmitting(false);
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all";
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
   const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
 
   return (
@@ -174,7 +317,7 @@ export default function ProductForm({ product, onClose }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up">
         
         {/* Header */}
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/10 bg-white/5">
@@ -195,7 +338,7 @@ export default function ProductForm({ product, onClose }) {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting, values }) => (
+          {({ isSubmitting, values, setFieldValue }) => (
             <Form className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
               {/* Section 1: Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -224,6 +367,35 @@ export default function ProductForm({ product, onClose }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
+                  <label className={labelClass}>Manufacturer</label>
+                  <Field
+                    name="manufacturer"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. Cipla, Sun Pharma, Samsung"
+                  />
+                  <ErrorMessage name="manufacturer" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>GST Tax Rate (%)</label>
+                  <Field
+                    as="select"
+                    name="tax"
+                    className={inputClass}
+                  >
+                    {GST_RATES.map((rate) => (
+                      <option key={rate.value} value={rate.value}>
+                        {rate.label}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
                   <label className={labelClass}>Description / Notes</label>
                   <Field
                     as="textarea"
@@ -235,26 +407,22 @@ export default function ProductForm({ product, onClose }) {
                 </div>
 
                 <div>
-                  <label className={labelClass}>GST Tax Rate (%)</label>
-                  <Field
-                    name="tax"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    className={inputClass}
-                    placeholder="e.g. 18.00"
+                  <StorageConditionSelector
+                    value={values.meta.storage_condition}
+                    onChange={(val) => setFieldValue("meta.storage_condition", val)}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
                   />
-                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="meta.storage_condition" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Expiry Date (Optional)</label>
-                  <Field
-                    name="meta.expiry_date"
-                    type="date"
+                  <FormattedDateInput
+                    value={values.meta.expiry_date}
+                    onChange={(val) => setFieldValue("meta.expiry_date", val)}
                     className={inputClass}
                   />
                   <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-1" />
@@ -300,7 +468,7 @@ export default function ProductForm({ product, onClose }) {
                 </div>
               </div>
 
-              {/* Section 3: Pricing & Stock */}
+              {/* Section 3: Pricing & Stock (Stock Value removed) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className={labelClass}>Cost Price ({getCurrencySymbol()})</label>
@@ -335,17 +503,10 @@ export default function ProductForm({ product, onClose }) {
                   />
                   <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
-
-                <div>
-                  <label className={labelClass}>Stock Value</label>
-                  <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                    {getCurrencySymbol()}{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
-                  </div>
-                </div>
               </div>
 
-               {/* Section 4: Alerts & Warranty */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Section 4: Alerts & Warranty */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Low Stock Alert</label>
                   <Field
@@ -372,86 +533,27 @@ export default function ProductForm({ product, onClose }) {
                     Warranty duration from sale date. 0 = no warranty.
                   </p>
                 </div>
-               </div>
-
-               {/* Section 5: Advanced Details (Sidecar) */}
-               <div className="pt-6 border-t border-white/10">
-                 <h3 className="text-sm font-bold text-white mb-4">Advanced Details</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className={labelClass}>Secondary Stock</label>
-                      <Field
-                        name="meta.secondary_stock"
-                        type="number"
-                        className={inputClass}
-                        placeholder="e.g. 50"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Mandi Tax ({getCurrencySymbol()})</label>
-                      <Field
-                        name="meta.mandi_tax"
-                        type="number"
-                        className={inputClass}
-                        placeholder="0.00"
-                      />
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className={labelClass}>Temperature (°C)</label>
-                      <Field
-                        name="meta.temperature"
-                        type="text"
-                        className={inputClass}
-                        placeholder="e.g. 2-8 °C"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Storage Condition</label>
-                      <Field
-                        name="meta.storage_condition"
-                        type="text"
-                        className={inputClass}
-                        placeholder="e.g. Store in a cool, dry place"
-                      />
-                    </div>
-                 </div>
-
-                 <div className="flex flex-wrap gap-6">
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <Field type="checkbox" name="meta.is_h1" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">H1 Drug</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <Field type="checkbox" name="meta.is_narcotic" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">Narcotic</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <Field type="checkbox" name="meta.is_new_launch" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">New Launch</span>
-                    </label>
-                 </div>
-               </div>
+              </div>
 
               {/* Actions */}
               <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-xl transition-colors"
+                  className="px-6 py-2.5 text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
-                  className="btn-primary shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                  className="px-6 py-2.5 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-500/20"
                 >
-                  {isSubmitting ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
+                  {isSubmitting || createMutation.isPending || updateMutation.isPending
+                    ? "Saving..."
+                    : isEdit
+                    ? "Update Product"
+                    : "Create Product"}
                 </button>
               </div>
             </Form>

@@ -13,6 +13,7 @@ export const createProduct = (data) => {
     name: data.name,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     description: data.description || null,
+    manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,
@@ -37,6 +38,7 @@ export const patchProduct = (id, data) => {
   if (data.hsn_code !== undefined) payload.hsn_sac_code = data.hsn_code;
   if (data.tax !== undefined) payload.tax = parseFloat(data.tax) || 0;
   if (data.description !== undefined) payload.description = data.description;
+  if (data.manufacturer !== undefined) payload.manufacturer = data.manufacturer;
   if (data.unit !== undefined) payload.unit = data.unit;
   if (data.stock !== undefined) payload.stock = parseInt(data.stock) || 0;
   return api.patch(`/inventory/products/${id}/`, payload).then(res => res.data);
@@ -52,6 +54,7 @@ export const updateProduct = (id, data) => {
     name: data.name,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     description: data.description || null,
+    manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
     stock: parseInt(data.stock || data.current_stock || 0),
     unit: data.unit,

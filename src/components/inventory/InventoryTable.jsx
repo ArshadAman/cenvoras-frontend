@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
 import { useLoadingPolicy } from "../../hooks/useLoadingPolicy";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import InventoryCsvMappingModal from "./InventoryCsvMappingModal";
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -82,6 +83,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [mappingFile, setMappingFile] = useState(null);
+  const [showMappingModal, setShowMappingModal] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
@@ -138,67 +141,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     }
   };
 
-  const handleUploadCsv = async (event) => {
+  const handleUploadCsv = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      toast.error('Please select a CSV file.');
+      toast.error('Please select a valid CSV file.');
       event.target.value = '';
       return;
     }
 
-    const preValidation = await validateCsvBeforeUpload(file);
-    if (!preValidation.valid) {
-      toast.error(preValidation.message);
-      event.target.value = '';
-      return;
-    }
-
-    setIsUploadingCsv(true);
-    setUploadProgress(0);
-    try {
-      const result = await bulkUploadProductsCsv(file, {
-        onUploadProgress: (event) => {
-          const total = Number(event?.total || 0);
-          if (!total) return;
-          const percent = (Number(event.loaded || 0) / total) * 100;
-          setUploadProgress(percent);
-        },
-      });
-      
-      if (result?.message) {
-        toast.info(result.message);
-      } else {
-        const createdCount = Number(result?.created_count || 0);
-        const failedCount = Number(result?.failed_count || 0);
-
-        if (failedCount > 0) {
-          if (createdCount > 0) {
-            toast.warn(`Partial upload complete. Created: ${createdCount}, Failed: ${failedCount}`);
-          } else {
-            toast.error(`Upload failed. No products created. Failed rows: ${failedCount}`);
-          }
-        } else if (createdCount > 0) {
-          toast.success(`Bulk upload complete. Created: ${createdCount}`);
-        } else {
-          toast.error('Upload finished, but no products were created. Please verify the template columns and values.');
-        }
-      }
-
-      refetch();
-    } catch (err) {
-      const responseData = err?.response?.data;
-      if (responseData?.errors?.length) {
-        toast.error(`Upload finished with errors. Created: ${responseData.created_count || 0}, Failed: ${responseData.failed_count || 0}`);
-      } else {
-        toast.error(responseData?.error || 'Bulk upload failed.');
-      }
-    } finally {
-      setIsUploadingCsv(false);
-      setUploadProgress(0);
-      event.target.value = '';
-    }
+    setMappingFile(file);
+    setShowMappingModal(true);
+    event.target.value = '';
   };
 
   if (error) {
@@ -799,6 +754,21 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
       {/* Pagination */}
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
+
+      {/* CSV Mapping Modal */}
+      {showMappingModal && mappingFile && (
+        <InventoryCsvMappingModal
+          file={mappingFile}
+          isOpen={showMappingModal}
+          onClose={() => {
+            setShowMappingModal(false);
+            setMappingFile(null);
+          }}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 }
