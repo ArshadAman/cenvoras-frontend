@@ -253,12 +253,6 @@ export default function LandingPage() {
       {/* 1. Hero Section with Interactive 3D Canvas */}
       <section className="relative z-10 pt-32 sm:pt-40 pb-16 sm:pb-24 px-6 text-center">
         <div className="max-w-5xl mx-auto">
-          {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-300 text-xs font-semibold mb-6 shadow-md backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Built for Indian Businesses & GST Precision
-          </div>
-
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.1] max-w-4xl mx-auto">
             Fast, modern GST billing & stock management you actually own.
           </h1>
@@ -296,11 +290,6 @@ export default function LandingPage() {
 
           {/* Interactive Three.js 3D Floating Prism Modules */}
           <div className="mt-10 sm:mt-14">
-            <div className="text-center mb-2">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                Interactive 3D System Modules (Move Cursor to Tilt)
-              </span>
-            </div>
             <HeroPrismCanvas />
           </div>
 
