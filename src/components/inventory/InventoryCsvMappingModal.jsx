@@ -7,7 +7,7 @@ import InlineProgressBar from '../common/InlineProgressBar';
 // Standard inventory target fields that can be mapped
 const TARGET_FIELDS = [
   { key: 'name', label: 'Product Name', required: true, aliases: ['name', 'product_name', 'item_name', 'product', 'item', 'title', 'description_name'] },
-  { key: 'unit', label: 'Primary Unit', required: true, aliases: ['unit', 'uom', 'unit_of_measure', 'measurement_unit', 'unit_name'] },
+  { key: 'unit', label: 'Primary Unit (optional — defaults to pcs)', required: false, aliases: ['unit', 'uom', 'unit_of_measure', 'measurement_unit', 'unit_name'] },
   { key: 'sale_price', label: 'Sale Price', required: true, aliases: ['sale_price', 'sales_price', 'selling_price', 'mrp', 'rate', 'price', 'retail_price'] },
   { key: 'cost_price', label: 'Cost Price', required: false, aliases: ['cost_price', 'purchase_price', 'cost', 'buying_price', 'purchase_rate'] },
   { key: 'stock', label: 'Opening Stock', required: false, aliases: ['stock', 'opening_stock', 'current_stock', 'qty', 'quantity', 'balance'] },

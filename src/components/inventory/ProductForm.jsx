@@ -42,7 +42,7 @@ const productSchema = Yup.object().shape({
     .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
     .required("Unit is required")
-    .oneOf(UNIT_OPTIONS, "Please select a valid unit"),
+    .max(50, "Unit must be 50 characters or less"),
   secondary_unit: Yup.string()
     .max(20, "Secondary unit must be 20 characters or less")
     .nullable(),
@@ -433,12 +433,24 @@ export default function ProductForm({ product, onClose }) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className={labelClass}>Primary Unit *</label>
-                  <Field as="select" name="unit" className={inputClass}>
-                    {UNIT_OPTIONS.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
-                      </option>
-                    ))}
+                  <Field name="unit">
+                    {({ field }) => (
+                      <>
+                        <input
+                          {...field}
+                          type="text"
+                          list="unit-datalist"
+                          className={inputClass}
+                          placeholder="e.g. pcs, kg, box, nos, tablet…"
+                          autoComplete="off"
+                        />
+                        <datalist id="unit-datalist">
+                          {UNIT_OPTIONS.map((u) => (
+                            <option key={u} value={u} />
+                          ))}
+                        </datalist>
+                      </>
+                    )}
                   </Field>
                   <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
