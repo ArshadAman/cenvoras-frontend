@@ -319,8 +319,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const selectedData = filteredProducts.filter(product => selectedProducts.has(product.id));
     const dataToExport = selectedData.length > 0 ? selectedData : filteredProducts;
     
-    const csvHeaders = ['Name', 'Current Stock', 'Unit', 'Cost Price', 'Sale Price', 'Total Value'];
+    const csvHeaders = ['Item Code', 'Name', 'Current Stock', 'Unit', 'Cost Price', 'Sale Price', 'Total Value'];
     const csvData = dataToExport.map(product => [
+      product.item_code || '',
       product.name,
       product.stock ?? product.current_stock,
       product.unit,
@@ -526,10 +527,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-white drop-shadow-lg">
                             {product.name}
                           </span>
+                          {product.item_code && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20" title={`Item Code: ${product.item_code}`}>
+                              {product.item_code}
+                            </span>
+                          )}
                           {product.is_active === false && (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40">
                               Archived
@@ -670,8 +676,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     className="flex-shrink-0 mt-1.5 rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-lg font-semibold text-white break-words">
-                      {product.name}
+                    <div className="text-lg font-semibold text-white break-words flex items-center gap-2 flex-wrap">
+                      <span>{product.name}</span>
+                      {product.item_code && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20">
+                          {product.item_code}
+                        </span>
+                      )}
                     </div>
                     {product.manufacturer && (
                       <div className="text-xs text-white/60">Mfg: {product.manufacturer}</div>

@@ -6,6 +6,7 @@ import InlineProgressBar from '../common/InlineProgressBar';
 
 // Standard inventory target fields that can be mapped
 const TARGET_FIELDS = [
+  { key: 'item_code', label: 'Item Code / SKU (Unique ID)', required: false, aliases: ['item_code', 'itemcode', 'item_id', 'itemid', 'sku', 'product_code', 'product_id', 'code'] },
   { key: 'name', label: 'Product Name', required: true, aliases: ['name', 'product_name', 'item_name', 'product', 'item', 'title', 'description_name'] },
   { key: 'unit', label: 'Primary Unit (optional — defaults to pcs)', required: false, aliases: ['unit', 'uom', 'unit_of_measure', 'measurement_unit', 'unit_name'] },
   { key: 'sale_price', label: 'Sale Price', required: true, aliases: ['sale_price', 'sales_price', 'selling_price', 'mrp', 'rate', 'price', 'retail_price'] },
@@ -190,16 +191,21 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
         toast.info(result.message);
       } else {
         const createdCount = Number(result?.created_count || 0);
+        const updatedCount = Number(result?.updated_count || 0);
+        const skippedCount = Number(result?.skipped_count || 0);
         const failedCount = Number(result?.failed_count || 0);
 
+        const summaryParts = [];
+        if (createdCount > 0) summaryParts.push(`${createdCount} created`);
+        if (updatedCount > 0) summaryParts.push(`${updatedCount} updated`);
+        if (skippedCount > 0) summaryParts.push(`${skippedCount} unchanged`);
+
+        const summaryText = summaryParts.length > 0 ? summaryParts.join(', ') : 'Processed';
+
         if (failedCount > 0) {
-          if (createdCount > 0) {
-            toast.warn(`Import complete. Created: ${createdCount}, Failed: ${failedCount}`);
-          } else {
-            toast.error(`Import failed. Failed rows: ${failedCount}`);
-          }
-        } else if (createdCount > 0) {
-          toast.success(`Successfully imported ${createdCount} products!`);
+          toast.warn(`Import finished (${summaryText}). Failed rows: ${failedCount}`);
+        } else if (createdCount > 0 || updatedCount > 0 || skippedCount > 0) {
+          toast.success(`Import complete: ${summaryText}!`);
         } else {
           toast.success('CSV upload processed successfully!');
         }

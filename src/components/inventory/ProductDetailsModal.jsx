@@ -76,12 +76,14 @@ export default function ProductDetailsModal({ productId, onClose }) {
                     {product.name}
                   </h2>
                   <div className="flex flex-wrap items-center gap-3 mt-2">
-                    <span className="text-sm font-mono text-cyan-200 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                      SKU: {product.sku}
-                    </span>
+                    {(product.item_code || product.sku) && (
+                      <span className="text-sm font-mono text-cyan-200 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                        Item Code: {product.item_code || product.sku}
+                      </span>
+                    )}
                     {product.barcode && (
-                      <span className="text-sm font-mono text-purple-200 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                        Code: {product.barcode}
+                      <span className="text-sm font-mono text-cyan-200 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                        Barcode: {product.barcode}
                       </span>
                     )}
                   </div>
@@ -99,6 +101,12 @@ export default function ProductDetailsModal({ productId, onClose }) {
                   <div>
                     <h3 className="text-lg font-semibold text-white drop-shadow-md mb-3">Basic Information</h3>
                     <div className="bg-[#111] border border-white/5 shadow-inner p-4 rounded-lg space-y-2">
+                      {product.item_code && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-400">Item Code / SKU:</span>
+                          <span className="text-cyan-300 font-mono font-medium">{product.item_code}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-400">Category:</span>
                         <span>{product.category || 'Uncategorized'}</span>
