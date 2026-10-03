@@ -27,6 +27,9 @@ const STORAGE_PRESETS = [
 ];
 
 const productSchema = Yup.object().shape({
+  item_code: Yup.string()
+    .max(100, "Item code must be 100 characters or less")
+    .nullable(),
   name: Yup.string()
     .required("Product name is required")
     .max(255, "Name must be 255 characters or less"),
@@ -253,6 +256,7 @@ export default function ProductForm({ product, onClose }) {
   });
 
   const initialValues = {
+    item_code: product?.item_code || "",
     name: product?.name || "",
     manufacturer: product?.manufacturer || "",
     description: product?.description || "",
@@ -281,6 +285,7 @@ export default function ProductForm({ product, onClose }) {
     if (values.meta.storage_condition?.trim()) metaData.storage_condition = values.meta.storage_condition;
 
     const productData = {
+      item_code: values.item_code?.trim() || null,
       name: values.name,
       manufacturer: values.manufacturer?.trim() || null,
       description: values.description || null,
@@ -341,7 +346,18 @@ export default function ProductForm({ product, onClose }) {
           {({ isSubmitting, values, setFieldValue }) => (
             <Form className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
               {/* Section 1: Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className={labelClass}>Item Code / SKU</label>
+                  <Field
+                    name="item_code"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. PRD-001 (optional)"
+                  />
+                  <ErrorMessage name="item_code" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
                 <div>
                   <label className={labelClass}>Product Name *</label>
                   <Field
