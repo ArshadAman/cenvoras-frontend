@@ -1276,6 +1276,8 @@ export default function SalesForm({
           tax: isNote ? 0 : (Number(item.tax) || 0),
           manufacturer: isNote ? "" : (item.manufacturer || item.product_detail?.manufacturer || ""),
           isExistingProduct: !isNote && !!productId,
+          id: item.id || null,
+          source_item_id: item.source_item_id || null,
         };
       }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
           const qty = Number(item.quantity) || 1;
@@ -1461,6 +1463,8 @@ export default function SalesForm({
                   product_description: (item.description || item.product_description || "").trim(),
                   discount: itemSettings.show_item_discount ? discount : 0,
                   tax: itemSettings.show_item_tax ? tax : 0,
+                  ...(item.id ? { id: item.id } : {}),
+                  ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                 };
               });
 

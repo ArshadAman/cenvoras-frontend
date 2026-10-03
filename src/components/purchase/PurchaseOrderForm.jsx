@@ -313,6 +313,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({
+              id: item.id,
+              source_item_id: item.source_item_id || null,
               product: item.product_display_name || item.product_name || item.product || "",
               product_id: item.product || null,
               manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
@@ -344,6 +346,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             submitLockRef.current = true;
             try {
                const processedItems = values.items.map(item => ({
+                  ...(item.id ? { id: item.id } : {}),
+                  ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                   product: item.product_id, // PrimaryKeyRelatedField expects ID
                   product_name: item.product,
                   description: (item.description || item.product_description || "").trim(),

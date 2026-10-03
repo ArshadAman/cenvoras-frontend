@@ -13,9 +13,7 @@ const GST_RATES = [
   { value: 0, label: "0% (Exempt / Nil)" },
   { value: 3, label: "3% (Gold / Precious Metals)" },
   { value: 5, label: "5% (Essential Goods)" },
-  { value: 12, label: "12% (Standard Goods)" },
   { value: 18, label: "18% (Standard Rate)" },
-  { value: 28, label: "28% (Luxury Goods)" },
   { value: 40, label: "40% (Sin / Cess Goods)" },
 ];
 
@@ -35,6 +33,9 @@ const productSchema = Yup.object().shape({
     .max(255, "Name must be 255 characters or less"),
   manufacturer: Yup.string()
     .max(255, "Manufacturer must be 255 characters or less")
+    .nullable(),
+  internal_reference: Yup.string()
+    .max(100, "Internal reference must be 100 characters or less")
     .nullable(),
   description: Yup.string().nullable(),
   tax: Yup.number()
@@ -66,15 +67,13 @@ const productSchema = Yup.object().shape({
       return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
     }),
   stock: Yup.number()
-    .required("Stock is required")
+    .typeError("Stock must be a whole number")
     .integer("Stock must be a whole number")
-    .min(0, "Stock must be positive"),
+    .min(0, "Stock cannot be negative")
+    .required("Stock is required"),
   low_stock_alert: Yup.number()
     .integer("Low stock alert must be a whole number")
     .min(0, "Low stock alert must be positive"),
-  warranty_months: Yup.number()
-    .integer("Warranty must be a whole number")
-    .min(0, "Warranty must be positive"),
   meta: Yup.object().shape({
     expiry_date: Yup.string().nullable(),
     storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
@@ -259,6 +258,7 @@ export default function ProductForm({ product, onClose }) {
     item_code: product?.item_code || "",
     name: product?.name || "",
     manufacturer: product?.manufacturer || "",
+    internal_reference: product?.internal_reference || "",
     description: product?.description || "",
     tax: product?.tax != null && product?.tax !== "" ? Number(product.tax) : 0,
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
@@ -267,9 +267,8 @@ export default function ProductForm({ product, onClose }) {
     conversion_factor: product?.conversion_factor || 1,
     cost_price: product?.cost_price ?? product?.price ?? product?.purchase_price ?? product?.unit_price ?? "",
     sale_price: product?.sale_price ?? "",
-    stock: product?.stock || product?.current_stock || "",
+    stock: product?.stock != null ? product.stock : 0,
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
-    warranty_months: product?.warranty_months || 0,
     meta: {
       barcode: product?.barcode || product?.meta?.barcode || "",
       expiry_date: product?.meta?.expiry_date || "",
@@ -288,6 +287,7 @@ export default function ProductForm({ product, onClose }) {
       item_code: values.item_code?.trim() || null,
       name: values.name,
       manufacturer: values.manufacturer?.trim() || null,
+      internal_reference: values.internal_reference?.trim() || null,
       description: values.description || null,
       tax: values.tax ? parseFloat(values.tax) : 0,
       hsn_sac_code: values.hsn_sac_code || null,
@@ -296,9 +296,8 @@ export default function ProductForm({ product, onClose }) {
       conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
       cost_price: values.cost_price,
       sale_price: values.sale_price,
-      stock: parseInt(values.stock),
+      stock: values.stock === "" || values.stock == null ? 0 : parseInt(values.stock, 10),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
-      warranty_months: parseInt(values.warranty_months) || 0,
       meta: metaData,
     };
 
@@ -309,6 +308,15 @@ export default function ProductForm({ product, onClose }) {
     }
     setSubmitting(false);
   };
+
+  const activeGstRates = React.useMemo(() => {
+    const rates = [...GST_RATES];
+    const currentTax = product?.tax != null ? Number(product.tax) : null;
+    if (currentTax !== null && !rates.some((r) => r.value === currentTax)) {
+      rates.push({ value: currentTax, label: `${currentTax}% (Legacy Rate)` });
+    }
+    return rates;
+  }, [product?.tax]);
 
   const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
   const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
@@ -400,7 +408,7 @@ export default function ProductForm({ product, onClose }) {
                     name="tax"
                     className={inputClass}
                   >
-                    {GST_RATES.map((rate) => (
+                    {activeGstRates.map((rate) => (
                       <option key={rate.value} value={rate.value}>
                         {rate.label}
                       </option>
@@ -435,13 +443,24 @@ export default function ProductForm({ product, onClose }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Expiry Date (Optional)</label>
+                  <label className={labelClass}>Expiry Date/Warranty (Optional)</label>
                   <FormattedDateInput
                     value={values.meta.expiry_date}
                     onChange={(val) => setFieldValue("meta.expiry_date", val)}
                     className={inputClass}
                   />
                   <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-1" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Internal Reference</label>
+                  <Field
+                    name="internal_reference"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. REF-2026-X, BATCH-A01"
+                  />
+                  <ErrorMessage name="internal_reference" component="div" className="text-red-400 text-xs mt-1" />
                 </div>
               </div>
 
@@ -521,7 +540,7 @@ export default function ProductForm({ product, onClose }) {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Opening Stock *</label>
+                  <label className={labelClass}>Stock *</label>
                   <Field
                     name="stock"
                     type="number"
@@ -533,7 +552,7 @@ export default function ProductForm({ product, onClose }) {
                 </div>
               </div>
 
-              {/* Section 4: Alerts & Warranty */}
+              {/* Section 4: Alerts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className={labelClass}>Low Stock Alert</label>
@@ -546,19 +565,6 @@ export default function ProductForm({ product, onClose }) {
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Get notified when stock falls below this level.
-                  </p>
-                </div>
-                <div>
-                  <label className={labelClass}>Warranty (Months)</label>
-                  <Field
-                    name="warranty_months"
-                    type="number"
-                    min="0"
-                    className={inputClass}
-                    placeholder="e.g. 12"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Warranty duration from sale date. 0 = no warranty.
                   </p>
                 </div>
               </div>

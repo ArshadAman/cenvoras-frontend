@@ -456,6 +456,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
               isExistingProduct: !!(item.product),
+              source_item_id: item.source_item_id || null,
             })) || [{
               product: "",
               product_id: null,
@@ -480,6 +481,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             try {
                 const processedItems = values.items.map(item => ({
                    ...(item.id ? { id: item.id } : {}),
+                   ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                    product: item.product_id || item.product, // UUID or Name
                    description: (item.description || item.product_description || "").trim(),
                    product_description: (item.description || item.product_description || "").trim(),
