@@ -170,6 +170,8 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
             vehicle_number: editData?.vehicle_number || "", // Extra field for DC
             notes: editData?.notes || "",
             items: editData?.items?.map(item => ({
+              id: item.id,
+              source_item_id: item.source_item_id || null,
               product: item.product_name || item.product || "",
               product_id: item.product || null,
               manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
@@ -188,6 +190,8 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                 vehicle_number: values.vehicle_number,
                 notes: values.notes,
                 items: values.items.map(item => ({
+                    ...(item.id ? { id: item.id } : {}),
+                    ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                     product: item.product_id || item.product,
                     description: (item.description || item.product_description || "").trim(),
                     product_description: (item.description || item.product_description || "").trim(),
