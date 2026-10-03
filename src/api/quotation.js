@@ -18,12 +18,12 @@ export const deleteQuotation = (id) =>
 export const getNextQuotationNumber = (prefix = 'QT-') =>
   api.get(`/billing/quotations/next-number/?prefix=${prefix}`).then((res) => res.data);
 
-export const convertQuotationToSalesOrder = (id, approvedItemIds = []) =>
-  api
-    .post(`/billing/quotations/${id}/convert-to-sales-order/`, {
-      approved_item_ids: approvedItemIds,
-    })
+export const convertQuotationToSalesOrder = (id, payload = {}) => {
+  const body = Array.isArray(payload) ? { approved_item_ids: payload } : payload;
+  return api
+    .post(`/billing/quotations/${id}/convert-to-sales-order/`, body)
     .then((res) => res.data);
+};
 
 export const downloadQuotationPDF = (id, payload) => {
   if (payload) {

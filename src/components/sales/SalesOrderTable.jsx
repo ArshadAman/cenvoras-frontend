@@ -56,6 +56,7 @@ export default function SalesOrderTable({
   const filteredOrders = orders
     .filter(order => 
       order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
+      order.po_number?.toLowerCase().includes(search.toLowerCase()) ||
       (order.customer_display_name || order.customer_name || '')?.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
@@ -157,12 +158,24 @@ export default function SalesOrderTable({
                             : 'bg-transparent border-white/5 hover:bg-white/5'
                         }`}
                       >
-                          <td className="px-6 py-4 whitespace-nowrap text-white font-medium flex items-center gap-2">
-                            <span>{order.order_number}</span>
-                            {isHighlighted && (
-                              <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-purple-500/30 text-purple-200 border border-purple-400/40 rounded-full">
-                                Referenced
-                              </span>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-white font-medium flex items-center gap-2">
+                              <span>{order.order_number}</span>
+                              {isHighlighted && (
+                                <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-purple-500/30 text-purple-200 border border-purple-400/40 rounded-full">
+                                  Referenced
+                                </span>
+                              )}
+                            </div>
+                            {order.po_number && (
+                              <div className="text-[11px] text-amber-400/90 font-mono mt-0.5 flex items-center gap-1.5">
+                                <span className="font-semibold">PO: {order.po_number}</span>
+                                {order.po_date && (
+                                  <span className="text-gray-400 font-normal">
+                                    ({format(new Date(order.po_date), 'dd/MM/yyyy')})
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-gray-400">{order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}</td>
@@ -224,7 +237,17 @@ export default function SalesOrderTable({
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
+                    {order.po_number && (
+                      <div className="text-[10px] text-amber-400/90 font-mono mt-0.5 flex items-center gap-1">
+                        <span className="font-semibold">PO: {order.po_number}</span>
+                        {order.po_date && (
+                          <span className="text-gray-400 font-normal">
+                            ({format(new Date(order.po_date), 'dd/MM/yyyy')})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="text-[10px] text-white/50 uppercase tracking-widest font-black mt-0.5">
                       {order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}
                     </div>
                   </div>
