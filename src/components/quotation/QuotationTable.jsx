@@ -83,7 +83,7 @@ export default function QuotationTable({ onEdit, onView }) {
   });
 
   const convertMutation = useMutation({
-    mutationFn: ({ id, approvedItemIds }) => convertQuotationToSalesOrder(id, approvedItemIds),
+    mutationFn: ({ id, payload, approvedItemIds }) => convertQuotationToSalesOrder(id, payload || approvedItemIds),
     onSuccess: (resp) => {
       toast.success(`Converted to Sales Order ${resp.sales_order_number}`);
       setConvertTarget(null);
@@ -309,9 +309,9 @@ export default function QuotationTable({ onEdit, onView }) {
         quotation={convertTarget}
         onClose={() => setConvertTarget(null)}
         isSubmitting={convertMutation.isPending}
-        onConfirm={(approvedItemIds) => {
+        onConfirm={(payload) => {
           if (!convertTarget) return;
-          convertMutation.mutate({ id: convertTarget.id, approvedItemIds });
+          convertMutation.mutate({ id: convertTarget.id, payload });
         }}
       />
     </div>
