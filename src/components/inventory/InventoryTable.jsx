@@ -484,7 +484,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 />
               </th>
               <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Product</th>
-              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Stock</th>
+              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Quantity</th>
+              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Unit</th>
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Cost Price</th>
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Sale Price</th>
               <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Value</th>
@@ -500,7 +501,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   .map((_, i) => (
                     <tr key={i}>
                       <td
-                        colSpan={9}
+                        colSpan={10}
                         className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
                       />
                     </tr>
@@ -542,14 +543,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         )}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <div className="font-medium text-white drop-shadow-lg">
-                            {parseFloat(product.stock ?? product.current_stock ?? 0)} {product.unit}
+                        <div className="font-semibold text-white drop-shadow-lg">
+                          {parseFloat(product.stock ?? product.current_stock ?? 0).toLocaleString()}
                         </div>
-                          {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
-                            <div className="text-xs text-white/60 drop-shadow-md">
-                              Min: {product.low_stock_alert ?? product.min_stock_level} {product.unit}
-                            </div>
-                          )}
+                        {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
+                          <div className="text-[11px] text-amber-300/80 drop-shadow-md mt-0.5">
+                            Min: {parseFloat(product.low_stock_alert ?? product.min_stock_level).toLocaleString()}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span 
+                          className="inline-block px-2.5 py-0.5 rounded-md text-xs font-medium text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 font-mono max-w-[130px] truncate"
+                          title={product.unit || 'pcs'}
+                        >
+                          {product.unit || 'pcs'}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
                         {getCurrencySymbol()}{costPrice.toFixed(2)}
@@ -664,7 +673,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     <div className="text-lg font-semibold text-white break-words">
                       {product.name}
                     </div>
-                    <div className="text-sm text-white/70">Unit: {product.unit || 'pcs'}</div>
+                    {product.manufacturer && (
+                      <div className="text-xs text-white/60">Mfg: {product.manufacturer}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -672,20 +683,34 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               {/* Card Content */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Category:</span>
+                  <span className="text-sm text-white/70">Category / HSN:</span>
                   <span className="text-sm font-medium text-white">{product.hsn_sac_code || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Stock:</span>
-                  <span className={`text-sm font-medium ${
-                    isLowStock
-                      ? 'text-red-400' 
-                      : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
-                        ? 'text-yellow-400' 
-                        : 'text-green-400'
-                  }`}>
-                    {currentStock} {product.unit}
+                  <span className="text-sm text-white/70">Quantity:</span>
+                  <div className="text-right">
+                    <span className={`text-sm font-semibold ${
+                      isLowStock
+                        ? 'text-red-400' 
+                        : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
+                          ? 'text-yellow-400' 
+                          : 'text-green-400'
+                    }`}>
+                      {currentStock.toLocaleString()}
+                    </span>
+                    {lowStockLevel > 0 && (
+                      <div className="text-[11px] text-amber-300/80">
+                        Min: {lowStockLevel.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-white/70">Unit:</span>
+                  <span className="px-2 py-0.5 rounded text-xs font-medium text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 font-mono">
+                    {product.unit || 'pcs'}
                   </span>
                 </div>
 
