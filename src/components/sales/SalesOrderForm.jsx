@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -25,6 +25,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.price ?? 0);
     const quantity = values.items[idx]?.quantity || 1;
@@ -71,9 +72,17 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
               autoComplete="off"
             />
+            {meta.touched && meta.error && (
+              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+            )}
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
+            )}
             <textarea
               rows={1}
               value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
@@ -89,11 +98,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
               }}
               placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-purple-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-cyan-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
             />
-            {meta.touched && meta.error && (
-              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
-            )}
           </div>
         )}
       </Field>
@@ -104,7 +110,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               key={product.id}
               className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
                 index === selectedIndex 
-                  ? 'bg-purple-500/20 text-white' 
+                  ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
               onClick={() => selectProduct(product)}
@@ -207,7 +213,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 }
               }}
               placeholder="Customer name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
             />
             {meta.touched && meta.error && (
               <div className="text-red-400 text-sm mt-1">{meta.error}</div>
@@ -222,7 +228,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               key={customer.id}
               className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-purple-500/20 text-white' 
+                  ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
               onClick={() => selectCustomer(customer)}
@@ -243,7 +249,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
             <div
               className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
-                  ? 'bg-purple-500/20 text-white' 
+                  ? 'bg-cyan-500/20 text-white' 
                   : 'text-gray-300 hover:bg-white/5 hover:text-white'
               }`}
               onClick={() => {
@@ -251,7 +257,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 setShowDropdown(false);
               }}
             >
-              <div className="font-medium text-purple-400 flex items-center gap-2">
+              <div className="font-medium text-cyan-400 flex items-center gap-2">
                 <span>➕</span> Add New Customer: "{inputValue}"
               </div>
             </div>
@@ -263,7 +269,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       {showNewCustomerModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
-          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-purple-900/30 animate-fade-up overflow-hidden">
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-cyan-900/30 animate-fade-up overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <h3 className="text-lg font-bold text-white">Add New Customer</h3>
@@ -285,7 +291,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 <input
                   type="text"
                   defaultValue={inputValue}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                   id="new-customer-name"
                   placeholder="Customer name"
                 />
@@ -294,7 +300,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
                 <input
                   type="email"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                   id="new-customer-email"
                   placeholder="email@example.com"
                 />
@@ -303,7 +309,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
                 <input
                   type="tel"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
                   id="new-customer-phone"
                   placeholder="+91 98765 43210"
                 />
@@ -332,7 +338,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   setInputValue(name);
                   setShowNewCustomerModal(false);
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white rounded-lg transition-all shadow-lg shadow-purple-900/30 text-sm font-medium"
+                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-lg transition-all shadow-lg shadow-cyan-900/30 text-sm font-medium"
               >
                 Add Customer
               </button>
@@ -365,6 +371,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const submitLockRef = useRef(false);
+  const [showManufacturer, setShowManufacturer] = useState(true);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   
   const { data: productsResult } = useQuery({ 
       queryKey: ["products"], 
@@ -409,7 +417,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up border border-white/10 bg-[#111]">
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
         <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
@@ -438,6 +446,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
               id: item.id,
               product: item.product_name || item.product || "",
               product_id: item.product || null,
+              manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
               description: item.description || item.product_description || "",
               product_description: item.description || item.product_description || "",
               quantity: item.quantity || "",
@@ -450,6 +459,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             })) || [{
               product: "",
               product_id: null,
+              manufacturer: "",
               description: "",
               product_description: "",
               quantity: "",
@@ -525,6 +535,35 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                         </div>
                    </div>
 
+                   {/* Items Header */}
+                   <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                     <h3 className="text-base font-bold text-white">Order Items</h3>
+                     <div className="relative">
+                       <button
+                         type="button"
+                         onClick={() => setShowColumnPicker((prev) => !prev)}
+                         className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                       >
+                         Columns
+                       </button>
+
+                       {showColumnPicker && (
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
+                           <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                             <input
+                               type="checkbox"
+                               checked={showManufacturer}
+                               onChange={() => setShowManufacturer((prev) => !prev)}
+                               className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                             />
+                             <span>Manufacturer</span>
+                           </label>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+
                    {/* Items */}
                    <FieldArray name="items">
                     {({ push, remove }) => (
@@ -534,7 +573,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      {/* Row 1: Product (Full width on mobile, col-span-4 on desktop) */}
                                      <div className="lg:col-span-4">
                                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
-                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                          {isEdit && item.id && (
                                              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
@@ -542,7 +581,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                                          : (item.dispatched_quantity || 0) > 0
                                                          ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                                         : "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                                         : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                                                  }`}>
                                                      {(item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
                                                          ? "Fulfilled"
@@ -566,7 +605,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
                                          <div>
                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quantity</label>
-                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-center" 
+                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all text-sm text-center" 
                                                  onChange={e => {
                                                      const qty = e.target.value;
                                                      setFieldValue(`items.${index}.quantity`, qty);
@@ -576,7 +615,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                          </div>
                                          <div>
                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
-                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-right font-mono"
+                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all text-sm text-right font-mono"
                                                  onChange={e => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -608,7 +647,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      </div>
                                  </div>
                              ))}
-                            <button type="button" onClick={() => push({ product: "", product_id: null, description: "", product_description: "", quantity: "", dispatched_quantity: 0, pending_quantity: 0, price: "", amount: 0, unit: "pcs", isExistingProduct: false })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: "", dispatched_quantity: 0, pending_quantity: 0, price: "", amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium">
                                 + Add Item
                             </button>
                         </div>

@@ -807,7 +807,7 @@ export default function SalesTable({
               </tr>
             ) : (
               filteredInvoices.map((invoice) => {
-                const compactRowStyle = { paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 };
+                const compactRowStyle = { paddingTop: '1.0px', paddingBottom: '1.0px', margin: 0, lineHeight: 1.25 };
                 return (
               <tr key={invoice.id} style={compactRowStyle} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
                 <td style={compactRowStyle} className="px-3 whitespace-nowrap">

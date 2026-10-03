@@ -20,7 +20,7 @@ import DateInputField from "../common/DateInputField";
 import useEscKey from "../../hooks/useEscStack";
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, onCreateNewProduct, onSelectProduct }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -89,6 +89,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     const initialPrice = Number(product.sale_price ?? product.price ?? 0) || 0;
     setFieldValue(`items.${idx}.price`, initialPrice);
@@ -190,6 +191,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             />
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+            )}
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
             )}
             {showDescription && (
               <div className="mt-1">
@@ -623,6 +629,7 @@ const DEFAULT_ITEM_SETTINGS = {
   show_item_discount: true,
   show_item_tax: true,
   show_item_storage_condition: false,
+  show_item_manufacturer: true,
 };
 
 export default function SalesForm({
@@ -857,6 +864,9 @@ export default function SalesForm({
   };
 
   const handleProductSelected = (idx, prod, setFieldValue, currentValues) => {
+    if (prod?.manufacturer) {
+      setFieldValue(`items.${idx}.manufacturer`, prod.manufacturer);
+    }
     const qty = parseFloat(currentValues.items[idx]?.quantity) || 1;
     const scheme = findMatchingScheme(prod.id, qty);
     if (scheme && scheme.scheme_type === 'bogo') {
@@ -1264,6 +1274,7 @@ export default function SalesForm({
           hsn_sac_code: isNote ? "" : (item.hsn_sac_code || item.hsn_code || ""),
           discount: isNote ? 0 : (Number(item.discount) || 0),
           tax: isNote ? 0 : (Number(item.tax) || 0),
+          manufacturer: isNote ? "" : (item.manufacturer || item.product_detail?.manufacturer || ""),
           isExistingProduct: !isNote && !!productId,
         };
       }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
@@ -1284,6 +1295,7 @@ export default function SalesForm({
               hsn_sac_code: "",
               discount: 0,
               tax: 0,
+              manufacturer: item.manufacturer || "",
               isExistingProduct: false,
           };
       }) : [{
@@ -1301,6 +1313,7 @@ export default function SalesForm({
         hsn_sac_code: "",
         discount: 0,
         tax: 0,
+        manufacturer: "",
         isExistingProduct: false,
       }],
     };
@@ -1576,6 +1589,84 @@ export default function SalesForm({
               >
                 <div className="flex-1 overflow-y-auto p-0">
                   <div className="p-6 sm:p-8 space-y-8">
+                  {/* Top Document Meta Row: Invoice #, Date, Due Date, PO #, PO Date */}
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                    <div className="flex items-center gap-2 pb-3 mb-4 border-b border-white/5">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">
+                        {isDeliveryChallan ? 'Challan Details' : isQuotation ? 'Quotation Details' : 'Invoice Details'}
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {/* Document / Invoice Number */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                          {isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
+                        </label>
+                        <Field
+                          name="invoice_number"
+                          type="text"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          data-1p-ignore="true"
+                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
+                          placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
+                        />
+                        <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
+                      </div>
+
+                      {/* Document / Invoice Date */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                          {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
+                        </label>
+                        <DateInputField
+                          name="invoice_date"
+                          value={values.invoice_date}
+                          onChange={(e) => setFieldValue('invoice_date', e.target.value)}
+                          placeholder="DD/MM/YYYY"
+                        />
+                        <ErrorMessage name="invoice_date" component="div" className="text-red-400 text-xs mt-1" />
+                      </div>
+
+                      {/* Due Date */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                          Due Date
+                        </label>
+                        <DateInputField
+                          name="due_date"
+                          value={values.due_date}
+                          onChange={(e) => setFieldValue('due_date', e.target.value)}
+                          placeholder="DD/MM/YYYY"
+                        />
+                      </div>
+
+                      {/* PO Number */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Number</label>
+                        <Field
+                          name="po_number"
+                          type="text"
+                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
+                          placeholder="e.g. PO-8921"
+                        />
+                      </div>
+
+                      {/* PO Date */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
+                        <DateInputField
+                          name="po_date"
+                          value={values.po_date}
+                          onChange={(e) => setFieldValue('po_date', e.target.value)}
+                          placeholder="DD/MM/YYYY"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Header Columns: Billing Details & Shipping Details */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Column 1: Billing Details */}
@@ -1585,7 +1676,7 @@ export default function SalesForm({
                           <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
                           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Billing Details</h3>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-mono">CUSTOMER & INVOICE</span>
+                        <span className="text-[10px] text-gray-500 font-mono">CUSTOMER</span>
                       </div>
 
                       {/* Customer Autocomplete */}
@@ -1619,51 +1710,6 @@ export default function SalesForm({
                             </div>
                           </div>
                         )}
-                      </div>
-
-                      {/* Invoice Number, Invoice Date & Due Date */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                            {isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
-                          </label>
-                          <Field
-                            name="invoice_number"
-                            type="text"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            spellCheck="false"
-                            data-1p-ignore="true"
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
-                            placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
-                          />
-                          <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                            {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
-                          </label>
-                          <DateInputField
-                            name="invoice_date"
-                            value={values.invoice_date}
-                            onChange={(e) => setFieldValue('invoice_date', e.target.value)}
-                            placeholder="DD/MM/YYYY"
-                          />
-                          <ErrorMessage name="invoice_date" component="div" className="text-red-400 text-xs mt-1" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                          Due Date
-                        </label>
-                        <DateInputField
-                          name="due_date"
-                          value={values.due_date}
-                          onChange={(e) => setFieldValue('due_date', e.target.value)}
-                          placeholder="DD/MM/YYYY"
-                        />
                       </div>
                     </div>
 
@@ -1720,30 +1766,6 @@ export default function SalesForm({
                           ))}
                         </Field>
                       </div>
-
-                      {/* Purchase Order Details */}
-                      {!isQuotation && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Number</label>
-                            <Field
-                              name="po_number"
-                              type="text"
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
-                              placeholder="e.g. PO-8921"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
-                            <DateInputField
-                              name="po_date"
-                              value={values.po_date}
-                              onChange={(e) => setFieldValue('po_date', e.target.value)}
-                              placeholder="DD/MM/YYYY"
-                            />
-                          </div>
-                        </div>
-                      )}
 
                       {/* Transport & Vehicle Details if Delivery Challan */}
                       {isDeliveryChallan && (
@@ -1868,6 +1890,7 @@ export default function SalesForm({
                           <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
                           {[
                             ["show_item_description", "Description"],
+                            ["show_item_manufacturer", "Manufacturer"],
                             ["show_item_hsn", "HSN/SAC"],
                             ["show_item_batch", "Batch"],
                             ["show_item_free_quantity", "Free Qty"],
@@ -2149,6 +2172,7 @@ export default function SalesForm({
                                                    products={products}
                                                    onInputChange={() => handleAutoAddRow(index)}
                                                    showDescription={itemSettings.show_item_description}
+                                                   showManufacturer={itemSettings.show_item_manufacturer}
                                                    onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                    onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                                  />
@@ -2465,6 +2489,7 @@ export default function SalesForm({
                                             products={products}
                                             onInputChange={() => handleAutoAddRow(index)}
                                             showDescription={itemSettings.show_item_description}
+                                            showManufacturer={itemSettings.show_item_manufacturer}
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                             onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                           />
