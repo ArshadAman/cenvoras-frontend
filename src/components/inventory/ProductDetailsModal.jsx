@@ -117,6 +117,12 @@ export default function ProductDetailsModal({ productId, onClose }) {
                           <span className="text-white font-medium">{product.manufacturer}</span>
                         </div>
                       )}
+                      {product.internal_reference && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-400">Internal Reference:</span>
+                          <span className="text-cyan-300 font-mono font-medium">{product.internal_reference}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-400">GST Rate:</span>
                         <span>{product.tax ? `${product.tax}%` : '0%'}</span>
@@ -141,7 +147,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
                       )}
                       {product.meta?.expiry_date && (
                         <div className="flex justify-between">
-                          <span className="font-medium text-gray-400">Expiry Date:</span>
+                          <span className="font-medium text-gray-400">Expiry Date/Warranty:</span>
                           <span className="text-amber-300 font-mono">
                             {(() => {
                               const parts = String(product.meta.expiry_date).split('-');

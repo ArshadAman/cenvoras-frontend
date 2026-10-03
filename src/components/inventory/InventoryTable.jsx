@@ -319,9 +319,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const selectedData = filteredProducts.filter(product => selectedProducts.has(product.id));
     const dataToExport = selectedData.length > 0 ? selectedData : filteredProducts;
     
-    const csvHeaders = ['Item Code', 'Name', 'Current Stock', 'Unit', 'Cost Price', 'Sale Price', 'Total Value'];
+    const csvHeaders = ['Item Code', 'Internal Reference', 'Name', 'Current Stock', 'Unit', 'Cost Price', 'Sale Price', 'Total Value'];
     const csvData = dataToExport.map(product => [
       product.item_code || '',
+      product.internal_reference || '',
       product.name,
       product.stock ?? product.current_stock,
       product.unit,
@@ -534,6 +535,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                           {product.item_code && (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20" title={`Item Code: ${product.item_code}`}>
                               {product.item_code}
+                            </span>
+                          )}
+                          {product.internal_reference && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-teal-300 bg-teal-500/10 border border-teal-500/20" title={`Internal Ref: ${product.internal_reference}`}>
+                              Ref: {product.internal_reference}
                             </span>
                           )}
                           {product.is_active === false && (
