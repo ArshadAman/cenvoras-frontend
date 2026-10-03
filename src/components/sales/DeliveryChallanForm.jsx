@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Reuse ProductAutocomplete and CustomerAutocomplete from SalesOrderForm logic (duplicated for now for independence)
 // Ideally these should be shared components
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -22,6 +22,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.description`, product.description || "");
     setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
@@ -61,6 +62,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm"
               autoComplete="off"
             />
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
+            )}
             <textarea
               rows={1}
               value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
@@ -113,6 +119,8 @@ const DeliveryChallanSchema = Yup.object().shape({
 export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
+  const [showManufacturer, setShowManufacturer] = useState(true);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   
   const { data: productsResult } = useQuery({ 
       queryKey: ["products"], 
@@ -164,11 +172,12 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
             items: editData?.items?.map(item => ({
               product: item.product_name || item.product || "",
               product_id: item.product || null,
+              manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
               description: item.description || item.product_description || "",
               product_description: item.description || item.product_description || "",
               quantity: item.quantity || 1,
               unit: item.unit || "pcs",
-            })) || [{ product: "", product_id: null, description: "", product_description: "", quantity: 1, unit: "pcs" }]
+            })) || [{ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, unit: "pcs" }]
           }}
           validationSchema={DeliveryChallanSchema}
           onSubmit={async (values, { setSubmitting }) => {
@@ -217,6 +226,35 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                         </div>
                    </div>
 
+                   {/* Items Header */}
+                   <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                     <h3 className="text-base font-bold text-white">Challan Items</h3>
+                     <div className="relative">
+                       <button
+                         type="button"
+                         onClick={() => setShowColumnPicker((prev) => !prev)}
+                         className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                       >
+                         Columns
+                       </button>
+
+                       {showColumnPicker && (
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
+                           <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                             <input
+                               type="checkbox"
+                               checked={showManufacturer}
+                               onChange={() => setShowManufacturer((prev) => !prev)}
+                               className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                             />
+                             <span>Manufacturer</span>
+                           </label>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+
                    <FieldArray name="items">
                     {({ push, remove }) => (
                         <div className="space-y-4">
@@ -224,7 +262,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                                 <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
                                     <div className="col-span-6">
                                         <label className="block text-xs text-gray-400 mb-1">Product</label>
-                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                     </div>
                                     <div className="col-span-4">
                                         <label className="block text-xs text-gray-400 mb-1">Qty</label>
@@ -235,7 +273,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", product_id: null, description: "", product_description: "", quantity: 1, unit: "pcs" })} className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, unit: "pcs" })} className="text-blue-400 hover:text-blue-300 text-sm font-medium">
                                 + Add Item
                             </button>
                         </div>

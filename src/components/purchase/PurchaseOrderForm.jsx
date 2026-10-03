@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -23,6 +23,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.purchase_price ?? product.price ?? 0);
     setFieldValue(`items.${idx}.description`, product.description || "");
@@ -93,6 +94,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             />
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+            )}
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
             )}
           </div>
         )}
@@ -231,6 +237,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const submitLockRef = useRef(false);
+  const [showManufacturer, setShowManufacturer] = useState(true);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   
   const { data: productsResult } = useQuery({ 
       queryKey: ["products"], 
@@ -307,6 +315,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             items: editData?.items?.map(item => ({
               product: item.product_display_name || item.product_name || item.product || "",
               product_id: item.product || null,
+              manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
               description: item.description || item.product_description || "",
               product_description: item.description || item.product_description || "",
               quantity: item.quantity || 1,
@@ -317,6 +326,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             })) || [{
               product: "",
               product_id: null,
+              manufacturer: "",
               description: "",
               product_description: "",
               quantity: 1,
@@ -390,6 +400,35 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                         </div>
                    </div>
 
+                   {/* Items Header */}
+                   <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                     <h3 className="text-base font-bold text-white">Order Items</h3>
+                     <div className="relative">
+                       <button
+                         type="button"
+                         onClick={() => setShowColumnPicker((prev) => !prev)}
+                         className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                       >
+                         Columns
+                       </button>
+
+                       {showColumnPicker && (
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
+                           <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                             <input
+                               type="checkbox"
+                               checked={showManufacturer}
+                               onChange={() => setShowManufacturer((prev) => !prev)}
+                               className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                             />
+                             <span>Manufacturer</span>
+                           </label>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+
                    {/* Items */}
                    <FieldArray name="items">
                     {({ push, remove }) => (
@@ -398,7 +437,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                                 <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
                                     <div className="col-span-4">
                                         <label className="block text-xs text-gray-400 mb-1">Product</label>
-                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                     </div>
                                     <div className="col-span-2">
                                         <label className="block text-xs text-gray-400 mb-1">Qty</label>
@@ -433,7 +472,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", product_id: null, description: "", product_description: "", quantity: 1, price: 0, amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, price: 0, amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
                                 + Add Item
                             </button>
                         </div>

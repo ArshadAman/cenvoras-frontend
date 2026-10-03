@@ -78,7 +78,7 @@ const parseErrorDetails = (details) => {
 };
 
 // Product Autocomplete Component - Dark Theme
-function ProductAutocomplete({ idx, values, setFieldValue, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, products, showManufacturer = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product_name || "");
@@ -92,6 +92,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product_name`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.purchase_price`, product.purchase_price ?? product.price ?? 0);
     setFieldValue(`items.${idx}.hsn_code`, product.hsn_code || product.hsn_sac_code || "");
@@ -146,6 +147,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, products }) {
               className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
             />
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
+            )}
             <textarea
               rows={1}
               value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
@@ -440,6 +446,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             items: bill?.items?.map(item => ({
               product_name: item.product_detail?.name || item.product_name || "",
               product_id: item.product_detail?.id || item.product_id || null,
+              manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
               description: item.description || item.product_description || item.product_detail?.description || "",
               product_description: item.description || item.product_description || item.product_detail?.description || "",
               quantity: item.quantity || 1,
@@ -458,6 +465,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
             })) || [{
               product_name: "",
               product_id: null,
+              manufacturer: "",
               description: "",
               product_description: "",
               quantity: 1,
@@ -737,8 +745,34 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
                     <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">Itemized Bill</h3>
                     <div className="h-px w-20 bg-gradient-to-r from-white/20 to-transparent"></div>
                   </div>
-                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                    {values.items.length} {values.items.length === 1 ? 'Item' : 'Items'} Listed
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowColumnPicker((prev) => !prev)}
+                        className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                      >
+                        Columns
+                      </button>
+
+                      {showColumnPicker && (
+                        <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
+                          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                          <label className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={showManufacturer}
+                              onChange={() => setShowManufacturer((prev) => !prev)}
+                              className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                            />
+                            <span>Manufacturer</span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest hidden sm:block">
+                      {values.items.length} {values.items.length === 1 ? 'Item' : 'Items'} Listed
+                    </div>
                   </div>
                 </div>
 
@@ -889,7 +923,7 @@ export default function PurchaseForm({ bill, onClose, onSubmit }) {
   );
 }
 
-function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAddCustomUnit, products }) {
+function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAddCustomUnit, products, showManufacturer = true }) {
   const quantity = Number(item.quantity) || 0;
   const price = Number(item.purchase_price) || 0;
   const discount = Number(item.discount) || 0;
@@ -906,7 +940,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAd
       <div className="md:col-span-3 space-y-2.5">
          <div className="relative">
             <label className="block text-[9px] font-black text-gray-600 mb-1.5 md:hidden uppercase tracking-widest">Product</label>
-            <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} products={products} />
+            <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
          </div>
          <div className="flex items-center gap-2">
             <Field name={`items.${idx}.hsn_code`}>
@@ -918,7 +952,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAd
                     />
                 )}
             </Field>
-            <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-tighter border ${item.isExistingProduct ? "bg-cyan-500/5 border-cyan-500/10 text-cyan-500/50" : "bg-purple-500/5 border-purple-500/10 text-purple-500/50"}`}>
+            <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-tighter border ${item.isExistingProduct ? "bg-cyan-500/5 border-cyan-500/10 text-cyan-500/50" : "bg-emerald-500/5 border-emerald-500/10 text-emerald-500/50"}`}>
                {item.isExistingProduct ? "Master" : "New"}
             </div>
          </div>
