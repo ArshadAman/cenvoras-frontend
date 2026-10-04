@@ -335,7 +335,7 @@ const PurchaseSchema = Yup.object().shape({
   ).min(1),
 });
 
-export default function PurchaseForm({ bill, onClose, onSubmit }) {
+export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit }) {
   const queryClient = useQueryClient();
   const isEdit = !!bill;
   const [availableUnits, setAvailableUnits] = useState(getAllUnits);
