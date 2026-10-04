@@ -361,6 +361,8 @@ export default function SalesTable({
         
         // Invalidate queries to refresh the data
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+        queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+        queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
         
         toast.success(`Successfully deleted ${selectedInvoices.size} sales invoices!`);
         setSelectedInvoices(new Set());

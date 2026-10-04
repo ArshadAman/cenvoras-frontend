@@ -14,6 +14,8 @@ export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
     onSuccess: () => {
       toast.success("Sales invoice deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+      queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
       onClose();
     },
     onError: (error) => {
