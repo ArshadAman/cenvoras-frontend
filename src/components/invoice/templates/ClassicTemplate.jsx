@@ -434,6 +434,11 @@ const InvoicePreview = forwardRef(({
                     </td>
                     <td className="border align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                      {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                        <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                          Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                        </div>
+                      )}
                       {desc && (
                         <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-tight font-normal" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
                           {desc}
@@ -574,6 +579,11 @@ const InvoicePreview = forwardRef(({
                           {col.id === 'description' ? (
                             <div>
                               <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                              {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                                <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                                  Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                                </div>
+                              )}
                               {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
                                 <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
                                   {item.description || item.product_description || item.product_detail?.description}

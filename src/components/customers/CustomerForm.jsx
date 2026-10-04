@@ -27,7 +27,7 @@ const customerSchema = Yup.object().shape({
   }),
 });
 
-export default function CustomerForm({ isOpen, onClose, editData = null }) {
+export default function CustomerForm({ isOpen, onClose, editData = null, onSaved = null }) {
   useEscKey(onClose, isOpen, 10);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
@@ -37,6 +37,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success(response?.message || "Customer created successfully!");
+      if (onSaved) onSaved(response?.data || response);
       onClose();
     },
     onError: (error) => {
@@ -49,6 +50,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null }) {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success(response?.message || "Customer updated successfully!");
+      if (onSaved) onSaved(response?.data || response);
       onClose();
     },
     onError: (error) => {

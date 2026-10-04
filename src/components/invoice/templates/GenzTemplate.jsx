@@ -201,6 +201,11 @@ const GenzTemplate = forwardRef(({
                       <td className="align-middle text-gray-800 text-xs text-center" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
                       <td className="align-middle text-gray-800 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                         <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
+                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                          <p className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                          </p>
+                        )}
                         {desc && (
                           <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
@@ -259,6 +264,11 @@ const GenzTemplate = forwardRef(({
                         val = (
                           <div className="py-0">
                             <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
+                            {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                              <p className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                                Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                              </p>
+                            )}
                             {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
                             {desc && (
                               <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>

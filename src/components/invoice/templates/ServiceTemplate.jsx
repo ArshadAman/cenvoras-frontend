@@ -203,6 +203,11 @@ const ServiceTemplate = forwardRef(({
                   <td className="text-[12px] font-medium text-gray-700 align-middle text-center" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
                   <td className="text-[12px] font-medium text-gray-700 align-middle text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                     <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
+                    {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                      <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                        Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                      </div>
+                    )}
                     {desc && (
                       <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                         {desc}
@@ -256,6 +261,11 @@ const ServiceTemplate = forwardRef(({
                     val = (
                       <div className="py-0">
                         <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
+                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                          <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                          </div>
+                        )}
                         {desc && (
                           <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}

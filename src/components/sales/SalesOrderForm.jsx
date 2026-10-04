@@ -187,8 +187,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               }}
               onKeyDown={(e) => {
                 if (showDropdown) {
+                  const isExactMatch = (customers || []).some(
+                    (c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()
+                  );
+                  const showAddNew = Boolean(inputValue.trim() && !isExactMatch);
                   const displayLimit = Math.min(filteredCustomers.length, 50);
-                  const totalItems = displayLimit + (inputValue.trim() ? 1 : 0); // +1 for "Add New"
+                  const totalItems = displayLimit + (showAddNew ? 1 : 0);
                   
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -200,10 +204,10 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                     e.preventDefault();
                     if (selectedIndex < displayLimit) {
                       selectCustomer(filteredCustomers[selectedIndex]);
-                    } else {
+                    } else if (showAddNew) {
                       // "Add New Customer" option
                       setShowNewCustomerModal(true);
-                       setShowDropdown(false);
+                      setShowDropdown(false);
                     }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -245,7 +249,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 Showing top 50 results...
              </div>
           )}
-          {inputValue.trim() && (
+          {inputValue.trim() && !(customers || []).some((c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
             <div
               className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
