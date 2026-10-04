@@ -27,6 +27,9 @@ export const convertToInvoice = (id) =>
 export const bulkConvertToInvoice = (challanIds) =>
   api.post(`/billing/delivery-challans/bulk-convert-to-invoice/`, { challan_ids: challanIds }).then(res => res.data);
 
+export const bulkDeleteDeliveryChallans = (ids) =>
+  api.post(`/billing/delivery-challans/bulk-delete/`, { ids }).then(res => res.data);
+
 export const getDeliveryChallanPdf = (id, payload) => {
   if (payload) {
     const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)

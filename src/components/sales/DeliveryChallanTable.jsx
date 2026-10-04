@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDeliveryChallans, deleteDeliveryChallan, convertToInvoice, bulkConvertToInvoice } from "../../api/delivery_challan";
+import { getDeliveryChallans, deleteDeliveryChallan, convertToInvoice, bulkConvertToInvoice, bulkDeleteDeliveryChallans } from "../../api/delivery_challan";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { 
@@ -154,6 +154,26 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
     }
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: bulkDeleteDeliveryChallans,
+    onSuccess: (resp) => {
+      toast.success(resp?.message || `Successfully deleted ${selectedChallans.size} delivery challan(s)!`);
+      setSelectedChallans(new Set());
+      queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+      queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        err.message ||
+        "Failed to delete selected delivery challans";
+      toast.error(msg);
+    }
+  });
+
   const handleBulkConvert = () => {
     if (selectedChallans.size === 0) return;
     const selectedList = filteredChallans.filter((c) => selectedChallans.has(c.id));
@@ -169,6 +189,19 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
     }
     if (window.confirm(`Convert ${selectedChallans.size} selected Delivery Challans into a single consolidated Sales Invoice?`)) {
       bulkConvertMutation.mutate(Array.from(selectedChallans));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedChallans.size === 0) return;
+    const selectedList = filteredChallans.filter((c) => selectedChallans.has(c.id));
+    const alreadyBilled = selectedList.filter((c) => c.is_billed || c.status === "invoiced");
+    if (alreadyBilled.length > 0) {
+      toast.error(`Cannot delete challan(s) ${alreadyBilled.map((c) => c.challan_number).join(", ")} because they are already converted to an invoice.`);
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete ${selectedChallans.size} selected Delivery Challan(s)? Stock will be restored and linked Sales Orders updated.`)) {
+      bulkDeleteMutation.mutate(Array.from(selectedChallans));
     }
   };
 
@@ -306,16 +339,29 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
           </div>
 
           {selectedChallans.size > 0 && (
-            <button
-              type="button"
-              onClick={handleBulkConvert}
-              disabled={bulkConvertMutation.isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all cursor-pointer animate-fade-in"
-              title="Convert selected delivery challans into a single consolidated Sales Invoice"
-            >
-              <CurrencyRupeeIcon className="w-4 h-4" />
-              <span>Convert to Invoice ({selectedChallans.size})</span>
-            </button>
+            <div className="flex items-center gap-2 animate-fade-in">
+              <button
+                type="button"
+                onClick={handleBulkConvert}
+                disabled={bulkConvertMutation.isLoading || bulkDeleteMutation.isLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                title="Convert selected delivery challans into a single consolidated Sales Invoice"
+              >
+                <CurrencyRupeeIcon className="w-4 h-4" />
+                <span>Convert to Invoice ({selectedChallans.size})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={bulkDeleteMutation.isLoading || bulkConvertMutation.isLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+                title="Bulk delete selected delivery challans and restore inventory"
+              >
+                <TrashIcon className="w-4 h-4" />
+                <span>Delete Selected ({selectedChallans.size})</span>
+              </button>
+            </div>
           )}
         </div>
 

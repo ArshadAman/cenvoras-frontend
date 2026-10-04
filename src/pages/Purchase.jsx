@@ -113,6 +113,7 @@ export default function Purchase() {
       {/* Modals */}
       {showForm && (
         <PurchaseForm
+          isOpen={showForm}
           bill={editBill}
           onClose={handleCloseForm} 
         />
