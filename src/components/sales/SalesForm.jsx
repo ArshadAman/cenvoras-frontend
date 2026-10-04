@@ -15,8 +15,9 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
-import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon, TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import DateInputField from "../common/DateInputField";
+import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
 
 // Product Autocomplete Component
@@ -356,8 +357,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               data-1p-ignore="true"
               onKeyDown={(e) => {
                 if (showDropdown) {
+                  const isExactMatch = (customers || []).some(
+                    (c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()
+                  );
+                  const showAddNew = Boolean(inputValue.trim() && !isExactMatch);
                   const displayLimit = Math.min(filteredCustomers.length, 50);
-                  const totalItems = displayLimit + (inputValue.trim() ? 1 : 0); // +1 for "Add New"
+                  const totalItems = displayLimit + (showAddNew ? 1 : 0);
                   
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -369,7 +374,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                     e.preventDefault();
                     if (selectedIndex < displayLimit) {
                       selectCustomer(filteredCustomers[selectedIndex]);
-                    } else {
+                    } else if (showAddNew) {
                       // "Add New Customer" option
                       setShowNewCustomerModal(true);
                       setShowDropdown(false);
@@ -426,7 +431,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 Showing top 50 results...
              </div>
           )}
-          {inputValue.trim() && (
+          {inputValue.trim() && !(customers || []).some((c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
             <div
               className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
@@ -706,6 +711,7 @@ export default function SalesForm({
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
   const [productCreationState, setProductCreationState] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1685,14 +1691,39 @@ export default function SalesForm({
 
                       {/* Customer Autocomplete */}
                       <div className="relative">
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                          Customer *
-                        </label>
-                        <CustomerAutocomplete 
-                          values={values} 
-                          setFieldValue={setFieldValue} 
-                          customers={customers} 
-                        />
+                        {(() => {
+                          const matchedCustomer = (customers || []).find(
+                            (c) =>
+                              (values.customer && String(c.id) === String(values.customer)) ||
+                              (values.customer_name &&
+                                c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
+                          );
+
+                          return (
+                            <>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+                                  Customer *
+                                </label>
+                                {matchedCustomer && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingCustomer(matchedCustomer)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                                  >
+                                    <PencilSquareIcon className="w-3.5 h-3.5" />
+                                    <span>Edit Customer</span>
+                                  </button>
+                                )}
+                              </div>
+                              <CustomerAutocomplete 
+                                values={values} 
+                                setFieldValue={setFieldValue} 
+                                customers={customers} 
+                              />
+                            </>
+                          );
+                        })()}
                         <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
                         {(values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
                           <div className="mt-3 rounded-xl border border-white/10 bg-[#141416] p-3 text-xs text-gray-300 space-y-1.5">
@@ -3060,6 +3091,36 @@ export default function SalesForm({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Customer Edit Modal */}
+        {editingCustomer && (
+          <CustomerForm
+            isOpen={!!editingCustomer}
+            onClose={() => setEditingCustomer(null)}
+            editData={editingCustomer}
+            onSaved={(updatedCustomer) => {
+              if (updatedCustomer && formikRef.current) {
+                if (updatedCustomer.name) formikRef.current.setFieldValue('customer_name', updatedCustomer.name);
+                if (updatedCustomer.address) {
+                  formikRef.current.setFieldValue('customer_address', updatedCustomer.address);
+                  formikRef.current.setFieldValue('delivery_address', updatedCustomer.address);
+                }
+                if (updatedCustomer.gstin) formikRef.current.setFieldValue('customer_gstin', updatedCustomer.gstin);
+                if (updatedCustomer.phone) formikRef.current.setFieldValue('customer_phone', updatedCustomer.phone);
+                if (updatedCustomer.email) formikRef.current.setFieldValue('customer_email', updatedCustomer.email);
+                if (updatedCustomer.gstin && updatedCustomer.gstin.length >= 2) {
+                  const stateCode = updatedCustomer.gstin.substring(0, 2);
+                  if (GST_STATE_CODE_MAP[stateCode]) {
+                    formikRef.current.setFieldValue('place_of_supply', GST_STATE_CODE_MAP[stateCode]);
+                  }
+                } else if (updatedCustomer.state) {
+                  formikRef.current.setFieldValue('place_of_supply', updatedCustomer.state);
+                }
+              }
+              setEditingCustomer(null);
+            }}
+          />
         )}
       </div>
     </div>,

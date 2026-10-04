@@ -204,6 +204,11 @@ const LegendTemplate = forwardRef(({
                     <td className="text-xs text-gray-800 align-middle text-center border-r border-gray-200 font-medium" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
                     <td className="text-xs text-gray-800 align-middle text-left border-r border-gray-200" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                       <div className="font-normal text-gray-900 leading-tight">{item.product_name || item.product}</div>
+                      {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                        <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                          Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                        </div>
+                      )}
                       {desc && (
                         <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                           {desc}
@@ -265,6 +270,11 @@ const LegendTemplate = forwardRef(({
                     val = (
                       <div className="leading-tight py-0">
                         <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
+                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                          <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                          </div>
+                        )}
                         {desc && (
                           <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
