@@ -338,6 +338,8 @@ const PurchaseSchema = Yup.object().shape({
 export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit }) {
   const queryClient = useQueryClient();
   const isEdit = !!bill;
+  const [showManufacturer, setShowManufacturer] = useState(true);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [availableUnits, setAvailableUnits] = useState(getAllUnits);
   const [showDocNote, setShowDocNote] = useState(false);
   const { data: warehousesResult } = useQuery({ queryKey: ["warehouses"], queryFn: getWarehouses });
@@ -389,6 +391,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
 
   // Register hierarchical ESC key navigation for this form (auto-saves on exit if data entered)
   useEscKey(handleBeforeClose, isOpen, 10);
+  useEscKey(() => setShowColumnPicker(false), showColumnPicker, 30);
 
   // Keyboard Shortcuts Logic
   useEffect(() => {
@@ -806,6 +809,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                                setAvailableUnits(getAllUnits());
                              }}
                              products={products}
+                             showManufacturer={showManufacturer}
                            />
                         ))}
 
