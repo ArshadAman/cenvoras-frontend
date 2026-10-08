@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import DeliveryChallanTable from "../components/sales/DeliveryChallanTable";
 import SalesForm from "../components/sales/SalesForm";
 import SalesDetailsModal from "../components/sales/SalesDetailsModal";
@@ -9,7 +9,8 @@ import {
   TruckIcon, 
   ClockIcon, 
   DocumentCheckIcon, 
-  CurrencyRupeeIcon 
+  CurrencyRupeeIcon,
+  DocumentTextIcon
 } from "@heroicons/react/24/outline";
 import { 
   getDeliveryChallans, 
@@ -17,15 +18,23 @@ import {
   updateDeliveryChallan, 
   getNextDeliveryChallanNumber 
 } from "../api/delivery_challan";
-import { getUserProfile } from "../api/users";
+import { getUserProfile, patchUserProfile } from "../api/users";
 import { getCurrencySymbol } from "../utils/currency";
+
+const DEFAULT_CHALLAN_PREFIX = "DC-";
+
+const normalizePrefix = (value) => {
+  return String(value ?? '').toUpperCase();
+};
 
 export default function DeliveryChallanList() {
   const location = useLocation();
   const [showForm, setShowForm] = useState(false);
   const [editChallan, setEditChallan] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
-  const [challanPrefix, setChallanPrefix] = useState("DC-");
+  const [challanPrefix, setChallanPrefix] = useState(() => {
+    return localStorage.getItem("delivery_challan_prefix") || DEFAULT_CHALLAN_PREFIX;
+  });
 
   // Fetch tenant profile for invoice/challan preview branding
   const { data: userProfile } = useQuery({
@@ -34,7 +43,36 @@ export default function DeliveryChallanList() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const saveChallanPrefixMutation = useMutation({
+    mutationFn: (prefix) => patchUserProfile({ delivery_challan_prefix: prefix }),
+  });
+
   const billingProfile = userProfile?.billing_profile || userProfile?.profile;
+  const canEditPrefix = Boolean(
+    userProfile?.profile?.id &&
+    billingProfile?.id &&
+    userProfile.profile.id === billingProfile.id
+  );
+
+  useEffect(() => {
+    const dbPrefix = billingProfile?.delivery_challan_prefix;
+    if (dbPrefix !== undefined && dbPrefix !== null && dbPrefix !== "") {
+      const normalized = normalizePrefix(dbPrefix);
+      setChallanPrefix(normalized);
+      localStorage.setItem("delivery_challan_prefix", normalized);
+    }
+  }, [billingProfile?.delivery_challan_prefix]);
+
+  const handlePrefixBlur = () => {
+    const normalized = normalizePrefix(challanPrefix);
+    setChallanPrefix(normalized);
+    localStorage.setItem("delivery_challan_prefix", normalized);
+    if (!canEditPrefix) return;
+    if (normalized !== normalizePrefix(billingProfile?.delivery_challan_prefix || DEFAULT_CHALLAN_PREFIX)) {
+      saveChallanPrefixMutation.mutate(normalized);
+    }
+  };
+
   const businessInfo = billingProfile
     ? {
         business_name: billingProfile.business_name,
@@ -70,11 +108,12 @@ export default function DeliveryChallanList() {
     : challansData?.data || challansData?.results || [];
 
   const totalCount = allChallans.length;
+  const draftCount = allChallans.filter((c) => c.status === "draft").length;
   const openCount = allChallans.filter(
-    (c) => !c.is_billed && c.status !== "invoiced" && c.status !== "cancelled"
+    (c) => (c.status === "open" || c.status === "pending") && !c.is_billed
   ).length;
   const invoicedCount = allChallans.filter(
-    (c) => c.is_billed || c.status === "invoiced"
+    (c) => Boolean(c.converted_invoice && (c.is_billed || c.status === "invoiced" || c.status === "billed"))
   ).length;
   const totalValue = allChallans.reduce(
     (sum, c) => sum + Number(c.total_amount || 0),
@@ -139,14 +178,17 @@ export default function DeliveryChallanList() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50 w-full sm:w-auto">
               <span className="text-xs text-gray-400 font-medium">PREFIX:</span>
               <input
                 type="text"
                 value={challanPrefix}
-                onChange={(e) => setChallanPrefix(e.target.value.toUpperCase())}
-                className="bg-transparent border-none text-white text-sm w-20 outline-none p-0 font-mono"
+                onChange={(e) => setChallanPrefix(normalizePrefix(e.target.value))}
+                onBlur={handlePrefixBlur}
+                disabled={!canEditPrefix}
+                className="bg-transparent border-none text-white text-sm w-20 outline-none p-0 font-mono focus:ring-0"
                 maxLength={8}
+                title={!canEditPrefix ? "Delivery challan prefix is managed by the main account." : ""}
               />
             </div>
 
@@ -163,7 +205,7 @@ export default function DeliveryChallanList() {
         </div>
 
         {/* Quick Summary Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="bento-card p-5 bg-gradient-to-br from-white/5 to-white/[0.02]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Challans</span>
@@ -171,6 +213,15 @@ export default function DeliveryChallanList() {
             </div>
             <div className="text-2xl font-black text-white">{totalCount}</div>
             <div className="text-xs text-gray-500 mt-1">Recorded to date</div>
+          </div>
+
+          <div className="bento-card p-5 bg-gradient-to-br from-amber-500/10 to-amber-500/[0.02]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Drafts</span>
+              <DocumentTextIcon className="w-5 h-5 text-amber-400" />
+            </div>
+            <div className="text-2xl font-black text-amber-300">{draftCount}</div>
+            <div className="text-xs text-amber-400/60 mt-1">Unconfirmed drafts</div>
           </div>
 
           <div className="bento-card p-5 bg-gradient-to-br from-cyan-500/10 to-cyan-500/[0.02]">
