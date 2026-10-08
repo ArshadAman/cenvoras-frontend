@@ -74,7 +74,11 @@ export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }
             </div>
             <p className="text-xs text-slate-300/80 mt-0.5">
               {isProcessing && `Processing ${current.toLocaleString()} of ${total ? total.toLocaleString() : '...'} rows`}
-              {isSuccess && `Processed all ${total || (createdCount + updatedCount + skippedCount + failedCount)} rows`}
+              {isSuccess && (
+                (createdCount + updatedCount + skippedCount + failedCount > 0)
+                  ? `Processed ${total || (createdCount + updatedCount + skippedCount + failedCount)} rows (${createdCount} created, ${updatedCount} updated, ${skippedCount} unchanged${failedCount > 0 ? `, ${failedCount} failed` : ''})`
+                  : (total > 0 ? `Processed ${total} rows` : `Completed (0 data rows found in uploaded CSV)`)
+              )}
               {isFailure && (errorMessage || 'Processing interrupted')}
             </p>
           </div>
