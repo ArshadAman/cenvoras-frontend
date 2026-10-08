@@ -87,6 +87,9 @@ export const bulkUploadProductsCsv = (file, options = {}) => {
   }).then(res => res.data);
 };
 
+export const getInventoryCsvJobStatus = (taskId) =>
+  api.get(`/inventory/products/csv-jobs/${taskId}/`).then(res => res.data);
+
 // Stock management endpoints
 export const getStockMovements = (params) =>
   api.get("/inventory/transfers/", { params }).then(res => res.data);
