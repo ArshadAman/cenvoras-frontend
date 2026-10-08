@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { bulkUploadProductsCsv, downloadProductCsvTemplate, getProducts, bulkDeleteProducts, updateProduct } from "../../api/inventory";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { downloadProductCsvTemplate, getProducts, bulkDeleteProducts, updateProduct } from "../../api/inventory";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
 import { useLoadingPolicy } from "../../hooks/useLoadingPolicy";
+import { useInventoryCsvJob } from "../../hooks/useInventoryCsvJob";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import InventoryCsvMappingModal from "./InventoryCsvMappingModal";
+import InventoryCsvProgressBar from "./InventoryCsvProgressBar";
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -116,6 +118,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     placeholderData: (previousData) => previousData,
   });
   const loadingPolicy = useLoadingPolicy(isLoading);
+  const queryClient = useQueryClient();
+
+  const csvJob = useInventoryCsvJob({
+    onComplete: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      refetch();
+    },
+  });
 
   const handleRestore = async (product) => {
     try {
@@ -360,6 +370,16 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
   return (
     <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg p-4 rounded">
+      {/* Background CSV Import Progress Widget (Non-blocking) */}
+      <InventoryCsvProgressBar
+        job={csvJob}
+        onDismiss={csvJob.clearJob}
+        onRefreshNow={() => {
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          refetch();
+        }}
+      />
+
       {/* Enhanced Filters */}
       <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-2 mb-4">
         <input
@@ -806,8 +826,16 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             setShowMappingModal(false);
             setMappingFile(null);
           }}
-          onSuccess={() => {
-            refetch();
+          onSuccess={(result) => {
+            if (result?.taskId) {
+              csvJob.startJob(result.taskId);
+            } else {
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+              refetch();
+            }
+          }}
+          onJobStarted={(taskId) => {
+            csvJob.startJob(taskId);
           }}
         />
       )}

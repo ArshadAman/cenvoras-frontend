@@ -57,7 +57,7 @@ function parseCsvRows(text) {
   return lines.map(parseCsvLine);
 }
 
-export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSuccess }) {
+export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSuccess, onJobStarted }) {
   const [rawRows, setRawRows] = useState([]);
   const [headerRowIndex, setHeaderRowIndex] = useState(0); // 0-indexed (Row 1 = 0)
   const [columnMapping, setColumnMapping] = useState({});
@@ -188,31 +188,41 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
 
       setUploadProgress(100);
 
-      if (result?.message) {
-        toast.info(result.message);
-      } else {
-        const createdCount = Number(result?.created_count || 0);
-        const updatedCount = Number(result?.updated_count || 0);
-        const skippedCount = Number(result?.skipped_count || 0);
-        const failedCount = Number(result?.failed_count || 0);
-
-        const summaryParts = [];
-        if (createdCount > 0) summaryParts.push(`${createdCount} created`);
-        if (updatedCount > 0) summaryParts.push(`${updatedCount} updated`);
-        if (skippedCount > 0) summaryParts.push(`${skippedCount} unchanged`);
-
-        const summaryText = summaryParts.length > 0 ? summaryParts.join(', ') : 'Processed';
-
-        if (failedCount > 0) {
-          toast.warn(`Import finished (${summaryText}). Failed rows: ${failedCount}`);
-        } else if (createdCount > 0 || updatedCount > 0 || skippedCount > 0) {
-          toast.success(`Import complete: ${summaryText}!`);
-        } else {
-          toast.success('CSV upload processed successfully!');
+      if (result?.task_id) {
+        toast.info(result.message || 'File uploaded! Processing CSV rows in the background...');
+        if (onJobStarted) {
+          onJobStarted(result.task_id);
+        } else if (onSuccess) {
+          onSuccess({ taskId: result.task_id });
         }
+        onClose();
+        return;
       }
 
-      onSuccess();
+      // Synchronous fallback handling
+      const createdCount = Number(result?.created_count || 0);
+      const updatedCount = Number(result?.updated_count || 0);
+      const skippedCount = Number(result?.skipped_count || 0);
+      const failedCount = Number(result?.failed_count || 0);
+
+      const summaryParts = [];
+      if (createdCount > 0) summaryParts.push(`${createdCount} created`);
+      if (updatedCount > 0) summaryParts.push(`${updatedCount} updated`);
+      if (skippedCount > 0) summaryParts.push(`${skippedCount} unchanged`);
+
+      const summaryText = summaryParts.length > 0 ? summaryParts.join(', ') : 'Processed';
+
+      if (failedCount > 0) {
+        toast.warn(`Import finished (${summaryText}). Failed rows: ${failedCount}`);
+      } else if (createdCount > 0 || updatedCount > 0 || skippedCount > 0) {
+        toast.success(`Import complete: ${summaryText}!`);
+      } else {
+        toast.success(result?.message || 'CSV upload processed successfully!');
+      }
+
+      if (onSuccess) {
+        onSuccess(result);
+      }
       onClose();
     } catch (err) {
       console.error('CSV import error:', err);
