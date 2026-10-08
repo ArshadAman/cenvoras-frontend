@@ -44,7 +44,12 @@ export default function SalesOrderList() {
   const deleteMutation = useMutation({
     mutationFn: deleteSalesOrder,
     onSuccess: () => {
+      toast.success("Sales order deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || error?.message || "Failed to delete sales order");
     },
   });
 

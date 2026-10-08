@@ -282,9 +282,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
       if (!matchesSearch) return false;
 
       if (statusFilterTab === "all") return true;
-      if (statusFilterTab === "invoiced") return challan.is_billed || challan.status === "invoiced";
-      if (statusFilterTab === "open") return !challan.is_billed && challan.status !== "invoiced" && challan.status !== "cancelled";
-      if (statusFilterTab === "cancelled") return challan.status === "cancelled";
+      if (statusFilterTab === "draft") return challan.status === "draft";
+      if (statusFilterTab === "open") return challan.status === "open" && !challan.is_billed;
+      if (statusFilterTab === "invoiced") return Boolean(challan.converted_invoice && (challan.is_billed || challan.status === "invoiced" || challan.status === "billed"));
       return true;
     })
     .sort((a, b) => {
@@ -309,9 +309,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
 
   const statusTabs = [
     { id: "all", label: "All Challans" },
+    { id: "draft", label: "Drafts" },
     { id: "open", label: "Open / Dispatched" },
     { id: "invoiced", label: "Invoiced" },
-    { id: "cancelled", label: "Cancelled" },
   ];
 
   const visibleColumnCount = 3 + Object.values(visibleColumns).filter(Boolean).length;
@@ -538,7 +538,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
               </tr>
             ) : (
               filteredChallans.map((challan) => {
-                const isInvoiced = challan.is_billed || challan.status === "invoiced";
+                const isInvoiced = Boolean(challan.converted_invoice && (challan.is_billed || challan.status === "invoiced" || challan.status === "billed"));
+                const isDraft = challan.status === "draft";
                 const isSelected = selectedChallans.has(challan.id);
                 return (
                   <tr
@@ -639,9 +640,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                             <DocumentCheckIcon className="w-3.5 h-3.5" />
                             Invoiced
                           </span>
-                        ) : challan.status === "cancelled" ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                            Cancelled
+                        ) : isDraft ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            Draft
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -671,17 +672,19 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                               <PencilSquareIcon className="w-3.5 h-3.5" />
                               Edit
                             </button>
-                            <button
-                              onClick={() => handleConvert(challan)}
-                              title="Convert to Sales Invoice (No double stock decrement)"
-                              className="px-2.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors text-xs font-medium flex items-center gap-1"
-                            >
-                              <ArrowPathRoundedSquareIcon className="w-3.5 h-3.5" />
-                              Convert
-                            </button>
+                            {!isDraft && (
+                              <button
+                                onClick={() => handleConvert(challan)}
+                                title="Convert to Sales Invoice (No double stock decrement)"
+                                className="px-2.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors text-xs font-medium flex items-center gap-1"
+                              >
+                                <ArrowPathRoundedSquareIcon className="w-3.5 h-3.5" />
+                                Convert
+                              </button>
+                            )}
                             <button
                               onClick={() => handleDelete(challan)}
-                              title="Delete Challan & Restore Stock"
+                              title={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
                               className="px-2.5 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors text-xs font-medium flex items-center gap-1"
                             >
                               <TrashIcon className="w-3.5 h-3.5" />
@@ -710,7 +713,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
           </div>
         ) : (
           filteredChallans.map((challan) => {
-            const isInvoiced = challan.is_billed || challan.status === "invoiced";
+            const isInvoiced = Boolean(challan.converted_invoice && (challan.is_billed || challan.status === "invoiced" || challan.status === "billed"));
+            const isDraft = challan.status === "draft";
             const isSelected = selectedChallans.has(challan.id);
             return (
               <div
@@ -750,6 +754,10 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                       {isInvoiced ? (
                         <span className="inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                           Invoiced
+                        </span>
+                      ) : isDraft ? (
+                        <span className="inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          Draft
                         </span>
                       ) : (
                         <span className="inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
@@ -822,14 +830,17 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                       >
                         <PencilSquareIcon className="w-3.5 h-3.5" /> Edit
                       </button>
-                      <button
-                        onClick={() => handleConvert(challan)}
-                        className="flex-1 min-w-[80px] py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-emerald-500/20"
-                      >
-                        <ArrowPathRoundedSquareIcon className="w-3.5 h-3.5" /> Convert
-                      </button>
+                      {!isDraft && (
+                        <button
+                          onClick={() => handleConvert(challan)}
+                          className="flex-1 min-w-[80px] py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-emerald-500/20"
+                        >
+                          <ArrowPathRoundedSquareIcon className="w-3.5 h-3.5" /> Convert
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(challan)}
+                        title={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
                         className="py-2 px-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs font-semibold flex items-center justify-center hover:bg-red-500/20"
                       >
                         <TrashIcon className="w-3.5 h-3.5" />
