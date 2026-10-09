@@ -78,16 +78,34 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     }
   }, [inputValue, products, isFocused]);
 
+  const remoteSearchCacheRef = useRef(new Map());
+
   // Debounced remote search against API to guarantee all inventory items are synced even in large catalogs
   useEffect(() => {
     const query = (inputValue || "").trim();
     if (query.length < 2 || !isFocused) return;
+
+    // If local in-memory catalog already has sufficient matches, avoid redundant network queries
+    if (filteredProducts.length >= 8) return;
+
+    // Check client session search cache first (0ms)
+    const cached = remoteSearchCacheRef.current.get(query.toLowerCase());
+    if (cached) {
+      setFilteredProducts((prev) => {
+        const map = new Map();
+        prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
+        cached.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
+        return Array.from(map.values());
+      });
+      return;
+    }
 
     let isCancelled = false;
     const timer = setTimeout(async () => {
       try {
         const res = await getProducts({ search: query, page_size: 50 });
         const remoteItems = Array.isArray(res) ? res : res?.data || res?.results || [];
+        remoteSearchCacheRef.current.set(query.toLowerCase(), remoteItems);
         if (!isCancelled && remoteItems.length > 0) {
           setFilteredProducts((prev) => {
             const map = new Map();
@@ -99,13 +117,13 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       } catch (e) {
         // Silently ignore search error
       }
-    }, 300);
+    }, 350);
 
     return () => {
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [inputValue, isFocused]);
+  }, [inputValue, isFocused, filteredProducts.length]);
 
   useEffect(() => {
     if (!showDropdown) return;
@@ -825,6 +843,7 @@ export default function SalesForm({
       queryKey: ["products"], 
       queryFn: () => getProducts({
         ordering: "name",
+        page_size: 200,
       }),
       enabled: isOpen && canAccessInventory,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
