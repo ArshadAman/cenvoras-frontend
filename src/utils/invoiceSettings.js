@@ -260,7 +260,70 @@ export const getActiveTemplate = () => {
   }
 };
 
-// Set active template
+// Scoped template resolution per section and per customer/account (no cross-syncing)
+export const getActiveTemplateForSection = ({
+  sectionKey = 'sales_invoice',
+  documentTemplateId = null,
+  customerTemplates = null,
+  userDefaultTemplates = null,
+} = {}) => {
+  try {
+    const templates = getInvoiceTemplates();
+
+    // 1. Per-document explicit override
+    if (documentTemplateId) {
+      const match = templates.find(t => t.id === documentTemplateId);
+      if (match) return match;
+    }
+
+    // 2. Customer's preferred template for this section
+    if (customerTemplates && customerTemplates[sectionKey]) {
+      const match = templates.find(t => t.id === customerTemplates[sectionKey]);
+      if (match) return match;
+    }
+
+    // 3. User's section default
+    if (userDefaultTemplates && userDefaultTemplates[sectionKey]) {
+      const match = templates.find(t => t.id === userDefaultTemplates[sectionKey]);
+      if (match) return match;
+    }
+
+    // 4. Scoped localStorage fallback for this specific section
+    const scopedKey = `cenvora_active_template_${sectionKey}`;
+    const scopedId = localStorage.getItem(scopedKey);
+    if (scopedId) {
+      const match = templates.find(t => t.id === scopedId);
+      if (match) return match;
+    }
+
+    // 5. Global active template fallback or first preset
+    const globalId = localStorage.getItem(ACTIVE_TEMPLATE_KEY);
+    if (globalId) {
+      const match = templates.find(t => t.id === globalId);
+      if (match) return match;
+    }
+
+    return templates[0] || defaultInvoiceTemplate;
+  } catch (error) {
+    console.error('Error loading active template for section:', error);
+    return defaultInvoiceTemplate;
+  }
+};
+
+// Set active template scoped to section
+export const setActiveTemplateForSection = (sectionKey, templateId) => {
+  try {
+    if (!sectionKey) return false;
+    const scopedKey = `cenvora_active_template_${sectionKey}`;
+    localStorage.setItem(scopedKey, templateId);
+    return true;
+  } catch (error) {
+    console.error('Error setting active template for section:', error);
+    return false;
+  }
+};
+
+// Set active template (global fallback)
 export const setActiveTemplate = (templateId) => {
   try {
     localStorage.setItem(ACTIVE_TEMPLATE_KEY, templateId);

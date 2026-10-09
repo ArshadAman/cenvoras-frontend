@@ -20,9 +20,10 @@ import { toast } from 'react-toastify';
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
-import { getActiveTemplate, setActiveTemplate, getInvoiceTemplates } from "../../utils/invoiceSettings";
+import { getActiveTemplate, setActiveTemplate, getInvoiceTemplates, getActiveTemplateForSection, setActiveTemplateForSection } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
 import { getUserProfile, patchUserProfile } from "../../api/users";
+import { patchCustomer } from "../../api/customers";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
@@ -205,9 +206,90 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     effectiveBusinessInfo.hide_bank_details = false;
   }
 
-  const handleTemplateSwitch = (targetId) => {
-    setActiveTemplate(targetId);
-    setTemplate(getActiveTemplate());
+  const customerId = invoiceDetails?.customer?.id || invoiceDetails?.customer_id || invoice?.customer_id || invoice?.customer?.id || null;
+  const customerTemplates = invoiceDetails?.customer?.preview_templates || invoiceDetails?.customer_details?.preview_templates || invoiceDetails?.preview_templates || invoice?.preview_templates || null;
+  const userDefaultTemplates = billingProfile?.default_preview_template_sections || null;
+  const docTemplateId = invoiceDetails?.template_id || invoice?.template_id || null;
+
+  // Load active template scoped per section and per customer (no cross-syncing)
+  useEffect(() => {
+    if (isOpen) {
+      const resolvedTemplate = getActiveTemplateForSection({
+        sectionKey,
+        documentTemplateId: docTemplateId,
+        customerTemplates,
+        userDefaultTemplates,
+      });
+      setTemplate(resolvedTemplate);
+    }
+  }, [isOpen, sectionKey, docTemplateId, JSON.stringify(customerTemplates), JSON.stringify(userDefaultTemplates)]);
+
+  const handleTemplateSwitch = async (targetId) => {
+    setActiveTemplateForSection(sectionKey, targetId);
+    const chosen = getActiveTemplateForSection({
+      sectionKey,
+      documentTemplateId: targetId,
+      customerTemplates,
+      userDefaultTemplates,
+    });
+    setTemplate(chosen);
+
+    // 1. Persist template to current bill
+    const docId = invoice?.id;
+    if (docId) {
+      const payload = { template_id: targetId };
+      try {
+        if (isDeliveryChallan) {
+          await patchDeliveryChallan(docId, payload);
+          queryClient.invalidateQueries(['deliveryChallan', docId]);
+        } else if (isQuotation) {
+          await patchQuotation(docId, payload);
+          queryClient.invalidateQueries(['quotation', docId]);
+        } else if (isSalesOrder) {
+          await patchSalesOrder(docId, payload);
+          queryClient.invalidateQueries(['salesOrder', docId]);
+        } else {
+          await patchSalesInvoice(docId, payload);
+          queryClient.invalidateQueries(['salesInvoice', docId]);
+        }
+      } catch (err) {
+        console.warn('Failed to save template_id to bill:', err);
+      }
+    }
+
+    // 2. Persist to customer's section format preferences if customer exists
+    if (customerId) {
+      try {
+        await patchCustomer(customerId, {
+          meta: {
+            preview_templates: {
+              ...(customerTemplates || {}),
+              [sectionKey]: targetId,
+            }
+          }
+        });
+        queryClient.invalidateQueries(['customer', customerId]);
+        queryClient.invalidateQueries(['customers']);
+      } catch (err) {
+        console.warn('Failed to update customer preview_templates:', err);
+      }
+    }
+
+    // 3. Persist as section default in UserProfile
+    try {
+      const currentSectionDefaults = billingProfile.default_preview_template_sections || {};
+      if (currentSectionDefaults[sectionKey] !== targetId) {
+        await patchUserProfile({
+          default_preview_template_sections: {
+            ...currentSectionDefaults,
+            [sectionKey]: targetId,
+          }
+        });
+        queryClient.invalidateQueries(['userProfile']);
+      }
+    } catch (err) {
+      console.warn('Failed to update section default preview template:', err);
+    }
   };
 
   // Close PDF options dropdown when clicking outside
@@ -222,16 +304,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [pdfMenuOpen]);
-
-  // Load active template
-  useEffect(() => {
-    if (isOpen) {
-      const activeTemplate = getActiveTemplate();
-      setTemplate(activeTemplate);
-    }
-  }, [isOpen]);
-
-  // Close on Escape key press
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {

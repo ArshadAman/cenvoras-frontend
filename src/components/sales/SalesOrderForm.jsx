@@ -74,6 +74,21 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               placeholder="Product name"
               className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
               autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === 'Tab') {
+                  if (showDropdown && filteredProducts.length === 1) {
+                    selectProduct(filteredProducts[0]);
+                  }
+                  setShowDropdown(false);
+                  return;
+                }
+                if (showDropdown && filteredProducts.length === 1 && e.key === 'Enter') {
+                  e.preventDefault();
+                  selectProduct(filteredProducts[0]);
+                } else if (e.key === 'Escape') {
+                  setShowDropdown(false);
+                }
+              }}
             />
             {meta.touched && meta.error && (
               <div className="text-red-400 text-xs mt-1">{meta.error}</div>

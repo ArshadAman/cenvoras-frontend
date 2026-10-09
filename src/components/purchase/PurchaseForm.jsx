@@ -146,6 +146,21 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
               placeholder="Product name"
               className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/50 outline-none transition-all hover:border-white/20 text-xs font-bold"
               autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === 'Tab') {
+                  if (showDropdown && filteredProducts.length === 1) {
+                    selectProduct(filteredProducts[0]);
+                  }
+                  setShowDropdown(false);
+                  return;
+                }
+                if (showDropdown && filteredProducts.length === 1 && e.key === 'Enter') {
+                  e.preventDefault();
+                  selectProduct(filteredProducts[0]);
+                } else if (e.key === 'Escape') {
+                  setShowDropdown(false);
+                }
+              }}
             />
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
               <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
@@ -370,10 +385,22 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
       const validItems = (values.items || []).filter(item => 
         item.product_name && item.product_name.trim() !== ''
       );
-      const hasVendor = !!(values.vendor_name && values.vendor_name.trim());
+      const vendorNameTrimmed = (values.vendor_name || '').trim().toLowerCase();
+      const isSavedVendorInDb = Boolean(
+        values.vendor_id ||
+        (vendors || []).some(v => v.id && (v.name || '').trim().toLowerCase() === vendorNameTrimmed)
+      );
+
+      // Prevent autosaving draft if vendor is not saved in database
+      if (!isSavedVendorInDb) {
+        onClose();
+        return;
+      }
+
+      const hasVendor = !!vendorNameTrimmed;
       const hasItems = validItems.length > 0;
 
-      // Auto-save on exit if user entered bill details
+      // Auto-save on exit if user entered bill details and vendor is in DB
       if (hasVendor && hasItems) {
         try {
           if (!values.bill_number) {
