@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
-import { getCustomers } from "../../api/customers";
+import { getCustomers, createCustomer } from "../../api/customers";
 import { createProduct, patchProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
@@ -11,6 +11,7 @@ import { getUserProfile } from "../../api/users";
 import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants"; // Added imports
 import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
@@ -62,15 +63,49 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       return;
     }
 
-    const filtered = (products || []).filter((product) =>
-      (product?.name || "").toLowerCase().includes(query)
-    );
+    const filtered = (products || []).filter((product) => {
+      const name = (product?.name || "").toLowerCase();
+      const code = (product?.item_code || "").toLowerCase();
+      const ref = (product?.internal_reference || "").toLowerCase();
+      const hsn = (product?.hsn_sac_code || product?.hsn_code || "").toLowerCase();
+      const mfr = (product?.manufacturer || "").toLowerCase();
+      return name.includes(query) || code.includes(query) || ref.includes(query) || hsn.includes(query) || mfr.includes(query);
+    });
     setFilteredProducts(filtered);
 
     if (!isFocused) {
       setShowDropdown(false);
     }
   }, [inputValue, products, isFocused]);
+
+  // Debounced remote search against API to guarantee all inventory items are synced even in large catalogs
+  useEffect(() => {
+    const query = (inputValue || "").trim();
+    if (query.length < 2 || !isFocused) return;
+
+    let isCancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await getProducts({ search: query, page_size: 50 });
+        const remoteItems = Array.isArray(res) ? res : res?.data || res?.results || [];
+        if (!isCancelled && remoteItems.length > 0) {
+          setFilteredProducts((prev) => {
+            const map = new Map();
+            prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
+            remoteItems.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
+            return Array.from(map.values());
+          });
+        }
+      } catch (e) {
+        // Silently ignore search error
+      }
+    }, 300);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [inputValue, isFocused]);
 
   useEffect(() => {
     if (!showDropdown) return;
@@ -91,6 +126,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
     setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
+    setFieldValue(`items.${idx}.internal_reference`, product.internal_reference || "");
+    const storageCond = product?.meta?.storage_condition || product?.storage_condition || "";
+    setFieldValue(`items.${idx}.storage_condition`, storageCond);
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     const initialPrice = Number(product.sale_price ?? product.price ?? 0) || 0;
     setFieldValue(`items.${idx}.price`, initialPrice);
@@ -222,52 +260,70 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
           </div>
         )}
       </Field>
-        {showDropdown && filteredProducts.length > 0 && dropdownStyle && typeof document !== "undefined" && createPortal(
-          <div
-            style={dropdownStyle}
-            className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
-          >
-            {filteredProducts.slice(0, 50).map((product, index) => (
-              <div
-                key={product.id}
-                className={`cursor-pointer border-b border-white/5 px-4 py-3 text-sm transition-colors last:border-0 ${
-                  index === selectedIndex
-                    ? 'bg-cyan-500/20 text-white'
-                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                }`}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  selectProduct(product);
-                }}
-              >
-                <div className="font-medium">{product.name}</div>
-                <div className="mt-0.5 text-xs text-gray-500">
-                  Unit: {product.unit} | Price: {getCurrencySymbol()}{product.sale_price ?? product.price}
+        {(() => {
+          const hasItems = filteredProducts.length > 0;
+          const exactMatch = (filteredProducts || []).some(
+            (p) => (p.name || '').trim().toLowerCase() === (inputValue || '').trim().toLowerCase()
+          );
+          const showAddButton = Boolean(inputValue.trim() && !exactMatch && onCreateNewProduct);
+
+          if (!showDropdown || (!hasItems && !showAddButton) || !dropdownStyle || typeof document === "undefined") {
+            return null;
+          }
+
+          return createPortal(
+            <div
+              style={dropdownStyle}
+              className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
+            >
+              {filteredProducts.slice(0, 50).map((product, index) => (
+                <div
+                  key={product.id}
+                  className={`cursor-pointer border-b border-white/5 px-4 py-3 text-sm transition-colors last:border-0 ${
+                    index === selectedIndex
+                      ? 'bg-cyan-500/20 text-white'
+                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    selectProduct(product);
+                  }}
+                >
+                  <div className="font-medium text-white flex items-center justify-between">
+                    <span>{product.name}</span>
+                    {product.item_code && <span className="text-[10px] text-gray-400 font-mono">{product.item_code}</span>}
+                  </div>
+                  <div className="mt-0.5 text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+                    {product.manufacturer && <span className="text-cyan-400 font-medium italic">Mfr: {product.manufacturer}</span>}
+                    {product.internal_reference && <span className="text-amber-400 font-mono text-[10px]">Ref: {product.internal_reference}</span>}
+                    <span>Unit: {product.unit || 'pcs'}</span>
+                    <span>Price: {getCurrencySymbol()}{product.sale_price ?? product.price ?? 0}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {filteredProducts.length > 50 && (
-              <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
-                Showing top 50 results...
-              </div>
-            )}
-            {inputValue.trim() && filteredProducts.length === 0 && onCreateNewProduct && (
-              <button
-                type="button"
-                className="w-full border-t border-white/5 px-4 py-3 text-left text-sm text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onCreateNewProduct(inputValue.trim(), idx);
-                }}
-              >
-                + Add to inventory: "{inputValue.trim()}"
-              </button>
-            )}
-          </div>,
-          document.body
-        )}
+              ))}
+              {filteredProducts.length > 50 && (
+                <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
+                  Showing top 50 results...
+                </div>
+              )}
+              {showAddButton && (
+                <button
+                  type="button"
+                  className="w-full border-t border-white/5 px-4 py-3 text-left text-sm text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onCreateNewProduct(inputValue.trim(), idx);
+                  }}
+                >
+                  + Add to inventory: "{inputValue.trim()}"
+                </button>
+              )}
+            </div>,
+            document.body
+          );
+        })()}
     </div>
   );
 }
@@ -279,6 +335,8 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [inputValue, setInputValue] = useState(values.customer_name || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+  const queryClient = useQueryClient();
 
   useEscKey(() => setShowDropdown(false), showDropdown, 30);
   useEscKey(() => setShowNewCustomerModal(false), showNewCustomerModal, 20);
@@ -533,25 +591,42 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const name = document.getElementById('new-customer-name').value;
-                  const email = document.getElementById('new-customer-email').value;
-                  const phone = document.getElementById('new-customer-phone').value;
-                  const address = document.getElementById('new-customer-address').value;
-                  const gstin = document.getElementById('new-customer-gstin').value;
-                  
-                  setFieldValue('customer_name', name);
-                  setFieldValue('customer_email', email);
-                  setFieldValue('customer_phone', phone);
-                  setFieldValue('customer_address', address);
-                  setFieldValue('customer_gstin', gstin);
-                  setFieldValue('delivery_address', address);
-                  setInputValue(name);
-                  setShowNewCustomerModal(false);
+                disabled={isCreatingCustomer}
+                onClick={async () => {
+                  const name = document.getElementById('new-customer-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Customer name is required');
+                    return;
+                  }
+                  const email = document.getElementById('new-customer-email')?.value?.trim();
+                  const phone = document.getElementById('new-customer-phone')?.value?.trim();
+                  const address = document.getElementById('new-customer-address')?.value?.trim();
+                  const gstin = document.getElementById('new-customer-gstin')?.value?.trim();
+
+                  setIsCreatingCustomer(true);
+                  try {
+                    const newCust = await createCustomer({
+                      name,
+                      email: email || null,
+                      phone: phone || null,
+                      address: address || null,
+                      gstin: gstin || null,
+                    });
+
+                    queryClient.invalidateQueries({ queryKey: ["customers"] });
+                    toast.success(`Customer "${newCust.name}" added successfully`);
+
+                    selectCustomer(newCust);
+                    setShowNewCustomerModal(false);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create customer"));
+                  } finally {
+                    setIsCreatingCustomer(false);
+                  }
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-lg transition-all shadow-lg shadow-blue-900/30 text-sm font-medium"
+                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-lg transition-all shadow-lg shadow-blue-900/30 text-sm font-medium disabled:opacity-50"
               >
-                Add Customer
+                {isCreatingCustomer ? "Adding..." : "Add Customer"}
               </button>
             </div>
           </div>
@@ -627,6 +702,8 @@ const SalesSchema = Yup.object().shape({
 
 const DEFAULT_ITEM_SETTINGS = {
   show_item_description: true,
+  show_item_manufacturer: true,
+  show_item_internal_reference: false,
   show_item_hsn: true,
   show_item_batch: true,
   require_item_batch: false,
@@ -634,7 +711,6 @@ const DEFAULT_ITEM_SETTINGS = {
   show_item_discount: true,
   show_item_tax: true,
   show_item_storage_condition: false,
-  show_item_manufacturer: true,
 };
 
 export default function SalesForm({
@@ -873,6 +949,13 @@ export default function SalesForm({
     if (prod?.manufacturer) {
       setFieldValue(`items.${idx}.manufacturer`, prod.manufacturer);
     }
+    if (prod?.internal_reference) {
+      setFieldValue(`items.${idx}.internal_reference`, prod.internal_reference);
+    }
+    const storageCond = prod?.meta?.storage_condition || prod?.storage_condition || "";
+    if (storageCond) {
+      setFieldValue(`items.${idx}.storage_condition`, storageCond);
+    }
     const qty = parseFloat(currentValues.items[idx]?.quantity) || 1;
     const scheme = findMatchingScheme(prod.id, qty);
     if (scheme && scheme.scheme_type === 'bogo') {
@@ -916,13 +999,14 @@ export default function SalesForm({
   const handleUpdateCatalogItem = async () => {
     if (!catalogSyncModal) return;
     try {
-      const { product_id, name, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
+      const { product_id, name, manufacturer, internal_reference, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
       if (!product_id) {
         toast.info("This is a new custom item. Use 'Save as New Product' to add it to your catalog.");
         return;
       }
       await patchProduct(product_id, {
         name: name || undefined,
+        manufacturer: manufacturer || undefined,
         sale_price: Number(price) || 0,
         hsn_sac_code: hsn_sac_code || null,
         tax: Number(tax) || 0,
@@ -933,30 +1017,27 @@ export default function SalesForm({
       if (formikRef.current && typeof catalogSyncModal.idx === 'number') {
         const itemPath = `items.${catalogSyncModal.idx}`;
         if (name) formikRef.current.setFieldValue(`${itemPath}.product`, name);
+        if (manufacturer) formikRef.current.setFieldValue(`${itemPath}.manufacturer`, manufacturer);
       }
       toast.success("Catalog item updated successfully!");
       setCatalogSyncModal(null);
     } catch (err) {
-      const data = err?.response?.data;
-      const msg = data
-        ? (typeof data === 'object'
-            ? Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
-            : String(data))
-        : err.message || "Failed to update catalog product";
-      toast.error(msg);
+      toast.error(formatErrorMessage(err, "Failed to update catalog product"));
     }
   };
 
   const handleSaveAsNewCatalogItem = async () => {
     if (!catalogSyncModal) return;
     try {
-      const { name, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
+      const { name, manufacturer, internal_reference, price, hsn_sac_code, tax, description, unit } = catalogSyncModal;
       const defaultName = name?.trim() ? name.trim() : "New Product";
       const newName = window.prompt("Enter product name to save in catalog:", defaultName);
       if (!newName || !newName.trim()) return;
 
       const created = await createProduct({
         name: newName.trim(),
+        manufacturer: manufacturer || null,
+        internal_reference: internal_reference || null,
         sale_price: Number(price) || 0,
         cost_price: Number(price) || 0,
         unit: unit || "pcs",
@@ -970,6 +1051,8 @@ export default function SalesForm({
         const itemPath = `items.${catalogSyncModal.idx}`;
         formikRef.current.setFieldValue(`${itemPath}.product`, created.name);
         formikRef.current.setFieldValue(`${itemPath}.product_id`, created.id);
+        formikRef.current.setFieldValue(`${itemPath}.manufacturer`, created.manufacturer || "");
+        formikRef.current.setFieldValue(`${itemPath}.internal_reference`, created.internal_reference || "");
         formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
         if (created.hsn_sac_code) formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, created.hsn_sac_code);
         if (created.unit) formikRef.current.setFieldValue(`${itemPath}.unit`, created.unit);
@@ -977,13 +1060,7 @@ export default function SalesForm({
       toast.success(`Saved new product "${created.name}" in catalog!`);
       setCatalogSyncModal(null);
     } catch (err) {
-      const data = err?.response?.data;
-      const msg = data
-        ? (typeof data === 'object'
-            ? Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
-            : String(data))
-        : err.message || "Failed to create new catalog product";
-      toast.error(msg);
+      toast.error(formatErrorMessage(err, "Failed to create new catalog product"));
     }
   };
 
@@ -993,14 +1070,18 @@ export default function SalesForm({
       return;
     }
 
+    const currentItem = formikRef.current?.values?.items?.[idx] || {};
+
     setProductCreationState({
       idx,
       name: productName,
-      sale_price: "",
-      unit: "pcs",
-      tax: "0",
-      hsn_sac_code: "",
-      description: "",
+      manufacturer: currentItem.manufacturer || "",
+      internal_reference: currentItem.internal_reference || "",
+      sale_price: currentItem.price ? String(currentItem.price) : "",
+      unit: currentItem.unit || "pcs",
+      tax: currentItem.tax !== undefined ? String(currentItem.tax) : "0",
+      hsn_sac_code: currentItem.hsn_sac_code || "",
+      description: currentItem.description || currentItem.product_description || "",
     });
   };
 
@@ -1011,6 +1092,8 @@ export default function SalesForm({
       const salePrice = Number(productCreationState.sale_price || 0) || 0;
       const createdProduct = await createProduct({
         name: productCreationState.name,
+        manufacturer: productCreationState.manufacturer || null,
+        internal_reference: productCreationState.internal_reference || null,
         sale_price: salePrice,
         cost_price: salePrice,
         unit: productCreationState.unit || "pcs",
@@ -1029,6 +1112,8 @@ export default function SalesForm({
 
         formikRef.current.setFieldValue(`${itemPath}.product`, createdProduct.name);
         formikRef.current.setFieldValue(`${itemPath}.product_id`, createdProduct.id);
+        formikRef.current.setFieldValue(`${itemPath}.manufacturer`, createdProduct.manufacturer || productCreationState.manufacturer || "");
+        formikRef.current.setFieldValue(`${itemPath}.internal_reference`, createdProduct.internal_reference || productCreationState.internal_reference || "");
         formikRef.current.setFieldValue(`${itemPath}.unit`, createdProduct.unit || productCreationState.unit || 'pcs');
         formikRef.current.setFieldValue(`${itemPath}.price`, normalizedPrice);
         formikRef.current.setFieldValue(`${itemPath}.amount`, quantity * normalizedPrice);
@@ -1042,7 +1127,7 @@ export default function SalesForm({
       toast.success(`Added ${createdProduct.name} to inventory.`);
       setProductCreationState(null);
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || "Failed to create inventory item");
+      toast.error(formatErrorMessage(error, "Failed to create inventory item"));
     }
   };
   
@@ -1065,39 +1150,7 @@ export default function SalesForm({
   }, [nextInvData?.next_number, isEdit]);
 
   const extractErrorMessage = (error, defaultMsg) => {
-    const data = error.response?.data;
-    if (!data) return error.message || defaultMsg;
-    if (typeof data === "string") return data;
-    if (data.detail) return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
-    if (data.error) return typeof data.error === "string" ? data.error : JSON.stringify(data.error);
-    if (data.message) return typeof data.message === "string" ? data.message : JSON.stringify(data.message);
-    if (Array.isArray(data) && data.length > 0) {
-      return typeof data[0] === "string" ? data[0] : JSON.stringify(data[0]);
-    }
-    if (typeof data === "object") {
-      const messages = [];
-      for (const [key, val] of Object.entries(data)) {
-        if (Array.isArray(val)) {
-          const itemErrors = val
-            .map((v) => {
-              if (typeof v === "object" && v !== null) {
-                return Object.entries(v)
-                  .map(([k, subv]) => `${k}: ${Array.isArray(subv) ? subv.join(", ") : subv}`)
-                  .join("; ");
-              }
-              return String(v);
-            })
-            .filter(Boolean);
-          messages.push(`${key !== "non_field_errors" ? key + ": " : ""}${itemErrors.join(", ")}`);
-        } else if (typeof val === "string") {
-          messages.push(`${key !== "non_field_errors" ? key + ": " : ""}${val}`);
-        } else if (typeof val === "object" && val !== null) {
-          messages.push(`${key}: ${JSON.stringify(val)}`);
-        }
-      }
-      if (messages.length > 0) return messages.join(" | ");
-    }
-    return error.message || defaultMsg;
+    return formatErrorMessage(error, defaultMsg);
   };
 
   const createMutation = useMutation({
@@ -1281,6 +1334,8 @@ export default function SalesForm({
           discount: isNote ? 0 : (Number(item.discount) || 0),
           tax: isNote ? 0 : (Number(item.tax) || 0),
           manufacturer: isNote ? "" : (item.manufacturer || item.product_detail?.manufacturer || ""),
+          internal_reference: isNote ? "" : (item.internal_reference || item.product_detail?.internal_reference || ""),
+          storage_condition: isNote ? "" : (item.storage_condition || item.product_detail?.storage_condition || ""),
           isExistingProduct: !isNote && !!productId,
           id: item.id || null,
           source_item_id: item.source_item_id || null,
@@ -1304,6 +1359,8 @@ export default function SalesForm({
               discount: 0,
               tax: 0,
               manufacturer: item.manufacturer || "",
+              internal_reference: item.internal_reference || "",
+              storage_condition: item.storage_condition || "",
               isExistingProduct: false,
           };
       }) : [{
@@ -1322,6 +1379,8 @@ export default function SalesForm({
         discount: 0,
         tax: 0,
         manufacturer: "",
+        internal_reference: "",
+        storage_condition: "",
         isExistingProduct: false,
       }],
     };
@@ -1467,6 +1526,9 @@ export default function SalesForm({
                   hsn_sac_code: itemSettings.show_item_hsn ? (item.hsn_sac_code || null) : null,
                   description: (item.description || item.product_description || "").trim(),
                   product_description: (item.description || item.product_description || "").trim(),
+                  manufacturer: item.manufacturer || "",
+                  internal_reference: item.internal_reference || "",
+                  storage_condition: item.storage_condition || "",
                   discount: itemSettings.show_item_discount ? discount : 0,
                   tax: itemSettings.show_item_tax ? tax : 0,
                   ...(item.id ? { id: item.id } : {}),
@@ -1926,6 +1988,7 @@ export default function SalesForm({
                           {[
                             ["show_item_description", "Description"],
                             ["show_item_manufacturer", "Manufacturer"],
+                            ["show_item_internal_reference", "Internal reference"],
                             ["show_item_hsn", "HSN/SAC"],
                             ["show_item_batch", "Batch"],
                             ["show_item_free_quantity", "Free Qty"],
@@ -1992,6 +2055,9 @@ export default function SalesForm({
                               hsn_sac_code: "",
                               tax_rate: 0,
                               amount: 0,
+                              manufacturer: "",
+                              internal_reference: "",
+                              storage_condition: "",
                               isExistingProduct: false,
                             });
                           }
@@ -2003,7 +2069,9 @@ export default function SalesForm({
                           {(() => {
                             const desktopColumns = [
                               { key: "drag", label: "", show: true, width: "36px", minWidth: 36 },
-                              { key: "product", label: "Product", show: true, width: "minmax(320px, 1fr)", minWidth: 320 },
+                              { key: "product", label: "Product", show: true, width: "minmax(300px, 1fr)", minWidth: 300 },
+                              { key: "manufacturer", label: "Manufacturer", show: itemSettings.show_item_manufacturer, width: "130px", minWidth: 130 },
+                              { key: "internal_reference", label: "Internal Ref", show: itemSettings.show_item_internal_reference, width: "120px", minWidth: 120 },
                               { key: "hsn", label: "HSN/SAC Code", show: itemSettings.show_item_hsn, width: "120px", minWidth: 120 },
                               { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px", minWidth: 140 },
                               { key: "quantity", label: "Quantity", show: true, width: "80px", minWidth: 80 },
@@ -2211,6 +2279,17 @@ export default function SalesForm({
                                                    onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                    onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                                  />
+                                                  {itemSettings.show_item_storage_condition && (
+                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-cyan-300">
+                                                      <span className="text-[10px] uppercase font-semibold text-gray-400 select-none">Storage:</span>
+                                                      <Field
+                                                        name={`items.${index}.storage_condition`}
+                                                        type="text"
+                                                        placeholder="e.g. Store in cool, dry place"
+                                                        className="flex-1 bg-transparent border-0 border-b border-cyan-500/30 hover:border-cyan-500/60 focus:border-cyan-400 px-1 py-0.5 text-xs text-cyan-200 placeholder-gray-500 outline-none transition-colors"
+                                                      />
+                                                    </div>
+                                                  )}
                                                  {canAccessInventory && item.product?.trim() && (
                                                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                                      {item.product_id ? (
@@ -2220,6 +2299,8 @@ export default function SalesForm({
                                                            idx: index,
                                                            product_id: item.product_id,
                                                            name: item.product,
+                                                            manufacturer: item.manufacturer,
+                                                            internal_reference: item.internal_reference,
                                                            price: item.price,
                                                            hsn_sac_code: item.hsn_sac_code,
                                                            tax: item.tax,
@@ -2239,6 +2320,8 @@ export default function SalesForm({
                                                            idx: index,
                                                            product_id: null,
                                                            name: item.product,
+                                                            manufacturer: item.manufacturer,
+                                                            internal_reference: item.internal_reference,
                                                            price: item.price,
                                                            hsn_sac_code: item.hsn_sac_code,
                                                            tax: item.tax,
@@ -2269,6 +2352,32 @@ export default function SalesForm({
                                                </div>
                                              );
                                            }
+
+                                            if (col.key === "manufacturer") {
+                                              return (
+                                                <div key={col.key}>
+                                                  <Field
+                                                    name={`items.${index}.manufacturer`}
+                                                    type="text"
+                                                    placeholder="Manufacturer"
+                                                    className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200 placeholder-gray-500 focus:border-cyan-500 outline-none"
+                                                  />
+                                                </div>
+                                              );
+                                            }
+
+                                            if (col.key === "internal_reference") {
+                                              return (
+                                                <div key={col.key}>
+                                                  <Field
+                                                    name={`items.${index}.internal_reference`}
+                                                    type="text"
+                                                    placeholder="Internal Ref"
+                                                    className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200 placeholder-gray-500 focus:border-cyan-500 outline-none"
+                                                  />
+                                                </div>
+                                              );
+                                            }
 
                                            if (col.key === "hsn") {
                                              return (
@@ -2439,6 +2548,8 @@ export default function SalesForm({
                                                       idx: index,
                                                       product_id: item.product_id || null,
                                                       name: item.product,
+                                                            manufacturer: item.manufacturer,
+                                                            internal_reference: item.internal_reference,
                                                       price: item.price,
                                                       hsn_sac_code: item.hsn_sac_code,
                                                       tax: item.tax,
@@ -2528,6 +2639,17 @@ export default function SalesForm({
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                             onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                           />
+                                                  {itemSettings.show_item_storage_condition && (
+                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-cyan-300">
+                                                      <span className="text-[10px] uppercase font-semibold text-gray-400 select-none">Storage:</span>
+                                                      <Field
+                                                        name={`items.${index}.storage_condition`}
+                                                        type="text"
+                                                        placeholder="e.g. Store in cool, dry place"
+                                                        className="flex-1 bg-transparent border-0 border-b border-cyan-500/30 hover:border-cyan-500/60 focus:border-cyan-400 px-1 py-0.5 text-xs text-cyan-200 placeholder-gray-500 outline-none transition-colors"
+                                                      />
+                                                    </div>
+                                                  )}
                                           {canAccessInventory && item.product?.trim() && (
                                             <div className="mt-2 flex items-center gap-2 flex-wrap">
                                               {item.product_id ? (
@@ -2537,6 +2659,8 @@ export default function SalesForm({
                                                     idx: index,
                                                     product_id: item.product_id,
                                                     name: item.product,
+                                                            manufacturer: item.manufacturer,
+                                                            internal_reference: item.internal_reference,
                                                     price: item.price,
                                                     hsn_sac_code: item.hsn_sac_code,
                                                     tax: item.tax,
@@ -2555,6 +2679,8 @@ export default function SalesForm({
                                                     idx: index,
                                                     product_id: null,
                                                     name: item.product,
+                                                            manufacturer: item.manufacturer,
+                                                            internal_reference: item.internal_reference,
                                                     price: item.price,
                                                     hsn_sac_code: item.hsn_sac_code,
                                                     tax: item.tax,
@@ -2587,6 +2713,24 @@ export default function SalesForm({
                                           })()}
                                       </div>
                                       
+                                       {/* Settings Optional Fields: Manufacturer & Internal Reference */}
+                                       {(itemSettings.show_item_manufacturer || itemSettings.show_item_internal_reference) && (
+                                           <div className="grid grid-cols-2 gap-4">
+                                               {itemSettings.show_item_manufacturer && (
+                                                 <div>
+                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Manufacturer</label>
+                                                     <Field name={`items.${index}.manufacturer`} type="text" placeholder="Manufacturer" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
+                                                 </div>
+                                               )}
+                                               {itemSettings.show_item_internal_reference && (
+                                                 <div>
+                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Internal Ref</label>
+                                                     <Field name={`items.${index}.internal_reference`} type="text" placeholder="Internal Ref" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
+                                                 </div>
+                                               )}
+                                           </div>
+                                       )}
+
                                       {/* Settings Optional Fields: HSN & Batch */}
                                       {(itemSettings.show_item_hsn || itemSettings.show_item_batch) && (
                                           <div className="grid grid-cols-2 gap-4">
@@ -2777,6 +2921,9 @@ export default function SalesForm({
                                 hsn_sac_code: "",
                                 tax_rate: 0,
                                 amount: 0,
+                                manufacturer: "",
+                                internal_reference: "",
+                                storage_condition: "",
                                 isExistingProduct: false,
                               })}
                               className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
@@ -3027,6 +3174,24 @@ export default function SalesForm({
                 <div className="md:col-span-2">
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Product Name</label>
                   <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Manufacturer</label>
+                  <input
+                    value={productCreationState.manufacturer || ""}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, manufacturer: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="e.g. Acme Corp"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Internal Reference</label>
+                  <input
+                    value={productCreationState.internal_reference || ""}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, internal_reference: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="e.g. SKU-1234"
+                  />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Sale Price</label>

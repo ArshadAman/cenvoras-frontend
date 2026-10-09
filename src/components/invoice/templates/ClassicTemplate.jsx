@@ -444,6 +444,13 @@ const InvoicePreview = forwardRef(({
                           {desc}
                         </div>
                       )}
+                      {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                        <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
+                          {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                          {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                          {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="border text-center align-middle font-semibold text-gray-900" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
                       {qty} {unit}
@@ -589,10 +596,10 @@ const InvoicePreview = forwardRef(({
                                   {item.description || item.product_description || item.product_detail?.description}
                                 </div>
                               ) : null}
-                              {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                              {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
                                 <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
-                                  {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
-                                  {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
+                                  {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                                  {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                                   {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
                                 </div>
                               ) : null}

@@ -214,6 +214,13 @@ const LegendTemplate = forwardRef(({
                           {desc}
                         </div>
                       )}
+                      {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                        <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                          {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                          {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                          {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="text-xs text-gray-900 align-middle text-center border-r border-gray-200 font-bold" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{qty} {unit}</td>
                     <td className="text-xs text-gray-700 align-middle text-left border-r border-gray-200" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
@@ -280,6 +287,13 @@ const LegendTemplate = forwardRef(({
                             {desc}
                           </div>
                         )}
+                        {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                          <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                            {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                            {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                          </div>
+                        ) : null}
                       </div>
                     );
                   }
