@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoice, downloadSalesInvoicePDF } from "../../api/sales";
-import { getQuotation, downloadQuotationPDF } from "../../api/quotation";
-import { getDeliveryChallan, getDeliveryChallanPdf } from "../../api/delivery_challan";
-import { getSalesOrder, downloadSalesOrderPDF } from "../../api/sales_order";
+import { getSalesInvoice, downloadSalesInvoicePDF, patchSalesInvoice } from "../../api/sales";
+import { getQuotation, downloadQuotationPDF, patchQuotation } from "../../api/quotation";
+import { getDeliveryChallan, getDeliveryChallanPdf, patchDeliveryChallan } from "../../api/delivery_challan";
+import { getSalesOrder, downloadSalesOrderPDF, patchSalesOrder } from "../../api/sales_order";
 import { useReactToPrint } from "react-to-print";
 import { 
   XMarkIcon, 
@@ -22,7 +22,7 @@ import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
 import { getActiveTemplate, setActiveTemplate, getInvoiceTemplates } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
-import { getUserProfile } from "../../api/users";
+import { getUserProfile, patchUserProfile } from "../../api/users";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
@@ -38,6 +38,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [manualEmail, setManualEmail] = useState('');
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState(null);
+
+  const isQuotation = documentType === "quotation";
+  const isDeliveryChallan = documentType === "delivery_challan";
+  const isSalesOrder = documentType === "sales_order" || documentType === "proforma";
+  const sectionKey = isQuotation ? 'quotation' : isDeliveryChallan ? 'delivery_challan' : isSalesOrder ? 'sales_order' : 'sales_invoice';
 
   // Fetch user profile to ensure business & bank details are always populated
   const { data: userProfile } = useQuery({
@@ -48,6 +54,116 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   });
 
   const billingProfile = userProfile?.billing_profile || userProfile?.profile || {};
+  const allBankAccounts = (billingProfile.bank_accounts && billingProfile.bank_accounts.length > 0)
+    ? billingProfile.bank_accounts
+    : (businessInfo.bank_accounts && businessInfo.bank_accounts.length > 0)
+    ? businessInfo.bank_accounts
+    : (billingProfile.bank_name || businessInfo.bank_name)
+    ? [{
+        id: 'bank_acc_1',
+        account_name: 'Primary Account',
+        bank_name: billingProfile.bank_name || businessInfo.bank_name || '',
+        account_number: billingProfile.bank_account_number || businessInfo.bank_account_number || '',
+        ifsc_code: billingProfile.bank_ifsc_code || businessInfo.bank_ifsc_code || '',
+        account_holder: billingProfile.business_name || businessInfo.business_name || '',
+        branch: billingProfile.bank_branch || businessInfo.bank_branch || '',
+        upi_id: billingProfile.bank_upi_id || businessInfo.bank_upi_id || '',
+        qr_code: billingProfile.bank_qr_code || businessInfo.bank_qr_code || '',
+        is_default: true,
+      }]
+    : [];
+
+  // Fetch invoice/quotation/challan/sales order details
+  const { data: invoiceDetails = {}, isLoading } = useQuery({
+    queryKey: [
+      isDeliveryChallan
+        ? "deliveryChallan"
+        : isQuotation
+        ? "quotation"
+        : isSalesOrder
+        ? "salesOrder"
+        : "salesInvoice",
+      invoice?.id,
+    ],
+    queryFn: () =>
+      isDeliveryChallan
+        ? getDeliveryChallan(invoice?.id)
+        : isQuotation
+        ? getQuotation(invoice?.id)
+        : isSalesOrder
+        ? getSalesOrder(invoice?.id)
+        : getSalesInvoice(invoice?.id),
+    enabled: isOpen && !!invoice?.id,
+  });
+
+  // Resolve active bank account: bill-specific override -> section default -> default account -> first account
+  const billBankAccountId = invoiceDetails?.bank_account_id || invoice?.bank_account_id || invoiceDetails?.meta?.bank_account_id || invoice?.meta?.bank_account_id;
+  const sectionDefaultBankAccountId = billingProfile?.default_bank_account_sections?.[sectionKey];
+
+  useEffect(() => {
+    if (billBankAccountId !== undefined && billBankAccountId !== null && billBankAccountId !== '') {
+      setSelectedBankAccountId(billBankAccountId);
+    } else if (sectionDefaultBankAccountId) {
+      setSelectedBankAccountId(sectionDefaultBankAccountId);
+    } else if (allBankAccounts.length > 0) {
+      const defaultAcc = allBankAccounts.find(a => a.is_default) || allBankAccounts[0];
+      setSelectedBankAccountId(defaultAcc ? defaultAcc.id : 'none');
+    } else {
+      setSelectedBankAccountId('none');
+    }
+  }, [billBankAccountId, sectionDefaultBankAccountId, allBankAccounts.length]);
+
+  const activeBankAcc = selectedBankAccountId === 'none'
+    ? null
+    : allBankAccounts.find(a => a.id === selectedBankAccountId)
+      || allBankAccounts.find(a => a.is_default)
+      || allBankAccounts[0]
+      || null;
+
+  const handleBankSelect = async (newId) => {
+    setSelectedBankAccountId(newId);
+
+    // 1. Update default bank account for this section in user profile
+    try {
+      const currentSectionDefaults = billingProfile.default_bank_account_sections || {};
+      if (currentSectionDefaults[sectionKey] !== newId) {
+        await patchUserProfile({
+          default_bank_account_sections: {
+            ...currentSectionDefaults,
+            [sectionKey]: newId,
+          }
+        });
+        queryClient.invalidateQueries(['userProfile']);
+      }
+    } catch (err) {
+      console.warn('Failed to update section default bank account:', err);
+    }
+
+    // 2. Persist override to current document
+    const docId = invoice?.id;
+    if (docId) {
+      const payload = { bank_account_id: newId === 'none' ? '' : newId };
+      try {
+        if (isDeliveryChallan) {
+          await patchDeliveryChallan(docId, payload);
+          queryClient.invalidateQueries(['deliveryChallan', docId]);
+        } else if (isQuotation) {
+          await patchQuotation(docId, payload);
+          queryClient.invalidateQueries(['quotation', docId]);
+        } else if (isSalesOrder) {
+          await patchSalesOrder(docId, payload);
+          queryClient.invalidateQueries(['salesOrder', docId]);
+        } else {
+          await patchSalesInvoice(docId, payload);
+          queryClient.invalidateQueries(['salesInvoice', docId]);
+        }
+        toast.success('Bank account updated for this bill');
+      } catch (err) {
+        console.warn('Failed to save bank account to bill:', err);
+      }
+    }
+  };
+
   const effectiveBusinessInfo = {
     business_name: billingProfile.business_name,
     business_address: billingProfile.business_address,
@@ -61,14 +177,33 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     city: billingProfile.city,
     country: billingProfile.country,
     trn: billingProfile.trn,
-    bank_name: billingProfile.bank_name,
-    bank_account_number: billingProfile.bank_account_number,
-    bank_ifsc_code: billingProfile.bank_ifsc_code,
-    bank_branch: billingProfile.bank_branch,
-    bank_upi_id: billingProfile.bank_upi_id,
-    bank_qr_code: billingProfile.bank_qr_code,
+    bank_name: activeBankAcc ? activeBankAcc.bank_name : '',
+    bank_account_number: activeBankAcc ? activeBankAcc.account_number : '',
+    bank_ifsc_code: activeBankAcc ? activeBankAcc.ifsc_code : '',
+    bank_branch: activeBankAcc ? (activeBankAcc.account_holder || activeBankAcc.branch) : '',
+    bank_upi_id: activeBankAcc ? activeBankAcc.upi_id : '',
+    bank_qr_code: activeBankAcc ? activeBankAcc.qr_code : '',
+    bank_accounts: allBankAccounts,
+    hide_bank_details: selectedBankAccountId === 'none',
     ...businessInfo,
   };
+  if (selectedBankAccountId === 'none') {
+    effectiveBusinessInfo.bank_name = '';
+    effectiveBusinessInfo.bank_account_number = '';
+    effectiveBusinessInfo.bank_ifsc_code = '';
+    effectiveBusinessInfo.bank_branch = '';
+    effectiveBusinessInfo.bank_upi_id = '';
+    effectiveBusinessInfo.bank_qr_code = '';
+    effectiveBusinessInfo.hide_bank_details = true;
+  } else if (activeBankAcc) {
+    effectiveBusinessInfo.bank_name = activeBankAcc.bank_name || '';
+    effectiveBusinessInfo.bank_account_number = activeBankAcc.account_number || '';
+    effectiveBusinessInfo.bank_ifsc_code = activeBankAcc.ifsc_code || '';
+    effectiveBusinessInfo.bank_branch = activeBankAcc.account_holder || activeBankAcc.branch || '';
+    effectiveBusinessInfo.bank_upi_id = activeBankAcc.upi_id || '';
+    effectiveBusinessInfo.bank_qr_code = activeBankAcc.qr_code || '';
+    effectiveBusinessInfo.hide_bank_details = false;
+  }
 
   const handleTemplateSwitch = (targetId) => {
     setActiveTemplate(targetId);
@@ -114,33 +249,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, showDesigner, emailPromptOpen, onClose]);
 
-  const isQuotation = documentType === "quotation";
-  const isDeliveryChallan = documentType === "delivery_challan";
-  const isSalesOrder = documentType === "sales_order" || documentType === "proforma";
-
-  // Fetch invoice/quotation/challan/sales order details
-  const { data: invoiceDetails = {}, isLoading } = useQuery({
-    queryKey: [
-      isDeliveryChallan
-        ? "deliveryChallan"
-        : isQuotation
-        ? "quotation"
-        : isSalesOrder
-        ? "salesOrder"
-        : "salesInvoice",
-      invoice?.id,
-    ],
-    queryFn: () =>
-      isDeliveryChallan
-        ? getDeliveryChallan(invoice?.id)
-        : isQuotation
-        ? getQuotation(invoice?.id)
-        : isSalesOrder
-        ? getSalesOrder(invoice?.id)
-        : getSalesInvoice(invoice?.id),
-    enabled: isOpen && !!invoice?.id,
-  });
-
   // Fetch tenant invoice settings
   const { data: invoiceSettings } = useQuery({
     queryKey: ['invoiceSettings'],
@@ -149,31 +257,23 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     staleTime: 5 * 60 * 1000,
   });
 
-  const previewTemplate = isQuotation
-    ? {
-        ...template,
-        content: {
-          ...(template?.content || {}),
-          invoiceTitle: "QUOTATION",
-        },
-      }
-    : isDeliveryChallan
-    ? {
-        ...template,
-        content: {
-          ...(template?.content || {}),
-          invoiceTitle: "DELIVERY CHALLAN",
-        },
-      }
-    : isSalesOrder
-    ? {
-        ...template,
-        content: {
-          ...(template?.content || {}),
-          invoiceTitle: "PROFORMA INVOICE",
-        },
-      }
-    : template;
+  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : (template?.content?.invoiceTitle || "TAX INVOICE");
+  const previewTemplate = {
+    ...template,
+    content: {
+      ...(template?.content || {}),
+      invoiceTitle: baseTitle,
+      hideBankDetails: selectedBankAccountId === 'none',
+      bankDetails: activeBankAcc ? {
+        bankName: activeBankAcc.bank_name || '',
+        accountNumber: activeBankAcc.account_number || '',
+        ifscCode: activeBankAcc.ifsc_code || '',
+        accountHolder: activeBankAcc.account_holder || activeBankAcc.branch || '',
+        branch: activeBankAcc.branch || '',
+        upiId: activeBankAcc.upi_id || '',
+      } : { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '' },
+    },
+  };
 
   const enrichedInvoice = {
     ...invoiceDetails,
@@ -521,6 +621,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   ))}
                 </select>
               </div>
+
+              {/* Instant Bank Account Switcher Dropdown */}
+              {allBankAccounts.length > 0 && (
+                <div className="flex items-center gap-1.5 ml-1">
+                  <span className="text-xs text-gray-400 hidden lg:inline">Bank:</span>
+                  <select
+                    value={selectedBankAccountId || 'none'}
+                    onChange={(e) => handleBankSelect(e.target.value)}
+                    className="bg-[#1a1a2e] hover:bg-[#252542] border border-emerald-500/30 text-emerald-300 text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer transition-colors shadow-sm max-w-[140px] sm:max-w-[200px] truncate"
+                    title="Select which bank account to print on this bill & section default"
+                  >
+                    <option value="none" className="bg-gray-900 text-gray-400">
+                      No Bank Details
+                    </option>
+                    {allBankAccounts.map((acc, idx) => (
+                      <option key={acc.id || idx} value={acc.id} className="bg-gray-900 text-white">
+                        {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `(${acc.bank_name})` : ''} {billingProfile.default_bank_account_sections?.[sectionKey] === acc.id ? '★' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button
                 onClick={onClose}

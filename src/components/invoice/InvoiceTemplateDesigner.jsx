@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { getUserProfile } from '../../api/users';
 import {
   XMarkIcon,
   PaintBrushIcon,
@@ -155,6 +157,34 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [viewMode, setViewMode] = useState('design'); // 'design' or 'preview'
   const previewRef = useRef(null);
+
+  // Fetch profile to get configured multi-bank accounts
+  const { data: userProfileData } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const billingProfile = userProfileData?.billing_profile || userProfileData?.profile || {};
+  const allBankAccounts = (billingProfile.bank_accounts && billingProfile.bank_accounts.length > 0)
+    ? billingProfile.bank_accounts
+    : (businessInfo.bank_accounts && businessInfo.bank_accounts.length > 0)
+    ? businessInfo.bank_accounts
+    : (billingProfile.bank_name || businessInfo.bank_name)
+    ? [{
+        id: 'bank_acc_1',
+        account_name: 'Primary Account',
+        bank_name: billingProfile.bank_name || businessInfo.bank_name || '',
+        account_number: billingProfile.bank_account_number || businessInfo.bank_account_number || '',
+        ifsc_code: billingProfile.bank_ifsc_code || businessInfo.bank_ifsc_code || '',
+        account_holder: billingProfile.business_name || businessInfo.business_name || '',
+        branch: billingProfile.bank_branch || businessInfo.bank_branch || '',
+        upi_id: billingProfile.bank_upi_id || businessInfo.bank_upi_id || '',
+        qr_code: billingProfile.bank_qr_code || businessInfo.bank_qr_code || '',
+        is_default: true,
+      }]
+    : [];
 
   // Sample invoice data for preview
   const sampleInvoice = {
@@ -767,30 +797,70 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               />
               
               <SectionHeader>Bank Details</SectionHeader>
-              <TextInput
-                label="Bank Name"
-                value={currentTemplate.content?.bankDetails?.bankName}
-                onChange={(v) => updateTemplate('content.bankDetails.bankName', v)}
-                placeholder="State Bank of India"
-              />
-              <TextInput
-                label="Account Number"
-                value={currentTemplate.content?.bankDetails?.accountNumber}
-                onChange={(v) => updateTemplate('content.bankDetails.accountNumber', v)}
-                placeholder="1234567890"
-              />
-              <TextInput
-                label="IFSC Code"
-                value={currentTemplate.content?.bankDetails?.ifscCode}
-                onChange={(v) => updateTemplate('content.bankDetails.ifscCode', v)}
-                placeholder="SBIN0001234"
-              />
-              <TextInput
-                label="Account Holder"
-                value={currentTemplate.content?.bankDetails?.accountHolder}
-                onChange={(v) => updateTemplate('content.bankDetails.accountHolder', v)}
-                placeholder="Your Business Name"
-              />
+              <div className="py-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm text-white">Bank Account to Print</span>
+                  <span className="text-xs text-gray-400">Profile Linked</span>
+                </div>
+                <select
+                  value={currentTemplate.content?.bankAccountId || (currentTemplate.content?.hideBankDetails ? 'none' : (allBankAccounts[0]?.id || ''))}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    if (selId === 'none') {
+                      updateTemplate('content.bankAccountId', 'none');
+                      updateTemplate('content.hideBankDetails', true);
+                      updateTemplate('content.bankDetails', { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '' });
+                    } else {
+                      const acc = allBankAccounts.find(a => a.id === selId);
+                      if (acc) {
+                        updateTemplate('content.bankAccountId', acc.id);
+                        updateTemplate('content.hideBankDetails', false);
+                        updateTemplate('content.bankDetails', {
+                          bankName: acc.bank_name || '',
+                          accountNumber: acc.account_number || '',
+                          ifscCode: acc.ifsc_code || '',
+                          accountHolder: acc.account_holder || acc.branch || '',
+                          branch: acc.branch || '',
+                          upiId: acc.upi_id || '',
+                        });
+                      }
+                    }
+                  }}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-purple-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="none" className="bg-gray-900 text-gray-400">Do not print bank details (None)</option>
+                  {allBankAccounts.map((acc, idx) => (
+                    <option key={acc.id || idx} value={acc.id} className="bg-gray-900 text-white">
+                      {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `• ${acc.bank_name}` : ''} {acc.account_number ? `(••••${acc.account_number.slice(-4)})` : ''} {acc.is_default ? '★ Default' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-gray-500 mt-1.5">
+                  Choose which profile account to print. To add or edit accounts, visit Profile → Bank & Payment Details.
+                </p>
+
+                {(() => {
+                  const selId = currentTemplate.content?.bankAccountId;
+                  const isNone = selId === 'none' || currentTemplate.content?.hideBankDetails;
+                  if (isNone) return null;
+                  const activeAcc = allBankAccounts.find(a => a.id === selId) || allBankAccounts[0];
+                  if (!activeAcc || (!activeAcc.bank_name && !activeAcc.account_number)) return null;
+                  return (
+                    <div className="mt-3 p-3 rounded-lg border border-purple-500/20 bg-purple-500/5 text-xs space-y-1.5">
+                      <div className="flex justify-between text-gray-300">
+                        <span>Bank: <strong className="text-white font-medium">{activeAcc.bank_name || '—'}</strong></span>
+                        <span>IFSC: <strong className="text-white font-mono">{activeAcc.ifsc_code || '—'}</strong></span>
+                      </div>
+                      <div className="flex justify-between text-gray-300">
+                        <span>A/C: <strong className="text-white font-mono">{activeAcc.account_number || '—'}</strong></span>
+                        {activeAcc.account_holder && (
+                          <span>Holder: <strong className="text-white font-medium">{activeAcc.account_holder}</strong></span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
               
               <SectionHeader>Terms & Conditions</SectionHeader>
               <TextArea

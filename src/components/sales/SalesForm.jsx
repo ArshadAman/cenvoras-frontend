@@ -735,7 +735,7 @@ export default function SalesForm({
   isOpen,
   onClose,
   editData,
-  invoicePrefix = "INV-",
+  invoicePrefix = "INV",
   documentType = "invoice",
   forceDraft = false,
   createDocument = createSalesInvoice,
@@ -1562,9 +1562,9 @@ export default function SalesForm({
                 : 0;
 
               const isFormalAutoSeq = values.invoice_number?.startsWith(invoicePrefix) ||
-                values.invoice_number?.startsWith('INV-') ||
-                values.invoice_number?.startsWith('QT-') ||
-                values.invoice_number?.startsWith('DC-');
+                values.invoice_number?.startsWith('INV') ||
+                values.invoice_number?.startsWith('QT') ||
+                values.invoice_number?.startsWith('DC');
 
               const serializedChallanNumber = Array.isArray(values.delivery_challans)
                 ? values.delivery_challans.map(c => c.challan_number?.trim()).filter(Boolean).join(', ')
@@ -1702,7 +1702,7 @@ export default function SalesForm({
                           spellCheck="false"
                           data-1p-ignore="true"
                           className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
-                          placeholder={isDeliveryChallan ? "e.g. DC-ABCD-001" : isQuotation ? "e.g. QT-ABCD-001" : "e.g. INV-ABCD-001"}
+                          placeholder={isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001"}
                         />
                         <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
                       </div>

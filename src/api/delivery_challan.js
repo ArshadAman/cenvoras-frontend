@@ -12,10 +12,13 @@ export const createDeliveryChallan = (data) =>
 export const updateDeliveryChallan = (id, data) => 
   api.put(`/billing/delivery-challans/${id}/`, data).then(res => res.data);
 
+export const patchDeliveryChallan = (id, data) => 
+  api.patch(`/billing/delivery-challans/${id}/`, data).then(res => res.data);
+
 export const deleteDeliveryChallan = (id) => 
   api.delete(`/billing/delivery-challans/${id}/`).then(res => res.data);
 
-export const getNextDeliveryChallanNumber = (prefix = "DC-") =>
+export const getNextDeliveryChallanNumber = (prefix = "DC") =>
   api.get(`/billing/delivery-challans/next-number/?prefix=${prefix}`).then(res => res.data);
 
 export const convertOrderToChallan = (orderId, data = {}) =>

@@ -21,7 +21,7 @@ import {
 import { getUserProfile, patchUserProfile } from "../api/users";
 import { getCurrencySymbol } from "../utils/currency";
 
-const DEFAULT_CHALLAN_PREFIX = "DC-";
+const DEFAULT_CHALLAN_PREFIX = "DC";
 
 const normalizePrefix = (value) => {
   return String(value ?? '').toUpperCase();
@@ -187,6 +187,7 @@ export default function DeliveryChallanList() {
                 onBlur={handlePrefixBlur}
                 disabled={!canEditPrefix}
                 className="bg-transparent border-none text-white text-sm w-20 outline-none p-0 font-mono focus:ring-0"
+                placeholder="DC"
                 maxLength={8}
                 title={!canEditPrefix ? "Delivery challan prefix is managed by the main account." : ""}
               />

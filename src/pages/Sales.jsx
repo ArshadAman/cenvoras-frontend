@@ -12,7 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { getUserProfile, patchUserProfile } from "../api/users";
 
-const DEFAULT_INVOICE_PREFIX = "INV-";
+const DEFAULT_INVOICE_PREFIX = "INV";
 
 const normalizePrefix = (value) => {
   return String(value ?? "").toUpperCase();
@@ -181,7 +181,7 @@ export default function Sales({ documentType = "invoice" }) {
                  onBlur={handlePrefixBlur}
                  disabled={!canEditInvoicePrefix}
                  className="bg-transparent border-none text-white text-sm flex-1 sm:w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
-                 placeholder="INV-"
+                 placeholder="INV"
                  maxLength={10}
                  title={!canEditInvoicePrefix ? 'Invoice prefix is managed by the main account.' : ''}
                />

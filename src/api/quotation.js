@@ -12,10 +12,13 @@ export const createQuotation = (data) =>
 export const updateQuotation = (id, data) =>
   api.put(`/billing/quotations/${id}/`, data).then((res) => res.data);
 
+export const patchQuotation = (id, data) =>
+  api.patch(`/billing/quotations/${id}/`, data).then((res) => res.data);
+
 export const deleteQuotation = (id) =>
   api.delete(`/billing/quotations/${id}/`).then((res) => res.data);
 
-export const getNextQuotationNumber = (prefix = 'QT-') =>
+export const getNextQuotationNumber = (prefix = 'QT') =>
   api.get(`/billing/quotations/next-number/?prefix=${prefix}`).then((res) => res.data);
 
 export const convertQuotationToSalesOrder = (id, payload = {}) => {

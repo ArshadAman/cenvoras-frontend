@@ -12,6 +12,9 @@ export const createSalesOrder = (data) =>
 export const updateSalesOrder = (id, data) => 
   api.put(`/billing/sales-orders/${id}/`, data).then(res => res.data);
 
+export const patchSalesOrder = (id, data) => 
+  api.patch(`/billing/sales-orders/${id}/`, data).then(res => res.data);
+
 export const deleteSalesOrder = (id) => 
   api.delete(`/billing/sales-orders/${id}/`).then(res => res.data);
 
