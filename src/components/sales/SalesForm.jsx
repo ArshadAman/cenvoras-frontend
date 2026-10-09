@@ -215,7 +215,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === 'Tab') {
-                  if (showDropdown && filteredProducts.length > 0 && selectedIndex >= 0) {
+                  if (showDropdown && filteredProducts.length === 1) {
+                    selectProduct(filteredProducts[0]);
+                  } else if (showDropdown && filteredProducts.length > 0 && selectedIndex >= 0) {
                     selectProduct(filteredProducts[selectedIndex]);
                   }
                   setShowDropdown(false);
@@ -232,9 +234,14 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     setSelectedIndex(prev => (prev > 0) ? prev - 1 : displayLimit - 1);
-                  } else if (e.key === 'Enter' && selectedIndex >= 0) {
-                    e.preventDefault();
-                    selectProduct(filteredProducts[selectedIndex]);
+                  } else if (e.key === 'Enter') {
+                    if (filteredProducts.length === 1) {
+                      e.preventDefault();
+                      selectProduct(filteredProducts[0]);
+                    } else if (selectedIndex >= 0) {
+                      e.preventDefault();
+                      selectProduct(filteredProducts[selectedIndex]);
+                    }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
                     setShowDropdown(false);
@@ -440,20 +447,35 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   const displayLimit = Math.min(filteredCustomers.length, 50);
                   const totalItems = displayLimit + (showAddNew ? 1 : 0);
                   
+                  if (e.key === 'Tab') {
+                    if (filteredCustomers.length === 1) {
+                      selectCustomer(filteredCustomers[0]);
+                    } else if (selectedIndex >= 0 && selectedIndex < displayLimit) {
+                      selectCustomer(filteredCustomers[selectedIndex]);
+                    }
+                    setShowDropdown(false);
+                    setSelectedIndex(-1);
+                    return;
+                  }
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     setSelectedIndex(prev => (prev < totalItems - 1) ? prev + 1 : 0);
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalItems - 1);
-                  } else if (e.key === 'Enter' && selectedIndex >= 0) {
-                    e.preventDefault();
-                    if (selectedIndex < displayLimit) {
-                      selectCustomer(filteredCustomers[selectedIndex]);
-                    } else if (showAddNew) {
-                      // "Add New Customer" option
-                      setShowNewCustomerModal(true);
-                      setShowDropdown(false);
+                  } else if (e.key === 'Enter') {
+                    if (filteredCustomers.length === 1 && !showAddNew) {
+                      e.preventDefault();
+                      selectCustomer(filteredCustomers[0]);
+                    } else if (selectedIndex >= 0) {
+                      e.preventDefault();
+                      if (selectedIndex < displayLimit) {
+                        selectCustomer(filteredCustomers[selectedIndex]);
+                      } else if (showAddNew) {
+                        // "Add New Customer" option
+                        setShowNewCustomerModal(true);
+                        setShowDropdown(false);
+                      }
                     }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -1241,14 +1263,24 @@ export default function SalesForm({
           : ((item?.product && item.product.trim() !== '') || item?.product_id)
       );
 
-      const hasCustomerName = !!(values.customer_name && values.customer_name.trim());
+      const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
+      // Check if this customer is actually saved in the database
+      const isSavedCustomerInDb = Boolean(
+        values.customer_id ||
+        (customers || []).some(c => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
+      );
+
+      // Requirement: Until a customer is saved in the database, it won't get autosaved just because you press on a blank area or "Esc".
+      if (!isSavedCustomerInDb) {
+        onClose();
+        return;
+      }
+
+      const hasCustomerName = !!customerNameTrimmed;
       const hasAtLeastOneItem = cleanedItems.length > 0;
 
-      // Auto-save draft on close (Esc or backdrop click) whenever customer or item data has been entered
-      if (hasCustomerName || hasAtLeastOneItem) {
-        if (!hasCustomerName) {
-          formikRef.current.setFieldValue('customer_name', 'Draft Customer');
-        }
+      // Auto-save draft on close (Esc or backdrop click) only when customer is already saved in the database
+      if (hasCustomerName && hasAtLeastOneItem) {
         submitActionRef.current = 'draft';
         await formikRef.current.submitForm();
         return;

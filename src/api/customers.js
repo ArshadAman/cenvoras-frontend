@@ -25,6 +25,10 @@ export const createCustomer = data =>
 export const updateCustomer = (id, data) =>
   api.put(`/billing/customers/${id}/edit/`, data).then(res => res.data);
 
+// Partially update an existing customer
+export const patchCustomer = (id, data) =>
+  api.patch(`/billing/customers/${id}/edit/`, data).then(res => res.data);
+
 // Delete a customer
 export const deleteCustomer = id =>
   api.delete(`/billing/customers/${id}/edit/`).then(res => res.data);
