@@ -7,7 +7,7 @@ import QuotationTable from '../components/quotation/QuotationTable';
 import { createQuotation, getNextQuotationNumber, updateQuotation } from '../api/quotation';
 import { getUserProfile, patchUserProfile } from '../api/users';
 
-const DEFAULT_QUOTATION_PREFIX = 'QT-';
+const DEFAULT_QUOTATION_PREFIX = 'QT';
 
 const normalizePrefix = (value) => {
   return String(value ?? '').toUpperCase();
@@ -93,7 +93,7 @@ export default function Quotations() {
                 onBlur={handlePrefixBlur}
                 disabled={!canEditPrefix}
                 className="bg-transparent border-none text-white text-sm flex-1 sm:w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
-                placeholder="QT-"
+                placeholder="QT"
                 maxLength={10}
                 title={!canEditPrefix ? 'Quotation prefix is managed by the main account.' : ''}
               />

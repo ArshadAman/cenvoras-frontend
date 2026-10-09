@@ -312,9 +312,53 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   );
 };
 
+const normalizeAccounts = (accounts, p) => {
+  if (Array.isArray(accounts) && accounts.length > 0) {
+    return accounts.map((acc, idx) => ({
+      id: acc.id || `bank_acc_${idx + 1}`,
+      account_name: acc.account_name || `Account ${idx + 1}`,
+      bank_name: acc.bank_name || '',
+      account_number: acc.account_number || '',
+      ifsc_code: acc.ifsc_code || '',
+      account_holder: acc.account_holder || p?.business_name || '',
+      branch: acc.branch || '',
+      upi_id: acc.upi_id || '',
+      qr_code: acc.qr_code || '',
+      is_default: Boolean(acc.is_default),
+    }));
+  }
+  if (p?.bank_name || p?.bank_account_number) {
+    return [{
+      id: 'bank_acc_1',
+      account_name: 'Primary Account',
+      bank_name: p.bank_name || '',
+      account_number: p.bank_account_number || '',
+      ifsc_code: p.bank_ifsc_code || '',
+      account_holder: p.business_name || '',
+      branch: p.bank_branch || '',
+      upi_id: p.bank_upi_id || '',
+      qr_code: p.bank_qr_code || '',
+      is_default: true,
+    }];
+  }
+  return [{
+    id: 'bank_acc_1',
+    account_name: 'Primary Account',
+    bank_name: '',
+    account_number: '',
+    ifsc_code: '',
+    account_holder: p?.business_name || '',
+    branch: '',
+    upi_id: '',
+    qr_code: '',
+    is_default: true,
+  }];
+};
+
 const Profile = ({ onLogout }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [activeBankIndex, setActiveBankIndex] = useState(0);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -336,7 +380,8 @@ const Profile = ({ onLogout }) => {
     bank_ifsc_code: '',
     bank_branch: '',
     bank_upi_id: '',
-    bank_qr_code: ''
+    bank_qr_code: '',
+    bank_accounts: []
   });
   const [selectedTargetPlanCode, setSelectedTargetPlanCode] = useState('free');
   const [selectedBillingCycle, setSelectedBillingCycle] = useState('monthly');
@@ -415,7 +460,8 @@ const Profile = ({ onLogout }) => {
         bank_ifsc_code: profile.bank_ifsc_code || '',
         bank_branch: profile.bank_branch || '',
         bank_upi_id: profile.bank_upi_id || '',
-        bank_qr_code: profile.bank_qr_code || ''
+        bank_qr_code: profile.bank_qr_code || '',
+        bank_accounts: normalizeAccounts(profile.bank_accounts, profile)
       }));
     }
   }, [userProfile]);
@@ -566,16 +612,107 @@ const Profile = ({ onLogout }) => {
   };
 
   const profile = userProfile?.profile || {};
-  const bankFieldsChanged = Boolean(
-    (formData.bank_name || '') !== (profile.bank_name || '') ||
-    (formData.bank_account_number || '') !== (profile.bank_account_number || '') ||
-    (formData.bank_ifsc_code || '') !== (profile.bank_ifsc_code || '') ||
-    (formData.bank_branch || '') !== (profile.bank_branch || '') ||
-    (formData.bank_upi_id || '') !== (profile.bank_upi_id || '') ||
-    (formData.bank_qr_code || '') !== (profile.bank_qr_code || '')
-  );
+  const originalAccounts = normalizeAccounts(profile.bank_accounts, profile);
+  const currentAccounts = formData.bank_accounts || [];
+  const bankFieldsChanged = JSON.stringify(originalAccounts) !== JSON.stringify(currentAccounts);
 
-  const handleQrUpload = (e) => {
+  const handleBankAccountChange = (field, value) => {
+    setFormData(prev => {
+      const accounts = [...(prev.bank_accounts || [])];
+      if (!accounts[activeBankIndex]) return prev;
+      accounts[activeBankIndex] = {
+        ...accounts[activeBankIndex],
+        [field]: value
+      };
+      const defaultAcc = accounts.find(a => a.is_default) || accounts[0] || {};
+      return {
+        ...prev,
+        bank_accounts: accounts,
+        bank_name: defaultAcc.bank_name || '',
+        bank_account_number: defaultAcc.account_number || '',
+        bank_ifsc_code: defaultAcc.ifsc_code || '',
+        bank_branch: defaultAcc.branch || '',
+        bank_upi_id: defaultAcc.upi_id || '',
+        bank_qr_code: defaultAcc.qr_code || '',
+      };
+    });
+  };
+
+  const handleSetDefaultAccount = (index) => {
+    setFormData(prev => {
+      const accounts = (prev.bank_accounts || []).map((acc, i) => ({
+        ...acc,
+        is_default: i === index
+      }));
+      const defaultAcc = accounts[index] || {};
+      return {
+        ...prev,
+        bank_accounts: accounts,
+        bank_name: defaultAcc.bank_name || '',
+        bank_account_number: defaultAcc.account_number || '',
+        bank_ifsc_code: defaultAcc.ifsc_code || '',
+        bank_branch: defaultAcc.branch || '',
+        bank_upi_id: defaultAcc.upi_id || '',
+        bank_qr_code: defaultAcc.qr_code || '',
+      };
+    });
+  };
+
+  const handleAddAccount = () => {
+    setFormData(prev => {
+      const current = prev.bank_accounts || [];
+      if (current.length >= 3) {
+        toast.info('Maximum 3 bank accounts allowed');
+        return prev;
+      }
+      const newAcc = {
+        id: `bank_acc_${Date.now()}`,
+        account_name: `Account ${current.length + 1}`,
+        bank_name: '',
+        account_number: '',
+        ifsc_code: '',
+        account_holder: prev.business_name || '',
+        branch: '',
+        upi_id: '',
+        qr_code: '',
+        is_default: current.length === 0,
+      };
+      setActiveBankIndex(current.length);
+      return {
+        ...prev,
+        bank_accounts: [...current, newAcc]
+      };
+    });
+  };
+
+  const handleRemoveAccount = (indexToRemove) => {
+    setFormData(prev => {
+      const current = prev.bank_accounts || [];
+      if (current.length <= 1) {
+        toast.error('At least one bank account must remain');
+        return prev;
+      }
+      const filtered = current.filter((_, i) => i !== indexToRemove);
+      if (!filtered.some(a => a.is_default)) {
+        filtered[0].is_default = true;
+      }
+      const nextIndex = Math.min(activeBankIndex, filtered.length - 1);
+      setActiveBankIndex(nextIndex);
+      const defaultAcc = filtered.find(a => a.is_default) || filtered[0] || {};
+      return {
+        ...prev,
+        bank_accounts: filtered,
+        bank_name: defaultAcc.bank_name || '',
+        bank_account_number: defaultAcc.account_number || '',
+        bank_ifsc_code: defaultAcc.ifsc_code || '',
+        bank_branch: defaultAcc.branch || '',
+        bank_upi_id: defaultAcc.upi_id || '',
+        bank_qr_code: defaultAcc.qr_code || '',
+      };
+    });
+  };
+
+  const handleQrUploadForAccount = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -588,19 +725,13 @@ const Profile = ({ onLogout }) => {
     }
     const reader = new FileReader();
     reader.onload = () => {
-      setFormData(prev => ({
-        ...prev,
-        bank_qr_code: reader.result
-      }));
+      handleBankAccountChange('qr_code', reader.result);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveQr = () => {
-    setFormData(prev => ({
-      ...prev,
-      bank_qr_code: ''
-    }));
+  const handleRemoveQrForAccount = () => {
+    handleBankAccountChange('qr_code', '');
   };
 
   const handleSubmit = (e) => {
@@ -620,6 +751,8 @@ const Profile = ({ onLogout }) => {
       return;
     }
 
+    const defaultAcc = (formData.bank_accounts || []).find(a => a.is_default) || (formData.bank_accounts || [])[0] || {};
+
     // Prepare data for submission
     const updateData = {
       first_name: formData.first_name,
@@ -636,12 +769,13 @@ const Profile = ({ onLogout }) => {
       dl_number: formData.dl_number,
       state: formData.state,
       city: formData.city,
-      bank_name: formData.bank_name,
-      bank_account_number: formData.bank_account_number,
-      bank_ifsc_code: formData.bank_ifsc_code,
-      bank_branch: formData.bank_branch,
-      bank_upi_id: formData.bank_upi_id,
-      bank_qr_code: formData.bank_qr_code
+      bank_accounts: formData.bank_accounts,
+      bank_name: defaultAcc.bank_name || '',
+      bank_account_number: defaultAcc.account_number || '',
+      bank_ifsc_code: defaultAcc.ifsc_code || '',
+      bank_branch: defaultAcc.branch || '',
+      bank_upi_id: defaultAcc.upi_id || '',
+      bank_qr_code: defaultAcc.qr_code || ''
     };
 
     if (isEmailChanged || bankFieldsChanged) {
@@ -656,6 +790,7 @@ const Profile = ({ onLogout }) => {
     // Reset form data
     if (userProfile && userProfile.profile) {
       const p = userProfile.profile;
+      setActiveBankIndex(0);
       setFormData({
         first_name: p.first_name || '',
         last_name: p.last_name || '',
@@ -677,7 +812,8 @@ const Profile = ({ onLogout }) => {
         bank_ifsc_code: p.bank_ifsc_code || '',
         bank_branch: p.bank_branch || '',
         bank_upi_id: p.bank_upi_id || '',
-        bank_qr_code: p.bank_qr_code || ''
+        bank_qr_code: p.bank_qr_code || '',
+        bank_accounts: normalizeAccounts(p.bank_accounts, p)
       });
     }
   };
@@ -1205,12 +1341,21 @@ const Profile = ({ onLogout }) => {
                         </span>
                       </div>
                     )}
-                    {isAdmin && formData.bank_name && (
+                    {isAdmin && (formData.bank_name || (formData.bank_accounts && formData.bank_accounts.length > 0)) && (
                       <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
                         <BuildingLibraryIcon className="h-4 w-4 text-cyan-300" />
                         <div className="text-xs">
-                          <p className="font-semibold text-white">{formData.bank_name}</p>
-                          <p className="text-white/50 font-mono">A/C: {formData.bank_account_number || '—'}</p>
+                          <p className="font-semibold text-white">
+                            {formData.bank_name || ((formData.bank_accounts || [])[0]?.bank_name) || 'Bank Configured'}
+                          </p>
+                          <p className="text-white/50 font-mono">
+                            A/C: {formData.bank_account_number || ((formData.bank_accounts || [])[0]?.account_number) || '—'}
+                          </p>
+                          {(formData.bank_accounts?.length || 0) > 1 && (
+                            <span className="text-[10px] text-cyan-400 font-medium">
+                              +{formData.bank_accounts.length - 1} more account{formData.bank_accounts.length > 2 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1549,123 +1694,217 @@ const Profile = ({ onLogout }) => {
 
                     {isAdmin && (
                     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
-                      <div className="mb-4 flex items-center justify-between">
-                        <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-                          <BuildingLibraryIcon className="h-4 w-4" />
-                          Bank & Payment Details
-                        </h4>
-                        <span className="text-[11px] text-white/50">Stored securely in database for invoice templates</span>
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                            <BuildingLibraryIcon className="h-4 w-4" />
+                            Bank & Payment Details
+                          </h4>
+                          <p className="text-[11px] text-white/50 mt-0.5">
+                            Manage up to 3 bank accounts. Choose which account to print per bill in the preview format.
+                          </p>
+                        </div>
+                        {isEditing && (formData.bank_accounts || []).length < 3 && (
+                          <button
+                            type="button"
+                            onClick={handleAddAccount}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 text-xs font-medium transition-colors"
+                          >
+                            <span>+ Add Bank Account ({(formData.bank_accounts || []).length}/3)</span>
+                          </button>
+                        )}
                       </div>
-                      
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Bank Name</label>
-                          <input
-                            type="text"
-                            name="bank_name"
-                            value={formData.bank_name}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
-                            placeholder="e.g. HDFC Bank, State Bank of India"
-                          />
-                        </div>
 
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Number</label>
-                          <input
-                            type="text"
-                            name="bank_account_number"
-                            value={formData.bank_account_number}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 font-mono"
-                            placeholder="e.g. 50100234567890"
-                          />
-                        </div>
+                      {/* Bank Account Selection Tabs */}
+                      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 border-b border-white/10">
+                        {(formData.bank_accounts || []).map((acc, idx) => (
+                          <button
+                            key={acc.id || idx}
+                            type="button"
+                            onClick={() => setActiveBankIndex(idx)}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
+                              activeBankIndex === idx
+                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                                : 'bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.06] border border-transparent'
+                            }`}
+                          >
+                            <span>{acc.account_name || `Account ${idx + 1}`}</span>
+                            {acc.is_default && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
+                                Default
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
 
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">IFSC Code</label>
-                          <input
-                            type="text"
-                            name="bank_ifsc_code"
-                            value={formData.bank_ifsc_code}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 uppercase font-mono"
-                            placeholder="e.g. HDFC0001234"
-                            maxLength={11}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Branch Name</label>
-                          <input
-                            type="text"
-                            name="bank_branch"
-                            value={formData.bank_branch}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
-                            placeholder="e.g. Indiranagar, Bangalore"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
-                          <input
-                            type="text"
-                            name="bank_upi_id"
-                            value={formData.bank_upi_id}
-                            onChange={handleInputChange}
-                            disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
-                            placeholder="e.g. business@okaxis"
-                          />
-                        </div>
-
-                        {/* Payment QR Code Upload */}
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Payment QR Code (Optional)</label>
-                          <div className="flex items-center gap-3">
-                            {formData.bank_qr_code ? (
-                              <div className="relative group flex-shrink-0">
-                                <img
-                                  src={formData.bank_qr_code}
-                                  alt="Payment QR"
-                                  className="w-16 h-16 rounded-xl border border-white/10 object-contain bg-white p-1 shadow-md"
-                                />
-                                {isEditing && (
-                                  <button
-                                    type="button"
-                                    onClick={handleRemoveQr}
-                                    className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-1 hover:bg-red-500 shadow-md transition-colors"
-                                    title="Remove QR Code"
-                                  >
-                                    <XMarkIcon className="w-3.5 h-3.5" />
-                                  </button>
+                      {/* Active Account Details */}
+                      {(() => {
+                        const currentAcc = (formData.bank_accounts || [])[activeBankIndex] || {};
+                        return (
+                          <div className="space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">Account #{activeBankIndex + 1}:</span>
+                                <span className="text-sm font-bold text-white">{currentAcc.account_name || `Account ${activeBankIndex + 1}`}</span>
+                                {currentAcc.is_default ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                    ✓ Primary Default
+                                  </span>
+                                ) : (
+                                  isEditing && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSetDefaultAccount(activeBankIndex)}
+                                      className="text-xs text-cyan-400 hover:text-cyan-300 underline font-medium"
+                                    >
+                                      Make Default
+                                    </button>
+                                  )
                                 )}
                               </div>
-                            ) : null}
-                            {isEditing && (
-                              <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.02] px-4 py-3 text-xs text-white/70 hover:border-cyan-400 hover:text-white transition-all">
-                                <QrCodeIcon className="w-4 h-4 text-cyan-400" />
-                                <span>{formData.bank_qr_code ? 'Change QR Image' : 'Upload QR Image (PNG/JPG)'}</span>
+                              {isEditing && (formData.bank_accounts || []).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveAccount(activeBankIndex)}
+                                  className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2.5 py-1 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
+                                >
+                                  Remove Account
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Label / Nickname</label>
                                 <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleQrUpload}
-                                  className="hidden"
-                                  disabled={updateProfileMutation.isPending}
+                                  type="text"
+                                  value={currentAcc.account_name || ''}
+                                  onChange={(e) => handleBankAccountChange('account_name', e.target.value)}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  placeholder="e.g. Primary Account, Current A/C, GST Account"
                                 />
-                              </label>
-                            )}
-                            {!isEditing && !formData.bank_qr_code && (
-                              <span className="text-xs text-white/40 italic">No QR code uploaded</span>
-                            )}
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Holder Name</label>
+                                <input
+                                  type="text"
+                                  value={currentAcc.account_holder || ''}
+                                  onChange={(e) => handleBankAccountChange('account_holder', e.target.value)}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  placeholder="e.g. Acme Enterprises Pvt Ltd"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Bank Name</label>
+                                <input
+                                  type="text"
+                                  value={currentAcc.bank_name || ''}
+                                  onChange={(e) => handleBankAccountChange('bank_name', e.target.value)}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  placeholder="e.g. HDFC Bank, State Bank of India"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Number</label>
+                                <input
+                                  type="text"
+                                  value={currentAcc.account_number || ''}
+                                  onChange={(e) => handleBankAccountChange('account_number', e.target.value)}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 font-mono"
+                                  placeholder="e.g. 50100234567890"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">IFSC Code</label>
+                                <input
+                                  type="text"
+                                  value={currentAcc.ifsc_code || ''}
+                                  onChange={(e) => handleBankAccountChange('ifsc_code', e.target.value.toUpperCase())}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 uppercase font-mono"
+                                  placeholder="e.g. HDFC0001234"
+                                  maxLength={11}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Branch Name</label>
+                                <input
+                                  type="text"
+                                  value={currentAcc.branch || ''}
+                                  onChange={(e) => handleBankAccountChange('branch', e.target.value)}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  placeholder="e.g. Indiranagar, Bangalore"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
+                                <input
+                                  type="text"
+                                  value={currentAcc.upi_id || ''}
+                                  onChange={(e) => handleBankAccountChange('upi_id', e.target.value)}
+                                  disabled={!isEditing || updateProfileMutation.isPending}
+                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  placeholder="e.g. business@okaxis"
+                                />
+                              </div>
+
+                              {/* Payment QR Code Upload */}
+                              <div>
+                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Payment QR Code (Optional)</label>
+                                <div className="flex items-center gap-3">
+                                  {currentAcc.qr_code ? (
+                                    <div className="relative group flex-shrink-0">
+                                      <img
+                                        src={currentAcc.qr_code}
+                                        alt="Payment QR"
+                                        className="w-16 h-16 rounded-xl border border-white/10 object-contain bg-white p-1 shadow-md"
+                                      />
+                                      {isEditing && (
+                                        <button
+                                          type="button"
+                                          onClick={handleRemoveQrForAccount}
+                                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-1 hover:bg-red-500 shadow-md transition-colors"
+                                          title="Remove QR Code"
+                                        >
+                                          <XMarkIcon className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  ) : null}
+                                  {isEditing && (
+                                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.02] px-4 py-3 text-xs text-white/70 hover:border-cyan-400 hover:text-white transition-all">
+                                      <QrCodeIcon className="w-4 h-4 text-cyan-400" />
+                                      <span>{currentAcc.qr_code ? 'Change QR Image' : 'Upload QR Image (PNG/JPG)'}</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleQrUploadForAccount}
+                                        className="hidden"
+                                        disabled={updateProfileMutation.isPending}
+                                      />
+                                    </label>
+                                  )}
+                                  {!isEditing && !currentAcc.qr_code && (
+                                    <span className="text-xs text-white/40 italic">No QR code uploaded</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        );
+                      })()}
 
                       {/* Password confirmation prompt for bank details */}
                       {isEditing && bankFieldsChanged && (

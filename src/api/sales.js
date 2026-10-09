@@ -4,7 +4,7 @@ import api from './api';
 export const getSalesInvoices = params =>
   api.get("/billing/sales-invoices/", { params }).then(res => res.data);
 
-export const getNextInvoiceNumber = (prefix = "INV-") =>
+export const getNextInvoiceNumber = (prefix = "INV") =>
   api.get(`/billing/sales-invoices/next-number/?prefix=${prefix}`).then(res => res.data);
 
 export const getSalesAnalytics = params =>
@@ -21,6 +21,9 @@ export const createSalesInvoice = data =>
 
 export const updateSalesInvoice = (id, data) =>
   api.put(`/billing/sales-invoices/${id}/edit/`, data).then(res => res.data);
+
+export const patchSalesInvoice = (id, data) =>
+  api.patch(`/billing/sales-invoices/${id}/edit/`, data).then(res => res.data);
 
 export const deleteSalesInvoice = id =>
   api.delete(`/billing/sales-invoices/${id}/edit/`)
