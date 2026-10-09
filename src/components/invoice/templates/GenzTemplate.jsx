@@ -211,6 +211,13 @@ const GenzTemplate = forwardRef(({
                             {desc}
                           </p>
                         )}
+                        {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                          <p className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                            {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                            {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                          </p>
+                        ) : null}
                       </td>
                       <td className="align-middle text-gray-900 text-xs text-center font-bold" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full">{qty} {unit}</span>
@@ -275,6 +282,13 @@ const GenzTemplate = forwardRef(({
                                 {desc}
                               </p>
                             )}
+                            {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                              <p className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                                {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                                {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                                {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                              </p>
+                            ) : null}
                           </div>
                         );
                       }
