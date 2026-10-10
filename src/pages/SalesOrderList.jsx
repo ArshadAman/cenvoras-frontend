@@ -47,6 +47,7 @@ export default function SalesOrderList() {
       toast.success("Sales order deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
       queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+      queryClient.invalidateQueries({ queryKey: ["quotations"] });
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || error?.message || "Failed to delete sales order");

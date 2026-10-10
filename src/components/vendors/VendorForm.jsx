@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createVendor, updateVendor } from "../../api/vendors";
 import { toast } from "react-toastify";
-import { INDIAN_STATES } from "../../utils/constants";
+import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../../hooks/useEscStack";
 
@@ -191,13 +191,29 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
                 {/* GSTIN */}
                 <div>
                   <label htmlFor="gstin" className={labelClass}>GSTIN</label>
-                  <Field
-                    id="gstin"
-                    name="gstin"
-                    type="text"
-                    className={inputClass}
-                    placeholder="22AAAAA0000A1Z5"
-                  />
+                  <Field name="gstin">
+                    {({ field, form }) => (
+                      <input
+                        {...field}
+                        id="gstin"
+                        type="text"
+                        className={inputClass}
+                        placeholder="22AAAAA0000A1Z5"
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          form.setFieldValue('gstin', val);
+                          if (val.length >= 2) {
+                            const code = val.substring(0, 2);
+                            const mappedState = GST_STATE_CODE_MAP[code];
+                            if (mappedState) {
+                              form.setFieldValue('state', mappedState);
+                            }
+                            form.setFieldValue('meta.gst_type', 'registered');
+                          }
+                        }}
+                      />
+                    )}
+                  </Field>
                   <ErrorMessage name="gstin" component="div" className="mt-1 text-xs text-red-400" />
                 </div>
 

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
-import { getCustomers, createCustomer } from "../../api/customers";
+import { getCustomers, createCustomer, patchCustomer } from "../../api/customers";
 import { createProduct, patchProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
@@ -150,6 +150,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     const initialPrice = Number(product.sale_price ?? product.price ?? 0) || 0;
     setFieldValue(`items.${idx}.price`, initialPrice);
+    const purPrice = Number(product.cost_price ?? product.purchase_price ?? product.price ?? 0) || 0;
+    setFieldValue(`items.${idx}.purchase_price`, purPrice);
     // Calculate amount automatically
     const quantity = values.items[idx]?.quantity || 1;
     const amount = quantity * initialPrice;
@@ -214,11 +216,20 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               className="w-full bg-[#111] border border-white/10 rounded px-2 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-xs"
               autoComplete="off"
               onKeyDown={(e) => {
+                const exactMatch = (filteredProducts || []).some(
+                  (p) => (p.name || '').trim().toLowerCase() === (inputValue || '').trim().toLowerCase()
+                );
+                const showAddButton = Boolean(inputValue.trim() && !exactMatch && onCreateNewProduct);
+                const displayLimit = Math.min(filteredProducts.length, 50);
+                const totalOptions = displayLimit + (showAddButton ? 1 : 0);
+
                 if (e.key === 'Tab') {
-                  if (showDropdown && filteredProducts.length === 1) {
+                  if (showDropdown && filteredProducts.length === 1 && !showAddButton) {
                     selectProduct(filteredProducts[0]);
-                  } else if (showDropdown && filteredProducts.length > 0 && selectedIndex >= 0) {
+                  } else if (showDropdown && selectedIndex >= 0 && selectedIndex < displayLimit) {
                     selectProduct(filteredProducts[selectedIndex]);
+                  } else if (showDropdown && selectedIndex === displayLimit && showAddButton) {
+                    onCreateNewProduct(inputValue.trim(), idx);
                   }
                   setShowDropdown(false);
                   setSelectedIndex(-1);
@@ -226,21 +237,23 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 }
 
                 // Handle dropdown navigation
-                if (showDropdown && filteredProducts.length > 0) {
-                  const displayLimit = Math.min(filteredProducts.length, 50);
+                if (showDropdown && totalOptions > 0) {
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    setSelectedIndex(prev => (prev < displayLimit - 1) ? prev + 1 : 0);
+                    setSelectedIndex(prev => (prev < totalOptions - 1) ? prev + 1 : 0);
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : displayLimit - 1);
+                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalOptions - 1);
                   } else if (e.key === 'Enter') {
-                    if (filteredProducts.length === 1) {
+                    if (filteredProducts.length === 1 && !showAddButton) {
                       e.preventDefault();
                       selectProduct(filteredProducts[0]);
-                    } else if (selectedIndex >= 0) {
+                    } else if (selectedIndex >= 0 && selectedIndex < displayLimit) {
                       e.preventDefault();
                       selectProduct(filteredProducts[selectedIndex]);
+                    } else if (selectedIndex === displayLimit && showAddButton) {
+                      e.preventDefault();
+                      onCreateNewProduct(inputValue.trim(), idx);
                     }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -335,7 +348,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               {showAddButton && (
                 <button
                   type="button"
-                  className="w-full border-t border-white/5 px-4 py-3 text-left text-sm text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+                  className={`w-full border-t border-white/5 px-4 py-3 text-left text-sm transition-colors ${
+                    selectedIndex === Math.min(filteredProducts.length, 50)
+                      ? 'bg-cyan-500/20 text-white ring-1 ring-cyan-400'
+                      : 'text-cyan-300 hover:bg-cyan-500/10 hover:text-cyan-200'
+                  }`}
                   onMouseDown={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -378,8 +395,9 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
     setFieldValue('customer_gstin', customer.gstin || '');
-    // Auto-fill delivery address same as customer address
-    setFieldValue('delivery_address', customer.address || '');
+    // Auto-fill delivery address from customer shipping details if present, else billing address
+    const savedShippingAddress = customer.meta?.shipping_address || customer.shipping_address || customer.address || '';
+    setFieldValue('delivery_address', savedShippingAddress);
 
     // Auto-fetch place of supply from GSTIN (first 2 digits)
     if (customer.gstin && customer.gstin.length >= 2) {
@@ -653,10 +671,11 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                       gstin: gstin || null,
                     });
 
+                    const createdCust = newCust?.data || newCust;
                     queryClient.invalidateQueries({ queryKey: ["customers"] });
-                    toast.success(`Customer "${newCust.name}" added successfully`);
+                    toast.success(`Customer "${createdCust.name || name}" added successfully`);
 
-                    selectCustomer(newCust);
+                    selectCustomer(createdCust);
                     setShowNewCustomerModal(false);
                   } catch (err) {
                     toast.error(formatErrorMessage(err, "Failed to create customer"));
@@ -751,6 +770,7 @@ const DEFAULT_ITEM_SETTINGS = {
   show_item_discount: true,
   show_item_tax: true,
   show_item_storage_condition: false,
+  show_item_purchase_price: false,
 };
 
 export default function SalesForm({
@@ -997,6 +1017,8 @@ export default function SalesForm({
     if (storageCond) {
       setFieldValue(`items.${idx}.storage_condition`, storageCond);
     }
+    const purPrice = Number(prod?.cost_price ?? prod?.purchase_price ?? prod?.price ?? 0) || 0;
+    setFieldValue(`items.${idx}.purchase_price`, purPrice);
     const qty = parseFloat(currentValues.items[idx]?.quantity) || 1;
     const scheme = findMatchingScheme(prod.id, qty);
     if (scheme && scheme.scheme_type === 'bogo') {
@@ -1321,6 +1343,7 @@ export default function SalesForm({
       customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
       customer_gstin: editData?.customer_gstin || "",
       delivery_address: editData?.delivery_address || "",
+      save_shipping_address: false,
       vehicle_number: editData?.vehicle_number || "",
       transport_mode: editData?.transport_mode || "",
       eway_bill_number: editData?.eway_bill_number || "",
@@ -1387,6 +1410,7 @@ export default function SalesForm({
           manufacturer: isNote ? "" : (item.manufacturer || item.product_detail?.manufacturer || ""),
           internal_reference: isNote ? "" : (item.internal_reference || item.product_detail?.internal_reference || ""),
           storage_condition: isNote ? "" : (item.storage_condition || item.product_detail?.storage_condition || ""),
+          purchase_price: isNote ? 0 : (Number(item.purchase_price ?? item.cost_price ?? item.product_detail?.cost_price ?? 0) || 0),
           isExistingProduct: !isNote && !!productId,
           id: item.id || null,
           source_item_id: item.source_item_id || null,
@@ -1646,6 +1670,23 @@ export default function SalesForm({
 
               console.log("DEBUG: Submitting Sales Invoice:", formData);
 
+              if (values.save_shipping_address && values.delivery_address) {
+                const matchedCust = (customers || []).find(
+                  (c) =>
+                    (values.customer && String(c.id) === String(values.customer)) ||
+                    (values.customer_name &&
+                      c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
+                );
+                if (matchedCust?.id) {
+                  patchCustomer(matchedCust.id, {
+                    meta: {
+                      ...(matchedCust.meta || {}),
+                      shipping_address: values.delivery_address.trim(),
+                    }
+                  }).catch(() => {});
+                }
+              }
+
               if (isEdit) {
                 updateMutation.mutate({ id: editData.id, data: formData });
               } else {
@@ -1880,9 +1921,19 @@ export default function SalesForm({
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                          Shipping Address
-                        </label>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+                            Shipping Address
+                          </label>
+                          <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer hover:text-cyan-400 transition-colors">
+                            <Field
+                              type="checkbox"
+                              name="save_shipping_address"
+                              className="rounded border-white/20 text-cyan-500 focus:ring-cyan-500 bg-white/5 h-3 w-3"
+                            />
+                            <span>Save for future</span>
+                          </label>
+                        </div>
                         <Field
                           name="delivery_address"
                           as="textarea"
@@ -2042,6 +2093,7 @@ export default function SalesForm({
                             ["show_item_internal_reference", "Internal reference"],
                             ["show_item_hsn", "HSN/SAC"],
                             ["show_item_batch", "Batch"],
+                            ["show_item_purchase_price", "Pur. Price (Internal)"],
                             ["show_item_free_quantity", "Free Qty"],
                             ["show_item_storage_condition", "Storage Details"],
                             ["show_item_discount", "Discount"],
@@ -2128,6 +2180,7 @@ export default function SalesForm({
                               { key: "quantity", label: "Quantity", show: true, width: "80px", minWidth: 80 },
                               { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "70px", minWidth: 70 },
                               { key: "unit", label: "Unit", show: true, width: "70px", minWidth: 70 },
+                              { key: "purchase_price", label: "Pur. Price", show: itemSettings.show_item_purchase_price, width: "100px", minWidth: 100 },
                               { key: "price", label: "Price", show: true, width: "110px", minWidth: 110 },
                               { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
                               { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
@@ -2515,6 +2568,20 @@ export default function SalesForm({
                                                   {availableUnits.map((u) => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
                                                 </select>
+                                              </div>
+                                            );
+                                          }
+
+                                          if (col.key === "purchase_price") {
+                                            return (
+                                              <div key={col.key}>
+                                                <input
+                                                  type="number"
+                                                  readOnly
+                                                  value={item.purchase_price ?? item.cost_price ?? 0}
+                                                  title="Purchase / Cost Price (Internal Drafting Reference Only - Never Printed)"
+                                                  className="w-full text-right bg-white/5 border border-white/5 rounded px-2 py-2 text-xs font-mono text-amber-300/90 cursor-not-allowed select-all"
+                                                />
                                               </div>
                                             );
                                           }
