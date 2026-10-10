@@ -407,11 +407,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     documentTitle: `${isDeliveryChallan ? "Delivery-Challan" : isQuotation ? "Quotation" : isSalesOrder ? "Proforma-Invoice" : "Invoice"}-${enrichedInvoice.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
-        size: A4;
-        margin: 10mm;
+        size: A4 portrait;
+        margin: 0;
       }
       @media print {
-        body {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: auto !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
@@ -424,6 +428,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         }
         .print-hidden {
           display: none !important;
+        }
+        [data-print-target] {
+          width: 100% !important;
+          margin: 0 auto !important;
+          box-shadow: none !important;
         }
       }
     `,

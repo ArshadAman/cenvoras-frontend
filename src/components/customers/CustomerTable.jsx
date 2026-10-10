@@ -300,9 +300,14 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <div className="text-sm font-bold text-white drop-shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => onView(customer)}
+                        className="text-left text-sm font-bold text-white hover:text-cyan-400 transition-colors drop-shadow-lg cursor-pointer"
+                        title="View Detailed Ledger"
+                      >
                         {customer.name}
-                      </div>
+                      </button>
                       <div className="text-sm text-cyan-300 font-medium">
                         {customer.email}
                       </div>
