@@ -147,16 +147,16 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       try {
         if (isDeliveryChallan) {
           await patchDeliveryChallan(docId, payload);
-          queryClient.invalidateQueries(['deliveryChallan', docId]);
+          queryClient.invalidateQueries({ queryKey: ['deliveryChallan', docId] });
         } else if (isQuotation) {
           await patchQuotation(docId, payload);
-          queryClient.invalidateQueries(['quotation', docId]);
+          queryClient.invalidateQueries({ queryKey: ['quotation', docId] });
         } else if (isSalesOrder) {
           await patchSalesOrder(docId, payload);
-          queryClient.invalidateQueries(['salesOrder', docId]);
+          queryClient.invalidateQueries({ queryKey: ['salesOrder', docId] });
         } else {
           await patchSalesInvoice(docId, payload);
-          queryClient.invalidateQueries(['salesInvoice', docId]);
+          queryClient.invalidateQueries({ queryKey: ['salesInvoice', docId] });
         }
         toast.success('Bank account updated for this bill');
       } catch (err) {
@@ -241,16 +241,16 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       try {
         if (isDeliveryChallan) {
           await patchDeliveryChallan(docId, payload);
-          queryClient.invalidateQueries(['deliveryChallan', docId]);
+          queryClient.invalidateQueries({ queryKey: ['deliveryChallan', docId] });
         } else if (isQuotation) {
           await patchQuotation(docId, payload);
-          queryClient.invalidateQueries(['quotation', docId]);
+          queryClient.invalidateQueries({ queryKey: ['quotation', docId] });
         } else if (isSalesOrder) {
           await patchSalesOrder(docId, payload);
-          queryClient.invalidateQueries(['salesOrder', docId]);
+          queryClient.invalidateQueries({ queryKey: ['salesOrder', docId] });
         } else {
           await patchSalesInvoice(docId, payload);
-          queryClient.invalidateQueries(['salesInvoice', docId]);
+          queryClient.invalidateQueries({ queryKey: ['salesInvoice', docId] });
         }
       } catch (err) {
         console.warn('Failed to save template_id to bill:', err);
@@ -399,6 +399,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         ? `SO #${invoiceDetails.sales_order_details.order_number}`
         : '') ||
       '',
+    items:
+      (Array.isArray(invoiceDetails.items) && invoiceDetails.items.length > 0)
+        ? invoiceDetails.items
+        : (Array.isArray(invoice?.items) && invoice?.items.length > 0)
+        ? invoice.items
+        : invoiceDetails.items || invoice?.items || [],
   };
 
   // Print functionality with anti-slicing CSS rules
