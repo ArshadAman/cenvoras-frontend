@@ -253,6 +253,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                       selectProduct(filteredProducts[selectedIndex]);
                     } else if (selectedIndex === displayLimit && showAddButton) {
                       e.preventDefault();
+                      setShowDropdown(false);
+                      setSelectedIndex(-1);
                       onCreateNewProduct(inputValue.trim(), idx);
                     }
                   } else if (e.key === 'Escape') {
@@ -356,6 +358,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                   onMouseDown={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
+                    setShowDropdown(false);
+                    setSelectedIndex(-1);
                     onCreateNewProduct(inputValue.trim(), idx);
                   }}
                 >
@@ -395,9 +399,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
     setFieldValue('customer_gstin', customer.gstin || '');
-    // Auto-fill delivery address from customer shipping details if present, else billing address
-    const savedShippingAddress = customer.meta?.shipping_address || customer.shipping_address || customer.address || '';
+    const savedShippingAddress = 
+      (Array.isArray(customer.meta?.shipping_addresses) && customer.meta.shipping_addresses.length > 0)
+        ? customer.meta.shipping_addresses[0]
+        : (customer.meta?.shipping_address || customer.shipping_address || customer.address || '');
     setFieldValue('delivery_address', savedShippingAddress);
+    setFieldValue('customer', customer.id || null);
 
     // Auto-fetch place of supply from GSTIN (first 2 digits)
     if (customer.gstin && customer.gstin.length >= 2) {
@@ -845,9 +852,27 @@ export default function SalesForm({
   const formikRef = React.useRef(null);
   const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const columnPickerRef = React.useRef(null);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
   const [productCreationState, setProductCreationState] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
+
+  // Hierarchical ESC key handlers
+  useEscKey(() => setShowColumnPicker(false), showColumnPicker, 30);
+  useEscKey(() => setProductCreationState(null), Boolean(productCreationState), 25);
+  useEscKey(() => setCatalogSyncModal(null), Boolean(catalogSyncModal), 25);
+
+  // Click-outside listener for Column Picker dropdown
+  useEffect(() => {
+    if (!showColumnPicker) return;
+    const handleClickOutside = (event) => {
+      if (columnPickerRef.current && !columnPickerRef.current.contains(event.target)) {
+        setShowColumnPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showColumnPicker]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1067,20 +1092,32 @@ export default function SalesForm({
         toast.info("This is a new custom item. Use 'Save as New Product' to add it to your catalog.");
         return;
       }
-      await patchProduct(product_id, {
+      const updated = await patchProduct(product_id, {
         name: name || undefined,
         manufacturer: manufacturer || undefined,
+        internal_reference: internal_reference || undefined,
         sale_price: Number(price) || 0,
         hsn_sac_code: hsn_sac_code || null,
         tax: Number(tax) || 0,
         description: description || null,
         unit: unit || undefined,
       });
+
+      // Bust both React Query caches and client-side map cache
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.refetchQueries({ queryKey: ["products"] });
+
       if (formikRef.current && typeof catalogSyncModal.idx === 'number') {
         const itemPath = `items.${catalogSyncModal.idx}`;
         if (name) formikRef.current.setFieldValue(`${itemPath}.product`, name);
-        if (manufacturer) formikRef.current.setFieldValue(`${itemPath}.manufacturer`, manufacturer);
+        if (manufacturer !== undefined) formikRef.current.setFieldValue(`${itemPath}.manufacturer`, manufacturer);
+        if (internal_reference !== undefined) formikRef.current.setFieldValue(`${itemPath}.internal_reference`, internal_reference);
+        if (price !== undefined) formikRef.current.setFieldValue(`${itemPath}.price`, Number(price));
+        if (hsn_sac_code !== undefined) formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, hsn_sac_code);
+        if (tax !== undefined) formikRef.current.setFieldValue(`${itemPath}.tax`, Number(tax));
+        if (unit !== undefined) formikRef.current.setFieldValue(`${itemPath}.unit`, unit);
+        if (description !== undefined) formikRef.current.setFieldValue(`${itemPath}.product_description`, description);
+        formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
       }
       toast.success("Catalog item updated successfully!");
       setCatalogSyncModal(null);
@@ -1141,6 +1178,7 @@ export default function SalesForm({
       manufacturer: currentItem.manufacturer || "",
       internal_reference: currentItem.internal_reference || "",
       sale_price: currentItem.price ? String(currentItem.price) : "",
+      cost_price: currentItem.purchase_price !== undefined ? String(currentItem.purchase_price) : (currentItem.price ? String(currentItem.price) : ""),
       unit: currentItem.unit || "pcs",
       tax: currentItem.tax !== undefined ? String(currentItem.tax) : "0",
       hsn_sac_code: currentItem.hsn_sac_code || "",
@@ -1153,12 +1191,13 @@ export default function SalesForm({
 
     try {
       const salePrice = Number(productCreationState.sale_price || 0) || 0;
+      const costPrice = Number(productCreationState.cost_price || 0) || salePrice;
       const createdProduct = await createProduct({
         name: productCreationState.name,
         manufacturer: productCreationState.manufacturer || null,
         internal_reference: productCreationState.internal_reference || null,
         sale_price: salePrice,
-        cost_price: salePrice,
+        cost_price: costPrice,
         unit: productCreationState.unit || "pcs",
         tax: Number(productCreationState.tax || 0),
         hsn_sac_code: productCreationState.hsn_sac_code || null,
@@ -1678,11 +1717,21 @@ export default function SalesForm({
                       c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
                 );
                 if (matchedCust?.id) {
+                  const currentAddresses = Array.isArray(matchedCust.meta?.shipping_addresses)
+                    ? [...matchedCust.meta.shipping_addresses]
+                    : (matchedCust.meta?.shipping_address ? [matchedCust.meta.shipping_address] : []);
+                  const cleanAddr = values.delivery_address.trim();
+                  if (!currentAddresses.includes(cleanAddr)) {
+                    currentAddresses.unshift(cleanAddr);
+                  }
                   patchCustomer(matchedCust.id, {
                     meta: {
                       ...(matchedCust.meta || {}),
-                      shipping_address: values.delivery_address.trim(),
+                      shipping_address: cleanAddr,
+                      shipping_addresses: currentAddresses,
                     }
+                  }).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ["customers"] });
                   }).catch(() => {});
                 }
               }
@@ -1747,6 +1796,21 @@ export default function SalesForm({
                     return false;
                   }
                   if (e.key === 'Escape') {
+                    if (showColumnPicker) {
+                      e.preventDefault();
+                      setShowColumnPicker(false);
+                      return;
+                    }
+                    if (catalogSyncModal) {
+                      e.preventDefault();
+                      setCatalogSyncModal(null);
+                      return;
+                    }
+                    if (productCreationState) {
+                      e.preventDefault();
+                      setProductCreationState(null);
+                      return;
+                    }
                     onClose();
                   }
                 }}
@@ -1921,6 +1985,45 @@ export default function SalesForm({
                       </div>
 
                       <div>
+                        {/* Saved shipping addresses selector if available */}
+                        {(() => {
+                          const matchedCust = (customers || []).find(
+                            (c) =>
+                              (values.customer && String(c.id) === String(values.customer)) ||
+                              (values.customer_name &&
+                                c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
+                          );
+                          const savedList = Array.isArray(matchedCust?.meta?.shipping_addresses)
+                            ? matchedCust.meta.shipping_addresses
+                            : (matchedCust?.shipping_addresses ? [matchedCust.shipping_addresses] : []);
+                          
+                          if (!savedList || savedList.length === 0) return null;
+
+                          return (
+                            <div className="mb-2">
+                              <label className="block text-[11px] font-medium text-gray-400 mb-1">
+                                Saved Shipping Addresses ({savedList.length})
+                              </label>
+                              <select
+                                value={values.delivery_address || ""}
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    setFieldValue('delivery_address', e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-[#161616] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-cyan-500 mb-2"
+                              >
+                                <option value="">-- Select from saved shipping addresses --</option>
+                                {savedList.map((addr, idx) => (
+                                  <option key={idx} value={addr} className="bg-[#18181b]">
+                                    {addr.length > 60 ? `${addr.slice(0, 60)}...` : addr}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })()}
+
                         <div className="flex items-center justify-between mb-1.5">
                           <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
                             Shipping Address
@@ -2075,7 +2178,7 @@ export default function SalesForm({
                 <div className="p-8 bg-[#151515] border-t border-b border-white/5">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h3 className="text-lg font-bold text-white">Items</h3>
-                    <div className="relative">
+                    <div className="relative" ref={columnPickerRef}>
                       <button
                         type="button"
                         onClick={() => setShowColumnPicker((prev) => !prev)}
@@ -2619,7 +2722,46 @@ export default function SalesForm({
                                           if (col.key === "tax") {
                                             return (
                                               <div key={col.key}>
-                                                <Field name={`items.${index}.tax`} type="number" step="1" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                                <Field
+                                                  name={`items.${index}.tax`}
+                                                  type="number"
+                                                  step="1"
+                                                  className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === "Tab" && !e.shiftKey) {
+                                                      const isLastRow = index === values.items.length - 1;
+                                                      if (isLastRow) {
+                                                        e.preventDefault();
+                                                        push({
+                                                          _key: `item-${Math.random().toString(36).substring(2, 9)}`,
+                                                          row_type: "item",
+                                                          product: "",
+                                                          product_name: "",
+                                                          product_id: null,
+                                                          description: "",
+                                                          product_description: "",
+                                                          quantity: 1,
+                                                          free_quantity: 0,
+                                                          batch: "",
+                                                          unit: "pcs",
+                                                          price: 0,
+                                                          discount: 0,
+                                                          tax: 0,
+                                                          hsn_sac_code: "",
+                                                          tax_rate: 0,
+                                                          amount: 0,
+                                                        });
+                                                        setTimeout(() => {
+                                                          const nextInput = document.querySelector(`input[name="items.${index + 1}.product"]`);
+                                                          if (nextInput) {
+                                                            nextInput.focus();
+                                                            nextInput.select?.();
+                                                          }
+                                                        }, 60);
+                                                      }
+                                                    }
+                                                  }}
+                                                />
                                               </div>
                                             );
                                           }
@@ -3228,8 +3370,14 @@ export default function SalesForm({
 
         {/* Catalog Sync Prompt Modal */}
         {catalogSyncModal && (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-            <div className="bg-[#18181b] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            onClick={() => setCatalogSyncModal(null)}
+          >
+            <div
+              className="bg-[#18181b] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400">
                   <ArrowPathIcon className="w-6 h-6" />
@@ -3324,25 +3472,53 @@ export default function SalesForm({
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Unit</label>
-                  <input
-                    value={productCreationState.unit}
-                    onChange={(e) => setProductCreationState((current) => ({ ...current, unit: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
-                    placeholder="pcs"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Cost Price (Internal)</label>
                   <input
                     type="number"
                     step="any"
                     min="0"
-                    value={productCreationState.tax}
+                    value={productCreationState.cost_price || ""}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, cost_price: e.target.value }))}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    placeholder="Purchase / Cost price"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Unit</label>
+                  <select
+                    value={productCreationState.unit || "pcs"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "__custom__") {
+                        const custom = window.prompt("Enter custom unit name (e.g. roll, pkt, bundle):");
+                        if (custom && custom.trim()) {
+                          const clean = custom.trim().toLowerCase();
+                          handleAddCustomUnit(clean);
+                          setProductCreationState((current) => ({ ...current, unit: clean }));
+                        }
+                      } else {
+                        setProductCreationState((current) => ({ ...current, unit: val }));
+                      }
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                  >
+                    {availableUnits.map((u) => <option key={u} value={u} className="bg-[#18181b]">{u}</option>)}
+                    <option value="__custom__" className="bg-[#18181b] text-cyan-400 font-bold">+ Custom Unit...</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
+                  <select
+                    value={productCreationState.tax !== undefined ? String(productCreationState.tax) : "0"}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
                     className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
-                    placeholder="0.00"
-                  />
+                  >
+                    {[0, 5, 12, 18, 28].map((rate) => (
+                      <option key={rate} value={String(rate)} className="bg-[#18181b]">
+                        {rate}% GST
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC</label>

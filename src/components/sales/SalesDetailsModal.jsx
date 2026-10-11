@@ -414,7 +414,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     pageStyle: `
       @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 10mm 6mm 10mm 6mm;
       }
       @media print {
         html, body {
@@ -428,6 +428,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         thead {
           display: table-header-group !important;
         }
+        thead tr {
+          page-break-before: auto !important;
+        }
         tr {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
@@ -439,6 +442,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           width: 100% !important;
           margin: 0 auto !important;
           box-shadow: none !important;
+          padding-top: 2mm !important;
         }
       }
     `,
