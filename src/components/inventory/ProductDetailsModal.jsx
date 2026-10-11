@@ -2,8 +2,10 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProduct, getProductBatches } from "../../api/inventory";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import useEscKey from "../../hooks/useEscStack";
 
 export default function ProductDetailsModal({ productId, onClose }) {
+  useEscKey(onClose, Boolean(productId), 15);
   const { data, isLoading } = useQuery({
     queryKey: ["product", productId],
     queryFn: () => getProduct(productId),
@@ -25,9 +27,11 @@ export default function ProductDetailsModal({ productId, onClose }) {
     const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
     const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
     
-    if (currentStock === 0) {
+    if (currentStock < 0) {
+      return { text: "Critical", className: "bg-red-600/20 text-red-400 border border-red-500/40 font-bold" };
+    } else if (currentStock === 0) {
       return { text: "Out of Stock", className: "bg-red-500/10 text-red-400 border border-red-500/20" };
-    } else if (currentStock <= minStock) {
+    } else if (minStock > 0 && currentStock <= minStock) {
       return { text: "Low Stock", className: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20" };
     } else {
       return { text: "In Stock", className: "bg-green-500/10 text-green-400 border border-green-500/20" };

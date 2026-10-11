@@ -4,8 +4,10 @@ import { deleteProduct } from "../../api/inventory";
 import { createPortal } from "react-dom";
 import { XMarkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
+import useEscKey from "../../hooks/useEscStack";
 
 export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
+  useEscKey(onClose, Boolean(product), 20);
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState(null);
   

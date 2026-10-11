@@ -11,11 +11,13 @@ export const createProduct = (data) => {
   // Map frontend fields to backend schema
   const backendData = {
     name: data.name,
+    item_code: data.item_code ? String(data.item_code).trim() : null,
+    internal_reference: data.internal_reference ? String(data.internal_reference).trim() : null,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     description: data.description || null,
     manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
-    stock: parseInt(data.stock || data.current_stock || 0),
+    stock: parseInt(data.stock ?? data.current_stock ?? 0),
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
@@ -23,6 +25,7 @@ export const createProduct = (data) => {
     sale_price: data.sale_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     warranty_months: parseInt(data.warranty_months || 0),
+    is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
     meta: data.meta
   };
   return api.post("/inventory/products/", backendData).then(res => res.data);
@@ -31,6 +34,8 @@ export const createProduct = (data) => {
 export const patchProduct = (id, data) => {
   const payload = {};
   if (data.name !== undefined) payload.name = data.name;
+  if (data.item_code !== undefined) payload.item_code = data.item_code ? String(data.item_code).trim() : null;
+  if (data.internal_reference !== undefined) payload.internal_reference = data.internal_reference ? String(data.internal_reference).trim() : null;
   if (data.sale_price !== undefined) payload.sale_price = data.sale_price;
   if (data.cost_price !== undefined) payload.cost_price = data.cost_price;
   if (data.price !== undefined) payload.price = data.price;
@@ -41,6 +46,7 @@ export const patchProduct = (id, data) => {
   if (data.manufacturer !== undefined) payload.manufacturer = data.manufacturer;
   if (data.unit !== undefined) payload.unit = data.unit;
   if (data.stock !== undefined) payload.stock = parseInt(data.stock) || 0;
+  if (data.is_active !== undefined) payload.is_active = Boolean(data.is_active);
   return api.patch(`/inventory/products/${id}/`, payload).then(res => res.data);
 };
 
@@ -52,11 +58,13 @@ export const updateProduct = (id, data) => {
   // Map frontend fields to backend schema
   const backendData = {
     name: data.name,
+    item_code: data.item_code ? String(data.item_code).trim() : null,
+    internal_reference: data.internal_reference ? String(data.internal_reference).trim() : null,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     description: data.description || null,
     manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
-    stock: parseInt(data.stock || data.current_stock || 0),
+    stock: parseInt(data.stock ?? data.current_stock ?? 0),
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
@@ -64,6 +72,7 @@ export const updateProduct = (id, data) => {
     sale_price: data.sale_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     warranty_months: parseInt(data.warranty_months || 0),
+    is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
     meta: data.meta
   };
   return api.put(`/inventory/products/${id}/`, backendData).then(res => res.data);
@@ -74,6 +83,9 @@ export const deleteProduct = (id) =>
 
 export const bulkDeleteProducts = (ids) =>
   api.post('/inventory/products/bulk-delete/', { ids }).then(res => res.data);
+
+export const bulkRestoreProducts = (ids) =>
+  api.post('/inventory/products/bulk-restore/', { ids }).then(res => res.data);
 
 export const downloadProductCsvTemplate = () =>
   api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);

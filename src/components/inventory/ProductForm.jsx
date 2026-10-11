@@ -6,8 +6,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
-
-const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
+import { getAllUnits, saveCustomUnit } from '../../utils/units';
+import useEscKey from '../../hooks/useEscStack';
 
 const GST_RATES = [
   { value: 0, label: "0% (Exempt / Nil)" },
@@ -69,7 +69,6 @@ const productSchema = Yup.object().shape({
   stock: Yup.number()
     .typeError("Stock must be a whole number")
     .integer("Stock must be a whole number")
-    .min(0, "Stock cannot be negative")
     .required("Stock is required"),
   low_stock_alert: Yup.number()
     .integer("Low stock alert must be a whole number")
@@ -225,8 +224,18 @@ function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
 }
 
 export default function ProductForm({ product, onClose }) {
+  useEscKey(onClose, true, 10);
   const queryClient = useQueryClient();
   const isEdit = !!product;
+
+  const [availableUnits, setAvailableUnits] = useState(() => {
+    const defaultUnits = getAllUnits();
+    if (product?.unit && !defaultUnits.includes(product.unit)) {
+      return [...defaultUnits, product.unit];
+    }
+    return defaultUnits;
+  });
+  const [isCustomUnit, setIsCustomUnit] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -467,24 +476,54 @@ export default function ProductForm({ product, onClose }) {
               {/* Section 2: Units */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className={labelClass}>Primary Unit *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelClass}>Primary Unit *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomUnit(!isCustomUnit)}
+                      className="text-[11px] text-cyan-400 hover:text-cyan-300 transition underline"
+                    >
+                      {isCustomUnit ? "Choose Predefined Unit" : "+ Custom Unit"}
+                    </button>
+                  </div>
                   <Field name="unit">
-                    {({ field }) => (
-                      <>
-                        <input
-                          {...field}
-                          type="text"
-                          list="unit-datalist"
-                          className={inputClass}
-                          placeholder="e.g. pcs, kg, box, nos, tablet…"
-                          autoComplete="off"
-                        />
-                        <datalist id="unit-datalist">
-                          {UNIT_OPTIONS.map((u) => (
-                            <option key={u} value={u} />
-                          ))}
-                        </datalist>
-                      </>
+                    {({ field, form }) => isCustomUnit ? (
+                      <input
+                        {...field}
+                        type="text"
+                        className={inputClass}
+                        placeholder="e.g. tablet, vial, bundle, set…"
+                        onChange={(e) => {
+                          field.onChange(e);
+                          if (e.target.value.trim()) {
+                            saveCustomUnit(e.target.value.trim());
+                            setAvailableUnits(getAllUnits());
+                          }
+                        }}
+                      />
+                    ) : (
+                      <select
+                        {...field}
+                        className={inputClass}
+                        onChange={(e) => {
+                          if (e.target.value === '__add_custom__') {
+                            setIsCustomUnit(true);
+                            form.setFieldValue("unit", "");
+                          } else {
+                            field.onChange(e);
+                          }
+                        }}
+                      >
+                        <option value="">Select Primary Unit</option>
+                        {availableUnits.map((u) => (
+                          <option key={u} value={u} className="bg-gray-800 text-white">
+                            {u.toUpperCase()}
+                          </option>
+                        ))}
+                        <option value="__add_custom__" className="bg-gray-800 text-cyan-400 font-semibold">
+                          + Add Custom Unit...
+                        </option>
+                      </select>
                     )}
                   </Field>
                   <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />

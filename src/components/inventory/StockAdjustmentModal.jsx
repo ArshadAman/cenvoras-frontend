@@ -5,14 +5,14 @@ import { createStockAdjustment } from "../../api/inventory";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from "../../hooks/useEscStack";
 
 const stockAdjustmentSchema = Yup.object().shape({
   adjustment_type: Yup.string()
     .required("Adjustment type is required")
     .oneOf(["add", "remove", "set"], "Invalid adjustment type"),
   quantity: Yup.number()
-    .required("Quantity is required")
-    .min(0, "Quantity must be positive"),
+    .required("Quantity is required"),
   reason: Yup.string()
     .required("Reason is required")
     .max(200, "Reason must be 200 characters or less"),
@@ -21,12 +21,15 @@ const stockAdjustmentSchema = Yup.object().shape({
 });
 
 export default function StockAdjustmentModal({ product, onClose }) {
+  useEscKey(onClose, Boolean(product), 20);
   const queryClient = useQueryClient();
 
   const stockAdjustmentMutation = useMutation({
     mutationFn: createStockAdjustment,
     onSuccess: () => {
-      queryClient.invalidateQueries(["products"]);
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["batches"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       toast.success("Stock adjustment recorded successfully!");
       onClose();
     },
