@@ -12,7 +12,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
 
   const approvedItems = useMemo(() => {
     if (!quotation?.items) return [];
-    return quotation.items.filter((item) => item.approval_status === 'approved' && !item.converted_to_order);
+    return quotation.items.filter((item) => item.approval_status !== 'rejected' && !item.converted_to_order);
   }, [quotation]);
 
   useEffect(() => {
