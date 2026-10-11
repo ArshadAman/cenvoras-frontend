@@ -27,6 +27,7 @@ import { patchCustomer } from "../../api/customers";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
+import { buildThemedInvoiceEmailHtml } from "../../utils/invoiceEmailGenerator";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
@@ -560,64 +561,57 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
   };
 
-  // Send invoice email helper
+  // Send invoice email helper using the user's SELECTED invoice theme
   const sendInvoiceEmail = async (email) => {
     setSendingEmail(true);
     try {
-      const businessName = businessInfo.business_name || 'Cenvora';
-      const subject = `Invoice ${invoiceDetails.invoice_number} from ${businessName}`;
+      const businessName = effectiveBusinessInfo.business_name || businessInfo.business_name || 'Company';
+      const docTypeLabel = isDeliveryChallan
+        ? 'Delivery Challan'
+        : isQuotation
+        ? 'Quotation'
+        : isSalesOrder
+        ? 'Proforma Invoice'
+        : 'Tax Invoice';
+      const fileNum =
+        enrichedInvoice.invoice_number ||
+        invoiceDetails.order_number ||
+        invoiceDetails.quotation_number ||
+        invoiceDetails.invoice_number ||
+        invoiceDetails.challan_number ||
+        '';
+      const subject = `${docTypeLabel} #${fileNum} from ${businessName}`;
 
-      // Build HTML-formatted invoice for email
-      const items = invoiceDetails.items || [];
-      let itemRows = items.map(item =>
-        `<tr>
-          <td style="padding:8px;border-bottom:1px solid #eee;">${item.product_name || item.product?.name || '—'}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.price || 0).toFixed(2)}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.amount || 0).toFixed(2)}</td>
-        </tr>`
-      ).join('');
+      // Build beautifully styled email using the user's SELECTED invoice template/theme
+      const currentActiveTemplate = previewTemplate || template;
+      const themedEmailHtml = buildThemedInvoiceEmailHtml({
+        invoice: enrichedInvoice,
+        template: currentActiveTemplate,
+        businessInfo: effectiveBusinessInfo,
+        currencySymbol: getCurrencySymbol(),
+        docTypeLabel,
+      });
 
-      const roundOff = parseFloat(invoiceDetails.round_off || 0) || 0;
-      const roundOffRow = roundOff !== 0
-        ? `<tr><td colspan="3" style="padding:8px;text-align:right;color:#666;">Round Off:</td><td style="padding:8px;text-align:right;">${roundOff >= 0 ? '+' : ''}${getCurrencySymbol()}${roundOff.toFixed(2)}</td></tr>`
-        : '';
+      const plainTextSummary = `Dear ${enrichedInvoice.customer_name || 'Customer'},\n\nPlease find attached your ${docTypeLabel} #${fileNum} for ${getCurrencySymbol()}${Number(enrichedInvoice.total_amount || 0).toFixed(2)} from ${businessName}.\n\nThank you for your business!`;
 
-      const body =
-        `<div style="font-family:Arial,sans-serif;max-width:600px;">` +
-        `<h2 style="color:#333;">Invoice from ${businessName}</h2>` +
-        `<table style="width:100%;margin:16px 0;">` +
-        `<tr><td style="color:#666;">Invoice No:</td><td><strong>${invoiceDetails.invoice_number}</strong></td></tr>` +
-        `<tr><td style="color:#666;">Date:</td><td>${invoiceDetails.invoice_date}</td></tr>` +
-        `<tr><td style="color:#666;">Customer:</td><td>${invoiceDetails.customer_name || 'N/A'}</td></tr>` +
-        `</table>` +
-        `<table style="width:100%;border-collapse:collapse;margin:16px 0;">` +
-        `<thead><tr style="background:#f5f5f5;">` +
-        `<th style="padding:8px;text-align:left;">Item</th>` +
-        `<th style="padding:8px;text-align:center;">Qty</th>` +
-        `<th style="padding:8px;text-align:right;">Price</th>` +
-        `<th style="padding:8px;text-align:right;">Amount</th>` +
-        `</tr></thead>` +
-        `<tbody>${itemRows}</tbody>` +
-        `<tfoot>` +
-        `${roundOffRow}` +
-        `<tr style="background:#f5f5f5;font-weight:bold;">` +
-        `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
-        `<td style="padding:8px;text-align:right;">${getCurrencySymbol()}${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
-        `</tr></tfoot>` +
-        `</table>` +
-        `<p style="color:#666;">Thank you for your business!<br>— ${businessName}</p>` +
-        `</div>`;
+      await sendCustomEmail({
+        recipient: email,
+        subject,
+        body: plainTextSummary,
+        html_body: themedEmailHtml,
+        invoice_id: invoiceDetails.id,
+      });
 
-      await sendCustomEmail({ recipient: email, subject, body });
-      toast.success(`Invoice emailed to ${email}`);
+      toast.success(`${docTypeLabel} emailed in "${currentActiveTemplate?.name || 'Selected'}" theme to ${email}`);
       queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
       setEmailPromptOpen(false);
       setManualEmail('');
-    } catch {
+    } catch (err) {
+      console.error('Failed to send invoice email:', err);
       toast.error('Failed to send email. Check your email configuration in Business Tools.');
+    } finally {
+      setSendingEmail(false);
     }
-    setSendingEmail(false);
   };
 
   // Handle email button click
