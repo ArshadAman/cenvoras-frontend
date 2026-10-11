@@ -163,7 +163,11 @@ export async function generatePixelPerfectPDF(element, options = {}) {
 
       let drawOffsetY = 0;
 
-      // On pages 2+, if we have a table header, repeat it at top of page
+      // On pages 2+, add generous top headspace (e.g. 15mm / ~40px equivalent) so table items never bump into top boundary
+      const topHeadspacePx = Math.round(14 * (canvas.width / pdfWidthMm)); // ~14mm top padding in canvas pixels
+      drawOffsetY = pageIndex > 0 ? topHeadspacePx : 0;
+
+      // On pages 2+, if we have a table header, repeat it below top headspace
       if (pageIndex > 0 && theadElement && theadHeight > 0) {
         const theadCanvasY = theadTop;
         const theadCanvasHeight = theadHeight * scaleFactor;
@@ -175,14 +179,14 @@ export async function generatePixelPerfectPDF(element, options = {}) {
           canvas.width,
           Math.round(theadCanvasHeight),
           0,
-          0,
+          drawOffsetY,
           canvas.width,
           Math.round(theadCanvasHeight)
         );
-        drawOffsetY = Math.round(theadCanvasHeight);
+        drawOffsetY += Math.round(theadCanvasHeight);
       }
 
-      // Draw the page slice below the repeated header
+      // Draw the page slice below the repeated header and headspace
       ctx.drawImage(
         canvas,
         0,
