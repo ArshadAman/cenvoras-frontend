@@ -599,6 +599,9 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
               }
               
               queryClient.invalidateQueries({ queryKey: ["purchaseBills"] });
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+              queryClient.invalidateQueries({ queryKey: ["batches"] });
+              queryClient.invalidateQueries({ queryKey: ["inventory"] });
               onClose();
             } catch (error) {
               console.error('Error saving purchase bill:', error);

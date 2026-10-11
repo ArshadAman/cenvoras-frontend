@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import InventoryTable from "../components/inventory/InventoryTable";
 import ProductForm from "../components/inventory/ProductForm";
 import ProductDetailsModal from "../components/inventory/ProductDetailsModal";
@@ -8,6 +8,7 @@ import StockAdjustmentModal from "../components/inventory/StockAdjustmentModal";
 // import StockTransfer from "../components/inventory/StockTransfer";
 import BatchSplitModal from "../components/inventory/BatchSplitModal";
 import { CubeIcon, PlusIcon, ScissorsIcon } from '@heroicons/react/24/outline';
+import useEscKey from "../hooks/useEscStack";
 
 export default function Inventory() {
   const [showProductForm, setShowProductForm] = useState(false);
@@ -19,6 +20,25 @@ export default function Inventory() {
   const [showBatchSplit, setShowBatchSplit] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const isAnyModalOpen = Boolean(
+    showProductForm ||
+    showProductDetails ||
+    productToDelete ||
+    showStockAdjustment ||
+    showBatchSplit
+  );
+
+  // Level 0: When no modal is open, Esc navigates back to dashboard
+  useEscKey(() => navigate('/dashboard'), !isAnyModalOpen, 0);
+
+  // Esc keys for modals
+  useEscKey(() => setShowBatchSplit(false), showBatchSplit, 20);
+  useEscKey(() => setShowStockAdjustment(false), showStockAdjustment, 20);
+  useEscKey(() => setProductToDelete(null), Boolean(productToDelete), 20);
+  useEscKey(() => setShowProductDetails(false), showProductDetails, 15);
+  useEscKey(() => { setShowProductForm(false); setEditingProduct(null); }, showProductForm, 10);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { downloadProductCsvTemplate, getProducts, bulkDeleteProducts, updateProduct } from "../../api/inventory";
+import { downloadProductCsvTemplate, getProducts, bulkDeleteProducts, bulkRestoreProducts, updateProduct } from "../../api/inventory";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
@@ -9,6 +9,8 @@ import { useInventoryCsvJob } from "../../hooks/useInventoryCsvJob";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import InventoryCsvMappingModal from "./InventoryCsvMappingModal";
 import InventoryCsvProgressBar from "./InventoryCsvProgressBar";
+import useEscKey from "../../hooks/useEscStack";
+import { AdjustmentsHorizontalIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -73,6 +75,19 @@ const validateCsvBeforeUpload = async (file) => {
   return { valid: true };
 };
 
+const DEFAULT_COLUMNS = {
+  checkbox: true,
+  product: true,
+  quantity: true,
+  unit: true,
+  cost_price: true,
+  sale_price: true,
+  total_value: true,
+  status: true,
+  warranty: true,
+  actions: true,
+};
+
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -80,13 +95,39 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [page, setPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock
+  const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock, low-stock, critical
   const [statusFilter, setStatusFilter] = useState("active"); // active, archived, all
+  const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [mappingFile, setMappingFile] = useState(null);
   const [showMappingModal, setShowMappingModal] = useState(false);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [showItemDetails, setShowItemDetails] = useState(true);
+
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem("inventory_table_columns");
+      return saved ? { ...DEFAULT_COLUMNS, ...JSON.parse(saved) } : DEFAULT_COLUMNS;
+    } catch {
+      return DEFAULT_COLUMNS;
+    }
+  });
+
+  const toggleColumn = (colKey) => {
+    setVisibleColumns((prev) => {
+      const updated = { ...prev, [colKey]: !prev[colKey] };
+      try {
+        localStorage.setItem("inventory_table_columns", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  useEscKey(() => setShowMappingModal(false), showMappingModal, 20);
+  useEscKey(() => setShowColumnPicker(false), showColumnPicker, 20);
+
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
     stockRange: { min: "", max: "" },
@@ -105,15 +146,17 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   }, [searchInput]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["products", search, ordering, page, statusFilter],
+    queryKey: ["products", search, ordering, page, statusFilter, selectedManufacturer],
     queryFn: () => getProducts({
       search,
       ordering,
       page,
+      ...(selectedManufacturer ? { manufacturer: selectedManufacturer } : {}),
       ...(statusFilter === 'archived' ? { is_active: false } : statusFilter === 'all' ? { include_archived: true } : { is_active: true })
     }),
-    staleTime: 30 * 1000,
+    staleTime: 5 * 1000,
     gcTime: 5 * 60 * 1000,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData,
   });
@@ -191,6 +234,35 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
+  // Extract available manufacturers from loaded products
+  const availableManufacturers = useMemo(() => {
+    const set = new Set();
+    productsRaw.forEach((p) => {
+      if (p.manufacturer && String(p.manufacturer).trim()) {
+        set.add(String(p.manufacturer).trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [productsRaw]);
+
+  // Handle clickable column header sorting
+  const handleSort = (field) => {
+    if (ordering === field) {
+      setOrdering(`-${field}`);
+    } else if (ordering === `-${field}`) {
+      setOrdering(field);
+    } else {
+      setOrdering(field);
+    }
+    setPage(1);
+  };
+
+  const renderSortIndicator = (field) => {
+    if (ordering === field) return <span className="ml-1 text-cyan-300 font-bold">▲</span>;
+    if (ordering === `-${field}`) return <span className="ml-1 text-cyan-300 font-bold">▼</span>;
+    return <span className="ml-1 text-white/30 text-xs">↕</span>;
+  };
+
   // Backend handles search across all products; frontend applies additional filters only.
   const filteredProducts = useMemo(() => {
     const minPrice = advancedFilters.priceRange.min === "" ? null : parseFloat(advancedFilters.priceRange.min);
@@ -211,6 +283,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           matchesStock = currentStock === 0;
         } else if (stockFilter === "low-stock") {
           matchesStock = currentStock > 0 && currentStock <= minStock;
+        } else if (stockFilter === "critical") {
+          matchesStock = currentStock < 0;
         }
 
         if (advancedFilters.lowStock) {
@@ -246,15 +320,25 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           matchesSupplier = String(product.supplier || "").toLowerCase().includes(supplierQuery);
         }
 
-        return matchesStock && matchesPrice && matchesStockRange && matchesSupplier;
+        let matchesManufacturer = true;
+        if (selectedManufacturer) {
+          matchesManufacturer = String(product.manufacturer || "").toLowerCase() === selectedManufacturer.toLowerCase();
+        }
+
+        return matchesStock && matchesPrice && matchesStockRange && matchesSupplier && matchesManufacturer;
       })
       .sort((a, b) => {
         if (ordering === "name") return (a.name || "").localeCompare(b.name || "");
         if (ordering === "-name") return (b.name || "").localeCompare(a.name || "");
-        if (ordering === "current_stock") return parseFloat(a.current_stock || 0) - parseFloat(b.current_stock || 0);
-        if (ordering === "-current_stock") return parseFloat(b.current_stock || 0) - parseFloat(a.current_stock || 0);
-        if (ordering === "unit_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
-        if (ordering === "-unit_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
+        if (ordering === "current_stock") return parseFloat(a.current_stock ?? a.stock ?? 0) - parseFloat(b.current_stock ?? b.stock ?? 0);
+        if (ordering === "-current_stock") return parseFloat(b.current_stock ?? b.stock ?? 0) - parseFloat(a.current_stock ?? a.stock ?? 0);
+        if (ordering === "sale_price") return parseFloat(a.sale_price || 0) - parseFloat(b.sale_price || 0);
+        if (ordering === "-sale_price") return parseFloat(b.sale_price || 0) - parseFloat(a.sale_price || 0);
+        if (ordering === "unit_price" || ordering === "cost_price") return parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0) - parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0);
+        if (ordering === "-unit_price" || ordering === "-cost_price") return parseFloat(b.cost_price ?? b.price ?? b.unit_price ?? 0) - parseFloat(a.cost_price ?? a.price ?? a.unit_price ?? 0);
+        if (ordering === "updated_at") return new Date(a.updated_at || 0) - new Date(b.updated_at || 0);
+        if (ordering === "-updated_at") return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+        if (ordering === "-created_at") return new Date(b.created_at || 0) - new Date(a.created_at || 0);
 
         return 0;
       });
@@ -268,6 +352,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     advancedFilters.supplier,
     ordering,
     productsRaw,
+    selectedManufacturer,
     stockFilter,
   ]);
 
@@ -324,6 +409,34 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     }
   };
 
+  const handleBulkRestore = async () => {
+    if (selectedProducts.size === 0) return;
+
+    const count = selectedProducts.size;
+    const confirmed = window.confirm(`Are you sure you want to restore ${count} selected product(s) to active inventory?`);
+    if (!confirmed) return;
+
+    const toastId = "bulk-restore-progress";
+    toast.loading(`Restoring ${count} product(s)...`, { toastId });
+    try {
+      const productIds = Array.from(selectedProducts);
+      const result = await bulkRestoreProducts(productIds);
+
+      toast.dismiss(toastId);
+      setSelectedProducts(new Set());
+      setShowBulkActions(false);
+      toast.success(result.message || `${count} product(s) restored successfully.`, { toastId: 'bulk-restore-result', autoClose: 3000 });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      refetch();
+    } catch (error) {
+      toast.dismiss(toastId);
+      const errMsg = error?.response?.data?.error || error?.response?.data?.detail || `Failed to restore products.`;
+      toast.error(errMsg, { toastId: 'bulk-restore-result', autoClose: 4000 });
+    } finally {
+      toast.dismiss(toastId);
+    }
+  };
+
   // Export functions
   const exportToCSV = () => {
     const selectedData = filteredProducts.filter(product => selectedProducts.has(product.id));
@@ -359,7 +472,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
     const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
 
-    if (currentStock === 0) {
+    if (currentStock < 0) {
+      return { text: "Critical", className: "bg-red-600/30 text-red-200 border border-red-500/60 backdrop-filter backdrop-blur-10 font-bold" };
+    } else if (currentStock === 0) {
       return { text: "Out of Stock", className: "bg-red-500/30 text-red-200 border border-red-300/50 backdrop-filter backdrop-blur-10 font-bold" };
     } else if (minStock > 0 && currentStock > 0 && currentStock <= minStock) {
       return { text: "Low Stock", className: "bg-yellow-500/30 text-yellow-200 border border-yellow-300/50 backdrop-filter backdrop-blur-10 font-bold" };
@@ -381,50 +496,127 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       />
 
       {/* Enhanced Filters */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-2 mb-4">
-        <input
-          className="w-full sm:w-64 border border-white/30 rounded px-3 py-2 sm:px-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          placeholder="Search by name or description"
-          value={searchInput}
-          onChange={(e) => {
-            setSearchInput(e.target.value);
-          }}
-        />
-        <div className="flex gap-2 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <input
+            className="w-full sm:w-56 border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            placeholder="Search products..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
           <select
             value={ordering}
-            onChange={(e) => setOrdering(e.target.value)}
-            className="w-1/2 sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            onChange={(e) => {
+              setOrdering(e.target.value);
+              setPage(1);
+            }}
+            className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           >
             <option value="name">Name (A-Z)</option>
             <option value="-name">Name (Z-A)</option>
+            <option value="-updated_at">Recently Modified</option>
+            <option value="updated_at">Modified (Oldest)</option>
+            <option value="-created_at">Recently Added</option>
             <option value="-current_stock">Stock (High to Low)</option>
             <option value="current_stock">Stock (Low to High)</option>
-            <option value="-unit_price">Price (High to Low)</option>
-            <option value="unit_price">Price (Low to High)</option>
+            <option value="-sale_price">Sale Price (High to Low)</option>
+            <option value="sale_price">Sale Price (Low to High)</option>
+            <option value="-unit_price">Cost Price (High to Low)</option>
+            <option value="unit_price">Cost Price (Low to High)</option>
           </select>
           <select
             value={stockFilter}
-            onChange={(e) => setStockFilter(e.target.value)}
-            className="w-1/2 sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            onChange={(e) => {
+              setStockFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           >
             <option value="all">All Stock</option>
-            <option value="in-stock">In Stock</option>
+            <option value="in-stock">In Stock (&gt;0)</option>
             <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock</option>
+            <option value="out-of-stock">Out of Stock (0)</option>
+            <option value="critical">Critical (&lt;0)</option>
           </select>
+          {availableManufacturers.length > 0 && (
+            <select
+              value={selectedManufacturer}
+              onChange={(e) => {
+                setSelectedManufacturer(e.target.value);
+                setPage(1);
+              }}
+              className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 max-w-[180px] truncate"
+            >
+              <option value="">All Manufacturers</option>
+              {availableManufacturers.map((mfg) => (
+                <option key={mfg} value={mfg} className="bg-gray-800 text-white">
+                  {mfg}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full sm:w-auto border border-white/30 rounded px-2 py-2 sm:py-1 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
           >
             <option value="active">Active</option>
             <option value="archived">Archived</option>
             <option value="all">All Status</option>
           </select>
+        </div>
+
+        {/* View Options: Columns Picker & Details Toggle */}
+        <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowColumnPicker(!showColumnPicker)}
+              className="px-3 py-1.5 bg-white/10 text-white/90 border border-white/20 rounded hover:bg-white/20 transition text-xs font-semibold flex items-center gap-1.5 backdrop-filter backdrop-blur-10"
+              title="Show / Hide Columns"
+            >
+              <AdjustmentsHorizontalIcon className="w-4 h-4 text-cyan-300" />
+              <span>Columns</span>
+            </button>
+            {showColumnPicker && (
+              <div className="absolute right-0 mt-2 w-52 bg-gray-900/95 border border-white/20 rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl space-y-2">
+                <div className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider mb-2">Display Columns</div>
+                {[
+                  { key: 'product', label: 'Product Name' },
+                  { key: 'quantity', label: 'Quantity / Stock' },
+                  { key: 'unit', label: 'Unit' },
+                  { key: 'cost_price', label: 'Cost Price' },
+                  { key: 'sale_price', label: 'Sale Price' },
+                  { key: 'total_value', label: 'Total Value' },
+                  { key: 'status', label: 'Stock Status' },
+                  { key: 'warranty', label: 'Warranty' },
+                ].map((col) => (
+                  <label key={col.key} className="flex items-center gap-2 text-xs text-white/90 hover:text-white cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[col.key]}
+                      onChange={() => toggleColumn(col.key)}
+                      className="rounded border-white/30 text-cyan-400 focus:ring-cyan-400 bg-white/10"
+                    />
+                    {col.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowItemDetails(!showItemDetails)}
+            className={`px-3 py-1.5 border rounded transition text-xs font-semibold flex items-center gap-1.5 backdrop-filter backdrop-blur-10 ${showItemDetails ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/30' : 'bg-white/10 text-white/70 border-white/20'}`}
+            title={showItemDetails ? "Hide Item Details" : "Show Item Details"}
+          >
+            {showItemDetails ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
+            <span>{showItemDetails ? "Details On" : "Details Off"}</span>
+          </button>
         </div>
       </div>
 
@@ -451,6 +643,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 className="px-3 py-1 bg-red-500/30 text-red-200 border border-red-300/50 rounded hover:bg-red-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
               >
                 Delete Selected
+              </button>
+              <button
+                onClick={handleBulkRestore}
+                className="px-3 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+              >
+                Restore Selected
               </button>
             </div>
           )}
@@ -494,26 +692,88 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border-separate border-spacing-y-2">
+          <table className="w-full table-fixed text-sm border-separate border-spacing-y-2">
           <thead>
             <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
-              <th className="text-left py-3 px-4 rounded-l-lg">
-                <input
-                  type="checkbox"
-                  checked={filteredProducts.length > 0 && selectedProducts.size === filteredProducts.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
-                />
-              </th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Product</th>
-              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Quantity</th>
-              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Unit</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Cost Price</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Sale Price</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Value</th>
-              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Status</th>
-              <th className="text-center py-3 px-4 font-black text-white drop-shadow-lg">Warranty</th>
-              <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
+              {visibleColumns.checkbox && (
+                <th className="w-12 text-left py-3 px-4 rounded-l-lg">
+                  <input
+                    type="checkbox"
+                    checked={filteredProducts.length > 0 && selectedProducts.size === filteredProducts.length}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                  />
+                </th>
+              )}
+              {visibleColumns.product && (
+                <th
+                  onClick={() => handleSort('name')}
+                  className="w-[28%] min-w-[200px] text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Product</span>
+                    {renderSortIndicator('name')}
+                  </div>
+                </th>
+              )}
+              {visibleColumns.quantity && (
+                <th
+                  onClick={() => handleSort('current_stock')}
+                  className="w-24 text-center py-3 px-3 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Quantity</span>
+                    {renderSortIndicator('current_stock')}
+                  </div>
+                </th>
+              )}
+              {visibleColumns.unit && (
+                <th className="w-20 text-center py-3 px-2 font-black text-white drop-shadow-lg">
+                  Unit
+                </th>
+              )}
+              {visibleColumns.cost_price && (
+                <th
+                  onClick={() => handleSort('cost_price')}
+                  className="w-28 text-right py-3 px-3 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                >
+                  <div className="flex items-center justify-end gap-1">
+                    <span>Cost Price</span>
+                    {renderSortIndicator('cost_price')}
+                  </div>
+                </th>
+              )}
+              {visibleColumns.sale_price && (
+                <th
+                  onClick={() => handleSort('sale_price')}
+                  className="w-28 text-right py-3 px-3 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                >
+                  <div className="flex items-center justify-end gap-1">
+                    <span>Sale Price</span>
+                    {renderSortIndicator('sale_price')}
+                  </div>
+                </th>
+              )}
+              {visibleColumns.total_value && (
+                <th className="w-28 text-right py-3 px-3 font-black text-white drop-shadow-lg">
+                  Total Value
+                </th>
+              )}
+              {visibleColumns.status && (
+                <th className="w-28 text-center py-3 px-3 font-black text-white drop-shadow-lg">
+                  Status
+                </th>
+              )}
+              {visibleColumns.warranty && (
+                <th className="w-24 text-center py-3 px-2 font-black text-white drop-shadow-lg">
+                  Warranty
+                </th>
+              )}
+              {visibleColumns.actions && (
+                <th className="w-32 text-center py-3 px-3 rounded-r-lg font-black text-white drop-shadow-lg">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -530,125 +790,150 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   ))
               : filteredProducts.map((product) => {
                   const stockStatus = getStockStatus(product);
-              const costPrice = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
-              const salePrice = product.sale_price == null ? null : parseFloat(product.sale_price);
-              const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * costPrice;
+                  const costPrice = parseFloat(product.cost_price ?? product.price ?? product.purchase_price ?? product.unit_price ?? 0);
+                  const salePrice = product.sale_price == null ? null : parseFloat(product.sale_price);
+                  const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * costPrice;
                   
                   return (
                     <tr
                       key={product.id}
                       className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300"
                     >
-                      <td className="py-3 px-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.has(product.id)}
-                          onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                          className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
-                        />
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-white drop-shadow-lg">
-                            {product.name}
-                          </span>
-                          {product.item_code && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20" title={`Item Code: ${product.item_code}`}>
-                              {product.item_code}
+                      {visibleColumns.checkbox && (
+                        <td className="py-3 px-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.has(product.id)}
+                            onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                            className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                          />
+                        </td>
+                      )}
+                      {visibleColumns.product && (
+                        <td className="py-3 px-4 break-words min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-white drop-shadow-lg break-words">
+                              {product.name}
                             </span>
-                          )}
-                          {product.internal_reference && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-teal-300 bg-teal-500/10 border border-teal-500/20" title={`Internal Ref: ${product.internal_reference}`}>
-                              Ref: {product.internal_reference}
-                            </span>
-                          )}
-                          {product.is_active === false && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40">
-                              Archived
-                            </span>
-                          )}
-                        </div>
-                        {product.description && (
-                          <div className="text-xs text-white/70 drop-shadow-md mt-1">
-                            {product.description.substring(0, 50)}...
+                            {product.item_code && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20" title={`Item Code: ${product.item_code}`}>
+                                {product.item_code}
+                              </span>
+                            )}
+                            {showItemDetails && product.internal_reference && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-teal-300 bg-teal-500/10 border border-teal-500/20" title={`Internal Ref: ${product.internal_reference}`}>
+                                Ref: {product.internal_reference}
+                              </span>
+                            )}
+                            {showItemDetails && product.manufacturer && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-purple-300 bg-purple-500/10 border border-purple-500/20" title={`Manufacturer: ${product.manufacturer}`}>
+                                {product.manufacturer}
+                              </span>
+                            )}
+                            {product.is_active === false && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40">
+                                Archived
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="font-semibold text-white drop-shadow-lg">
-                          {parseFloat(product.stock ?? product.current_stock ?? 0).toLocaleString()}
-                        </div>
-                        {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
-                          <div className="text-[11px] text-amber-300/80 drop-shadow-md mt-0.5">
-                            Min: {parseFloat(product.low_stock_alert ?? product.min_stock_level).toLocaleString()}
+                          {showItemDetails && product.description && (
+                            <div className="text-xs text-white/70 drop-shadow-md mt-1 break-words line-clamp-2">
+                              {product.description}
+                            </div>
+                          )}
+                        </td>
+                      )}
+                      {visibleColumns.quantity && (
+                        <td className="py-3 px-3 text-center">
+                          <div className={`font-semibold drop-shadow-lg ${parseFloat(product.stock ?? product.current_stock ?? 0) < 0 ? 'text-red-400 font-bold' : 'text-white'}`}>
+                            {parseFloat(product.stock ?? product.current_stock ?? 0).toLocaleString()}
                           </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span 
-                          className="inline-block px-2.5 py-0.5 rounded-md text-xs font-medium text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 font-mono max-w-[130px] truncate"
-                          title={product.unit || 'pcs'}
-                        >
-                          {product.unit || 'pcs'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        {getCurrencySymbol()}{costPrice.toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-medium text-white drop-shadow-lg">
-                        {salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}
-                      </td>
-                      <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
-                        {getCurrencySymbol()}{totalValue.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.className}`}>
-                          {stockStatus.text}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {(product.warranty_months && product.warranty_months > 0) ? (
-                          <span className="px-2 py-0.5 rounded text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
-                            {product.warranty_months} mo
-                          </span>
-                        ) : (
-                          <span className="text-gray-500 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center space-x-1">
-                        <button
-                          className="px-2 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                          onClick={() => onView(product)}
-                        >
-                          View
-                        </button>
-                        {product.is_active === false ? (
-                          <button
-                            className="px-2 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg font-medium"
-                            onClick={() => handleRestore(product)}
+                          {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
+                            <div className="text-[11px] text-amber-300/80 drop-shadow-md mt-0.5">
+                              Min: {parseFloat(product.low_stock_alert ?? product.min_stock_level).toLocaleString()}
+                            </div>
+                          )}
+                        </td>
+                      )}
+                      {visibleColumns.unit && (
+                        <td className="py-3 px-2 text-center">
+                          <span 
+                            className="inline-block px-2 py-0.5 rounded-md text-xs font-medium text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 font-mono truncate max-w-full"
+                            title={product.unit || 'pcs'}
                           >
-                            Restore
+                            {product.unit || 'pcs'}
+                          </span>
+                        </td>
+                      )}
+                      {visibleColumns.cost_price && (
+                        <td className="py-3 px-3 text-right font-medium text-white drop-shadow-lg">
+                          {getCurrencySymbol()}{costPrice.toFixed(2)}
+                        </td>
+                      )}
+                      {visibleColumns.sale_price && (
+                        <td className="py-3 px-3 text-right font-medium text-white drop-shadow-lg">
+                          {salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}
+                        </td>
+                      )}
+                      {visibleColumns.total_value && (
+                        <td className="py-3 px-3 text-right font-bold text-white drop-shadow-lg">
+                          {getCurrencySymbol()}{totalValue.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                      )}
+                      {visibleColumns.status && (
+                        <td className="py-3 px-3 text-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.className}`}>
+                            {stockStatus.text}
+                          </span>
+                        </td>
+                      )}
+                      {visibleColumns.warranty && (
+                        <td className="py-3 px-2 text-center">
+                          {(product.warranty_months && product.warranty_months > 0) ? (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+                              {product.warranty_months} mo
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">—</span>
+                          )}
+                        </td>
+                      )}
+                      {visibleColumns.actions && (
+                        <td className="py-3 px-3 text-center space-x-1">
+                          <button
+                            className="px-2 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                            onClick={() => onView(product)}
+                          >
+                            View
                           </button>
-                        ) : (
-                          <>
+                          {product.is_active === false ? (
                             <button
-                              className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                              onClick={() => onEdit(product)}
+                              className="px-2 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg font-medium"
+                              onClick={() => handleRestore(product)}
                             >
-                              Edit
+                              Restore
                             </button>
-                            <button
-                              className="px-2 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                              onClick={() => onDelete(product)}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </td>
+                          ) : (
+                            <>
+                              <button
+                                className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                                onClick={() => onEdit(product)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="px-2 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
+                                onClick={() => onDelete(product)}
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -728,11 +1013,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   <span className="text-sm text-white/70">Quantity:</span>
                   <div className="text-right">
                     <span className={`text-sm font-semibold ${
-                      isLowStock
-                        ? 'text-red-400' 
-                        : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
-                          ? 'text-yellow-400' 
-                          : 'text-green-400'
+                      currentStock < 0
+                        ? 'text-red-400 font-bold'
+                        : isLowStock
+                          ? 'text-red-400' 
+                          : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
+                            ? 'text-yellow-400' 
+                            : 'text-green-400'
                     }`}>
                       {currentStock.toLocaleString()}
                     </span>
@@ -765,11 +1052,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   </span>
                 </div>
 
-                {isLowStock && (
-                  <div className="text-xs text-red-400 bg-red-500/20 px-2 py-1 rounded">
+                {currentStock < 0 ? (
+                  <div className="text-xs text-red-300 bg-red-600/30 border border-red-500/50 px-2 py-1 rounded font-bold">
+                    Critical (Negative Stock)
+                  </div>
+                ) : isLowStock ? (
+                  <div className="text-xs text-yellow-400 bg-yellow-500/20 px-2 py-1 rounded">
                     Low Stock Alert
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Card Actions */}

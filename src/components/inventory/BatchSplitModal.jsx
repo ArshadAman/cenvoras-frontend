@@ -3,8 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getProductBatches } from "../../api/inventory";
 import { splitBatch } from "../../api/reports";
 import { XMarkIcon, ScissorsIcon } from '@heroicons/react/24/outline';
+import useEscKey from "../../hooks/useEscStack";
 
 export default function BatchSplitModal({ onClose }) {
+  useEscKey(onClose, true, 20);
   const queryClient = useQueryClient();
   const [selectedBatch, setSelectedBatch] = useState('');
   const [newBatchNumber, setNewBatchNumber] = useState('');
