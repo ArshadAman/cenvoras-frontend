@@ -81,6 +81,21 @@ export default function SalaryBreakdownCalculator({
     }
   }, [initialTaxRegime]);
 
+  useEffect(() => {
+    if (initialComponents) {
+      const basicVal = Number(initialComponents.Basic || initialComponents.basic || 0);
+      const hraVal = Number(initialComponents.HRA !== undefined ? initialComponents.HRA : (initialComponents.hra !== undefined ? initialComponents.hra : -1));
+      if (basicVal > 0 && monthlyCtc > 0) {
+        setBasicPct(Math.min(90, Math.max(50, Math.round((basicVal / monthlyCtc) * 100))));
+        if (hraVal === 0) {
+          setHraPctOfBasic(0);
+        } else if (hraVal > 0) {
+          setHraPctOfBasic(Math.min(50, Math.max(0, Math.round((hraVal / basicVal) * 100))));
+        }
+      }
+    }
+  }, [initialComponents]);
+
   // Handle monthly change
   const handleMonthlyChange = (e) => {
     const val = parseFloat(e.target.value);
@@ -426,24 +441,57 @@ export default function SalaryBreakdownCalculator({
             </div>
 
             {/* HRA (% of Basic) */}
-            <div>
-              <div className="flex justify-between items-center text-xs mb-1.5">
+            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+              <div className="flex justify-between items-center text-xs">
                 <span className="font-medium text-gray-300">HRA (% of Basic)</span>
-                <span className="font-semibold text-indigo-400">{hraPctOfBasic}%</span>
+                <span className="font-semibold text-indigo-400">
+                  {hraPctOfBasic}% {hraPctOfBasic === 0 ? '(No HRA)' : hraPctOfBasic === 50 ? '(Metro)' : '(Non-Metro)'}
+                </span>
               </div>
               <input
                 type="range"
-                min="30"
+                min="0"
                 max="50"
                 step="5"
                 value={hraPctOfBasic}
                 onChange={(e) => setHraPctOfBasic(Number(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
-              <div className="flex items-center justify-between text-[11px] text-gray-400 mt-1">
-                <span>₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo</span>
-                <span className="text-[10px] text-gray-500">{hraPctOfBasic === 50 ? 'Metro (50%)' : 'Non-Metro (40%)'}</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
+                <span className="font-medium text-white">₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setHraPctOfBasic(0)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
+                      hraPctOfBasic === 0 ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    0% (No HRA)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHraPctOfBasic(40)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
+                      hraPctOfBasic === 40 ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    40% (Non-Metro)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHraPctOfBasic(50)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
+                      hraPctOfBasic === 50 ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    50% (Metro)
+                  </button>
+                </div>
               </div>
+              <p className="text-[10px] text-gray-400 leading-relaxed pt-1 border-t border-white/5">
+                💡 While HRA is not part of your basic salary, it directly depends on it. Section 10(13A) tax exemptions calculate allowable tax-free HRA strictly based on Basic Salary (not gross pay or overall CTC). If your company does not provide HRA, set it to 0% and the remaining amount automatically balances into Special Allowance.
+              </p>
             </div>
 
             {/* Work State (All 36 States & UTs) */}

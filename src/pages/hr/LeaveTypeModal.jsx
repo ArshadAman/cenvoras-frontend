@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { hrApi } from "../../api/hr";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
@@ -101,8 +102,8 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
   const inputCls = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-sm";
   const labelCls = "block text-sm font-medium text-gray-300 mb-1";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">
@@ -226,6 +227,7 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

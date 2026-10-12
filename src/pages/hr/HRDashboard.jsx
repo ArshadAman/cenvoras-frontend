@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { hrApi } from "../../api/hr";
 import {
@@ -12,6 +13,72 @@ import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
 import SimpleFormModal from "./SimpleFormModal";
 import LeaveTypeModal from "./LeaveTypeModal";
+
+// ─── Alert Details Modal ───────────────────────────────────────────────────────
+function AlertDetailsModal({ isOpen, onClose, alert, onSelectEmployee }) {
+  if (!isOpen || !alert) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-xl shadow-2xl my-10 animate-fade-up">
+        <div className="flex justify-between items-center p-5 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldExclamationIcon className={`w-5 h-5 ${
+                alert.type === 'danger' ? 'text-red-400' :
+                alert.type === 'warning' ? 'text-amber-400' :
+                'text-blue-400'
+              }`} />
+              <h3 className="text-base font-semibold text-white">{alert.title}</h3>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">{alert.message}</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-5 max-h-[60vh] overflow-y-auto space-y-2.5">
+          {(!alert.items || alert.items.length === 0) ? (
+            <p className="text-sm text-gray-400 text-center py-6">No specific employees listed for this alert.</p>
+          ) : (
+            alert.items.map((item, idx) => (
+              <div key={item.id || idx} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition">
+                <div className="min-w-0 pr-3">
+                  <p className="text-sm font-semibold text-white truncate">{item.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 truncate">
+                    {item.employee_code && <span className="font-mono text-indigo-300 mr-1.5">{item.employee_code}</span>}
+                    {item.department && <span className="text-gray-400">· {item.department} </span>}
+                    {item.designation && <span className="text-gray-500">({item.designation}) </span>}
+                    {item.reason && <span className="text-amber-300 font-medium">· {item.reason}</span>}
+                  </p>
+                </div>
+                {item.id && onSelectEmployee && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectEmployee(item.id)}
+                    className="shrink-0 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-indigo-400 hover:bg-indigo-300 rounded-lg transition"
+                  >
+                    Edit / Fix
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+        <div className="p-4 border-t border-white/10 flex justify-between items-center bg-white/[0.01] rounded-b-2xl">
+          <span className="text-xs text-gray-400">Total: {alert.items?.length || 0} affected</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-medium text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 // ─── Reusable Stat Card ───────────────────────────────────────────────────────
 function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
@@ -80,8 +147,8 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
   };
   if (!isOpen) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">Log Attendance</h2>
@@ -120,7 +187,8 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -184,77 +252,80 @@ function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes, onLeave
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-        <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
-          <div className="flex justify-between items-center p-5 border-b border-white/10">
-            <h2 className="text-lg font-semibold text-white">Apply for Leave</h2>
-            <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
-          </div>
-          <form onSubmit={handleSubmit} className="p-5 space-y-4">
-            <div><label className="block text-sm text-gray-300 mb-1">Employee *</label>
-              <select required name="employee" value={form.employee} onChange={hc} className={ic}>
-                <option value="">Select Employee</option>
-                {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
-              </select></div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm text-gray-300">Leave Type *</label>
+      {createPortal(
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
+            <div className="flex justify-between items-center p-5 border-b border-white/10">
+              <h2 className="text-lg font-semibold text-white">Apply for Leave</h2>
+              <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              <div><label className="block text-sm text-gray-300 mb-1">Employee *</label>
+                <select required name="employee" value={form.employee} onChange={hc} className={ic}>
+                  <option value="">Select Employee</option>
+                  {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
+                </select></div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm text-gray-300">Leave Type *</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddLeaveType(true)}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 transition"
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" /> Add
+                  </button>
+                </div>
+                <select required name="leave_type" value={form.leave_type} onChange={hc} className={ic}>
+                  <option value="">Select Leave Type</option>
+                  {leaveTypes.map(lt => (
+                    <option key={lt.id} value={lt.id}>
+                      {lt.name} ({lt.is_paid ? 'Paid' : 'Unpaid/Free'})
+                    </option>
+                  ))}
+                  <option value="__add_new__" className="text-indigo-400 font-semibold">+ Add New Leave Type...</option>
+                </select>
+                {form.employee && form.leave_type && (
+                  <div className="flex items-center justify-between text-xs mt-1 px-1">
+                    <span className={isPaid ? (isQuotaExhausted ? "text-red-400 font-medium" : "text-emerald-400 font-medium") : "text-amber-400"}>
+                      {isPaid
+                        ? `Paid Quota: ${availableQuota !== null ? `${availableQuota} Days remaining` : 'Calculating...'}`
+                        : "Unpaid / Free Leave (no quota limit)"}
+                    </span>
+                    {isQuotaExhausted && (
+                      <span className="text-red-400 font-semibold uppercase text-[10px] tracking-wider bg-red-500/10 px-1.5 py-0.5 rounded">
+                        Quota Exhausted
+                      </span>
+                    )}
+                  </div>
+                )}
+                {isQuotaExhausted && (
+                  <div className="p-2.5 mt-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                    This employee has exhausted their paid leave quota (0 days remaining). Additional paid leave cannot be taken. Please apply for an Unpaid / Free Leave type instead.
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="block text-sm text-gray-300 mb-1">Start *</label><input required type="date" name="start_date" value={form.start_date} onChange={hc} className={ic} /></div>
+                <div><label className="block text-sm text-gray-300 mb-1">End *</label><input required type="date" name="end_date" value={form.end_date} onChange={hc} className={ic} /></div>
+              </div>
+              <div><label className="block text-sm text-gray-300 mb-1">Reason</label>
+                <textarea name="reason" value={form.reason} onChange={hc} rows={2} className={ic + " resize-none"} /></div>
+              <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
+                <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
                 <button
-                  type="button"
-                  onClick={() => setShowAddLeaveType(true)}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 transition"
+                  type="submit"
+                  disabled={saving || isQuotaExhausted}
+                  className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <PlusIcon className="w-3.5 h-3.5" /> Add
+                  {saving ? "Submitting..." : isQuotaExhausted ? "Quota Exhausted" : "Submit"}
                 </button>
               </div>
-              <select required name="leave_type" value={form.leave_type} onChange={hc} className={ic}>
-                <option value="">Select Leave Type</option>
-                {leaveTypes.map(lt => (
-                  <option key={lt.id} value={lt.id}>
-                    {lt.name} ({lt.is_paid ? 'Paid' : 'Unpaid/Free'})
-                  </option>
-                ))}
-                <option value="__add_new__" className="text-indigo-400 font-semibold">+ Add New Leave Type...</option>
-              </select>
-              {form.employee && form.leave_type && (
-                <div className="flex items-center justify-between text-xs mt-1 px-1">
-                  <span className={isPaid ? (isQuotaExhausted ? "text-red-400 font-medium" : "text-emerald-400 font-medium") : "text-amber-400"}>
-                    {isPaid
-                      ? `Paid Quota: ${availableQuota !== null ? `${availableQuota} Days remaining` : 'Calculating...'}`
-                      : "Unpaid / Free Leave (no quota limit)"}
-                  </span>
-                  {isQuotaExhausted && (
-                    <span className="text-red-400 font-semibold uppercase text-[10px] tracking-wider bg-red-500/10 px-1.5 py-0.5 rounded">
-                      Quota Exhausted
-                    </span>
-                  )}
-                </div>
-              )}
-              {isQuotaExhausted && (
-                <div className="p-2.5 mt-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300">
-                  This employee has exhausted their paid leave quota (0 days remaining). Additional paid leave cannot be taken. Please apply for an Unpaid / Free Leave type instead.
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="block text-sm text-gray-300 mb-1">Start *</label><input required type="date" name="start_date" value={form.start_date} onChange={hc} className={ic} /></div>
-              <div><label className="block text-sm text-gray-300 mb-1">End *</label><input required type="date" name="end_date" value={form.end_date} onChange={hc} className={ic} /></div>
-            </div>
-            <div><label className="block text-sm text-gray-300 mb-1">Reason</label>
-              <textarea name="reason" value={form.reason} onChange={hc} rows={2} className={ic + " resize-none"} /></div>
-            <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
-              <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
-              <button
-                type="submit"
-                disabled={saving || isQuotaExhausted}
-                className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? "Submitting..." : isQuotaExhausted ? "Quota Exhausted" : "Submit"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <LeaveTypeModal
         isOpen={showAddLeaveType}
@@ -315,8 +386,8 @@ function TaskModal({ isOpen, onClose, onSuccess, employees, task = null }) {
 
   if (!isOpen) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">{task ? "Edit Task" : "Assign Task"}</h2>
@@ -360,7 +431,8 @@ function TaskModal({ isOpen, onClose, onSuccess, employees, task = null }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -370,8 +442,8 @@ function TaskDetailsModal({ isOpen, onClose, task, employees, onEdit = null, onD
   const isOverdue = task.status !== "completed" && task.deadline && new Date(task.deadline) < new Date(new Date().setHours(0,0,0,0));
   const emp = employees.find(e => e.id === task.employee);
   
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl my-8 animate-fade-up">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <span className="text-xs uppercase tracking-widest text-indigo-300 font-bold">Task Details</span>
@@ -460,7 +532,8 @@ function TaskDetailsModal({ isOpen, onClose, task, employees, onEdit = null, onD
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -489,8 +562,8 @@ function NotificationModal({ isOpen, onClose, onSuccess, employees }) {
   };
   if (!isOpen) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">Send Broadcast Notification</h2>
@@ -518,7 +591,8 @@ function NotificationModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -546,8 +620,8 @@ function SalaryIncrementModal({ isOpen, onClose, onSuccess, employee }) {
   };
   if (!isOpen || !employee) return null;
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-sm shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">Apply Salary Increment</h2>
@@ -567,7 +641,8 @@ function SalaryIncrementModal({ isOpen, onClose, onSuccess, employee }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -597,6 +672,22 @@ export default function HRDashboard() {
   const [incrementModal, setIncrementModal] = useState({ open: false, employee: null });
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskToEdit, setTaskToEdit] = useState(null);
+  const [activeAlertDetails, setActiveAlertDetails] = useState(null);
+
+  const handleFixAlertEmployee = async (empId) => {
+    setActiveAlertDetails(null);
+    const existing = employees.find(e => String(e.id) === String(empId));
+    if (existing) {
+      setEmpModal({ open: true, employee: existing });
+    } else {
+      try {
+        const res = await hrApi.getEmployee(empId);
+        setEmpModal({ open: true, employee: res.data });
+      } catch (err) {
+        toast.error("Could not load employee details");
+      }
+    }
+  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -819,22 +910,62 @@ export default function HRDashboard() {
                       </div>
                     ) : (
                       metrics.alerts.map((alert, idx) => (
-                        <div key={idx} className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+                        <div key={idx} className={`p-3.5 rounded-xl border flex flex-col gap-2.5 ${
                           alert.type === 'danger' ? 'bg-red-500/10 border-red-500/20 text-red-300' :
                           alert.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-300' :
                           'bg-blue-500/10 border-blue-500/20 text-blue-300'
                         }`}>
-                          <div className="flex items-center gap-3">
-                            <ShieldExclamationIcon className="w-5 h-5 shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-white">{alert.title}</p>
-                              <p className="text-xs text-gray-400">{alert.message}</p>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                              <ShieldExclamationIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-sm font-semibold text-white">{alert.title}</p>
+                                <p className="text-xs text-gray-300/90 mt-0.5">{alert.message}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {alert.items && alert.items.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveAlertDetails(alert)}
+                                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 transition whitespace-nowrap"
+                                >
+                                  View Affected ({alert.items.length})
+                                </button>
+                              )}
+                              {alert.action_url && (
+                                <Link to={alert.action_url} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white whitespace-nowrap transition">
+                                  Resolve
+                                </Link>
+                              )}
                             </div>
                           </div>
-                          {alert.action_url && (
-                            <Link to={alert.action_url} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white whitespace-nowrap transition">
-                              Resolve
-                            </Link>
+                          {/* Affected Employees quick inline pills preview */}
+                          {alert.items && alert.items.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/5">
+                              <span className="text-[11px] text-gray-400 font-medium">Affecting:</span>
+                              {alert.items.slice(0, 4).map((it, i) => (
+                                <button
+                                  key={it.id || i}
+                                  type="button"
+                                  onClick={() => handleFixAlertEmployee(it.id)}
+                                  className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/15 text-white border border-white/10 transition inline-flex items-center gap-1"
+                                  title="Click to view/edit employee"
+                                >
+                                  <span>{it.name}</span>
+                                  {it.employee_code && <span className="text-gray-400 font-mono text-[10px]">({it.employee_code})</span>}
+                                </button>
+                              ))}
+                              {alert.items.length > 4 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveAlertDetails(alert)}
+                                  className="text-[11px] text-indigo-400 hover:underline font-medium"
+                                >
+                                  +{alert.items.length - 4} more
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))
@@ -1226,6 +1357,12 @@ export default function HRDashboard() {
       <TaskDetailsModal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)} task={selectedTask} employees={employees} onEdit={(t) => { setTaskToEdit(t); setTaskModal(true); }} onDelete={handleDeleteTask} />
       <NotificationModal isOpen={notificationModal} onClose={() => setNotificationModal(false)} onSuccess={fetchAll} employees={employees} />
       <SalaryIncrementModal isOpen={incrementModal.open} onClose={() => setIncrementModal({ open: false, employee: null })} onSuccess={fetchAll} employee={incrementModal.employee} />
+      <AlertDetailsModal
+        isOpen={!!activeAlertDetails}
+        onClose={() => setActiveAlertDetails(null)}
+        alert={activeAlertDetails}
+        onSelectEmployee={handleFixAlertEmployee}
+      />
     </>
   );
 }

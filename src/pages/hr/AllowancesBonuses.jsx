@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { hrApi } from "../../api/hr";
 import {
   GiftIcon, PlusIcon, CheckBadgeIcon, XMarkIcon,
@@ -10,6 +11,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({
     employee: '',
     record_type: 'allowance',
+    calculation_mode: 'fixed',
     title: '',
     amount: '',
     is_recurring: false,
@@ -23,6 +25,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
       setForm({
         employee: '',
         record_type: 'allowance',
+        calculation_mode: 'fixed',
         title: '',
         amount: '',
         is_recurring: false,
@@ -33,7 +36,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
   }, [isOpen]);
 
   const PRESETS = {
-    allowance: ['Travel Allowance', 'Internet / Phone Allowance', 'Food & Meal Allowance', 'Medical Allowance', 'Special Allowance'],
+    allowance: ['Travel Allowance', 'Food & Meal Daily Allowance', 'Internet / Phone Allowance', 'Site Visit Allowance', 'Special Allowance'],
     bonus: ['Performance Bonus', 'Festival / Festive Bonus', 'Annual Incentive Bonus', 'Referral Bonus', 'Retention Bonus']
   };
 
@@ -53,6 +56,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
       await hrApi.createAllowanceBonus({
         employee: form.employee,
         record_type: form.record_type,
+        calculation_mode: form.record_type === 'allowance' ? form.calculation_mode : 'fixed',
         title: form.title.trim(),
         amount: parseFloat(form.amount),
         is_recurring: form.record_type === 'allowance' ? form.is_recurring : false,
@@ -74,8 +78,8 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
   const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-sm";
   const labelCls = "block text-sm font-medium text-gray-300 mb-1";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex justify-between items-center p-5 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
@@ -151,8 +155,47 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
             </div>
           </div>
 
+          {form.record_type === 'allowance' && (
+            <div className="space-y-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <label className={labelCls}>Calculation Mode *</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm(p => ({ ...p, calculation_mode: 'fixed' }))}
+                  className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
+                    form.calculation_mode === 'fixed'
+                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                      : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Fixed Monthly Flat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(p => ({ ...p, calculation_mode: 'per_day' }))}
+                  className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
+                    form.calculation_mode === 'per_day'
+                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                      : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Daily Rate (₹/day)
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-400">
+                {form.calculation_mode === 'per_day'
+                  ? '💡 Multiplied by days present in monthly payroll: ₹ Rate/day × Present Days.'
+                  : '💡 Flat fixed amount added to monthly payroll payslip regardless of daily presence.'}
+              </p>
+            </div>
+          )}
+
           <div>
-            <label className={labelCls}>Amount (₹) *</label>
+            <label className={labelCls}>
+              {form.calculation_mode === 'per_day' && form.record_type === 'allowance'
+                ? 'Daily Allowance Rate (₹/day) *'
+                : 'Amount (₹) *'}
+            </label>
             <input
               required
               type="number"
@@ -161,7 +204,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
               value={form.amount}
               onChange={e => setForm(p => ({ ...p, amount: e.target.value }))}
               className={ic}
-              placeholder="e.g. 5000"
+              placeholder={form.calculation_mode === 'per_day' ? 'e.g. 500 (per day)' : 'e.g. 5000'}
             />
           </div>
 
@@ -209,7 +252,8 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -376,8 +420,18 @@ export default function AllowancesBonuses() {
                           <span className="text-white font-medium">{item.title}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-semibold text-white">
-                        ₹{parseFloat(item.amount || 0).toLocaleString('en-IN')}
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-white">
+                          ₹{parseFloat(item.amount || 0).toLocaleString('en-IN')}
+                          {item.calculation_mode === 'per_day' && (
+                            <span className="text-xs font-normal text-indigo-300 ml-1">/ day</span>
+                          )}
+                        </div>
+                        {item.calculation_mode === 'per_day' && (
+                          <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/20">
+                            ⚡ ₹/day × Present Days
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-xs">
                         {item.is_recurring ? (

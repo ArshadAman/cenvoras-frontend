@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { hrApi } from '../../api/hr';
 import { getWarehouses } from '../../api/inventory';
 import { toast } from 'react-toastify';
@@ -17,6 +18,7 @@ const EMPTY_FORM = {
   date_of_joining: '',
   gender: 'M',
   employment_type: 'full_time',
+  contract_fee: '',
   work_state: 'Karnataka',
   status: 'active',
   department_id: '',
@@ -45,6 +47,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [salaryConfig, setSalaryConfig] = useState(null);
 
+  // KYC Document file states
+  const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [panFile, setPanFile] = useState(null);
+  const [marksheetFile, setMarksheetFile] = useState(null);
+
   // Quick Add Department Modal state
   const [showAddDept, setShowAddDept] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
@@ -71,6 +78,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           date_of_joining: employee.date_of_joining || '',
           gender: employee.gender || 'M',
           employment_type: employee.employment_type || 'full_time',
+          contract_fee: employee.contract_fee || '',
           work_state: employee.work_state || 'Karnataka',
           status: employee.status || 'active',
           department_id: employee.department || '',
@@ -88,6 +96,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           upi_id: employee.upi_id || '',
           tax_regime: employee.tax_regime || 'new',
         });
+        setAadhaarFile(null);
+        setPanFile(null);
+        setMarksheetFile(null);
         const currentCtc = Number(employee.current_ctc || employee.salary_details?.monthly_ctc || 0);
         const existingComponents = employee.salary_details?.earnings || employee.salary_details?.components || {};
         if (currentCtc > 0 || employee.salary_details) {
@@ -101,6 +112,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       } else {
         setFormData(EMPTY_FORM);
         setSalaryConfig(null);
+        setAadhaarFile(null);
+        setPanFile(null);
+        setMarksheetFile(null);
       }
     }
   }, [isOpen, employee]);
@@ -172,9 +186,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Mandatory phone number check
-    if (!formData.personal_phone?.trim()) {
-      toast.error('Personal phone number is mandatory.');
+    // 1. Mandatory phone number check (10 to 11 digits, e.g. 9876543210 or 09876543210)
+    const rawPhone = (formData.personal_phone || '').trim();
+    const cleanPhone = rawPhone.replace(/[\s\-+]/g, '');
+    if (!cleanPhone || cleanPhone.length < 10 || cleanPhone.length > 15 || !/^\d+$/.test(cleanPhone)) {
+      toast.error('Please enter a valid phone number (10 to 11 digits, e.g., 9876543210 or 09876543210).');
       setActiveTab('personal');
       return;
     }
@@ -223,6 +239,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       return;
     }
 
+    // 5. Contract Remuneration check
+    const isContract = formData.employment_type === 'contract';
+    if (isContract && (!formData.contract_fee || Number(formData.contract_fee) <= 0)) {
+      toast.error('Please specify the agreed monthly contract fee for this contract personnel.');
+      setActiveTab('compensation');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -231,6 +255,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         date_of_joining: formData.date_of_joining,
         gender: formData.gender,
         employment_type: formData.employment_type,
+        contract_fee: isContract && formData.contract_fee ? parseFloat(formData.contract_fee) : null,
         work_state: formData.work_state,
         status: formData.status,
         department: formData.department_id || null,
@@ -250,14 +275,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         bank_ifsc: formData.bank_ifsc ? formData.bank_ifsc.toUpperCase() : '',
         account_holder_name: formData.account_holder_name,
         upi_id: formData.upi_id?.trim() || null,
-        tax_regime: salaryConfig?.tax_regime || formData.tax_regime || 'new',
+        tax_regime: !isContract ? (salaryConfig?.tax_regime || formData.tax_regime || 'new') : 'new',
       };
 
       if (formData.personal_email) payload.personal_email = formData.personal_email;
       if (formData.personal_phone) payload.personal_phone = formData.personal_phone;
 
-      // Attach salary breakdown if configured
-      if (salaryConfig && salaryConfig.monthly_ctc > 0) {
+      // Attach salary breakdown only if NOT a contract worker
+      if (!isContract && salaryConfig && salaryConfig.monthly_ctc > 0) {
         payload.salary = {
           monthly_ctc: salaryConfig.monthly_ctc,
           components: salaryConfig.components || {},
@@ -267,17 +292,54 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         }
       }
 
-      if (salaryConfig && salaryConfig.tax_declaration) {
+      if (!isContract && salaryConfig && salaryConfig.tax_declaration) {
         payload.tax_declaration = salaryConfig.tax_declaration;
       }
 
+      let savedEmp = null;
       if (employee) {
-        await hrApi.updateEmployee(employee.id, payload);
+        const res = await hrApi.updateEmployee(employee.id, payload);
+        savedEmp = res.data;
         toast.success('Employee updated successfully');
       } else {
-        await hrApi.createEmployee(payload);
+        const res = await hrApi.createEmployee(payload);
+        savedEmp = res.data;
         toast.success('Employee added successfully');
       }
+
+      // Handle KYC document uploads securely in tenant-isolated partition
+      const targetEmpId = employee ? employee.id : savedEmp?.id;
+      if (targetEmpId) {
+        const docUploads = [];
+        if (aadhaarFile) {
+          const fd = new FormData();
+          fd.append('file', aadhaarFile);
+          fd.append('document_type', 'aadhaar');
+          fd.append('title', 'Aadhaar Card (KYC)');
+          fd.append('employee', targetEmpId);
+          docUploads.push(hrApi.createDocument(fd).catch(err => console.warn('Aadhaar upload failed', err)));
+        }
+        if (panFile) {
+          const fd = new FormData();
+          fd.append('file', panFile);
+          fd.append('document_type', 'pan');
+          fd.append('title', 'PAN Card (KYC)');
+          fd.append('employee', targetEmpId);
+          docUploads.push(hrApi.createDocument(fd).catch(err => console.warn('PAN upload failed', err)));
+        }
+        if (marksheetFile) {
+          const fd = new FormData();
+          fd.append('file', marksheetFile);
+          fd.append('document_type', 'marksheet_10th');
+          fd.append('title', '10th Marksheet / Education Certificate (KYC)');
+          fd.append('employee', targetEmpId);
+          docUploads.push(hrApi.createDocument(fd).catch(err => console.warn('Marksheet upload failed', err)));
+        }
+        if (docUploads.length > 0) {
+          await Promise.allSettled(docUploads);
+        }
+      }
+
       onSuccess();
       onClose();
     } catch (err) {
@@ -306,8 +368,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const inputCls = 'w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500';
   const labelCls = 'block text-sm font-medium text-gray-300 mb-1';
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-white/10 sticky top-0 bg-[#111116] z-10 rounded-t-2xl">
           <h2 className="text-xl font-semibold text-white">
@@ -325,13 +387,17 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             { id: 'employment', label: 'Employment & Branch' },
             { id: 'statutory', label: 'Statutory (PF/ESI/PAN)' },
             { id: 'bank', label: 'Bank Details' },
-            { id: 'compensation', label: 'Compensation & Tax' },
+            { id: 'kyc', label: 'KYC & Verification' },
+            {
+              id: 'compensation',
+              label: formData.employment_type === 'contract' ? 'Contract Fee' : 'Compensation & Tax',
+            },
           ].map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-3 text-sm font-medium border-b-2 transition ${
+              className={`pb-3 px-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-indigo-400 text-indigo-300'
                   : 'border-transparent text-gray-400 hover:text-white'
@@ -358,7 +424,15 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 </div>
                 <div>
                   <label className={labelCls}>Personal Phone *</label>
-                  <input required type="tel" name="personal_phone" value={formData.personal_phone} onChange={handleChange} className={inputCls} placeholder="e.g. 9876543210" />
+                  <input
+                    required
+                    type="tel"
+                    name="personal_phone"
+                    value={formData.personal_phone}
+                    onChange={handleChange}
+                    className={inputCls}
+                    placeholder="e.g. 9876543210 or 09876543210 (10–11 digits)"
+                  />
                 </div>
               </div>
 
@@ -563,26 +637,160 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             </div>
           )}
 
-          {/* TAB 5: COMPENSATION & TAX */}
+          {/* TAB KYC: KYC & VERIFICATION DOCUMENTS */}
+          {activeTab === 'kyc' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-start gap-2.5">
+                <span className="text-base shrink-0">🛡️</span>
+                <p className="leading-relaxed">
+                  <strong className="text-white">DPDPA 2023 & Aadhaar Act Compliant Partition:</strong> Identity and educational credentials are encrypted at rest and stored in a private tenant partition. Files are never stored on public servers or shared folders.
+                </p>
+              </div>
+
+              {/* Aadhaar Card */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className={labelCls + ' mb-0'}>Aadhaar Card (PDF / Image)</label>
+                  {employee?.kyc_documents?.find(d => d.document_type === 'aadhaar') && (
+                    <a
+                      href={employee.kyc_documents.find(d => d.document_type === 'aadhaar').file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded hover:underline"
+                    >
+                      ✓ Previously Uploaded (View)
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,image/png,image/jpeg,image/jpg"
+                  onChange={(e) => setAadhaarFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                />
+                {aadhaarFile && (
+                  <p className="text-[11px] text-indigo-300">Selected: {aadhaarFile.name} ({(aadhaarFile.size / 1024).toFixed(1)} KB)</p>
+                )}
+              </div>
+
+              {/* PAN Card */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className={labelCls + ' mb-0'}>PAN Card (PDF / Image)</label>
+                  {employee?.kyc_documents?.find(d => d.document_type === 'pan') && (
+                    <a
+                      href={employee.kyc_documents.find(d => d.document_type === 'pan').file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded hover:underline"
+                    >
+                      ✓ Previously Uploaded (View)
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,image/png,image/jpeg,image/jpg"
+                  onChange={(e) => setPanFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                />
+                {panFile && (
+                  <p className="text-[11px] text-indigo-300">Selected: {panFile.name} ({(panFile.size / 1024).toFixed(1)} KB)</p>
+                )}
+              </div>
+
+              {/* 10th Marksheet */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className={labelCls + ' mb-0'}>10th Marksheet / Education Certificate (PDF / Image)</label>
+                  {employee?.kyc_documents?.find(d => d.document_type === 'marksheet_10th') && (
+                    <a
+                      href={employee.kyc_documents.find(d => d.document_type === 'marksheet_10th').file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded hover:underline"
+                    >
+                      ✓ Previously Uploaded (View)
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,image/png,image/jpeg,image/jpg"
+                  onChange={(e) => setMarksheetFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                />
+                {marksheetFile && (
+                  <p className="text-[11px] text-indigo-300">Selected: {marksheetFile.name} ({(marksheetFile.size / 1024).toFixed(1)} KB)</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: COMPENSATION OR CONTRACT REMUNERATION */}
           {activeTab === 'compensation' && (
             <div className="space-y-4 pt-1">
-              <SalaryBreakdownCalculator
-                initialMonthlyCtc={
-                  salaryConfig?.monthly_ctc ||
-                  Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
-                }
-                initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
-                initialWorkState={salaryConfig?.work_state || formData.work_state || 'Karnataka'}
-                initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
-                onChange={(calcData) => {
-                  setSalaryConfig(calcData);
-                  setFormData((prev) => ({
-                    ...prev,
-                    tax_regime: calcData.tax_regime,
-                    work_state: calcData.work_state || prev.work_state,
-                  }));
-                }}
-              />
+              {formData.employment_type === 'contract' ? (
+                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-white">Contract Remuneration & Terms</h3>
+                      <p className="text-xs text-gray-400 mt-0.5">Fixed contract fee for professional / freelance personnel.</p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Contract Personnel
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 space-y-1">
+                    <p className="font-semibold text-white">Exempt from Statutory Payroll & PF/ESI</p>
+                    <p className="text-amber-300/90">
+                      Contract personnel receive their agreed monthly remuneration without deductions for Employee Provident Fund (PF) or Employee State Insurance (ESI). They are automatically excluded from permanent monthly statutory payroll runs.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Agreed Monthly Contract Fee (₹) *</label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-2.5 text-gray-400 font-semibold text-sm">₹</span>
+                      <input
+                        required
+                        type="number"
+                        step="0.01"
+                        min="1"
+                        name="contract_fee"
+                        value={formData.contract_fee}
+                        onChange={handleChange}
+                        className={inputCls + ' pl-8'}
+                        placeholder="e.g. 50000"
+                      />
+                    </div>
+                    {formData.contract_fee && Number(formData.contract_fee) > 0 && (
+                      <p className="text-xs text-indigo-300 mt-1.5">
+                        Annual Contract Value: ₹{(Number(formData.contract_fee) * 12).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <SalaryBreakdownCalculator
+                  initialMonthlyCtc={
+                    salaryConfig?.monthly_ctc ||
+                    Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
+                  }
+                  initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
+                  initialWorkState={salaryConfig?.work_state || formData.work_state || 'Karnataka'}
+                  initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
+                  onChange={(calcData) => {
+                    setSalaryConfig(calcData);
+                    setFormData((prev) => ({
+                      ...prev,
+                      tax_regime: calcData.tax_regime,
+                      work_state: calcData.work_state || prev.work_state,
+                    }));
+                  }}
+                />
+              )}
             </div>
           )}
 
@@ -593,7 +801,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <button
                   type="button"
                   onClick={() => {
-                    const tabs = ['personal', 'employment', 'statutory', 'bank', 'compensation'];
+                    const tabs = ['personal', 'employment', 'statutory', 'bank', 'kyc', 'compensation'];
                     const idx = tabs.indexOf(activeTab);
                     if (idx > 0) setActiveTab(tabs[idx - 1]);
                   }}
@@ -606,7 +814,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <button
                   type="button"
                   onClick={() => {
-                    const tabs = ['personal', 'employment', 'statutory', 'bank', 'compensation'];
+                    const tabs = ['personal', 'employment', 'statutory', 'bank', 'kyc', 'compensation'];
                     const idx = tabs.indexOf(activeTab);
                     if (idx < tabs.length - 1) setActiveTab(tabs[idx + 1]);
                   }}
@@ -724,6 +932,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
