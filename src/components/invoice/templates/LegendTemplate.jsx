@@ -143,8 +143,8 @@ const LegendTemplate = forwardRef(({
                     <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
                        <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
                        <p className="font-semibold text-gray-900">{invoice.place_of_supply || 'Same State'}</p>
-                       {invoice.challan_number && (
-                         <p className="text-[10px] text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{invoice.challan_number}</span></p>
+                       {(invoice.challan_number || invoice.delivery_challan_number) && (
+                         <p className="text-[10px] text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{invoice.challan_number || invoice.delivery_challan_number}</span></p>
                        )}
                     </div>
                     <div className="w-1/2 p-2.5 flex flex-col justify-center">

@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SalesOrderTable from "../components/sales/SalesOrderTable";
-import SalesOrderForm from "../components/sales/SalesOrderForm";
+import SalesForm from "../components/sales/SalesForm";
 import SalesDetailsModal from "../components/sales/SalesDetailsModal";
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { deleteSalesOrder, getSalesOrder } from "../api/sales_order";
+import { 
+  createSalesOrder, 
+  deleteSalesOrder, 
+  getNextSalesOrderNumber, 
+  getSalesOrder, 
+  updateSalesOrder 
+} from "../api/sales_order";
+import { getUserProfile, patchUserProfile } from "../api/users";
+
+const DEFAULT_SALES_ORDER_PREFIX = 'SO';
+
+const normalizePrefix = (value) => {
+  return String(value ?? '').toUpperCase();
+};
 
 export default function SalesOrderList() {
   const queryClient = useQueryClient();
@@ -18,6 +31,63 @@ export default function SalesOrderList() {
   const [showForm, setShowForm] = useState(false);
   const [editOrder, setEditOrder] = useState(null);
   const [viewOrder, setViewOrder] = useState(null);
+  const [salesOrderPrefix, setSalesOrderPrefix] = useState(DEFAULT_SALES_ORDER_PREFIX);
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveSalesOrderPrefixMutation = useMutation({
+    mutationFn: (prefix) => patchUserProfile({ sales_order_prefix: prefix }),
+  });
+
+  const billingProfile = userProfile?.billing_profile || userProfile?.profile;
+  const canEditPrefix = Boolean(
+    userProfile?.profile?.id &&
+    billingProfile?.id &&
+    userProfile.profile.id === billingProfile.id
+  );
+
+  useEffect(() => {
+    const dbPrefix = billingProfile?.sales_order_prefix;
+    if (dbPrefix !== undefined && dbPrefix !== null) {
+      setSalesOrderPrefix(normalizePrefix(dbPrefix));
+    }
+  }, [billingProfile?.sales_order_prefix]);
+
+  const handlePrefixBlur = () => {
+    const normalized = normalizePrefix(salesOrderPrefix);
+    setSalesOrderPrefix(normalized);
+    if (!canEditPrefix) return;
+    if (normalized !== normalizePrefix(billingProfile?.sales_order_prefix || DEFAULT_SALES_ORDER_PREFIX)) {
+      saveSalesOrderPrefixMutation.mutate(normalized);
+    }
+  };
+
+  const businessInfo = billingProfile
+    ? {
+        business_name: billingProfile.business_name,
+        business_address: billingProfile.business_address,
+        phone: billingProfile.phone,
+        email: billingProfile.email,
+        gstin: billingProfile.gstin,
+        pan_number: billingProfile.pan_number,
+        gem_id: billingProfile.gem_id,
+        dl_number: billingProfile.dl_number,
+        state: billingProfile.state,
+        city: billingProfile.city,
+        country: billingProfile.country,
+        trn: billingProfile.trn,
+        bank_name: billingProfile.bank_name,
+        bank_account_number: billingProfile.bank_account_number,
+        bank_ifsc_code: billingProfile.bank_ifsc_code,
+        bank_branch: billingProfile.bank_branch,
+        bank_upi_id: billingProfile.bank_upi_id,
+        bank_qr_code: billingProfile.bank_qr_code,
+      }
+    : {};
 
   // Auto-open referenced order if navigated from Delivery Challan
   useEffect(() => {
@@ -70,6 +140,10 @@ export default function SalesOrderList() {
   };
 
   const handleDelete = async (order) => {
+    if (order.has_challans || order.has_invoices) {
+      toast.error("Cannot delete Sales Order because a Delivery Challan or Sales Invoice has already been generated from it.");
+      return;
+    }
     if (!window.confirm(`Delete sales order ${order.order_number}?`)) return;
     await deleteMutation.mutateAsync(order.id);
   };
@@ -84,13 +158,30 @@ export default function SalesOrderList() {
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Sales Orders</h1>
             <p className="text-gray-400 text-sm">Manage customer orders before invoicing.</p>
           </div>
-          <div className="flex gap-3 w-full sm:w-auto">
-             <button
-               onClick={() => setShowForm(true)}
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-purple-500/20 flex items-center gap-2 w-full sm:w-auto justify-center"
-             >
-               <PlusIcon className="w-4 h-4"/> New Order
-             </button>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50 w-full sm:w-auto">
+              <span className="text-xs text-gray-400 font-medium">PREFIX:</span>
+              <input 
+                type="text" 
+                value={salesOrderPrefix}
+                onChange={(e) => setSalesOrderPrefix(normalizePrefix(e.target.value))}
+                onBlur={handlePrefixBlur}
+                disabled={!canEditPrefix}
+                className="bg-transparent border-none text-white text-sm flex-1 sm:w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
+                placeholder="SO"
+                maxLength={10}
+                title={!canEditPrefix ? 'Sales Order prefix is managed by the main account.' : ''}
+              />
+            </div>
+            <button
+              onClick={() => {
+                setEditOrder(null);
+                setShowForm(true);
+              }}
+              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <PlusIcon className="w-4 h-4"/> New Order
+            </button>
           </div>
         </div>
 
@@ -109,10 +200,16 @@ export default function SalesOrderList() {
 
       {/* Modals */}
       {showForm && (
-        <SalesOrderForm 
+        <SalesForm 
           isOpen={showForm} 
           onClose={handleCloseForm}
           editData={editOrder}
+          invoicePrefix={salesOrderPrefix}
+          documentType="sales_order"
+          createDocument={createSalesOrder}
+          updateDocument={(id, data) => updateSalesOrder(id, data)}
+          getNextNumber={getNextSalesOrderNumber}
+          finalSubmitStatus="new"
         />
       )}
 
@@ -121,6 +218,7 @@ export default function SalesOrderList() {
           isOpen={!!viewOrder}
           onClose={() => setViewOrder(null)}
           invoice={viewOrder}
+          businessInfo={businessInfo}
           documentType="proforma"
         />
       )}

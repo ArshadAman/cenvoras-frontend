@@ -216,7 +216,7 @@ export default function SalesOrderTable({
                               >
                                 <PencilSquareIcon className="w-4 h-4" />
                               </button>
-                              {order.stage !== 'completed' && (
+                              {!order.is_invoiced && (
                                 <button
                                   type="button"
                                   onClick={() => handleConvert(order)}
@@ -229,10 +229,20 @@ export default function SalesOrderTable({
                               )}
                               <button
                                 type="button"
-                                onClick={() => onDelete(order)}
-                                title="Delete Sales Order"
+                                onClick={() => {
+                                  if (order.has_challans || order.has_invoices) {
+                                    toast.error("Cannot delete Sales Order because a Delivery Challan or Sales Invoice has already been generated from it.");
+                                    return;
+                                  }
+                                  onDelete(order);
+                                }}
+                                title={order.has_challans || order.has_invoices ? "Cannot delete: Linked Delivery Challan or Invoice exists" : "Delete Sales Order"}
                                 aria-label="Delete Sales Order"
-                                className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                                className={`p-1.5 rounded-lg border transition-all drop-shadow ${
+                                  order.has_challans || order.has_invoices
+                                    ? "opacity-40 cursor-not-allowed bg-gray-500/10 text-gray-400 border-gray-500/20"
+                                    : "bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40"
+                                }`}
                               >
                                 <TrashIcon className="w-4 h-4" />
                               </button>
@@ -332,7 +342,7 @@ export default function SalesOrderTable({
                   >
                     <PencilSquareIcon className="w-4 h-4" />
                   </button>
-                  {order.stage !== 'completed' && (
+                  {!order.is_invoiced && (
                     <button
                       type="button"
                       onClick={() => handleConvert(order)}
@@ -345,10 +355,20 @@ export default function SalesOrderTable({
                   )}
                   <button
                     type="button"
-                    onClick={() => onDelete(order)}
-                    title="Delete Sales Order"
+                    onClick={() => {
+                      if (order.has_challans || order.has_invoices) {
+                        toast.error("Cannot delete Sales Order because a Delivery Challan or Sales Invoice has already been generated from it.");
+                        return;
+                      }
+                      onDelete(order);
+                    }}
+                    title={order.has_challans || order.has_invoices ? "Cannot delete: Linked Delivery Challan or Invoice exists" : "Delete Sales Order"}
                     aria-label="Delete Sales Order"
-                    className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                    className={`p-2 rounded-lg border transition-all ${
+                      order.has_challans || order.has_invoices
+                        ? "opacity-40 cursor-not-allowed bg-gray-500/10 text-gray-400 border-gray-500/20"
+                        : "bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300"
+                    }`}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>

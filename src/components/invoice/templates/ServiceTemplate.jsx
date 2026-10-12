@@ -169,7 +169,7 @@ const ServiceTemplate = forwardRef(({
             <>
               {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
               {(invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
-              {invoice.delivery_challan_number && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900">{invoice.delivery_challan_number}</span></div>}
+              {(invoice.delivery_challan_number || invoice.challan_number) && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</span></div>}
             </>
           )}
         </div>

@@ -28,18 +28,38 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
   const [ewayBillNumber, setEwayBillNumber] = useState('');
   const [notes, setNotes] = useState('');
 
+  const allDispatched = useMemo(() => {
+    return Array.isArray(order?.items) && order.items.length > 0 && order.items.every(i => (i.pending_quantity ?? 0) <= 0);
+  }, [order]);
+
+  const isPostDeliveryInvoicing = useMemo(() => {
+    if (conversionType !== 'invoice') return false;
+    return allDispatched || Boolean(order?.has_challans);
+  }, [conversionType, allDispatched, order]);
+
   // Selected items & dispatch quantities for Delivery Challan / Sales Invoice
   const orderItems = useMemo(() => {
-    return Array.isArray(order?.items)
-      ? order.items.filter((i) => {
-          const pending = typeof i.pending_quantity === 'number' ? i.pending_quantity : i.quantity;
-          return Number(pending) > 0;
-        })
-      : [];
-  }, [order]);
+    if (!Array.isArray(order?.items)) return [];
+    if (isPostDeliveryInvoicing) {
+      return order.items;
+    }
+    return order.items.filter((i) => {
+      const pending = typeof i.pending_quantity === 'number' ? i.pending_quantity : i.quantity;
+      return Number(pending) > 0;
+    });
+  }, [order, isPostDeliveryInvoicing]);
 
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [dispatchQuantities, setDispatchQuantities] = useState({});
+
+  useEffect(() => {
+    if (!isOpen || !order) return;
+    if (allDispatched) {
+      setConversionType('invoice');
+    } else {
+      setConversionType('challan');
+    }
+  }, [isOpen, order, allDispatched]);
 
   useEffect(() => {
     if (!isOpen || !order) return;
@@ -50,14 +70,17 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
     const initialQtys = {};
     orderItems.forEach((i) => {
       const pending = typeof i.pending_quantity === 'number' ? i.pending_quantity : i.quantity;
-      initialQtys[i.id] = Number(pending) || 1;
+      const defaultQty = isPostDeliveryInvoicing
+        ? (Number(i.dispatched_quantity) || Number(i.quantity) || 1)
+        : (Number(pending) || 1);
+      initialQtys[i.id] = defaultQty;
     });
     setDispatchQuantities(initialQtys);
     setVehicleNumber('');
     setTransportMode('');
     setEwayBillNumber('');
     setNotes('');
-  }, [isOpen, order, orderItems]);
+  }, [isOpen, order, orderItems, isPostDeliveryInvoicing]);
 
   if (!isOpen || !order) return null;
 
@@ -128,7 +151,9 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
       for (const item of orderItems) {
         if (selectedItemIds.has(item.id)) {
           const qty = Number(dispatchQuantities[item.id]) || 0;
-          const maxAvailable = typeof item.pending_quantity === 'number' ? item.pending_quantity : item.quantity;
+          const maxAvailable = isPostDeliveryInvoicing
+            ? (Number(item.dispatched_quantity) || Number(item.quantity) || 0)
+            : (typeof item.pending_quantity === 'number' ? item.pending_quantity : item.quantity);
           if (qty <= 0) {
             toast.error(`Please enter a valid quantity for ${item.product_name || 'item'}.`);
             setIsSubmitting(false);
@@ -214,23 +239,35 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
             <div className="grid grid-cols-2 gap-3">
               {/* Option 1: Delivery Challan */}
               <div
-                onClick={() => setConversionType('challan')}
-                className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
-                  conversionType === 'challan'
-                    ? 'bg-blue-500/10 border-blue-500 shadow-md shadow-blue-500/10'
-                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                onClick={() => {
+                  if (allDispatched) {
+                    toast.info('All items have already been dispatched via Delivery Challan.');
+                    return;
+                  }
+                  setConversionType('challan');
+                }}
+                className={`p-3.5 rounded-xl border-2 transition-all flex items-start gap-3 select-none ${
+                  allDispatched
+                    ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/5'
+                    : conversionType === 'challan'
+                    ? 'bg-blue-500/10 border-blue-500 shadow-md shadow-blue-500/10 cursor-pointer'
+                    : 'bg-white/5 border-white/10 hover:border-white/20 cursor-pointer'
                 }`}
               >
-                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'challan' ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'challan' && !allDispatched ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
                   <TruckIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-white flex items-center justify-between">
                     <span>Delivery Challan</span>
-                    <span className="text-[10px] text-blue-400 font-medium">Dispatch</span>
+                    <span className="text-[10px] text-blue-400 font-medium">
+                      {allDispatched ? 'Fully Dispatched' : 'Dispatch'}
+                    </span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-1 leading-tight">
-                    Dispatches goods & reduces inventory stock. No ledger/receivable entry created.
+                    {allDispatched 
+                      ? 'All items of this order were already dispatched via Challan.' 
+                      : 'Dispatches goods & reduces inventory stock. No ledger/receivable entry created.'}
                   </p>
                 </div>
               </div>
@@ -250,10 +287,14 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-white flex items-center justify-between">
                     <span>Sales Invoice</span>
-                    <span className="text-[10px] text-cyan-400 font-medium">Direct Billing</span>
+                    <span className="text-[10px] text-cyan-400 font-medium">
+                      {isPostDeliveryInvoicing ? 'Invoice Delivered Goods' : 'Direct Billing'}
+                    </span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-1 leading-tight">
-                    Converts selected items directly into a final GST tax invoice with ledger accounting.
+                    {isPostDeliveryInvoicing
+                      ? 'Converts delivered order items into Sales Invoice referencing Delivery Challan without double-deducting stock.'
+                      : 'Converts selected items directly into a final GST tax invoice with ledger accounting.'}
                   </p>
                 </div>
               </div>
@@ -281,13 +322,15 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
 
               {orderItems.length === 0 ? (
                 <div className="p-6 text-center text-xs text-gray-400 bg-white/5 rounded-xl border border-white/5">
-                  No pending items available in this sales order.
+                  No items available in this sales order.
                 </div>
               ) : (
                 <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                   {orderItems.map((item) => {
                     const isSelected = selectedItemIds.has(item.id);
-                    const maxQty = typeof item.pending_quantity === 'number' ? item.pending_quantity : item.quantity;
+                    const maxQty = isPostDeliveryInvoicing
+                      ? (Number(item.dispatched_quantity) || Number(item.quantity) || 0)
+                      : (typeof item.pending_quantity === 'number' ? item.pending_quantity : item.quantity);
                     const currentQty = dispatchQuantities[item.id] !== undefined ? dispatchQuantities[item.id] : maxQty;
 
                     return (
@@ -316,8 +359,9 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                               {item.product_name}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              Pending Qty: <strong className="text-gray-200">{maxQty} {item.unit || 'pcs'}</strong>
-                              {item.dispatched_quantity > 0 && (
+                              {isPostDeliveryInvoicing ? 'Delivered Qty: ' : 'Pending Qty: '}
+                              <strong className="text-gray-200">{maxQty} {item.unit || 'pcs'}</strong>
+                              {item.dispatched_quantity > 0 && !isPostDeliveryInvoicing && (
                                 <span className="text-purple-300 ml-1.5">(Dispatched: {item.dispatched_quantity})</span>
                               )}
                               {' '}&bull; Rate: {getCurrencySymbol()}{Number(item.price || 0).toFixed(2)}

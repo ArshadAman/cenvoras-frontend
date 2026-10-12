@@ -130,9 +130,9 @@ const BillShipTemplate = forwardRef(({
                    PO / Order: {invoice.po_number || invoice.sales_order_number}
                  </p>
                )}
-               {invoice.challan_number && (
+               {(invoice.challan_number || invoice.delivery_challan_number) && (
                  <p className="text-sm text-gray-800 font-semibold mt-1">
-                   Challan: {invoice.challan_number}
+                   Challan: {invoice.challan_number || invoice.delivery_challan_number}
                  </p>
                )}
                {invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>}
