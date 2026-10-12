@@ -795,6 +795,7 @@ export default function SalesForm({
 }) {
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
+  const isSalesOrder = documentType === "sales_order";
 
   const handleBeforeCloseRef = React.useRef(null);
   const [draggedRowIndex, setDraggedRowIndex] = useState(null);
@@ -812,7 +813,7 @@ export default function SalesForm({
         const submitBtn = document.querySelector('button[type="submit"]');
         if(submitBtn) {
             submitBtn.click();
-            toast.info(`Saving ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
+            toast.info(`Saving ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
         }
       }
 
@@ -1260,14 +1261,15 @@ export default function SalesForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
       queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       if (submitActionRef.current === 'draft') {
-        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
+        toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
-        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
+        toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       }
       onClose();
     },
@@ -1278,7 +1280,7 @@ export default function SalesForm({
           toast.error(
             extractErrorMessage(
               error,
-              `Failed to create ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
+              `Failed to create ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
             )
           );
       }
@@ -1290,14 +1292,15 @@ export default function SalesForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
       queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       if (submitActionRef.current === 'draft') {
-        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
+        toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
-        toast.success(`${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
+        toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       }
       onClose();
     },
@@ -1308,7 +1311,7 @@ export default function SalesForm({
           toast.error(
             extractErrorMessage(
               error,
-              `Failed to update ${isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
+              `Failed to update ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
             )
           );
       }
@@ -1373,7 +1376,7 @@ export default function SalesForm({
       // Required fields
       customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
       // Use fetched next number or edit data
-      invoice_number: editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
+      invoice_number: editData?.order_number || editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
       invoice_date: parsedInvoiceDate,
       
       // Optional customer fields (for Customer record creation)
@@ -1418,7 +1421,7 @@ export default function SalesForm({
       gst_treatment: editData?.gst_treatment || "registered",
       place_of_supply: editData?.place_of_supply || "",
       warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || ""),
-      journal: editData?.journal || (isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
+      journal: editData?.journal || (isSalesOrder ? "Sales" : isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
       total_amount: editData?.total_amount || null,
       notes: editData?.notes || "",
       
@@ -1510,8 +1513,8 @@ export default function SalesForm({
           <div>
             <h2 className="text-xl font-bold text-white mb-1">
               {isEdit
-                ? `Edit ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`
-                : `New ${isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`}
+                ? `Edit ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`
+                : `New ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`}
             </h2>
              <p className="text-xs text-gray-400 flex items-center gap-2">
               <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
@@ -1574,7 +1577,7 @@ export default function SalesForm({
                   await SalesSchema.validate(valuesToValidate, { abortEarly: false });
                 } catch (err) {
                   const errors = {};
-                  const docLabel = isDeliveryChallan ? 'Challan' : isQuotation ? 'Quotation' : 'Invoice';
+                  const docLabel = isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Challan' : isQuotation ? 'Quotation' : 'Invoice';
                   err.inner?.forEach(e => {
                     let msg = e.message;
                     if (msg.includes('Invoice number')) {
@@ -1705,6 +1708,11 @@ export default function SalesForm({
                   quotation_number: values.invoice_number,
                   quotation_date: values.invoice_date,
                 }),
+                // Sales Order specific fields
+                ...(isSalesOrder && {
+                  order_number: values.invoice_number,
+                  date: values.invoice_date,
+                }),
               };
 
               console.log("DEBUG: Submitting Sales Invoice:", formData);
@@ -1822,14 +1830,14 @@ export default function SalesForm({
                     <div className="flex items-center gap-2 pb-3 mb-4 border-b border-white/5">
                       <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">
-                        {isDeliveryChallan ? 'Challan Details' : isQuotation ? 'Quotation Details' : 'Invoice Details'}
+                        {isSalesOrder ? 'Order Details' : isDeliveryChallan ? 'Challan Details' : isQuotation ? 'Quotation Details' : 'Invoice Details'}
                       </h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                       {/* Document / Invoice Number */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                          {isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
+                          {isSalesOrder ? 'Order Number *' : isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                         </label>
                         <Field
                           name="invoice_number"
@@ -1839,7 +1847,7 @@ export default function SalesForm({
                           spellCheck="false"
                           data-1p-ignore="true"
                           className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
-                          placeholder={isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001"}
+                          placeholder={isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001"}
                         />
                         <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
                       </div>
@@ -1847,7 +1855,7 @@ export default function SalesForm({
                       {/* Document / Invoice Date */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                          {isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
+                          {isSalesOrder ? 'Order Date *' : isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                         </label>
                         <DateInputField
                           name="invoice_date"
@@ -2105,7 +2113,7 @@ export default function SalesForm({
                   </div>
 
                   {/* Multiple Delivery Challans Section (For Invoices) */}
-                  {!isDeliveryChallan && !isQuotation && (
+                  {!isDeliveryChallan && !isQuotation && !isSalesOrder && (
                     <FieldArray name="delivery_challans">
                       {({ push: pushChallan, remove: removeChallan }) => (
                         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-3">
@@ -3358,6 +3366,8 @@ export default function SalesForm({
                       ? (isEdit ? "Update Challan" : "Create Delivery Challan")
                       : isQuotation
                       ? (isEdit ? "Update Quotation" : "Create Quotation")
+                      : isSalesOrder
+                      ? (isEdit ? "Update Sales Order" : "Create Sales Order")
                       : forceDraft
                         ? (isEdit ? "Update Draft" : "Save Draft")
                         : (isEdit ? "Update Invoice" : "Create Invoice")}

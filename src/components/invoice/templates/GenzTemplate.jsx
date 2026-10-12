@@ -158,10 +158,10 @@ const GenzTemplate = forwardRef(({
                     <span className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span>
                   </div>
                 )}
-                {invoice.delivery_challan_number && (
+                {(invoice.delivery_challan_number || invoice.challan_number) && (
                   <div className="flex justify-between mt-2">
                     <span className="text-gray-500 font-semibold">Challan #</span>
-                    <span className="font-bold text-gray-900">{invoice.delivery_challan_number}</span>
+                    <span className="font-bold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</span>
                   </div>
                 )}
               </>
