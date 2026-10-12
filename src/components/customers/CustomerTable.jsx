@@ -4,6 +4,7 @@ import { getCustomers, deleteCustomer } from "../../api/customers";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 export default function CustomerTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -343,24 +344,33 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1.5">
                       <button
+                        type="button"
                         onClick={() => onView(customer)}
-                        className="text-blue-300 hover:text-blue-100 text-sm font-bold drop-shadow-lg transition-colors"
+                        title="View Customer Details & Ledger"
+                        aria-label="View Customer Details & Ledger"
+                        className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
                       >
-                        View
+                        <EyeIcon className="w-4 h-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => onEdit(customer)}
-                        className="text-green-300 hover:text-green-100 text-sm font-bold drop-shadow-lg transition-colors"
+                        title="Edit Customer"
+                        aria-label="Edit Customer"
+                        className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
                       >
-                        Edit
+                        <PencilSquareIcon className="w-4 h-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => onDelete(customer)}
-                        className="text-red-300 hover:text-red-100 text-sm font-bold drop-shadow-lg transition-colors"
+                        title="Delete Customer"
+                        aria-label="Delete Customer"
+                        className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
                       >
-                        Delete
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -437,24 +447,33 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                 )}
               </div>
 
-              <div className="flex gap-2 mt-4 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-white/5">
                 <button
+                  type="button"
                   onClick={() => onView(customer)}
-                  className="flex-1 px-4 py-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all text-xs font-black uppercase tracking-widest"
+                  title="View Customer Details & Ledger"
+                  aria-label="View Customer Details & Ledger"
+                  className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
                 >
-                  View
+                  <EyeIcon className="w-4 h-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => onEdit(customer)}
-                  className="flex-1 px-4 py-2.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl hover:bg-green-500/20 transition-all text-xs font-black uppercase tracking-widest"
+                  title="Edit Customer"
+                  aria-label="Edit Customer"
+                  className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
                 >
-                  Edit
+                  <PencilSquareIcon className="w-4 h-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => onDelete(customer)}
-                  className="flex-1 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all text-xs font-black uppercase tracking-widest"
+                  title="Delete Customer"
+                  aria-label="Delete Customer"
+                  className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
                 >
-                  Delete
+                  <TrashIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>

@@ -667,42 +667,47 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       </td>
                     )}
                     <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
+                          type="button"
                           onClick={() => onView(challan)}
                           title="View Preview & PDF"
-                          className="px-2.5 py-1.5 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white transition-colors text-xs font-medium flex items-center gap-1"
+                          aria-label="View Preview & PDF"
+                          className="p-1.5 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                         >
-                          <EyeIcon className="w-3.5 h-3.5" />
-                          View
+                          <EyeIcon className="w-4 h-4" />
                         </button>
 
                         {!isInvoiced && (
                           <>
                             <button
+                              type="button"
                               onClick={() => onEdit(challan)}
                               title="Edit Challan"
-                              className="px-2.5 py-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition-colors text-xs font-medium flex items-center gap-1"
+                              aria-label="Edit Challan"
+                              className="p-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors"
                             >
-                              <PencilSquareIcon className="w-3.5 h-3.5" />
-                              Edit
+                              <PencilSquareIcon className="w-4 h-4" />
                             </button>
                             {!isDraft && (
                               <button
+                                type="button"
                                 onClick={() => handleConvert(challan)}
                                 title="Convert to Sales Invoice (No double stock decrement)"
-                                className="px-2.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors text-xs font-medium flex items-center gap-1"
+                                aria-label="Convert to Sales Invoice"
+                                className="p-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors"
                               >
-                                <ArrowPathRoundedSquareIcon className="w-3.5 h-3.5" />
-                                Convert
+                                <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                               </button>
                             )}
                             <button
+                              type="button"
                               onClick={() => handleDelete(challan)}
                               title={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
-                              className="px-2.5 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors text-xs font-medium flex items-center gap-1"
+                              aria-label={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
+                              className="p-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
                             >
-                              <TrashIcon className="w-3.5 h-3.5" />
+                              <TrashIcon className="w-4 h-4" />
                             </button>
                           </>
                         )}
@@ -847,36 +852,47 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 )}
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
                   <button
+                    type="button"
                     onClick={() => onView(challan)}
-                    className="flex-1 min-w-[70px] py-2 bg-white/5 text-white border border-white/10 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-white/10"
+                    title="View Preview & PDF"
+                    aria-label="View Preview & PDF"
+                    className="p-2 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                   >
-                    <EyeIcon className="w-3.5 h-3.5" /> View
+                    <EyeIcon className="w-4 h-4" />
                   </button>
 
                   {!isInvoiced && (
                     <>
                       <button
+                        type="button"
                         onClick={() => onEdit(challan)}
-                        className="flex-1 min-w-[70px] py-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-cyan-500/20"
+                        title="Edit Challan"
+                        aria-label="Edit Challan"
+                        className="p-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors"
                       >
-                        <PencilSquareIcon className="w-3.5 h-3.5" /> Edit
+                        <PencilSquareIcon className="w-4 h-4" />
                       </button>
                       {!isDraft && (
                         <button
+                          type="button"
                           onClick={() => handleConvert(challan)}
-                          className="flex-1 min-w-[80px] py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-emerald-500/20"
+                          title="Convert to Sales Invoice (No double stock decrement)"
+                          aria-label="Convert to Sales Invoice"
+                          className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors"
                         >
-                          <ArrowPathRoundedSquareIcon className="w-3.5 h-3.5" /> Convert
+                          <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={() => handleDelete(challan)}
                         title={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
-                        className="py-2 px-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs font-semibold flex items-center justify-center hover:bg-red-500/20"
+                        aria-label={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
+                        className="p-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
                       >
-                        <TrashIcon className="w-3.5 h-3.5" />
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </>
                   )}

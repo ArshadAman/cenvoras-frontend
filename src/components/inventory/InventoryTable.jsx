@@ -10,7 +10,15 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import InventoryCsvMappingModal from "./InventoryCsvMappingModal";
 import InventoryCsvProgressBar from "./InventoryCsvProgressBar";
 import useEscKey from "../../hooks/useEscStack";
-import { AdjustmentsHorizontalIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import {
+  AdjustmentsHorizontalIcon,
+  AdjustmentsVerticalIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
 
 const REQUIRED_CSV_COLUMNS = ["name", "unit", "cost_price"];
 
@@ -770,7 +778,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 </th>
               )}
               {visibleColumns.actions && (
-                <th className="w-32 text-center py-3 px-3 rounded-r-lg font-black text-white drop-shadow-lg">
+                <th className="w-36 text-center py-3 px-3 rounded-r-lg font-black text-white drop-shadow-lg">
                   Actions
                 </th>
               )}
@@ -902,36 +910,61 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         </td>
                       )}
                       {visibleColumns.actions && (
-                        <td className="py-3 px-3 text-center space-x-1">
-                          <button
-                            className="px-2 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                            onClick={() => onView(product)}
-                          >
-                            View
-                          </button>
-                          {product.is_active === false ? (
+                        <td className="py-3 px-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
                             <button
-                              className="px-2 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg font-medium"
-                              onClick={() => handleRestore(product)}
+                              type="button"
+                              onClick={() => onView(product)}
+                              title="View Product Details"
+                              aria-label="View Product Details"
+                              className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
                             >
-                              Restore
+                              <EyeIcon className="w-4 h-4" />
                             </button>
-                          ) : (
-                            <>
+                            {product.is_active === false ? (
                               <button
-                                className="px-2 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                                onClick={() => onEdit(product)}
+                                type="button"
+                                onClick={() => handleRestore(product)}
+                                title="Restore Product to Active Inventory"
+                                aria-label="Restore Product"
+                                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-200 hover:border-emerald-500/40 transition-all drop-shadow"
                               >
-                                Edit
+                                <ArrowPathIcon className="w-4 h-4" />
                               </button>
-                              <button
-                                className="px-2 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition text-xs backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                                onClick={() => onDelete(product)}
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
+                            ) : (
+                              <>
+                                {onStockAdjustment && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onStockAdjustment(product)}
+                                    title="Adjust Stock"
+                                    aria-label="Adjust Stock"
+                                    className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 hover:border-amber-500/40 transition-all drop-shadow"
+                                  >
+                                    <AdjustmentsVerticalIcon className="w-4 h-4" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => onEdit(product)}
+                                  title="Edit Product"
+                                  aria-label="Edit Product"
+                                  className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                                >
+                                  <PencilSquareIcon className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onDelete(product)}
+                                  title="Delete Product"
+                                  aria-label="Delete Product"
+                                  className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -1064,27 +1097,59 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               </div>
 
               {/* Card Actions */}
-              <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-white/10">
                 <button
+                  type="button"
                   onClick={() => onView(product)}
-                  className="flex-1 px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                  title="View Product Details"
+                  aria-label="View Product Details"
+                  className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
                 >
-                  View
+                  <EyeIcon className="w-4 h-4" />
                 </button>
                 {product.is_active === false ? (
                   <button
+                    type="button"
                     onClick={() => handleRestore(product)}
-                    className="flex-1 px-3 py-2 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded-lg hover:bg-emerald-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                    title="Restore Product to Active Inventory"
+                    aria-label="Restore Product"
+                    className="px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold"
                   >
-                    Restore
+                    <ArrowPathIcon className="w-4 h-4" />
+                    <span>Restore</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={() => onEdit(product)}
-                    className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                  >
-                    Edit
-                  </button>
+                  <>
+                    {onStockAdjustment && (
+                      <button
+                        type="button"
+                        onClick={() => onStockAdjustment(product)}
+                        title="Adjust Stock"
+                        aria-label="Adjust Stock"
+                        className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 transition-all"
+                      >
+                        <AdjustmentsVerticalIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onEdit(product)}
+                      title="Edit Product"
+                      aria-label="Edit Product"
+                      className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(product)}
+                      title="Delete Product"
+                      aria-label="Delete Product"
+                      className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
               </div>
                   </>
