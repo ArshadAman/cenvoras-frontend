@@ -14,6 +14,9 @@ export const getTaxRegisterInvoiceDetail = (invoiceId, type = 'sales') =>
 export const getGSTR1Export = (from, to) =>
   api.get(`/billing/gst/gstr1-export/?from=${from}&to=${to}`).then(res => res.data);
 
+export const getGSTR3BSummary = (from, to) =>
+  api.get(`/billing/gst/gstr3b/?from=${from}&to=${to}`).then(res => res.data);
+
 export const generateEInvoice = (invoiceId) =>
   api.post('/billing/gst/e-invoice/', { invoice_id: invoiceId }).then(res => res.data);
 

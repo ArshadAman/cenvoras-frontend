@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { recordClientPayment } from "../../api/ledger";
 import { getCustomers } from "../../api/customers";
+import api from "../../api/api";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { 
@@ -120,8 +121,35 @@ const paymentSchema = Yup.object().shape({
   date: Yup.string().required("Date is required"),
 });
 
+function CustomerInvoicesWatcher({ customerId, initialInvoice, onInvoicesLoaded }) {
+  useEffect(() => {
+    if (!customerId || initialInvoice) {
+      onInvoicesLoaded([]);
+      return;
+    }
+    let isMounted = true;
+    api.get(`/billing/sales-invoices/?customer=${customerId}`)
+      .then(res => {
+        if (!isMounted) return;
+        const list = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+        const unpaid = list.filter(inv => {
+          if (inv?.status === 'draft') return false;
+          const outstanding = Math.max((Number(inv?.total_amount) || 0) - (Number(inv?.amount_paid) || 0), 0);
+          return outstanding > 0.01;
+        });
+        onInvoicesLoaded(unpaid);
+      })
+      .catch(() => {
+        if (isMounted) onInvoicesLoaded([]);
+      });
+    return () => { isMounted = false; };
+  }, [customerId, initialInvoice, onInvoicesLoaded]);
+  return null;
+}
+
 export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null, initialCustomer = null }) {
   const queryClient = useQueryClient();
+  const [openInvoices, setOpenInvoices] = useState([]);
 
   const roundTo3 = (value) => Math.round((Number(value) || 0) * 1000) / 1000;
   const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
@@ -129,14 +157,20 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     maximumFractionDigits: 3,
   });
 
-  const resolvedCustomer = initialCustomer || initialInvoice?.customer_details || initialInvoice?.customer || null;
+  const customerId = typeof initialCustomer === 'string'
+    ? initialCustomer
+    : (initialCustomer?.id || initialInvoice?.customer_details?.id || initialInvoice?.customer_id || (typeof initialInvoice?.customer === 'string' ? initialInvoice.customer : initialInvoice?.customer?.id) || '');
+  const customerName = typeof initialCustomer === 'object'
+    ? (initialCustomer?.name || initialInvoice?.customer_name || '')
+    : (initialInvoice?.customer_name || '');
+
   const invoiceOutstanding = initialInvoice
     ? roundTo3(Math.max(roundTo3(initialInvoice.total_amount || 0) - roundTo3(initialInvoice.amount_paid || 0), 0))
     : '';
 
   const initialValues = useMemo(() => ({
-    customer: resolvedCustomer?.id || '',
-    customer_name: resolvedCustomer?.name || initialInvoice?.customer_name || '',
+    customer: customerId,
+    customer_name: customerName,
     amount: initialInvoice ? invoiceOutstanding : '',
     mode: 'cash',
     reference: '',
@@ -145,7 +179,11 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       : 'Payment received',
     date: format(new Date(), 'yyyy-MM-dd'),
     invoice: initialInvoice?.id || '',
-  }), [resolvedCustomer, initialInvoice, invoiceOutstanding]);
+  }), [customerId, customerName, initialInvoice, invoiceOutstanding]);
+
+  const handleInvoicesLoaded = useCallback((invoices) => {
+    setOpenInvoices(invoices);
+  }, []);
 
   const recordPaymentMutation = useMutation({
     mutationFn: recordClientPayment,
@@ -189,82 +227,135 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       validationSchema={paymentSchema}
       onSubmit={handleSubmit}
     >
-      {({ values, setFieldValue, isSubmitting }) => (
-        <Form className="space-y-4">
-          {initialInvoice ? (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
+      {({ values, setFieldValue, isSubmitting }) => {
+        const activeInvoice = initialInvoice || openInvoices.find(i => String(i.id) === String(values.invoice));
+        const activeOutstanding = activeInvoice
+          ? roundTo3(Math.max((Number(activeInvoice.total_amount) || 0) - (Number(activeInvoice.amount_paid) || 0), 0))
+          : null;
+
+        return (
+          <Form className="space-y-4">
+            <CustomerInvoicesWatcher
+              customerId={values.customer}
+              initialInvoice={initialInvoice}
+              onInvoicesLoaded={handleInvoicesLoaded}
+            />
+
+            {initialInvoice ? (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Selected Invoice</div>
+                    <div className="text-white font-semibold">#{initialInvoice.invoice_number}</div>
+                    <div className="text-xs text-gray-400 mt-1">{customerName || 'Customer'}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Outstanding</div>
+                    <div className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+                  </div>
+                </div>
+                <div className="text-[11px] text-cyan-300/80">
+                  This payment will be linked directly to the selected invoice.
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className={labelClass}>Customer *</label>
+                <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+              </div>
+            )}
+
+            {!initialInvoice && values.customer && openInvoices.length > 0 && (
+              <div>
+                <label className={labelClass}>Apply To Invoice</label>
+                <select
+                  id="invoice"
+                  name="invoice"
+                  value={values.invoice || ''}
+                  onChange={(e) => {
+                    const invId = e.target.value;
+                    setFieldValue('invoice', invId);
+                    if (invId) {
+                      const inv = openInvoices.find(i => String(i.id) === String(invId));
+                      if (inv) {
+                        const out = roundTo3(Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0));
+                        setFieldValue('amount', out);
+                        setFieldValue('description', `Payment for invoice ${inv.invoice_number}`);
+                      }
+                    } else {
+                      setFieldValue('description', 'Payment received');
+                    }
+                  }}
+                  className={inputClass}
+                >
+                  <option value="">Auto-apply to oldest open invoices (FIFO)</option>
+                  {openInvoices.map((inv) => {
+                    const out = roundTo3(Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0));
+                    return (
+                      <option key={inv.id} value={inv.id}>
+                        #{inv.invoice_number} — Due: {getCurrencySymbol()}{formatAmount(out)} ({inv.invoice_date || ''})
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="mt-1 text-[11px] text-gray-500">
+                  {values.invoice
+                    ? 'Payment will be applied directly to the selected invoice.'
+                    : 'If no invoice is selected, payment automatically knocks off oldest unpaid invoices first (FIFO).'}
+                </p>
+              </div>
+            )}
+
+            <Field name="customer" type="hidden" />
+            <Field name="invoice" type="hidden" />
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
+
+            {/* Amount and Date */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Amount Paid *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
+                  <Field
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    className={`${inputClass} pl-7`}
+                    placeholder="0.00"
+                  />
+                </div>
+                <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
+              </div>
+
+              <div>
+                <label className={labelClass}>Date *</label>
+                <Field
+                  id="date"
+                  name="date"
+                  type="date"
+                  className={inputClass}
+                />
+                <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+              </div>
+            </div>
+
+            {/* Total Due & Remaining Card */}
+            {activeInvoice && (
+              <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Selected Invoice</div>
-                  <div className="text-white font-semibold">#{initialInvoice.invoice_number}</div>
-                  <div className="text-xs text-gray-400 mt-1">{resolvedCustomer?.name || initialInvoice.customer_name || 'Customer'}</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
+                  <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(activeOutstanding)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Outstanding</div>
-                  <div className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
+                  <div className={`text-base font-bold ${Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                    {getCurrencySymbol()}{formatAmount(Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0))}
+                  </div>
                 </div>
               </div>
-              <div className="text-[11px] text-cyan-300/80">
-                This payment will be linked directly to the selected invoice.
-              </div>
-            </div>
-          ) : (
-            <div>
-              <label className={labelClass}>Customer *</label>
-              <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
-            </div>
-          )}
-
-          <Field name="customer" type="hidden" />
-          <Field name="invoice" type="hidden" />
-          <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
-
-          {/* Amount and Date */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Amount Paid *</label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
-                <Field
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  className={`${inputClass} pl-7`}
-                  placeholder="0.00"
-                />
-              </div>
-              <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
-            </div>
-
-            <div>
-              <label className={labelClass}>Date *</label>
-              <Field
-                id="date"
-                name="date"
-                type="date"
-                className={inputClass}
-              />
-              <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
-            </div>
-          </div>
-
-          {/* Total Due & Remaining Card */}
-          {initialInvoice && (
-            <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
-              <div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
-                <div className={`text-base font-bold ${Math.max(roundTo3(invoiceOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
-                  {getCurrencySymbol()}{formatAmount(Math.max(roundTo3(invoiceOutstanding) - roundTo3(values.amount || 0), 0))}
-                </div>
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Payment Mode Selection */}
           <div>
