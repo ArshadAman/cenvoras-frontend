@@ -114,6 +114,8 @@ export const defaultInvoiceTemplate = {
     { id: 'quantity', label: 'QTY', width: '7%', show: true, align: 'center' },
     { id: 'free_qty', label: 'Free', width: '7%', show: false, align: 'center' },
     { id: 'unit', label: 'Unit', width: '8%', show: false, align: 'center' },
+    { id: 'make', label: 'Make', width: '10%', show: false, align: 'left' },
+    { id: 'pack_size', label: 'Pack Size', width: '10%', show: false, align: 'left' },
     { id: 'price', label: 'UNIT PRICE', width: '14%', show: true, align: 'right' },
     { id: 'discount', label: 'Disc.', width: '9%', show: false, align: 'right' },
     { id: 'tax', label: 'TAX', width: '9%', show: true, align: 'center' },

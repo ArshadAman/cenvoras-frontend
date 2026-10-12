@@ -150,6 +150,8 @@ const InvoicePreview = forwardRef(({
     quantity: 7,
     free_qty: 7,
     unit: 8,
+    make: 12,
+    pack_size: 12,
     price: 14,
     discount: 9,
     tax: 9,
@@ -314,7 +316,7 @@ const InvoicePreview = forwardRef(({
             letterSpacing: '1px',
           }}
         >
-          {content.invoiceTitle || 'TAX INVOICE'}
+          {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}
         </h2>
         {content.invoiceSubtitle && (
           <p className="text-sm mt-1" style={{ color: colors.lightText }}>
@@ -382,98 +384,7 @@ const InvoicePreview = forwardRef(({
       
       {/* Items Table */}
       <div className="mb-5">
-        {isDeliveryChallan ? (
-          <table 
-            className="w-full border-collapse"
-            style={{ 
-              borderRadius: styles.borderRadius || 0,
-              overflow: 'hidden',
-              tableLayout: 'fixed',
-            }}
-          >
-            <thead style={{ display: 'table-header-group' }}>
-              <tr style={tableHeaderStyle}>
-                <th className="px-3 py-2 font-bold border text-center" style={{ width: '8%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Sl.</th>
-                <th className="px-3 py-2 font-bold border text-left" style={{ width: '48%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Item & Description</th>
-                <th className="px-3 py-2 font-bold border text-center" style={{ width: '14%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Qty</th>
-                <th className="px-3 py-2 font-bold border text-left" style={{ width: '15%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Make</th>
-                <th className="px-3 py-2 font-bold border text-left" style={{ width: '15%', borderColor: colors.tableBorder, fontSize: `${typography.smallSize || 10}px`, whiteSpace: 'nowrap' }}>Pack Size</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length > 0 ? items.map((item, index) => {
-                if (item.row_type === 'note') {
-                  return (
-                    <tr key={index} style={{ backgroundColor: '#fbfbfb' }}>
-                      <td colSpan={5} className="px-3 py-1.5 border text-left text-xs text-slate-700 italic font-medium" style={{ borderColor: colors.tableBorder }}>
-                        Note: {item.description || item.product_description || item.product || ''}
-                      </td>
-                    </tr>
-                  );
-                }
-                const qty = item.quantity || 0;
-                const unit = item.unit || 'pcs';
-                const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
-                const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
-                const desc = item.description || item.product_description || item.product_detail?.description;
-                return (
-                  <tr 
-                    key={index}
-                    style={{
-                      backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
-                        ? colors.tableStripe 
-                        : 'transparent',
-                      paddingTop: '0.6px',
-                      paddingBottom: '0.6px',
-                      margin: 0,
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    <td className="border text-center align-middle font-medium" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
-                      {index + 1}
-                    </td>
-                    <td className="border align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
-                      <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
-                      {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                        <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
-                          Mfr: {item.manufacturer || item.product_detail?.manufacturer}
-                        </div>
-                      )}
-                      {desc && (
-                        <div className="whitespace-pre-line text-gray-500 mt-0.5 leading-tight font-normal" style={{ fontSize: `${typography.smallSize || 9}px`, wordBreak: 'break-word' }}>
-                          {desc}
-                        </div>
-                      )}
-                      {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                        <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
-                          {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
-                          {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
-                          {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td className="border text-center align-middle font-semibold text-gray-900" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
-                      {qty} {unit}
-                    </td>
-                    <td className="border align-middle text-gray-700" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
-                      {make}
-                    </td>
-                    <td className="border align-middle text-gray-700" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle', borderColor: colors.tableBorder, fontSize: `${typography.bodySize || 11}px` }}>
-                      {packSize}
-                    </td>
-                  </tr>
-                );
-              }) : (
-                <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">
-                    No items added yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        ) : (
-          <table 
+        <table 
             className="w-full border-collapse"
             style={{ 
               borderRadius: styles.borderRadius || 0,
@@ -549,6 +460,8 @@ const InvoicePreview = forwardRef(({
                         case 'quantity': value = qty; break;
                         case 'free_qty': value = item.free_quantity || 0; break;
                         case 'unit': value = item.unit || 'pcs'; break;
+                        case 'make': value = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-'; break;
+                        case 'pack_size': value = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-'; break;
                         case 'price': {
                           const pStr = price.toString();
                           const decCount = (pStr.split('.')[1] || '').length;
@@ -622,7 +535,6 @@ const InvoicePreview = forwardRef(({
               )}
             </tbody>
           </table>
-        )}
       </div>
       
       {/* Bottom Section - Bank Details & Totals (Hidden for Delivery Challans) */}

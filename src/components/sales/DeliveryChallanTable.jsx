@@ -30,7 +30,7 @@ const COLUMN_OPTIONS = [
   { id: "status", label: "Status" },
 ];
 
-export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess }) {
+export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, onConvertSuccess }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -562,8 +562,23 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                         #{challan.challan_number}
                       </div>
                       {challan.converted_invoice && (
-                        <div className="text-[11px] text-emerald-400 mt-0.5">
-                          Inv #{challan.converted_invoice}
+                        <div className="mt-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onViewInvoice) {
+                                onViewInvoice(challan.converted_invoice);
+                              } else {
+                                navigate(`/sales?invoice=${challan.converted_invoice}`);
+                              }
+                            }}
+                            className="text-[11px] font-mono font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                            title="Click to view converted invoice"
+                          >
+                            <span>Inv #{challan.converted_invoice_number || challan.converted_invoice}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3 h-3 text-emerald-400" />
+                          </button>
                         </div>
                       )}
                     </td>
@@ -740,6 +755,24 @@ export default function DeliveryChallanTable({ onEdit, onView, onConvertSuccess 
                       <div className="text-[11px] text-gray-400">
                         {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </div>
+                      {challan.converted_invoice && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onViewInvoice) {
+                              onViewInvoice(challan.converted_invoice);
+                            } else {
+                              navigate(`/sales?invoice=${challan.converted_invoice}`);
+                            }
+                          }}
+                          className="mt-1 text-[11px] font-mono font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline transition-colors"
+                          title="Click to view converted invoice"
+                        >
+                          <span>Inv #{challan.converted_invoice_number || challan.converted_invoice}</span>
+                          <ArrowTopRightOnSquareIcon className="w-3 h-3 text-emerald-400" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">

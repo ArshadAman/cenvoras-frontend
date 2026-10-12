@@ -147,7 +147,7 @@ const SectionHeader = ({ children }) => (
 );
 
 // Main Component
-export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo = {} }) {
+export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo = {}, documentType = 'invoice', invoice = null }) {
   const [templates, setTemplates] = useState([]);
   const [activeTemplateId, setActiveTemplateId] = useState(null);
   const [currentTemplate, setCurrentTemplate] = useState(defaultInvoiceTemplate);
@@ -157,6 +157,12 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [viewMode, setViewMode] = useState('design'); // 'design' or 'preview'
   const previewRef = useRef(null);
+
+  const isDeliveryChallan = Boolean(
+    documentType === 'delivery_challan' ||
+    invoice?.document_type === 'delivery_challan' ||
+    invoice?.is_delivery_challan
+  );
 
   // Fetch profile to get configured multi-bank accounts
   const { data: userProfileData } = useQuery({
@@ -201,6 +207,38 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
       { product: 'Support Package', hsn_sac_code: '9983', quantity: 12, price: 500, tax: 18, unit: 'months' },
     ],
   };
+
+  const sampleDeliveryChallan = {
+    challan_number: 'DC-001',
+    challan_date: new Date().toISOString(),
+    invoice_number: 'DC-001',
+    invoice_date: new Date().toISOString(),
+    customer_name: 'Acme Corporation',
+    customer_address: '123 Business Park, Tech City\nKarnataka, India - 560001',
+    customer_gstin: '29AAKCG6382L1ZU',
+    vehicle_number: 'KA-01-AB-1234',
+    transporter_name: 'Fast Track Logistics',
+    transport_mode: 'Road',
+    eway_bill_number: 'EWB-998877665544',
+    is_delivery_challan: true,
+    document_type: 'delivery_challan',
+    items: [
+      { product: 'Industrial Valve 50mm', hsn_sac_code: '8481', quantity: 10, price: 2500, tax: 18, unit: 'pcs', make: 'Kitz', pack_size: 'Box of 5' },
+      { product: 'Pressure Gauge 0-10 Bar', hsn_sac_code: '9026', quantity: 4, price: 1500, tax: 18, unit: 'nos', make: 'Baumer', pack_size: 'Single' },
+      { product: 'Flange Gasket Kit', hsn_sac_code: '4016', quantity: 20, price: 350, tax: 18, unit: 'sets', make: 'Klinger', pack_size: 'Pack of 10' },
+    ],
+  };
+
+  const previewInvoice = invoice
+    ? {
+        ...(isDeliveryChallan ? sampleDeliveryChallan : sampleInvoice),
+        ...invoice,
+        is_delivery_challan: isDeliveryChallan,
+        document_type: documentType,
+      }
+    : isDeliveryChallan
+    ? sampleDeliveryChallan
+    : sampleInvoice;
 
   // Load templates on mount
   useEffect(() => {
@@ -366,8 +404,12 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">Invoice Designer</h2>
-            <p className="text-xs text-gray-500">Customize your invoice template</p>
+            <h2 className="text-lg font-bold text-white">
+              {isDeliveryChallan ? 'Challan Designer' : 'Invoice Designer'}
+            </h2>
+            <p className="text-xs text-gray-500">
+              {isDeliveryChallan ? 'Customize your delivery challan template' : 'Customize your invoice template'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -978,7 +1020,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
           <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center' }}>
             <InvoicePreview
               ref={previewRef}
-              invoice={sampleInvoice}
+              invoice={previewInvoice}
+              documentType={documentType}
               template={currentTemplate}
               businessInfo={businessInfo}
               scale={1}
