@@ -89,7 +89,7 @@ export default function DebitNoteList() {
                   notes.map((dn) => (
                     <tr key={dn.id} className="hover:bg-white/5 transition-colors">
                       <td className="p-4">
-                        <div className="text-white font-medium">DN-{dn.debit_note_number}</div>
+                        <div className="text-white font-medium">{dn.debit_note_number.startsWith('DN-') ? dn.debit_note_number : `DN-${dn.debit_note_number}`}</div>
                       </td>
                       <td className="p-4 text-gray-300 text-sm">{dn.date}</td>
                       <td className="p-4 text-gray-300 text-sm">{dn.vendor_name}</td>

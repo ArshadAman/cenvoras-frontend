@@ -23,6 +23,7 @@ import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
+import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
@@ -133,9 +134,7 @@ export default function Dashboard({ onLogout }) {
   };
 
   const handleDownloadReportForCA = async () => {
-    const today = new Date();
-    const toDate = today.toISOString().split('T')[0];
-    const fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const { from: fromDate, to: toDate } = getKolkataMonthBounds();
 
     try {
       const gstr1Data = await getGSTR1Export(fromDate, toDate);

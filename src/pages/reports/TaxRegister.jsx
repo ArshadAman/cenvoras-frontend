@@ -6,11 +6,10 @@ import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } f
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getCurrencySymbol, formatCurrency, getCountryCode } from '../../utils/currency';
-
-const today = new Date().toLocaleDateString('sv-SE');
-const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
 
 export default function TaxRegister() {
+  const { from: monthStart, to: today } = getKolkataMonthBounds();
   const [activeTab, setActiveTab] = useState('register');
   const [fromDate, setFromDate] = useState(monthStart);
   const [toDate, setToDate] = useState(today);

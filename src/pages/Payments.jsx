@@ -23,6 +23,7 @@ import { toast } from 'react-toastify';
 import api from '../api/api';
 import { allocatePayment } from '../api/ledger';
 import { getCurrencySymbol } from '../utils/currency';
+import { getTodayKolkata } from '../utils/date';
 
 const roundTo3 = (value) => {
   const num = Number(value || 0);
@@ -122,7 +123,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     customer: '',
     invoice: '',
     amount: '',
-    date: new Date().toLocaleDateString('sv-SE'),
+    date: getTodayKolkata(),
     mode: 'cash',
     reference: '',
     notes: ''
@@ -176,7 +177,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         customer: editData.customer || '',
         invoice: editData.invoice || '',
         amount: editData.amount || '',
-        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toLocaleDateString('sv-SE'),
+        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : getTodayKolkata(),
         mode: editData.mode || 'cash',
         reference: editData.reference || '',
         notes: editData.notes || ''
