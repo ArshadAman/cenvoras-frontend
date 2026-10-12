@@ -8,11 +8,14 @@ import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { EyeIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import SalesDetailsModal from "../sales/SalesDetailsModal";
 
 export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   const printRef = useRef();
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("invoices");
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["customer", customer?.id],
@@ -51,6 +54,42 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   const totalInvoiced = customerInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
   const totalPaid = customerInvoices.reduce((sum, inv) => sum + (Number(inv.amount_paid) || 0), 0);
   const outstandingBalance = Number(customerDetails.current_balance) || (totalInvoiced - totalPaid);
+
+  const getRelatedChallansForInvoice = (inv) => {
+    const matched = customerChallans.filter(ch => {
+      const convInvId = ch.converted_invoice?.id || ch.converted_invoice;
+      if (convInvId && (convInvId === inv.id || String(convInvId) === String(inv.id))) return true;
+      if (ch.converted_invoice_number && inv.invoice_number &&
+          ch.converted_invoice_number.trim().toLowerCase() === inv.invoice_number.trim().toLowerCase()) {
+        return true;
+      }
+      if (inv.challan_number && ch.challan_number &&
+          inv.challan_number.trim().toLowerCase() === ch.challan_number.trim().toLowerCase()) {
+        return true;
+      }
+      return false;
+    });
+
+    if (matched.length > 0) {
+      return matched.map(ch => ({
+        id: ch.id,
+        number: ch.challan_number || `DC-${ch.id?.slice(0, 6)}`,
+        date: ch.challan_date,
+        rawChallan: ch,
+      }));
+    }
+
+    if (inv.challan_number) {
+      return [{
+        id: null,
+        number: inv.challan_number,
+        date: inv.challan_date,
+        rawChallan: null,
+      }];
+    }
+
+    return [];
+  };
 
   // Print functionality
   const handlePrint = useReactToPrint({
@@ -139,17 +178,6 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
             <div className="flex bg-white/5 border border-white/10 rounded-xl p-0.5 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => setActiveTab("overview")}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeTab === "overview"
-                    ? "bg-cyan-500 text-black font-black shadow-lg shadow-cyan-500/20"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                type="button"
                 onClick={() => setActiveTab("invoices")}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeTab === "invoices"
@@ -157,7 +185,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                     : "text-gray-400 hover:text-white"
                 }`}
               >
-                <span>Invoices</span>
+                <span>Ledger (Invoices)</span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-mono">
                   {customerInvoices.length}
                 </span>
@@ -175,6 +203,17 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-mono">
                   {customerChallans.length}
                 </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("overview")}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeTab === "overview"
+                    ? "bg-cyan-500 text-black font-black shadow-lg shadow-cyan-500/20"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Overview
               </button>
             </div>
           </div>
@@ -333,7 +372,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                   <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-wider">Sales Invoices Ledger</h3>
-                      <p className="text-xs text-gray-400 mt-1">Transaction record for {customerDetails.name}</p>
+                      <p className="text-xs text-gray-400 mt-1">Detailed transaction & dispatch records for {customerDetails.name}</p>
                     </div>
                     <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full">
                       {customerInvoices.length} Records
@@ -356,10 +395,12 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                             <th className="py-3 px-4">Invoice #</th>
                             <th className="py-3 px-4">Date</th>
                             <th className="py-3 px-4">Due Date</th>
+                            <th className="py-3 px-4">Related Challan(s)</th>
                             <th className="py-3 px-4 text-right">Total</th>
                             <th className="py-3 px-4 text-right">Paid</th>
                             <th className="py-3 px-4 text-right">Balance</th>
                             <th className="py-3 px-4 text-center">Status</th>
+                            <th className="py-3 px-4 text-center print-hidden">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -368,17 +409,57 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                             const paid = Number(inv.amount_paid) || 0;
                             const bal = tot - paid;
                             const status = inv.payment_status || (bal <= 0 ? 'paid' : paid > 0 ? 'partial' : 'pending');
+                            const relatedChallans = getRelatedChallansForInvoice(inv);
 
                             return (
                               <tr key={inv.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-3 px-4 font-mono font-black text-cyan-400">
-                                  {inv.invoice_number || inv.id?.slice(0, 8)}
+                                <td className="py-3 px-4 font-mono font-black">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewDoc({ invoice: inv, documentType: "invoice" })}
+                                    className="text-cyan-400 hover:text-cyan-300 hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
+                                    title="View Full Invoice Details"
+                                  >
+                                    <span>{inv.invoice_number || inv.id?.slice(0, 8)}</span>
+                                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                  </button>
                                 </td>
                                 <td className="py-3 px-4 text-gray-300">
                                   {inv.invoice_date ? format(new Date(inv.invoice_date), 'dd MMM yyyy') : '-'}
                                 </td>
                                 <td className="py-3 px-4 text-gray-400">
                                   {inv.due_date ? format(new Date(inv.due_date), 'dd MMM yyyy') : '-'}
+                                </td>
+                                <td className="py-3 px-4">
+                                  {relatedChallans.length === 0 ? (
+                                    <span className="text-gray-500 font-mono text-[11px]">—</span>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                      {relatedChallans.map((c, idx) => (
+                                        c.rawChallan ? (
+                                          <button
+                                            key={c.id || idx}
+                                            type="button"
+                                            onClick={() => setPreviewDoc({ invoice: c.rawChallan, documentType: "delivery_challan" })}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200 border border-cyan-500/30 text-[11px] font-mono font-bold transition-all cursor-pointer"
+                                            title={`View Delivery Challan #${c.number}${c.date ? ` (${format(new Date(c.date), 'dd/MM/yyyy')})` : ''}`}
+                                          >
+                                            <span>#{c.number}</span>
+                                            {c.date && <span className="text-[10px] text-cyan-400/70 font-normal">({format(new Date(c.date), 'dd/MM')})</span>}
+                                          </button>
+                                        ) : (
+                                          <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/5 text-gray-300 border border-white/10 text-[11px] font-mono font-medium"
+                                            title={`Challan Ref: #${c.number}${c.date ? ` (${format(new Date(c.date), 'dd/MM/yyyy')})` : ''}`}
+                                          >
+                                            <span>#{c.number}</span>
+                                            {c.date && <span className="text-[10px] text-gray-400 font-normal">({format(new Date(c.date), 'dd/MM')})</span>}
+                                          </span>
+                                        )
+                                      ))}
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono font-bold text-white">
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -398,6 +479,17 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                     {status}
                                   </span>
                                 </td>
+                                <td className="py-3 px-4 text-center print-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewDoc({ invoice: inv, documentType: "invoice" })}
+                                    className="p-1 rounded-md bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 border border-cyan-500/20 transition-all inline-flex items-center"
+                                    title="View & Print Invoice"
+                                    aria-label="View & Print Invoice"
+                                  >
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
                               </tr>
                             );
                           })}
@@ -414,7 +506,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                   <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-wider">Delivery Challans</h3>
-                      <p className="text-xs text-gray-400 mt-1">Dispatches and linked challans</p>
+                      <p className="text-xs text-gray-400 mt-1">Dispatches and converted billing records</p>
                     </div>
                     <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full">
                       {customerChallans.length} Records
@@ -436,9 +528,11 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                           <tr className="bg-white/5 border-b border-white/10 text-gray-400 font-bold uppercase tracking-wider">
                             <th className="py-3 px-4">Challan #</th>
                             <th className="py-3 px-4">Date</th>
+                            <th className="py-3 px-4">Linked Invoice</th>
                             <th className="py-3 px-4">Items Count</th>
                             <th className="py-3 px-4 text-right">Total Amount</th>
                             <th className="py-3 px-4 text-center">Status</th>
+                            <th className="py-3 px-4 text-center print-hidden">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -447,13 +541,50 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                             const itemsCount = ch.items?.length || 0;
                             const status = ch.status || (ch.is_billed ? 'billed' : 'open');
 
+                            const linkedInv = customerInvoices.find(inv => {
+                              const convInvId = ch.converted_invoice?.id || ch.converted_invoice;
+                              if (convInvId && (convInvId === inv.id || String(convInvId) === String(inv.id))) return true;
+                              if (ch.converted_invoice_number && inv.invoice_number &&
+                                  ch.converted_invoice_number.trim().toLowerCase() === inv.invoice_number.trim().toLowerCase()) return true;
+                              if (inv.challan_number && ch.challan_number &&
+                                  inv.challan_number.trim().toLowerCase() === ch.challan_number.trim().toLowerCase()) return true;
+                              return false;
+                            });
+
                             return (
                               <tr key={ch.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-3 px-4 font-mono font-black text-cyan-400">
-                                  {ch.challan_number || ch.id?.slice(0, 8)}
+                                <td className="py-3 px-4 font-mono font-black">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewDoc({ invoice: ch, documentType: "delivery_challan" })}
+                                    className="text-cyan-400 hover:text-cyan-300 hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
+                                    title="View Delivery Challan Details"
+                                  >
+                                    <span>{ch.challan_number || ch.id?.slice(0, 8)}</span>
+                                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                  </button>
                                 </td>
                                 <td className="py-3 px-4 text-gray-300">
                                   {ch.challan_date ? format(new Date(ch.challan_date), 'dd MMM yyyy') : '-'}
+                                </td>
+                                <td className="py-3 px-4">
+                                  {linkedInv ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewDoc({ invoice: linkedInv, documentType: "invoice" })}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 border border-emerald-500/30 text-[11px] font-mono font-bold transition-all cursor-pointer"
+                                      title={`View Linked Invoice #${linkedInv.invoice_number}`}
+                                    >
+                                      <span>#{linkedInv.invoice_number}</span>
+                                      <ArrowTopRightOnSquareIcon className="w-3 h-3 opacity-70" />
+                                    </button>
+                                  ) : ch.converted_invoice_number ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded bg-white/5 text-gray-300 border border-white/10 text-[11px] font-mono">
+                                      #{ch.converted_invoice_number}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Unbilled</span>
+                                  )}
                                 </td>
                                 <td className="py-3 px-4 text-gray-400 font-mono">
                                   {itemsCount} items
@@ -469,6 +600,17 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                   }`}>
                                     {status}
                                   </span>
+                                </td>
+                                <td className="py-3 px-4 text-center print-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewDoc({ invoice: ch, documentType: "delivery_challan" })}
+                                    className="p-1 rounded-md bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 border border-cyan-500/20 transition-all inline-flex items-center"
+                                    title="View & Print Challan"
+                                    aria-label="View & Print Challan"
+                                  >
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                  </button>
                                 </td>
                               </tr>
                             );
@@ -502,6 +644,16 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
           </div>
         </div>
       </div>
+
+      {/* Embedded Document Preview Modal */}
+      {previewDoc && (
+        <SalesDetailsModal
+          isOpen={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          invoice={previewDoc.invoice}
+          documentType={previewDoc.documentType}
+        />
+      )}
     </div>
   );
 }

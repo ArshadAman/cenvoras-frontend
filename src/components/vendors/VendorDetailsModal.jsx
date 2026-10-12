@@ -8,10 +8,13 @@ import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { EyeIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import PurchaseDetailsModal from "../purchase/PurchaseDetailsModal";
 
 export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   const printRef = useRef();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("bills");
+  const [previewBillId, setPreviewBillId] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["vendor", vendor?.id],
@@ -50,6 +53,21 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   const totalBilled = vendorBills.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const totalPaid = vendorBills.reduce((sum, b) => sum + (Number(b.amount_paid) || 0), 0);
   const outstandingBalance = totalBilled - totalPaid;
+
+  const getReferenceForBill = (bill) => {
+    const ref = bill.meta?.po_number || bill.order_number || bill.purchase_order_number || bill.challan_number || bill.meta?.challan_number || bill.meta?.reference_number;
+    if (ref) return ref;
+
+    const matchedPo = vendorOrders.find(po => {
+      const poId = bill.purchase_order?.id || bill.purchase_order || bill.purchase_order_id;
+      if (poId && (poId === po.id || String(poId) === String(po.id))) return true;
+      if (po.po_number && bill.order_number && po.po_number.trim().toLowerCase() === bill.order_number.trim().toLowerCase()) return true;
+      return false;
+    });
+
+    if (matchedPo) return matchedPo.po_number || `PO-${matchedPo.id?.slice(0, 6)}`;
+    return null;
+  };
 
   // Print functionality
   const handlePrint = useReactToPrint({
@@ -138,17 +156,6 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
             <div className="flex bg-white/5 border border-white/10 rounded-xl p-0.5 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => setActiveTab("overview")}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeTab === "overview"
-                    ? "bg-indigo-500 text-white font-black shadow-lg shadow-indigo-500/20"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                type="button"
                 onClick={() => setActiveTab("bills")}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeTab === "bills"
@@ -156,7 +163,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                     : "text-gray-400 hover:text-white"
                 }`}
               >
-                <span>Bills</span>
+                <span>Ledger (Bills)</span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-mono">
                   {vendorBills.length}
                 </span>
@@ -174,6 +181,17 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-mono">
                   {vendorOrders.length}
                 </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("overview")}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeTab === "overview"
+                    ? "bg-indigo-500 text-white font-black shadow-lg shadow-indigo-500/20"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Overview
               </button>
             </div>
           </div>
@@ -332,7 +350,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                   <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-wider">Purchase Bills Ledger</h3>
-                      <p className="text-xs text-gray-400 mt-1">Transaction record for {vendorDetails.name}</p>
+                      <p className="text-xs text-gray-400 mt-1">Detailed purchase bills & order references for {vendorDetails.name}</p>
                     </div>
                     <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full">
                       {vendorBills.length} Records
@@ -355,10 +373,12 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             <th className="py-3 px-4">Bill #</th>
                             <th className="py-3 px-4">Date</th>
                             <th className="py-3 px-4">Due Date</th>
+                            <th className="py-3 px-4">PO / Ref #</th>
                             <th className="py-3 px-4 text-right">Total</th>
                             <th className="py-3 px-4 text-right">Paid</th>
                             <th className="py-3 px-4 text-right">Balance</th>
                             <th className="py-3 px-4 text-center">Status</th>
+                            <th className="py-3 px-4 text-center print-hidden">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -367,17 +387,38 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             const paid = Number(bill.amount_paid) || 0;
                             const bal = tot - paid;
                             const status = bill.payment_status || (bal <= 0 ? 'paid' : paid > 0 ? 'partial' : 'pending');
+                            const ref = getReferenceForBill(bill);
 
                             return (
                               <tr key={bill.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-3 px-4 font-mono font-black text-indigo-400">
-                                  {bill.bill_number || bill.id?.slice(0, 8)}
+                                <td className="py-3 px-4 font-mono font-black">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewBillId(bill.id)}
+                                    className="text-indigo-400 hover:text-indigo-300 hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
+                                    title="View Full Bill Details & Print / Download"
+                                  >
+                                    <span>{bill.bill_number || bill.id?.slice(0, 8)}</span>
+                                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                  </button>
                                 </td>
                                 <td className="py-3 px-4 text-gray-300">
                                   {bill.bill_date ? format(new Date(bill.bill_date), 'dd MMM yyyy') : '-'}
                                 </td>
                                 <td className="py-3 px-4 text-gray-400">
                                   {bill.due_date ? format(new Date(bill.due_date), 'dd MMM yyyy') : '-'}
+                                </td>
+                                <td className="py-3 px-4">
+                                  {ref ? (
+                                    <span
+                                      className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[11px] font-mono font-medium"
+                                      title={`PO / Reference: ${ref}`}
+                                    >
+                                      #{ref}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-500 font-mono text-[11px]">—</span>
+                                  )}
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono font-bold text-white">
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -396,6 +437,17 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                   }`}>
                                     {status}
                                   </span>
+                                </td>
+                                <td className="py-3 px-4 text-center print-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewBillId(bill.id)}
+                                    className="p-1 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 border border-indigo-500/20 transition-all inline-flex items-center"
+                                    title="View & Print Bill"
+                                    aria-label="View & Print Bill"
+                                  >
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                  </button>
                                 </td>
                               </tr>
                             );
@@ -496,6 +548,14 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
           </div>
         </div>
       </div>
+
+      {/* Embedded Purchase Bill Preview Modal */}
+      {previewBillId && (
+        <PurchaseDetailsModal
+          billId={previewBillId}
+          onClose={() => setPreviewBillId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { getCustomers, deleteCustomer } from "../../api/customers";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilSquareIcon, TrashIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 export default function CustomerTable({ onEdit, onView, onDelete }) {
   const queryClient = useQueryClient();
@@ -304,10 +304,11 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                       <button
                         type="button"
                         onClick={() => onView(customer)}
-                        className="text-left text-sm font-bold text-white hover:text-cyan-400 transition-colors drop-shadow-lg cursor-pointer"
-                        title="View Detailed Ledger"
+                        className="text-left text-sm font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors drop-shadow-lg cursor-pointer inline-flex items-center gap-1.5 group"
+                        title="View Detailed Ledger & Invoices"
                       >
-                        {customer.name}
+                        <span>{customer.name}</span>
+                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-cyan-400/70 group-hover:text-cyan-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                       </button>
                       <div className="text-sm text-cyan-300 font-medium">
                         {customer.email}
@@ -405,9 +406,15 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
                       className="rounded border-white/10 text-cyan-500 focus:ring-cyan-500 bg-white/5 w-5 h-5"
                     />
                   <div>
-                    <div className="text-lg font-semibold text-white">
-                      {customer.name}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onView(customer)}
+                      className="text-left text-lg font-semibold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors inline-flex items-center gap-1.5 group"
+                      title="View Detailed Ledger & Invoices"
+                    >
+                      <span>{customer.name}</span>
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-cyan-400/70 group-hover:text-cyan-300 transition-all" />
+                    </button>
                     <div className="text-sm text-white/70">
                       {customer.email || 'No email'}
                     </div>
