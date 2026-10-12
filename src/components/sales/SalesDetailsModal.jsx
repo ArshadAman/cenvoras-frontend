@@ -979,9 +979,17 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         isOpen={showDesigner}
         onClose={() => {
           setShowDesigner(false);
-          setTemplate(getActiveTemplate());
+          const resolvedTemplate = getActiveTemplateForSection({
+            sectionKey,
+            documentTemplateId: docTemplateId,
+            customerTemplates,
+            userDefaultTemplates,
+          });
+          setTemplate(resolvedTemplate);
         }}
         businessInfo={effectiveBusinessInfo}
+        documentType={documentType}
+        invoice={enrichedInvoice}
       />
     </>,
     document.body

@@ -105,7 +105,7 @@ const GenzTemplate = forwardRef(({
             {companyAddress && <p className="text-xs text-white/80 mt-1 whitespace-pre-line leading-relaxed">{companyAddress}</p>}
           </div>
         </div>
-        <h2 className="text-3xl font-bold opacity-90">{content.invoiceTitle || (isDeliveryChallan ? 'DELIVERY CHALLAN' : 'TAX INVOICE')}</h2>
+        <h2 className="text-3xl font-bold opacity-90">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
       </div>
 
       <div className="p-12 flex-1 flex flex-col">
@@ -171,74 +171,14 @@ const GenzTemplate = forwardRef(({
 
         {/* Items Table */}
         <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm mb-10">
-          {isDeliveryChallan ? (
-            <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-              <thead style={{ backgroundColor: '#f8fafc' }}>
-                <tr className="border-b border-gray-200">
-                  <th className="py-3 text-xs font-bold text-gray-600 uppercase tracking-widest text-center px-3" style={{ width: '8%', whiteSpace: 'nowrap' }}>Sl.</th>
-                  <th className="py-3 text-xs font-bold text-gray-600 uppercase tracking-widest text-left px-5" style={{ width: '48%', whiteSpace: 'nowrap' }}>Item & Description</th>
-                  <th className="py-3 text-xs font-bold text-gray-600 uppercase tracking-widest text-center px-3" style={{ width: '14%', whiteSpace: 'nowrap' }}>Qty</th>
-                  <th className="py-3 text-xs font-bold text-gray-600 uppercase tracking-widest text-left px-5" style={{ width: '15%', whiteSpace: 'nowrap' }}>Make</th>
-                  <th className="py-3 text-xs font-bold text-gray-600 uppercase tracking-widest text-left px-5" style={{ width: '15%', whiteSpace: 'nowrap' }}>Pack Size</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {items.map((item, idx) => {
-                  const qty = item.quantity || 0;
-                  const unit = item.unit || 'pcs';
-                  const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
-                  const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
-                  const desc = item.description || item.product_description || item.product_detail?.description;
-                  return (
-                    item.row_type === 'note' ? (
-                      <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
-                        <td colSpan={5} className="py-2.5 px-5 text-left text-xs text-gray-700 italic font-medium">
-                          Note: {item.description || item.product_description || item.product || ''}
-                        </td>
-                      </tr>
-                    ) : (
-                    <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="hover:bg-gray-50 transition-colors">
-                      <td className="align-middle text-gray-800 text-xs text-center" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
-                      <td className="align-middle text-gray-800 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
-                        <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
-                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                          <p className="text-[10px] text-gray-500 font-medium italic mt-0.5">
-                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
-                          </p>
-                        )}
-                        {desc && (
-                          <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
-                            {desc}
-                          </p>
-                        )}
-                        {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <p className="text-[10px] text-gray-500 mt-0.5 font-medium">
-                            {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
-                            {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
-                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                          </p>
-                        ) : null}
-                      </td>
-                      <td className="align-middle text-gray-900 text-xs text-center font-bold" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
-                        <span className="bg-gray-100 px-2 py-0.5 rounded-full">{qty} {unit}</span>
-                      </td>
-                      <td className="align-middle text-gray-700 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
-                      <td className="align-middle text-gray-700 text-xs text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
-                    </tr>
-                    )
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+          <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
               <thead style={{ backgroundColor: '#f8fafc' }}>
                 <tr className="border-b border-gray-200">
                   {visibleColumns.map((col) => {
                     const isNum = ['price', 'amount'].includes(col.id);
                     const isDesc = col.id === 'description';
                     const alignClass = isDesc ? 'text-left px-5' : isNum ? 'text-right px-5' : 'text-center px-3';
-                    const colWidth = col.id === 'serial' ? '8%' : col.id === 'description' ? '38%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '8%' : '14%';
+                    const colWidth = col.id === 'serial' ? '8%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '10%' : col.id === 'free_qty' ? '8%' : col.id === 'unit' ? '8%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '8%' : '14%';
                     return (
                       <th key={col.id} className={`py-3 text-xs font-bold text-gray-600 uppercase tracking-widest ${alignClass}`} style={{ width: colWidth, whiteSpace: 'nowrap' }}>
                         {col.id === 'serial' ? 'Sl.' : col.label}
@@ -293,6 +233,11 @@ const GenzTemplate = forwardRef(({
                         );
                       }
                       else if(col.id==='quantity') val = <span className="font-bold bg-gray-100 px-2.5 py-0.5 rounded-full text-xs">{item.quantity}</span>;
+                      else if(col.id==='batch') val = item.batch_number || item.batch?.batch_number || item.batch || '-';
+                      else if(col.id==='unit') val = item.unit || 'pcs';
+                      else if(col.id==='free_qty') val = item.free_quantity || 0;
+                      else if(col.id==='make') val = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                      else if(col.id==='pack_size') val = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
                       else if(col.id==='price') {
                         const p = parseFloat(item.price||0);
                         const pStr = p.toString();
@@ -332,7 +277,6 @@ const GenzTemplate = forwardRef(({
               })}
               </tbody>
             </table>
-          )}
         </div>
 
         {/* Totals Section (Hidden for Delivery Challans) */}

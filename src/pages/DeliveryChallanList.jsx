@@ -21,7 +21,7 @@ import {
 import { getUserProfile, patchUserProfile } from "../api/users";
 import { getCurrencySymbol } from "../utils/currency";
 
-const DEFAULT_CHALLAN_PREFIX = "DC";
+const DEFAULT_CHALLAN_PREFIX = "DC-";
 
 const normalizePrefix = (value) => {
   return String(value ?? '').toUpperCase();
@@ -32,6 +32,7 @@ export default function DeliveryChallanList() {
   const [showForm, setShowForm] = useState(false);
   const [editChallan, setEditChallan] = useState(null);
   const [showDetails, setShowDetails] = useState(null);
+  const [previewDocType, setPreviewDocType] = useState("delivery_challan");
   const [challanPrefix, setChallanPrefix] = useState(() => {
     return localStorage.getItem("delivery_challan_prefix") || DEFAULT_CHALLAN_PREFIX;
   });
@@ -269,7 +270,14 @@ export default function DeliveryChallanList() {
 
           <DeliveryChallanTable
             onEdit={handleEdit}
-            onView={(challan) => setShowDetails(challan)}
+            onView={(challan) => {
+              setPreviewDocType("delivery_challan");
+              setShowDetails(challan);
+            }}
+            onViewInvoice={(invoiceId) => {
+              setPreviewDocType("invoice");
+              setShowDetails({ id: invoiceId });
+            }}
             onConvertSuccess={(invoice) => {
               // Could open the new invoice preview if desired
             }}
@@ -296,10 +304,13 @@ export default function DeliveryChallanList() {
       {showDetails && (
         <SalesDetailsModal
           isOpen={!!showDetails}
-          onClose={() => setShowDetails(null)}
+          onClose={() => {
+            setShowDetails(null);
+            setPreviewDocType("delivery_challan");
+          }}
           invoice={showDetails}
           businessInfo={businessInfo}
-          documentType="delivery_challan"
+          documentType={previewDocType}
         />
       )}
     </>

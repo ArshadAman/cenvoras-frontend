@@ -102,7 +102,7 @@ const LegendTemplate = forwardRef(({
             </div>
           </div>
           <div className="p-4 w-1/3 text-right">
-            <h2 className="text-xl font-bold tracking-widest">{content.invoiceTitle || (isDeliveryChallan ? 'DELIVERY CHALLAN' : 'TAX INVOICE')}</h2>
+            <h2 className="text-xl font-bold tracking-widest">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1">Original for Recipient</p>
           </div>
         </div>
@@ -172,66 +172,7 @@ const LegendTemplate = forwardRef(({
         </div>
 
         {/* Legend Table */}
-        {isDeliveryChallan ? (
-          <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
-            <thead>
-              <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
-                <th className="py-2 text-[11px] font-bold uppercase tracking-wider text-center px-2 border-r border-white/20" style={{ width: '8%', whiteSpace: 'nowrap' }}>Sl.</th>
-                <th className="py-2 text-[11px] font-bold uppercase tracking-wider text-left px-3 border-r border-white/20" style={{ width: '48%', whiteSpace: 'nowrap' }}>Item & Description</th>
-                <th className="py-2 text-[11px] font-bold uppercase tracking-wider text-center px-2 border-r border-white/20" style={{ width: '14%', whiteSpace: 'nowrap' }}>Qty</th>
-                <th className="py-2 text-[11px] font-bold uppercase tracking-wider text-left px-3 border-r border-white/20" style={{ width: '15%', whiteSpace: 'nowrap' }}>Make</th>
-                <th className="py-2 text-[11px] font-bold uppercase tracking-wider text-left px-3" style={{ width: '15%', whiteSpace: 'nowrap' }}>Pack Size</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, idx) => {
-                if (item.row_type === 'note') {
-                  return (
-                    <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
-                      <td colSpan={5} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
-                        Note: {item.description || item.product_description || item.product || ''}
-                      </td>
-                    </tr>
-                  );
-                }
-                const qty = item.quantity || 0;
-                const unit = item.unit || 'pcs';
-                const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
-                const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
-                const desc = item.description || item.product_description || item.product_detail?.description;
-                return (
-                  <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-200">
-                    <td className="text-xs text-gray-800 align-middle text-center border-r border-gray-200 font-medium" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
-                    <td className="text-xs text-gray-800 align-middle text-left border-r border-gray-200" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
-                      <div className="font-normal text-gray-900 leading-tight">{item.product_name || item.product}</div>
-                      {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                        <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
-                          Mfr: {item.manufacturer || item.product_detail?.manufacturer}
-                        </div>
-                      )}
-                      {desc && (
-                        <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
-                          {desc}
-                        </div>
-                      )}
-                      {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                        <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
-                          {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
-                          {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
-                          {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td className="text-xs text-gray-900 align-middle text-center border-r border-gray-200 font-bold" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{qty} {unit}</td>
-                    <td className="text-xs text-gray-700 align-middle text-left border-r border-gray-200" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
-                    <td className="text-xs text-gray-700 align-middle text-left" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
-          <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
+        <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
             <thead>
               <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
                 {visibleColumns.map((col, idx) => {
@@ -239,7 +180,7 @@ const LegendTemplate = forwardRef(({
                   const isNum = ['price', 'amount'].includes(col.id);
                   const isDesc = col.id === 'description';
                   const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
-                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '36%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
+                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '8%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
                   return (
                     <th 
                       key={col.id} 
@@ -298,6 +239,11 @@ const LegendTemplate = forwardRef(({
                     );
                   }
                   else if(col.id==='quantity') val = item.quantity;
+                  else if(col.id==='batch') val = item.batch_number || item.batch?.batch_number || item.batch || '-';
+                  else if(col.id==='unit') val = item.unit || 'pcs';
+                  else if(col.id==='free_qty') val = item.free_quantity || 0;
+                  else if(col.id==='make') val = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                  else if(col.id==='pack_size') val = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
                   else if(col.id==='price') {
                     const p = parseFloat(item.price||0);
                     const pStr = p.toString();
@@ -335,18 +281,19 @@ const LegendTemplate = forwardRef(({
                 </tr>
               );
             })}
-              <tr className="font-bold h-9 bg-gray-50/50">
-                <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
-                  Total items: {items.length}
-                </td>
-                <td colSpan={2} className="text-right px-3 text-xs">
-                  <span className="uppercase tracking-wider font-semibold text-gray-700 mr-3">Subtotal</span>
-                  <span className="font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
-                </td>
-              </tr>
+              {!isDeliveryChallan && (
+                <tr className="font-bold h-9 bg-gray-50/50">
+                  <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
+                    Total items: {items.length}
+                  </td>
+                  <td colSpan={2} className="text-right px-3 text-xs">
+                    <span className="uppercase tracking-wider font-semibold text-gray-700 mr-3">Subtotal</span>
+                    <span className="font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-        )}
 
         {/* Footer Details (Hidden for Delivery Challans) */}
         {!isDeliveryChallan ? (

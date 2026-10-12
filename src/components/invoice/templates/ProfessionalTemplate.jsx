@@ -81,8 +81,13 @@ const ProfessionalTemplate = forwardRef(({
     switch (columnId) {
       case 'serial': return '30px';
       case 'description': return 'auto';
+      case 'batch': return '65px';
       case 'hsn': return '75px';
       case 'quantity': return '55px';
+      case 'free_qty': return '50px';
+      case 'unit': return '50px';
+      case 'make': return '70px';
+      case 'pack_size': return '70px';
       case 'price': return '95px';
       case 'discount': return '50px';
       case 'tax': return '50px';
@@ -99,8 +104,13 @@ const ProfessionalTemplate = forwardRef(({
     switch (col.id) {
       case 'serial': return 'Sl.';
       case 'description': return 'DESCRIPTION';
+      case 'batch': return 'BATCH';
       case 'hsn': return 'HSNC';
       case 'quantity': return 'QTY';
+      case 'free_qty': return 'FREE';
+      case 'unit': return 'UNIT';
+      case 'make': return 'MAKE';
+      case 'pack_size': return 'PACK SIZE';
       case 'price': return 'UNIT PRICE';
       case 'discount': return 'DISC.%';
       case 'tax': return 'TAX';
@@ -139,7 +149,7 @@ const ProfessionalTemplate = forwardRef(({
         </div>
         <div className="text-right w-1/2">
           <h2 className="text-2xl font-bold tracking-widest mb-4" style={{ color: '#1f2937' }}>
-            {content.invoiceTitle || (isDeliveryChallan ? 'DELIVERY CHALLAN' : 'TAX INVOICE')}
+            {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}
           </h2>
           <div className="grid grid-cols-2 gap-3 text-left ml-auto max-w-sm border border-gray-200 p-3 bg-gray-50/50 rounded-lg">
             <div>
@@ -207,66 +217,7 @@ const ProfessionalTemplate = forwardRef(({
       </div>
 
       {/* Items Table */}
-      {isDeliveryChallan ? (
-        <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
-          <thead>
-            <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
-              <th className="py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 text-center px-2" style={{ width: '8%', whiteSpace: 'nowrap' }}>Sl.</th>
-              <th className="py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 text-left px-3" style={{ width: '48%', whiteSpace: 'nowrap' }}>Item & Description</th>
-              <th className="py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 text-center px-2" style={{ width: '14%', whiteSpace: 'nowrap' }}>Qty</th>
-              <th className="py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 text-left px-3" style={{ width: '15%', whiteSpace: 'nowrap' }}>Make</th>
-              <th className="py-2.5 text-xs font-bold uppercase tracking-wider text-gray-900 text-left px-3" style={{ width: '15%', whiteSpace: 'nowrap' }}>Pack Size</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {items.map((item, idx) => {
-              if (item.row_type === 'note') {
-                return (
-                  <tr key={idx} className="bg-gray-50/50">
-                    <td colSpan={5} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
-                      Note: {item.description || item.product_description || item.product || ''}
-                    </td>
-                  </tr>
-                );
-              }
-              const qty = item.quantity || 0;
-              const unit = item.unit || 'pcs';
-              const make = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
-              const packSize = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
-              const desc = item.description || item.product_description || item.product_detail?.description;
-              return (
-                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="h-auto hover:bg-gray-50 transition-colors">
-                  <td className="text-xs text-gray-800 text-center px-2 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{idx + 1}</td>
-                  <td className="text-xs text-gray-800 text-left px-3 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>
-                    <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
-                    {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                      <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
-                        Mfr: {item.manufacturer || item.product_detail?.manufacturer}
-                      </div>
-                    )}
-                    {desc && (
-                      <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
-                        {desc}
-                      </div>
-                    )}
-                    {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                      <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
-                        {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
-                        {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
-                        {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="text-xs text-gray-900 font-medium text-center px-2 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{qty} {unit}</td>
-                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{make}</td>
-                  <td className="text-xs text-gray-700 text-left px-3 align-middle" style={{ paddingTop: '0.6px', paddingBottom: '0.6px', paddingLeft: '8px', paddingRight: '8px', margin: 0, lineHeight: 1.2, verticalAlign: 'middle' }}>{packSize}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      ) : (
-        <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
+      <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
               {visibleColumns.map((col) => (
@@ -329,6 +280,11 @@ const ProfessionalTemplate = forwardRef(({
                     );
                   }
                   else if(col.id==='quantity') val = item.quantity;
+                  else if(col.id==='batch') val = item.batch_number || item.batch?.batch_number || item.batch || '-';
+                  else if(col.id==='unit') val = item.unit || 'pcs';
+                  else if(col.id==='free_qty') val = item.free_quantity || 0;
+                  else if(col.id==='make') val = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                  else if(col.id==='pack_size') val = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
                   else if(col.id==='price') {
                     const p = parseFloat(item.price||0);
                     const pStr = p.toString();
@@ -368,7 +324,6 @@ const ProfessionalTemplate = forwardRef(({
           })}
           </tbody>
         </table>
-      )}
 
       {/* Totals & Details (Hidden for Delivery Challans) */}
       {!isDeliveryChallan && (
