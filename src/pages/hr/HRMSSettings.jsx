@@ -194,6 +194,32 @@ export default function HRMSSettings() {
           </div>
         </div>
 
+        {/* Section 3: Recruitment & Onboarding Communications */}
+        <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-xl space-y-4">
+          <h2 className="text-base font-semibold text-white uppercase tracking-wider border-b border-white/10 pb-3">
+            Onboarding & Offer Letter Automation
+          </h2>
+
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-white">Automatic Offer Letter on Employee Onboarding</h3>
+              <p className="text-xs text-gray-400 mt-1 max-w-xl">
+                When enabled, an official corporate employment offer letter will automatically be emailed to newly created employees with their position, terms, and compensation, sent using your business name.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                name="auto_send_offer_letter"
+                checked={!!settings.auto_send_offer_letter}
+                onChange={handleChange}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+            </label>
+          </div>
+        </div>
+
         {/* Submit */}
         <div className="flex justify-end gap-3">
           <button type="submit" disabled={saving} className="px-6 py-2.5 text-sm font-semibold text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 shadow-lg shadow-indigo-500/20 disabled:opacity-50">

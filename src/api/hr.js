@@ -24,6 +24,7 @@ export const hrApi = {
   incrementSalary: (id, data) => api.post(`/hr/employees/${id}/increment_salary/`, data),
   getEmployeeSalaryHistory: (id) => api.get(`/hr/employees/${id}/salary_history/`),
   calculateSalaryBreakdown: (data) => api.post('/hr/employees/calculate_salary_breakdown/', data),
+  sendEmployeeOfferLetter: (id) => api.post(`/hr/employees/${id}/send_offer_letter/`),
 
   // Tax Declarations
   getTaxDeclarations: (params) => api.get('/hr/tax-declarations/', { params }),
@@ -37,6 +38,15 @@ export const hrApi = {
   updateAttendance: (id, data) => api.put(`/hr/attendance/${id}/`, data),
   deleteAttendance: (id) => api.delete(`/hr/attendance/${id}/`),
   bulkAttendance: (data) => api.post('/hr/attendance/bulk/', data),
+  exportAttendance: (params) => api.get('/hr/attendance/export/', { params, responseType: 'blob' }),
+  getEmployeeAttendanceSummary: (employeeIdOrParams, params = {}) => {
+    if (typeof employeeIdOrParams === 'object') {
+      return api.get('/hr/attendance/employee_summary/', { params: employeeIdOrParams });
+    }
+    return api.get('/hr/attendance/employee_summary/', {
+      params: { employee_id: employeeIdOrParams, ...params },
+    });
+  },
 
   // Leave Types
   getLeaveTypes: (params) => api.get('/hr/leave-types/', { params }),
