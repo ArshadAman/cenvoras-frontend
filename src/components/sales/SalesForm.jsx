@@ -856,6 +856,7 @@ export default function SalesForm({
   const [roundOffApplied, setRoundOffApplied] = useState(false);
   const [productCreationState, setProductCreationState] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [catalogSyncModal, setCatalogSyncModal] = useState(null);
 
   // Hierarchical ESC key handlers
   useEscKey(() => setShowColumnPicker(false), showColumnPicker, 30);
@@ -1077,7 +1078,6 @@ export default function SalesForm({
 
   const [availableUnits, setAvailableUnits] = useState(getAllUnits);
   const [showDocNote, setShowDocNote] = useState(false);
-  const [catalogSyncModal, setCatalogSyncModal] = useState(null);
 
   const handleAddCustomUnit = (unit) => {
     saveCustomUnit(unit);
