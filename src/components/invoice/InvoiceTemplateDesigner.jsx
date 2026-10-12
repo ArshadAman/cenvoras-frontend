@@ -831,7 +831,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   <option value="none" className="bg-gray-900 text-gray-400">Do not print bank details (None)</option>
                   {allBankAccounts.map((acc, idx) => (
                     <option key={acc.id || idx} value={acc.id} className="bg-gray-900 text-white">
-                      {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `• ${acc.bank_name}` : ''} {acc.account_number ? `(••••${acc.account_number.slice(-4)})` : ''} {acc.is_default ? '★ Default' : ''}
+                      {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `• ${acc.bank_name}` : ''} {acc.account_number ? `(••••${acc.account_number.slice(-4)})` : ''}{acc.is_default ? ' [Default]' : ''}
                     </option>
                   ))}
                 </select>
