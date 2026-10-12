@@ -74,6 +74,8 @@ import CreditNoteList from './pages/CreditNoteList'
 import DebitNoteList from './pages/DebitNoteList'
 import ProfitLossStatement from './pages/reports/ProfitLossStatement'
 import BalanceSheet from './pages/reports/BalanceSheet'
+import TrialBalance from './pages/TrialBalance'
+import GSTR3B from './pages/reports/GSTR3B'
 import BankReconciliation from './pages/financial/BankReconciliation'
 import ManualJournal from './pages/financial/ManualJournal'
 import { ToastContainer } from 'react-toastify'
@@ -273,6 +275,22 @@ function App() {
         <Route
           path="/reports/balance-sheet"
           element={isAuthenticated ? <BalanceSheet /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/trial-balance"
+          element={isAuthenticated ? <TrialBalance /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/trial-balance"
+          element={isAuthenticated ? <TrialBalance /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/gstr-3b"
+          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/gst/gstr-3b"
+          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
         />
         <Route
           path="/bank-reconciliation"

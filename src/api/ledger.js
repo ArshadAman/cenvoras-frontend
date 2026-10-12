@@ -348,13 +348,33 @@ export const deleteLedgerEntry = async (id) => {
 // ==================== TRIAL BALANCE API ====================
 
 // Get trial balance for all accounts
-export const getTrialBalance = async () => {
+export const getTrialBalance = async (params = {}) => {
   try {
-    const response = await api.get('/ledger/trial-balance/');
+    const queryString = new URLSearchParams();
+    const asOfDate = typeof params === 'string' ? params : (params?.as_of || params?.asOf);
+    if (asOfDate) queryString.append('as_of', asOfDate);
+
+    const url = queryString.toString() ? `/ledger/trial-balance/?${queryString}` : '/ledger/trial-balance/';
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching trial balance:', error);
     throw createUserFriendlyError(error, 'Failed to load trial balance. Please try again.');
+  }
+};
+
+// Allocate unlinked payment / customer advance
+export const allocatePayment = async (paymentId, invoiceId = null) => {
+  try {
+    const payload = {};
+    if (invoiceId) {
+      payload.invoice_id = invoiceId;
+    }
+    const response = await api.post(`/billing/payments/${paymentId}/allocate/`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error allocating payment:', error);
+    throw createUserFriendlyError(error, 'Failed to allocate payment.');
   }
 };
 

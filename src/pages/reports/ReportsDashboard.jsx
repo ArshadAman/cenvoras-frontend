@@ -54,12 +54,28 @@ export default function ReportsDashboard() {
       bg: "bg-emerald-500/10"
     },
     {
+      title: "Trial Balance",
+      description: "Double-entry verification: debit and credit balances across all accounts.",
+      icon: ScaleIcon,
+      link: "/reports/trial-balance",
+      color: "text-cyan-400",
+      bg: "bg-cyan-500/10"
+    },
+    {
       title: "Balance Sheet",
       description: "Assets = Liabilities + Equity. Financial position at a point in time.",
       icon: ScaleIcon,
       link: "/reports/balance-sheet",
       color: "text-indigo-400",
       bg: "bg-indigo-500/10"
+    },
+    {
+      title: "GSTR-3B Summary",
+      description: "Monthly summary return: outward taxable supplies, ITC, and cash tax payable.",
+      icon: DocumentTextIcon,
+      link: "/reports/gstr-3b",
+      color: "text-rose-400",
+      bg: "bg-rose-500/10"
     },
     {
       title: "Tax Register",

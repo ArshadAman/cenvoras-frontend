@@ -16,10 +16,12 @@ import {
   UserIcon,
   CalendarIcon,
   PencilSquareIcon,
-  TrashIcon
+  TrashIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import api from '../api/api';
+import { allocatePayment } from '../api/ledger';
 import { getCurrencySymbol } from '../utils/currency';
 
 const roundTo3 = (value) => {
@@ -42,7 +44,7 @@ const PAYMENT_MODES = {
 };
 
 // Payment card component
-function PaymentCard({ payment, onEdit, onDelete }) {
+function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
   const mode = PAYMENT_MODES[payment.mode] || PAYMENT_MODES.cash;
   const ModeIcon = mode.icon;
   
@@ -64,17 +66,37 @@ function PaymentCard({ payment, onEdit, onDelete }) {
         </div>
       </div>
       
-      {payment.reference && (
-        <div className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded inline-block">
-          Ref: {payment.reference}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {payment.invoice_number ? (
+          <span className="text-[11px] font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-md">
+            Invoice #{payment.invoice_number}
+          </span>
+        ) : (
+          <span className="text-[11px] font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+            Customer Advance
+          </span>
+        )}
+        {payment.reference && (
+          <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+            Ref: {payment.reference}
+          </span>
+        )}
+      </div>
       
       {payment.notes && (
         <div className="text-xs text-gray-500 mt-2 line-clamp-1">{payment.notes}</div>
       )}
       
       <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 transition-opacity">
+        {!payment.invoice && !payment.invoice_number && (
+          <button 
+            onClick={() => onAllocate(payment)} 
+            className="p-2 bg-white/5 text-gray-400 hover:text-green-400 hover:bg-green-400/20 rounded-lg transition-all border border-white/5" 
+            title="Allocate Advance to Invoices"
+          >
+            <LinkIcon className="w-4 h-4" />
+          </button>
+        )}
         <button 
           onClick={() => onEdit(payment)} 
           className="p-2 bg-white/5 text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/20 rounded-lg transition-all border border-white/5" 
@@ -524,6 +546,128 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   );
 }
 
+// Modal to allocate an unlinked payment / customer advance
+function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !payment?.customer) return;
+    setLoading(true);
+    api.get(`/billing/sales-invoices/?customer=${payment.customer}`)
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+        const unpaid = data.filter(inv => {
+          if (inv?.status === 'draft') return false;
+          const outstanding = Math.max((Number(inv?.total_amount) || 0) - (Number(inv?.amount_paid) || 0), 0);
+          return outstanding > 0.01;
+        });
+        setInvoices(unpaid);
+      })
+      .catch(err => {
+        console.error('Failed to load invoices for allocation', err);
+      })
+      .finally(() => setLoading(false));
+  }, [isOpen, payment]);
+
+  if (!isOpen || !payment) return null;
+
+  const handleAllocate = async () => {
+    setSubmitting(true);
+    try {
+      await allocatePayment(payment.id, selectedInvoice || null);
+      toast.success('Payment successfully allocated to invoice(s)!');
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error(err.message || 'Failed to allocate payment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#0a0a0a] border border-cyan-500/20 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <LinkIcon className="w-5 h-5 text-cyan-400" />
+            Allocate Payment / Advance
+          </h3>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white rounded-lg">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4 space-y-1">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">Customer:</span>
+            <span className="text-white font-medium">{payment.customer_name}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">Payment Amount:</span>
+            <span className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>Date:</span>
+            <span>{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          </div>
+        </div>
+
+        <div className="space-y-2 mb-6">
+          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+            Select Invoice to Apply
+          </label>
+          {loading ? (
+            <div className="py-4 text-center text-xs text-gray-400">Loading open invoices...</div>
+          ) : (
+            <select
+              value={selectedInvoice}
+              onChange={(e) => setSelectedInvoice(e.target.value)}
+              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-cyan-500 outline-none"
+            >
+              <option value="">Auto-apply to oldest open invoices (FIFO)</option>
+              {invoices.map(inv => {
+                const outstanding = Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0);
+                return (
+                  <option key={inv.id} value={inv.id}>
+                    #{inv.invoice_number} — Due: {getCurrencySymbol()}{formatAmount(outstanding)} ({inv.invoice_date || ''})
+                  </option>
+                );
+              })}
+            </select>
+          )}
+          <p className="text-[11px] text-gray-500">
+            {selectedInvoice
+              ? 'This unlinked payment will pay down the selected invoice.'
+              : 'Auto-apply will automatically knock off the oldest unpaid invoices for this customer.'}
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAllocate}
+            disabled={submitting}
+            className="flex-1 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl transition-colors text-sm flex justify-center items-center gap-2"
+          >
+            {submitting ? 'Allocating...' : 'Allocate Now'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // Main Payments Page
 export default function Payments() {
   const queryClient = useQueryClient();
@@ -532,6 +676,8 @@ export default function Payments() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState(null);
+  const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
+  const [paymentToAllocate, setPaymentToAllocate] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'month'
@@ -540,6 +686,8 @@ export default function Payments() {
   const invalidatePaymentRelatedQueries = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: ['payments'] }),
     queryClient.invalidateQueries({ queryKey: ['customers'] }),
+    queryClient.invalidateQueries({ queryKey: ['salesInvoices'] }),
+    queryClient.invalidateQueries({ queryKey: ['salesAnalytics'] }),
     queryClient.invalidateQueries({ queryKey: ['generalLedgerEntries'] }),
     queryClient.invalidateQueries({ queryKey: ['ledgerStats'] }),
     queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] }),
@@ -596,6 +744,11 @@ export default function Payments() {
   const handleDelete = (payment) => {
     setPaymentToDelete(payment);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleAllocate = (payment) => {
+    setPaymentToAllocate(payment);
+    setIsAllocateModalOpen(true);
   };
   
   
@@ -828,7 +981,8 @@ export default function Payments() {
                 key={payment.id} 
                 payment={payment} 
                 onEdit={handleEdit} 
-                onDelete={handleDelete} 
+                onDelete={handleDelete}
+                onAllocate={handleAllocate}
               />
             ))}
           </div>
@@ -846,6 +1000,20 @@ export default function Payments() {
           onSuccess={() => {
             invalidatePaymentRelatedQueries();
             setSelectedPayment(null);
+          }}
+        />
+
+        {/* Allocate Payment Modal */}
+        <AllocatePaymentModal
+          isOpen={isAllocateModalOpen}
+          onClose={() => {
+            setIsAllocateModalOpen(false);
+            setPaymentToAllocate(null);
+          }}
+          payment={paymentToAllocate}
+          onSuccess={() => {
+            invalidatePaymentRelatedQueries();
+            setPaymentToAllocate(null);
           }}
         />
 

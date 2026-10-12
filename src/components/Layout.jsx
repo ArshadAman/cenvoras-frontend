@@ -25,6 +25,7 @@ import {
   ArrowUturnRightIcon,
   ReceiptPercentIcon,
   BuildingLibraryIcon,
+  ScaleIcon,
   ShieldCheckIcon,
   ChatBubbleLeftRightIcon,
   BuildingOfficeIcon,
@@ -208,6 +209,7 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
         { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
+        { path: "/reports/trial-balance", label: "Trial Balance", icon: ScaleIcon, roles: [] },
         { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
         { path: "/gst", label: country === 'IN' ? "GST Dashboard" : "Tax & VAT", icon: ReceiptPercentIcon, roles: [] },
         { path: "/gst-hsn-guide", label: country === 'IN' ? "HSN & GST Guide" : "Tax Codes Guide", icon: BookOpenIcon, roles: [] },

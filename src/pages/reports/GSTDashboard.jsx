@@ -31,6 +31,14 @@ export default function GSTDashboard() {
       bg: "bg-blue-500/10",
     },
     {
+      title: "GSTR-3B Monthly Return",
+      description: "Auto-computed Table 3.1, 3.2, 4 (ITC), and 6.1 (Cash Tax Liability) summary with JSON export.",
+      icon: DocumentTextIcon,
+      link: "/reports/gstr-3b",
+      color: "text-rose-400",
+      bg: "bg-rose-500/10",
+    },
+    {
       title: "Tax Register",
       description: "Invoice-wise CGST/SGST/IGST breakup register for sales and purchases.",
       icon: DocumentTextIcon,
