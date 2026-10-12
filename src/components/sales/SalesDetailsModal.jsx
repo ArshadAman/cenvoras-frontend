@@ -10,13 +10,25 @@ import {
   XMarkIcon, 
   PrinterIcon, 
   ArrowDownTrayIcon, 
-  PaintBrushIcon,
-  EnvelopeIcon,
-  ChatBubbleLeftIcon,
-  ArrowPathIcon,
-  ChevronDownIcon,
+  PaintBrushIcon, 
+  EnvelopeIcon, 
+  ArrowPathIcon, 
+  ChevronDownIcon, 
+  BoltIcon, 
+  SparklesIcon, 
+  DocumentTextIcon, 
+  BuildingLibraryIcon, 
+  SwatchIcon 
 } from "@heroicons/react/24/outline";
 import { toast } from 'react-toastify';
+
+function WhatsAppIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.82 11.82 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
@@ -679,177 +691,257 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         {/* Modal Content */}
         <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
           
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-white/10 bg-black/50 gap-4">
-            <div className="flex justify-between items-center w-full sm:w-auto gap-4">
+          {/* Modernized Header */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-5 py-3.5 border-b border-white/10 bg-[#0d0d14]/95 backdrop-blur-md gap-3">
+            {/* Left section: Document Title, Badge, Theme & Bank Selectors */}
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               <div>
-                <h2 className="text-lg font-bold text-white">{isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}</h2>
-                <p className="text-xs text-gray-400">
-                  {enrichedInvoice.invoice_number || 'Loading...'}
-                  {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    {isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    {enrichedInvoice.invoice_number || 'Draft'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                  <span>Theme:</span>
+                  <span className="text-cyan-300 font-medium">{template?.name || 'Classic Professional'}</span>
                 </p>
               </div>
 
-              {/* Instant Template Switcher Dropdown */}
-              <div className="flex items-center gap-1.5 ml-1">
-                <span className="text-xs text-gray-400 hidden md:inline">Theme:</span>
-                <select
-                  value={template?.id || 'classic'}
-                  onChange={(e) => handleTemplateSwitch(e.target.value)}
-                  className="bg-[#1a1a2e] hover:bg-[#252542] border border-cyan-500/30 text-cyan-300 text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer transition-colors shadow-sm"
-                  title="Switch template instantly without reopening"
-                >
-                  {getInvoiceTemplates().map((t) => (
-                    <option key={t.id} value={t.id} className="bg-gray-900 text-white">
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Subtle separator */}
+              <div className="hidden sm:block h-6 w-px bg-white/10 mx-1" />
 
-              {/* Instant Bank Account Switcher Dropdown */}
-              {allBankAccounts.length > 0 && (
-                <div className="flex items-center gap-1.5 ml-1">
-                  <span className="text-xs text-gray-400 hidden lg:inline">Bank:</span>
+              {/* Theme & Bank Switcher Controls */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Instant Template Switcher Dropdown */}
+                <div className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-cyan-500/30 text-cyan-300 rounded-lg px-2.5 py-1.5 transition-colors shadow-sm">
+                  <SwatchIcon className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                   <select
-                    value={selectedBankAccountId || 'none'}
-                    onChange={(e) => handleBankSelect(e.target.value)}
-                    className="bg-[#1a1a2e] hover:bg-[#252542] border border-emerald-500/30 text-emerald-300 text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer transition-colors shadow-sm max-w-[140px] sm:max-w-[200px] truncate"
-                    title="Select which bank account to print on this bill & section default"
+                    value={template?.id || 'classic'}
+                    onChange={(e) => handleTemplateSwitch(e.target.value)}
+                    className="bg-transparent text-cyan-200 text-xs font-semibold outline-none cursor-pointer pr-1"
+                    title="Switch template"
                   >
-                    <option value="none" className="bg-gray-900 text-gray-400">
-                      No Bank Details
-                    </option>
-                    {allBankAccounts.map((acc, idx) => (
-                      <option key={acc.id || idx} value={acc.id} className="bg-gray-900 text-white">
-                        {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `(${acc.bank_name})` : ''} {billingProfile.default_bank_account_sections?.[sectionKey] === acc.id ? '★' : ''}
+                    {getInvoiceTemplates().map((t) => (
+                      <option key={t.id} value={t.id} className="bg-[#14141f] text-white">
+                        {t.name}
                       </option>
                     ))}
                   </select>
                 </div>
-              )}
 
-              <button
-                onClick={onClose}
-                className="sm:hidden p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors ml-auto"
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </button>
+                {/* Instant Bank Account Switcher Dropdown */}
+                {allBankAccounts.length > 0 && (
+                  <div className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-emerald-500/30 text-emerald-300 rounded-lg px-2.5 py-1.5 transition-colors shadow-sm max-w-[200px]">
+                    <BuildingLibraryIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <select
+                      value={selectedBankAccountId || 'none'}
+                      onChange={(e) => handleBankSelect(e.target.value)}
+                      className="bg-transparent text-emerald-200 text-xs font-semibold outline-none cursor-pointer truncate pr-1"
+                      title="Select bank account to display on bill"
+                    >
+                      <option value="none" className="bg-[#14141f] text-gray-400">
+                        No Bank Details
+                      </option>
+                      {allBankAccounts.map((acc, idx) => (
+                        <option key={acc.id || idx} value={acc.id} className="bg-[#14141f] text-white">
+                          {acc.account_name || `Account ${idx + 1}`}{acc.bank_name ? ` (${acc.bank_name})` : ''}{billingProfile.default_bank_account_sections?.[sectionKey] === acc.id ? ' [Default]' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
             </div>
-            
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
-              <button
-                onClick={() => setShowDesigner(true)}
-                className="whitespace-nowrap px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                <PaintBrushIcon className="w-4 h-4" />
-                Customize
-              </button>
-              
-              <button
-                onClick={handlePrint}
-                className="whitespace-nowrap px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                <PrinterIcon className="w-4 h-4" />
-                Print
-              </button>
-              
+
+            {/* Right section: Clean Icon-Based Action Toolbar */}
+            <div className="flex items-center gap-1.5 bg-white/[0.04] p-1 rounded-xl border border-white/10 backdrop-blur-md self-end md:self-center shrink-0">
+              {/* Customize Template Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={() => setShowDesigner(true)}
+                  className="w-8 sm:w-9 h-8 sm:h-9 flex items-center justify-center rounded-lg text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 active:bg-purple-500/30 transition-all border border-transparent hover:border-purple-500/30"
+                  title="Customize Template"
+                  aria-label="Customize Template"
+                >
+                  <PaintBrushIcon className="w-4 h-4" />
+                </button>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#1a1a24] text-gray-200 text-[11px] font-medium rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  Customize Template
+                </div>
+              </div>
+
+              {/* Print Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="w-8 sm:w-9 h-8 sm:h-9 flex items-center justify-center rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 active:bg-blue-500/30 transition-all border border-transparent hover:border-blue-500/30"
+                  title="Print Document"
+                  aria-label="Print Document"
+                >
+                  <PrinterIcon className="w-4 h-4" />
+                </button>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#1a1a24] text-gray-200 text-[11px] font-medium rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  Print Document
+                </div>
+              </div>
+
               {/* PDF Download Split Button */}
-              <div ref={pdfMenuRef} className="relative inline-flex items-stretch rounded-lg shadow-sm">
-                <button
-                  disabled={downloadingPDF}
-                  onClick={() => handleDownloadPDF('vector')}
-                  className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-l-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 border-r border-green-500/20"
-                  title="Download Vector PDF directly to your device"
-                >
-                  {downloadingPDF ? (
-                    <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Downloading...</>
-                  ) : (
-                    <><ArrowDownTrayIcon className="w-4 h-4" /> PDF</>
-                  )}
-                </button>
-                <button
-                  disabled={downloadingPDF}
-                  onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
-                  className="px-2 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-r-lg text-sm font-medium flex items-center transition-colors disabled:opacity-50"
-                  title="Choose PDF download format"
-                >
-                  <ChevronDownIcon className="w-3.5 h-3.5" />
-                </button>
+              <div ref={pdfMenuRef} className="relative group/pdf">
+                <div className="inline-flex items-stretch rounded-lg bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all text-emerald-300 shadow-sm">
+                  <button
+                    type="button"
+                    disabled={downloadingPDF}
+                    onClick={() => handleDownloadPDF('vector')}
+                    className="w-7 sm:w-8 h-8 sm:h-9 flex items-center justify-center hover:text-white transition-colors disabled:opacity-50 rounded-l-lg border-r border-emerald-500/30"
+                    title="Download Vector PDF"
+                    aria-label="Download Vector PDF"
+                  >
+                    {downloadingPDF ? (
+                      <ArrowPathIcon className="w-4 h-4 animate-spin text-emerald-300" />
+                    ) : (
+                      <ArrowDownTrayIcon className="w-4 h-4 text-emerald-300" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={downloadingPDF}
+                    onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
+                    className="px-1.5 h-8 sm:h-9 flex items-center justify-center hover:text-white transition-colors disabled:opacity-50 rounded-r-lg"
+                    title="PDF Download Options"
+                    aria-label="PDF Download Options"
+                  >
+                    <ChevronDownIcon className={`w-3.5 h-3.5 text-emerald-300 transition-transform ${pdfMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {!pdfMenuOpen && (
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#1a1a24] text-gray-200 text-[11px] font-medium rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover/pdf:opacity-100 transition-opacity pointer-events-none z-50">
+                    Download PDF
+                  </div>
+                )}
 
                 {pdfMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-68 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 w-72 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                     <button
+                      type="button"
                       onClick={() => handleDownloadPDF('vector')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 group/opt"
                     >
-                      <span className="font-semibold text-green-400 flex items-center gap-1.5">
-                        <span>⚡</span> Download Vector PDF (Direct File)
-                      </span>
-                      <span className="text-[11px] text-gray-400">~20KB, crystal-clear vector file download</span>
+                      <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <BoltIcon className="w-3.5 h-3.5 text-amber-400" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">Download Vector PDF</span>
+                        <span className="text-[11px] text-gray-400">~20KB, crystal-clear direct vector file</span>
+                      </div>
                     </button>
+
                     <button
+                      type="button"
                       onClick={() => handleDownloadPDF('client')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 mt-1 border-t border-white/5 pt-2 group/opt"
                     >
-                      <span className="font-semibold text-cyan-400 flex items-center gap-1.5">
-                        <span>🎨</span> Direct Canvas Download (~45KB)
-                      </span>
-                      <span className="text-[11px] text-gray-400">Instant client file download fallback</span>
+                      <div className="w-6 h-6 rounded-md bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <SparklesIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">Direct Canvas Download</span>
+                        <span className="text-[11px] text-gray-400">~45KB, high-res client fallback</span>
+                      </div>
                     </button>
+
                     <button
+                      type="button"
                       onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 mt-1 border-t border-white/5 pt-2 group/opt"
                     >
-                      <span className="font-semibold text-purple-400 flex items-center gap-1.5">
-                        <span>🖨️</span> Open System Print Dialog
-                      </span>
-                      <span className="text-[11px] text-gray-400">Print or choose destination printer</span>
+                      <div className="w-6 h-6 rounded-md bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <PrinterIcon className="w-3.5 h-3.5 text-purple-400" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">System Print Dialog</span>
+                        <span className="text-[11px] text-gray-400">Print or choose destination printer</span>
+                      </div>
                     </button>
+
                     <button
+                      type="button"
                       onClick={() => handleDownloadPDF('backend')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex flex-col gap-0.5 mt-1 border-t border-white/5 pt-1.5"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 mt-1 border-t border-white/5 pt-2 group/opt"
                     >
-                      <span className="font-semibold text-gray-400 flex items-center gap-1.5">
-                        <span>📄</span> Classic Server PDF
-                      </span>
-                      <span className="text-[11px] text-gray-500">Standard backend ReportLab format</span>
+                      <div className="w-6 h-6 rounded-md bg-gray-500/10 border border-gray-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <DocumentTextIcon className="w-3.5 h-3.5 text-gray-400" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">Classic Server PDF</span>
+                        <span className="text-[11px] text-gray-500">Standard backend ReportLab format</span>
+                      </div>
                     </button>
                   </div>
                 )}
               </div>
 
-              <button
-                disabled={sendingEmail}
-                onClick={handleEmailClick}
-                className="whitespace-nowrap px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {sendingEmail
-                  ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
-                  : <><EnvelopeIcon className="w-4 h-4" /> Email</>}
-              </button>
-
-              <button
-                onClick={(e) => { e.preventDefault(); toast.info('WhatsApp automation is available on demand. Contact support to activate.'); }}
-                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-pointer group overflow-hidden whitespace-nowrap"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
-                <span className="opacity-90">WhatsApp Automation</span>
-                
-                {/* On Demand Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[10px] uppercase tracking-wider text-emerald-400/90 rounded-lg border border-emerald-500/30">
-                  On demand
+              {/* Email Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  disabled={sendingEmail}
+                  onClick={handleEmailClick}
+                  className="w-8 sm:w-9 h-8 sm:h-9 flex items-center justify-center rounded-lg text-sky-400 hover:text-sky-300 hover:bg-sky-500/20 active:bg-sky-500/30 transition-all border border-transparent hover:border-sky-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Send via Email"
+                  aria-label="Send via Email"
+                >
+                  {sendingEmail ? (
+                    <ArrowPathIcon className="w-4 h-4 animate-spin text-sky-400" />
+                  ) : (
+                    <EnvelopeIcon className="w-4 h-4" />
+                  )}
+                </button>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#1a1a24] text-gray-200 text-[11px] font-medium rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  Send via Email
                 </div>
-              </button>
-              
-              <button
-                onClick={onClose}
-                className="hidden sm:block p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </button>
+              </div>
+
+              {/* WhatsApp Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); toast.info('WhatsApp automation is available on demand. Contact support to activate.'); }}
+                  className="w-8 sm:w-9 h-8 sm:h-9 flex items-center justify-center rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 active:bg-emerald-500/30 transition-all border border-transparent hover:border-emerald-500/30 relative"
+                  title="WhatsApp Automation (On Demand)"
+                  aria-label="WhatsApp Automation"
+                >
+                  <WhatsAppIcon className="w-4 h-4" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </button>
+                <div className="absolute top-full mt-2 right-0 sm:left-1/2 sm:-translate-x-1/2 px-2.5 py-1 bg-[#1a1a24] text-gray-200 text-[11px] font-medium rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  WhatsApp Automation <span className="text-emerald-400 font-semibold">(On Demand)</span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+              {/* Close Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-8 sm:w-9 h-8 sm:h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all border border-transparent hover:border-white/10"
+                  title="Close (Esc)"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[#1a1a24] text-gray-200 text-[11px] font-medium rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  Close (Esc)
+                </div>
+              </div>
             </div>
           </div>
 
