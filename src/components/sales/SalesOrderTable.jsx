@@ -4,8 +4,13 @@ import { getSalesOrders, deleteSalesOrder } from "../../api/sales_order";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import Pagination from "../common/Pagination";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import SalesOrderConvertModal from "./SalesOrderConvertModal";
+import {
+  EyeIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  ArrowPathRoundedSquareIcon,
+} from "@heroicons/react/24/outline";
 
 export default function SalesOrderTable({ 
   onEdit, 
@@ -191,13 +196,47 @@ export default function SalesOrderTable({
                                   {order.stage === 'shipped' ? 'Partially Shipped' : (order.stage || 'new')}
                               </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
-                               <button onClick={() => onView && onView(order)} className="text-blue-400 hover:text-blue-300" title="View Proforma Invoice">View</button>
-                               <button onClick={() => onEdit(order)} className="text-purple-400 hover:text-purple-300">Edit</button>
-                               {order.stage !== 'completed' && (
-                                 <button onClick={() => handleConvert(order)} className="text-green-400 hover:text-green-300">Convert</button>
-                               )}
-                               <button onClick={() => onDelete(order)} className="text-red-400 hover:text-red-300">Delete</button>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-1.5">
+                              <button
+                                type="button"
+                                onClick={() => onView && onView(order)}
+                                title="View Proforma Invoice"
+                                aria-label="View Proforma Invoice"
+                                className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                              >
+                                <EyeIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onEdit(order)}
+                                title="Edit Sales Order"
+                                aria-label="Edit Sales Order"
+                                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                              >
+                                <PencilSquareIcon className="w-4 h-4" />
+                              </button>
+                              {order.stage !== 'completed' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleConvert(order)}
+                                  title="Convert to Delivery Challan / Invoice"
+                                  aria-label="Convert to Delivery Challan / Invoice"
+                                  className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 hover:border-indigo-500/40 transition-all drop-shadow"
+                                >
+                                  <ArrowPathRoundedSquareIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => onDelete(order)}
+                                title="Delete Sales Order"
+                                aria-label="Delete Sales Order"
+                                className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                       </tr>
                     );
@@ -274,13 +313,45 @@ export default function SalesOrderTable({
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <button onClick={() => onView && onView(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">View</button>
-                  <button onClick={() => onEdit(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Edit</button>
+                <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => onView && onView(order)}
+                    title="View Proforma Invoice"
+                    aria-label="View Proforma Invoice"
+                    className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(order)}
+                    title="Edit Sales Order"
+                    aria-label="Edit Sales Order"
+                    className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                  >
+                    <PencilSquareIcon className="w-4 h-4" />
+                  </button>
                   {order.stage !== 'completed' && (
-                    <button onClick={() => handleConvert(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Convert</button>
+                    <button
+                      type="button"
+                      onClick={() => handleConvert(order)}
+                      title="Convert to Delivery Challan / Invoice"
+                      aria-label="Convert to Delivery Challan / Invoice"
+                      className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all"
+                    >
+                      <ArrowPathRoundedSquareIcon className="w-4 h-4" />
+                    </button>
                   )}
-                  <button onClick={() => onDelete(order)} className="flex-1 min-w-[60px] px-2 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Delete</button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(order)}
+                    title="Delete Sales Order"
+                    aria-label="Delete Sales Order"
+                    className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );

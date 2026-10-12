@@ -5,6 +5,12 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   ArrowsUpDownIcon,
+  EyeIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ArrowPathRoundedSquareIcon,
 } from '@heroicons/react/24/outline';
 import {
   convertQuotationToSalesOrder,
@@ -209,28 +215,73 @@ export default function QuotationTable({ onEdit, onView }) {
                     <td className="px-4 py-3 text-white">{q.customer_name}</td>
                     <td className="px-4 py-3 text-cyan-400">Rs {Number(q.total_amount || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 text-gray-300 capitalize">{q.status}</td>
-                    <td className="px-4 py-3 flex items-center gap-3 text-xs">
-                      <button onClick={() => onView?.(q)} className="text-indigo-300 hover:text-indigo-200">View</button>
-                      <button onClick={() => onEdit(q)} className="text-cyan-400 hover:text-cyan-300">Edit</button>
-                      {(q.status === 'draft' || q.status === 'pending') && (
-                        <button onClick={() => setQuotationStatus(q, 'approved')} className="text-green-400 hover:text-green-300">Approve</button>
-                      )}
-                      {(q.status === 'draft' || q.status === 'pending' || q.status === 'approved' || q.status === 'partially_converted') && (
-                        <button onClick={() => setQuotationStatus(q, 'rejected')} className="text-amber-400 hover:text-amber-300">Reject</button>
-                      )}
-                      {(q.status === 'approved' || q.status === 'partially_converted') && (
-                        <button onClick={() => setConvertTarget(q)} className="text-cyan-300 hover:text-cyan-200">Convert</button>
-                      )}
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
-                            deleteMutation.mutate(q.id);
-                          }
-                        }}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        Delete
-                      </button>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onView?.(q)}
+                          title="View Quotation"
+                          aria-label="View Quotation"
+                          className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onEdit(q)}
+                          title="Edit Quotation"
+                          aria-label="Edit Quotation"
+                          className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                        >
+                          <PencilSquareIcon className="w-4 h-4" />
+                        </button>
+                        {(q.status === 'draft' || q.status === 'pending') && (
+                          <button
+                            type="button"
+                            onClick={() => setQuotationStatus(q, 'approved')}
+                            title="Approve Quotation"
+                            aria-label="Approve Quotation"
+                            className="p-1.5 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 hover:text-green-300 transition-all drop-shadow"
+                          >
+                            <CheckCircleIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(q.status === 'draft' || q.status === 'pending' || q.status === 'approved' || q.status === 'partially_converted') && (
+                          <button
+                            type="button"
+                            onClick={() => setQuotationStatus(q, 'rejected')}
+                            title="Reject Quotation"
+                            aria-label="Reject Quotation"
+                            className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 transition-all drop-shadow"
+                          >
+                            <XCircleIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(q.status === 'approved' || q.status === 'partially_converted') && (
+                          <button
+                            type="button"
+                            onClick={() => setConvertTarget(q)}
+                            title="Convert Quotation to Invoice"
+                            aria-label="Convert Quotation to Invoice"
+                            className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all drop-shadow"
+                          >
+                            <ArrowPathRoundedSquareIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
+                              deleteMutation.mutate(q.id);
+                            }
+                          }}
+                          title="Delete Quotation"
+                          aria-label="Delete Quotation"
+                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -281,21 +332,71 @@ export default function QuotationTable({ onEdit, onView }) {
                      </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => onView?.(q)} className="flex-1 min-w-[60px] px-2 py-2 bg-white/5 text-white border border-white/10 rounded-lg hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest text-center">View</button>
-                    <button onClick={() => onEdit(q)} className="flex-1 min-w-[60px] px-2 py-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Edit</button>
-                    {(q.status === 'approved' || q.status === 'partially_converted') && (
-                      <button onClick={() => setConvertTarget(q)} className="flex-1 min-w-[60px] px-2 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Convert</button>
-                    )}
-                    <button onClick={() => { if (window.confirm(`Delete quotation ${q.quotation_number}?`)) deleteMutation.mutate(q.id); }} className="flex-1 min-w-[60px] px-2 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Delete</button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex items-center justify-end flex-wrap gap-2 pt-2 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => onView?.(q)}
+                      title="View Quotation"
+                      aria-label="View Quotation"
+                      className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
+                    >
+                      <EyeIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onEdit(q)}
+                      title="Edit Quotation"
+                      aria-label="Edit Quotation"
+                      className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                    </button>
                     {(q.status === 'draft' || q.status === 'pending') && (
-                      <button onClick={() => setQuotationStatus(q, 'approved')} className="flex-1 min-w-[60px] px-2 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Approve</button>
+                      <button
+                        type="button"
+                        onClick={() => setQuotationStatus(q, 'approved')}
+                        title="Approve Quotation"
+                        aria-label="Approve Quotation"
+                        className="p-2 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 hover:text-green-300 transition-all"
+                      >
+                        <CheckCircleIcon className="w-4 h-4" />
+                      </button>
                     )}
                     {(q.status === 'draft' || q.status === 'pending' || q.status === 'approved' || q.status === 'partially_converted') && (
-                      <button onClick={() => setQuotationStatus(q, 'rejected')} className="flex-1 min-w-[60px] px-2 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg hover:bg-amber-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center">Reject</button>
+                      <button
+                        type="button"
+                        onClick={() => setQuotationStatus(q, 'rejected')}
+                        title="Reject Quotation"
+                        aria-label="Reject Quotation"
+                        className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 transition-all"
+                      >
+                        <XCircleIcon className="w-4 h-4" />
+                      </button>
                     )}
+                    {(q.status === 'approved' || q.status === 'partially_converted') && (
+                      <button
+                        type="button"
+                        onClick={() => setConvertTarget(q)}
+                        title="Convert Quotation to Invoice"
+                        aria-label="Convert Quotation to Invoice"
+                        className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all"
+                      >
+                        <ArrowPathRoundedSquareIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
+                          deleteMutation.mutate(q.id);
+                        }
+                      }}
+                      title="Delete Quotation"
+                      aria-label="Delete Quotation"
+                      className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))

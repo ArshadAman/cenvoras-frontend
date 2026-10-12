@@ -4,6 +4,7 @@ import { getPurchaseBills } from "../../api/purchase";
 import { format } from "date-fns";
 import AdvancedPurchaseFilters from "./AdvancedPurchaseFilters";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
@@ -488,36 +489,45 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         maximumFractionDigits: 2,
                       })}
                     </td>
-                    <td className="py-3 px-4 text-center space-x-2">
-                      <button
-                        className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                        onClick={() => onView(bill.id)}
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        className={`px-3 py-1 rounded transition backdrop-filter backdrop-blur-10 drop-shadow-lg border ${
-                          canEditBill(bill)
-                            ? 'bg-green-500/30 text-white border-green-300/50 hover:bg-green-500/50'
-                            : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
-                        }`}
-                        onClick={() => {
-                          if (canEditBill(bill)) {
-                            onEdit(bill);
-                          }
-                        }}
-                        disabled={!canEditBill(bill)}
-                        title={editBillTitle(bill)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                        onClick={() => onDelete(bill.id)}
-                      >
-                        Delete
-                      </button>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                          onClick={() => onView(bill.id)}
+                          title="View Purchase Bill"
+                          aria-label="View Purchase Bill"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className={`p-1.5 rounded-lg transition-all drop-shadow border ${
+                            canEditBill(bill)
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40'
+                              : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
+                          }`}
+                          onClick={() => {
+                            if (canEditBill(bill)) {
+                              onEdit(bill);
+                            }
+                          }}
+                          disabled={!canEditBill(bill)}
+                          title={editBillTitle(bill)}
+                          aria-label={editBillTitle(bill)}
+                        >
+                          <PencilSquareIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                          onClick={() => onDelete(bill.id)}
+                          title="Delete Purchase Bill"
+                          aria-label="Delete Purchase Bill"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -599,12 +609,15 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               </div>
 
               {/* Card Actions */}
-              <div className="flex gap-2 mt-5 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-end gap-2 mt-5 pt-4 border-t border-white/5">
                 <button
+                  type="button"
                   onClick={() => onView(bill.id)}
-                  className="flex-1 px-4 py-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center"
+                  title="View Purchase Bill"
+                  aria-label="View Purchase Bill"
+                  className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
                 >
-                  View
+                  <EyeIcon className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
@@ -614,19 +627,24 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     }
                   }}
                   disabled={!canEditBill(bill)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center border ${
+                  title={editBillTitle(bill)}
+                  aria-label={editBillTitle(bill)}
+                  className={`p-2 rounded-lg transition-all border ${
                     canEditBill(bill)
-                      ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                      : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-50'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300'
+                      : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
                   }`}
                 >
-                  Edit
+                  <PencilSquareIcon className="w-4 h-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => onDelete(bill.id)}
-                  className="flex-1 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center"
+                  title="Delete Purchase Bill"
+                  aria-label="Delete Purchase Bill"
+                  className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
                 >
-                  Delete
+                  <TrashIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>
