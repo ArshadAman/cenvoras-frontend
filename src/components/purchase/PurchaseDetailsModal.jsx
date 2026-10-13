@@ -261,7 +261,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                           </td>
                           <td className="px-6 py-5 text-right font-mono text-sm text-gray-300 align-top">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
                           <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{parseFloat(item.discount || 0).toFixed(1)}%</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{item.tax_display || `${parseFloat(item.tax_rate ?? item.tax || 0)}%`}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{item.tax_display || `${parseFloat((item.tax_rate ?? item.tax) || 0)}%`}</td>
                           <td className="px-6 py-5 text-right font-mono text-sm font-black text-white align-top">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
                         </tr>
                       ))}
