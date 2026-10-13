@@ -279,8 +279,26 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const maxStockRange = advancedFilters.stockRange.max === "" ? null : parseFloat(advancedFilters.stockRange.max);
     const supplierQuery = String(advancedFilters.supplier || "").toLowerCase();
 
+    const searchQ = String(search || "").trim().toLowerCase();
+
     return productsRaw
       .filter((product) => {
+        // Client-side search belt-and-suspenders (also sent to API as `search`)
+        if (searchQ) {
+          const hay = [
+            product.name,
+            product.item_code,
+            product.internal_reference,
+            product.manufacturer,
+            product.hsn_sac_code,
+            product.description,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          if (!hay.includes(searchQ)) return false;
+        }
+
         let matchesStock = true;
         const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
         const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
@@ -360,6 +378,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     advancedFilters.supplier,
     ordering,
     productsRaw,
+    search,
     selectedManufacturer,
     stockFilter,
   ]);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrencySymbol } from '../../utils/currency';
+import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
 import { downloadCAAuditPack } from '../../api/gst';
 import {
   ShieldCheckIcon,
@@ -26,10 +27,9 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [hoveredFormat, setHoveredFormat] = useState(null);
 
-  // Date filters for CA Pack
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  const monthStartStr = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  // Date filters for CA Pack (IST — avoid UTC “yesterday”)
+  const todayStr = getTodayKolkata();
+  const { from: monthStartStr } = getKolkataMonthBounds();
   const [fromDate, setFromDate] = useState(monthStartStr);
   const [toDate, setToDate] = useState(todayStr);
 
@@ -264,8 +264,14 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                 <button
                   type="button"
                   onClick={() => {
-                    const lastMonthFirst = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-                    const lastMonthLast = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
+                    const [yStr, mStr] = todayStr.split('-');
+                    const y = parseInt(yStr, 10);
+                    const m = parseInt(mStr, 10);
+                    const prevMonth = m === 1 ? 12 : m - 1;
+                    const prevYear = m === 1 ? y - 1 : y;
+                    const lastMonthFirst = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
+                    const lastDay = new Date(prevYear, prevMonth, 0).getDate();
+                    const lastMonthLast = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
                     setFromDate(lastMonthFirst);
                     setToDate(lastMonthLast);
                   }}
@@ -276,8 +282,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                 <button
                   type="button"
                   onClick={() => {
-                    const fyStart = new Date(today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1, 3, 1).toISOString().split('T')[0];
-                    setFromDate(fyStart);
+                    setFromDate(getKolkataFYStart());
                     setToDate(todayStr);
                   }}
                   className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition-all whitespace-nowrap"

@@ -15,7 +15,7 @@ const JournalSchema = Yup.object().shape({
   items: Yup.array().of(
     Yup.object().shape({
       product: Yup.string().required("Product is required"),
-      batch: Yup.string().required("Batch is required"),
+      batch: Yup.string().nullable(),
       quantity: Yup.number().required("Qty is required").min(1, "Qty must be at least 1"),
     })
   ).min(1, "At least one item is required"),
@@ -86,10 +86,12 @@ function BatchSelect({ idx, values, setFieldValue }) {
 
     return (
         <Field as="select" name={`items.${idx}.batch`} className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm">
-            <option value="">Select Batch</option>
+            <option value="">
+              {productBatches.length === 0 ? 'No batch (DEFAULT)' : 'Optional — or DEFAULT'}
+            </option>
             {productBatches.map(b => (
                 <option key={b.id} value={b.id}>
-                    {b.batch_number} (Exp: {b.expiry_date})
+                    {b.batch_number}{b.expiry_date ? ` (Exp: ${b.expiry_date})` : ''}
                 </option>
             ))}
         </Field>
@@ -113,10 +115,13 @@ export default function StockJournalForm({ isOpen, onClose }) {
     mutationFn: createStockJournal,
     onSuccess: () => {
       queryClient.invalidateQueries(["stock-journals"]);
-      toast.success("Journal Posted!");
+      queryClient.invalidateQueries(["products"]);
+      queryClient.invalidateQueries(["stockPoints"]);
+      queryClient.invalidateQueries(["warehouses"]);
+      toast.success("Journal posted — warehouse & product stock updated");
       onClose();
     },
-    onError: () => toast.error("Failed to post journal"),
+    onError: (err) => toast.error(err?.response?.data?.product || err?.response?.data?.detail || "Failed to post journal"),
   });
 
   if (!isOpen) return null;
@@ -148,7 +153,7 @@ export default function StockJournalForm({ isOpen, onClose }) {
                 ...values,
                 items: values.items.map(item => ({
                     product: item.product,
-                    batch: item.batch,
+                    ...(item.batch ? { batch: item.batch } : {}),
                     quantity: Number(item.quantity) * multiplier
                 }))
             };

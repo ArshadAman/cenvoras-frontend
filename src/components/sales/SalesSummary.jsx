@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { getCurrencySymbol } from '../../utils/currency';
+import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
 import { useQuery } from "@tanstack/react-query";
 import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
@@ -36,22 +37,14 @@ export default function SalesSummary() {
     });
   };
 
-  const formatLocalDate = (dateObj) => {
-    const y = dateObj.getFullYear();
-    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const d = String(dateObj.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  };
-
-  const todayStr = formatLocalDate(new Date());
+  const todayStr = getTodayKolkata();
+  const { from: monthStartStr } = getKolkataMonthBounds();
   const [customRange, setCustomRange] = useState({ start: todayStr, end: todayStr });
 
   const getDates = () => {
     if (dateFilter === "today") return { start_date: todayStr, end_date: todayStr };
     if (dateFilter === "month") {
-      const d = new Date();
-      d.setDate(1);
-      return { start_date: formatLocalDate(d), end_date: todayStr };
+      return { start_date: monthStartStr, end_date: todayStr };
     }
     if (dateFilter === "custom") {
       return { start_date: customRange.start, end_date: customRange.end };

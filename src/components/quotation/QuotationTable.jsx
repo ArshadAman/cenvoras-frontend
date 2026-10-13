@@ -19,6 +19,7 @@ import {
   updateQuotation,
 } from '../../api/quotation';
 import QuotationConvertModal from './QuotationConvertModal';
+import { getCurrencySymbol } from '../../utils/currency';
 
 export default function QuotationTable({ onEdit, onView }) {
   const queryClient = useQueryClient();
@@ -213,7 +214,7 @@ export default function QuotationTable({ onEdit, onView }) {
                     <td className="px-4 py-3 text-white font-medium">{q.quotation_number || q.invoice_number}</td>
                     <td className="px-4 py-3 text-gray-300">{q.quotation_date || q.invoice_date}</td>
                     <td className="px-4 py-3 text-white">{q.customer_name}</td>
-                    <td className="px-4 py-3 text-cyan-400">Rs {Number(q.total_amount || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-cyan-400">{getCurrencySymbol()}{Number(q.total_amount || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 text-gray-300 capitalize">{q.status}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
@@ -261,8 +262,8 @@ export default function QuotationTable({ onEdit, onView }) {
                           <button
                             type="button"
                             onClick={() => setConvertTarget(q)}
-                            title="Convert Quotation to Invoice"
-                            aria-label="Convert Quotation to Invoice"
+                            title="Convert Quotation"
+                            aria-label="Convert Quotation"
                             className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all drop-shadow"
                           >
                             <ArrowPathRoundedSquareIcon className="w-4 h-4" />
@@ -311,7 +312,7 @@ export default function QuotationTable({ onEdit, onView }) {
                       <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">{q.quotation_date || q.invoice_date}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-black text-cyan-400">Rs {Number(q.total_amount || 0).toLocaleString()}</div>
+                      <div className="text-lg font-black text-cyan-400">{getCurrencySymbol()}{Number(q.total_amount || 0).toLocaleString()}</div>
                     </div>
                   </div>
 
@@ -377,8 +378,8 @@ export default function QuotationTable({ onEdit, onView }) {
                       <button
                         type="button"
                         onClick={() => setConvertTarget(q)}
-                        title="Convert Quotation to Invoice"
-                        aria-label="Convert Quotation to Invoice"
+                        title="Convert Quotation"
+                        aria-label="Convert Quotation"
                         className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all"
                       >
                         <ArrowPathRoundedSquareIcon className="w-4 h-4" />

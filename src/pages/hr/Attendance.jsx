@@ -235,7 +235,7 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-center">
                   <p className="text-[11px] text-gray-400">Total Days</p>
-                  <p className="text-lg font-bold text-white mt-0.5">{summary.total_days_in_month}</p>
+                  <p className="text-lg font-bold text-white mt-0.5">{summary.total_calendar_days ?? summary.total_days_in_month}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
                   <p className="text-[11px] text-emerald-400">Present Days</p>
@@ -255,7 +255,11 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
                 </div>
                 <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-center">
                   <p className="text-[11px] text-indigo-400">Attendance Rate</p>
-                  <p className="text-lg font-bold text-indigo-300 mt-0.5">{summary.attendance_rate}%</p>
+                  <p className="text-lg font-bold text-indigo-300 mt-0.5">
+                    {String(summary.attendance_rate || '').includes('%')
+                      ? summary.attendance_rate
+                      : `${summary.attendance_rate ?? 0}%`}
+                  </p>
                 </div>
               </div>
 
@@ -271,13 +275,13 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
                         d.status === 'half_day' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' :
                         d.status === 'absent' ? 'bg-rose-500/10 border-rose-500/30 text-rose-300' :
                         d.status === 'leave' ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' :
-                        d.status === 'holiday' ? 'bg-purple-500/10 border-purple-500/30 text-purple-300' :
+                        (d.status === 'holiday' || d.status === 'weekend') ? 'bg-purple-500/10 border-purple-500/30 text-purple-300' :
                         'bg-white/[0.02] border-white/5 text-gray-500'
                       }`}
                     >
                       <div className="flex items-center justify-between text-[11px] text-gray-400 mb-1">
-                        <span>{d.day_name}</span>
-                        <span className="font-semibold text-white">{d.day}</span>
+                        <span>{d.day_name || d.day}</span>
+                        <span className="font-semibold text-white">{d.day_number ?? d.day}</span>
                       </div>
                       <p className="text-xs font-semibold capitalize tracking-wide">{d.status.replace('_', ' ')}</p>
                     </div>

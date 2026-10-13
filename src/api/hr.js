@@ -151,7 +151,10 @@ export const hrApi = {
 
   // Documents
   getDocuments: (params) => api.get('/hr/documents/', { params }),
-  createDocument: (data) => api.post('/hr/documents/', data),
+  createDocument: (data) => {
+    const isForm = typeof FormData !== 'undefined' && data instanceof FormData;
+    return api.post('/hr/documents/', data, isForm ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
+  },
   deleteDocument: (id) => api.delete(`/hr/documents/${id}/`),
 
   // HRMS Settings

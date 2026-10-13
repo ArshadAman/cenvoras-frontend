@@ -33,7 +33,9 @@ export default function BOMList() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Bill of Materials</h1>
-            <p className="text-gray-400 text-sm">Manage manufacturing recipes and formulas.</p>
+            <p className="text-gray-400 text-sm">
+              Manage product recipes and component lists. Automated production runs / MRP are not supported yet.
+            </p>
           </div>
           <button
             onClick={() => setShowForm(true)}

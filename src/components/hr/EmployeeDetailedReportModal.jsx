@@ -495,7 +495,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
         {/* Modal Footer */}
         <div className="p-4 border-t border-white/10 flex flex-wrap justify-between items-center bg-white/[0.01]">
           <div className="text-xs text-gray-500">
-            System Generated Audit Report • Cenvoras HRMS Compliance Engine
+            System Generated Audit Report • Cenvora HRMS Compliance Engine
           </div>
           <button
             type="button"

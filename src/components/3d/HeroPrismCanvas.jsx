@@ -396,7 +396,7 @@ export default function HeroPrismCanvas() {
     <div
       ref={mountRef}
       className="relative w-full h-[420px] sm:h-[480px] lg:h-[540px] cursor-grab active:cursor-grabbing overflow-hidden flex items-center justify-center"
-      aria-label="Interactive 3D Cenvoras Modular Architecture"
+      aria-label="Interactive 3D Cenvora Modular Architecture"
     />
   );
 }

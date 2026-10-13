@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../../hooks/useEscStack";
+import { formatErrorMessage } from "../../utils/toastUtils";
 
 const vendorSchema = Yup.object().shape({
   name: Yup.string()
@@ -40,7 +41,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create vendor");
+      toast.error(formatErrorMessage(error, "Failed to create vendor"));
     },
   });
 
@@ -52,7 +53,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update vendor");
+      toast.error(formatErrorMessage(error, "Failed to update vendor"));
     },
   });
 

@@ -113,7 +113,12 @@ export default function Quotations() {
         <div className="bento-card p-3 sm:p-6">
           <QuotationTable
             onEdit={(q) => {
-              setEditData(q);
+              if (q?.status === 'converted' || q?.status === 'partially_converted') {
+                // Converted quotes are locked — open view-only via edit with flag
+                setEditData({ ...q, _locked: true });
+              } else {
+                setEditData(q);
+              }
               setShowForm(true);
             }}
             onView={(q) => setViewData(q)}
@@ -135,6 +140,7 @@ export default function Quotations() {
           updateDocument={(id, data) => updateQuotation(id, data)}
           getNextNumber={getNextQuotationNumber}
           finalSubmitStatus="pending"
+          readOnly={Boolean(editData?._locked || editData?.status === 'converted' || editData?.status === 'partially_converted')}
         />
       )}
 

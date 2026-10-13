@@ -539,7 +539,15 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                           {customerChallans.map((ch) => {
                             const tot = Number(ch.total_amount) || 0;
                             const itemsCount = ch.items?.length || 0;
-                            const status = ch.status || (ch.is_billed ? 'billed' : 'open');
+                            const rawStatus = ch.status || (ch.is_billed ? 'billed' : 'open');
+                            const isInvoiced = Boolean(
+                              ch.is_billed
+                              || rawStatus === 'billed'
+                              || rawStatus === 'invoiced'
+                              || ch.converted_invoice
+                              || ch.converted_invoice_number
+                            );
+                            const statusLabel = isInvoiced ? 'Invoiced' : (rawStatus === 'open' || rawStatus === 'pending' ? 'Open' : rawStatus);
 
                             const linkedInv = customerInvoices.find(inv => {
                               const convInvId = ch.converted_invoice?.id || ch.converted_invoice;
@@ -594,11 +602,11 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                 </td>
                                 <td className="py-3 px-4 text-center">
                                   <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                    status === 'billed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                    status === 'open' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                    isInvoiced ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                    statusLabel === 'Open' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                                     'bg-gray-500/10 text-gray-400 border border-gray-500/20'
                                   }`}>
-                                    {status}
+                                    {statusLabel}
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 text-center print-hidden">

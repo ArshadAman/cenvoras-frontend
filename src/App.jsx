@@ -25,6 +25,7 @@ import SalesOrderList from './pages/SalesOrderList'
 import DeliveryChallanList from './pages/DeliveryChallanList'
 import ComingSoon from './pages/ComingSoon'
 import BOMList from './pages/inventory/BOMList'
+import BarcodeGenerator from './pages/inventory/BarcodeGenerator'
 import StockJournalList from './pages/inventory/StockJournalList'
 import BatchListPage from './pages/inventory/BatchListPage'
 import PriceListList from './pages/inventory/PriceListList'
@@ -186,7 +187,11 @@ function App() {
         />
         <Route
           path="/boms"
-          element={isAuthenticated ? <Navigate to="/coming-soon" replace /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><BOMList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/inventory/barcodes"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><BarcodeGenerator /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/stock-journals"

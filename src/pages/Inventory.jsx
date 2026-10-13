@@ -5,9 +5,9 @@ import ProductForm from "../components/inventory/ProductForm";
 import ProductDetailsModal from "../components/inventory/ProductDetailsModal";
 import ProductDeleteDialog from "../components/inventory/ProductDeleteDialog";
 import StockAdjustmentModal from "../components/inventory/StockAdjustmentModal";
-// import StockTransfer from "../components/inventory/StockTransfer";
+import StockTransfer from "../components/inventory/StockTransfer";
 import BatchSplitModal from "../components/inventory/BatchSplitModal";
-import { CubeIcon, PlusIcon, ScissorsIcon } from '@heroicons/react/24/outline';
+import { CubeIcon, PlusIcon, ScissorsIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../hooks/useEscStack";
 
 export default function Inventory() {
@@ -16,7 +16,7 @@ export default function Inventory() {
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [showStockAdjustment, setShowStockAdjustment] = useState(false);
-  // const [showStockTransfer, setShowStockTransfer] = useState(false);
+  const [showStockTransfer, setShowStockTransfer] = useState(false);
   const [showBatchSplit, setShowBatchSplit] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
@@ -27,6 +27,7 @@ export default function Inventory() {
     showProductDetails ||
     productToDelete ||
     showStockAdjustment ||
+    showStockTransfer ||
     showBatchSplit
   );
 
@@ -36,6 +37,7 @@ export default function Inventory() {
   // Esc keys for modals
   useEscKey(() => setShowBatchSplit(false), showBatchSplit, 20);
   useEscKey(() => setShowStockAdjustment(false), showStockAdjustment, 20);
+  useEscKey(() => setShowStockTransfer(false), showStockTransfer, 20);
   useEscKey(() => setProductToDelete(null), Boolean(productToDelete), 20);
   useEscKey(() => setShowProductDetails(false), showProductDetails, 15);
   useEscKey(() => { setShowProductForm(false); setEditingProduct(null); }, showProductForm, 10);
@@ -110,17 +112,14 @@ export default function Inventory() {
                 <ScissorsIcon className="h-4 w-4" />
                 Split Batch
               </button>
-              {/* Transfer Stock - disabled as of now */}
-              {/* <button
-                disabled
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-500 cursor-not-allowed opacity-70 relative"
+              <button
+                type="button"
+                onClick={() => setShowStockTransfer(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm font-medium text-white/85 transition hover:bg-white/10"
               >
                 <ArrowsRightLeftIcon className="h-4 w-4" />
                 Transfer Stock
-                <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full">
-                  Soon
-                </span>
-              </button> */}
+              </button>
               <button
                 onClick={handleAddProduct}
                 className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
@@ -177,11 +176,11 @@ export default function Inventory() {
         />
       )}
 
-      {/* {showStockTransfer && (
+      {showStockTransfer && (
         <StockTransfer
           onClose={() => setShowStockTransfer(false)}
         />
-      )} */}
+      )}
 
       {showBatchSplit && (
         <BatchSplitModal

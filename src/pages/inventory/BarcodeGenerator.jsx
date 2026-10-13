@@ -12,12 +12,15 @@ export default function BarcodeGenerator() {
     const [quantity, setQuantity] = useState(10);
     const printRef = useRef(null);
 
-    const { data: products } = useQuery({
-        queryKey: ['products'],
-        queryFn: getProducts
+    const { data: productsData } = useQuery({
+        queryKey: ['products', 'barcode-generator'],
+        queryFn: () => getProducts({ page_size: 500 }),
     });
+    const products = Array.isArray(productsData)
+      ? productsData
+      : productsData?.results || productsData?.data || [];
 
-    const activeProduct = products?.find(p => p.id === selectedProduct);
+    const activeProduct = products.find(p => p.id === selectedProduct);
 
     const handlePrint = useReactToPrint({
         contentRef: printRef,
@@ -43,7 +46,7 @@ export default function BarcodeGenerator() {
                             className="input-field w-full"
                         >
                             <option value="">-- Choose Product --</option>
-                            {products?.map(p => (
+                            {products.map(p => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
@@ -108,7 +111,7 @@ export default function BarcodeGenerator() {
                                         <div className="text-xs text-gray-500 mb-2">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
                                         <div className="w-full flex justify-center scale-75 origin-top">
                                             <Barcode 
-                                                value={activeProduct.id.split('-')[0].toUpperCase()} // Generate a short unique ID for barcode, as UUID is too long
+                                                value={String(activeProduct.barcode || activeProduct.meta?.barcode || activeProduct.item_code || activeProduct.id.split('-')[0].toUpperCase())}
                                                 format="CODE128" 
                                                 width={1.5} 
                                                 height={40} 
