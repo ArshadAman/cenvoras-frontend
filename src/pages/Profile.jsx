@@ -748,11 +748,6 @@ const Profile = ({ onLogout }) => {
       return;
     }
 
-    if (bankFieldsChanged && !String(formData.current_password || '').trim()) {
-      toast.error('Current password is required to update bank details');
-      return;
-    }
-
     if (formData.country === 'IN' && formData.gstin && formData.state) {
       const gstinPrefix = formData.gstin.trim().slice(0, 2);
       const stateCode = getGSTStateCode(formData.state);
@@ -789,7 +784,7 @@ const Profile = ({ onLogout }) => {
       bank_qr_code: defaultAcc.qr_code || ''
     };
 
-    if (isEmailChanged || bankFieldsChanged) {
+    if (isEmailChanged) {
       updateData.current_password = formData.current_password;
     }
 
@@ -1932,23 +1927,6 @@ const Profile = ({ onLogout }) => {
                         );
                       })()}
 
-                      {/* Password confirmation prompt for bank details */}
-                      {isEditing && bankFieldsChanged && (
-                        <div className="mt-5 rounded-xl border border-amber-400/40 bg-amber-500/10 p-4">
-                          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
-                            Confirm Current Password (Required to save bank details)
-                          </label>
-                          <input
-                            type="password"
-                            name="current_password"
-                            value={formData.current_password}
-                            onChange={handleInputChange}
-                            disabled={updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-amber-400/40 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-300/70 focus:outline-none disabled:opacity-60"
-                            placeholder="Enter your current password to authorize bank updates"
-                          />
-                        </div>
-                      )}
                     </div>
                     )}
 

@@ -6,8 +6,10 @@ export const getSalesOrders = (params) =>
 export const getSalesOrder = (id) => 
   api.get(`/billing/sales-orders/${id}/`).then(res => res.data);
 
-export const getNextSalesOrderNumber = (params) =>
-  api.get("/billing/sales-orders/next-number/", { params }).then(res => res.data);
+export const getNextSalesOrderNumber = (prefix = 'SO') => {
+  const p = typeof prefix === 'object' ? prefix?.prefix || 'SO' : (prefix || 'SO');
+  return api.get(`/billing/sales-orders/next-number/?prefix=${p}`).then(res => res.data);
+};
 
 export const createSalesOrder = (data) => 
   api.post("/billing/sales-orders/", data).then(res => res.data);

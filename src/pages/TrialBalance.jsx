@@ -142,7 +142,7 @@ export default function TrialBalance() {
     document.body.removeChild(link);
   };
 
-  const isBalanced = data?.is_balanced ?? Math.abs(Number(data?.difference || 0)) < 0.01;
+  const isBalanced = !isError && !!data && (data?.is_balanced ?? Math.abs(Number(data?.difference || 0)) < 0.01);
   const totalDebits = Number(data?.total_debits || 0);
   const totalCredits = Number(data?.total_credits || 0);
   const diff = Number(data?.difference || 0);
@@ -220,67 +220,83 @@ export default function TrialBalance() {
         </div>
       </div>
 
+      {isError && (
+        <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-center text-rose-400">
+          <ExclamationTriangleIcon className="w-10 h-10 mx-auto mb-2 text-rose-400" />
+          <h3 className="text-base font-bold text-white mb-1">Failed to load Trial Balance</h3>
+          <p className="text-xs text-rose-300/80 mb-4">An error occurred while fetching double-entry account balances.</p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Status Card */}
-        <div
-          className={`bento-card !p-5 border ${
-            isBalanced
-              ? 'border-emerald-500/30 bg-emerald-500/5'
-              : 'border-rose-500/30 bg-rose-500/5'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs uppercase tracking-wider font-semibold text-gray-400">
-              Ledger State
-            </span>
-            {isBalanced ? (
-              <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
-            ) : (
-              <ExclamationTriangleIcon className="w-5 h-5 text-rose-400 animate-pulse" />
-            )}
+      {!isLoading && !isError && data && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Status Card */}
+          <div
+            className={`bento-card !p-5 border ${
+              isBalanced
+                ? 'border-emerald-500/30 bg-emerald-500/5'
+                : 'border-rose-500/30 bg-rose-500/5'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs uppercase tracking-wider font-semibold text-gray-400">
+                Ledger State
+              </span>
+              {isBalanced ? (
+                <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+              ) : (
+                <ExclamationTriangleIcon className="w-5 h-5 text-rose-400 animate-pulse" />
+              )}
+            </div>
+            <div className={`text-xl font-bold ${isBalanced ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {isBalanced ? 'Balanced' : 'Imbalanced'}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              {isBalanced ? 'Debits and Credits equal exactly' : `Difference of ${getCurrencySymbol()}${fmt(Math.abs(diff))}`}
+            </p>
           </div>
-          <div className={`text-xl font-bold ${isBalanced ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {isBalanced ? 'Balanced' : 'Imbalanced'}
-          </div>
-          <p className="text-xs text-gray-400 mt-1">
-            {isBalanced ? 'Debits and Credits equal exactly' : `Difference of ${getCurrencySymbol()}${fmt(Math.abs(diff))}`}
-          </p>
-        </div>
 
-        {/* Total Debits */}
-        <div className="bento-card !p-5 border border-white/10">
-          <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
-            Total Debits (Dr)
+          {/* Total Debits */}
+          <div className="bento-card !p-5 border border-white/10">
+            <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
+              Total Debits (Dr)
+            </div>
+            <div className="text-2xl font-bold text-white">
+              {getCurrencySymbol()}{fmt(totalDebits)}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">All accounts debit sum</p>
           </div>
-          <div className="text-2xl font-bold text-white">
-            {getCurrencySymbol()}{fmt(totalDebits)}
-          </div>
-          <p className="text-xs text-gray-400 mt-1">All accounts debit sum</p>
-        </div>
 
-        {/* Total Credits */}
-        <div className="bento-card !p-5 border border-white/10">
-          <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
-            Total Credits (Cr)
+          {/* Total Credits */}
+          <div className="bento-card !p-5 border border-white/10">
+            <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
+              Total Credits (Cr)
+            </div>
+            <div className="text-2xl font-bold text-white">
+              {getCurrencySymbol()}{fmt(totalCredits)}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">All accounts credit sum</p>
           </div>
-          <div className="text-2xl font-bold text-white">
-            {getCurrencySymbol()}{fmt(totalCredits)}
-          </div>
-          <p className="text-xs text-gray-400 mt-1">All accounts credit sum</p>
-        </div>
 
-        {/* Net Difference */}
-        <div className="bento-card !p-5 border border-white/10">
-          <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
-            Dr - Cr Difference
+          {/* Net Difference */}
+          <div className="bento-card !p-5 border border-white/10">
+            <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
+              Dr - Cr Difference
+            </div>
+            <div className={`text-2xl font-bold ${Math.abs(diff) < 0.01 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {getCurrencySymbol()}{fmt(diff)}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Target is {getCurrencySymbol()}0.00</p>
           </div>
-          <div className={`text-2xl font-bold ${Math.abs(diff) < 0.01 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {getCurrencySymbol()}{fmt(diff)}
-          </div>
-          <p className="text-xs text-gray-400 mt-1">Target is {getCurrencySymbol()}0.00</p>
         </div>
-      </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/5 border border-white/10 p-3 rounded-2xl">

@@ -977,6 +977,11 @@ export default function SalesForm({
     userProfileData?.profile?.state ||
     userProfileData?.state ||
     null;
+  const sellerGstin =
+    userProfileData?.billing_profile?.gstin ||
+    userProfileData?.profile?.gstin ||
+    userProfileData?.gstin ||
+    null;
 
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,
@@ -1787,7 +1792,7 @@ export default function SalesForm({
             // Determine IGST vs CGST/SGST
             const taxType = getTaxType(
               { place_of_supply: values.place_of_supply },
-              { state: sellerState }
+              { state: sellerState, gstin: sellerGstin }
             );
             const isIGST = taxType === 'igst';
 

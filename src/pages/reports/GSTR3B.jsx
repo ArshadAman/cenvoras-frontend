@@ -54,8 +54,11 @@ export default function GSTR3B() {
 
   const payment = data?.table_6_1_payment || {};
   const t31 = data?.table_3_1 || {};
+  const t311 = data?.table_3_1_1 || {};
   const t32 = data?.table_3_2 || [];
   const t4 = data?.table_4_itc || {};
+  const t5 = data?.table_5_exempt || {};
+  const t51 = data?.table_5_1_interest || {};
 
   return (
     <div className="p-6 md:p-10 space-y-6 animate-fade-up">
@@ -210,10 +213,13 @@ export default function GSTR3B() {
       <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-1">
         {[
           { id: 'all', label: 'All Tables' },
-          { id: 'table_3_1', label: '3.1 Outward & RCM Supplies' },
-          { id: 'table_3_2', label: '3.2 Inter-State to Unregistered' },
-          { id: 'table_4', label: '4. Eligible ITC' },
-          { id: 'table_6_1', label: '6.1 Tax Payment & Cash Liability' },
+          { id: 'table_3_1', label: '3.1 Outward & RCM' },
+          { id: 'table_3_1_1', label: '3.1.1 ECO Supplies u/s 9(5)' },
+          { id: 'table_3_2', label: '3.2 Inter-State to Unreg' },
+          { id: 'table_4', label: '4. Eligible & Ineligible ITC' },
+          { id: 'table_5', label: '5. Exempt Inward' },
+          { id: 'table_5_1', label: '5.1 Interest & Late Fee' },
+          { id: 'table_6_1', label: '6.1 Tax Payment' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -347,6 +353,72 @@ export default function GSTR3B() {
                 </table>
               </div>
             </div>
+          {/* Table 3.1.1: Supplies notified under section 9(5) */}
+          {(activeTab === 'all' || activeTab === 'table_3_1_1') && (
+            <div className="bento-card overflow-hidden border border-white/10">
+              <div className="px-5 py-4 border-b border-white/10 bg-white/[0.02]">
+                <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                  <span className="text-cyan-400 font-mono font-bold">3.1.1</span>
+                  Details of supplies notified under sub-section (5) of section 9 of the CGST Act, 2017
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-white/[0.02] border-b border-white/5 text-gray-400 uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="py-2.5 px-4 font-semibold">Nature of Supplies</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Taxable Value</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Integrated Tax (IGST)</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Central Tax (CGST)</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">State/UT Tax (SGST)</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Cess</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.03]">
+                    <tr className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 px-4 text-white font-medium">
+                        (i) Taxable supplies on which electronic commerce operator pays tax u/s 9(5)
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-white">
+                        {getCurrencySymbol()}{fmt(t311.supplies_notified_9_5?.txval ?? t311.eco_taxable)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-cyan-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_notified_9_5?.iamt ?? t311.eco_igst)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-cyan-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_notified_9_5?.camt ?? t311.eco_cgst)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-cyan-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_notified_9_5?.samt ?? t311.eco_sgst)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-500">
+                        {getCurrencySymbol()}{fmt(t311.supplies_notified_9_5?.csamt ?? t311.eco_csamt)}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 px-4 text-gray-400">
+                        (ii) Taxable supplies made by registered person through electronic commerce operator
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_through_eco?.txval)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_through_eco?.iamt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_through_eco?.camt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t311.supplies_through_eco?.samt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-500">
+                        {getCurrencySymbol()}{fmt(t311.supplies_through_eco?.csamt)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
           {/* Table 3.2: Inter-state supplies to unregistered persons */}
@@ -475,6 +547,143 @@ export default function GSTR3B() {
                       <td className="py-3 px-4 text-right font-mono text-gray-500">
                         {getCurrencySymbol()}{fmt(t4.net_itc_available?.csamt)}
                       </td>
+                    </tr>
+
+                    {/* (D) Ineligible ITC */}
+                    <tr className="bg-white/[0.01]">
+                      <td colSpan={5} className="py-2 px-4 font-bold text-gray-300">
+                        (D) Ineligible ITC
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-white/[0.02]">
+                      <td className="py-2.5 px-4 pl-8 text-gray-400">(1) As per section 17(5)</td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.iamt)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.camt)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.samt)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-500">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.csamt)}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-white/[0.02]">
+                      <td className="py-2.5 px-4 pl-8 text-gray-400">(2) Others</td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.iamt)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.camt)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.samt)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-gray-500">
+                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.csamt)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Table 5: Values of exempt, nil-rated and non-GST inward supplies */}
+          {(activeTab === 'all' || activeTab === 'table_5') && (
+            <div className="bento-card overflow-hidden border border-white/10">
+              <div className="px-5 py-4 border-b border-white/10 bg-white/[0.02]">
+                <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                  <span className="text-purple-400 font-mono font-bold">5</span>
+                  Values of exempt, nil-rated and non-GST inward supplies
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-white/[0.02] border-b border-white/5 text-gray-400 uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="py-2.5 px-4 font-semibold">Nature of Supplies</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Inter-State Supplies</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Intra-State Supplies</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.03]">
+                    <tr className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-4 text-white font-medium">
+                        From a supplier under composition scheme, Exempt and Nil rated supply
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-white">
+                        {getCurrencySymbol()}{fmt(t5.from_composition_scheme?.inter_state ?? t5.inter_state)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-white">
+                        {getCurrencySymbol()}{fmt(t5.from_composition_scheme?.intra_state ?? t5.intra_state)}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-4 text-gray-400 font-medium">
+                        Non-GST supply
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t5.non_gst_supply?.inter_state)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t5.non_gst_supply?.intra_state)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Table 5.1: Interest & Late fee for previous tax period */}
+          {(activeTab === 'all' || activeTab === 'table_5_1') && (
+            <div className="bento-card overflow-hidden border border-white/10">
+              <div className="px-5 py-4 border-b border-white/10 bg-white/[0.02]">
+                <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                  <span className="text-amber-400 font-mono font-bold">5.1</span>
+                  Interest and Late Fee Payable
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-white/[0.02] border-b border-white/5 text-gray-400 uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="py-2.5 px-4 font-semibold">Description</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Integrated Tax (IGST)</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Central Tax (CGST)</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">State/UT Tax (SGST)</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Cess</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.03]">
+                    <tr className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-4 text-white font-medium">(a) Interest</td>
+                      <td className="py-3 px-4 text-right font-mono text-amber-400">
+                        {getCurrencySymbol()}{fmt(t51.interest?.iamt ?? t51.iamt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-amber-400">
+                        {getCurrencySymbol()}{fmt(t51.interest?.camt ?? t51.camt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-amber-400">
+                        {getCurrencySymbol()}{fmt(t51.interest?.samt ?? t51.samt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-500">
+                        {getCurrencySymbol()}{fmt(t51.interest?.csamt ?? t51.csamt)}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-white/[0.02]">
+                      <td className="py-3 px-4 text-gray-400 font-medium">(b) Late fee</td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-600">—</td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t51.late_fee?.camt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-400">
+                        {getCurrencySymbol()}{fmt(t51.late_fee?.samt)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-gray-600">—</td>
                     </tr>
                   </tbody>
                 </table>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useEscKey from "../hooks/useEscStack";
 import SalesTable from "../components/sales/SalesTable";
 import SalesForm from "../components/sales/SalesForm";
@@ -19,6 +19,7 @@ const normalizePrefix = (value) => {
 };
 
 export default function Sales({ documentType = "invoice" }) {
+  const queryClient = useQueryClient();
   const isQuotation = documentType === "quotation";
   const location = useLocation();
   const navigate = useNavigate();
@@ -89,6 +90,10 @@ export default function Sales({ documentType = "invoice" }) {
     setShowForm(false);
     setEditInvoice(null);
     setAiDraftData(null);
+    queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+    queryClient.invalidateQueries({ queryKey: ["quotations"] });
+    queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+    queryClient.invalidateQueries({ queryKey: ["salesAnalytics"] });
   };
 
   useEffect(() => {
