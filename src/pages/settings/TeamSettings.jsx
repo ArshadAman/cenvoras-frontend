@@ -4,25 +4,40 @@ import { getTeamMembers, createTeamMember, deleteTeamMember, updateTeamMember } 
 import { getUserProfile } from '../../api/users';
 import { UserPlusIcon, TrashIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, CurrencyDollarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
+const DEFAULT_PERMISSIONS = {
+  sales: 'edit',
+  purchases: 'edit',
+  inventory: 'edit',
+  financials: 'edit',
+};
+
+const EMPTY_TEAM_FORM = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  password: '',
+  role: 'manager',
+  permissions: { ...DEFAULT_PERMISSIONS },
+};
+
 export default function TeamSettings() {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    password: '',
-    role: 'manager',
-    permissions: {
-      sales: 'edit',
-      purchases: 'edit',
-      inventory: 'edit',
-      financials: 'edit'
-    }
-  });
+  const [formData, setFormData] = useState({ ...EMPTY_TEAM_FORM, permissions: { ...DEFAULT_PERMISSIONS } });
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditingId(null);
+    setFormData({ ...EMPTY_TEAM_FORM, permissions: { ...DEFAULT_PERMISSIONS } });
+  };
+
+  const closeModal = () => {
+    setShowAddModal(false);
+    resetForm();
+  };
 
   const { data: profileData } = useQuery({
     queryKey: ['profile'],
@@ -42,14 +57,10 @@ export default function TeamSettings() {
     mutationFn: createTeamMember,
     onSuccess: () => {
       queryClient.invalidateQueries(['teamMembers']);
-      setShowAddModal(false);
-      setFormData({
-        first_name: '', last_name: '', email: '', phone: '', password: '', role: 'manager',
-        permissions: { sales: 'edit', purchases: 'edit', inventory: 'edit', financials: 'edit' }
-      });
+      closeModal();
     },
     onError: (err) => {
-      alert(err.response?.data?.detail || err.response?.data?.email?.[0] || 'Error adding team member');
+      alert(err.response?.data?.detail || err.response?.data?.password?.[0] || err.response?.data?.email?.[0] || 'Error adding team member');
     }
   });
 
@@ -57,13 +68,7 @@ export default function TeamSettings() {
     mutationFn: ({ id, data }) => updateTeamMember(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['teamMembers']);
-      setShowAddModal(false);
-      setIsEditing(false);
-      setEditingId(null);
-      setFormData({
-        first_name: '', last_name: '', email: '', phone: '', password: '', role: 'manager',
-        permissions: { sales: 'edit', purchases: 'edit', inventory: 'edit', financials: 'edit' }
-      });
+      closeModal();
     },
     onError: (err) => {
       alert(err.response?.data?.detail || 'Error updating team member');
@@ -88,10 +93,22 @@ export default function TeamSettings() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      role: formData.role || 'manager',
+      permissions: {
+        ...DEFAULT_PERMISSIONS,
+        ...(formData.permissions || {}),
+      },
+    };
+    // Never send empty password on update
+    if (isEditing && !payload.password) {
+      delete payload.password;
+    }
     if (isEditing) {
-      updateMutation.mutate({ id: editingId, data: formData });
+      updateMutation.mutate({ id: editingId, data: payload });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(payload);
     }
   };
 
@@ -105,9 +122,10 @@ export default function TeamSettings() {
       phone: member.phone || '',
       password: '', // Leave blank unless changing
       role: member.role || 'manager',
-      permissions: typeof member.permissions === 'object' && member.permissions !== null 
-        ? member.permissions 
-        : { sales: 'edit', purchases: 'edit', inventory: 'edit', financials: 'edit' }
+      permissions: {
+        ...DEFAULT_PERMISSIONS,
+        ...(typeof member.permissions === 'object' && member.permissions !== null ? member.permissions : {}),
+      },
     });
     setShowAddModal(true);
   };
@@ -138,12 +156,7 @@ export default function TeamSettings() {
           </div>
           <button
             onClick={() => {
-              setIsEditing(false);
-              setEditingId(null);
-              setFormData({
-                first_name: '', last_name: '', email: '', phone: '', password: '', role: 'manager',
-                permissions: { sales: 'edit', purchases: 'edit', inventory: 'edit', financials: 'edit' }
-              });
+              resetForm();
               setShowAddModal(true);
             }}
             disabled={!canAddMore}
@@ -254,14 +267,14 @@ export default function TeamSettings() {
       {/* Add Member Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal}></div>
           <div className="relative bg-[#111] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="p-6 border-b border-white/10 flex justify-between items-center sticky top-0 bg-[#111]/90 backdrop-blur z-10">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 {isEditing ? <PencilSquareIcon className="w-6 h-6 text-purple-400" /> : <UserPlusIcon className="w-6 h-6 text-purple-400" />}
                 {isEditing ? 'Edit Team Member' : 'Add Team Member'}
               </h2>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-white">&times;</button>
+              <button type="button" onClick={closeModal} className="text-gray-400 hover:text-white">&times;</button>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -311,31 +324,34 @@ export default function TeamSettings() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   
-                  {['sales', 'purchases', 'inventory', 'financials'].map((module) => (
+                  {['sales', 'purchases', 'inventory', 'financials'].map((module) => {
+                    const permValue = formData.permissions?.[module] || DEFAULT_PERMISSIONS[module] || 'edit';
+                    return (
                     <div key={module} className="bg-white/5 border border-white/5 rounded-xl p-4">
                       <div className="font-medium text-white capitalize mb-3 border-b border-white/10 pb-2">{module} access</div>
                       <div className="space-y-2">
                         <label className="flex items-center gap-3 cursor-pointer group">
-                          <input type="radio" checked={formData.permissions[module] === 'edit'} onChange={() => handlePermChange(module, 'edit')} className="w-4 h-4 text-purple-500 bg-black border-gray-600 focus:ring-purple-500 focus:ring-offset-black" />
+                          <input type="radio" checked={permValue === 'edit'} onChange={() => handlePermChange(module, 'edit')} className="w-4 h-4 text-purple-500 bg-black border-gray-600 focus:ring-purple-500 focus:ring-offset-black" />
                           <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Full Access (View, Create, Edit)</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer group">
-                          <input type="radio" checked={formData.permissions[module] === 'view'} onChange={() => handlePermChange(module, 'view')} className="w-4 h-4 text-purple-500 bg-black border-gray-600 focus:ring-purple-500 focus:ring-offset-black" />
+                          <input type="radio" checked={permValue === 'view'} onChange={() => handlePermChange(module, 'view')} className="w-4 h-4 text-purple-500 bg-black border-gray-600 focus:ring-purple-500 focus:ring-offset-black" />
                           <span className="text-sm text-gray-300 group-hover:text-white transition-colors">View Only (Read Only)</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer group">
-                          <input type="radio" checked={formData.permissions[module] === 'none'} onChange={() => handlePermChange(module, 'none')} className="w-4 h-4 text-purple-500 bg-black border-gray-600 focus:ring-purple-500 focus:ring-offset-black" />
+                          <input type="radio" checked={permValue === 'none'} onChange={() => handlePermChange(module, 'none')} className="w-4 h-4 text-purple-500 bg-black border-gray-600 focus:ring-purple-500 focus:ring-offset-black" />
                           <span className="text-sm text-gray-300 group-hover:text-white transition-colors">No Access (Hidden)</span>
                         </label>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
-                <button type="button" onClick={() => setShowAddModal(false)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Cancel</button>
+                <button type="button" onClick={closeModal} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Cancel</button>
                 <button type="submit" disabled={isEditing ? updateMutation.isPending : createMutation.isPending} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-purple-500 hover:bg-purple-600 text-white transition-colors disabled:opacity-50">
                   {isEditing 
                     ? (updateMutation.isPending ? 'Saving...' : 'Save Changes')

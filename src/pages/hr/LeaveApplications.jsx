@@ -333,6 +333,8 @@ export default function LeaveApplications() {
       await hrApi.approveLeave(id);
       showSuccessToast("Leave application approved successfully");
       fetchApplications();
+      // Refresh balances after approve so Remaining Quota updates immediately
+      hrApi.getLeaveBalances().then(() => {}).catch(() => {});
     } catch (error) {
       showErrorToast(error, "Failed to approve leave application");
     }

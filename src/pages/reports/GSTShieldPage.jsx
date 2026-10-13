@@ -61,13 +61,26 @@ export default function GSTShieldPage() {
     safe_itc: 0,
     at_risk_itc: 0,
     withheld_pool: 0,
+    has_2b_import: false,
+    is_fully_reconciled: false,
+    ledger_net_itc: null,
     counts: { matched: 0, unmatched: 0, probable: 0, missing_in_books: 0 },
+    matched_bills: [],
     unmatched_bills: [],
     probable_bills: [],
     missing_in_books: [],
     defaulters: [],
     recent_imports: []
   };
+
+  const isFullyReconciled =
+    summary.is_fully_reconciled === true ||
+    (Boolean(summary.has_2b_import || (summary.recent_imports || []).length > 0) &&
+      (summary.counts?.unmatched || 0) === 0 &&
+      (summary.counts?.probable || 0) === 0 &&
+      (summary.counts?.matched || 0) > 0);
+
+  const matchedBills = summary.matched_bills || [];
 
   const formatCurrency = (val) => {
     return `${getCurrencySymbol()}${Number(val || 0).toLocaleString('en-IN', {
@@ -185,11 +198,22 @@ export default function GSTShieldPage() {
         {/* Safe ITC */}
         <div className="bento-card !p-5 border-emerald-500/20 bg-gradient-to-b from-emerald-500/5 to-transparent">
           <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold mb-2">
-            <span className="flex items-center gap-1.5"><CheckCircleIcon className="w-4 h-4" /> Safe ITC (Matched)</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">Verified</span>
+            <span className="flex items-center gap-1.5"><CheckCircleIcon className="w-4 h-4" /> Matched ITC (2B)</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+              isFullyReconciled
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                : 'bg-gray-500/10 border-gray-500/20 text-gray-400'
+            }`}>
+              {isFullyReconciled ? '2B reconciled' : 'Not reconciled yet'}
+            </span>
           </div>
           <div className="text-2xl font-black text-white">{formatCurrency(summary.safe_itc)}</div>
-          <p className="text-[11px] text-gray-400 mt-1">{summary.counts.matched} invoices matched in GSTR-2B</p>
+          <p className="text-[11px] text-gray-400 mt-1">
+            {summary.counts.matched} matched · {summary.counts.probable || 0} probable · {summary.counts.unmatched} at-risk
+            {summary.ledger_net_itc != null && (
+              <> · Ledger Input GST {formatCurrency(summary.ledger_net_itc)}</>
+            )}
+          </p>
         </div>
 
         {/* At-Risk ITC */}
@@ -390,7 +414,9 @@ export default function GSTShieldPage() {
                 {summary.unmatched_bills.length === 0 && (
                   <tr>
                     <td colSpan={8} className="py-8 text-center text-gray-500">
-                      🎉 Zero unmatched bills! All purchase tax credits are 100% verified.
+                      {isFullyReconciled
+                        ? 'No at-risk bills — all purchase invoices match GSTR-2B for this import.'
+                        : 'Not reconciled yet. Upload GSTR-2B to verify ITC matches.'}
                     </td>
                   </tr>
                 )}
@@ -406,8 +432,11 @@ export default function GSTShieldPage() {
           <div className="p-4 border-b border-white/10">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
-              100% Reconciled Invoices (Safe to Claim in GSTR-3B)
+              Matched in GSTR-2B (ITC available after 2B match)
             </h3>
+            <p className="text-[11px] text-gray-400 mt-1">
+              2B match status is not the same as GSTR-3B table 4(C) net ITC from the ledger.
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -418,15 +447,32 @@ export default function GSTShieldPage() {
                   <th className="py-3 px-4">Vendor</th>
                   <th className="py-3 px-4">GSTIN</th>
                   <th className="py-3 px-4 text-right">Taxable</th>
-                  <th className="py-3 px-4 text-right">Verified ITC</th>
+                  <th className="py-3 px-4 text-right">Matched ITC</th>
                   <th className="py-3 px-4 text-center">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {summary.unmatched_bills.length === 0 && summary.counts.matched === 0 && (
+                {matchedBills.map((bill) => (
+                  <tr key={bill.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-white">{bill.bill_number}</td>
+                    <td className="py-3 px-4 text-gray-400">{bill.bill_date}</td>
+                    <td className="py-3 px-4 font-medium text-gray-200">{bill.vendor_name}</td>
+                    <td className="py-3 px-4 font-mono text-gray-400">{bill.vendor_gstin || 'N/A'}</td>
+                    <td className="py-3 px-4 text-right text-gray-300">{formatCurrency(bill.taxable_value)}</td>
+                    <td className="py-3 px-4 text-right font-bold text-emerald-400">{formatCurrency(bill.tax_amount)}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                        Matched
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {matchedBills.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-gray-500">
-                      Upload your GSTR-2B JSON/Excel file above to run reconciliation.
+                      {summary.has_2b_import || (summary.recent_imports || []).length > 0
+                        ? 'No matched bills yet for this import.'
+                        : 'Upload your GSTR-2B JSON/Excel file above to run reconciliation.'}
                     </td>
                   </tr>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { hrApi } from '../../api/hr';
 import { getWarehouses } from '../../api/inventory';
@@ -46,6 +46,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [salaryConfig, setSalaryConfig] = useState(null);
+  const [salaryEdited, setSalaryEdited] = useState(false);
+  const [calculatorKey, setCalculatorKey] = useState(0);
+  const formSessionRef = useRef(0);
 
   // KYC Document file states
   const [aadhaarFile, setAadhaarFile] = useState(null);
@@ -64,6 +67,10 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
 
   useEffect(() => {
     if (isOpen) {
+      formSessionRef.current += 1;
+      setActiveTab('personal');
+      setSalaryEdited(false);
+      setCalculatorKey((k) => k + 1);
       fetchDropdowns();
       if (employee) {
         setFormData({
@@ -108,6 +115,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             work_state: employee.work_state || 'Karnataka',
             components: existingComponents,
           });
+        } else {
+          setSalaryConfig(null);
         }
       } else {
         setFormData(EMPTY_FORM);
@@ -116,6 +125,12 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         setPanFile(null);
         setMarksheetFile(null);
       }
+    } else {
+      // Reset on close so next Add does not inherit prior compensation tab/state
+      setActiveTab('personal');
+      setSalaryConfig(null);
+      setSalaryEdited(false);
+      setFormData(EMPTY_FORM);
     }
   }, [isOpen, employee]);
 
@@ -281,8 +296,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       if (formData.personal_email) payload.personal_email = formData.personal_email;
       if (formData.personal_phone) payload.personal_phone = formData.personal_phone;
 
-      // Attach salary breakdown only if NOT a contract worker
-      if (!isContract && salaryConfig && salaryConfig.monthly_ctc > 0) {
+      // Only attach salary if compensation was edited this session (prevents cross-assign on rapid creates)
+      if (!isContract && salaryEdited && salaryConfig && salaryConfig.monthly_ctc > 0) {
         payload.salary = {
           monthly_ctc: salaryConfig.monthly_ctc,
           components: salaryConfig.components || {},
@@ -292,7 +307,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         }
       }
 
-      if (!isContract && salaryConfig && salaryConfig.tax_declaration) {
+      if (!isContract && salaryEdited && salaryConfig && salaryConfig.tax_declaration) {
         payload.tax_declaration = salaryConfig.tax_declaration;
       }
 
@@ -774,6 +789,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 </div>
               ) : (
                 <SalaryBreakdownCalculator
+                  key={`salary-calc-${calculatorKey}-${employee?.id || 'new'}`}
                   initialMonthlyCtc={
                     salaryConfig?.monthly_ctc ||
                     Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
@@ -782,6 +798,10 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   initialWorkState={salaryConfig?.work_state || formData.work_state || 'Karnataka'}
                   initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
                   onChange={(calcData) => {
+                    const session = formSessionRef.current;
+                    // Ignore stale calculator responses from a previous open session
+                    if (session !== formSessionRef.current) return;
+                    setSalaryEdited(true);
                     setSalaryConfig(calcData);
                     setFormData((prev) => ({
                       ...prev,
