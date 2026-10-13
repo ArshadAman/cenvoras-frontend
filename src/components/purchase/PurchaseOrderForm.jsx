@@ -26,10 +26,14 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.purchase_price ?? product.price ?? 0);
+    setFieldValue(`items.${idx}.tax`, product.tax ?? 0);
     setFieldValue(`items.${idx}.description`, product.description || "");
     setFieldValue(`items.${idx}.product_description`, product.description || "");
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * (product.purchase_price ?? product.price ?? 0);
+    const price = product.purchase_price ?? product.price ?? 0;
+    const tax = Number(product.tax ?? 0);
+    const taxable = quantity * price;
+    const amount = taxable + (taxable * tax) / 100;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
     setInputValue(product.name);
@@ -322,6 +326,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
               product_description: item.description || item.product_description || "",
               quantity: item.quantity || 1,
               price: item.price || 0,
+              tax: item.tax ?? 0,
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
               isExistingProduct: !!(item.product),
@@ -333,6 +338,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
               product_description: "",
               quantity: 1,
               price: 0,
+              tax: 0,
               amount: 0,
               unit: "pcs",
               isExistingProduct: false,
@@ -345,20 +351,27 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             }
             submitLockRef.current = true;
             try {
-               const processedItems = values.items.map(item => ({
+               const processedItems = values.items.map(item => {
+                  const qty = Math.max(1, Number(item.quantity) || 1);
+                  const price = Number(item.price) || 0;
+                  const tax = Number(item.tax) || 0;
+                  const taxable = qty * price;
+                  const amount = Number((taxable + (taxable * tax) / 100).toFixed(2));
+                  return {
                   ...(item.id ? { id: item.id } : {}),
                   ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                   product: item.product_id, // PrimaryKeyRelatedField expects ID
                   product_name: item.product,
                   description: (item.description || item.product_description || "").trim(),
                   product_description: (item.description || item.product_description || "").trim(),
-                  quantity: Math.max(1, Number(item.quantity) || 1),
-                  price: Number(item.price),
-                  amount: Number(item.amount),
+                  quantity: qty,
+                  price: price,
+                  amount: amount,
                   unit: item.unit,
                   discount: 0,
-                  tax: 0,
-               }));
+                  tax: tax,
+               };
+               });
                
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
@@ -438,18 +451,21 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                     {({ push, remove }) => (
                         <div className="space-y-4">
                             {values.items.map((item, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div key={index} className="grid grid-cols-12 gap-3 items-end bg-white/5 p-4 rounded-xl border border-white/5">
                                     <div className="col-span-4">
                                         <label className="block text-xs text-gray-400 mb-1">Product</label>
                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="col-span-1">
                                         <label className="block text-xs text-gray-400 mb-1">Qty</label>
                                         <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" 
                                             onChange={e => {
                                             const qty = Math.max(1, Number(e.target.value) || 1);
+                                            const price = Number(values.items[index].price || 0);
+                                            const tax = Number(values.items[index].tax || 0);
+                                            const taxable = qty * price;
                                                 setFieldValue(`items.${index}.quantity`, qty);
-                                                setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
+                                                setFieldValue(`items.${index}.amount`, taxable + (taxable * tax) / 100);
                                             }}
                                         />
                                     </div>
@@ -457,9 +473,25 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                                         <label className="block text-xs text-gray-400 mb-1">Price</label>
                                         <Field name={`items.${index}.price`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
                                             onChange={e => {
-                                                const price = e.target.value;
+                                                const price = Number(e.target.value) || 0;
+                                                const qty = Number(values.items[index].quantity || 0);
+                                                const tax = Number(values.items[index].tax || 0);
+                                                const taxable = qty * price;
                                                 setFieldValue(`items.${index}.price`, price);
-                                                setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
+                                                setFieldValue(`items.${index}.amount`, taxable + (taxable * tax) / 100);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="col-span-1">
+                                        <label className="block text-xs text-gray-400 mb-1">GST %</label>
+                                        <Field name={`items.${index}.tax`} type="number" min="0" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
+                                            onChange={e => {
+                                                const tax = Number(e.target.value) || 0;
+                                                const qty = Number(values.items[index].quantity || 0);
+                                                const price = Number(values.items[index].price || 0);
+                                                const taxable = qty * price;
+                                                setFieldValue(`items.${index}.tax`, tax);
+                                                setFieldValue(`items.${index}.amount`, taxable + (taxable * tax) / 100);
                                             }}
                                         />
                                     </div>
@@ -476,7 +508,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, price: 0, amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, price: 0, tax: 0, amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
                                 + Add Item
                             </button>
                         </div>

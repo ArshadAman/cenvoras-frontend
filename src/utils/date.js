@@ -26,6 +26,23 @@ export function getKolkataMonthBounds(date = new Date()) {
   return { from, to };
 }
 
+/** Calendar year start (Jan 1) in Asia/Kolkata. */
+export function getKolkataYearStart(date = new Date()) {
+  const todayStr = getTodayKolkata(date);
+  const year = todayStr.split('-')[0];
+  return `${year}-01-01`;
+}
+
+/** Indian FY start (Apr 1) in Asia/Kolkata. */
+export function getKolkataFYStart(date = new Date()) {
+  const todayStr = getTodayKolkata(date);
+  const [yearStr, monthStr] = todayStr.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const fyYear = month >= 4 ? year : year - 1;
+  return `${fyYear}-04-01`;
+}
+
 export function formatDateKolkata(date, format = 'DD-MM-YYYY') {
   if (!date) return '';
   const d = date instanceof Date ? date : new Date(date);
@@ -42,5 +59,12 @@ export function formatDateKolkata(date, format = 'DD-MM-YYYY') {
 
   if (format === 'DD-MM-YYYY') return `${day}-${month}-${year}`;
   if (format === 'YYYY-MM-DD') return `${year}-${month}-${day}`;
+  if (format === 'DD-MMM-YYYY') {
+    const monthShort = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      month: 'short',
+    }).format(d);
+    return `${day}-${monthShort}-${year}`;
+  }
   return `${day}/${month}/${year}`;
 }

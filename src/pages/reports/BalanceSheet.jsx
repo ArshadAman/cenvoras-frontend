@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getTodayKolkata } from '../../utils/date';
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
@@ -18,7 +19,7 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 
-const today = new Date().toISOString().split("T")[0];
+const today = getTodayKolkata();
 const fmt = (v) =>
   parseFloat(v || 0).toLocaleString("en-IN", {
     minimumFractionDigits: 2,

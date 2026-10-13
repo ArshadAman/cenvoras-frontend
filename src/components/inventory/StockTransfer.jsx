@@ -60,11 +60,13 @@ export default function StockTransfer({ onClose }) {
     onSuccess: () => {
       queryClient.invalidateQueries(["stockPoints"]);
       queryClient.invalidateQueries(["stockMovements"]);
+      queryClient.invalidateQueries(["products"]);
+      queryClient.invalidateQueries(["warehouses"]);
       toast.success("Stock Transfer completed successfully!");
       onClose();
     },
     onError: (error) => {
-      toast.error(error?.message || "Failed to create transfer");
+      toast.error(error?.response?.data?.detail || error?.response?.data?.message || error?.message || "Failed to create transfer");
     }
   });
 

@@ -5,8 +5,10 @@ import {
   XMarkIcon, ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import useEscKey from "../../hooks/useEscStack";
 
 function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
+  useEscKey(onClose, isOpen, 10);
   const [form, setForm] = useState({
     employee: '',
     title: '',
@@ -14,6 +16,7 @@ function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
     file_url: '',
     notes: '',
   });
+  const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,19 +28,37 @@ function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
         file_url: '',
         notes: '',
       });
+      setFile(null);
     }
   }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!file && !form.file_url) {
+      toast.error('Upload a file or provide a document URL');
+      return;
+    }
     setSaving(true);
     try {
-      await hrApi.createDocument(form);
+      const payload = new FormData();
+      payload.append('employee', form.employee);
+      payload.append('title', form.title);
+      payload.append('document_type', form.document_type);
+      if (form.notes) payload.append('notes', form.notes);
+      if (form.file_url) payload.append('file_url', form.file_url);
+      if (file) payload.append('file', file);
+      await hrApi.createDocument(payload);
       toast.success('Document uploaded successfully');
       onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to upload document');
+      const data = err.response?.data;
+      const msg = data?.detail
+        || data?.file?.[0]
+        || data?.file_url?.[0]
+        || (typeof data === 'string' ? data : null)
+        || 'Failed to upload document';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -86,7 +107,17 @@ function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Document Link / URL</label>
+            <label className="block text-sm text-gray-300 mb-1">Upload File</label>
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="w-full text-sm text-gray-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30"
+            />
+            {file && <p className="mt-1 text-xs text-gray-500 truncate">{file.name}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Or Document Link / URL</label>
             <input type="url" value={form.file_url} onChange={e => setForm(p => ({ ...p, file_url: e.target.value }))} className={ic} placeholder="https://..." />
           </div>
 

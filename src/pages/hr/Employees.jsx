@@ -190,7 +190,7 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
                 <SalaryBreakdownCalculator
                   initialMonthlyCtc={numNew}
                   initialTaxRegime={employee.tax_regime || 'new'}
-                  initialWorkState={employee.work_state || 'Karnataka'}
+                  initialWorkState={employee.work_state || ''}
                   onChange={(calc) => {
                     // sync changes if user adjusts inside calculator
                   }}
@@ -230,7 +230,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
         hrApi.calculateSalaryBreakdown({
           monthly_ctc: monthly,
           tax_regime: employee.tax_regime || 'new',
-          work_state: employee.work_state || 'Karnataka',
+          work_state: employee.work_state || '',
           components: {
             Basic: basic,
             HRA: hra,

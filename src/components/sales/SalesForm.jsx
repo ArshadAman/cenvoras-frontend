@@ -793,10 +793,15 @@ export default function SalesForm({
   finalSubmitStatus = 'final',
   aiDraftData = null,
   onSaved = null,
+  readOnly = false,
 }) {
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
   const isSalesOrder = documentType === "sales_order";
+  const isLocked = Boolean(
+    readOnly
+    || (isQuotation && (editData?.status === 'converted' || editData?.status === 'partially_converted' || editData?._locked))
+  );
 
   const handleBeforeCloseRef = React.useRef(null);
   const [draggedRowIndex, setDraggedRowIndex] = useState(null);
@@ -1363,6 +1368,12 @@ export default function SalesForm({
       const hasCustomerName = !!customerNameTrimmed;
       const hasAtLeastOneItem = cleanedItems.length > 0;
 
+      // AI draft review: Esc/cancel must not create a draft or reserve a number
+      if (aiDraftData) {
+        onClose();
+        return;
+      }
+
       // Auto-save draft on close (Esc or backdrop click) only when customer is already saved in the database
       if (hasCustomerName && hasAtLeastOneItem) {
         submitActionRef.current = 'draft';
@@ -1404,7 +1415,7 @@ export default function SalesForm({
       customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
       customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
       customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
-      customer_gstin: editData?.customer_gstin || "",
+      customer_gstin: editData?.customer_gstin || aiDraftData?.customer_gstin || "",
       delivery_address: editData?.delivery_address || "",
       save_shipping_address: false,
       vehicle_number: editData?.vehicle_number || "",
@@ -1440,8 +1451,8 @@ export default function SalesForm({
         return [{ challan_number: '', challan_date: '' }];
       })(),
       gst_treatment: editData?.gst_treatment || "registered",
-      place_of_supply: editData?.place_of_supply || "",
-      warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || ""),
+      place_of_supply: editData?.place_of_supply || aiDraftData?.place_of_supply || "",
+      warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || aiDraftData?.warehouse || ""),
       journal: editData?.journal || (isSalesOrder ? "Sales" : isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
       total_amount: editData?.total_amount || null,
       notes: editData?.notes || "",
@@ -1481,25 +1492,28 @@ export default function SalesForm({
       }) : (aiDraftData?.items && aiDraftData.items.length > 0) ? aiDraftData.items.map((item, idx) => {
           const qty = Number(item.quantity) || 1;
           const price = Number(item.price || 0) || 0;
+          const tax = Number(item.tax || 0) || 0;
+          const productId = item.product_id || null;
+          const taxable = qty * price;
           return {
               _key: `item-ai-${idx}`,
-              product: item.product_name || "",
-              product_id: null,
+              product: item.product_name || item.product || "",
+              product_id: productId,
               description: item.description || item.product_description || "",
               product_description: item.description || item.product_description || "",
               quantity: qty,
               free_quantity: 0,
               batch: "",
               price: price,
-              amount: qty * price,
-              unit: "pcs",
-              hsn_sac_code: "",
+              amount: taxable + (taxable * tax) / 100,
+              unit: item.unit || "pcs",
+              hsn_sac_code: item.hsn_sac_code || "",
               discount: 0,
-              tax: 0,
+              tax: tax,
               manufacturer: item.manufacturer || "",
               internal_reference: item.internal_reference || "",
               storage_condition: item.storage_condition || "",
-              isExistingProduct: false,
+              isExistingProduct: Boolean(productId || item.isExistingProduct),
           };
       }) : [{
         _key: 'item-initial-0',
@@ -1558,6 +1572,11 @@ export default function SalesForm({
           initialValues={initialValues}
           enableReinitialize={isEdit}
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
+            if (isLocked) {
+              toast.info(isQuotation ? 'Converted quotations are locked and cannot be edited.' : 'This document is read-only.');
+              setSubmitting(false);
+              return;
+            }
             const isDraft = forceDraft || submitActionRef.current === "draft";
             
             // Clean up empty product rows before processing/validation
@@ -3376,6 +3395,23 @@ export default function SalesForm({
 
                 {/* Actions */}
                 <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
+                  {isLocked ? (
+                    <>
+                      <div className="text-amber-400/90 text-xs flex-1 mr-4">
+                        {isQuotation
+                          ? 'This quotation has been converted and is locked. Editing is disabled.'
+                          : 'This document is read-only.'}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
+                      >
+                        Close
+                      </button>
+                    </>
+                  ) : (
+                    <>
                   <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
                     Closing this window automatically saves as a draft. Or click Save Draft.
                   </div>
@@ -3421,6 +3457,8 @@ export default function SalesForm({
                         ? (isEdit ? "Update Draft" : "Save Draft")
                         : (isEdit ? "Update Invoice" : "Create Invoice")}
                   </button>
+                    </>
+                  )}
                 </div>
               </Form>
             );

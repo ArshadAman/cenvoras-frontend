@@ -203,6 +203,8 @@ export default function Layout({ children, onLogout }) {
         { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
         { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
         { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [], featureKey: 'warehouse', upgradePlan: 'Business', upgradeText: 'Warehouses are available on the Business plan.' },
+        { path: "/boms", label: "Bill of Materials", icon: ClipboardDocumentListIcon, roles: [] },
+        { path: "/inventory/barcodes", label: "Barcodes", icon: CubeIcon, roles: [] },
       ]
     },
     {
@@ -278,7 +280,12 @@ export default function Layout({ children, onLogout }) {
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
   const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
-  const isVipAccess = String(currentPlanName).toLowerCase().includes('vip');
+  const isVipAccess = Boolean(
+    entitlements.is_vip
+    || entitlements.plan?.is_vip
+    || String(currentPlanName).toLowerCase().includes('vip')
+  );
+  const displayPlanName = isVipAccess ? 'VIP Lifetime' : currentPlanName;
   const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
   const nextPlanCode = (entitlements.plan?.pending_plan_code || entitlements.plan?.next_plan_code || '').toLowerCase();
@@ -390,9 +397,9 @@ export default function Layout({ children, onLogout }) {
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
                       : 'bg-white/10 text-gray-300 border-white/10'
                   }`}
-                  title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+                  title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
                 >
-                  {isVipAccess ? 'VIP' : currentPlanName}
+                  {isVipAccess ? 'VIP' : displayPlanName}
                 </span>
                 <button
                   type="button"
@@ -692,9 +699,9 @@ export default function Layout({ children, onLogout }) {
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
                 : 'bg-white/10 text-gray-300 border-white/10'
             }`}
-            title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
+            title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
           >
-            {isVipAccess ? 'VIP' : currentPlanName}
+            {isVipAccess ? 'VIP' : displayPlanName}
           </span>
         </header>
 

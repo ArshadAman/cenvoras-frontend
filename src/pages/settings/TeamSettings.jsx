@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTeamMembers, createTeamMember, deleteTeamMember, updateTeamMember } from '../../api/team';
 import { getUserProfile } from '../../api/users';
 import { UserPlusIcon, TrashIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, CurrencyDollarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import useEscKey from '../../hooks/useEscStack';
 
 const DEFAULT_PERMISSIONS = {
   sales: 'edit',
@@ -38,6 +39,7 @@ export default function TeamSettings() {
     setShowAddModal(false);
     resetForm();
   };
+  useEscKey(closeModal, showAddModal, 10);
 
   const { data: profileData } = useQuery({
     queryKey: ['profile'],
@@ -87,7 +89,14 @@ export default function TeamSettings() {
   // Read dynamic limits directly from plan 
   const currentCount = teamMembersList.length;
   const maxLimit = Number(profile?.max_managers) || 0;
-  const planName = profile?.plan_name || 'Starter Plan';
+  const isVip = Boolean(
+    profile?.is_lifetime_free
+    || profileData?.subscription?.is_vip
+    || (profile?.plan_name || '').toUpperCase().includes('VIP')
+  );
+  const planName = isVip
+    ? 'VIP Lifetime'
+    : (profile?.plan_name || 'Starter Plan');
   
   const canAddMore = maxLimit === -1 || currentCount < maxLimit;
 
@@ -152,7 +161,7 @@ export default function TeamSettings() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Team & Roles</h1>
-            <p className="text-gray-400">Manage your team's access to Cenvoras.</p>
+            <p className="text-gray-400">Manage your team's access to Cenvora.</p>
           </div>
           <button
             onClick={() => {

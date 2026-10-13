@@ -1,10 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
 import { hrApi } from '../../api/hr';
 import { getWarehouses } from '../../api/inventory';
+import { getUserProfile } from '../../api/users';
 import { toast } from 'react-toastify';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import SalaryBreakdownCalculator from '../../components/hr/SalaryBreakdownCalculator';
+import { indianStates, getGSTStateCode } from '../../utils/indiaData';
+import useEscKey from '../../hooks/useEscStack';
+
+function resolveCompanyWorkState(profileState) {
+  if (!profileState) return 'Karnataka';
+  const raw = String(profileState).trim();
+  if (!raw) return 'Karnataka';
+  // Already a full state name used by PT slabs
+  const byLabel = indianStates.find((s) => s.label.toLowerCase() === raw.toLowerCase());
+  if (byLabel) return byLabel.label;
+  const code = getGSTStateCode(raw);
+  if (code) {
+    const byCode = indianStates.find((s) => getGSTStateCode(s.value) === code || getGSTStateCode(s.label) === code);
+    if (byCode) return byCode.label;
+  }
+  return raw;
+}
 
 const EMPTY_FORM = {
   full_name: '',
@@ -19,7 +38,7 @@ const EMPTY_FORM = {
   gender: 'M',
   employment_type: 'full_time',
   contract_fee: '',
-  work_state: 'Karnataka',
+  work_state: '',
   status: 'active',
   department_id: '',
   designation_id: '',
@@ -38,6 +57,7 @@ const EMPTY_FORM = {
 };
 
 export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess }) {
+  useEscKey(onClose, isOpen, 10);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -49,6 +69,17 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [salaryEdited, setSalaryEdited] = useState(false);
   const [calculatorKey, setCalculatorKey] = useState(0);
   const formSessionRef = useRef(0);
+
+  const { data: profileData } = useQuery({
+    queryKey: ['profile'],
+    queryFn: getUserProfile,
+    enabled: isOpen,
+    staleTime: 60_000,
+  });
+  const companyWorkState = useMemo(
+    () => resolveCompanyWorkState(profileData?.profile?.state || profileData?.billing_profile?.state),
+    [profileData]
+  );
 
   // KYC Document file states
   const [aadhaarFile, setAadhaarFile] = useState(null);
@@ -86,7 +117,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           gender: employee.gender || 'M',
           employment_type: employee.employment_type || 'full_time',
           contract_fee: employee.contract_fee || '',
-          work_state: employee.work_state || 'Karnataka',
+          work_state: employee.work_state || companyWorkState,
           status: employee.status || 'active',
           department_id: employee.department || '',
           designation_id: employee.designation || '',
@@ -112,14 +143,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           setSalaryConfig({
             monthly_ctc: currentCtc > 0 ? currentCtc : Number(employee.salary_details?.monthly_ctc || 50000),
             tax_regime: employee.tax_regime || 'new',
-            work_state: employee.work_state || 'Karnataka',
+            work_state: employee.work_state || companyWorkState,
             components: existingComponents,
           });
         } else {
           setSalaryConfig(null);
         }
       } else {
-        setFormData(EMPTY_FORM);
+        setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
         setSalaryConfig(null);
         setAadhaarFile(null);
         setPanFile(null);
@@ -130,9 +161,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       setActiveTab('personal');
       setSalaryConfig(null);
       setSalaryEdited(false);
-      setFormData(EMPTY_FORM);
+      setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
     }
-  }, [isOpen, employee]);
+  }, [isOpen, employee, companyWorkState]);
 
   const fetchDropdowns = async () => {
     try {
@@ -795,7 +826,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
                   }
                   initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
-                  initialWorkState={salaryConfig?.work_state || formData.work_state || 'Karnataka'}
+                  initialWorkState={salaryConfig?.work_state || formData.work_state || companyWorkState}
                   initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
                   onChange={(calcData) => {
                     const session = formSessionRef.current;

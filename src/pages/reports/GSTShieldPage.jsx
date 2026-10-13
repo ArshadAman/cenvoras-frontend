@@ -13,6 +13,7 @@ import {
   downloadCAAuditPack
 } from '../../api/gst';
 import { getCurrencySymbol } from '../../utils/currency';
+import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
 
 import {
   ShieldCheckIcon,
@@ -40,9 +41,9 @@ export default function GSTShieldPage() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Date filters for CA Pack
-  const todayStr = new Date().toISOString().split('T')[0];
-  const monthStartStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  // Date filters for CA Pack (IST — avoid UTC “yesterday”)
+  const { from: monthStartStr, to: _monthEnd } = getKolkataMonthBounds();
+  const todayStr = getTodayKolkata();
   const [fromDate, setFromDate] = useState(monthStartStr);
   const [toDate, setToDate] = useState(todayStr);
 

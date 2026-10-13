@@ -4,9 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getProfitLossStatement } from "../../api/gst";
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getTodayKolkata, getKolkataYearStart } from '../../utils/date';
 
-const today = new Date().toLocaleDateString('sv-SE');
-const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+const today = getTodayKolkata();
+const yearStart = getKolkataYearStart();
 const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function ProfitLossStatement() {

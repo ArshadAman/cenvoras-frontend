@@ -25,7 +25,20 @@ export default function AuditLogList() {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return format(date, 'dd MMM yyyy HH:mm:ss');
+    try {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).format(date) + ' IST';
+    } catch {
+      return format(date, 'dd MMM yyyy HH:mm:ss');
+    }
   };
 
   // Readable mappings for technical terms
@@ -68,10 +81,23 @@ export default function AuditLogList() {
   const formatValue = (field, val) => {
     if (val === null || val === undefined) return 'None';
     if (typeof val === 'boolean') return val ? 'Yes' : 'No';
-    if (field.includes('amount') || field.includes('price') || field === 'total_revenue') {
-      return `${getCurrencySymbol()}${Number(val).toLocaleString()}`;
+    if (typeof val === 'object') {
+      try {
+        return JSON.stringify(val);
+      } catch {
+        return '[object]';
+      }
     }
-    return String(val);
+    if (field.includes('amount') || field.includes('price') || field === 'total_revenue') {
+      const num = Number(val);
+      if (!Number.isNaN(num)) return `${getCurrencySymbol()}${num.toLocaleString()}`;
+    }
+    // Mask tenant UUIDs / long opaque IDs for non-technical readability
+    const s = String(val);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) {
+      return `${s.slice(0, 8)}…`;
+    }
+    return s;
   };
 
   const renderChanges = (log) => {
