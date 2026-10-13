@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getGSTR3BSummary } from '../../api/gst';
 import { getCurrencySymbol } from '../../utils/currency';
+import { getKolkataMonthBounds } from '../../utils/date';
 import { toast } from 'react-toastify';
 import {
   DocumentTextIcon,
@@ -25,9 +26,7 @@ const fmt = (v) =>
   });
 
 export default function GSTR3B() {
-  const now = new Date();
-  const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const defaultTo = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const { from: defaultFrom, to: defaultTo } = getKolkataMonthBounds();
 
   const [fromDate, setFromDate] = useState(defaultFrom);
   const [toDate, setToDate] = useState(defaultTo);

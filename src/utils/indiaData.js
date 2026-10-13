@@ -75,3 +75,52 @@ export const citiesByState = {
   UT: ['Dehradun', 'Haridwar', 'Roorkee', 'Haldwani', 'Rudrapur', 'Kashipur'],
   WB: ['Kolkata', 'Asansol', 'Siliguri', 'Durgapur', 'Bardhaman', 'English Bazar', 'Baharampur', 'Habra', 'Kharagpur'],
 };
+
+export const STATE_TO_GST_CODE = {
+  '01': '01', 'JK': '01', 'JAMMU AND KASHMIR': '01',
+  '02': '02', 'HP': '02', 'HIMACHAL PRADESH': '02',
+  '03': '03', 'PB': '03', 'PUNJAB': '03',
+  '04': '04', 'CH': '04', 'CHANDIGARH': '04',
+  '05': '05', 'UT': '05', 'UK': '05', 'UA': '05', 'UTTARAKHAND': '05',
+  '06': '06', 'HR': '06', 'HARYANA': '06',
+  '07': '07', 'DL': '07', 'DELHI': '07',
+  '08': '08', 'RJ': '08', 'RAJASTHAN': '08',
+  '09': '09', 'UP': '09', 'UTTAR PRADESH': '09',
+  '10': '10', 'BR': '10', 'BIHAR': '10',
+  '11': '11', 'SK': '11', 'SIKKIM': '11',
+  '12': '12', 'AR': '12', 'ARUNACHAL PRADESH': '12',
+  '13': '13', 'NL': '13', 'NAGALAND': '13',
+  '14': '14', 'MN': '14', 'MANIPUR': '14',
+  '15': '15', 'MZ': '15', 'MIZORAM': '15',
+  '16': '16', 'TR': '16', 'TRIPURA': '16',
+  '17': '17', 'ML': '17', 'MEGHALAYA': '17',
+  '18': '18', 'AS': '18', 'ASSAM': '18',
+  '19': '19', 'WB': '19', 'WEST BENGAL': '19',
+  '20': '20', 'JH': '20', 'JHARKHAND': '20',
+  '21': '21', 'OR': '21', 'OD': '21', 'ODISHA': '21', 'ORISSA': '21',
+  '22': '22', 'CG': '22', 'CT': '22', 'CHHATTISGARH': '22',
+  '23': '23', 'MP': '23', 'MADHYA PRADESH': '23',
+  '24': '24', 'GJ': '24', 'GUJARAT': '24',
+  '25': '25', 'DD': '25', 'DAMAN AND DIU': '25',
+  '26': '26', 'DN': '26', 'DADRA AND NAGAR HAVELI AND DAMAN AND DIU': '26',
+  '27': '27', 'MH': '27', 'MAHARASHTRA': '27',
+  '28': '28', 'AP (OLD)': '28',
+  '29': '29', 'KA': '29', 'KARNATAKA': '29',
+  '30': '30', 'GA': '30', 'GOA': '30',
+  '31': '31', 'LD': '31', 'LAKSHADWEEP': '31',
+  '32': '32', 'KL': '32', 'KERALA': '32',
+  '33': '33', 'TN': '33', 'TAMIL NADU': '33',
+  '34': '34', 'PY': '34', 'PUDUCHERRY': '34',
+  '35': '35', 'AN': '35', 'ANDAMAN AND NICOBAR ISLANDS': '35',
+  '36': '36', 'TG': '36', 'TS': '36', 'TELANGANA': '36',
+  '37': '37', 'AP': '37', 'ANDHRA PRADESH': '37',
+  '38': '38', 'LA': '38', 'LADAKH': '38',
+  '97': '97', 'OT': '97', 'OTHER TERRITORY': '97',
+};
+
+export const getGSTStateCode = (stateVal) => {
+  if (!stateVal) return null;
+  const s = String(stateVal).trim().toUpperCase();
+  return STATE_TO_GST_CODE[s] || (s.length === 2 && /^\d+$/.test(s) ? s : null);
+};
+

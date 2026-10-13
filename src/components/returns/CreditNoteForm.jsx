@@ -68,23 +68,36 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
-      .map(item => ({
-        product: item.product_detail?.id || item.product_id || item.product, // Extract exact UUID
-        batch: item.batch_id || item.batch || null,
-        hsn_sac_code: item.hsn_sac_code,
-        description: item.description || item.product_description || "",
-        quantity: parseFloat(item.return_qty),
-        unit: item.unit,
-        price: parseFloat(item.price),
-        discount: parseFloat(item.discount || 0),
-        tax: parseFloat(item.tax || 0),
-        amount: (parseFloat(item.price) * parseFloat(item.return_qty)) // Simplified calculation
-      }));
+      .map(item => {
+        const qty = parseFloat(item.return_qty) || 0;
+        const price = parseFloat(item.price) || 0;
+        const discount = parseFloat(item.discount || 0);
+        const taxRate = parseFloat(item.tax || 0);
+        const base = qty * price;
+        const discAmt = base * (discount / 100);
+        const taxable = base - discAmt;
+        const taxAmt = taxable * (taxRate / 100);
+        const lineGross = Math.round((taxable + taxAmt) * 100) / 100;
+        return {
+          product: item.product_detail?.id || item.product_id || item.product,
+          batch: item.batch_id || item.batch || null,
+          hsn_sac_code: item.hsn_sac_code,
+          description: item.description || item.product_description || "",
+          quantity: qty,
+          unit: item.unit,
+          price: price,
+          discount: discount,
+          tax: taxRate,
+          amount: lineGross
+        };
+      });
 
     if (itemsToReturn.length === 0) {
       toast.error("Please select at least one item to return");
       return;
     }
+
+    const totalAmt = Math.round(itemsToReturn.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
 
     const payload = {
       date: new Date().toLocaleDateString('sv-SE'),
@@ -93,7 +106,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       reason,
       notes,
       items: itemsToReturn,
-      total_amount: itemsToReturn.reduce((sum, item) => sum + item.amount, 0),
+      total_amount: totalAmt,
       warehouse: selectedInvoice.warehouse // Return to same warehouse
     };
 

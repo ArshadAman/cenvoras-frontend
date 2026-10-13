@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { getTrialBalance, repairRoundOffEntries } from '../api/ledger';
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { getTodayKolkata } from '../utils/date';
 import { toast } from 'react-toastify';
 import {
   ScaleIcon,
@@ -39,7 +40,7 @@ export default function TrialBalance() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0]);
+  const [asOfDate, setAsOfDate] = useState(getTodayKolkata());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [hideZeroBalances, setHideZeroBalances] = useState(true);

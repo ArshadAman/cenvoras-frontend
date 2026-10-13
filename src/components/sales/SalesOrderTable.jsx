@@ -11,6 +11,7 @@ import {
   TrashIcon,
   ArrowPathRoundedSquareIcon,
 } from "@heroicons/react/24/outline";
+import { getCurrencySymbol } from "../../utils/currency";
 
 export default function SalesOrderTable({ 
   onEdit, 

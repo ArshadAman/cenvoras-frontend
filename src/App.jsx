@@ -289,6 +289,10 @@ function App() {
           element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
         />
         <Route
+          path="/gstr-3b"
+          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/gst/gstr-3b"
           element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
         />

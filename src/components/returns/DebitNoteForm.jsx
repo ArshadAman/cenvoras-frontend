@@ -92,22 +92,35 @@ export default function DebitNoteForm({ isOpen, onClose }) {
     
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
-      .map(item => ({
-        product: item.product_id,
-        batch: null, // Default batch to null as there's no original bill
-        hsn_sac_code: item.hsn_sac_code,
-        quantity: parseFloat(item.return_qty),
-        unit: item.unit,
-        price: parseFloat(item.price),
-        discount: parseFloat(item.discount || 0),
-        tax: parseFloat(item.tax || 0),
-        amount: parseFloat(item.amount)
-      }));
+      .map(item => {
+        const qty = parseFloat(item.return_qty) || 0;
+        const itemPrice = parseFloat(item.price) || 0;
+        const discount = parseFloat(item.discount || 0);
+        const taxRate = parseFloat(item.tax || 0);
+        const base = qty * itemPrice;
+        const discAmt = base * (discount / 100);
+        const taxable = base - discAmt;
+        const taxAmt = taxable * (taxRate / 100);
+        const grossAmount = Math.round((taxable + taxAmt) * 100) / 100;
+        return {
+          product: item.product_id,
+          batch: null, // Default batch to null as there's no original bill
+          hsn_sac_code: item.hsn_sac_code,
+          quantity: qty,
+          unit: item.unit,
+          price: itemPrice,
+          discount: discount,
+          tax: taxRate,
+          amount: grossAmount
+        };
+      });
 
     if (itemsToReturn.length === 0) {
       toast.error("Please add at least one product to return");
       return;
     }
+
+    const totalAmt = Math.round(itemsToReturn.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
 
     const payload = {
       date: new Date().toLocaleDateString('sv-SE'),
@@ -117,7 +130,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
       reason,
       notes,
       items: itemsToReturn,
-      total_amount: itemsToReturn.reduce((sum, item) => sum + item.amount, 0),
+      total_amount: totalAmt,
       warehouse: null
     };
 

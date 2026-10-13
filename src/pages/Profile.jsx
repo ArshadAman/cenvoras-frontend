@@ -18,10 +18,12 @@ import {
   XMarkIcon,
   KeyIcon,
   BuildingLibraryIcon,
-  QrCodeIcon
+  QrCodeIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import Select from 'react-select';
 import { State, City } from 'country-state-city';
+import { getGSTStateCode } from '../utils/indiaData';
 import { getUserProfile, patchUserProfile, changePassword } from '../api/users';
 import {
   getSubscriptionEntitlements,
@@ -749,6 +751,15 @@ const Profile = ({ onLogout }) => {
     if (bankFieldsChanged && !String(formData.current_password || '').trim()) {
       toast.error('Current password is required to update bank details');
       return;
+    }
+
+    if (formData.country === 'IN' && formData.gstin && formData.state) {
+      const gstinPrefix = formData.gstin.trim().slice(0, 2);
+      const stateCode = getGSTStateCode(formData.state);
+      if (/^\d{2}$/.test(gstinPrefix) && stateCode && gstinPrefix !== stateCode) {
+        toast.error(`GSTIN state prefix '${gstinPrefix}' does not match selected state '${formData.state}' (code ${stateCode}). Please correct before saving.`);
+        return;
+      }
     }
 
     const defaultAcc = (formData.bank_accounts || []).find(a => a.is_default) || (formData.bank_accounts || [])[0] || {};
@@ -1609,6 +1620,21 @@ const Profile = ({ onLogout }) => {
                               placeholder="GSTIN (optional)"
                               maxLength={15}
                             />
+                            {formData.country === 'IN' && formData.gstin && formData.state && (() => {
+                              const gstinPrefix = formData.gstin.trim().slice(0, 2);
+                              const stateCode = getGSTStateCode(formData.state);
+                              if (/^\d{2}$/.test(gstinPrefix) && stateCode && gstinPrefix !== stateCode) {
+                                return (
+                                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-xs flex items-start gap-2">
+                                    <ExclamationTriangleIcon className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                                    <span>
+                                      Warning: GSTIN starts with state code &apos;{gstinPrefix}&apos;, which does not match your selected state &apos;{formData.state}&apos; (code {stateCode}).
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
                             <input
                               type="text"
                               name="pan_number"

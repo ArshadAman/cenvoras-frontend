@@ -90,7 +90,7 @@ export default function CreditNoteList() {
                     notes.map((cn) => (
                       <tr key={cn.id} className="hover:bg-white/5 transition-colors">
                         <td className="p-4">
-                          <div className="text-white font-medium">CN-{cn.credit_note_number}</div>
+                          <div className="text-white font-medium">{cn.credit_note_number.startsWith('CN-') ? cn.credit_note_number : `CN-${cn.credit_note_number}`}</div>
                         </td>
                         <td className="p-4 text-gray-300 text-sm">{cn.date}</td>
                         <td className="p-4 text-gray-300 text-sm">{cn.customer_name}</td>
@@ -140,7 +140,7 @@ export default function CreditNoteList() {
                   <div key={cn.id} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 hover:bg-white/10 transition-all">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="text-cyan-400 font-black text-xs tracking-widest uppercase mb-1">CN-{cn.credit_note_number}</div>
+                        <div className="text-cyan-400 font-black text-xs tracking-widest uppercase mb-1">{cn.credit_note_number.startsWith('CN-') ? cn.credit_note_number : `CN-${cn.credit_note_number}`}</div>
                         <div className="text-white font-bold">{cn.customer_name}</div>
                         <div className="text-gray-500 text-[10px] uppercase tracking-tighter mt-1">{formattedDate}</div>
                       </div>
