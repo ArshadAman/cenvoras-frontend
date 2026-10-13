@@ -20,9 +20,9 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
 
   if (isLoading) {
     return (
-      <section className="bento-card !p-4 animate-pulse">
-        <div className="h-6 w-48 bg-white/10 rounded mb-4" />
-        <div className="space-y-3">
+      <section className="bento-card !p-5 h-full flex flex-col animate-pulse">
+        <div className="h-6 w-48 bg-white/10 rounded mb-4 flex-shrink-0" />
+        <div className="flex-1 space-y-3 min-h-0">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-16 bg-white/5 rounded-lg" />
           ))}
@@ -96,7 +96,7 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
             <div className="space-y-3">
               {warnings.map((warning, i) => {
                 const Icon = getIcon(warning.type);
@@ -132,9 +132,9 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
   };
 
   return (
-    <section className="bento-card !p-5">
+    <section className="bento-card !p-5 h-full flex flex-col min-h-0">
       {/* Header with Health Status */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Alerts</h2>
           <span className="text-xs px-2 py-0.5 bg-white/5 text-gray-500 rounded-full">
@@ -151,15 +151,15 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
         </div>
       </div>
 
-      {/* Warning List */}
+      {/* Warning List — fills remaining card height; themed scrollbar */}
       {warnings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
           <CheckCircleIcon className="w-12 h-12 text-green-500/30 mb-3" />
           <p className="text-sm text-gray-500">No alerts right now!</p>
           <p className="text-xs text-gray-600">Your business is running smoothly 🎉</p>
         </div>
       ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2 pr-1">
           {warnings.slice(0, 5).map((warning, i) => {
             const Icon = getIcon(warning.type);
             const styles = severityStyles[warning.severity] || severityStyles.yellow;
@@ -203,7 +203,7 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
       )}
       
       {warnings.length > 5 && (
-        <div className="mt-3 text-center">
+        <div className="mt-3 pt-3 border-t border-white/5 text-center flex-shrink-0">
           <button
             type="button"
             onClick={() => setShowAllAlerts(true)}

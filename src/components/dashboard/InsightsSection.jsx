@@ -37,13 +37,13 @@ export default function InsightsSection({ data, isLoading }) {
   const colors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b'];
 
   return (
-    <section className="bento-card !p-5">
-      <div className="flex items-center gap-2 mb-5">
+    <section className="bento-card !p-5 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-5 flex-shrink-0">
         <TrophyIcon className="w-5 h-5 text-amber-400" />
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Profit Finder</h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 flex-1">
         {/* Top 5 Bestsellers */}
         <div>
           <h3 className="text-xs font-medium text-gray-500 mb-3 flex items-center gap-2">
