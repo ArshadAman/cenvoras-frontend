@@ -440,7 +440,8 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
             </button>
           </div>
         </Form>
-      )}
+        );
+      }}
     </Formik>
   );
 }
