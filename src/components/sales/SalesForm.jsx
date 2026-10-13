@@ -1623,6 +1623,26 @@ export default function SalesForm({
             }
             
             try {
+              // Bare product names (no UUID) require explicit catalog-create confirm
+              const bareNameItems = cleanedItems.filter((item) => {
+                if (item.row_type === 'note') return false;
+                const pid = item.product_id;
+                const pname = (typeof item.product === 'string' ? item.product : '').trim();
+                if (!pname) return false;
+                if (pid && isUUID(String(pid))) return false;
+                if (pname && isUUID(pname)) return false;
+                return true;
+              });
+              let allowCreateProducts = false;
+              if (bareNameItems.length > 0) {
+                const names = bareNameItems.map((i) => (i.product || '').trim()).filter(Boolean).slice(0, 5).join(', ');
+                allowCreateProducts = window.confirm(
+                  `${bareNameItems.length} line(s) use a product name without a catalog ID (${names}${bareNameItems.length > 5 ? ', …' : ''}).\n\n` +
+                  'OK = create missing products in catalog and continue.\n' +
+                  'Cancel = continue only if those names already exist (or use "Save as New Product" first).'
+                );
+              }
+
               const processedItems = cleanedItems.map(item => {
                 if (item.row_type === 'note') {
                   return {
@@ -1650,11 +1670,15 @@ export default function SalesForm({
                 const taxableAmount = baseAmount - discountAmount;
                 const taxAmount = (taxableAmount * tax) / 100;
                 const amount = Number((taxableAmount + taxAmount).toFixed(2));
-                
+                const productRef = item.product_id || item.product;
+                const isBareName = !(item.product_id && isUUID(String(item.product_id)))
+                  && !(typeof productRef === 'string' && isUUID(productRef));
+
                 return {
                   row_type: 'item',
-                  product: item.product_id || item.product, // Pass UUID if available, else name
+                  product: productRef, // Pass UUID if available, else name
                   product_name: (item.product || '').trim(),
+                  ...(isBareName && allowCreateProducts ? { confirm_create_product: true } : {}),
                   quantity: quantity,
                   free_quantity: itemSettings.show_item_free_quantity ? (Number(item.free_quantity) || 0) : 0,
                   ...(itemSettings.show_item_batch && item.batch ? { batch: item.batch } : {}),

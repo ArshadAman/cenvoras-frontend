@@ -125,9 +125,9 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
             if (parseFloat(payslip.loan_recovery || 0) > 0 && !deductionsMap['Loan Recovery']) {
               deductionsMap['Loan Recovery'] = payslip.loan_recovery;
             }
-            if (parseFloat(payslip.lop_amount || 0) > 0 && !deductionsMap['Loss of Pay (LOP)']) {
-              deductionsMap['Loss of Pay (LOP)'] = payslip.lop_amount;
-            }
+            // LOP is already in prorated gross — do not add as a deduction line
+            delete deductionsMap['Loss of Pay (LOP)'];
+            delete deductionsMap['LOP'];
             if (Object.keys(deductionsMap).length === 0 && parseFloat(payslip.total_deductions || 0) > 0) {
               deductionsMap['Statutory & Other Deductions'] = payslip.total_deductions;
             }

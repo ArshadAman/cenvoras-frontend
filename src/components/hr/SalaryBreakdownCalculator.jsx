@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { hrApi } from '../../api/hr';
 import {
   CurrencyRupeeIcon,
@@ -155,6 +155,8 @@ export default function SalaryBreakdownCalculator({
     setAdHocAdditions(prev => prev.filter(item => item.id !== id));
   };
 
+  const calcRequestIdRef = useRef(0);
+
   // Fetch / Compute breakdown from backend
   const calculateBreakdown = useCallback(async () => {
     if (!monthlyCtc || monthlyCtc <= 0) {
@@ -162,6 +164,7 @@ export default function SalaryBreakdownCalculator({
       return;
     }
 
+    const requestId = ++calcRequestIdRef.current;
     setLoading(true);
     try {
       const basicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
@@ -211,6 +214,8 @@ export default function SalaryBreakdownCalculator({
       }
 
       const res = await hrApi.calculateSalaryBreakdown(payload);
+      // Ignore stale responses from an earlier calc / unmounted session
+      if (requestId !== calcRequestIdRef.current) return;
       setBreakdown(res.data);
 
       if (onChange) {
@@ -226,9 +231,10 @@ export default function SalaryBreakdownCalculator({
         });
       }
     } catch (err) {
+      if (requestId !== calcRequestIdRef.current) return;
       console.error('Failed to calculate breakdown:', err);
     } finally {
-      setLoading(false);
+      if (requestId === calcRequestIdRef.current) setLoading(false);
     }
   }, [
     monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic,

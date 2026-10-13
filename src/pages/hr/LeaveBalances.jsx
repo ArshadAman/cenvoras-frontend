@@ -157,7 +157,11 @@ export default function LeaveBalances() {
                 {loading ? (
                   <tr><td colSpan="5" className="px-6 py-4 text-center">Loading...</td></tr>
                 ) : balances.length === 0 ? (
-                  <tr><td colSpan="5" className="px-6 py-4 text-center">No leave balances found</td></tr>
+                  <tr>
+                    <td colSpan="5" className="px-6 py-8 text-center text-gray-400">
+                      No leave balances yet. Add employees and paid leave types — balances initialize at 0 / entitlement automatically.
+                    </td>
+                  </tr>
                 ) : (
                   balances.map(bal => (
                     <tr key={bal.id} className="border-b border-white/10 hover:bg-white/5">

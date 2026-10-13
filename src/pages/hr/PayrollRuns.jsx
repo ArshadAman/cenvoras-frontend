@@ -461,9 +461,9 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                     if (parseFloat(selectedPayslip.loan_recovery || 0) > 0 && !deductionsMap['Loan Recovery']) {
                       deductionsMap['Loan Recovery'] = selectedPayslip.loan_recovery;
                     }
-                    if (parseFloat(selectedPayslip.lop_amount || 0) > 0 && !deductionsMap['Loss of Pay (LOP)']) {
-                      deductionsMap['Loss of Pay (LOP)'] = selectedPayslip.lop_amount;
-                    }
+                    // LOP is already in prorated gross — do not add as a deduction line
+                    delete deductionsMap['Loss of Pay (LOP)'];
+                    delete deductionsMap['LOP'];
                     if (Object.keys(deductionsMap).length === 0 && parseFloat(selectedPayslip.total_deductions || 0) > 0) {
                       deductionsMap['Statutory & Other Deductions'] = selectedPayslip.total_deductions;
                     }
