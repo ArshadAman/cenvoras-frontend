@@ -24,6 +24,7 @@ export default function SalesOrderTable({
   const [search, setSearch] = useState(initialSearch || "");
   const [page, setPage] = useState(1);
   const [convertOrder, setConvertOrder] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
 
   React.useEffect(() => {
     if (initialSearch) {
@@ -43,8 +44,6 @@ export default function SalesOrderTable({
   const orders = Array.isArray(data) ? data : data?.results || data?.data || [];
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
-
-  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
 
   const handleSort = (key) => {
     setSortConfig(prev => {

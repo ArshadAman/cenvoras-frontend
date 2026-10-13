@@ -353,6 +353,8 @@ export default function GSTR3B() {
                 </table>
               </div>
             </div>
+          )}
+
           {/* Table 3.1.1: Supplies notified under section 9(5) */}
           {(activeTab === 'all' || activeTab === 'table_3_1_1') && (
             <div className="bento-card overflow-hidden border border-white/10">

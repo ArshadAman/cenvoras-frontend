@@ -30,6 +30,7 @@ export default function Sales({ documentType = "invoice" }) {
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [invoicePrefix, setInvoicePrefix] = useState(DEFAULT_INVOICE_PREFIX);
+  const [statusFilterTab, setStatusFilterTab] = useState(isQuotation ? "draft" : "final");
 
   // Hierarchical ESC key navigation:
   // 1. Idle on section list -> Esc redirects to Professional Dashboard (/dashboard)
@@ -93,6 +94,17 @@ export default function Sales({ documentType = "invoice" }) {
     queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
     queryClient.invalidateQueries({ queryKey: ["quotations"] });
     queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+    queryClient.invalidateQueries({ queryKey: ["salesAnalytics"] });
+  };
+
+  const handleDocumentSaved = (saved) => {
+    const status = String(saved?.status || "").toLowerCase();
+    if (status === "draft") {
+      setStatusFilterTab("draft");
+    } else if (status === "final") {
+      setStatusFilterTab("final");
+    }
+    queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
     queryClient.invalidateQueries({ queryKey: ["salesAnalytics"] });
   };
 
@@ -223,6 +235,8 @@ export default function Sales({ documentType = "invoice" }) {
           </div>
           <SalesTable
             initialStatusFilter={isQuotation ? "draft" : "final"}
+            statusFilter={statusFilterTab}
+            onStatusFilterChange={setStatusFilterTab}
             hideStatusTabs={isQuotation}
             documentType={documentType}
             onEdit={handleEdit}
@@ -238,6 +252,7 @@ export default function Sales({ documentType = "invoice" }) {
         <SalesForm 
           isOpen={showForm} 
           onClose={handleCloseForm}
+          onSaved={handleDocumentSaved}
           editData={editInvoice}
           aiDraftData={aiDraftData}
           invoicePrefix={invoicePrefix}

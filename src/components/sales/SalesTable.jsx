@@ -48,6 +48,8 @@ export default function SalesTable({
   onView,
   onDelete,
   initialStatusFilter = "all",
+  statusFilter,
+  onStatusFilterChange,
   hideStatusTabs = false,
   documentType = "invoice",
 }) {
@@ -57,7 +59,17 @@ export default function SalesTable({
   const [page] = useState(1);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [statusFilterTab, setStatusFilterTab] = useState(initialStatusFilter); // "all", "final", "draft"
+  const [internalStatusFilter, setInternalStatusFilter] = useState(initialStatusFilter); // "all", "final", "draft"
+  const isStatusControlled = statusFilter !== undefined && statusFilter !== null;
+  const statusFilterTab = isStatusControlled ? statusFilter : internalStatusFilter;
+  const setStatusFilterTab = (tab) => {
+    if (typeof onStatusFilterChange === "function") {
+      onStatusFilterChange(tab);
+    }
+    if (!isStatusControlled) {
+      setInternalStatusFilter(tab);
+    }
+  };
   const [dateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
@@ -184,8 +196,10 @@ export default function SalesTable({
   });
 
   useEffect(() => {
-    setStatusFilterTab(initialStatusFilter);
-  }, [initialStatusFilter]);
+    if (!isStatusControlled) {
+      setInternalStatusFilter(initialStatusFilter);
+    }
+  }, [initialStatusFilter, isStatusControlled]);
 
   const docLabel = documentType === "quotation" ? "quotation" : "invoice";
   const docLabelPlural = documentType === "quotation" ? "quotations" : "invoices";

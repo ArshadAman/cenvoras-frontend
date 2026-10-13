@@ -46,7 +46,7 @@ export default function TrialBalance() {
   const [hideZeroBalances, setHideZeroBalances] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState({});
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['trialBalance', asOfDate],
     queryFn: () => getTrialBalance(asOfDate),
   });
@@ -142,7 +142,9 @@ export default function TrialBalance() {
     document.body.removeChild(link);
   };
 
-  const isBalanced = !isError && !!data && (data?.is_balanced ?? Math.abs(Number(data?.difference || 0)) < 0.01);
+  // Never show Balanced while a fetch is in flight (incl. date changes / refetch)
+  const reportReady = !isLoading && !isFetching && !isError && !!data;
+  const isBalanced = reportReady && (data?.is_balanced ?? Math.abs(Number(data?.difference || 0)) < 0.01);
   const totalDebits = Number(data?.total_debits || 0);
   const totalCredits = Number(data?.total_credits || 0);
   const diff = Number(data?.difference || 0);
@@ -235,7 +237,7 @@ export default function TrialBalance() {
       )}
 
       {/* KPI Cards */}
-      {!isLoading && !isError && data && (
+      {reportReady && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Status Card */}
           <div
@@ -422,7 +424,10 @@ export default function TrialBalance() {
                           const acc = item.account || {};
                           const dr = Number(item.debit_total || 0);
                           const cr = Number(item.credit_total || 0);
-                          const bal = Number(item.balance || 0);
+                          // Trial balance net side uses raw Dr−Cr (not account-type signed balance).
+                          // Liabilities/revenue are credit-normal; their signed `balance` is flipped vs Dr/Cr.
+                          const netDrCr = dr - cr;
+                          const netLabel = netDrCr >= 0 ? 'Dr' : 'Cr';
 
                           return (
                             <tr key={acc.id} className="hover:bg-white/[0.02] transition-colors group">
@@ -441,8 +446,8 @@ export default function TrialBalance() {
                               <td className="py-3 px-4 text-right font-mono font-medium text-white">
                                 {cr > 0.001 ? `${getCurrencySymbol()}${fmt(cr)}` : '—'}
                               </td>
-                              <td className={`py-3 px-4 text-right font-mono font-semibold ${bal >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                {getCurrencySymbol()}{fmt(Math.abs(bal))} {bal >= 0 ? 'Dr' : 'Cr'}
+                              <td className={`py-3 px-4 text-right font-mono font-semibold ${netDrCr >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                {getCurrencySymbol()}{fmt(Math.abs(netDrCr))} {netLabel}
                               </td>
                               <td className="py-3 px-4 text-center">
                                 <Link

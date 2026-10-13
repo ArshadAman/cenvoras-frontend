@@ -737,7 +737,7 @@ const Profile = ({ onLogout }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     console.log('Submitting profile update...', formData);
     const originalEmail = String(profile.email || '').trim().toLowerCase();
     const updatedEmail = String(formData.email || '').trim().toLowerCase();
@@ -1475,7 +1475,24 @@ const Profile = ({ onLogout }) => {
                     </div>
                   </div>
 
-                  <form id="profile-form" onSubmit={handleSubmit} className="space-y-7">
+                  <form
+                    id="profile-form"
+                    onSubmit={(e) => {
+                      // Only persist when the Save button is clicked — not on Select Enter/change
+                      e.preventDefault();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                        const isSubmitControl =
+                          e.target.type === 'submit' ||
+                          e.target.closest?.('button[type="submit"]');
+                        if (!isSubmitControl) {
+                          e.preventDefault();
+                        }
+                      }
+                    }}
+                    className="space-y-7"
+                  >
                     {role !== 'employee' ? (
                       <>
                         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
@@ -1680,10 +1697,15 @@ const Profile = ({ onLogout }) => {
                             <Select
                               options={State.getStatesOfCountry(formData.country).map(state => ({ value: state.isoCode, label: state.name }))}
                               value={formData.state ? { value: formData.state, label: State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state } : null}
-                              onChange={(option) => setFormData(prev => ({ ...prev, state: option.value, city: '' }))}
+                              onChange={(option) => {
+                                // Local form state only — persisted via Save Changes
+                                setFormData(prev => ({ ...prev, state: option?.value || '', city: '' }));
+                              }}
                               isDisabled={!isEditing || updateProfileMutation.isPending}
                               styles={customSelectStyles}
                               placeholder="Select State"
+                              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                              menuPosition="fixed"
                             />
                           </div>
                         )}
@@ -1940,7 +1962,8 @@ const Profile = ({ onLogout }) => {
                           Cancel
                         </button>
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleSubmit}
                           disabled={updateProfileMutation.isPending}
                           className="rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                         >
