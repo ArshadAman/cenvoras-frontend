@@ -8,6 +8,7 @@ import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import useEscKey from '../../hooks/useEscStack';
+import { formatErrorMessage } from '../../utils/toastUtils';
 
 const GST_RATES = [
   { value: 0, label: "0% (Exempt / Nil)" },
@@ -43,6 +44,13 @@ const productSchema = Yup.object().shape({
     .max(100, "Tax cannot exceed 100%")
     .nullable(),
   hsn_sac_code: Yup.string()
+    .transform((v) => (v == null ? "" : String(v).trim()))
+    .required("HSN/SAC code is required")
+    .test("not-na", "HSN/SAC code is required", (value) => Boolean(value) && value.toUpperCase() !== "N/A")
+    .test("min-digits", "HSN/SAC code must be at least 4 digits", (value) => {
+      const digits = String(value || "").replace(/\D/g, "");
+      return digits.length >= 4;
+    })
     .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
     .required("Unit is required")
@@ -237,16 +245,36 @@ export default function ProductForm({ product, onClose }) {
   });
   const [isCustomUnit, setIsCustomUnit] = useState(false);
 
+  const applyServerFieldErrors = (error, setFieldError) => {
+    const data = error?.response?.data;
+    if (!data || typeof data !== "object") return false;
+
+    // Support both DRF field maps and { error, details } envelopes
+    const fieldMap =
+      data.details && typeof data.details === "object" && !Array.isArray(data.details)
+        ? data.details
+        : data;
+
+    const skipKeys = new Set(["detail", "error", "message", "non_field_errors", "details"]);
+    let applied = false;
+
+    Object.entries(fieldMap).forEach(([field, messages]) => {
+      if (skipKeys.has(field)) return;
+      const msg = Array.isArray(messages) ? messages[0] : messages;
+      if (typeof msg === "string" && msg.trim()) {
+        setFieldError(field, msg);
+        applied = true;
+      }
+    });
+    return applied;
+  };
+
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries(["products"]);
       toast.success("Product created successfully!");
       onClose();
-    },
-    onError: (error) => {
-      console.error("Error creating product:", error);
-      toast.error(error.response?.data?.message || "Failed to create product");
     },
   });
 
@@ -256,10 +284,6 @@ export default function ProductForm({ product, onClose }) {
       queryClient.invalidateQueries(["products"]);
       toast.success("Product updated successfully!");
       onClose();
-    },
-    onError: (error) => {
-      console.error("Error updating product:", error);
-      toast.error(error.response?.data?.message || "Failed to update product");
     },
   });
 
@@ -285,7 +309,7 @@ export default function ProductForm({ product, onClose }) {
     },
   };
 
-  const handleSubmit = (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
     const metaData = {};
 
     if (values.meta.barcode?.trim()) metaData.barcode = values.meta.barcode;
@@ -299,7 +323,7 @@ export default function ProductForm({ product, onClose }) {
       internal_reference: values.internal_reference?.trim() || null,
       description: values.description || null,
       tax: values.tax ? parseFloat(values.tax) : 0,
-      hsn_sac_code: values.hsn_sac_code || null,
+      hsn_sac_code: values.hsn_sac_code?.trim() || null,
       unit: values.unit,
       secondary_unit: values.secondary_unit || null,
       conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
@@ -310,12 +334,34 @@ export default function ProductForm({ product, onClose }) {
       meta: metaData,
     };
 
-    if (isEdit) {
-      updateMutation.mutate({ id: product.id, data: productData });
-    } else {
-      createMutation.mutate(productData);
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({ id: product.id, data: productData });
+      } else {
+        await createMutation.mutateAsync(productData);
+      }
+    } catch (error) {
+      console.error(isEdit ? "Error updating product:" : "Error creating product:", error);
+      const hasFieldError = applyServerFieldErrors(error, setFieldError);
+      const fallback = isEdit ? "Failed to update product" : "Failed to create product";
+      const toastMsg = formatErrorMessage(error, fallback);
+      // Always surface HSN clearly when that field failed
+      if (hasFieldError && error?.response?.data?.hsn_sac_code) {
+        const hsnMsg = Array.isArray(error.response.data.hsn_sac_code)
+          ? error.response.data.hsn_sac_code[0]
+          : error.response.data.hsn_sac_code;
+        toast.error(typeof hsnMsg === "string" ? hsnMsg : toastMsg);
+      } else if (hasFieldError && error?.response?.data?.details?.hsn_sac_code) {
+        const hsnMsg = Array.isArray(error.response.data.details.hsn_sac_code)
+          ? error.response.data.details.hsn_sac_code[0]
+          : error.response.data.details.hsn_sac_code;
+        toast.error(typeof hsnMsg === "string" ? hsnMsg : toastMsg);
+      } else {
+        toast.error(toastMsg);
+      }
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const activeGstRates = React.useMemo(() => {
@@ -387,7 +433,7 @@ export default function ProductForm({ product, onClose }) {
                 </div>
 
                 <div>
-                  <label className={labelClass}>HSN/SAC Code</label>
+                  <label className={labelClass}>HSN/SAC Code *</label>
                   <Field
                     name="hsn_sac_code"
                     type="text"

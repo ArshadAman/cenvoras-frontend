@@ -792,6 +792,7 @@ export default function SalesForm({
   getNextNumber = getNextInvoiceNumber,
   finalSubmitStatus = 'final',
   aiDraftData = null,
+  onSaved = null,
 }) {
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
@@ -1263,7 +1264,7 @@ export default function SalesForm({
 
   const createMutation = useMutation({
     mutationFn: createDocument,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
@@ -1271,10 +1272,14 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       if (submitActionRef.current === 'draft') {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
+      }
+      if (typeof onSaved === 'function') {
+        onSaved(data || { status: submitActionRef.current === 'draft' ? 'draft' : finalSubmitStatus });
       }
       onClose();
     },
@@ -1294,7 +1299,7 @@ export default function SalesForm({
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => updateDocument(id, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
@@ -1302,10 +1307,14 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       if (submitActionRef.current === 'draft') {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
+      }
+      if (typeof onSaved === 'function') {
+        onSaved(data || { status: submitActionRef.current === 'draft' ? 'draft' : finalSubmitStatus });
       }
       onClose();
     },
@@ -1324,7 +1333,11 @@ export default function SalesForm({
   });
 
   const handleBeforeClose = async () => {
-    if (formikRef.current && !createMutation.isPending && !updateMutation.isPending) {
+    // Avoid racing a second close that invalidates the list before the draft POST finishes
+    if (createMutation.isPending || updateMutation.isPending) {
+      return;
+    }
+    if (formikRef.current) {
       const values = formikRef.current.values || {};
       const cleanedItems = (values.items || []).filter((item) =>
         item.row_type === 'note'
@@ -1352,6 +1365,7 @@ export default function SalesForm({
       if (hasCustomerName && hasAtLeastOneItem) {
         submitActionRef.current = 'draft';
         await formikRef.current.submitForm();
+        // mutateAsync inside onSubmit waits for save; onSuccess closes + refreshes
         return;
       }
     }
@@ -1750,12 +1764,15 @@ export default function SalesForm({
               }
 
               if (isEdit) {
-                updateMutation.mutate({ id: editData.id, data: formData });
+                await updateMutation.mutateAsync({ id: editData.id, data: formData });
               } else {
-                createMutation.mutate(formData);
+                await createMutation.mutateAsync(formData);
               }
             } catch (error) {
-              toast.error("Error processing form data");
+              // mutateAsync errors are already toasted in onError; avoid double toast for those
+              if (!error?.response) {
+                toast.error("Error processing form data");
+              }
               console.error(error);
             }
             setSubmitting(false);
@@ -1824,7 +1841,8 @@ export default function SalesForm({
                       setProductCreationState(null);
                       return;
                     }
-                    onClose();
+                    e.preventDefault();
+                    handleBeforeClose();
                   }
                 }}
               >

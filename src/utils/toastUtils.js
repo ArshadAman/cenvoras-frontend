@@ -7,6 +7,9 @@ function humanizeKey(key) {
   if (!key || key === 'non_field_errors' || key === 'detail' || key === 'error') {
     return '';
   }
+  if (key === 'hsn_sac_code' || key === 'hsn_code') {
+    return 'HSN/SAC Code';
+  }
   return key
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
@@ -91,6 +94,28 @@ export function formatErrorMessage(err, fallback = 'Something went wrong. Please
       if (pattern.test(responseData.detail)) return replacement;
     }
     return responseData.detail;
+  }
+
+  // Handle { error: "Validation failed", details: { field: ["msg"] } }
+  if (
+    typeof responseData.error === 'string' &&
+    responseData.details &&
+    typeof responseData.details === 'object' &&
+    !Array.isArray(responseData.details)
+  ) {
+    const detailMessages = [];
+    for (const [key, val] of Object.entries(responseData.details)) {
+      const fieldTitle = humanizeKey(key);
+      const messageText = Array.isArray(val)
+        ? val.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ')
+        : typeof val === 'string'
+          ? val
+          : String(val);
+      detailMessages.push(fieldTitle ? `${fieldTitle}: ${messageText}` : messageText);
+    }
+    if (detailMessages.length > 0) {
+      return detailMessages.slice(0, 3).join(' • ');
+    }
   }
 
   // Handle { error: "..." }
