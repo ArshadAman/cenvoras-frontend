@@ -721,14 +721,31 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [saving, setSaving] = useState(false);
+  const [cashWarning, setCashWarning] = useState('');
 
   useEffect(() => {
     if (isOpen) {
+      setCashWarning('');
       getAccounts({ account_type: 'asset' })
-        .then(res => setAccounts(res.results || res || []))
+        .then(res => {
+          const list = res.results || res || [];
+          setAccounts(list);
+          const bank = list.find((a) => String(a.code) === '1002');
+          setSelectedAccount(bank ? bank.id : (list[0]?.id || ''));
+        })
         .catch((err) => showErrorToast(err, 'Failed to load asset accounts'));
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const acc = accounts.find((a) => String(a.id) === String(selectedAccount));
+    const net = parseFloat(payrollRun?.total_net || 0);
+    if (acc && String(acc.code) === '1001' && net > 10000) {
+      setCashWarning('Section 40A(3): Cash disbursement exceeds ₹10,000. Prefer Bank (1002).');
+    } else {
+      setCashWarning('');
+    }
+  }, [selectedAccount, accounts, payrollRun]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -736,10 +753,22 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
       showErrorToast('Please select a payment/bank account');
       return;
     }
+    const acc = accounts.find((a) => String(a.id) === String(selectedAccount));
+    const net = parseFloat(payrollRun?.total_net || 0);
+    const bal = parseFloat(acc?.current_balance || 0);
+    if (acc && bal < net) {
+      showErrorToast(`Insufficient balance in ${acc.name}. Available ₹${bal.toLocaleString('en-IN')}, required ₹${net.toLocaleString('en-IN')}.`);
+      return;
+    }
     setSaving(true);
     try {
-      await hrApi.payPayroll(payrollRun.id, { payment_account_id: selectedAccount });
-      showSuccessToast('Disbursement recorded and ledger entries posted!');
+      const res = await hrApi.payPayroll(payrollRun.id, { payment_account_id: selectedAccount });
+      const warnings = res?.warnings || [];
+      if (warnings.length) {
+        showSuccessToast(`Disbursement recorded. Note: ${warnings[0]}`);
+      } else {
+        showSuccessToast('Disbursement recorded and ledger entries posted!');
+      }
       onSuccess();
       onClose();
     } catch (err) {
@@ -775,7 +804,11 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
               ))}
             </select>
           </div>
-          <p className="text-xs text-gray-400">This will credit the chosen bank account and debit Salaries Payable in the General Ledger, settling loan recoveries.</p>
+          {cashWarning ? (
+            <p className="text-xs text-amber-400">{cashWarning}</p>
+          ) : (
+            <p className="text-xs text-gray-400">Defaults to Bank (1002). Credits the chosen account and debits Salaries Payable.</p>
+          )}
 
           <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-400 bg-white/5 rounded-xl hover:text-white">Cancel</button>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { getProducts, getVendorProducts } from "../../api/purchase";
+import { getProducts, getVendorProducts, getPurchaseBills } from "../../api/purchase";
 import { getVendors } from "../../api/vendors";
 import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -14,6 +14,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   const [step, setStep] = useState(1);
   const [vendorName, setVendorName] = useState("");
   const [vendorGstin, setVendorGstin] = useState("");
+  const [originalBillId, setOriginalBillId] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
   const [returnQty, setReturnQty] = useState(1);
   const [price, setPrice] = useState(0);
@@ -38,6 +39,23 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   });
 
   const productList = Array.isArray(products) ? products : products?.results || [];
+
+  const { data: billsResult } = useQuery({
+    queryKey: ["purchase-bills-for-dn", vendorName],
+    queryFn: () => getPurchaseBills({ search: vendorName, page_size: 50 }),
+    enabled: isOpen && !!vendorName,
+  });
+  const billList = (Array.isArray(billsResult) ? billsResult : billsResult?.results || [])
+    .filter((b) => !vendorName || (b.vendor_name || '').toLowerCase().includes(vendorName.toLowerCase()));
+
+  const handleBillSelect = (billId) => {
+    setOriginalBillId(billId);
+    const bill = billList.find((b) => String(b.id) === String(billId));
+    if (bill) {
+      if (bill.vendor_name) setVendorName(bill.vendor_name);
+      if (bill.vendor_gstin) setVendorGstin(bill.vendor_gstin);
+    }
+  };
 
   const handleAddProduct = () => {
     if (!selectedProductId) {
@@ -122,9 +140,14 @@ export default function DebitNoteForm({ isOpen, onClose }) {
 
     const totalAmt = Math.round(itemsToReturn.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
 
+    if (!originalBillId) {
+      toast.error("Please link this debit note to an original purchase bill");
+      return;
+    }
+
     const payload = {
       date: new Date().toLocaleDateString('sv-SE'),
-      original_bill: null,
+      original_bill: originalBillId,
       vendor_name: vendorName,
       vendor_gstin: vendorGstin,
       reason,
@@ -141,6 +164,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
     setStep(1);
     setVendorName("");
     setVendorGstin("");
+    setOriginalBillId("");
     setSelectedProductId("");
     setReturnQty(1);
     setPrice(0);
@@ -185,6 +209,22 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
                      placeholder="Enter GSTIN"
                    />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium text-gray-400 mb-1">Original Purchase Bill *</label>
+                   <select
+                     value={originalBillId}
+                     onChange={(e) => handleBillSelect(e.target.value)}
+                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                     required
+                   >
+                     <option value="">{vendorName ? "Select bill..." : "Enter vendor first..."}</option>
+                     {billList.map((b) => (
+                       <option key={b.id} value={b.id}>
+                         {b.bill_number} — {b.bill_date} — ₹{parseFloat(b.total_amount || 0).toLocaleString('en-IN')}
+                       </option>
+                     ))}
+                   </select>
                 </div>
               </div>
 
