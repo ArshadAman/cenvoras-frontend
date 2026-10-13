@@ -12,6 +12,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
 import PurchaseOrders from './pages/PurchaseOrders'
+import VendorPayments from './pages/VendorPayments'
 import Sales from './pages/Sales'
 import Quotations from './pages/Quotations'
 import Inventory from './pages/Inventory'
@@ -158,6 +159,10 @@ function App() {
         <Route
           path="/purchase-orders"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><PurchaseOrders /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/vendor-payments"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><VendorPayments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/sales"

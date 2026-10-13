@@ -261,7 +261,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                           </td>
                           <td className="px-6 py-5 text-right font-mono text-sm text-gray-300 align-top">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
                           <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{parseFloat(item.discount || 0).toFixed(1)}%</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{getCurrencySymbol()}{parseFloat(item.tax || 0).toFixed(2)}</td>
+                          <td className="px-6 py-5 text-right font-mono text-sm text-gray-500 align-top">{item.tax_display || `${parseFloat(item.tax_rate ?? item.tax || 0)}%`}</td>
                           <td className="px-6 py-5 text-right font-mono text-sm font-black text-white align-top">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
                         </tr>
                       ))}
@@ -320,9 +320,26 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
                 <div className="w-full sm:w-80 bg-white/[0.03] border border-white/10 rounded-[32px] p-8 space-y-4 shadow-xl">
                   <div className="flex justify-between items-center text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    <span>Subtotal</span>
-                    <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
+                    <span>Subtotal (ex-GST)</span>
+                    <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.taxable_amount || bill.subtotal || 0).toFixed(2)}</span>
                   </div>
+                  {parseFloat(bill.igst || 0) > 0 ? (
+                    <div className="flex justify-between items-center text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                      <span>IGST</span>
+                      <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.igst || 0).toFixed(2)}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-center text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                        <span>CGST</span>
+                        <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.cgst || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                        <span>SGST</span>
+                        <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.sgst || 0).toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between items-center text-[10px] font-black text-green-500/70 uppercase tracking-widest">
                     <span>Amount Paid</span>
                     <span className="font-mono text-xs">{getCurrencySymbol()}{parseFloat(bill.amount_paid || 0).toFixed(2)}</span>

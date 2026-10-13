@@ -471,6 +471,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             vendor_address: bill?.vendor_address || "",
             vendor_gstin: bill?.vendor_gstin || "",
             gst_treatment: bill?.gst_treatment || "registered",
+            is_reverse_charge: !!bill?.is_reverse_charge,
             journal: bill?.journal || "Purchase",
             total_amount: bill?.total_amount || "0.00",
             items: bill?.items?.map(item => ({
@@ -584,6 +585,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 vendor_address: values.vendor_address || null,
                 vendor_gstin: values.vendor_gstin || null,
                 gst_treatment: values.gst_treatment || null,
+                is_reverse_charge: !!values.is_reverse_charge,
                 journal: values.journal,
                 total_amount: Number(Number(totalAmount).toFixed(2)),
                 notes: values.notes || "",
@@ -617,15 +619,31 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
           }}
         >
           {({ values, isSubmitting, setFieldValue }) => {
-            const grandTotal = values.items.reduce((sum, item) => {
+            let taxableSubtotal = 0;
+            let taxTotal = 0;
+            values.items.forEach((item) => {
                 const quantity = Number(item.quantity) || 0;
                 const price = Number(item.purchase_price) || 0;
                 const discount = Number(item.discount) || 0;
                 const tax = Number(item.tax) || 0;
                 const discountAmount = ((quantity * price) * discount) / 100;
-                const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
-                return sum + ((quantity * price) - discountAmount + taxAmount);
-            }, 0);
+                const taxable = (quantity * price) - discountAmount;
+                const taxAmount = (taxable * tax) / 100;
+                taxableSubtotal += taxable;
+                taxTotal += taxAmount;
+            });
+            const grandTotal = taxableSubtotal + taxTotal;
+            const vendorGstin = (values.vendor_gstin || '').trim();
+            let companyGstin = '';
+            try {
+              const u = JSON.parse(localStorage.getItem('user') || '{}');
+              companyGstin = (u.gstin || u.active_tenant?.gstin || '').trim();
+            } catch (_) { /* ignore */ }
+            const isInterstate = vendorGstin.length >= 2 && companyGstin.length >= 2
+              && vendorGstin.slice(0, 2) !== companyGstin.slice(0, 2);
+            const cgst = isInterstate ? 0 : taxTotal / 2;
+            const sgst = isInterstate ? 0 : taxTotal - cgst;
+            const igst = isInterstate ? taxTotal : 0;
 
             return (
             <Form className="flex flex-col flex-1 overflow-hidden">
@@ -763,6 +781,10 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                                 <option value="overseas">Overseas</option>
                               </Field>
                            </div>
+                           <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                             <Field type="checkbox" name="is_reverse_charge" className="rounded border-white/20 bg-black" />
+                             Reverse charge (RCM)
+                           </label>
                            <div className="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10 text-[10px] text-cyan-500/70 leading-relaxed italic">
                              Address and GSTIN will be used to automatically calculate Intra-state (CGST/SGST) or Inter-state (IGST) taxes.
                            </div>
@@ -905,9 +927,26 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                   <div className="w-full max-w-md bg-[#111] border border-white/10 rounded-3xl p-8 shadow-2xl">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-400 font-medium">Subtotal</span>
-                        <span className="text-white font-black tabular-nums tracking-tight">{getCurrencySymbol()}{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-gray-400 font-medium">Subtotal (ex-GST)</span>
+                        <span className="text-white font-black tabular-nums tracking-tight">{getCurrencySymbol()}{taxableSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
+                      {isInterstate ? (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-400 font-medium">IGST</span>
+                          <span className="text-white font-mono tabular-nums">{getCurrencySymbol()}{igst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-400 font-medium">CGST</span>
+                            <span className="text-white font-mono tabular-nums">{getCurrencySymbol()}{cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-400 font-medium">SGST</span>
+                            <span className="text-white font-mono tabular-nums">{getCurrencySymbol()}{sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          </div>
+                        </>
+                      )}
                       <div className="h-px bg-white/5"></div>
                       <div className="flex justify-between items-center">
                         <div className="flex flex-col">
