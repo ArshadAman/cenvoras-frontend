@@ -16,6 +16,79 @@ function humanizeKey(key) {
 }
 
 /**
+ * Soften common HSN mandatory wording for toasts.
+ */
+function softenFieldMessage(message) {
+  if (typeof message !== 'string') return message;
+  return message
+    .replace(/HSN\/SAC code is mandatory for each invoice item\.?/i, 'HSN/SAC code is required.')
+    .replace(/HSN\/SAC code is mandatory\.?/i, 'HSN/SAC code is required.');
+}
+
+/**
+ * Recursively flatten DRF nested validation errors into readable lines.
+ * e.g. items: [{}, { hsn_sac_code: ["..."] }] -> "Line 2: HSN/SAC code is required."
+ */
+function flattenValidationErrors(value, fieldKey = '', linePrefix = '') {
+  const messages = [];
+
+  if (value == null) return messages;
+
+  if (typeof value === 'string') {
+    const text = softenFieldMessage(value);
+    const title = humanizeKey(fieldKey);
+    if (linePrefix && title) messages.push(`${linePrefix}${title}: ${text}`);
+    else if (linePrefix) messages.push(`${linePrefix}${text}`);
+    else if (title) messages.push(`${title}: ${text}`);
+    else messages.push(text);
+    return messages;
+  }
+
+  if (Array.isArray(value)) {
+    const allStrings = value.every((v) => typeof v === 'string');
+    if (allStrings) {
+      const text = softenFieldMessage(value.join(', '));
+      const title = humanizeKey(fieldKey);
+      if (linePrefix && title) messages.push(`${linePrefix}${title}: ${text}`);
+      else if (linePrefix) messages.push(`${linePrefix}${text}`);
+      else if (title) messages.push(`${title}: ${text}`);
+      else messages.push(text);
+      return messages;
+    }
+
+    value.forEach((entry, index) => {
+      if (entry == null || entry === '') return;
+      if (typeof entry === 'string') {
+        messages.push(...flattenValidationErrors(entry, fieldKey, linePrefix));
+        return;
+      }
+      if (typeof entry === 'object') {
+        const isEmpty = Object.keys(entry).length === 0;
+        if (isEmpty) return;
+        const nextPrefix =
+          fieldKey === 'items' || fieldKey === 'item'
+            ? `Line ${index + 1}: `
+            : linePrefix || (humanizeKey(fieldKey) ? `${humanizeKey(fieldKey)} ${index + 1}: ` : '');
+        messages.push(...flattenValidationErrors(entry, '', nextPrefix));
+      }
+    });
+    return messages;
+  }
+
+  if (typeof value === 'object') {
+    for (const [key, nested] of Object.entries(value)) {
+      if (key === 'non_field_errors' || key === 'detail' || key === 'error') {
+        messages.push(...flattenValidationErrors(nested, '', linePrefix));
+      } else {
+        messages.push(...flattenValidationErrors(nested, key, linePrefix));
+      }
+    }
+  }
+
+  return messages;
+}
+
+/**
  * Maps known raw or technical backend error messages to friendly, polite explanations.
  */
 const TECHNICAL_MESSAGE_MAP = [
@@ -103,73 +176,33 @@ export function formatErrorMessage(err, fallback = 'Something went wrong. Please
     typeof responseData.details === 'object' &&
     !Array.isArray(responseData.details)
   ) {
-    const detailMessages = [];
-    for (const [key, val] of Object.entries(responseData.details)) {
-      const fieldTitle = humanizeKey(key);
-      const messageText = Array.isArray(val)
-        ? val.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ')
-        : typeof val === 'string'
-          ? val
-          : String(val);
-      detailMessages.push(fieldTitle ? `${fieldTitle}: ${messageText}` : messageText);
-    }
+    const detailMessages = flattenValidationErrors(responseData.details);
     if (detailMessages.length > 0) {
       return detailMessages.slice(0, 3).join(' • ');
     }
   }
 
   // Handle { error: "..." }
-  if (typeof responseData.error === 'string') {
+  if (typeof responseData.error === 'string' && !responseData.details) {
     for (const { pattern, replacement } of TECHNICAL_MESSAGE_MAP) {
       if (pattern.test(responseData.error)) return replacement;
     }
     return responseData.error;
   }
 
-  // Handle array of errors: ["Error message 1", "Error message 2"]
-  if (Array.isArray(responseData)) {
-    const first = responseData[0];
-    if (typeof first === 'string') {
-      for (const { pattern, replacement } of TECHNICAL_MESSAGE_MAP) {
-        if (pattern.test(first)) return replacement;
-      }
-      return first;
-    }
-  }
-
-  // Handle validation field objects: { email: ["Invalid email format."], phone: ["Required"] }
+  // Handle array of errors / nested DRF field objects
   if (typeof responseData === 'object') {
-    const errorMessages = [];
-
-    for (const [key, val] of Object.entries(responseData)) {
-      const fieldTitle = humanizeKey(key);
-      let messageText = '';
-
-      if (Array.isArray(val)) {
-        messageText = val.map(v => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ');
-      } else if (typeof val === 'string') {
-        messageText = val;
-      } else if (typeof val === 'object' && val !== null) {
-        messageText = Object.values(val).flat().join(', ');
-      }
-
-      // Check against technical message map
-      for (const { pattern, replacement } of TECHNICAL_MESSAGE_MAP) {
-        if (pattern.test(messageText)) {
-          messageText = replacement;
-          break;
-        }
-      }
-
-      if (fieldTitle) {
-        errorMessages.push(`${fieldTitle}: ${messageText}`);
-      } else {
-        errorMessages.push(messageText);
-      }
-    }
-
+    const errorMessages = flattenValidationErrors(responseData);
     if (errorMessages.length > 0) {
-      return errorMessages.slice(0, 3).join(' • ');
+      return errorMessages
+        .slice(0, 3)
+        .map((msg) => {
+          for (const { pattern, replacement } of TECHNICAL_MESSAGE_MAP) {
+            if (pattern.test(msg)) return replacement;
+          }
+          return msg;
+        })
+        .join(' • ');
     }
   }
 

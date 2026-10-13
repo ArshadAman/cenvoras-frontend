@@ -1279,7 +1279,8 @@ export default function SalesForm({
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       }
       if (typeof onSaved === 'function') {
-        onSaved(data || { status: submitActionRef.current === 'draft' ? 'draft' : finalSubmitStatus });
+        const savedStatus = submitActionRef.current === 'draft' ? 'draft' : (data?.status || finalSubmitStatus);
+        onSaved({ ...(data || {}), status: savedStatus });
       }
       onClose();
     },
@@ -1314,7 +1315,8 @@ export default function SalesForm({
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       }
       if (typeof onSaved === 'function') {
-        onSaved(data || { status: submitActionRef.current === 'draft' ? 'draft' : finalSubmitStatus });
+        const savedStatus = submitActionRef.current === 'draft' ? 'draft' : (data?.status || finalSubmitStatus);
+        onSaved({ ...(data || {}), status: savedStatus });
       }
       onClose();
     },
