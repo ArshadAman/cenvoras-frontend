@@ -69,6 +69,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [salaryEdited, setSalaryEdited] = useState(false);
   const [calculatorKey, setCalculatorKey] = useState(0);
   const formSessionRef = useRef(0);
+  /** Prevents profile/companyWorkState reload from wiping CTC / Basic-HRA edits mid-session */
+  const hydratedForRef = useRef(null);
 
   const { data: profileData } = useQuery({
     queryKey: ['profile'],
@@ -97,78 +99,91 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [addingDesig, setAddingDesig] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      formSessionRef.current += 1;
-      setActiveTab('personal');
-      setSalaryEdited(false);
-      setCalculatorKey((k) => k + 1);
-      fetchDropdowns();
-      if (employee) {
-        setFormData({
-          full_name: employee.full_name || '',
-          personal_email: employee.personal_email || '',
-          personal_phone: employee.personal_phone || '',
-          father_mother_name: employee.father_mother_name || '',
-          address: employee.address || '',
-          emergency_contact_name: employee.emergency_contact_name || '',
-          emergency_contact_phone: employee.emergency_contact_phone || '',
-          date_of_birth: employee.date_of_birth || '',
-          date_of_joining: employee.date_of_joining || '',
-          gender: employee.gender || 'M',
-          employment_type: employee.employment_type || 'full_time',
-          contract_fee: employee.contract_fee || '',
-          work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
-          status: employee.status || 'active',
-          department_id: employee.department || '',
-          designation_id: employee.designation || '',
-          branch_id: employee.branch || '',
-          reporting_manager_id: employee.reporting_manager || '',
-          pan_number: employee.pan_number || '',
-          uan_number: employee.uan_number || '',
-          pf_number: employee.pf_number || '',
-          esi_number: employee.esi_number || '',
-          bank_name: employee.bank_name || '',
-          bank_account_number: employee.bank_account_number || '',
-          bank_ifsc: employee.bank_ifsc || '',
-          account_holder_name: employee.account_holder_name || '',
-          upi_id: employee.upi_id || '',
-          tax_regime: employee.tax_regime || 'new',
-        });
-        setAadhaarFile(null);
-        setPanFile(null);
-        setMarksheetFile(null);
-        const currentCtc = Number(employee.current_ctc || employee.salary_details?.monthly_ctc || 0);
-        const existingComponents = employee.salary_details?.earnings || employee.salary_details?.components || {};
-        if (currentCtc > 0 || employee.salary_details) {
-          setSalaryConfig({
-            monthly_ctc: currentCtc > 0 ? currentCtc : Number(employee.salary_details?.monthly_ctc || 50000),
-            tax_regime: employee.tax_regime || 'new',
-            work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
-            components: existingComponents,
-            basic_pct: employee.salary_details?.basic_pct != null
-              ? Number(employee.salary_details.basic_pct)
-              : undefined,
-            hra_pct: employee.salary_details?.hra_pct != null
-              ? Number(employee.salary_details.hra_pct)
-              : undefined,
-          });
-        } else {
-          setSalaryConfig(null);
-        }
-      } else {
-        setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
-        setSalaryConfig(null);
-        setAadhaarFile(null);
-        setPanFile(null);
-        setMarksheetFile(null);
-      }
-    } else {
-      // Reset on close so next Add does not inherit prior compensation tab/state
+    if (!isOpen) {
+      hydratedForRef.current = null;
       setActiveTab('personal');
       setSalaryConfig(null);
       setSalaryEdited(false);
       setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
+      return;
     }
+
+    const hydrateKey = employee?.id || 'new';
+    // Re-hydrate only when opening or switching employee — NOT when companyWorkState
+    // arrives from profile (that was wiping CTC / Basic-HRA edits and salaryEdited).
+    if (hydratedForRef.current === hydrateKey) {
+      return;
+    }
+    hydratedForRef.current = hydrateKey;
+    formSessionRef.current += 1;
+    setActiveTab('personal');
+    setSalaryEdited(false);
+    setCalculatorKey((k) => k + 1);
+    fetchDropdowns();
+    setAadhaarFile(null);
+    setPanFile(null);
+    setMarksheetFile(null);
+
+    if (employee) {
+      setFormData({
+        full_name: employee.full_name || '',
+        personal_email: employee.personal_email || '',
+        personal_phone: employee.personal_phone || '',
+        father_mother_name: employee.father_mother_name || '',
+        address: employee.address || '',
+        emergency_contact_name: employee.emergency_contact_name || '',
+        emergency_contact_phone: employee.emergency_contact_phone || '',
+        date_of_birth: employee.date_of_birth || '',
+        date_of_joining: employee.date_of_joining || '',
+        gender: employee.gender || 'M',
+        employment_type: employee.employment_type || 'full_time',
+        contract_fee: employee.contract_fee || '',
+        work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
+        status: employee.status || 'active',
+        department_id: employee.department || '',
+        designation_id: employee.designation || '',
+        branch_id: employee.branch || '',
+        reporting_manager_id: employee.reporting_manager || '',
+        pan_number: employee.pan_number || '',
+        uan_number: employee.uan_number || '',
+        pf_number: employee.pf_number || '',
+        esi_number: employee.esi_number || '',
+        bank_name: employee.bank_name || '',
+        bank_account_number: employee.bank_account_number || '',
+        bank_ifsc: employee.bank_ifsc || '',
+        account_holder_name: employee.account_holder_name || '',
+        upi_id: employee.upi_id || '',
+        tax_regime: employee.tax_regime || 'new',
+      });
+      const currentCtc = Number(employee.current_ctc || employee.salary_details?.monthly_ctc || 0);
+      const existingComponents = employee.salary_details?.earnings || employee.salary_details?.components || {};
+      if (currentCtc > 0 || employee.salary_details) {
+        setSalaryConfig({
+          monthly_ctc: currentCtc > 0 ? currentCtc : Number(employee.salary_details?.monthly_ctc || 50000),
+          tax_regime: employee.tax_regime || 'new',
+          work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
+          components: existingComponents,
+          basic_pct: employee.salary_details?.basic_pct != null
+            ? Number(employee.salary_details.basic_pct)
+            : undefined,
+          hra_pct: employee.salary_details?.hra_pct != null
+            ? Number(employee.salary_details.hra_pct)
+            : undefined,
+        });
+      } else {
+        setSalaryConfig(null);
+      }
+    } else {
+      setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
+      setSalaryConfig(null);
+    }
+  }, [isOpen, employee, companyWorkState]);
+
+  // Fill work_state for new employees once company profile loads (without resetting the form)
+  useEffect(() => {
+    if (!isOpen || employee) return;
+    if (!companyWorkState) return;
+    setFormData((prev) => (prev.work_state ? prev : { ...prev, work_state: companyWorkState }));
   }, [isOpen, employee, companyWorkState]);
 
   const fetchDropdowns = async () => {
@@ -333,10 +348,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       if (formData.personal_email) payload.personal_email = formData.personal_email;
       if (formData.personal_phone) payload.personal_phone = formData.personal_phone;
 
-      // Only attach salary if compensation was edited this session (prevents cross-assign on rapid creates)
-      if (!isContract && salaryEdited && salaryConfig && salaryConfig.monthly_ctc > 0) {
+      // Edit: always persist compensation when we have a CTC snapshot (Revise Salary
+      // is not required). Create: send when user touched compensation this session.
+      const ctcNum = Number(salaryConfig?.monthly_ctc || 0);
+      const shouldPersistSalary = !isContract && salaryConfig && ctcNum > 0 && (salaryEdited || !!employee);
+      if (shouldPersistSalary) {
         payload.salary = {
-          monthly_ctc: salaryConfig.monthly_ctc,
+          monthly_ctc: ctcNum,
           components: salaryConfig.components || {},
           basic_pct: salaryConfig.basic_pct,
           hra_pct: salaryConfig.hra_pct,
@@ -346,7 +364,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         }
       }
 
-      if (!isContract && salaryEdited && salaryConfig && salaryConfig.tax_declaration) {
+      if (!isContract && (salaryEdited || !!employee) && salaryConfig?.tax_declaration) {
         payload.tax_declaration = salaryConfig.tax_declaration;
       }
 
