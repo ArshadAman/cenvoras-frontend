@@ -145,6 +145,12 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             tax_regime: employee.tax_regime || 'new',
             work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
             components: existingComponents,
+            basic_pct: employee.salary_details?.basic_pct != null
+              ? Number(employee.salary_details.basic_pct)
+              : undefined,
+            hra_pct: employee.salary_details?.hra_pct != null
+              ? Number(employee.salary_details.hra_pct)
+              : undefined,
           });
         } else {
           setSalaryConfig(null);
@@ -332,6 +338,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         payload.salary = {
           monthly_ctc: salaryConfig.monthly_ctc,
           components: salaryConfig.components || {},
+          basic_pct: salaryConfig.basic_pct,
+          hra_pct: salaryConfig.hra_pct,
         };
         if (!employee && formData.date_of_joining) {
           payload.salary.effective_from = formData.date_of_joining;
@@ -834,6 +842,19 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
                   initialWorkState={salaryConfig?.work_state || formData.work_state || companyWorkState}
                   initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
+                  initialBasicPct={
+                    salaryConfig?.basic_pct ??
+                    (employee?.salary_details?.basic_pct != null
+                      ? Number(employee.salary_details.basic_pct)
+                      : null)
+                  }
+                  initialHraPct={
+                    salaryConfig?.hra_pct ??
+                    (employee?.salary_details?.hra_pct != null
+                      ? Number(employee.salary_details.hra_pct)
+                      : null)
+                  }
+                  dateOfJoining={formData.date_of_joining || employee?.date_of_joining || null}
                   onChange={(calcData) => {
                     const session = formSessionRef.current;
                     // Ignore stale calculator responses from a previous open session

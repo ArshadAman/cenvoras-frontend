@@ -57,18 +57,38 @@ export default function VendorPayments() {
 
   const tdsPreview = useMemo(() => {
     if (!selectedBill || !tdsSection) {
-      return { rate: 0, tds: 0, taxable: 0, net: parseFloat(amount || 0) };
+      return { rate: 0, tds: 0, taxable: 0, net: parseFloat(amount || 0), note: "" };
     }
     const payAmt = parseFloat(amount || 0);
     const due = parseFloat(selectedBill.balance_due || 0);
     const taxableBal = parseFloat(selectedBill.taxable_balance || due);
     const taxable = due > 0 ? (payAmt * taxableBal) / due : payAmt;
-    let rate = 0;
+    // For 194C, prefer server preview on full balance; scale only when paying partial
     if (tdsSection === "194C") {
-      rate = parseFloat(selectedBill.tds_rate_194c || (selectedBill.is_individual_or_huf ? 1 : 2));
-    } else {
-      rate = TDS_FIXED_RATES[tdsSection] || 0;
+      const fullTds = parseFloat(selectedBill.tds_amount_194c || 0);
+      const fullTaxable = parseFloat(selectedBill.taxable_balance || taxable);
+      const rate = parseFloat(selectedBill.tds_rate_194c || 0);
+      const thresholdMet = selectedBill.tds_threshold_met_194c !== false && fullTds > 0;
+      let tdsRounded = 0;
+      if (thresholdMet && fullTaxable > 0) {
+        tdsRounded = Math.round((taxable / fullTaxable) * fullTds * 100) / 100;
+      } else if (thresholdMet && rate > 0) {
+        tdsRounded = Math.round(taxable * rate) / 100;
+      }
+      const note = !selectedBill.vendor_has_pan && thresholdMet
+        ? "No PAN — Sec 206AA 20%"
+        : !thresholdMet
+          ? "Below 194C threshold (₹30k/payment or ₹1L/year)"
+          : "";
+      return {
+        rate: thresholdMet ? rate : 0,
+        tds: tdsRounded,
+        taxable: Math.round(taxable * 100) / 100,
+        net: Math.round((payAmt - tdsRounded) * 100) / 100,
+        note,
+      };
     }
+    const rate = TDS_FIXED_RATES[tdsSection] || 0;
     const tds = Math.round(taxable * rate) / 100;
     const tdsRounded = Math.round(tds * 100) / 100;
     return {
@@ -76,6 +96,7 @@ export default function VendorPayments() {
       tds: tdsRounded,
       taxable: Math.round(taxable * 100) / 100,
       net: Math.round((payAmt - tdsRounded) * 100) / 100,
+      note: "",
     };
   }, [selectedBill, amount, tdsSection]);
 
@@ -124,7 +145,9 @@ export default function VendorPayments() {
   };
 
   const rate194cLabel = selectedBill
-    ? `${selectedBill.tds_rate_194c || (selectedBill.is_individual_or_huf ? "1" : "2")}% on taxable`
+    ? !selectedBill.vendor_has_pan
+      ? "20% (no PAN)"
+      : `${selectedBill.tds_rate_194c || (selectedBill.is_individual_or_huf ? "1" : "2")}% on taxable`
     : "1%/2% on taxable";
 
   return (
@@ -249,6 +272,9 @@ export default function VendorPayments() {
                   <span>Net payable from account</span>
                   <span className="font-mono text-emerald-300">{formatCurrency(tdsPreview.net)}</span>
                 </div>
+                {tdsPreview.note ? (
+                  <p className="text-amber-200/80 pt-1">{tdsPreview.note}</p>
+                ) : null}
               </div>
             )}
             {insufficient && (
