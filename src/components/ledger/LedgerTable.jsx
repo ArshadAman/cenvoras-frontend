@@ -21,6 +21,7 @@ import { ArrowTopRightOnSquareIcon, ArrowDownTrayIcon } from '@heroicons/react/2
 import { Link } from 'react-router-dom';
 import { downloadPartnerStatementPdf } from '../../api/ledger';
 import { toast } from 'react-toastify';
+import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
 
 const LedgerTable = ({ 
   onEdit, 
@@ -113,22 +114,26 @@ const LedgerTable = ({
   const loadingPolicy = useLoadingPolicy(isLoading);
 
   const applyDatePreset = (preset) => {
-    const today = new Date();
+    const todayStr = getTodayKolkata();
+    const [yStr, mStr] = todayStr.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10); // 1-12
     let start, end;
     if (preset === 'today') {
-      start = format(today, 'yyyy-MM-dd');
-      end = format(today, 'yyyy-MM-dd');
+      start = todayStr;
+      end = todayStr;
     } else if (preset === 'this_month') {
-      start = format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd');
-      end = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
+      const bounds = getKolkataMonthBounds();
+      start = bounds.from;
+      // Inclusive of today so IST "today" entries are never clipped by UTC day rollover
+      end = todayStr;
     } else if (preset === 'this_quarter') {
-      const qMonth = Math.floor(today.getMonth() / 3) * 3;
-      start = format(new Date(today.getFullYear(), qMonth, 1), 'yyyy-MM-dd');
-      end = format(new Date(today.getFullYear(), qMonth + 3, 0), 'yyyy-MM-dd');
+      const qStartMonth = Math.floor((month - 1) / 3) * 3 + 1; // 1,4,7,10
+      start = `${year}-${String(qStartMonth).padStart(2, '0')}-01`;
+      end = todayStr;
     } else if (preset === 'this_fy') {
-      const fyStartYear = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
-      start = format(new Date(fyStartYear, 3, 1), 'yyyy-MM-dd');
-      end = format(new Date(fyStartYear + 1, 2, 31), 'yyyy-MM-dd');
+      start = getKolkataFYStart();
+      end = todayStr;
     } else if (preset === 'all_time') {
       start = '';
       end = '';

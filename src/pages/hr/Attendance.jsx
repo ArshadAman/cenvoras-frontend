@@ -6,6 +6,7 @@ import {
   ArrowDownTrayIcon, EyeIcon, FunnelIcon, ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import { getTodayKolkata } from "../../utils/date";
 
 const STATUS_COLORS = {
   present: 'bg-green-500/10 text-green-400 border border-green-500/20',
@@ -26,7 +27,7 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setForm({ employee: '', date: new Date().toISOString().split('T')[0], status: 'present' });
+    if (isOpen) setForm({ employee: '', date: getTodayKolkata(), status: 'present' });
   }, [isOpen]);
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -129,11 +130,12 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
     if (!employee?.id) return;
     setLoading(true);
     try {
-      const res = await hrApi.getEmployeeAttendanceSummary(employee.id, {
+      const empId = typeof employee.id === 'object' ? employee.id?.id : employee.id;
+      const res = await hrApi.getEmployeeAttendanceSummary(empId, {
         month: selectedMonth,
         year: selectedYear,
       });
-      setSummary(res.data);
+      setSummary(res?.data || res || null);
     } catch (e) {
       toast.error('Failed to load employee attendance summary');
     } finally {
@@ -252,6 +254,11 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
                 <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
                   <p className="text-[11px] text-blue-400">Leave Days</p>
                   <p className="text-lg font-bold text-blue-300 mt-0.5">{summary.leave_days}</p>
+                  {(summary.paid_leave_days != null || summary.unpaid_leave_days != null) && (
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      Paid {summary.paid_leave_days ?? 0} · Unpaid {summary.unpaid_leave_days ?? 0}
+                    </p>
+                  )}
                 </div>
                 <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-center">
                   <p className="text-[11px] text-indigo-400">Attendance Rate</p>
@@ -528,7 +535,7 @@ export default function Attendance() {
                       key={record.id}
                       className="border-b border-white/10 hover:bg-white/5 cursor-pointer transition"
                       onClick={() => setSelectedEmpSummary({
-                        id: record.employee,
+                        id: typeof record.employee === 'object' ? record.employee?.id : record.employee,
                         name: record.employee_name || 'Employee',
                         code: record.employee_code || '',
                       })}
@@ -553,7 +560,7 @@ export default function Attendance() {
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedEmpSummary({
-                              id: record.employee,
+                              id: typeof record.employee === 'object' ? record.employee?.id : record.employee,
                               name: record.employee_name || 'Employee',
                               code: record.employee_code || '',
                             });

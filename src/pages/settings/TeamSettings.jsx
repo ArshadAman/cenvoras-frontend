@@ -57,8 +57,9 @@ export default function TeamSettings() {
 
   const createMutation = useMutation({
     mutationFn: createTeamMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teamMembers']);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      await queryClient.refetchQueries({ queryKey: ['teamMembers'] });
       closeModal();
     },
     onError: (err) => {
@@ -68,8 +69,9 @@ export default function TeamSettings() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => updateTeamMember(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teamMembers']);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      await queryClient.refetchQueries({ queryKey: ['teamMembers'] });
       closeModal();
     },
     onError: (err) => {
@@ -79,8 +81,9 @@ export default function TeamSettings() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteTeamMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teamMembers']);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      await queryClient.refetchQueries({ queryKey: ['teamMembers'] });
     }
   });
 

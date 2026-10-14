@@ -728,12 +728,16 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
       setCashWarning('');
       getAccounts({ account_type: 'asset' })
         .then(res => {
-          const list = res.results || res || [];
+          const list = (res.results || res || []).filter((a) => {
+            const code = String(a.code || '');
+            const name = String(a.name || '').toLowerCase();
+            return code === '1001' || code === '1002' || name.includes('bank') || name === 'cash' || name.startsWith('cash ');
+          });
           setAccounts(list);
           const bank = list.find((a) => String(a.code) === '1002');
           setSelectedAccount(bank ? bank.id : (list[0]?.id || ''));
         })
-        .catch((err) => showErrorToast(err, 'Failed to load asset accounts'));
+        .catch((err) => showErrorToast(err, 'Failed to load bank/cash accounts'));
     }
   }, [isOpen]);
 

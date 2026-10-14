@@ -12,6 +12,8 @@ import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import DateInputField from "../common/DateInputField";
 import useEscKey from "../../hooks/useEscStack";
+import { getUserProfile } from "../../api/users";
+import { getTodayKolkata } from "../../utils/date";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -377,6 +379,24 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
 
+  const { data: userProfileData } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+  });
+  const companyGstin = (
+    userProfileData?.billing_profile?.gstin ||
+    userProfileData?.profile?.gstin ||
+    userProfileData?.gstin ||
+    ''
+  ).trim();
+  const companyState = (
+    userProfileData?.billing_profile?.state ||
+    userProfileData?.profile?.state ||
+    userProfileData?.state ||
+    ''
+  ).trim();
+
   const formikRef = useRef(null);
 
   const handleBeforeClose = async () => {
@@ -464,7 +484,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
           innerRef={formikRef}
           initialValues={{
             bill_number: bill?.bill_number || "",
-            bill_date: bill?.bill_date || new Date().toLocaleDateString('sv-SE'),
+            bill_date: bill?.bill_date || getTodayKolkata(),
             due_date: bill?.due_date || "",
             warehouse: bill?.warehouse || "",
             vendor_name: bill?.vendor_name || "",
@@ -634,13 +654,15 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             });
             const grandTotal = taxableSubtotal + taxTotal;
             const vendorGstin = (values.vendor_gstin || '').trim();
-            let companyGstin = '';
-            try {
-              const u = JSON.parse(localStorage.getItem('user') || '{}');
-              companyGstin = (u.gstin || u.active_tenant?.gstin || '').trim();
-            } catch (_) { /* ignore */ }
-            const isInterstate = vendorGstin.length >= 2 && companyGstin.length >= 2
-              && vendorGstin.slice(0, 2) !== companyGstin.slice(0, 2);
+            const vendorStateCode = vendorGstin.length >= 2 ? vendorGstin.slice(0, 2) : '';
+            const companyStateCode = companyGstin.length >= 2
+              ? companyGstin.slice(0, 2)
+              : (INDIAN_STATES.find((s) => s.name.toLowerCase() === companyState.toLowerCase())?.code || '');
+            const isInterstate = Boolean(
+              vendorStateCode
+              && companyStateCode
+              && vendorStateCode !== companyStateCode
+            );
             const cgst = isInterstate ? 0 : taxTotal / 2;
             const sgst = isInterstate ? 0 : taxTotal - cgst;
             const igst = isInterstate ? taxTotal : 0;
@@ -1020,7 +1042,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAd
                 {({ field }) => (
                     <input 
                         {...field} 
-                        placeholder="HSN/SAC CODE" 
+                        placeholder="HSN/SAC Code" 
                         className="flex-1 bg-black/20 border border-white/5 rounded-lg px-3 py-1.5 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase tracking-wider" 
                     />
                 )}

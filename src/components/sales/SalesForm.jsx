@@ -20,6 +20,7 @@ import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon,
 import DateInputField from "../common/DateInputField";
 import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
+import { getTodayKolkata } from "../../utils/date";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
@@ -707,7 +708,8 @@ const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f
 const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
-  invoice_number: Yup.string().required("Invoice number is required").min(1).max(100),
+  // Empty = auto-assigned on final save (do not pre-fill INV-### on open)
+  invoice_number: Yup.string().max(100),
   warehouse: Yup.string().nullable(),
   invoice_date: Yup.string().required("Invoice date is required"),
   
@@ -720,7 +722,7 @@ const SalesSchema = Yup.object().shape({
   due_date: Yup.string().nullable().test(
     'not-past-date',
     'Due date cannot be in the past',
-    (value) => !value || value >= new Date().toLocaleDateString('sv-SE')
+    (value) => !value || value >= getTodayKolkata()
   ),
   
   // Optional invoice fields
@@ -1248,20 +1250,12 @@ export default function SalesForm({
 
   // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
   
+  // Preview only — never write into the form on open (avoids burning INV-### on drafts)
   const { data: nextInvData } = useQuery({
     queryKey: ["nextInvoiceNumber", invoicePrefix],
     queryFn: () => getNextNumber(invoicePrefix ?? ""),
     enabled: !isEdit && isOpen
   });
-
-  useEffect(() => {
-    if (!isEdit && nextInvData?.next_number && formikRef.current) {
-      const currentVal = formikRef.current.values?.invoice_number;
-      if (!currentVal) {
-        formikRef.current.setFieldValue('invoice_number', nextInvData.next_number);
-      }
-    }
-  }, [nextInvData?.next_number, isEdit]);
 
   const extractErrorMessage = (error, defaultMsg) => {
     return formatErrorMessage(error, defaultMsg);
@@ -1394,7 +1388,8 @@ export default function SalesForm({
       }
       const d = new Date(raw);
       if (isNaN(d.getTime())) return "";
-      return d.toISOString().split('T')[0];
+      // Asia/Kolkata calendar day — never UTC toISOString (evening IST → yesterday)
+      return getTodayKolkata(d);
     } catch {
       return "";
     }
@@ -1402,13 +1397,13 @@ export default function SalesForm({
 
   const initialValues = useMemo(() => {
     const rawInvoiceDate = editData?.invoice_date || editData?.quotation_date || editData?.challan_date || editData?.date;
-    const parsedInvoiceDate = safeDateStr(rawInvoiceDate) || new Date().toLocaleDateString('sv-SE');
+    const parsedInvoiceDate = safeDateStr(rawInvoiceDate) || getTodayKolkata();
 
     return {
       // Required fields
       customer_name: editData?.customer_name || aiDraftData?.customer_name || "",
       // Use fetched next number or edit data
-      invoice_number: editData?.order_number || editData?.quotation_number || editData?.invoice_number || editData?.challan_number || nextInvData?.next_number || "",
+      invoice_number: editData?.order_number || editData?.quotation_number || editData?.invoice_number || editData?.challan_number || "",
       invoice_date: parsedInvoiceDate,
       
       // Optional customer fields (for Customer record creation)
@@ -1536,7 +1531,7 @@ export default function SalesForm({
         isExistingProduct: false,
       }],
     };
-  }, [editData?.id, aiDraftData, nextInvData?.next_number]);
+  }, [editData?.id, aiDraftData]);
 
   if (!isOpen) return null;
 
@@ -1915,7 +1910,11 @@ export default function SalesForm({
                           spellCheck="false"
                           data-1p-ignore="true"
                           className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
-                          placeholder={isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001"}
+                          placeholder={
+                            !isEdit && nextInvData?.next_number
+                              ? `Auto on save (next: ${nextInvData.next_number})`
+                              : (isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001")
+                          }
                         />
                         <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
                       </div>
@@ -2270,7 +2269,7 @@ export default function SalesForm({
                             ["show_item_description", "Description"],
                             ["show_item_manufacturer", "Manufacturer"],
                             ["show_item_internal_reference", "Internal reference"],
-                            ["show_item_hsn", "HSN/SAC"],
+                            ["show_item_hsn", "HSN/SAC Code"],
                             ["show_item_batch", "Batch"],
                             ["show_item_purchase_price", "Pur. Price (Internal)"],
                             ["show_item_free_quantity", "Free Qty"],
@@ -3072,7 +3071,7 @@ export default function SalesForm({
                                           <div className="grid grid-cols-2 gap-4">
                                               {itemSettings.show_item_hsn && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">HSN/SAC</label>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">HSN/SAC Code</label>
                                                     <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
                                                 </div>
                                               )}
@@ -3618,7 +3617,7 @@ export default function SalesForm({
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC Code</label>
                   <input
                     value={productCreationState.hsn_sac_code}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, hsn_sac_code: e.target.value }))}

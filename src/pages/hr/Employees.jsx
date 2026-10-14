@@ -8,8 +8,8 @@ import {
 import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
 import SalaryBreakdownCalculator from "../../components/hr/SalaryBreakdownCalculator";
+import { getTodayKolkata } from "../../utils/date";
 
-// ─── Salary Increment Modal ──────────────────────────────────────────────────
 // ─── Salary Increment Modal ──────────────────────────────────────────────────
 function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
   const [form, setForm] = useState({ new_salary: '', reason: '', effective_date: '' });
@@ -24,7 +24,7 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
       setForm({
         new_salary: '',
         reason: '',
-        effective_date: new Date().toISOString().split('T')[0]
+        effective_date: getTodayKolkata()
       });
 
       // Proactively fetch latest salary history to ensure freshest data
@@ -273,7 +273,13 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
   const employeeEsi = Number(sd?.employee_deductions?.employee_esi || 0);
   const pt = Number(sd?.employee_deductions?.professional_tax || 0);
   const annualNetTax = Number(sd?.tds_details?.annual_net_tax || sd?.tds_details?.annual_tax || 0);
-  const rebateApplied = Boolean(sd?.tds_details?.rebate_applied);
+  const nilTax87a = Boolean(
+    sd?.tds_details?.nil_tax_87a
+    || (sd?.tds_details?.rebate_applied
+      && Number(sd?.tds_details?.monthly_tds || 0) === 0
+      && Number(sd?.tds_details?.annual_tax || sd?.tds_details?.annual_net_tax || 0) === 0)
+  );
+  const marginalRelief = Boolean(sd?.tds_details?.marginal_relief);
   const tdsReason = sd?.tds_details?.reason || '';
 
   return (
@@ -334,8 +340,11 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Monthly Deductions</span>
-                    {rebateApplied && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium">87A Rebate</span>
+                    {nilTax87a && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium">87A Nil Tax</span>
+                    )}
+                    {marginalRelief && !nilTax87a && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium">87A Marginal Relief</span>
                     )}
                   </div>
                   <span className="text-xl font-bold text-red-400">
@@ -620,9 +629,19 @@ export default function Employees() {
                           <span className="text-[10px] text-gray-400">
                             {emp.tax_regime === 'old' ? 'Old Regime' : 'New Regime'}
                           </span>
-                          {emp.salary_details?.tds_details?.rebate_applied && (
+                          {(emp.salary_details?.tds_details?.nil_tax_87a
+                            || (emp.salary_details?.tds_details?.rebate_applied
+                              && Number(emp.salary_details?.tds_details?.monthly_tds || 0) === 0
+                              && Number(emp.salary_details?.tds_details?.annual_tax || 0) === 0)) && (
                             <span className="text-[9px] px-1 py-0.2 bg-emerald-500/20 text-emerald-300 rounded font-medium">
                               87A Nil Tax
+                            </span>
+                          )}
+                          {emp.salary_details?.tds_details?.marginal_relief
+                            && !emp.salary_details?.tds_details?.nil_tax_87a
+                            && Number(emp.salary_details?.tds_details?.monthly_tds || 0) > 0 && (
+                            <span className="text-[9px] px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded font-medium">
+                              87A Marginal Relief
                             </span>
                           )}
                         </div>
@@ -693,6 +712,7 @@ export default function Employees() {
       </div>
 
       <EmployeeFormModal 
+        key={selectedEmployee?.id || 'new-employee'}
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         employee={selectedEmployee} 

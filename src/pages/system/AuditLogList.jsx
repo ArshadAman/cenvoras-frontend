@@ -82,11 +82,19 @@ export default function AuditLogList() {
     if (val === null || val === undefined) return 'None';
     if (typeof val === 'boolean') return val ? 'Yes' : 'No';
     if (typeof val === 'object') {
-      try {
-        return JSON.stringify(val);
-      } catch {
-        return '[object]';
+      // Prefer human labels over raw JSON dumps
+      if (val.name) return String(val.name);
+      if (val.bill_number) return String(val.bill_number);
+      if (val.invoice_number) return String(val.invoice_number);
+      if (val.email) return String(val.email);
+      if (val.old !== undefined || val.new !== undefined) {
+        return `${formatValue(field, val.old)} → ${formatValue(field, val.new)}`;
       }
+      const keys = Object.keys(val);
+      if (keys.length <= 3) {
+        return keys.map((k) => `${FIELD_LABELS[k] || k}: ${formatValue(k, val[k])}`).join('; ');
+      }
+      return `${keys.length} fields`;
     }
     if (field.includes('amount') || field.includes('price') || field === 'total_revenue') {
       const num = Number(val);

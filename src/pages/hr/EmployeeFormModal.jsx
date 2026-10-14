@@ -408,7 +408,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const maxDobDate = (() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() - 13);
-    return d.toISOString().split('T')[0];
+    // IST calendar day (avoid UTC toISOString rollover)
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
   })();
 
   const inputCls = 'w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500';
