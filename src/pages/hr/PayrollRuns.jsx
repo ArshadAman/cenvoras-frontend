@@ -181,7 +181,11 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                   </p>
                   <p className="text-gray-400 text-[11px]">
                     Reopened by <span className="text-amber-200">{payrollRun.reopened_by_name || 'Admin'}</span>
-                    {payrollRun.reopened_at && ` on ${new Date(payrollRun.reopened_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`}
+                    {payrollRun.reopened_at && ` on ${new Intl.DateTimeFormat('en-GB', {
+                      timeZone: 'Asia/Kolkata',
+                      day: '2-digit', month: 'short', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit', hour12: false,
+                    }).format(new Date(payrollRun.reopened_at))} IST`}
                   </p>
                 </div>
 
@@ -196,7 +200,11 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                         <div key={idx} className="p-2.5 rounded-lg bg-black/40 text-[11px] space-y-0.5 border border-white/5">
                           <div className="flex justify-between items-center text-gray-400">
                             <span className="font-medium text-gray-200">{rh.reopened_by_name || rh.reopened_by}</span>
-                            <span>{rh.reopened_at ? new Date(rh.reopened_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>
+                            <span>{rh.reopened_at ? `${new Intl.DateTimeFormat('en-GB', {
+                              timeZone: 'Asia/Kolkata',
+                              day: '2-digit', month: 'short', year: 'numeric',
+                              hour: '2-digit', minute: '2-digit', hour12: false,
+                            }).format(new Date(rh.reopened_at))} IST` : '—'}</span>
                           </div>
                           <p className="text-amber-200/90 italic">"{rh.reason}"</p>
                         </div>
@@ -751,6 +759,13 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
     }
   }, [selectedAccount, accounts, payrollRun]);
 
+  const requiredNet = parseFloat(payrollRun?.total_net || 0);
+  const selectedAccBal = parseFloat(
+    accounts.find((a) => String(a.id) === String(selectedAccount))?.current_balance || 0
+  );
+  const insufficientBalance =
+    !!selectedAccount && (selectedAccBal < 0 || selectedAccBal < requiredNet);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedAccount) {
@@ -758,9 +773,9 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
       return;
     }
     const acc = accounts.find((a) => String(a.id) === String(selectedAccount));
-    const net = parseFloat(payrollRun?.total_net || 0);
-    const bal = parseFloat(acc?.current_balance || 0);
-    if (acc && bal < net) {
+    const net = requiredNet;
+    const bal = selectedAccBal;
+    if (acc && (bal < 0 || bal < net)) {
       showErrorToast(`Insufficient balance in ${acc.name}. Available ₹${bal.toLocaleString('en-IN')}, required ₹${net.toLocaleString('en-IN')}.`);
       return;
     }
@@ -808,6 +823,11 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
               ))}
             </select>
           </div>
+          {insufficientBalance && (
+            <p className="text-xs text-red-400">
+              Insufficient balance. Available ₹{selectedAccBal.toLocaleString('en-IN')}, required ₹{requiredNet.toLocaleString('en-IN')}.
+            </p>
+          )}
           {cashWarning ? (
             <p className="text-xs text-amber-400">{cashWarning}</p>
           ) : (
@@ -816,7 +836,7 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
 
           <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-400 bg-white/5 rounded-xl hover:text-white">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold text-slate-950 bg-emerald-400 rounded-xl hover:bg-emerald-300 disabled:opacity-50">
+            <button type="submit" disabled={saving || insufficientBalance} className="px-5 py-2 text-sm font-semibold text-slate-950 bg-emerald-400 rounded-xl hover:bg-emerald-300 disabled:opacity-50">
               {saving ? 'Processing...' : 'Confirm Disbursement'}
             </button>
           </div>
@@ -973,7 +993,14 @@ export default function PayrollRuns() {
     try {
       setLoading(true);
       const res = await hrApi.getPayrollRuns();
-      setRuns(res.data?.results || res.data || []);
+      const list = res.data?.results || res.data || [];
+      setRuns(list);
+      // Keep details modal in sync after reopen / recalculate
+      setSelectedDetailsRun((prev) => {
+        if (!prev?.id) return prev;
+        const fresh = list.find((r) => String(r.id) === String(prev.id));
+        return fresh || prev;
+      });
     } catch (error) {
       showErrorToast(error, "Failed to load payroll cycles");
     } finally {

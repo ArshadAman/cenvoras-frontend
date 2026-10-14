@@ -127,16 +127,20 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
   const [loading, setLoading] = useState(true);
 
   const fetchSummary = async () => {
-    if (!employee?.id) return;
+    const empId = typeof employee?.id === 'object' ? employee?.id?.id : (employee?.id || employee?.employee_id);
+    if (!empId) return;
     setLoading(true);
+    setSummary(null);
     try {
-      const empId = typeof employee.id === 'object' ? employee.id?.id : employee.id;
       const res = await hrApi.getEmployeeAttendanceSummary(empId, {
         month: selectedMonth,
         year: selectedYear,
       });
-      setSummary(res?.data || res || null);
+      // Axios may return { data } or the body directly depending on interceptor
+      const body = res?.data !== undefined && !res?.present_days && !res?.days ? res.data : res;
+      setSummary(body && (body.days || body.present_days !== undefined || body.employee) ? body : null);
     } catch (e) {
+      setSummary(null);
       toast.error('Failed to load employee attendance summary');
     } finally {
       setLoading(false);
@@ -144,8 +148,10 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
   };
 
   useEffect(() => {
-    if (isOpen && employee?.id) {
+    if (isOpen && (employee?.id || employee?.employee_id)) {
       fetchSummary();
+    } else if (!isOpen) {
+      setSummary(null);
     }
   }, [isOpen, employee, selectedMonth, selectedYear]);
 

@@ -249,7 +249,18 @@ export default function TeamSettings() {
                         </span>
                       </td>
                       <td className="p-4 text-sm text-gray-400">
-                        {member.date_joined ? new Date(member.date_joined).toLocaleDateString() : '-'}
+                        {member.date_joined ? (() => {
+                          try {
+                            return new Intl.DateTimeFormat('en-GB', {
+                              timeZone: 'Asia/Kolkata',
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            }).format(new Date(member.date_joined));
+                          } catch {
+                            return new Date(member.date_joined).toLocaleDateString('en-IN');
+                          }
+                        })() : '-'}
                       </td>
                       <td className="p-4 text-right space-x-2">
                         <button
