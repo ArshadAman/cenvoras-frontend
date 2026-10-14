@@ -45,9 +45,9 @@ const productSchema = Yup.object().shape({
     .nullable(),
   hsn_sac_code: Yup.string()
     .transform((v) => (v == null ? "" : String(v).trim()))
-    .required("HSN/SAC code is required")
-    .test("not-na", "HSN/SAC code is required", (value) => Boolean(value) && value.toUpperCase() !== "N/A")
-    .test("min-digits", "HSN/SAC code must be at least 4 digits", (value) => {
+    .required("HSN/SAC code is required.")
+    .test("not-na", "HSN/SAC code is required.", (value) => Boolean(value) && value.toUpperCase() !== "N/A")
+    .test("min-digits", "HSN/SAC code must be at least 4 digits (6 digits if turnover > ₹5 Cr).", (value) => {
       const digits = String(value || "").replace(/\D/g, "");
       return digits.length >= 4;
     })

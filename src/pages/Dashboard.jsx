@@ -101,7 +101,7 @@ export default function Dashboard({ onLogout }) {
   
   const { data: sales, isLoading: loadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['recent-sales'],
-    queryFn: () => api.get('/billing/sales-invoices/?ordering=-invoice_date&limit=5').then(res => res.data)
+    queryFn: () => api.get('/billing/sales-invoices/?status=final&ordering=-invoice_date&limit=5').then(res => res.data)
   });
   
   const { data: purchases, isLoading: loadingPurchases, refetch: refetchPurchases } = useQuery({
@@ -464,7 +464,7 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{invoice.total_amount}</div>
+                      <div className="text-sm font-bold text-white">{formatCurrency(invoice.total_amount)}</div>
                       <div className="text-xs text-gray-500">{invoice.invoice_date}</div>
                     </div>
                   </div>
@@ -501,7 +501,7 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{bill.total_amount}</div>
+                      <div className="text-sm font-bold text-white">{formatCurrency(bill.total_amount)}</div>
                       <div className="text-xs text-gray-500">{bill.bill_date}</div>
                     </div>
                   </div>

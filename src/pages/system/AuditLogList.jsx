@@ -7,7 +7,8 @@ import {
     DocumentTextIcon 
 } from '@heroicons/react/24/outline';
 import { format } from "date-fns";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
+import { formatAuditTimestamp } from '../../utils/dateFormat';
 
 export default function AuditLogList() {
   const [params, setParams] = useState({ page: 1 });
@@ -21,30 +22,14 @@ export default function AuditLogList() {
     ? data
     : data?.results || data?.data || [];
 
-  const formatTimestamp = (value) => {
-    if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '-';
-    try {
-      return new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Asia/Kolkata',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }).format(date) + ' IST';
-    } catch {
-      return format(date, 'dd MMM yyyy HH:mm:ss');
-    }
-  };
+  const formatTimestamp = (value) => formatAuditTimestamp(value);
 
   // Readable mappings for technical terms
   const MODEL_LABELS = {
     'SalesInvoice': 'Sales Bill',
+    'SalesInvoiceItem': 'Sales Bill Line',
     'PurchaseBill': 'Purchase Bill',
+    'PurchaseBillItem': 'Purchase Bill Line',
     'Product': 'Inventory Item',
     'Customer': 'Customer',
     'Vendor': 'Vendor',
@@ -55,6 +40,9 @@ export default function AuditLogList() {
     'User': 'Team Member/Profile',
     'Warehouse': 'Store/Warehouse',
     'ProductBatch': 'Batch/Expiry Info',
+    'PayrollRun': 'Payroll Run',
+    'Payslip': 'Payslip',
+    'AttendanceRecord': 'Attendance',
   };
 
   const FIELD_LABELS = {
@@ -98,7 +86,7 @@ export default function AuditLogList() {
     }
     if (field.includes('amount') || field.includes('price') || field === 'total_revenue') {
       const num = Number(val);
-      if (!Number.isNaN(num)) return `${getCurrencySymbol()}${num.toLocaleString()}`;
+      if (!Number.isNaN(num)) return formatCurrency(num);
     }
     // Mask tenant UUIDs / long opaque IDs for non-technical readability
     const s = String(val);

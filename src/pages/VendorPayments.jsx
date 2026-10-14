@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getUnpaidPurchaseBills, createVendorPayment, getRule37Itc, applyRule37Itc } from "../api/purchase";
 import { getAccounts } from "../api/ledger";
 import { showErrorToast, showSuccessToast } from "../utils/toastUtils";
-import { getCurrencySymbol } from "../utils/currency";
+import { getCurrencySymbol, formatCurrency } from "../utils/currency";
+
+const TDS_FIXED_RATES = {
+  "194J": 10,
+  "194Q": 0.1,
+};
 
 export default function VendorPayments() {
   const [bills, setBills] = useState([]);
@@ -50,15 +55,41 @@ export default function VendorPayments() {
     setTdsSection("");
   };
 
+  const tdsPreview = useMemo(() => {
+    if (!selectedBill || !tdsSection) {
+      return { rate: 0, tds: 0, taxable: 0, net: parseFloat(amount || 0) };
+    }
+    const payAmt = parseFloat(amount || 0);
+    const due = parseFloat(selectedBill.balance_due || 0);
+    const taxableBal = parseFloat(selectedBill.taxable_balance || due);
+    const taxable = due > 0 ? (payAmt * taxableBal) / due : payAmt;
+    let rate = 0;
+    if (tdsSection === "194C") {
+      rate = parseFloat(selectedBill.tds_rate_194c || (selectedBill.is_individual_or_huf ? 1 : 2));
+    } else {
+      rate = TDS_FIXED_RATES[tdsSection] || 0;
+    }
+    const tds = Math.round(taxable * rate) / 100;
+    const tdsRounded = Math.round(tds * 100) / 100;
+    return {
+      rate,
+      tds: tdsRounded,
+      taxable: Math.round(taxable * 100) / 100,
+      net: Math.round((payAmt - tdsRounded) * 100) / 100,
+    };
+  }, [selectedBill, amount, tdsSection]);
+
+  const selectedAcc = accounts.find((x) => String(x.id) === String(accountId));
+  const bal = parseFloat(selectedAcc?.current_balance || 0);
+  const requiredNet = tdsSection ? tdsPreview.net : parseFloat(amount || 0);
+  const insufficient = selectedAcc && (bal < 0 || bal < requiredNet);
+
   const submitPay = async (e) => {
     e.preventDefault();
     if (!selectedBill || !accountId) return;
-    const acc = accounts.find((x) => String(x.id) === String(accountId));
-    const payAmt = parseFloat(amount || 0);
-    const bal = parseFloat(acc?.current_balance || 0);
-    if (acc && bal < payAmt) {
+    if (insufficient) {
       showErrorToast(
-        `Insufficient balance in ${acc.name}. Available ₹${bal.toLocaleString("en-IN")}, required ₹${payAmt.toLocaleString("en-IN")}.`
+        `Insufficient balance in ${selectedAcc.name}. Available ₹${bal.toLocaleString("en-IN")}, required ₹${requiredNet.toLocaleString("en-IN")}.`
       );
       return;
     }
@@ -70,6 +101,7 @@ export default function VendorPayments() {
         payment_account_id: accountId,
         mode: "bank_transfer",
         tds_section: tdsSection || undefined,
+        tds_amount: tdsSection ? String(tdsPreview.tds) : undefined,
       });
       showSuccessToast("Vendor payment recorded");
       setSelectedBill(null);
@@ -90,6 +122,10 @@ export default function VendorPayments() {
       showErrorToast(err, "Rule 37 apply failed");
     }
   };
+
+  const rate194cLabel = selectedBill
+    ? `${selectedBill.tds_rate_194c || (selectedBill.is_individual_or_huf ? "1" : "2")}% on taxable`
+    : "1%/2% on taxable";
 
   return (
     <div className="p-6 space-y-8 text-white">
@@ -175,7 +211,7 @@ export default function VendorPayments() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <form onSubmit={submitPay} className="w-full max-w-md bg-[#111116] border border-white/10 rounded-2xl p-6 space-y-4">
             <h3 className="text-lg font-semibold">Pay {selectedBill.bill_number}</h3>
-            <p className="text-xs text-gray-400">Due {getCurrencySymbol()}{parseFloat(selectedBill.balance_due).toLocaleString("en-IN")}</p>
+            <p className="text-xs text-gray-400">Due {formatCurrency(selectedBill.balance_due)}</p>
             <div>
               <label className="block text-xs text-gray-400 mb-1">Amount</label>
               <input required type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10" />
@@ -194,14 +230,35 @@ export default function VendorPayments() {
               <label className="block text-xs text-gray-400 mb-1">TDS section (optional; on taxable value ex-GST)</label>
               <select value={tdsSection} onChange={(e) => setTdsSection(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                 <option value="">None</option>
-                <option value="194C">194C (2% on taxable)</option>
+                <option value="194C">194C ({rate194cLabel})</option>
                 <option value="194J">194J (10% on taxable)</option>
                 <option value="194Q">194Q (0.1% on taxable)</option>
               </select>
             </div>
+            {tdsSection && (
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs space-y-1">
+                <div className="flex justify-between text-gray-400">
+                  <span>Taxable base (ex-GST)</span>
+                  <span className="font-mono text-white">{formatCurrency(tdsPreview.taxable)}</span>
+                </div>
+                <div className="flex justify-between text-gray-400">
+                  <span>TDS @ {tdsPreview.rate}%</span>
+                  <span className="font-mono text-amber-300">{formatCurrency(tdsPreview.tds)}</span>
+                </div>
+                <div className="flex justify-between text-gray-300 font-semibold pt-1 border-t border-white/5">
+                  <span>Net payable from account</span>
+                  <span className="font-mono text-emerald-300">{formatCurrency(tdsPreview.net)}</span>
+                </div>
+              </div>
+            )}
+            {insufficient && (
+              <p className="text-xs text-red-400">
+                Insufficient balance. Available ₹{bal.toLocaleString("en-IN")}, required ₹{requiredNet.toLocaleString("en-IN")}.
+              </p>
+            )}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setSelectedBill(null)} className="px-4 py-2 text-sm text-gray-400">Cancel</button>
-              <button type="submit" disabled={paying} className="px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-400 text-slate-950 disabled:opacity-50">
+              <button type="submit" disabled={paying || insufficient} className="px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-400 text-slate-950 disabled:opacity-50">
                 {paying ? "Saving…" : "Confirm payment"}
               </button>
             </div>
