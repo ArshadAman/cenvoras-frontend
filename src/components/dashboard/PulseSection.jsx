@@ -162,15 +162,25 @@ export default function PulseSection({ data, isLoading }) {
     return balance > 0 ? sum + balance : sum;
   }, 0);
 
-  const formatCurrency = (value) => {
+  // Keep abs for sales/udhaar display; Cash/Bank must show signed ledger balances
+  const formatCurrencyAbs = (value) => {
     if (value === undefined || value === null) return '--';
     return `${getCurrencySymbol()}${Math.abs(value).toLocaleString('en-IN')}`;
   };
+  const formatCurrencySigned = (value) => {
+    if (value === undefined || value === null) return '--';
+    const n = Number(value);
+    const sign = n < 0 ? '-' : '';
+    return `${sign}${getCurrencySymbol()}${Math.abs(n).toLocaleString('en-IN')}`;
+  };
+
+  const liquidTotal = pulse.total_liquid_balance ?? ((pulse.cash_in_hand || 0) + (pulse.bank_collections || 0));
+  const liquidNegative = Number(liquidTotal) < 0;
 
   const cards = [
     {
       label: 'Sales Today',
-      value: formatCurrency(pulse.sales_today),
+      value: formatCurrencyAbs(pulse.sales_today),
       subtitle: pulse.sales_change_percent !== undefined 
         ? `${pulse.sales_change_percent > 0 ? '+' : ''}${pulse.sales_change_percent}% vs yesterday`
         : 'vs yesterday',
@@ -180,21 +190,21 @@ export default function PulseSection({ data, isLoading }) {
     },
     {
       label: 'Cash / Bank',
-      value: formatCurrency(pulse.total_liquid_balance ?? ((pulse.cash_in_hand || 0) + (pulse.bank_collections || 0))),
-      subtitle: `Cash: ${formatCurrency(pulse.cash_in_hand || 0)} | Bank: ${formatCurrency(pulse.bank_collections || 0)}`,
+      value: formatCurrencySigned(liquidTotal),
+      subtitle: `Cash: ${formatCurrencySigned(pulse.cash_in_hand || 0)} | Bank: ${formatCurrencySigned(pulse.bank_collections || 0)}`,
       icon: BanknotesIcon,
-      color: 'green',
+      color: liquidNegative ? 'red' : 'green',
     },
     {
       label: 'Net Profit (Est.)',
-      value: formatCurrency(pulse.net_profit_today),
+      value: formatCurrencyAbs(pulse.net_profit_today),
       subtitle: pulse.net_profit_today >= 0 ? 'Sales above COGS today' : 'Below COGS today',
       icon: pulse.net_profit_today >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon,
       color: pulse.net_profit_today >= 0 ? 'emerald' : 'red',
     },
     {
       label: 'Udhaar',
-      value: formatCurrency(liveReceivables || pulse.total_receivables),
+      value: formatCurrencyAbs(liveReceivables || pulse.total_receivables),
       subtitle: (
         <div className="flex justify-between items-center w-full">
           <span>G: {formatCurrency(pulse.udhaar_given_today)} | C: {formatCurrency(pulse.udhaar_collected_today)}</span>

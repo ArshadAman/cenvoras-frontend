@@ -102,13 +102,37 @@ export default function AuditLogList() {
     }
 
     if (log.action === 'UPDATE') {
+      // Support legacy {before, after} blobs if API did not normalize
+      let entries = Object.entries(log.changes || {});
+      if (log.changes?.before && log.changes?.after && typeof log.changes.before === 'object') {
+        const before = log.changes.before || {};
+        const after = log.changes.after || {};
+        const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+        entries = keys
+          .filter((k) => !String(k).startsWith('_') && before[k] !== after[k])
+          .map((k) => [k, { old: before[k], new: after[k] }]);
+      }
       return (
         <div className="space-y-2 py-1">
-          {Object.entries(log.changes).map(([field, delta]) => {
+          {entries.map(([field, delta]) => {
+            if (field === 'before' || field === 'after') return null;
             const label = FIELD_LABELS[field] || field;
-            const oldVal = delta?.old;
-            const newVal = delta?.new ?? delta;
-            
+            const setOnly = delta?.set_only || (delta?.old === undefined && delta?.new === undefined && typeof delta !== 'object');
+            const oldVal = typeof delta === 'object' && delta !== null ? delta.old : undefined;
+            const newVal = typeof delta === 'object' && delta !== null && ('new' in delta || 'old' in delta)
+              ? delta.new
+              : delta;
+
+            if (setOnly || (oldVal === null || oldVal === undefined) && newVal !== undefined) {
+              return (
+                <div key={field} className="flex flex-wrap items-center gap-1.5 leading-tight text-xs">
+                  <span className="text-gray-400 font-medium">{label}:</span>
+                  <span className="text-gray-500">set to</span>
+                  <span className="text-emerald-400 font-bold px-1 bg-emerald-500/5 rounded">{formatValue(field, newVal)}</span>
+                </div>
+              );
+            }
+
             return (
               <div key={field} className="flex flex-wrap items-center gap-1.5 leading-tight text-xs">
                 <span className="text-gray-400 font-medium">{label}:</span>

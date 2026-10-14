@@ -92,7 +92,12 @@ export default function SalesSummary() {
 
   const selectedRevenue = analytics.total_revenue || 0;
   const selectedCount = analytics.total_invoices || 0;
-  const overallMonthRevenue = analytics.this_month_revenue || 0;
+  // Prefer net (incl. GST − credit notes) — same as dashboard / AI sales_mtd
+  const overallMonthRevenue =
+    analytics.this_month_revenue_net
+    ?? analytics.sales_mtd?.net
+    ?? analytics.this_month_revenue
+    ?? 0;
 
   const cardTitle = dateFilter === 'today' ? "Today's Sales" : dateFilter === 'month' ? "This Month's Sales" : "Period Sales";
 

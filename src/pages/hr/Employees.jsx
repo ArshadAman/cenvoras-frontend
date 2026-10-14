@@ -264,21 +264,18 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
   const monthlyGross = (sd && !isNaN(Number(sd.monthly_gross || sd.gross_salary)))
     ? Number(sd.monthly_gross || sd.gross_salary)
     : 0;
-  const annualGross = (sd && !isNaN(Number(sd.annual_gross)))
-    ? Number(sd.annual_gross)
+  const annualGross = (sd && !isNaN(Number(sd.annual_ctc || sd.annual_gross)))
+    ? Number(sd.annual_ctc || sd.annual_gross)
     : monthlyGross * 12;
+  const projectedAnnualGross = Number(sd?.tds_details?.projected_annual_gross || sd?.projected_annual_gross || 0);
   const totalDeductions = Number(sd?.employee_deductions?.total_deductions || 0);
   const monthlyTds = Number(sd?.tds_details?.monthly_tds || 0);
   const employeePf = Number(sd?.employee_deductions?.employee_pf || 0);
   const employeeEsi = Number(sd?.employee_deductions?.employee_esi || 0);
   const pt = Number(sd?.employee_deductions?.professional_tax || 0);
   const annualNetTax = Number(sd?.tds_details?.annual_net_tax || sd?.tds_details?.annual_tax || 0);
-  const nilTax87a = Boolean(
-    sd?.tds_details?.nil_tax_87a
-    || (sd?.tds_details?.rebate_applied
-      && Number(sd?.tds_details?.monthly_tds || 0) === 0
-      && Number(sd?.tds_details?.annual_tax || sd?.tds_details?.annual_net_tax || 0) === 0)
-  );
+  // Only show 87A Nil when backend engine sets the flag — never infer from rebate alone
+  const nilTax87a = Boolean(sd?.tds_details?.nil_tax_87a);
   const marginalRelief = Boolean(sd?.tds_details?.marginal_relief);
   const tdsReason = sd?.tds_details?.reason || '';
 
@@ -328,12 +325,15 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Monthly Gross Pay</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Monthly CTC / Gross</span>
                   <span className="text-xl font-bold text-white">
                     ₹{formatInr(monthlyGross)}
                   </span>
                   <span className="block text-[11px] text-gray-400 mt-0.5">
-                    Annual: ₹{formatInr(annualGross, 0)}
+                    Annual CTC: ₹{formatInr(annualGross, 0)}
+                    {projectedAnnualGross > 0 && projectedAnnualGross !== annualGross && (
+                      <> · FY projected: ₹{formatInr(projectedAnnualGross, 0)}</>
+                    )}
                   </span>
                 </div>
 
@@ -629,10 +629,7 @@ export default function Employees() {
                           <span className="text-[10px] text-gray-400">
                             {emp.tax_regime === 'old' ? 'Old Regime' : 'New Regime'}
                           </span>
-                          {(emp.salary_details?.tds_details?.nil_tax_87a
-                            || (emp.salary_details?.tds_details?.rebate_applied
-                              && Number(emp.salary_details?.tds_details?.monthly_tds || 0) === 0
-                              && Number(emp.salary_details?.tds_details?.annual_tax || 0) === 0)) && (
+                          {emp.salary_details?.tds_details?.nil_tax_87a === true && (
                             <span className="text-[9px] px-1 py-0.2 bg-emerald-500/20 text-emerald-300 rounded font-medium">
                               87A Nil Tax
                             </span>

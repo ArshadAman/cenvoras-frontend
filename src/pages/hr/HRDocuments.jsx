@@ -242,7 +242,18 @@ export default function HRDocuments() {
                           {doc.document_type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-xs">{new Date(doc.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-gray-400 text-xs">{(() => {
+                        try {
+                          return new Intl.DateTimeFormat('en-GB', {
+                            timeZone: 'Asia/Kolkata',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          }).format(new Date(doc.created_at));
+                        } catch {
+                          return new Date(doc.created_at).toLocaleDateString('en-IN');
+                        }
+                      })()}</td>
                       <td className="px-6 py-4 text-right space-x-2">
                         {(doc.file_url || doc.file) && (
                           <a
