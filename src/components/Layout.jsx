@@ -268,7 +268,7 @@ export default function Layout({ children, onLogout }) {
     }
   }, [isProfileIncomplete]);
 
-  const { data: subscriptionData } = useQuery({
+  const { data: subscriptionData, isLoading: entitlementsLoading, isFetched: entitlementsFetched } = useQuery({
     queryKey: ['subscription-entitlements'],
     queryFn: getSubscriptionEntitlements,
     enabled: !!role,
@@ -279,14 +279,20 @@ export default function Layout({ children, onLogout }) {
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
-  const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
+  // Prefer profile plan while entitlements load — never flash "locked on Free" for paid tenants
+  const currentPlanCode = (
+    entitlements.plan?.code
+    || profileData?.profile?.plan_code
+    || (entitlementsFetched ? 'free' : '')
+  ).toLowerCase();
   const isVipAccess = Boolean(
     entitlements.is_vip
     || entitlements.plan?.is_vip
     || String(currentPlanName).toLowerCase().includes('vip')
   );
   const displayPlanName = isVipAccess ? 'VIP Lifetime' : currentPlanName;
-  const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
+  const isFreePlan = Boolean(currentPlanCode) && (currentPlanCode === 'free' || currentPlanCode === 'starter');
+  const showFreeLock = isFreePlan && !entitlementsLoading && (entitlementsFetched || Boolean(profileData?.profile?.plan_code));
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
   const nextPlanCode = (entitlements.plan?.pending_plan_code || entitlements.plan?.next_plan_code || '').toLowerCase();
   const currentPeriodEnd = entitlements.plan?.current_period_end;
@@ -916,7 +922,7 @@ export default function Layout({ children, onLogout }) {
             </div>
           )}
 
-          {isFreePlan && !isAllowedFreeRoute(location.pathname) ? (
+          {showFreeLock && !isAllowedFreeRoute(location.pathname) ? (
             <div className="p-6 md:p-10">
               <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
                 <h2 className="text-2xl font-bold text-white mb-2">This section is locked on Free</h2>

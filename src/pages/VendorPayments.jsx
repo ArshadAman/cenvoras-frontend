@@ -24,7 +24,11 @@ export default function VendorPayments() {
         getRule37Itc(),
       ]);
       setBills(b.results || []);
-      const list = a.results || a || [];
+      const list = (a.results || a || []).filter((x) => {
+        const code = String(x.code || "");
+        const name = String(x.name || "").toLowerCase();
+        return code === "1001" || code === "1002" || name.includes("bank") || name === "cash" || name.startsWith("cash ");
+      });
       setAccounts(list);
       const bank = list.find((x) => String(x.code) === "1002");
       setAccountId(bank?.id || list[0]?.id || "");
@@ -49,6 +53,15 @@ export default function VendorPayments() {
   const submitPay = async (e) => {
     e.preventDefault();
     if (!selectedBill || !accountId) return;
+    const acc = accounts.find((x) => String(x.id) === String(accountId));
+    const payAmt = parseFloat(amount || 0);
+    const bal = parseFloat(acc?.current_balance || 0);
+    if (acc && bal < payAmt) {
+      showErrorToast(
+        `Insufficient balance in ${acc.name}. Available ₹${bal.toLocaleString("en-IN")}, required ₹${payAmt.toLocaleString("en-IN")}.`
+      );
+      return;
+    }
     setPaying(true);
     try {
       await createVendorPayment({
@@ -171,17 +184,19 @@ export default function VendorPayments() {
               <label className="block text-xs text-gray-400 mb-1">Bank / Cash account</label>
               <select required value={accountId} onChange={(e) => setAccountId(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                 {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.code}) — Bal: ₹{parseFloat(a.current_balance || 0).toLocaleString("en-IN")}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">TDS section (optional)</label>
+              <label className="block text-xs text-gray-400 mb-1">TDS section (optional; on taxable value ex-GST)</label>
               <select value={tdsSection} onChange={(e) => setTdsSection(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                 <option value="">None</option>
-                <option value="194C">194C (1%)</option>
-                <option value="194J">194J (10%)</option>
-                <option value="194Q">194Q (0.1%)</option>
+                <option value="194C">194C (2% on taxable)</option>
+                <option value="194J">194J (10% on taxable)</option>
+                <option value="194Q">194Q (0.1% on taxable)</option>
               </select>
             </div>
             <div className="flex justify-end gap-2 pt-2">

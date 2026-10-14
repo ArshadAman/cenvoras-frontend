@@ -177,7 +177,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         customer: editData.customer || '',
         invoice: editData.invoice || '',
         amount: editData.amount || '',
-        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : getTodayKolkata(),
+        date: editData.date
+          ? (typeof editData.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(editData.date)
+            ? editData.date.slice(0, 10)
+            : getTodayKolkata(new Date(editData.date)))
+          : getTodayKolkata(),
         mode: editData.mode || 'cash',
         reference: editData.reference || '',
         notes: editData.notes || ''

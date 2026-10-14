@@ -152,8 +152,9 @@ export const hrApi = {
   // Documents
   getDocuments: (params) => api.get('/hr/documents/', { params }),
   createDocument: (data) => {
+    // Do NOT set Content-Type manually — axios must attach the multipart boundary.
     const isForm = typeof FormData !== 'undefined' && data instanceof FormData;
-    return api.post('/hr/documents/', data, isForm ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
+    return api.post('/hr/documents/', data, isForm ? { headers: { 'Content-Type': undefined } } : undefined);
   },
   deleteDocument: (id) => api.delete(`/hr/documents/${id}/`),
 

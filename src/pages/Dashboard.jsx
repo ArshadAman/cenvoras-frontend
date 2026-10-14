@@ -179,7 +179,9 @@ export default function Dashboard({ onLogout }) {
     },
     {
       label: metrics?.gst_payable < 0 ? 'GST Credit' : 'GST Payable',
-      value: metrics?.gst_payable != null ? (metrics.gst_payable < 0 ? `${getCurrencySymbol()}${Math.abs(metrics.gst_payable).toLocaleString()}` : `${getCurrencySymbol()}${metrics.gst_payable.toLocaleString()}`) : '--',
+      value: metrics?.gst_payable != null
+        ? `${getCurrencySymbol()}${Math.abs(Number(metrics.gst_payable)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : '--',
       icon: <BanknotesIcon className="w-6 h-6 text-yellow-400" />,
       color: metrics?.gst_payable < 0 ? 'text-green-400' : 'text-yellow-400'
     },
