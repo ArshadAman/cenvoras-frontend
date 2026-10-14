@@ -22,6 +22,14 @@ const vendorSchema = Yup.object().shape({
   gstin: Yup.string()
     .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format")
     .max(15, "GSTIN must be less than 15 characters"),
+  pan: Yup.string()
+    .nullable()
+    .transform((v) => (!v || !String(v).trim() ? null : String(v).trim().toUpperCase()))
+    .test(
+      "pan-format",
+      "Invalid PAN format (e.g. ABCDE1234F)",
+      (v) => !v || /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v)
+    ),
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
   meta: Yup.object().shape({
@@ -84,6 +92,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
     email: editData?.email || "",
     phone: editData?.phone || "",
     gstin: editData?.gstin || "",
+    pan: editData?.pan || (editData?.gstin && editData.gstin.length >= 12 ? editData.gstin.substring(2, 12) : ""),
     state: editData?.state || "",
     address: editData?.address || "",
     meta: {
@@ -211,11 +220,36 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
                             }
                             form.setFieldValue('meta.gst_type', 'registered');
                           }
+                          if (val.length >= 12 && !form.values.pan) {
+                            form.setFieldValue('pan', val.substring(2, 12));
+                          }
                         }}
                       />
                     )}
                   </Field>
                   <ErrorMessage name="gstin" component="div" className="mt-1 text-xs text-red-400" />
+                </div>
+
+                {/* PAN — required for 194C 1%/2%; missing PAN → 20% (Sec 206AA) */}
+                <div>
+                  <label htmlFor="pan" className={labelClass}>PAN (TDS)</label>
+                  <Field name="pan">
+                    {({ field, form }) => (
+                      <input
+                        {...field}
+                        id="pan"
+                        type="text"
+                        maxLength={10}
+                        className={inputClass}
+                        placeholder="ABCDE1234F"
+                        onChange={(e) => form.setFieldValue('pan', e.target.value.toUpperCase())}
+                      />
+                    )}
+                  </Field>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    4th letter P/H → 194C @ 1%; C/F/others → 2%. Blank → 20% (no PAN).
+                  </p>
+                  <ErrorMessage name="pan" component="div" className="mt-1 text-xs text-red-400" />
                 </div>
 
                 {/* GST Type */}
