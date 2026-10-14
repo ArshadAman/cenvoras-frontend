@@ -117,7 +117,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           gender: employee.gender || 'M',
           employment_type: employee.employment_type || 'full_time',
           contract_fee: employee.contract_fee || '',
-          work_state: employee.work_state || companyWorkState,
+          work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
           status: employee.status || 'active',
           department_id: employee.department || '',
           designation_id: employee.designation || '',
@@ -143,7 +143,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           setSalaryConfig({
             monthly_ctc: currentCtc > 0 ? currentCtc : Number(employee.salary_details?.monthly_ctc || 50000),
             tax_regime: employee.tax_regime || 'new',
-            work_state: employee.work_state || companyWorkState,
+            work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
             components: existingComponents,
           });
         } else {

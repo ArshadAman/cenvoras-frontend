@@ -51,7 +51,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
       setActiveTab(payrollRun.is_reopened ? 'audit' : 'employees');
       fetchCycleData();
     }
-  }, [isOpen, payrollRun]);
+  }, [isOpen, payrollRun?.id, payrollRun?.status, payrollRun?.total_net, payrollRun?.updated_at]);
 
   const handleDownloadPdf = async (ps) => {
     try {
@@ -989,9 +989,9 @@ export default function PayrollRuns() {
   const [selectedReopenRun, setSelectedReopenRun] = useState(null);
   const [selectedDetailsRun, setSelectedDetailsRun] = useState(null);
 
-  const fetchRuns = async () => {
+  const fetchRuns = async ({ soft = false } = {}) => {
     try {
-      setLoading(true);
+      if (!soft) setLoading(true);
       const res = await hrApi.getPayrollRuns();
       const list = res.data?.results || res.data || [];
       setRuns(list);
@@ -1004,7 +1004,7 @@ export default function PayrollRuns() {
     } catch (error) {
       showErrorToast(error, "Failed to load payroll cycles");
     } finally {
-      setLoading(false);
+      if (!soft) setLoading(false);
     }
   };
 
@@ -1030,9 +1030,16 @@ export default function PayrollRuns() {
 
   const handleCalculate = async (id) => {
     try {
-      await hrApi.calculatePayroll(id);
+      const res = await hrApi.calculatePayroll(id);
+      const updated = res?.data || res;
       showSuccessToast("Payroll computed successfully!");
-      fetchRuns();
+      if (updated && updated.id) {
+        setRuns((prev) => prev.map((r) => (String(r.id) === String(updated.id) ? { ...r, ...updated } : r)));
+        setSelectedDetailsRun((prev) => (
+          prev && String(prev.id) === String(updated.id) ? { ...prev, ...updated } : prev
+        ));
+      }
+      await fetchRuns({ soft: true });
     } catch (error) {
       showErrorToast(error, "Payroll calculation failed");
     }

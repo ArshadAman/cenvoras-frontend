@@ -1412,7 +1412,7 @@ const Profile = ({ onLogout }) => {
                           <div className="flex items-baseline gap-2">
                             <span className="text-4xl font-extrabold text-white tracking-tight">{userProfile.setup_progress.completion_percentage}%</span>
                             <span className={`text-sm font-semibold ${userProfile.setup_progress.profile_completed ? 'text-emerald-400' : 'text-cyan-400'}`}>
-                              {userProfile.setup_progress.profile_completed ? 'Fully Completed' : 'Completed'}
+                              {userProfile.setup_progress.profile_completed ? 'Fully Completed' : 'In progress'}
                             </span>
                           </div>
                           
