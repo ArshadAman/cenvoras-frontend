@@ -25,25 +25,60 @@ const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
+function derivePctsFromComponents(components, monthlyCtc, fallbackBasic = 50, fallbackHra = 50) {
+  if (!components || !monthlyCtc || monthlyCtc <= 0) {
+    return { basicPct: fallbackBasic, hraPct: fallbackHra };
+  }
+  const metaBasic = Number(components._basic_pct ?? components.basic_pct);
+  const metaHra = Number(components._hra_pct ?? components.hra_pct);
+  if (!isNaN(metaBasic) && metaBasic > 0) {
+    return {
+      basicPct: Math.min(90, Math.max(40, Math.round(metaBasic))),
+      hraPct: !isNaN(metaHra) ? Math.min(50, Math.max(0, Math.round(metaHra))) : fallbackHra,
+    };
+  }
+  const basicVal = Number(components.Basic || components.basic || 0);
+  const hraVal = Number(
+    components.HRA !== undefined ? components.HRA : (components.hra !== undefined ? components.hra : -1)
+  );
+  if (basicVal > 0) {
+    const basicPct = Math.min(90, Math.max(40, Math.round((basicVal / monthlyCtc) * 100)));
+    let hraPct = fallbackHra;
+    if (hraVal === 0) hraPct = 0;
+    else if (hraVal > 0) hraPct = Math.min(50, Math.max(0, Math.round((hraVal / basicVal) * 100)));
+    return { basicPct, hraPct };
+  }
+  return { basicPct: fallbackBasic, hraPct: fallbackHra };
+}
+
 export default function SalaryBreakdownCalculator({
   initialMonthlyCtc = 50000,
   initialTaxRegime = 'new',
   initialWorkState = 'Karnataka',
   initialComponents = null,
+  initialBasicPct = null,
+  initialHraPct = null,
   initialTaxDeclarations = null,
+  dateOfJoining = null,
   onChange = null,
   readOnly = false,
 }) {
-  const [monthlyCtc, setMonthlyCtc] = useState(Number(initialMonthlyCtc) || 50000);
-  const [annualCtc, setAnnualCtc] = useState(
-    initialMonthlyCtc ? Math.round(Number(initialMonthlyCtc) * 12) : 600000
+  const startCtc = Number(initialMonthlyCtc) || 50000;
+  const startPcts = derivePctsFromComponents(
+    initialComponents,
+    startCtc,
+    initialBasicPct != null ? Number(initialBasicPct) : 50,
+    initialHraPct != null ? Number(initialHraPct) : 50,
   );
+
+  const [monthlyCtc, setMonthlyCtc] = useState(startCtc);
+  const [annualCtc, setAnnualCtc] = useState(Math.round(startCtc * 12 * 100) / 100);
   const [taxRegime, setTaxRegime] = useState(initialTaxRegime || 'new');
   const [workState, setWorkState] = useState(initialWorkState || 'Karnataka');
   
-  // Basic pay configuration (Wage Code: minimum 50%, no upper cap up to 90%)
-  const [basicPct, setBasicPct] = useState(50);
-  const [hraPctOfBasic, setHraPctOfBasic] = useState(50); // 50% of Basic
+  // Basic pay configuration (Wage Code: typically ≥50%; UI allows 40–85)
+  const [basicPct, setBasicPct] = useState(startPcts.basicPct);
+  const [hraPctOfBasic, setHraPctOfBasic] = useState(startPcts.hraPct);
 
   // Allowances Section (Fixed recurring components inside CTC)
   const [showAllowancesSection, setShowAllowancesSection] = useState(false);
@@ -82,29 +117,35 @@ export default function SalaryBreakdownCalculator({
   }, [initialTaxRegime]);
 
   useEffect(() => {
-    if (initialComponents) {
-      const basicVal = Number(initialComponents.Basic || initialComponents.basic || 0);
-      const hraVal = Number(initialComponents.HRA !== undefined ? initialComponents.HRA : (initialComponents.hra !== undefined ? initialComponents.hra : -1));
-      if (basicVal > 0 && monthlyCtc > 0) {
-        setBasicPct(Math.min(90, Math.max(50, Math.round((basicVal / monthlyCtc) * 100))));
-        if (hraVal === 0) {
-          setHraPctOfBasic(0);
-        } else if (hraVal > 0) {
-          setHraPctOfBasic(Math.min(50, Math.max(0, Math.round((hraVal / basicVal) * 100))));
-        }
-      }
+    if (initialBasicPct != null && !isNaN(Number(initialBasicPct))) {
+      setBasicPct(Math.min(90, Math.max(40, Math.round(Number(initialBasicPct)))));
     }
-  }, [initialComponents]);
+    if (initialHraPct != null && !isNaN(Number(initialHraPct))) {
+      setHraPctOfBasic(Math.min(50, Math.max(0, Math.round(Number(initialHraPct)))));
+    }
+    if (initialComponents) {
+      const derived = derivePctsFromComponents(
+        initialComponents,
+        monthlyCtc || Number(initialMonthlyCtc) || 0,
+        initialBasicPct != null ? Number(initialBasicPct) : basicPct,
+        initialHraPct != null ? Number(initialHraPct) : hraPctOfBasic,
+      );
+      setBasicPct(derived.basicPct);
+      setHraPctOfBasic(derived.hraPct);
+    }
+    // Intentionally sync when employee/salary props change (open modal)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialComponents, initialBasicPct, initialHraPct, initialMonthlyCtc]);
 
-  // Handle monthly change
+  // Handle monthly change — accept any rupees/paise (no ₹500 step)
   const handleMonthlyChange = (e) => {
     const val = parseFloat(e.target.value);
     const safeVal = isNaN(val) ? 0 : val;
     setMonthlyCtc(safeVal);
-    setAnnualCtc(Math.round(safeVal * 12));
+    setAnnualCtc(Math.round(safeVal * 12 * 100) / 100);
   };
 
-  // Handle annual change
+  // Handle annual change — accept any rupees/paise (no ₹10,000 step)
   const handleAnnualChange = (e) => {
     const val = parseFloat(e.target.value);
     const safeVal = isNaN(val) ? 0 : val;
@@ -204,6 +245,9 @@ export default function SalaryBreakdownCalculator({
         components: components,
         ad_hoc_earnings: adHocEarnings,
       };
+      if (dateOfJoining) {
+        payload.date_of_joining = dateOfJoining;
+      }
 
       if (taxRegime === 'old') {
         payload.declarations = {
@@ -219,13 +263,22 @@ export default function SalaryBreakdownCalculator({
       setBreakdown(res.data);
 
       if (onChange) {
+        // Prefer absolute amounts computed from current sliders (stable keys)
+        // so save always persists the split the user sees.
         onChange({
           monthly_ctc: monthlyCtc,
           annual_ctc: annualCtc,
           tax_regime: taxRegime,
           work_state: workState,
           basic_pct: basicPct,
-          components: res.data?.earnings || components,
+          hra_pct: hraPctOfBasic,
+          components: {
+            Basic: basicVal,
+            HRA: hraVal,
+            ...Object.fromEntries(
+              Object.entries(components).filter(([k]) => !['Basic', 'HRA'].includes(k))
+            ),
+          },
           ad_hoc_earnings: adHocEarnings,
           breakdown: res.data,
         });
@@ -239,7 +292,7 @@ export default function SalaryBreakdownCalculator({
   }, [
     monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic,
     conveyance, medical, customAllowances, adHocAdditions,
-    sec80c, sec80d, sec24b, onChange
+    sec80c, sec80d, sec24b, dateOfJoining, onChange
   ]);
 
   useEffect(() => {
@@ -336,7 +389,7 @@ export default function SalaryBreakdownCalculator({
                 <input
                   type="number"
                   min="0"
-                  step="500"
+                  step="0.01"
                   value={monthlyCtc || ''}
                   onChange={handleMonthlyChange}
                   className={`${inputCls} pl-8 font-semibold`}
@@ -356,7 +409,7 @@ export default function SalaryBreakdownCalculator({
                 <input
                   type="number"
                   min="0"
-                  step="10000"
+                  step="0.01"
                   value={annualCtc || ''}
                   onChange={handleAnnualChange}
                   className={`${inputCls} pl-8 font-semibold`}
@@ -649,7 +702,7 @@ export default function SalaryBreakdownCalculator({
                       <input
                         type="number"
                         min="0"
-                        step="500"
+                        step="0.01"
                         value={ah.amount || ''}
                         onChange={(e) => updateAdHocAddition(ah.id, 'amount', parseFloat(e.target.value) || 0)}
                         className="w-full rounded-xl bg-black/40 border border-emerald-500/30 pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-400"
