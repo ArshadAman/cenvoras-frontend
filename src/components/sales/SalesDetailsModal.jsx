@@ -437,11 +437,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         /* Match on-screen preview padding (templates already pad ~10–15mm) */
         margin: 0;
       }
-      @media screen {
-        .invoice-continuation-header {
-          display: none !important;
-        }
-      }
       @media print {
         html, body {
           margin: 0 !important;
@@ -455,76 +450,30 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         thead {
           display: table-header-group !important;
         }
-        thead tr {
-          page-break-before: avoid !important;
-          break-before: avoid !important;
-        }
-        tr:not(.invoice-print-shell-row) {
+        tr {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
-        }
-        .invoice-print-shell,
-        .invoice-print-shell > tbody,
-        .invoice-print-shell-row,
-        .invoice-print-shell-row > td {
-          break-inside: auto !important;
-          page-break-inside: auto !important;
-          page-break-before: avoid !important;
-          break-before: avoid !important;
-          margin: 0 !important;
-          padding: 0 !important;
         }
         .print-hidden {
           display: none !important;
         }
         .invoice-sheet {
-          position: relative !important;
-          min-height: auto !important;
-          height: auto !important;
-          width: 210mm !important;
-          max-width: 210mm !important;
-          margin: 0 !important;
-          padding: 0 3mm 14mm 3mm !important;
-          border: none !important;
-          border-radius: 0 !important;
-          background: #ffffff !important;
           box-shadow: none !important;
           transform: none !important;
+          background: #ffffff !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
           flex: 0 0 auto !important;
           flex-grow: 0 !important;
         }
-        .invoice-first-page-header {
-          display: none !important;
-        }
         .invoice-continuation-header {
-          display: table-row !important;
-        }
-        .invoice-continuation-header > td > div {
-          margin-top: 0 !important;
-          padding-top: 0 !important;
-        }
-        .invoice-sheet-body {
-          padding-top: 2mm !important;
-          padding-left: 0 !important;
-          padding-right: 0 !important;
-        }
-        .invoice-page-footer {
-          position: absolute !important;
-          bottom: 3mm !important;
-          left: 3mm !important;
-          right: 3mm !important;
-          margin-top: 0 !important;
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
+          display: none !important;
         }
         [data-print-target] {
           width: 100% !important;
           margin: 0 auto !important;
           box-shadow: none !important;
-          padding: 0 !important;
           background: #ffffff !important;
         }
       }
