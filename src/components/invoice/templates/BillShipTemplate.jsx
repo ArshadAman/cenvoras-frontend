@@ -80,7 +80,7 @@ const BillShipTemplate = forwardRef(({
       ref={ref}
       className="invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box',
+        width: '210mm', minHeight: '297mm', padding: '6mm 3px', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
         fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left',
