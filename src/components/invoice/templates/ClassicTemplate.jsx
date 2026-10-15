@@ -197,9 +197,9 @@ const InvoicePreview = forwardRef(({
         </div>
       )}
       
-      {/* Header Section */}
+      {/* Header Section — print hides this; thead continuation matches this format on every page */}
       <div
-        className="mb-4"
+        className="mb-4 invoice-first-page-header"
         style={{
           backgroundColor: '#ececec',
           margin: '-10mm -10mm 0 -10mm',
@@ -406,10 +406,14 @@ const InvoicePreview = forwardRef(({
                 colSpan={visibleColumns.length}
                 companyName={companyName}
                 companyAddress={companyAddress}
+                companyPhone={companyPhone}
+                companyEmail={companyEmail}
                 companyGST={companyGST}
                 companyPAN={companyPAN}
                 companyGEM={companyGEM}
-                primaryColor={colors.primary || '#1a1a2e'}
+                companyDL={companyDL}
+                companyNameColor="#d11f1f"
+                companyNameSize={typography.companyNameSize || 18}
               />
               <tr style={tableHeaderStyle}>
                 {visibleColumns.map(col => (
@@ -700,31 +704,33 @@ const InvoicePreview = forwardRef(({
           )}
         </div>
         
-        {/* Footer Note */}
-        {content.footerNote && (
-          <div 
-            className="text-center mt-6 pt-3 text-xs"
-            style={{ 
-              color: colors.lightText,
-              borderTop: `1px dashed ${colors.tableBorder}`,
-            }}
-          >
-            {content.footerNote}
+        {/* Branding footer — print pins to bottom of last page */}
+        <div className="invoice-page-footer">
+          {content.footerNote && (
+            <div 
+              className="text-center mt-6 pt-3 text-xs"
+              style={{ 
+                color: colors.lightText,
+                borderTop: `1px dashed ${colors.tableBorder}`,
+              }}
+            >
+              {content.footerNote}
+            </div>
+          )}
+          
+          <div className="mt-3 pt-2 text-center text-[10px] text-gray-500 font-medium">
+            {isDeliveryChallan
+              ? 'This is a computer generated delivery challan and does not require a signature.'
+              : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
-        )}
-        
-        <div className="mt-3 pt-2 text-center text-[10px] text-gray-500 font-medium">
-          {isDeliveryChallan
-            ? 'This is a computer generated delivery challan and does not require a signature.'
-            : 'This is a computer generated digital invoice and does not require a signature.'}
+          
+          {showWatermarkFooter && (
+            <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
+              Made with Cenvora: Built for Modern Businesses<br />
+              <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+            </div>
+          )}
         </div>
-        
-        {showWatermarkFooter && (
-          <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
-            Made with Cenvora: Built for Modern Businesses<br />
-            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
-          </div>
-        )}
       </div>
     </div>
   );

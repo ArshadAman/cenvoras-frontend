@@ -91,7 +91,7 @@ const LegendTemplate = forwardRef(({
       <div style={{ border: `1px solid ${borderColor}` }} className="invoice-sheet-body flex flex-col">
         {/* Header Block */}
         <div className="flex justify-between items-start border-b" style={{ borderColor }}>
-          <div className="p-4 flex gap-4 w-2/3 border-r" style={{ borderColor }}>
+          <div className="p-4 flex gap-4 w-2/3 border-r invoice-first-page-header" style={{ borderColor }}>
             {sections.showLogo && template.branding?.logo && (
               <img src={template.branding.logo} alt="Logo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
             )}
@@ -182,10 +182,13 @@ const LegendTemplate = forwardRef(({
                 colSpan={visibleColumns.length}
                 companyName={companyName}
                 companyAddress={companyAddress}
+                companyPhone={businessInfo.phone || ''}
+                companyEmail={businessInfo.email || ''}
                 companyGST={businessInfo.gstin || ''}
                 companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
                 companyGEM={businessInfo.gem_id || ''}
-                primaryColor={colors.primary || '#1a1a2e'}
+                companyDL={businessInfo.dl_number || ''}
+                companyNameColor={colors.primary || '#d11f1f'}
               />
               <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
                 {visibleColumns.map((col, idx) => {
@@ -421,7 +424,7 @@ const LegendTemplate = forwardRef(({
       </div>
 
       {/* Bottom Anchored Footer */}
-      <div className="mt-auto">
+      <div className="mt-auto invoice-page-footer">
         <div className="mt-4 text-center text-[10px] text-gray-500 font-medium w-full">
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'

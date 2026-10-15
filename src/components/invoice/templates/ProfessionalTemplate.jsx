@@ -138,7 +138,7 @@ const ProfessionalTemplate = forwardRef(({
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
-        <div className="w-1/2">
+        <div className="w-1/2 invoice-first-page-header">
           {sections.showLogo && template.branding?.logo && (
             <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 60 }} className="mb-4" />
           )}
@@ -227,10 +227,13 @@ const ProfessionalTemplate = forwardRef(({
               colSpan={visibleColumns.length}
               companyName={companyName}
               companyAddress={companyAddress}
+              companyPhone={businessInfo.phone || ''}
+              companyEmail={businessInfo.email || ''}
               companyGST={companyGST}
               companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
               companyGEM={businessInfo.gem_id || ''}
-              primaryColor={colors.primary || '#1a1a2e'}
+              companyDL={businessInfo.dl_number || ''}
+              companyNameColor={colors.primary || '#d11f1f'}
             />
             <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
               {visibleColumns.map((col) => (
@@ -438,18 +441,20 @@ const ProfessionalTemplate = forwardRef(({
             </div>
           </div>
         )}
-        <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-500">
-          {isDeliveryChallan
-            ? 'This is a computer generated delivery challan and does not require a signature.'
-            : 'This is a computer generated digital invoice and does not require a signature.'}
-        </div>
-
-        {showWatermarkFooter && (
-          <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-            Made with Cenvora: Built for Modern Businesses<br />
-            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+        <div className="invoice-page-footer">
+          <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-500">
+            {isDeliveryChallan
+              ? 'This is a computer generated delivery challan and does not require a signature.'
+              : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
-        )}
+
+          {showWatermarkFooter && (
+            <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+              Made with Cenvora: Built for Modern Businesses<br />
+              <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
