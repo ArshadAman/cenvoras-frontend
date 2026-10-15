@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { createProduct, updateProduct } from "../../api/inventory";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createProduct, updateProduct, getManufacturers } from "../../api/inventory";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
@@ -231,10 +231,88 @@ function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
   );
 }
 
+function ManufacturerCombobox({ value, onChange, options, inputClass, labelClass }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [filterText, setFilterText] = useState(value || "");
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    setFilterText(value || "");
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filtered = (options || []).filter((opt) =>
+    opt.toLowerCase().includes((filterText || "").toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <label className={labelClass}>Manufacturer</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={filterText}
+          onChange={(e) => {
+            setFilterText(e.target.value);
+            onChange(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className={`${inputClass} pr-7`}
+          placeholder="Select or enter manufacturer"
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+          tabIndex={-1}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+      {isOpen && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 max-h-36 w-full overflow-auto rounded-lg border border-white/20 bg-gray-900/95 p-1 shadow-2xl backdrop-blur-xl text-xs">
+          {filtered.map((item) => (
+            <li
+              key={item}
+              onClick={() => {
+                setFilterText(item);
+                onChange(item);
+                setIsOpen(false);
+              }}
+              className="cursor-pointer rounded px-2.5 py-1.5 text-white/90 hover:bg-cyan-500/20 hover:text-cyan-300 transition"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function ProductForm({ product, onClose }) {
   useEscKey(onClose, true, 10);
   const queryClient = useQueryClient();
   const isEdit = !!product;
+
+  const { data: manufacturerList = [] } = useQuery({
+    queryKey: ['inventory-manufacturers'],
+    queryFn: getManufacturers,
+    staleTime: 60 * 1000,
+  });
 
   const [availableUnits, setAvailableUnits] = useState(() => {
     const defaultUnits = getAllUnits();
@@ -373,11 +451,11 @@ export default function ProductForm({ product, onClose }) {
     return rates;
   }, [product?.tax]);
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
+  const labelClass = "block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-20 sm:pt-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -385,18 +463,18 @@ export default function ProductForm({ product, onClose }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up">
+      <div className="relative w-full max-w-4xl max-h-[94vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/10 bg-white/5">
-          <h2 className="text-xl font-bold text-white">
+        <div className="flex justify-between items-center px-5 py-3 border-b border-white/10 bg-white/5">
+          <h2 className="text-lg font-bold text-white">
             {isEdit ? "Edit Product" : "New Product"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
-            <XMarkIcon className="w-6 h-6" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -407,9 +485,9 @@ export default function ProductForm({ product, onClose }) {
           enableReinitialize
         >
           {({ isSubmitting, values, setFieldValue }) => (
-            <Form className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
-              {/* Section 1: Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Form className="p-4 sm:p-5 space-y-3">
+              {/* Row 1: Code, Name, HSN */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className={labelClass}>Item Code / SKU</label>
                   <Field
@@ -418,7 +496,7 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="e.g. PRD-001 (optional)"
                   />
-                  <ErrorMessage name="item_code" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="item_code" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
@@ -429,7 +507,7 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="e.g. Wireless Headphones"
                   />
-                  <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
@@ -440,20 +518,21 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="e.g. 8518"
                   />
-                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Row 2: Manufacturer, GST Rate, Primary Unit, Stock */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                  <label className={labelClass}>Manufacturer</label>
-                  <Field
-                    name="manufacturer"
-                    type="text"
-                    className={inputClass}
-                    placeholder="e.g. Cipla, Sun Pharma, Samsung"
+                  <ManufacturerCombobox
+                    value={values.manufacturer}
+                    onChange={(val) => setFieldValue("manufacturer", val)}
+                    options={manufacturerList}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
                   />
-                  <ErrorMessage name="manufacturer" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="manufacturer" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
@@ -469,67 +548,18 @@ export default function ProductForm({ product, onClose }) {
                       </option>
                     ))}
                   </Field>
-                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClass}>Description / Notes</label>
-                  <Field
-                    as="textarea"
-                    name="description"
-                    className={`${inputClass} resize-none h-[52px]`}
-                    placeholder="Optional description"
-                  />
-                  <ErrorMessage name="description" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
-                <div>
-                  <StorageConditionSelector
-                    value={values.meta.storage_condition}
-                    onChange={(val) => setFieldValue("meta.storage_condition", val)}
-                    inputClass={inputClass}
-                    labelClass={labelClass}
-                  />
-                  <ErrorMessage name="meta.storage_condition" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClass}>Expiry Date/Warranty (Optional)</label>
-                  <FormattedDateInput
-                    value={values.meta.expiry_date}
-                    onChange={(val) => setFieldValue("meta.expiry_date", val)}
-                    className={inputClass}
-                  />
-                  <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Internal Reference</label>
-                  <Field
-                    name="internal_reference"
-                    type="text"
-                    className={inputClass}
-                    placeholder="e.g. REF-2026-X, BATCH-A01"
-                  />
-                  <ErrorMessage name="internal_reference" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-              </div>
-
-              {/* Section 2: Units */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className={labelClass}>Primary Unit *</label>
                     <button
                       type="button"
                       onClick={() => setIsCustomUnit(!isCustomUnit)}
-                      className="text-[11px] text-cyan-400 hover:text-cyan-300 transition underline"
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 transition underline"
                     >
-                      {isCustomUnit ? "Choose Predefined Unit" : "+ Custom Unit"}
+                      {isCustomUnit ? "Predefined" : "+ Custom"}
                     </button>
                   </div>
                   <Field name="unit">
@@ -538,7 +568,7 @@ export default function ProductForm({ product, onClose }) {
                         {...field}
                         type="text"
                         className={inputClass}
-                        placeholder="e.g. tablet, vial, bundle, set…"
+                        placeholder="e.g. tablet, vial…"
                         onChange={(e) => {
                           field.onChange(e);
                           if (e.target.value.trim()) {
@@ -560,68 +590,19 @@ export default function ProductForm({ product, onClose }) {
                           }
                         }}
                       >
-                        <option value="">Select Primary Unit</option>
+                        <option value="">Select Unit</option>
                         {availableUnits.map((u) => (
                           <option key={u} value={u} className="bg-gray-800 text-white">
                             {u.toUpperCase()}
                           </option>
                         ))}
                         <option value="__add_custom__" className="bg-gray-800 text-cyan-400 font-semibold">
-                          + Add Custom Unit...
+                          + Custom Unit...
                         </option>
                       </select>
                     )}
                   </Field>
-                  <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Secondary Unit</label>
-                  <Field
-                    name="secondary_unit"
-                    type="text"
-                    className={inputClass}
-                    placeholder="e.g. Box"
-                  />
-                  <ErrorMessage name="secondary_unit" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Conversion Factor</label>
-                  <Field
-                    name="conversion_factor"
-                    type="number"
-                    min="1"
-                    className={inputClass}
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Section 3: Pricing & Stock (Stock Value removed) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className={labelClass}>Cost Price ({getCurrencySymbol()})</label>
-                  <Field
-                    name="cost_price"
-                    type="text"
-                    className={inputClass}
-                    placeholder="Optional"
-                  />
-                  <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Sale Price ({getCurrencySymbol()}) *</label>
-                  <Field
-                    name="sale_price"
-                    type="text"
-                    className={inputClass}
-                    placeholder="0.00"
-                  />
-                  <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
@@ -633,12 +614,61 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="0"
                   />
-                  <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
               </div>
 
-              {/* Section 4: Alerts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Row 3: Cost Price, Sale Price, Secondary Unit, Conversion Factor */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label className={labelClass}>Cost Price ({getCurrencySymbol()})</label>
+                  <Field
+                    name="cost_price"
+                    type="text"
+                    className={inputClass}
+                    placeholder="Optional"
+                  />
+                  <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Sale Price ({getCurrencySymbol()}) *</label>
+                  <Field
+                    name="sale_price"
+                    type="text"
+                    className={inputClass}
+                    placeholder="0.00"
+                  />
+                  <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Secondary Unit</label>
+                  <Field
+                    name="secondary_unit"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. Box"
+                  />
+                  <ErrorMessage name="secondary_unit" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Conversion Factor</label>
+                  <Field
+                    name="conversion_factor"
+                    type="number"
+                    min="1"
+                    className={inputClass}
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Row 4: Low Stock Alert, Expiry Date, Storage Condition, Internal Reference */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className={labelClass}>Low Stock Alert</label>
                   <Field
@@ -648,25 +678,66 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="e.g. 10"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Get notified when stock falls below this level.
-                  </p>
+                  <ErrorMessage name="low_stock_alert" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Expiry Date/Warranty</label>
+                  <FormattedDateInput
+                    value={values.meta.expiry_date}
+                    onChange={(val) => setFieldValue("meta.expiry_date", val)}
+                    className={inputClass}
+                  />
+                  <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
+                <div>
+                  <StorageConditionSelector
+                    value={values.meta.storage_condition}
+                    onChange={(val) => setFieldValue("meta.storage_condition", val)}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
+                  />
+                  <ErrorMessage name="meta.storage_condition" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Internal Reference</label>
+                  <Field
+                    name="internal_reference"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. REF-2026-X"
+                  />
+                  <ErrorMessage name="internal_reference" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
               </div>
 
+              {/* Row 5: Description / Notes */}
+              <div>
+                <label className={labelClass}>Description / Notes</label>
+                <Field
+                  name="description"
+                  type="text"
+                  className={inputClass}
+                  placeholder="Optional product description or notes"
+                />
+                <ErrorMessage name="description" component="div" className="text-red-400 text-xs mt-0.5" />
+              </div>
+
               {/* Actions */}
-              <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
+              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                  className="px-6 py-2.5 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-500/20"
+                  className="px-5 py-2 text-sm bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold rounded-lg transition-colors disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-500/20"
                 >
                   {isSubmitting || createMutation.isPending || updateMutation.isPending
                     ? "Saving..."
