@@ -80,7 +80,7 @@ const LegendTemplate = forwardRef(({
       ref={ref}
       className="invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', padding: '4mm 3px', boxSizing: 'border-box',
+        width: '100%', minHeight: '297mm', margin: 0, padding: '4mm 3px', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#000000',
         fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left',

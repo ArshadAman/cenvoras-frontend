@@ -83,11 +83,11 @@ const GenzTemplate = forwardRef(({
       ref={ref}
       className="invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', boxSizing: 'border-box',
+        width: '100%', minHeight: '297mm', margin: 0, boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#333333',
         fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 11}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left',
-        border: `8px solid ${primaryColor}`, borderRadius: '24px', overflow: 'hidden',
+        border: `8px solid ${primaryColor}`, borderRadius: 0, overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -405,7 +405,7 @@ const GenzTemplate = forwardRef(({
       </InvoicePrintShell>
       
       {/* Bottom Footer Border */}
-      <div style={{ backgroundColor: primaryColor }} className="h-10 w-full" />
+      <div style={{ backgroundColor: primaryColor }} className="h-10 w-full mt-auto" />
     </div>
   );
 });

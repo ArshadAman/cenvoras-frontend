@@ -127,11 +127,11 @@ const ProfessionalTemplate = forwardRef(({
       ref={ref}
       className="invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', padding: '6mm 3px', boxSizing: 'border-box',
+        width: '100%', minHeight: '297mm', margin: 0, padding: '6mm 3px', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#333333',
         fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
         transform: `scale(${scale})`, transformOrigin: 'top left', border: `1px solid ${colors.tableBorder || '#e2e8f0'}`,
-        borderRadius: '12px',
+        borderRadius: 0,
         display: 'flex',
         flexDirection: 'column',
       }}
