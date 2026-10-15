@@ -968,7 +968,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
             ) : previewTemplate ? (
               <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center pb-10">
                 <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100 print:scale-100 print:transform-none" ref={printRef}>
-                  <div className="w-[210mm] min-h-[297mm] bg-white" data-print-target>
+                  <div className="w-[210mm] min-h-[297mm] bg-white p-0 m-0" data-print-target>
                     <InvoicePreview
                       invoice={enrichedInvoice}
                       template={previewTemplate}
