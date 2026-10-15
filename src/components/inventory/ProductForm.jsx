@@ -9,14 +9,7 @@ import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import useEscKey from '../../hooks/useEscStack';
 import { formatErrorMessage } from '../../utils/toastUtils';
-
-const GST_RATES = [
-  { value: 0, label: "0% (Exempt / Nil)" },
-  { value: 3, label: "3% (Gold / Precious Metals)" },
-  { value: 5, label: "5% (Essential Goods)" },
-  { value: 18, label: "18% (Standard Rate)" },
-  { value: 40, label: "40% (Sin / Cess Goods)" },
-];
+import { gstRatesWithLegacy } from '../../utils/gstRates';
 
 const STORAGE_PRESETS = [
   "Room Temperature (RT)",
@@ -442,14 +435,10 @@ export default function ProductForm({ product, onClose }) {
     }
   };
 
-  const activeGstRates = React.useMemo(() => {
-    const rates = [...GST_RATES];
-    const currentTax = product?.tax != null ? Number(product.tax) : null;
-    if (currentTax !== null && !rates.some((r) => r.value === currentTax)) {
-      rates.push({ value: currentTax, label: `${currentTax}% (Legacy Rate)` });
-    }
-    return rates;
-  }, [product?.tax]);
+  const activeGstRates = React.useMemo(
+    () => gstRatesWithLegacy(product?.tax),
+    [product?.tax]
+  );
 
   const inputClass = "w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
   const labelClass = "block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide";
