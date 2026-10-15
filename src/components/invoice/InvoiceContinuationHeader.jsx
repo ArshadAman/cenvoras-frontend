@@ -47,10 +47,10 @@ export default function InvoiceContinuationHeader({
         <div
           style={{
             backgroundColor: '#ececec',
-            padding: '6mm 4mm 4mm 4mm',
-            marginBottom: '2mm',
-            borderBottomLeftRadius: '120% 20px',
-            borderBottomRightRadius: '120% 20px',
+            padding: '0 0 2mm 0',
+            margin: 0,
+            borderBottomLeftRadius: '120% 16px',
+            borderBottomRightRadius: '120% 16px',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

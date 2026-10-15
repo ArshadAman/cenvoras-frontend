@@ -18,7 +18,7 @@ export default function InvoicePrintShell({ children, headerProps = {} }) {
         <InvoiceContinuationHeader colSpan={1} {...headerProps} />
       </thead>
       <tbody>
-        <tr>
+        <tr className="invoice-print-shell-row">
           <td style={{ padding: 0, border: 'none', verticalAlign: 'top' }}>{children}</td>
         </tr>
       </tbody>
