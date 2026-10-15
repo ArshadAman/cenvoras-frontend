@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
-import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Bill To - Ship To Template (Flipkart Style)
 const BillShipTemplate = forwardRef(({ 
@@ -89,6 +89,19 @@ const BillShipTemplate = forwardRef(({
         flexDirection: 'column',
       }}
     >
+      <InvoicePrintShell
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST: businessInfo.gstin || '',
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || '',
+          companyNameColor: colors.accent || colors.primary || '#d11f1f',
+        }}
+      >
       {/* Header Strip */}
       <div className="flex justify-between items-start mb-6 border-b border-gray-300 pb-4">
         <div className="flex gap-4 items-center invoice-first-page-header">
@@ -164,18 +177,6 @@ const BillShipTemplate = forwardRef(({
       {/* Items Table */}
       <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
           <thead style={{ display: 'table-header-group' }}>
-            <InvoiceContinuationHeader
-              colSpan={visibleColumns.length}
-              companyName={companyName}
-              companyAddress={companyAddress}
-              companyPhone={businessInfo.phone || ''}
-              companyEmail={businessInfo.email || ''}
-              companyGST={businessInfo.gstin || ''}
-              companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
-              companyGEM={businessInfo.gem_id || ''}
-              companyDL={businessInfo.dl_number || ''}
-              companyNameColor={colors.accent || colors.primary || '#d11f1f'}
-            />
             <tr className="border-y border-gray-400 bg-gray-50 h-9">
               {visibleColumns.map((col, idx) => {
                 const isLast = idx === visibleColumns.length - 1;
@@ -404,6 +405,7 @@ const BillShipTemplate = forwardRef(({
           )}
         </div>
       </div>
+      </InvoicePrintShell>
     </div>
   );
 });

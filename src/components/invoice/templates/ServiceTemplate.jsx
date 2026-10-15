@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
-import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Service Template (LTIMindtree Style)
 const ServiceTemplate = forwardRef(({ 
@@ -106,6 +106,19 @@ const ServiceTemplate = forwardRef(({
         flexDirection: 'column',
       }}
     >
+      <InvoicePrintShell
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST: businessInfo.gstin || '',
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || businessInfo.drug_license_number || '',
+          companyNameColor: primaryColor || '#d11f1f',
+        }}
+      >
       <div className="flex justify-between items-start mb-6">
         <div className="invoice-first-page-header">
           {sections.showLogo && template.branding?.logo && (
@@ -182,18 +195,6 @@ const ServiceTemplate = forwardRef(({
       {/* Items Table */}
       <table className="w-full text-left mb-8 border-collapse">
           <thead style={{ display: 'table-header-group' }}>
-            <InvoiceContinuationHeader
-              colSpan={visibleColumns.length}
-              companyName={companyName}
-              companyAddress={companyAddress}
-              companyPhone={businessInfo.phone || ''}
-              companyEmail={businessInfo.email || ''}
-              companyGST={businessInfo.gstin || ''}
-              companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
-              companyGEM={businessInfo.gem_id || ''}
-              companyDL={businessInfo.dl_number || businessInfo.drug_license_number || ''}
-              companyNameColor={primaryColor || '#d11f1f'}
-            />
             <tr className="border-b-2 border-gray-900">
               {visibleColumns.map(col => (
                 <th 
@@ -398,6 +399,7 @@ const ServiceTemplate = forwardRef(({
           )}
         </div>
       </div>
+      </InvoicePrintShell>
     </div>
   );
 });

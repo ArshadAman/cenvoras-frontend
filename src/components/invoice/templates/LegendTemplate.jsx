@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
-import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Legend Template (ITC Style)
 const LegendTemplate = forwardRef(({ 
@@ -88,6 +88,19 @@ const LegendTemplate = forwardRef(({
         flexDirection: 'column',
       }}
     >
+      <InvoicePrintShell
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST: businessInfo.gstin || '',
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || '',
+          companyNameColor: colors.primary || '#d11f1f',
+        }}
+      >
       <div style={{ border: `1px solid ${borderColor}` }} className="invoice-sheet-body flex flex-col">
         {/* Header Block */}
         <div className="flex justify-between items-start border-b" style={{ borderColor }}>
@@ -178,18 +191,6 @@ const LegendTemplate = forwardRef(({
         {/* Legend Table */}
         <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
             <thead style={{ display: 'table-header-group' }}>
-              <InvoiceContinuationHeader
-                colSpan={visibleColumns.length}
-                companyName={companyName}
-                companyAddress={companyAddress}
-                companyPhone={businessInfo.phone || ''}
-                companyEmail={businessInfo.email || ''}
-                companyGST={businessInfo.gstin || ''}
-                companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
-                companyGEM={businessInfo.gem_id || ''}
-                companyDL={businessInfo.dl_number || ''}
-                companyNameColor={colors.primary || '#d11f1f'}
-              />
               <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
                 {visibleColumns.map((col, idx) => {
                   const isLast = idx === visibleColumns.length - 1;
@@ -438,6 +439,7 @@ const LegendTemplate = forwardRef(({
           </div>
         )}
       </div>
+      </InvoicePrintShell>
     </div>
   );
 });
