@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
 
 // Service Template (LTIMindtree Style)
 const ServiceTemplate = forwardRef(({ 
@@ -24,7 +25,7 @@ const ServiceTemplate = forwardRef(({
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
   const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
   const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
-  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
   const bankUpi = businessInfo.bank_upi_id || '';
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
@@ -54,7 +55,9 @@ const ServiceTemplate = forwardRef(({
   const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
+    ? Boolean(businessInfo.show_cenvora_footer)
+    : planCode !== 'business';
 
   const isDeliveryChallan = 
     invoice.document_type === 'delivery_challan' || 
@@ -92,6 +95,7 @@ const ServiceTemplate = forwardRef(({
   return (
     <div 
       ref={ref}
+      className="invoice-sheet"
       style={{
         width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
@@ -177,7 +181,16 @@ const ServiceTemplate = forwardRef(({
 
       {/* Items Table */}
       <table className="w-full text-left mb-8 border-collapse">
-          <thead>
+          <thead style={{ display: 'table-header-group' }}>
+            <InvoiceContinuationHeader
+              colSpan={visibleColumns.length}
+              companyName={companyName}
+              companyAddress={companyAddress}
+              companyGST={businessInfo.gstin || ''}
+              companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
+              companyGEM={businessInfo.gem_id || ''}
+              primaryColor={primaryColor}
+            />
             <tr className="border-b-2 border-gray-900">
               {visibleColumns.map(col => (
                 <th 

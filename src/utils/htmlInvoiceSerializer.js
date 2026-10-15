@@ -84,11 +84,27 @@ export function serializeInvoiceHtml(element) {
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #ffffff;
+      background-color: #ffffff !important;
       color: #1f2937;
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', 'Noto Sans', 'Liberation Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+    /* Prevent dark empty slabs: do not stretch A4 shells / flex fillers in PDF */
+    .invoice-sheet {
+      min-height: auto !important;
+      height: auto !important;
+      background-color: #ffffff !important;
+    }
+    .invoice-sheet-body,
+    .invoice-sheet .flex-1 {
+      flex: 0 0 auto !important;
+      flex-grow: 0 !important;
+      min-height: 0 !important;
+    }
+    /* Show compact company band on every printed page (inside table thead) */
+    .invoice-continuation-header {
+      display: table-row !important;
     }
     .font-mono, [class*="font-mono"], code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;

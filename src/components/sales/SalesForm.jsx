@@ -21,6 +21,7 @@ import DateInputField from "../common/DateInputField";
 import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
 import { getTodayKolkata } from "../../utils/date";
+import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
@@ -226,10 +227,13 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
 
                 if (e.key === 'Tab') {
                   if (showDropdown && filteredProducts.length === 1 && !showAddButton) {
+                    e.preventDefault();
                     selectProduct(filteredProducts[0]);
                   } else if (showDropdown && selectedIndex >= 0 && selectedIndex < displayLimit) {
+                    e.preventDefault();
                     selectProduct(filteredProducts[selectedIndex]);
                   } else if (showDropdown && selectedIndex === displayLimit && showAddButton) {
+                    e.preventDefault();
                     onCreateNewProduct(inputValue.trim(), idx);
                   }
                   setShowDropdown(false);
@@ -2664,7 +2668,23 @@ export default function SalesForm({
                                            if (col.key === "hsn") {
                                              return (
                                                <div key={col.key}>
-                                                 <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                                 <Field name={`items.${index}.hsn_sac_code`}>
+                                                   {({ field }) => (
+                                                     <input
+                                                       {...field}
+                                                       type="text"
+                                                       className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                       onBlur={async (e) => {
+                                                         field.onBlur(e);
+                                                         await autofillTaxFromLearnedHsn(
+                                                           e.target.value,
+                                                           values.items[index]?.tax,
+                                                           (rate) => setFieldValue(`items.${index}.tax`, rate)
+                                                         );
+                                                       }}
+                                                     />
+                                                   )}
+                                                 </Field>
                                                </div>
                                              );
                                            }
@@ -3072,7 +3092,23 @@ export default function SalesForm({
                                               {itemSettings.show_item_hsn && (
                                                 <div>
                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">HSN/SAC Code</label>
-                                                    <Field name={`items.${index}.hsn_sac_code`} type="text" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
+                                                    <Field name={`items.${index}.hsn_sac_code`}>
+                                                      {({ field }) => (
+                                                        <input
+                                                          {...field}
+                                                          type="text"
+                                                          className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm"
+                                                          onBlur={async (e) => {
+                                                            field.onBlur(e);
+                                                            await autofillTaxFromLearnedHsn(
+                                                              e.target.value,
+                                                              values.items[index]?.tax,
+                                                              (rate) => setFieldValue(`items.${index}.tax`, rate)
+                                                            );
+                                                          }}
+                                                        />
+                                                      )}
+                                                    </Field>
                                                 </div>
                                               )}
                                               {itemSettings.show_item_batch && (

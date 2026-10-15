@@ -38,6 +38,7 @@ export default function InvoicePrintSettings({ isOpen, onClose }) {
              <div className="text-center text-gray-400">Loading settings...</div>
         ) : (
             <Formik
+            enableReinitialize
             initialValues={{
                 print_offset_x: settings?.print_offset_x || 0,
                 print_offset_y: settings?.print_offset_y || 0,
@@ -45,9 +46,14 @@ export default function InvoicePrintSettings({ isOpen, onClose }) {
                 header_text: settings?.header_text || '',
                 footer_text: settings?.footer_text || '',
                 terms_conditions: settings?.terms_conditions || '',
+                show_cenvora_footer: settings?.show_cenvora_footer !== false,
             }}
             onSubmit={(values) => {
-                mutation.mutate(values);
+                const payload = { ...values };
+                if (!settings?.allow_cenvora_footer_toggle) {
+                  delete payload.show_cenvora_footer;
+                }
+                mutation.mutate(payload);
             }}
             >
             {({ isSubmitting }) => (
@@ -86,6 +92,19 @@ export default function InvoicePrintSettings({ isOpen, onClose }) {
                         <label className="block text-xs font-medium text-gray-400 mb-1">Default Terms</label>
                         <Field name="terms_conditions" as="textarea" rows="3" className="w-full bg-[#222] border border-white/10 rounded-lg px-3 py-2 text-white" placeholder="Payment terms etc." />
                     </div>
+
+                    {settings?.allow_cenvora_footer_toggle ? (
+                      <label className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-3 cursor-pointer">
+                        <Field
+                          name="show_cenvora_footer"
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-white/20 bg-[#222] text-cyan-500 focus:ring-cyan-500/40"
+                        />
+                        <span className="text-sm text-gray-200">
+                          Show &ldquo;Made with Cenvora&rdquo; on invoices
+                        </span>
+                      </label>
+                    ) : null}
 
                     <div className="pt-4 flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
