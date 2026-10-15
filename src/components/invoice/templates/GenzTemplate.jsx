@@ -106,7 +106,7 @@ const GenzTemplate = forwardRef(({
         }}
       >
       {/* Massive Header Strip — screen/preview; print uses InvoicePrintShell thead */}
-      <div style={{ backgroundColor: primaryColor }} className="px-[3px] py-6 flex justify-between items-center text-white invoice-first-page-header">
+      <div style={{ backgroundColor: primaryColor }} className="px-8 py-6 flex justify-between items-center text-white invoice-first-page-header">
         <div className="flex items-center gap-4">
           {sections.showLogo && template.branding?.logo && (
              <img src={template.branding.logo} alt="Logo" className="h-12 bg-white p-1 rounded-xl" />
@@ -125,7 +125,7 @@ const GenzTemplate = forwardRef(({
         <h2 className="text-3xl font-bold opacity-90">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
       </div>
 
-      <div className="px-[3px] py-4 invoice-sheet-body flex flex-col">
+      <div className="px-8 py-4 invoice-sheet-body flex flex-col">
         <div className="grid grid-cols-2 gap-12 mb-10">
           <div>
             <h3 className="text-gray-400 font-bold mb-2 uppercase text-xs tracking-widest">Billed To</h3>
