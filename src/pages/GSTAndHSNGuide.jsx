@@ -10,6 +10,7 @@ import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
 import api from '../api/api';
 import { listLearnedHsnGst } from '../api/learned_hsn';
+import { GST_SLAB_CARDS } from '../utils/gstRates';
 import { toast } from 'react-toastify';
 
 export default function GSTAndHSNGuide() {
@@ -248,35 +249,19 @@ export default function GSTAndHSNGuide() {
         )}
 
         {/* GST Slab Reference */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-12">
-          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
-            <div className="text-xl font-bold text-white">0%</div>
-            <div className="text-xs font-medium text-zinc-400 mt-0.5">Nil Rated / Exempt</div>
-            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-              Fresh vegetables, grains, milk, salt, and basic healthcare.
-            </p>
-          </div>
-          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
-            <div className="text-xl font-bold text-white">5%</div>
-            <div className="text-xs font-medium text-zinc-400 mt-0.5">Essentials</div>
-            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-              Packaged foods, basic footwear, tea, spices, and medicines.
-            </p>
-          </div>
-          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
-            <div className="text-xl font-bold text-white">12% / 18%</div>
-            <div className="text-xs font-medium text-zinc-400 mt-0.5">Standard Goods</div>
-            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-              Electronics, computers, IT services, capital goods, and restaurants.
-            </p>
-          </div>
-          <div className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl">
-            <div className="text-xl font-bold text-white">28%</div>
-            <div className="text-xs font-medium text-zinc-400 mt-0.5">Luxury Goods</div>
-            <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-              Air conditioners, automobiles, and luxury consumer goods.
-            </p>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-12">
+          {GST_SLAB_CARDS.map((card) => (
+            <div
+              key={card.rate}
+              className="bg-zinc-950 border border-zinc-800/80 p-4 rounded-xl"
+            >
+              <div className="text-xl font-bold text-white">{card.rate}</div>
+              <div className="text-xs font-medium text-zinc-400 mt-0.5">{card.title}</div>
+              <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                {card.description}
+              </p>
+            </div>
+          ))}
         </div>
 
         {/* Bottom Callout */}

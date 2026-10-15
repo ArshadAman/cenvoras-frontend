@@ -22,6 +22,7 @@ import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
+import { GST_RATES } from "../../utils/gstRates";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
@@ -3645,9 +3646,9 @@ export default function SalesForm({
                     onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
                     className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
                   >
-                    {[0, 5, 12, 18, 28].map((rate) => (
-                      <option key={rate} value={String(rate)} className="bg-[#18181b]">
-                        {rate}% GST
+                    {GST_RATES.map((rate) => (
+                      <option key={rate.value} value={String(rate.value)} className="bg-[#18181b]">
+                        {rate.label}
                       </option>
                     ))}
                   </select>
