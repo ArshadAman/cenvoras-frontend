@@ -466,18 +466,32 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           display: none !important;
         }
         .invoice-sheet {
+          position: relative !important;
           min-height: auto !important;
           height: auto !important;
           background: #ffffff !important;
           box-shadow: none !important;
+          padding-bottom: 24mm !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
           flex: 0 0 auto !important;
           flex-grow: 0 !important;
         }
+        .invoice-first-page-header {
+          display: none !important;
+        }
         .invoice-continuation-header {
           display: table-row !important;
+        }
+        .invoice-page-footer {
+          position: absolute !important;
+          bottom: 8mm !important;
+          left: 10mm !important;
+          right: 10mm !important;
+          margin-top: 0 !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
         }
         [data-print-target] {
           width: 100% !important;

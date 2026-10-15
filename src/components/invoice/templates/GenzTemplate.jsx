@@ -92,8 +92,8 @@ const GenzTemplate = forwardRef(({
         flexDirection: 'column',
       }}
     >
-      {/* Massive Header Strip */}
-      <div style={{ backgroundColor: primaryColor }} className="px-12 py-8 flex justify-between items-center text-white">
+      {/* Massive Header Strip — company block hidden in print; thead repeats full-format header */}
+      <div style={{ backgroundColor: primaryColor }} className="px-12 py-8 flex justify-between items-center text-white invoice-first-page-header">
         <div className="flex items-center gap-4">
           {sections.showLogo && template.branding?.logo && (
              <img src={template.branding.logo} alt="Logo" className="h-12 bg-white p-1 rounded-xl" />
@@ -181,10 +181,13 @@ const GenzTemplate = forwardRef(({
                   colSpan={visibleColumns.length}
                   companyName={companyName}
                   companyAddress={companyAddress}
+                  companyPhone={businessInfo.phone || ''}
+                  companyEmail={businessInfo.email || ''}
                   companyGST={businessInfo.gstin || ''}
                   companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
                   companyGEM={businessInfo.gem_id || ''}
-                  primaryColor={primaryColor}
+                  companyDL={businessInfo.dl_number || businessInfo.drug_license_number || ''}
+                  companyNameColor={primaryColor || '#d11f1f'}
                 />
                 <tr className="border-b border-gray-200">
                   {visibleColumns.map((col) => {
@@ -382,18 +385,20 @@ const GenzTemplate = forwardRef(({
               </div>
             </div>
           )}
-          <div className="mt-6 pt-4 border-t border-gray-100 text-center text-[10px] text-gray-400 font-medium tracking-wide w-full">
-            {isDeliveryChallan
-              ? 'This is a computer generated delivery challan and does not require a signature.'
-              : 'This is a computer generated digital invoice and does not require a signature.'}
-          </div>
-          
-          {showWatermarkFooter && (
-            <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-              Made with Cenvora: Built for Modern Businesses<br />
-              <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+          <div className="invoice-page-footer">
+            <div className="mt-6 pt-4 border-t border-gray-100 text-center text-[10px] text-gray-400 font-medium tracking-wide w-full">
+              {isDeliveryChallan
+                ? 'This is a computer generated delivery challan and does not require a signature.'
+                : 'This is a computer generated digital invoice and does not require a signature.'}
             </div>
-          )}
+            
+            {showWatermarkFooter && (
+              <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+                Made with Cenvora: Built for Modern Businesses<br />
+                <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       

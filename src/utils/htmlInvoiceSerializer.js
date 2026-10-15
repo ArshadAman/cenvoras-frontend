@@ -92,9 +92,11 @@ export function serializeInvoiceHtml(element) {
     }
     /* Prevent dark empty slabs: do not stretch A4 shells / flex fillers in PDF */
     .invoice-sheet {
+      position: relative !important;
       min-height: auto !important;
       height: auto !important;
       background-color: #ffffff !important;
+      padding-bottom: 24mm !important;
     }
     .invoice-sheet-body,
     .invoice-sheet .flex-1 {
@@ -102,9 +104,22 @@ export function serializeInvoiceHtml(element) {
       flex-grow: 0 !important;
       min-height: 0 !important;
     }
-    /* Show compact company band on every printed page (inside table thead) */
+    /* Page 1 hero hidden; full-format company header in thead repeats every page */
+    .invoice-first-page-header {
+      display: none !important;
+    }
     .invoice-continuation-header {
       display: table-row !important;
+    }
+    /* Pin branding footer to bottom of last printed page */
+    .invoice-page-footer {
+      position: absolute !important;
+      bottom: 8mm !important;
+      left: 10mm !important;
+      right: 10mm !important;
+      margin-top: 0 !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
     }
     .font-mono, [class*="font-mono"], code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;

@@ -2,27 +2,33 @@ import React from 'react';
 import { getCountryCode } from '../../utils/currency';
 
 /**
- * Compact company band that lives inside a table <thead> so Chromium/print
- * repeats it on every page (with column headers). Keep density low — not a
- * full first-page hero duplicate.
+ * Full-format company header for Chromium/print page 2+.
+ * Lives in table <thead> so it repeats with column headers.
+ * Hidden on screen; print CSS shows it and hides .invoice-first-page-header
+ * so page 1 is not duplicated.
+ *
+ * Matches Classic invoice density (right-aligned name / address / tax IDs).
  */
 export default function InvoiceContinuationHeader({
   colSpan = 12,
   companyName = '',
   companyAddress = '',
+  companyPhone = '',
+  companyEmail = '',
   companyGST = '',
   companyPAN = '',
   companyGEM = '',
-  primaryColor = '#1a1a2e',
+  companyDL = '',
+  companyNameColor = '#d11f1f',
+  companyNameSize = 18,
 }) {
   const gstLabel = getCountryCode() === 'IN' ? 'GSTIN' : 'TRN';
-  const meta = [
-    companyGST ? `${gstLabel}: ${companyGST}` : null,
-    companyPAN ? `PAN: ${companyPAN}` : null,
-    companyGEM ? `GeM: ${companyGEM}` : null,
+  const contactLine = [
+    companyPhone ? `Ph- ${companyPhone}` : null,
+    companyEmail ? `email-${companyEmail}` : null,
   ]
     .filter(Boolean)
-    .join('  ·  ');
+    .join(', ');
 
   return (
     <tr
@@ -33,29 +39,50 @@ export default function InvoiceContinuationHeader({
       <td
         colSpan={colSpan}
         style={{
-          padding: '6px 8px',
-          borderBottom: `1px solid ${primaryColor}22`,
+          padding: 0,
+          border: 'none',
           backgroundColor: '#ffffff',
-          color: primaryColor,
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: '11px', lineHeight: 1.3 }}>{companyName}</div>
-        {companyAddress ? (
-          <div
-            style={{
-              fontSize: '8px',
-              color: '#4b5563',
-              whiteSpace: 'pre-line',
-              lineHeight: 1.25,
-              marginTop: 2,
-            }}
-          >
-            {companyAddress}
+        <div
+          style={{
+            backgroundColor: '#ececec',
+            padding: '6mm 4mm 4mm 4mm',
+            marginBottom: '2mm',
+            borderBottomLeftRadius: '120% 20px',
+            borderBottomRightRadius: '120% 20px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ textAlign: 'right', maxWidth: '62%' }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: `${companyNameSize}px`,
+                  color: companyNameColor,
+                  lineHeight: 1.25,
+                  marginBottom: 4,
+                }}
+              >
+                {companyName}
+              </div>
+              <div style={{ color: '#1f2937', fontSize: '9px', lineHeight: 1.35 }}>
+                {companyAddress ? (
+                  <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
+                ) : null}
+                {contactLine ? <div>{contactLine}</div> : null}
+                {companyGST ? (
+                  <div style={{ fontWeight: 500 }}>
+                    {gstLabel}: {companyGST}
+                  </div>
+                ) : null}
+                {companyPAN ? <div style={{ fontWeight: 500 }}>PAN: {companyPAN}</div> : null}
+                {companyGEM ? <div style={{ fontWeight: 500 }}>GEM ID- {companyGEM}</div> : null}
+                {companyDL ? <div style={{ fontWeight: 500 }}>DL No- {companyDL}</div> : null}
+              </div>
+            </div>
           </div>
-        ) : null}
-        {meta ? (
-          <div style={{ fontSize: '8px', color: '#6b7280', marginTop: 2, fontWeight: 500 }}>{meta}</div>
-        ) : null}
+        </div>
       </td>
     </tr>
   );
