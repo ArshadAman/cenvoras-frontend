@@ -87,6 +87,12 @@ export const bulkDeleteProducts = (ids) =>
 export const bulkRestoreProducts = (ids) =>
   api.post('/inventory/products/bulk-restore/', { ids }).then(res => res.data);
 
+export const restoreProduct = (id) =>
+  api.post(`/inventory/products/${id}/restore/`).then(res => res.data);
+
+export const getManufacturers = () =>
+  api.get('/inventory/manufacturers/').then(res => res.data);
+
 export const downloadProductCsvTemplate = () =>
   api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);
 

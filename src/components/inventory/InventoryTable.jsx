@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { downloadProductCsvTemplate, getProducts, bulkDeleteProducts, bulkRestoreProducts, updateProduct } from "../../api/inventory";
+import { downloadProductCsvTemplate, getProducts, bulkDeleteProducts, bulkRestoreProducts, updateProduct, restoreProduct, getManufacturers } from "../../api/inventory";
 import Pagination from "../common/Pagination";
 import { toast } from "react-toastify";
 import InlineProgressBar from "../common/InlineProgressBar";
@@ -133,8 +133,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     });
   };
 
+  const columnPickerRef = useRef(null);
+
   useEscKey(() => setShowMappingModal(false), showMappingModal, 20);
   useEscKey(() => setShowColumnPicker(false), showColumnPicker, 20);
+
+  // Close column picker on outside click
+  useEffect(() => {
+    if (!showColumnPicker) return;
+    const handleClickOutside = (e) => {
+      if (columnPickerRef.current && !columnPickerRef.current.contains(e.target)) {
+        setShowColumnPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showColumnPicker]);
 
   const [advancedFilters, setAdvancedFilters] = useState({
     priceRange: { min: "", max: "" },
@@ -153,6 +167,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     return () => window.clearTimeout(timeoutId);
   }, [searchInput]);
 
+  // Query all available manufacturers across tenant's catalog
+  const { data: allManufacturers = [] } = useQuery({
+    queryKey: ["inventory-manufacturers"],
+    queryFn: getManufacturers,
+    staleTime: 60 * 1000,
+  });
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["products", search, ordering, page, statusFilter, selectedManufacturer],
     queryFn: () => getProducts({
@@ -162,10 +183,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       ...(selectedManufacturer ? { manufacturer: selectedManufacturer } : {}),
       ...(statusFilter === 'archived' ? { is_active: false } : statusFilter === 'all' ? { include_archived: true } : { is_active: true })
     }),
-    staleTime: 5 * 1000,
+    staleTime: 2 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
   const loadingPolicy = useLoadingPolicy(isLoading);
@@ -174,17 +195,21 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const csvJob = useInventoryCsvJob({
     onComplete: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-manufacturers"] });
       refetch();
     },
   });
 
   const handleRestore = async (product) => {
     try {
-      await updateProduct(product.id, { ...product, is_active: true });
+      await restoreProduct(product.id);
       toast.success(`'${product.name}' restored to active inventory.`);
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-manufacturers"] });
       refetch();
-    } catch {
-      toast.error('Failed to restore product.');
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.response?.data?.detail || 'Failed to restore product.';
+      toast.error(msg);
     }
   };
 
@@ -242,16 +267,16 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const totalPages = data?.total_pages || 1;
   const currentPage = data?.current_page || page;
 
-  // Extract available manufacturers from loaded products
+  // Extract available manufacturers across tenant catalog
   const availableManufacturers = useMemo(() => {
-    const set = new Set();
+    const set = new Set(allManufacturers || []);
     productsRaw.forEach((p) => {
       if (p.manufacturer && String(p.manufacturer).trim()) {
         set.add(String(p.manufacturer).trim());
       }
     });
     return Array.from(set).sort();
-  }, [productsRaw]);
+  }, [allManufacturers, productsRaw]);
 
   // Handle clickable column header sorting
   const handleSort = (field) => {
@@ -586,6 +611,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
+              setSelectedProducts(new Set());
+              setShowBulkActions(false);
               setPage(1);
             }}
             className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
@@ -598,7 +625,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
         {/* View Options: Columns Picker & Details Toggle */}
         <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
-          <div className="relative">
+          <div className="relative" ref={columnPickerRef}>
             <button
               type="button"
               onClick={() => setShowColumnPicker(!showColumnPicker)}
@@ -609,7 +636,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               <span>Columns</span>
             </button>
             {showColumnPicker && (
-              <div className="absolute right-0 mt-2 w-52 bg-gray-900/95 border border-white/20 rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl space-y-2">
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 mt-2 w-52 bg-gray-900/95 border border-white/20 rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl space-y-2"
+              >
                 <div className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider mb-2">Display Columns</div>
                 {[
                   { key: 'product', label: 'Product Name' },
@@ -661,6 +691,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               >
                 Bulk Actions
               </button>
+              {statusFilter === "archived" && (
+                <button
+                  onClick={handleBulkRestore}
+                  className="px-3 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+                >
+                  Restore Selected ({selectedProducts.size})
+                </button>
+              )}
             </>
           )}
           {showBulkActions && (
