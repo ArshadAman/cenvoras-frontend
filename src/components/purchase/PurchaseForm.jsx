@@ -14,6 +14,7 @@ import DateInputField from "../common/DateInputField";
 import useEscKey from "../../hooks/useEscStack";
 import { getUserProfile } from "../../api/users";
 import { getTodayKolkata } from "../../utils/date";
+import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -151,6 +152,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
               onKeyDown={(e) => {
                 if (e.key === 'Tab') {
                   if (showDropdown && filteredProducts.length === 1) {
+                    e.preventDefault();
                     selectProduct(filteredProducts[0]);
                   }
                   setShowDropdown(false);
@@ -877,6 +879,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                              values={values}
                              setFieldValue={setFieldValue}
                              remove={remove}
+                             push={push}
+                             isLastRow={idx === values.items.length - 1}
                              units={availableUnits}
                              onAddCustomUnit={(u) => {
                                saveCustomUnit(u);
@@ -1018,7 +1022,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
   );
 }
 
-function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAddCustomUnit, products, showManufacturer = true }) {
+function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLastRow = false, units, onAddCustomUnit, products, showManufacturer = true }) {
   const quantity = Number(item.quantity) || 0;
   const price = Number(item.purchase_price) || 0;
   const discount = Number(item.discount) || 0;
@@ -1043,7 +1047,15 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAd
                     <input 
                         {...field} 
                         placeholder="HSN/SAC Code" 
-                        className="flex-1 bg-black/20 border border-white/5 rounded-lg px-3 py-1.5 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase tracking-wider" 
+                        className="flex-1 bg-black/20 border border-white/5 rounded-lg px-3 py-1.5 text-gray-500 text-[9px] font-bold focus:border-cyan-500/50 outline-none uppercase tracking-wider"
+                        onBlur={async (e) => {
+                          field.onBlur(e);
+                          await autofillTaxFromLearnedHsn(
+                            e.target.value,
+                            values.items[idx]?.tax,
+                            (rate) => setFieldValue(`items.${idx}.tax`, rate)
+                          );
+                        }}
                     />
                 )}
             </Field>
@@ -1137,7 +1149,43 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, units, onAd
           </div>
           <div className="col-span-3 space-y-1.5">
               <label className="block text-[9px] font-black text-gray-600 md:hidden uppercase tracking-widest">Tax%</label>
-              <Field name={`items.${idx}.tax`} type="number" step="1" className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none" placeholder="0" />
+              <Field
+                name={`items.${idx}.tax`}
+                type="number"
+                step="1"
+                className="w-full bg-[#0a0a0a]/50 border border-white/10 rounded-xl px-1 py-3 text-center text-gray-400 text-[10px] font-bold focus:border-cyan-500/50 outline-none"
+                placeholder="0"
+                onKeyDown={(e) => {
+                  if (e.key === "Tab" && !e.shiftKey && isLastRow && typeof push === "function") {
+                    e.preventDefault();
+                    push({
+                      product_name: "",
+                      product_id: null,
+                      description: "",
+                      product_description: "",
+                      quantity: 1,
+                      free_quantity: 0,
+                      unit: "pcs",
+                      batch_number: "",
+                      expiry_date: "",
+                      purchase_price: 0,
+                      discount: 0,
+                      tax: 0,
+                      hsn_code: "",
+                      tax_rate: 0,
+                      amount: 0,
+                      isExistingProduct: false,
+                    });
+                    setTimeout(() => {
+                      const nextInput = document.querySelector(`input[name="items.${idx + 1}.product_name"]`);
+                      if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select?.();
+                      }
+                    }, 60);
+                  }
+                }}
+              />
           </div>
       </div>
 

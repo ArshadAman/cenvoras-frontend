@@ -9,6 +9,7 @@ import {
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
 import api from '../api/api';
+import { listLearnedHsnGst } from '../api/learned_hsn';
 import { toast } from 'react-toastify';
 
 export default function GSTAndHSNGuide() {
@@ -17,6 +18,13 @@ export default function GSTAndHSNGuide() {
   const [searchType, setSearchType] = useState('hsn'); // 'hsn' or 'gst'
 
   const isAuthenticated = !!localStorage.getItem('token');
+
+  const { data: learnedHsn = [] } = useQuery({
+    queryKey: ['learned-hsn-gst'],
+    queryFn: listLearnedHsnGst,
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+  });
 
   // Search HSN codes
   const { data: hsnResults, isLoading: hsnLoading } = useQuery({
@@ -137,6 +145,39 @@ export default function GSTAndHSNGuide() {
 
       {/* Results */}
       <div>
+        {isAuthenticated && learnedHsn.length > 0 && !searchTerm && (
+          <div className="space-y-2 mb-10">
+            <div className="text-xs text-zinc-500 mb-2">
+              Your saved HSN → GST rates (from invoices):
+            </div>
+            {learnedHsn.slice(0, 20).map((item, idx) => (
+              <div
+                key={`learned-${item.hsn_code}-${idx}`}
+                className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 flex items-start justify-between gap-4"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold font-mono text-white">
+                    HSN {item.hsn_code}
+                  </span>
+                  <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 text-emerald-400 text-xs rounded font-medium">
+                    GST {item.gst_rate}%
+                  </span>
+                  {item.usage_count > 1 ? (
+                    <span className="text-[10px] text-zinc-500">used {item.usage_count}×</span>
+                  ) : null}
+                </div>
+                <button
+                  onClick={() => handleCopy(item.hsn_code)}
+                  className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs rounded transition-colors flex items-center gap-1 shrink-0"
+                >
+                  <DocumentDuplicateIcon className="w-3.5 h-3.5" />
+                  <span>Copy</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {(hsnLoading || gstLoading) && (
           <div className="p-8 text-center text-xs text-zinc-500">
             Searching directory...

@@ -861,7 +861,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                           bankName: acc.bank_name || '',
                           accountNumber: acc.account_number || '',
                           ifscCode: acc.ifsc_code || '',
-                          accountHolder: acc.account_holder || acc.branch || '',
+                          accountHolder: acc.account_holder || '',
                           branch: acc.branch || '',
                           upiId: acc.upi_id || '',
                         });

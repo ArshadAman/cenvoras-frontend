@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
 
 // Bill To - Ship To Template (Flipkart Style)
 const BillShipTemplate = forwardRef(({ 
@@ -25,7 +26,7 @@ const BillShipTemplate = forwardRef(({
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
   const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
   const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
-  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
   const bankUpi = businessInfo.bank_upi_id || '';
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
@@ -55,7 +56,9 @@ const BillShipTemplate = forwardRef(({
   const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
+    ? Boolean(businessInfo.show_cenvora_footer)
+    : planCode !== 'business';
 
   const isDeliveryChallan = 
     invoice.document_type === 'delivery_challan' || 
@@ -75,6 +78,7 @@ const BillShipTemplate = forwardRef(({
   return (
     <div 
       ref={ref}
+      className="invoice-sheet"
       style={{
         width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
@@ -159,7 +163,16 @@ const BillShipTemplate = forwardRef(({
 
       {/* Items Table */}
       <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
-          <thead>
+          <thead style={{ display: 'table-header-group' }}>
+            <InvoiceContinuationHeader
+              colSpan={visibleColumns.length}
+              companyName={companyName}
+              companyAddress={companyAddress}
+              companyGST={businessInfo.gstin || ''}
+              companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
+              companyGEM={businessInfo.gem_id || ''}
+              primaryColor={colors.accent || colors.primary || '#3b82f6'}
+            />
             <tr className="border-y border-gray-400 bg-gray-50 h-9">
               {visibleColumns.map((col, idx) => {
                 const isLast = idx === visibleColumns.length - 1;

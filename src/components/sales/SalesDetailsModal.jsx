@@ -194,7 +194,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     bank_name: activeBankAcc ? activeBankAcc.bank_name : '',
     bank_account_number: activeBankAcc ? activeBankAcc.account_number : '',
     bank_ifsc_code: activeBankAcc ? activeBankAcc.ifsc_code : '',
-    bank_branch: activeBankAcc ? (activeBankAcc.account_holder || activeBankAcc.branch) : '',
+    bank_branch: activeBankAcc ? (activeBankAcc.branch || '') : '',
     bank_upi_id: activeBankAcc ? activeBankAcc.upi_id : '',
     bank_qr_code: activeBankAcc ? activeBankAcc.qr_code : '',
     bank_accounts: allBankAccounts,
@@ -213,7 +213,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     effectiveBusinessInfo.bank_name = activeBankAcc.bank_name || '';
     effectiveBusinessInfo.bank_account_number = activeBankAcc.account_number || '';
     effectiveBusinessInfo.bank_ifsc_code = activeBankAcc.ifsc_code || '';
-    effectiveBusinessInfo.bank_branch = activeBankAcc.account_holder || activeBankAcc.branch || '';
+    effectiveBusinessInfo.bank_branch = activeBankAcc.branch || '';
     effectiveBusinessInfo.bank_upi_id = activeBankAcc.upi_id || '';
     effectiveBusinessInfo.bank_qr_code = activeBankAcc.qr_code || '';
     effectiveBusinessInfo.hide_bank_details = false;
@@ -342,6 +342,13 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     staleTime: 5 * 60 * 1000,
   });
 
+  if (invoiceSettings && typeof invoiceSettings.show_cenvora_footer === 'boolean') {
+    effectiveBusinessInfo.show_cenvora_footer = invoiceSettings.show_cenvora_footer;
+  } else if (effectiveBusinessInfo.show_cenvora_footer === undefined) {
+    const plan = String(effectiveBusinessInfo.plan_code || 'free').toLowerCase();
+    effectiveBusinessInfo.show_cenvora_footer = plan !== 'business';
+  }
+
   const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : (template?.content?.invoiceTitle || "TAX INVOICE");
   const previewTemplate = {
     ...template,
@@ -353,10 +360,10 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         bankName: activeBankAcc.bank_name || '',
         accountNumber: activeBankAcc.account_number || '',
         ifscCode: activeBankAcc.ifsc_code || '',
-        accountHolder: activeBankAcc.account_holder || activeBankAcc.branch || '',
+        accountHolder: activeBankAcc.account_holder || '',
         branch: activeBankAcc.branch || '',
         upiId: activeBankAcc.upi_id || '',
-      } : { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '' },
+      } : { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '', branch: '' },
     },
   };
 
@@ -427,7 +434,13 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     pageStyle: `
       @page {
         size: A4 portrait;
-        margin: 10mm 6mm 10mm 6mm;
+        /* Match on-screen preview padding (templates already pad ~10–15mm) */
+        margin: 0;
+      }
+      @media screen {
+        .invoice-continuation-header {
+          display: none !important;
+        }
       }
       @media print {
         html, body {
@@ -435,6 +448,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           padding: 0 !important;
           width: 100% !important;
           height: auto !important;
+          background: #ffffff !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
@@ -451,11 +465,26 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         .print-hidden {
           display: none !important;
         }
+        .invoice-sheet {
+          min-height: auto !important;
+          height: auto !important;
+          background: #ffffff !important;
+          box-shadow: none !important;
+        }
+        .invoice-sheet-body,
+        .invoice-sheet .flex-1 {
+          flex: 0 0 auto !important;
+          flex-grow: 0 !important;
+        }
+        .invoice-continuation-header {
+          display: table-row !important;
+        }
         [data-print-target] {
           width: 100% !important;
           margin: 0 auto !important;
           box-shadow: none !important;
-          padding-top: 2mm !important;
+          padding: 0 !important;
+          background: #ffffff !important;
         }
       }
     `,

@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
 
 // GenZ Template (Google Style)
 const GenzTemplate = forwardRef(({ 
@@ -26,7 +27,7 @@ const GenzTemplate = forwardRef(({
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
   const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
   const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
-  const bankBranch = businessInfo.bank_branch || content.bankDetails?.accountHolder || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
   const bankUpi = businessInfo.bank_upi_id || '';
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
@@ -56,7 +57,9 @@ const GenzTemplate = forwardRef(({
   const isIGST = taxType === 'igst';
 
   const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
+    ? Boolean(businessInfo.show_cenvora_footer)
+    : planCode !== 'business';
 
   const isDeliveryChallan = 
     invoice.document_type === 'delivery_challan' || 
@@ -78,6 +81,7 @@ const GenzTemplate = forwardRef(({
   return (
     <div 
       ref={ref}
+      className="invoice-sheet"
       style={{
         width: '210mm', minHeight: '297mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#333333',
@@ -108,7 +112,7 @@ const GenzTemplate = forwardRef(({
         <h2 className="text-3xl font-bold opacity-90">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
       </div>
 
-      <div className="p-12 flex-1 flex flex-col">
+      <div className="p-12 invoice-sheet-body flex flex-col">
         <div className="grid grid-cols-2 gap-12 mb-10">
           <div>
             <h3 className="text-gray-400 font-bold mb-2 uppercase text-xs tracking-widest">Billed To</h3>
@@ -172,7 +176,16 @@ const GenzTemplate = forwardRef(({
         {/* Items Table */}
         <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm mb-10">
           <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-              <thead style={{ backgroundColor: '#f8fafc' }}>
+              <thead style={{ display: 'table-header-group', backgroundColor: '#f8fafc' }}>
+                <InvoiceContinuationHeader
+                  colSpan={visibleColumns.length}
+                  companyName={companyName}
+                  companyAddress={companyAddress}
+                  companyGST={businessInfo.gstin || ''}
+                  companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
+                  companyGEM={businessInfo.gem_id || ''}
+                  primaryColor={primaryColor}
+                />
                 <tr className="border-b border-gray-200">
                   {visibleColumns.map((col) => {
                     const isNum = ['price', 'amount'].includes(col.id);
