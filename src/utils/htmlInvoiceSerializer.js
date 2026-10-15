@@ -90,17 +90,8 @@ export function serializeInvoiceHtml(element) {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* Bill-tight page: header flush to the top, small side inset, no blank lead page */
+    /* Keep each template's own preview layout. Only stop preview scale and dark empty fill. */
     .invoice-sheet {
-      position: relative !important;
-      min-height: auto !important;
-      height: auto !important;
-      width: 210mm !important;
-      max-width: 210mm !important;
-      margin: 0 !important;
-      padding: 0 3mm 14mm 3mm !important;
-      border: none !important;
-      border-radius: 0 !important;
       box-shadow: none !important;
       transform: none !important;
       background-color: #ffffff !important;
@@ -109,48 +100,9 @@ export function serializeInvoiceHtml(element) {
     .invoice-sheet .flex-1 {
       flex: 0 0 auto !important;
       flex-grow: 0 !important;
-      min-height: 0 !important;
     }
-    /*
-     * InvoicePrintShell puts company header in an OUTER thead (above billing).
-     * Hide in-flow hero so it is not duplicated; show shell thead on every page.
-     */
-    .invoice-first-page-header {
-      display: none !important;
-    }
-    .invoice-print-shell > thead .invoice-continuation-header,
     .invoice-continuation-header {
-      display: table-row !important;
-    }
-    .invoice-print-shell,
-    .invoice-print-shell > tbody,
-    .invoice-print-shell-row,
-    .invoice-print-shell-row > td {
-      break-inside: auto !important;
-      page-break-inside: auto !important;
-      page-break-before: avoid !important;
-      break-before: avoid !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-    .invoice-continuation-header > td > div {
-      margin-top: 0 !important;
-      padding-top: 0 !important;
-    }
-    .invoice-sheet-body {
-      padding-top: 2mm !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-    }
-    /* Pin branding footer to bottom of last printed page */
-    .invoice-page-footer {
-      position: absolute !important;
-      bottom: 3mm !important;
-      left: 3mm !important;
-      right: 3mm !important;
-      margin-top: 0 !important;
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
+      display: none !important;
     }
     .font-mono, [class*="font-mono"], code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;
