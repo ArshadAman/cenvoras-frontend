@@ -104,10 +104,14 @@ export function serializeInvoiceHtml(element) {
       flex-grow: 0 !important;
       min-height: 0 !important;
     }
-    /* Page 1 hero hidden; full-format company header in thead repeats every page */
+    /*
+     * InvoicePrintShell puts company header in an OUTER thead (above billing).
+     * Hide in-flow hero so it is not duplicated; show shell thead on every page.
+     */
     .invoice-first-page-header {
       display: none !important;
     }
+    .invoice-print-shell > thead .invoice-continuation-header,
     .invoice-continuation-header {
       display: table-row !important;
     }

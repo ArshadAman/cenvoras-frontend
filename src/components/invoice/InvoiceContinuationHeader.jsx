@@ -2,10 +2,10 @@ import React from 'react';
 import { getCountryCode } from '../../utils/currency';
 
 /**
- * Full-format company header for Chromium/print page 2+.
- * Lives in table <thead> so it repeats with column headers.
- * Hidden on screen; print CSS shows it and hides .invoice-first-page-header
- * so page 1 is not duplicated.
+ * Full-format company header for Chromium/print (every page).
+ * Used inside InvoicePrintShell <thead> so it sits ABOVE billing/items in DOM
+ * (avoids swapped order) and repeats on page 2+.
+ * Hidden on screen; print shows this and hides .invoice-first-page-header.
  *
  * Matches Classic invoice density (right-aligned name / address / tax IDs).
  */

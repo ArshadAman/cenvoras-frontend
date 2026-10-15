@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
-import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // GenZ Template (Google Style)
 const GenzTemplate = forwardRef(({ 
@@ -92,7 +92,20 @@ const GenzTemplate = forwardRef(({
         flexDirection: 'column',
       }}
     >
-      {/* Massive Header Strip — company block hidden in print; thead repeats full-format header */}
+      <InvoicePrintShell
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST: businessInfo.gstin || '',
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || businessInfo.drug_license_number || '',
+          companyNameColor: primaryColor || '#d11f1f',
+        }}
+      >
+      {/* Massive Header Strip — screen/preview; print uses InvoicePrintShell thead */}
       <div style={{ backgroundColor: primaryColor }} className="px-12 py-8 flex justify-between items-center text-white invoice-first-page-header">
         <div className="flex items-center gap-4">
           {sections.showLogo && template.branding?.logo && (
@@ -177,18 +190,6 @@ const GenzTemplate = forwardRef(({
         <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm mb-10">
           <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
               <thead style={{ display: 'table-header-group', backgroundColor: '#f8fafc' }}>
-                <InvoiceContinuationHeader
-                  colSpan={visibleColumns.length}
-                  companyName={companyName}
-                  companyAddress={companyAddress}
-                  companyPhone={businessInfo.phone || ''}
-                  companyEmail={businessInfo.email || ''}
-                  companyGST={businessInfo.gstin || ''}
-                  companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
-                  companyGEM={businessInfo.gem_id || ''}
-                  companyDL={businessInfo.dl_number || businessInfo.drug_license_number || ''}
-                  companyNameColor={primaryColor || '#d11f1f'}
-                />
                 <tr className="border-b border-gray-200">
                   {visibleColumns.map((col) => {
                     const isNum = ['price', 'amount'].includes(col.id);
@@ -401,6 +402,7 @@ const GenzTemplate = forwardRef(({
           </div>
         </div>
       </div>
+      </InvoicePrintShell>
       
       {/* Bottom Footer Border */}
       <div style={{ backgroundColor: primaryColor }} className="h-10 w-full" />

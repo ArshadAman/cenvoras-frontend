@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
-import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Professional Template (Marico Style)
 const ProfessionalTemplate = forwardRef(({ 
@@ -136,6 +136,19 @@ const ProfessionalTemplate = forwardRef(({
         flexDirection: 'column',
       }}
     >
+      <InvoicePrintShell
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST,
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || '',
+          companyNameColor: colors.primary || '#d11f1f',
+        }}
+      >
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div className="w-1/2 invoice-first-page-header">
@@ -223,18 +236,6 @@ const ProfessionalTemplate = forwardRef(({
       {/* Items Table */}
       <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
           <thead style={{ display: 'table-header-group' }}>
-            <InvoiceContinuationHeader
-              colSpan={visibleColumns.length}
-              companyName={companyName}
-              companyAddress={companyAddress}
-              companyPhone={businessInfo.phone || ''}
-              companyEmail={businessInfo.email || ''}
-              companyGST={companyGST}
-              companyPAN={businessInfo.pan_number || businessInfo.pan || ''}
-              companyGEM={businessInfo.gem_id || ''}
-              companyDL={businessInfo.dl_number || ''}
-              companyNameColor={colors.primary || '#d11f1f'}
-            />
             <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
               {visibleColumns.map((col) => (
                 <th 
@@ -456,6 +457,7 @@ const ProfessionalTemplate = forwardRef(({
           )}
         </div>
       </div>
+      </InvoicePrintShell>
     </div>
   );
 });

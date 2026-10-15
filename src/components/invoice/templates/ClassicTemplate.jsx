@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
-import InvoiceContinuationHeader from '../InvoiceContinuationHeader';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Beautiful Invoice Preview Component
 // Renders invoice based on template settings with dynamic styling
@@ -196,8 +196,23 @@ const InvoicePreview = forwardRef(({
           <span className="text-8xl font-bold text-gray-500 rotate-[-30deg]">PREVIEW</span>
         </div>
       )}
+
+      <InvoicePrintShell
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone,
+          companyEmail,
+          companyGST,
+          companyPAN,
+          companyGEM,
+          companyDL,
+          companyNameColor: '#d11f1f',
+          companyNameSize: typography.companyNameSize || 18,
+        }}
+      >
       
-      {/* Header Section — print hides this; thead continuation matches this format on every page */}
+      {/* Header Section — screen/preview; print uses InvoicePrintShell thead instead */}
       <div
         className="mb-4 invoice-first-page-header"
         style={{
@@ -402,19 +417,6 @@ const InvoicePreview = forwardRef(({
               ))}
             </colgroup>
             <thead style={{ display: 'table-header-group' }}>
-              <InvoiceContinuationHeader
-                colSpan={visibleColumns.length}
-                companyName={companyName}
-                companyAddress={companyAddress}
-                companyPhone={companyPhone}
-                companyEmail={companyEmail}
-                companyGST={companyGST}
-                companyPAN={companyPAN}
-                companyGEM={companyGEM}
-                companyDL={companyDL}
-                companyNameColor="#d11f1f"
-                companyNameSize={typography.companyNameSize || 18}
-              />
               <tr style={tableHeaderStyle}>
                 {visibleColumns.map(col => (
                   <th 
@@ -732,6 +734,7 @@ const InvoicePreview = forwardRef(({
           )}
         </div>
       </div>
+      </InvoicePrintShell>
     </div>
   );
 });
