@@ -456,11 +456,23 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           display: table-header-group !important;
         }
         thead tr {
-          page-break-before: auto !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
         }
-        tr {
+        tr:not(.invoice-print-shell-row) {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
+        }
+        .invoice-print-shell,
+        .invoice-print-shell > tbody,
+        .invoice-print-shell-row,
+        .invoice-print-shell-row > td {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
         .print-hidden {
           display: none !important;
@@ -469,9 +481,15 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           position: relative !important;
           min-height: auto !important;
           height: auto !important;
+          width: 210mm !important;
+          max-width: 210mm !important;
+          margin: 0 !important;
+          padding: 0 3mm 14mm 3mm !important;
+          border: none !important;
+          border-radius: 0 !important;
           background: #ffffff !important;
           box-shadow: none !important;
-          padding-bottom: 24mm !important;
+          transform: none !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
@@ -484,11 +502,20 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         .invoice-continuation-header {
           display: table-row !important;
         }
+        .invoice-continuation-header > td > div {
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+        }
+        .invoice-sheet-body {
+          padding-top: 2mm !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
         .invoice-page-footer {
           position: absolute !important;
-          bottom: 8mm !important;
-          left: 10mm !important;
-          right: 10mm !important;
+          bottom: 3mm !important;
+          left: 3mm !important;
+          right: 3mm !important;
           margin-top: 0 !important;
           break-inside: avoid !important;
           page-break-inside: avoid !important;
