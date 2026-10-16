@@ -44,11 +44,13 @@ import { buildThemedInvoiceEmailHtml } from "../../utils/invoiceEmailGenerator";
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
   const printRef = useRef();
+  const previewContainerRef = useRef(null);
   const pdfMenuRef = useRef(null);
   const [template, setTemplate] = useState(null);
   const [showDesigner, setShowDesigner] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
+  const [previewScale, setPreviewScale] = useState(1);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [manualEmail, setManualEmail] = useState('');
@@ -317,6 +319,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     }
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [pdfMenuOpen]);
+
+  // Dynamically calculate preview scale so A4 sheet (794px width) fits smaller viewports without distortion
+  useEffect(() => {
+    if (!isOpen) return;
+    const updatePreviewScale = () => {
+      const container = previewContainerRef.current;
+      const width = container ? container.clientWidth : window.innerWidth;
+      // Target A4 width is 794px (210mm at 96 DPI) + 32px padding
+      const targetWidth = 794;
+      if (width < targetWidth + 32) {
+        const s = Math.max(0.35, Math.min(1, (width - 32) / targetWidth));
+        setPreviewScale(Number(s.toFixed(3)));
+      } else {
+        setPreviewScale(1);
+      }
+    };
+
+    updatePreviewScale();
+    window.addEventListener('resize', updatePreviewScale);
+    return () => window.removeEventListener('resize', updatePreviewScale);
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -434,18 +458,20 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     pageStyle: `
       @page {
         size: A4 portrait;
-        /* Match on-screen preview padding (templates already pad ~10–15mm) */
         margin: 0;
       }
       @media print {
+        *, *::before, *::after {
+          box-sizing: border-box !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
         html, body {
           margin: 0 !important;
           padding: 0 !important;
-          width: 100% !important;
+          width: 210mm !important;
           height: auto !important;
           background: #ffffff !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
         }
         thead {
           display: table-header-group !important;
@@ -454,13 +480,17 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           break-inside: avoid !important;
           page-break-inside: avoid !important;
         }
-        .print-hidden {
+        .print-hidden, [data-no-print], button {
           display: none !important;
         }
         .invoice-sheet {
           box-shadow: none !important;
           transform: none !important;
           background: #ffffff !important;
+          width: 210mm !important;
+          min-height: 297mm !important;
+          margin: 0 auto !important;
+          box-sizing: border-box !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
@@ -471,16 +501,18 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           display: none !important;
         }
         [data-print-target] {
-          width: 100% !important;
+          width: 210mm !important;
+          min-height: 297mm !important;
           margin: 0 auto !important;
           box-shadow: none !important;
           background: #ffffff !important;
+          transform: none !important;
         }
       }
     `,
   });
 
-  // High-Quality PDF Download: Vector PDF (Chrome vector, exact replica) or Client Engine (336 DPI)
+  // High-Quality PDF Download: Vector PDF (Chrome vector, exact replica) or Client Engine (300+ DPI)
   const handleDownloadPDF = async (engine = 'vector') => {
     if (!printRef.current || !invoiceDetails) return;
     setDownloadingPDF(true);
@@ -512,31 +544,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
     try {
       const targetElement = printRef.current?.querySelector('[data-print-target]') || printRef.current;
-
-      if (engine === 'backend') {
-        let blob;
-        if (isDeliveryChallan) {
-          blob = await getDeliveryChallanPdf(invoiceDetails.id);
-        } else if (isQuotation) {
-          blob = await downloadQuotationPDF(invoiceDetails.id);
-        } else if (isSalesOrder) {
-          blob = await downloadSalesOrderPDF(invoiceDetails.id);
-        } else {
-          blob = await downloadSalesInvoicePDF(invoiceDetails.id);
-        }
-
-        const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(blobUrl);
-
-        toast.success(`${docTypeLabel} server PDF downloaded`);
-        return;
-      }
 
       if (engine === 'vector' && invoiceDetails.id && targetElement) {
         try {
@@ -881,20 +888,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                         <span className="text-[11px] text-gray-400">Print or choose destination printer</span>
                       </div>
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadPDF('backend')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 mt-1 border-t border-white/5 pt-2 group/opt"
-                    >
-                      <div className="w-6 h-6 rounded-md bg-gray-500/10 border border-gray-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <DocumentTextIcon className="w-3.5 h-3.5 text-gray-400" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">Classic Server PDF</span>
-                        <span className="text-[11px] text-gray-500">Standard backend ReportLab format</span>
-                      </div>
-                    </button>
                   </div>
                 )}
               </div>
@@ -959,16 +952,28 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start">
+          <div ref={previewContainerRef} className="flex-1 overflow-auto p-2 sm:p-8 bg-gray-950/70 flex justify-center items-start">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
                 <p className="text-gray-400">{isDeliveryChallan ? "Loading delivery challan..." : isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center pb-10">
-                <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100 print:scale-100 print:transform-none" ref={printRef}>
-                  <div className="w-[210mm] min-h-[297mm] bg-white p-0 m-0" data-print-target>
+              <div className="w-full flex justify-center pb-10">
+                <div 
+                  style={{
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top center',
+                    width: '210mm',
+                    marginBottom: previewScale < 1 ? `calc(297mm * (${previewScale} - 1))` : 0,
+                  }}
+                  className="print:transform-none print:w-auto print:m-0"
+                >
+                  <div 
+                    ref={printRef}
+                    data-print-target
+                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0"
+                  >
                     <InvoicePreview
                       invoice={enrichedInvoice}
                       template={previewTemplate}

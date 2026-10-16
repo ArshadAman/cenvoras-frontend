@@ -95,15 +95,16 @@ const ServiceTemplate = forwardRef(({
   return (
     <div 
       ref={ref}
-      className="invoice-sheet"
+      className="bg-white invoice-sheet"
       style={{
-        width: '100%', minHeight: '297mm', margin: 0, padding: '8mm', boxSizing: 'border-box',
+        width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '8mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
         fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif', fontSize: `${typography.bodySize || 10}px`,
-        transform: `scale(${scale})`, transformOrigin: 'top left',
+        ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
         border: `3px solid ${primaryColor}`, borderRadius: 0,
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
       }}
     >
       <InvoicePrintShell
@@ -193,7 +194,7 @@ const ServiceTemplate = forwardRef(({
       </div>
 
       {/* Items Table */}
-      <table className="w-full text-left mb-8 border-collapse">
+      <table className="w-full text-left mb-8 border-collapse" style={{ tableLayout: 'fixed' }}>
           <thead style={{ display: 'table-header-group' }}>
             <tr className="border-b-2 border-gray-900">
               {visibleColumns.map(col => (

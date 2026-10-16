@@ -1016,16 +1016,25 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-auto p-8 flex justify-center">
-          <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center' }}>
-            <InvoicePreview
-              ref={previewRef}
-              invoice={previewInvoice}
-              documentType={documentType}
-              template={currentTemplate}
-              businessInfo={businessInfo}
-              scale={1}
-            />
+        <div className="flex-1 overflow-auto p-8 flex justify-center bg-gray-950/70">
+          <div 
+            style={{ 
+              transform: `scale(${previewScale})`, 
+              transformOrigin: 'top center',
+              width: '210mm',
+              marginBottom: previewScale < 1 ? `calc(297mm * (${previewScale} - 1))` : 0,
+            }}
+          >
+            <div className="shadow-2xl bg-white">
+              <InvoicePreview
+                ref={previewRef}
+                invoice={previewInvoice}
+                documentType={documentType}
+                template={currentTemplate}
+                businessInfo={businessInfo}
+                scale={1}
+              />
+            </div>
           </div>
         </div>
       </div>
