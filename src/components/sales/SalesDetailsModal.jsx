@@ -458,7 +458,13 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     pageStyle: `
       @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 0mm;
+      }
+      @page :left {
+        margin: 0mm;
+      }
+      @page :right {
+        margin: 0mm;
       }
       @media print {
         *, *::before, *::after {
@@ -469,7 +475,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         html, body {
           margin: 0 !important;
           padding: 0 !important;
-          width: 210mm !important;
+          width: 100% !important;
           height: auto !important;
           background: #ffffff !important;
         }
@@ -487,9 +493,10 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           box-shadow: none !important;
           transform: none !important;
           background: #ffffff !important;
-          width: 210mm !important;
-          min-height: 297mm !important;
-          margin: 0 auto !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 100% !important;
+          margin: 0 !important;
           box-sizing: border-box !important;
         }
         .invoice-sheet-body,
@@ -501,9 +508,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           display: none !important;
         }
         [data-print-target] {
-          width: 210mm !important;
-          min-height: 297mm !important;
-          margin: 0 auto !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
           box-shadow: none !important;
           background: #ffffff !important;
           transform: none !important;
@@ -972,8 +981,30 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   <div 
                     ref={printRef}
                     data-print-target
-                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0"
+                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0 print:w-full print:max-w-none print:shadow-none print:m-0"
                   >
+                    <style type="text/css" media="print">{`
+                      @page {
+                        size: A4 portrait;
+                        margin: 0mm;
+                      }
+                      @page :left {
+                        margin: 0mm;
+                      }
+                      @page :right {
+                        margin: 0mm;
+                      }
+                      body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                      }
+                      .invoice-sheet {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                      }
+                    `}</style>
                     <InvoicePreview
                       invoice={enrichedInvoice}
                       template={previewTemplate}
