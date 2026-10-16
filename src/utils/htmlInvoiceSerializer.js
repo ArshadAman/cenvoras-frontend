@@ -93,23 +93,43 @@ export function serializeInvoiceHtml(element) {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* Keep each template's own preview layout. Only stop preview scale and dark empty fill. */
+    .invoice-container {
+      display: block !important;
+      gap: 0 !important;
+    }
     .invoice-sheet {
       box-shadow: none !important;
       transform: none !important;
       background-color: #ffffff !important;
       width: 210mm !important;
+      height: 297mm !important;
       min-height: 297mm !important;
+      max-height: 297mm !important;
       margin: 0 auto !important;
       box-sizing: border-box !important;
+      page-break-after: always !important;
+      break-after: page !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
     }
-    .invoice-sheet-body,
-    .invoice-sheet .flex-1 {
-      flex: 0 0 auto !important;
-      flex-grow: 0 !important;
+    .invoice-sheet:last-child {
+      page-break-after: auto !important;
+      break-after: auto !important;
     }
-    .invoice-continuation-header {
-      display: none !important;
+    .invoice-part-header {
+      flex-shrink: 0 !important;
+    }
+    .invoice-part-items {
+      flex-grow: 1 !important;
+    }
+    .invoice-part-footer {
+      margin-top: auto !important;
+      flex-shrink: 0 !important;
+    }
+    .invoice-part-continuation {
+      margin-top: auto !important;
+      flex-shrink: 0 !important;
     }
     .font-mono, [class*="font-mono"], code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;
