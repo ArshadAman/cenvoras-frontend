@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode } from '../../../utils/currency';
-import { paginateInvoiceItems } from '../../../utils/invoicePaginator';
+import { paginateInvoiceItems, getVisibleColumns, calculateColumnWidths } from '../../../utils/invoicePaginator';
 
 // Part 1: Classic Header Component (Repeats on every page)
 const ClassicHeader = ({
@@ -51,12 +51,8 @@ const ClassicHeader = ({
       >
         <div className="flex justify-between items-start">
           <div className="text-left text-xs text-gray-500 font-medium pt-1">
-            {totalPages > 1 && (
-              <span className="bg-white/80 px-2 py-0.5 rounded text-[10px] border border-gray-200">
-                Page {pageNumber} of {totalPages}
-              </span>
-            )}
           </div>
+
           <div className="text-right" style={{ maxWidth: '62%' }}>
             <h1 className="font-semibold mb-0.5" style={{ ...headerStyle, color: '#d11f1f', fontSize: `${typography.companyNameSize || 20}px` }}>
               {companyName}
@@ -191,7 +187,7 @@ const ClassicItemList = ({
   styles = {},
   typography = {},
   invoiceSettings = {},
-  getColumnWidth,
+  columnWidths = {},
   getColumnLabel,
   tableHeaderStyle,
   startIndex = 0,
@@ -208,7 +204,7 @@ const ClassicItemList = ({
       >
         <colgroup>
           {visibleColumns.map((col) => (
-            <col key={col.id} style={{ width: getColumnWidth(col.id) }} />
+            <col key={col.id} style={{ width: columnWidths[col.id] || 'auto' }} />
           ))}
         </colgroup>
         <thead style={{ display: 'table-header-group' }}>
@@ -218,8 +214,8 @@ const ClassicItemList = ({
                 key={col.id}
                 className="px-2 py-1.5 font-bold border"
                 style={{ 
-                  width: getColumnWidth(col.id),
-                  textAlign: col.align || 'left',
+                  width: columnWidths[col.id] || 'auto',
+                  textAlign: col.align || (col.id === 'description' ? 'left' : ['price', 'discount', 'tax', 'amount'].includes(col.id) ? 'right' : 'center'),
                   borderColor: colors.tableBorder || '#e5e7eb',
                   fontSize: `${typography.smallSize || 9}px`,
                   whiteSpace: 'nowrap',
@@ -230,6 +226,7 @@ const ClassicItemList = ({
             ))}
           </tr>
         </thead>
+
         <tbody>
           {items.length > 0 ? items.map((item, index) => {
             const actualSerial = startIndex + index + 1;
@@ -290,7 +287,7 @@ const ClassicItemList = ({
                   }
                   
                   const isDesc = col.id === 'description';
-                  const isNum = col.id === 'price' || col.id === 'amount';
+                  const isNum = ['price', 'discount', 'tax', 'amount'].includes(col.id);
                   return (
                     <td 
                       key={col.id}
@@ -533,14 +530,14 @@ const ClassicFooter = ({
 };
 
 // Intermediate Page Continuation Marker
-const ClassicContinuation = ({ pageNumber, totalPages }) => {
+const ClassicContinuation = () => {
   return (
-    <div className="invoice-part-continuation mt-auto flex-shrink-0 pt-2 pb-1 border-t border-dashed border-gray-300 flex justify-between items-center text-xs text-gray-500 font-medium">
-      <span>Continued on next page...</span>
-      <span>Page {pageNumber} of {totalPages}</span>
+    <div className="invoice-part-continuation mt-auto flex-shrink-0 pt-2 pb-1 border-t border-dashed border-gray-300 text-center text-xs text-gray-400 italic font-medium">
+      (Continued on next page)
     </div>
   );
 };
+
 
 // Main Unified Multi-Page Classic Template
 const ClassicTemplate = forwardRef(({ 
@@ -643,9 +640,10 @@ const ClassicTemplate = forwardRef(({
     fontFamily: typography.headingFontFamily || typography.fontFamily || 'Inter, sans-serif',
   };
 
+  const isLightHeader = !colors.tableHeader || colors.tableHeader === '#f8fafc' || colors.tableHeader === '#ffffff' || colors.tableHeader.startsWith('#f');
   const tableHeaderStyle = {
-    backgroundColor: colors.tableHeader || '#d11f1f',
-    color: colors.tableHeaderText || '#ffffff',
+    backgroundColor: colors.tableHeader || '#f3f4f6',
+    color: colors.tableHeaderText || (isLightHeader ? '#111827' : '#ffffff'),
   };
 
   const totalRowStyle = {
@@ -661,41 +659,22 @@ const ClassicTemplate = forwardRef(({
     challanNumber
   );
 
-  // Filter visible columns
+  // Filter visible columns & calculate dynamic widths
   const defaultColumns = [
-    { id: 'serial', label: 'Sr.', visible: true, width: '4%' },
-    { id: 'description', label: 'Item & Description', visible: true, width: '38%' },
-    { id: 'hsn', label: 'HSN', visible: true, width: '10%' },
-    { id: 'quantity', label: 'Qty', visible: true, width: '8%' },
-    { id: 'unit', label: 'Unit', visible: true, width: '6%' },
-    { id: 'price', label: 'Price', visible: true, width: '10%' },
-    { id: 'discount', label: 'Disc %', visible: true, width: '8%' },
-    { id: 'tax', label: 'Tax %', visible: true, width: '6%' },
-    { id: 'amount', label: 'Amount', visible: true, width: '10%' },
+    { id: 'serial', label: 'Sr.', visible: true },
+    { id: 'description', label: 'Item & Description', visible: true },
+    { id: 'hsn', label: 'HSN', visible: true },
+    { id: 'quantity', label: 'Qty', visible: true },
+    { id: 'unit', label: 'Unit', visible: false },
+    { id: 'price', label: 'Price', visible: true },
+    { id: 'discount', label: 'Disc %', visible: false },
+    { id: 'tax', label: 'Tax %', visible: true },
+    { id: 'amount', label: 'Amount', visible: true },
   ];
 
-  const visibleColumns = (columns.length > 0 ? columns : defaultColumns).filter(col => {
-    if (isDeliveryChallan && ['price', 'discount', 'tax', 'amount'].includes(col.id)) return false;
-    return col.visible !== false;
-  });
+  const visibleColumns = getVisibleColumns(columns, { isDeliveryChallan, defaultColumns });
+  const columnWidths = calculateColumnWidths(visibleColumns);
 
-  const getColumnWidth = (colId) => {
-    switch (colId) {
-      case 'serial': return '5%';
-      case 'hsn': return '10%';
-      case 'quantity': return '8%';
-      case 'free_qty': return '7%';
-      case 'unit': return '6%';
-      case 'make': return '9%';
-      case 'pack_size': return '8%';
-      case 'price': return '12%';
-      case 'discount': return '7%';
-      case 'tax': return '7%';
-      case 'amount': return '13%';
-      case 'description': return 'auto';
-      default: return 'auto';
-    }
-  };
 
   const getColumnLabel = (col) => {
     if (col.label) return col.label;
@@ -796,7 +775,7 @@ const ClassicTemplate = forwardRef(({
               styles={styles}
               typography={typography}
               invoiceSettings={invoiceSettings}
-              getColumnWidth={getColumnWidth}
+              columnWidths={columnWidths}
               getColumnLabel={getColumnLabel}
               tableHeaderStyle={tableHeaderStyle}
               startIndex={startIndex}
@@ -826,11 +805,9 @@ const ClassicTemplate = forwardRef(({
                 showWatermarkFooter={showWatermarkFooter}
               />
             ) : (
-              <ClassicContinuation
-                pageNumber={pageNumber}
-                totalPages={totalPages}
-              />
+              <ClassicContinuation />
             )}
+
           </div>
         );
       })}
