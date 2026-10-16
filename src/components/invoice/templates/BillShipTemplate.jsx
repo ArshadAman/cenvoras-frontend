@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { amountInWords } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode } from '../../../utils/currency';
-import { paginateInvoiceItems, getVisibleColumns, calculateColumnWidths } from '../../../utils/invoicePaginator';
+import { paginateInvoiceItems } from '../../../utils/invoicePaginator';
 
 // Part 1: BillShip Header Component (Repeats on every page)
 const BillShipHeader = ({
@@ -39,8 +39,12 @@ const BillShipHeader = ({
           </div>
         </div>
         <div className="text-right">
+          {totalPages > 1 && (
+            <span className="text-[9px] text-gray-500 font-semibold border border-gray-300 px-1.5 py-0.5 rounded bg-gray-50 inline-block mb-1">
+              Page {pageNumber} of {totalPages}
+            </span>
+          )}
           <h2 className="text-lg font-bold tracking-widest">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
-
           <p className="text-[10px] font-semibold text-gray-500 uppercase">Original for Recipient</p>
           <p className="text-xs font-bold mt-1.5">
             {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
@@ -97,18 +101,13 @@ const BillShipItemList = ({
   items = [],
   visibleColumns = [],
   invoiceSettings = {},
-  columnWidths = {},
+  getColumnWidth,
   getColumnLabel,
   startIndex = 0,
 }) => {
   return (
     <div className="invoice-part-items flex-1">
       <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-        <colgroup>
-          {visibleColumns.map((col) => (
-            <col key={col.id} style={{ width: columnWidths[col.id] || 'auto' }} />
-          ))}
-        </colgroup>
         <thead style={{ display: 'table-header-group' }}>
           <tr className="border-b-2 border-t-2 border-gray-900 bg-gray-50 text-[10px] uppercase font-bold text-gray-900">
             {visibleColumns.map((col, idx) => (
@@ -116,8 +115,8 @@ const BillShipItemList = ({
                 key={col.id} 
                 className={`py-1.5 px-1 ${idx !== visibleColumns.length - 1 ? 'border-r border-gray-200' : ''}`} 
                 style={{ 
-                  width: columnWidths[col.id] || 'auto',
-                  textAlign: col.id === 'description' ? 'left' : ['price', 'discount', 'tax', 'amount'].includes(col.id) ? 'right' : 'center',
+                  width: getColumnWidth(col.id),
+                  textAlign: col.id === 'description' ? 'left' : ['price', 'discount', 'tax', 'amount', 'quantity', 'free_qty'].includes(col.id) ? 'right' : 'center',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -126,7 +125,6 @@ const BillShipItemList = ({
             ))}
           </tr>
         </thead>
-
         <tbody className="divide-y divide-gray-200 text-xs">
           {items.map((item, index) => {
             const actualSerial = startIndex + index + 1;
@@ -370,14 +368,14 @@ const BillShipFooter = ({
 };
 
 // Intermediate Page Continuation Marker
-const BillShipContinuation = () => {
+const BillShipContinuation = ({ pageNumber, totalPages }) => {
   return (
-    <div className="invoice-part-continuation mt-auto flex-shrink-0 pt-2 pb-1 border-t border-dashed border-gray-300 text-center text-xs text-gray-400 italic font-medium">
-      (Continued on next page)
+    <div className="invoice-part-continuation mt-auto flex-shrink-0 pt-2 pb-1 border-t border-dashed border-gray-300 flex justify-between items-center text-xs text-gray-500 font-medium">
+      <span>Continued on next page...</span>
+      <span>Page {pageNumber} of {totalPages}</span>
     </div>
   );
 };
-
 
 // Main Unified Multi-Page BillShip Template
 const BillShipTemplate = forwardRef(({ 
@@ -452,16 +450,35 @@ const BillShipTemplate = forwardRef(({
     { id: 'description', label: 'Item & Details', visible: true },
     { id: 'hsn', label: 'HSN', visible: true },
     { id: 'quantity', label: 'Qty', visible: true },
-    { id: 'unit', label: 'Unit', visible: false },
+    { id: 'unit', label: 'Unit', visible: true },
     { id: 'price', label: 'Rate', visible: true },
-    { id: 'discount', label: 'Disc %', visible: false },
+    { id: 'discount', label: 'Disc %', visible: true },
     { id: 'tax', label: 'Tax %', visible: true },
     { id: 'amount', label: 'Amount', visible: true },
   ];
 
-  const visibleColumns = getVisibleColumns(template.columns, { isDeliveryChallan, defaultColumns });
-  const columnWidths = calculateColumnWidths(visibleColumns);
+  const visibleColumns = (template.columns?.length > 0 ? template.columns : defaultColumns).filter(c => {
+    if (isDeliveryChallan && ['price', 'discount', 'tax', 'amount'].includes(c.id)) return false;
+    return c.visible !== false;
+  });
 
+  const getColumnWidth = (colId) => {
+    switch (colId) {
+      case 'serial': return '5%';
+      case 'hsn': return '10%';
+      case 'quantity': return '8%';
+      case 'free_qty': return '7%';
+      case 'unit': return '6%';
+      case 'make': return '9%';
+      case 'pack_size': return '8%';
+      case 'price': return '12%';
+      case 'discount': return '7%';
+      case 'tax': return '7%';
+      case 'amount': return '13%';
+      case 'description': return 'auto';
+      default: return 'auto';
+    }
+  };
 
   const getColumnLabel = (col) => {
     switch (col.id) {
@@ -546,7 +563,7 @@ const BillShipTemplate = forwardRef(({
               items={pageItems}
               visibleColumns={visibleColumns}
               invoiceSettings={invoiceSettings}
-              columnWidths={columnWidths}
+              getColumnWidth={getColumnWidth}
               getColumnLabel={getColumnLabel}
               startIndex={startIndex}
             />
@@ -574,9 +591,11 @@ const BillShipTemplate = forwardRef(({
                 showWatermarkFooter={showWatermarkFooter}
               />
             ) : (
-              <BillShipContinuation />
+              <BillShipContinuation
+                pageNumber={pageNumber}
+                totalPages={totalPages}
+              />
             )}
-
           </div>
         );
       })}
