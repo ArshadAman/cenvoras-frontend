@@ -81,15 +81,16 @@ const GenzTemplate = forwardRef(({
   return (
     <div 
       ref={ref}
-      className="invoice-sheet"
+      className="bg-white invoice-sheet"
       style={{
-        width: '100%', minHeight: '297mm', margin: 0, boxSizing: 'border-box',
+        width: '210mm', minHeight: '297mm', margin: '0 auto', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#333333',
         fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 11}px`,
-        transform: `scale(${scale})`, transformOrigin: 'top left',
-        border: `8px solid ${primaryColor}`, borderRadius: 0, overflow: 'hidden',
+        ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
+        border: `8px solid ${primaryColor}`, borderRadius: 0,
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
       }}
     >
       <InvoicePrintShell

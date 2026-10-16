@@ -111,12 +111,13 @@ const InvoicePreview = forwardRef(({
     lineHeight: typography.lineHeight || 1.5,
     backgroundColor: colors.background || '#ffffff',
     color: colors.text || '#333333',
-    transform: `scale(${scale})`,
-    transformOrigin: 'top left',
+    ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
     display: 'flex',
     flexDirection: 'column',
-    // Screen preview fills A4; print/PDF must not stretch dark empty regions
+    width: '210mm',
     minHeight: '297mm',
+    boxSizing: 'border-box',
+    margin: '0 auto',
   };
   
   const headerStyle = {
@@ -187,6 +188,7 @@ const InvoicePreview = forwardRef(({
         minHeight: '297mm',
         padding: '10mm',
         boxSizing: 'border-box',
+        margin: '0 auto',
         position: 'relative',
       }}
     >

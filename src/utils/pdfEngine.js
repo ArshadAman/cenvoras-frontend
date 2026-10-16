@@ -82,6 +82,16 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         clonedTarget.style.webkitFontSmoothing = 'antialiased';
         clonedTarget.style.mozOsxFontSmoothing = 'grayscale';
         clonedTarget.style.textRendering = 'geometricPrecision';
+
+        const innerSheets = clonedDoc.querySelectorAll('.invoice-sheet');
+        innerSheets.forEach((sheet) => {
+          sheet.style.transform = 'none';
+          sheet.style.webkitTransform = 'none';
+          sheet.style.width = '210mm';
+          sheet.style.maxWidth = '210mm';
+          sheet.style.margin = '0 auto';
+          sheet.style.boxShadow = 'none';
+        });
       }
 
       // Hide any interactive or print-hidden buttons
