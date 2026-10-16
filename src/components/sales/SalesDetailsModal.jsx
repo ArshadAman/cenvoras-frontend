@@ -38,6 +38,7 @@ import { getUserProfile, patchUserProfile } from "../../api/users";
 import { patchCustomer } from "../../api/customers";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
+import { paginateInvoiceItems } from "../../utils/invoicePaginator";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
 import { buildThemedInvoiceEmailHtml } from "../../utils/invoiceEmailGenerator";
 
@@ -489,23 +490,44 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         .print-hidden, [data-no-print], button {
           display: none !important;
         }
+        .invoice-container {
+          display: block !important;
+          gap: 0 !important;
+        }
         .invoice-sheet {
           box-shadow: none !important;
           transform: none !important;
           background: #ffffff !important;
           width: 100% !important;
           max-width: 100% !important;
-          min-height: 100% !important;
+          height: 297mm !important;
+          min-height: 297mm !important;
+          max-height: 297mm !important;
           margin: 0 !important;
           box-sizing: border-box !important;
+          page-break-after: always !important;
+          break-after: page !important;
+          overflow: hidden !important;
+          display: flex !important;
+          flex-direction: column !important;
         }
-        .invoice-sheet-body,
-        .invoice-sheet .flex-1 {
-          flex: 0 0 auto !important;
-          flex-grow: 0 !important;
+        .invoice-sheet:last-child {
+          page-break-after: auto !important;
+          break-after: auto !important;
         }
-        .invoice-continuation-header {
-          display: none !important;
+        .invoice-part-header {
+          flex-shrink: 0 !important;
+        }
+        .invoice-part-items {
+          flex-grow: 1 !important;
+        }
+        .invoice-part-footer {
+          margin-top: auto !important;
+          flex-shrink: 0 !important;
+        }
+        .invoice-part-continuation {
+          margin-top: auto !important;
+          flex-shrink: 0 !important;
         }
         [data-print-target] {
           width: 100% !important;
@@ -967,54 +989,91 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
                 <p className="text-gray-400">{isDeliveryChallan ? "Loading delivery challan..." : isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
-            ) : previewTemplate ? (
-              <div className="w-full flex justify-center pb-10">
-                <div 
-                  style={{
-                    transform: `scale(${previewScale})`,
-                    transformOrigin: 'top center',
-                    width: '210mm',
-                    marginBottom: previewScale < 1 ? `calc(297mm * (${previewScale} - 1))` : 0,
-                  }}
-                  className="print:transform-none print:w-auto print:m-0"
-                >
+            ) : previewTemplate ? (() => {
+              const previewItems = Array.isArray(enrichedInvoice.items) ? enrichedInvoice.items : [];
+              const previewPages = paginateInvoiceItems(previewItems, { isDeliveryChallan });
+              const previewTotalPages = previewPages.length;
+
+              return (
+                <div className="w-full flex justify-center pb-10">
                   <div 
-                    ref={printRef}
-                    data-print-target
-                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0 print:w-full print:max-w-none print:shadow-none print:m-0"
+                    style={{
+                      transform: `scale(${previewScale})`,
+                      transformOrigin: 'top center',
+                      width: '210mm',
+                      marginBottom: previewScale < 1 ? `calc(${previewTotalPages} * 297mm * (${previewScale} - 1))` : 0,
+                    }}
+                    className="print:transform-none print:w-auto print:m-0"
                   >
-                    <style type="text/css" media="print">{`
-                      @page {
-                        size: A4 portrait;
-                        margin: 0mm;
-                      }
-                      @page :left {
-                        margin: 0mm;
-                      }
-                      @page :right {
-                        margin: 0mm;
-                      }
-                      body {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        width: 100% !important;
-                      }
-                      .invoice-sheet {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        margin: 0 !important;
-                      }
-                    `}</style>
-                    <InvoicePreview
-                      invoice={enrichedInvoice}
-                      template={previewTemplate}
-                      businessInfo={effectiveBusinessInfo}
-                      invoiceSettings={invoiceSettings || {}}
-                    />
+                    <div 
+                      ref={printRef}
+                      data-print-target
+                      className="w-[210mm] p-0 m-0 print:w-full print:max-w-none print:shadow-none print:m-0"
+                    >
+                      <style type="text/css" media="print">{`
+                        @page {
+                          size: A4 portrait;
+                          margin: 0mm;
+                        }
+                        @page :left {
+                          margin: 0mm;
+                        }
+                        @page :right {
+                          margin: 0mm;
+                        }
+                        body {
+                          margin: 0 !important;
+                          padding: 0 !important;
+                          width: 100% !important;
+                        }
+                        .invoice-container {
+                          display: block !important;
+                          gap: 0 !important;
+                        }
+                        .invoice-sheet {
+                          width: 100% !important;
+                          max-width: 100% !important;
+                          height: 297mm !important;
+                          min-height: 297mm !important;
+                          max-height: 297mm !important;
+                          margin: 0 !important;
+                          box-sizing: border-box !important;
+                          page-break-after: always !important;
+                          break-after: page !important;
+                          overflow: hidden !important;
+                          display: flex !important;
+                          flex-direction: column !important;
+                        }
+                        .invoice-sheet:last-child {
+                          page-break-after: auto !important;
+                          break-after: auto !important;
+                        }
+                        .invoice-part-header {
+                          flex-shrink: 0 !important;
+                        }
+                        .invoice-part-items {
+                          flex-grow: 1 !important;
+                        }
+                        .invoice-part-footer {
+                          margin-top: auto !important;
+                          flex-shrink: 0 !important;
+                        }
+                        .invoice-part-continuation {
+                          margin-top: auto !important;
+                          flex-shrink: 0 !important;
+                        }
+                      `}</style>
+                      <InvoicePreview
+                        invoice={enrichedInvoice}
+                        template={previewTemplate}
+                        businessInfo={effectiveBusinessInfo}
+                        invoiceSettings={invoiceSettings || {}}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="text-center py-20 text-gray-400">
                 <p>No template loaded</p>
                 <button
