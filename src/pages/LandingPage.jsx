@@ -16,6 +16,7 @@ import {
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
 import DetailedFeatures from '../components/DetailedFeatures';
+import BrandLogo from '../components/common/BrandLogo';
 
 const HeroPrismCanvas = React.lazy(() => import('../components/3d/HeroPrismCanvas'));
 
@@ -714,7 +715,7 @@ export default function LandingPage() {
           {/* Col 1: Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-3">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora" className="h-6 w-auto" />
+              <BrandLogo className="h-6 w-auto" />
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
               Simple business software. GST billing, inventory, and customer management for Indian businesses.

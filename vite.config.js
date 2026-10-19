@@ -19,26 +19,47 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        'favicon.png',
+        'favicon-32x32.png',
+        'favicon-16x16.png',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'cenvora-logo-light.png',
+        'cenvora-logo-dark.png'
+      ],
       manifest: {
         name: 'Cenvora',
         short_name: 'Cenvora',
         description: 'Cenvora - Billing and Inventory Software',
-        theme_color: '#0a0a0a',
-        background_color: '#0a0a0a',
+        theme_color: '#222831',
+        background_color: '#F5F5F0',
         display: 'standalone',
         icons: [
           {
             src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/app-icon-light.png',
+            sizes: '1254x1254',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },

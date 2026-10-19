@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRightIcon, ShieldCheckIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import Seo from '../components/Seo';
 import AuthPrismCanvas from '../components/3d/AuthPrismCanvas';
+import BrandLogo from '../components/common/BrandLogo';
 
 const LoginSchema = Yup.object().shape({
   username: Yup.string().required('Please enter your email address'),
@@ -95,7 +96,7 @@ export default function Login({ onLogin }) {
           {/* Top Brand Tagline */}
           <div className="relative z-10">
             <Link to="/" className="inline-flex items-center gap-2 hover:opacity-90 transition-opacity">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora" className="h-8 w-auto" />
+              <BrandLogo className="h-8 w-auto" />
             </Link>
             <div className="mt-8">
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--accent-primary)] text-xs font-semibold mb-3">
@@ -138,7 +139,7 @@ export default function Login({ onLogin }) {
             {/* Mobile Header */}
             <div className="lg:hidden text-center mb-8">
               <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
-                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora" className="h-8 w-auto mx-auto" />
+                <BrandLogo className="h-8 w-auto mx-auto" />
               </Link>
               <h2 className="text-xl font-bold text-[var(--text-primary)]">Sign in to Cenvora</h2>
             </div>

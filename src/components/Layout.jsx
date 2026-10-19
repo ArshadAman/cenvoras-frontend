@@ -46,6 +46,7 @@ import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
 import CommandPalette from './common/CommandPalette';
 import ThemeToggle from './common/ThemeToggle';
+import BrandLogo from './common/BrandLogo';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
@@ -407,9 +408,7 @@ export default function Layout({ children, onLogout }) {
           {!isSidebarCollapsed ? (
             <div className="flex items-center justify-between w-full gap-2 overflow-hidden">
               <Link to="/" className="flex items-center min-w-0" title="Cenvora Home">
-                <img 
-                  src="/cenvora-logo-backgrond-removed.png" 
-                  alt="Cenvora Logo" 
+                <BrandLogo 
                   className="w-[145px] h-auto object-contain transform origin-left transition-transform duration-300" 
                 />
               </Link>
@@ -438,9 +437,8 @@ export default function Layout({ children, onLogout }) {
           ) : (
             <div className="flex flex-col items-center justify-center gap-1 w-full py-1">
               <Link to="/" className="flex items-center justify-center hover:opacity-80 transition-opacity" title="Cenvora Home">
-                <img 
-                  src="/pwa-192x192.png" 
-                  alt="Cenvora" 
+                <BrandLogo 
+                  iconOnly
                   className="w-8 h-8 rounded-lg object-contain shadow-sm border border-[var(--border-default)]" 
                 />
               </Link>
@@ -738,7 +736,7 @@ export default function Layout({ children, onLogout }) {
           </button>
           
           <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+            <BrandLogo className="w-[140px] h-auto object-contain" />
           </Link>
           
           <div className="flex items-center gap-2">
@@ -780,7 +778,7 @@ export default function Layout({ children, onLogout }) {
             }`}
           >
             <div className="h-20 flex items-center justify-between px-6 border-b border-[var(--border-default)]">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+              <BrandLogo className="w-[140px] h-auto object-contain" />
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
