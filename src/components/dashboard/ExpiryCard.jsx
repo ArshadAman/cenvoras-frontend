@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/api';
 import { ClockIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -53,9 +54,9 @@ export default function ExpiryCard() {
       </div>
 
       {/* Detail Modal */}
-      {showModal && (
+      {showModal && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
           <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden bg-obsidian-card border border-hairline rounded-2xl shadow-2xl shadow-amber-950/30 flex flex-col animate-fade-up">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-hairline bg-gradient-to-r from-amber-500/10 to-orange-500/5">
@@ -160,7 +161,8 @@ export default function ExpiryCard() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/api';
@@ -75,10 +76,10 @@ export default function ExpiryAlertBanner() {
       </aside>
 
       {/* Detail Breakdown Modal */}
-      {showModal && (
+      {showModal && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm" 
             onClick={() => setShowModal(false)}
           />
           <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden bg-obsidian-card border border-hairline rounded-2xl shadow-2xl shadow-amber-950/30 flex flex-col animate-fade-up">
@@ -197,7 +198,8 @@ export default function ExpiryAlertBanner() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
