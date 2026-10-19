@@ -38,10 +38,10 @@ const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
 
 // Payment mode icons and colors
 const PAYMENT_MODES = {
-  cash: { label: 'Cash', icon: CurrencyRupeeIcon, color: 'text-green-400', bg: 'bg-green-500/10' },
-  upi: { label: 'UPI', icon: DevicePhoneMobileIcon, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  cheque: { label: 'Cheque', icon: DocumentTextIcon, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  cash: { label: 'Cash', icon: CurrencyRupeeIcon, color: 'text-[var(--status-success)]', bg: 'bg-[var(--status-success)]/10' },
+  upi: { label: 'UPI', icon: DevicePhoneMobileIcon, color: 'text-[var(--accent-primary)]', bg: 'bg-[var(--accent-primary)]/10' },
+  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon, color: 'text-[var(--status-info)]', bg: 'bg-[var(--status-info)]/10' },
+  cheque: { label: 'Cheque', icon: DocumentTextIcon, color: 'text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10' },
 };
 
 // Payment card component
@@ -50,49 +50,49 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
   const ModeIcon = mode.icon;
   
   return (
-    <div className="bento-card !p-4 group hover:border-white/20 transition-all">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${mode.bg}`}>
+          <div className={`p-2 rounded-xl ${mode.bg}`}>
             <ModeIcon className={`w-5 h-5 ${mode.color}`} />
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">{payment.customer_name}</div>
-            <div className="text-xs text-slate-400">{mode.label}</div>
+            <div className="text-sm font-semibold text-[var(--text-primary)]">{payment.customer_name}</div>
+            <div className="text-xs text-[var(--text-muted)]">{mode.label}</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-green-400">{getCurrencySymbol()}{formatAmount(payment.amount)}</div>
-          <div className="text-xs text-slate-400">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+          <div className="text-lg font-bold text-[var(--status-success)]">{getCurrencySymbol()}{formatAmount(payment.amount)}</div>
+          <div className="text-xs text-[var(--text-muted)]">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       </div>
       
       <div className="flex flex-wrap items-center gap-2 mb-2">
         {payment.invoice_number ? (
-          <span className="text-[11px] font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-md">
+          <span className="text-[11px] font-medium text-[var(--status-info)] bg-[var(--status-info)]/10 border border-[var(--status-info)]/20 px-2 py-0.5 rounded-md">
             Invoice #{payment.invoice_number}
           </span>
         ) : (
-          <span className="text-[11px] font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+          <span className="text-[11px] font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
             Customer Advance
           </span>
         )}
         {payment.reference && (
-          <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+          <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
             Ref: {payment.reference}
           </span>
         )}
       </div>
       
       {payment.notes && (
-        <div className="text-xs text-slate-400 mt-2 line-clamp-1">{payment.notes}</div>
+        <div className="text-xs text-[var(--text-secondary)] mt-2 line-clamp-1">{payment.notes}</div>
       )}
       
-      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 transition-opacity">
+      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)] transition-opacity">
         {!payment.invoice && !payment.invoice_number && (
           <button 
             onClick={() => onAllocate(payment)} 
-            className="p-2 bg-white/5 text-gray-400 hover:text-green-400 hover:bg-green-400/20 rounded-lg transition-all border border-white/5" 
+            className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--status-success)] hover:bg-[var(--status-success)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
             title="Allocate Advance to Invoices"
           >
             <LinkIcon className="w-4 h-4" />
@@ -100,14 +100,14 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
         )}
         <button 
           onClick={() => onEdit(payment)} 
-          className="p-2 bg-white/5 text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/20 rounded-lg transition-all border border-white/5" 
+          className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
           title="Edit Payment"
         >
           <PencilSquareIcon className="w-4 h-4" />
         </button>
         <button 
           onClick={() => onDelete(payment)} 
-          className="p-2 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all border border-white/5" 
+          className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--status-danger)] hover:bg-[var(--status-danger)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
           title="Delete Payment"
         >
           <TrashIcon className="w-4 h-4" />
@@ -345,15 +345,15 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <BanknotesIcon className="w-6 h-6 text-green-400" />
+          <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <BanknotesIcon className="w-6 h-6 text-[var(--status-success)]" />
             {editData ? "Edit Payment" : "Record Payment"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -361,7 +361,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Searchable Customer Selection */}
           <div className="relative">
-            <label className="block text-sm text-gray-400 mb-1">Customer *</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Customer *</label>
             <div className="relative">
               <input
                 type="text"
@@ -373,29 +373,29 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   if (formData.customer) setFormData({ ...formData, customer: '' });
                 }}
                 onFocus={() => setShowCustomerDropdown(true)}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
-              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
             </div>
             
             {showCustomerDropdown && customerSearch && (
-              <div className="absolute z-50 w-full mt-1 bg-[#111] border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
+              <div className="absolute z-50 w-full mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
                 {filteredCustomers.length > 0 ? (
                   filteredCustomers.map(c => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => handleSelectCustomer(c)}
-                      className="w-full text-left p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                      className="w-full text-left p-3 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-subtle)] last:border-0"
                     >
-                      <div className="text-sm font-medium text-white">{c.name}</div>
-                      <div className="text-xs text-slate-400 font-mono">
+                      <div className="text-sm font-medium text-[var(--text-primary)]">{c.name}</div>
+                      <div className="text-xs text-[var(--text-muted)] font-mono">
                         ID: {c.id.slice(0, 8)} • Balance: {getCurrencySymbol()}{formatAmount(c.current_balance)}
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-sm text-slate-400 italic">
+                  <div className="p-3 text-sm text-[var(--text-muted)] italic">
                     New customer will be created
                   </div>
                 )}
@@ -405,16 +405,16 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 
           {/* Optional Invoice Selection */}
           <div className={`transition-all duration-300 ${formData.customer ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-            <label className="block text-sm text-gray-400 mb-1">Link to Invoice (Optional)</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Link to Invoice (Optional)</label>
             <select
               value={formData.invoice}
               onChange={(e) => handleSelectInvoice(e.target.value)}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+              className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
               disabled={isLoadingInvoices}
             >
-              <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
+              <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Select an invoice...</option>
               {invoices.map((inv) => (
-                <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
+                <option key={inv.id} value={inv.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                   {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due {getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(inv))}
                 </option>
               ))}
@@ -424,9 +424,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           <div className="grid grid-cols-2 gap-4">
             {/* Amount */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Amount Paid *</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Amount Paid *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{getCurrencySymbol()}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">{getCurrencySymbol()}</span>
                 <input
                   type="number"
                   required
@@ -435,34 +435,34 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   placeholder="5,000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full p-3 pl-7 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 pl-7 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
                 />
               </div>
             </div>
             
             {/* Date */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Date *</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Date *</label>
               <input
                 type="date"
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
             </div>
           </div>
 
           {/* Info Fields (Non-gate/Display only) */}
           {selectedInvoice && (
-            <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
+            <div className="grid grid-cols-2 gap-4 p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] animate-fade-in">
               <div>
-                <div className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
+                <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Total Due</div>
+                <div className="text-base font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold mb-1">Remaining</div>
-                <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Remaining</div>
+                <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                   {getCurrencySymbol()}{formatAmount(calculateRemainingDue())}
                 </div>
               </div>
@@ -471,21 +471,21 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           
           {/* Payment Mode */}
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Payment Mode</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Payment Mode</label>
             <div className="grid grid-cols-4 gap-2">
               {Object.entries(PAYMENT_MODES).map(([key, { label, icon: Icon, color, bg }]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setFormData({ ...formData, mode: key })}
-                  className={`p-3 rounded-lg border text-center transition-all ${
+                  className={`p-3 rounded-xl border text-center transition-all ${
                     formData.mode === key
-                      ? `${bg} border-white/30 ring-2 ring-white/20`
-                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                      ? `${bg} border-[var(--accent-primary)] ring-2 ring-[var(--accent-primary)]/20`
+                      : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 mx-auto mb-1 ${formData.mode === key ? color : 'text-gray-400'}`} />
-                  <span className={`text-xs ${formData.mode === key ? 'text-white' : 'text-slate-400 font-medium'}`}>{label}</span>
+                  <Icon className={`w-5 h-5 mx-auto mb-1 ${formData.mode === key ? color : 'text-[var(--text-muted)]'}`} />
+                  <span className={`text-xs ${formData.mode === key ? 'text-[var(--text-primary)] font-semibold' : 'text-[var(--text-secondary)] font-medium'}`}>{label}</span>
                 </button>
               ))}
             </div>
@@ -493,30 +493,30 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Reference (Optional)</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Reference (Optional)</label>
               <input
                 type="text"
                 placeholder="Cheque No / UPI Transaction ID"
                 value={formData.reference}
                 onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
             </div>
             
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Notes (Optional)</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Notes (Optional)</label>
               <textarea
                 placeholder="Any additional details..."
                 rows={1}
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none resize-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm resize-none"
               />
             </div>
           </div>
           
           {error && (
-            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+            <div className="text-sm text-[var(--status-danger)] bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl p-3">
               {error}
             </div>
           )}
@@ -525,17 +525,17 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-medium transition-colors"
+              className="btn-secondary flex-1 py-2.5 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 bg-gradient-to-r from-green-500 to-cyan-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <CheckCircleIcon className="w-5 h-5" />
@@ -595,57 +595,57 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#0a0a0a] border border-cyan-500/20 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md p-6 shadow-2xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <LinkIcon className="w-5 h-5 text-cyan-400" />
+          <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <LinkIcon className="w-5 h-5 text-[var(--accent-primary)]" />
             Allocate Payment / Advance
           </h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white rounded-lg">
+          <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4 space-y-1">
+        <div className="bg-[var(--bg-primary)] rounded-xl p-3 border border-[var(--border-subtle)] mb-4 space-y-1">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Customer:</span>
-            <span className="text-white font-medium">{payment.customer_name}</span>
+            <span className="text-[var(--text-secondary)]">Customer:</span>
+            <span className="text-[var(--text-primary)] font-semibold">{payment.customer_name}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Payment Amount:</span>
-            <span className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
+            <span className="text-[var(--text-secondary)]">Payment Amount:</span>
+            <span className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
           </div>
-          <div className="flex justify-between text-xs text-slate-400">
+          <div className="flex justify-between text-xs text-[var(--text-muted)]">
             <span>Date:</span>
             <span>{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
           </div>
         </div>
 
         <div className="space-y-2 mb-6">
-          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
             Select Invoice to Apply
           </label>
           {loading ? (
-            <div className="py-4 text-center text-xs text-gray-400">Loading open invoices...</div>
+            <div className="py-4 text-center text-xs text-[var(--text-muted)]">Loading open invoices...</div>
           ) : (
             <select
               value={selectedInvoice}
               onChange={(e) => setSelectedInvoice(e.target.value)}
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-cyan-500 outline-none"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none"
             >
-              <option value="">Auto-apply to oldest open invoices (FIFO)</option>
+              <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Auto-apply to oldest open invoices (FIFO)</option>
               {invoices.map(inv => {
                 const outstanding = Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0);
                 return (
-                  <option key={inv.id} value={inv.id}>
+                  <option key={inv.id} value={inv.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     #{inv.invoice_number} — Due: {getCurrencySymbol()}{formatAmount(outstanding)} ({inv.invoice_date || ''})
                   </option>
                 );
               })}
             </select>
           )}
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--text-muted)]">
             {selectedInvoice
               ? 'This unlinked payment will pay down the selected invoice.'
               : 'Auto-apply will automatically knock off the oldest unpaid invoices for this customer.'}
@@ -655,14 +655,14 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10 text-sm"
+            className="btn-secondary flex-1 py-2.5 text-sm"
           >
             Cancel
           </button>
           <button
             onClick={handleAllocate}
             disabled={submitting}
-            className="flex-1 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl transition-colors text-sm flex justify-center items-center gap-2"
+            className="btn-primary flex-1 py-2.5 text-sm flex justify-center items-center gap-2"
           >
             {submitting ? 'Allocating...' : 'Allocate Now'}
           </button>
@@ -829,11 +829,11 @@ export default function Payments() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-              <BanknotesIcon className="w-8 h-8 text-green-400" />
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+              <BanknotesIcon className="w-8 h-8 text-[var(--status-success)]" />
               Payments
             </h1>
-            <p className="text-gray-400 text-sm">Record and track customer payments</p>
+            <p className="text-[var(--text-secondary)] text-sm">Record and track customer payments</p>
           </div>
           
           <button
@@ -841,7 +841,7 @@ export default function Payments() {
               setSelectedPayment(null);
               setIsModalOpen(true);
             }}
-            className="btn-primary text-sm py-2.5 px-5 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+            className="btn-primary text-sm py-2.5 px-5 flex items-center gap-2"
           >
             <PlusIcon className="w-5 h-5" />
             Record Payment
@@ -852,40 +852,52 @@ export default function Payments() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div 
             onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
-            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'today' ? 'border-green-500/50 bg-green-500/5' : 'border-white/5 hover:border-white/20'}`}
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
+              dateFilter === 'today' 
+                ? 'border-[var(--status-success)]/40 bg-[var(--status-success)]/5' 
+                : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+            }`}
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-slate-400">Today's Collection</div>
-              {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />}
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Today's Collection</div>
+              {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-[var(--status-success)] animate-pulse" />}
             </div>
-            <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{todayTotal.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-[var(--status-success)]">{getCurrencySymbol()}{todayTotal.toLocaleString('en-IN')}</div>
           </div>
           <div
             onClick={() => setDateFilter(dateFilter === 'month' ? 'all' : 'month')}
-            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'month' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/5 hover:border-white/20'}`}
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
+              dateFilter === 'month' 
+                ? 'border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/5' 
+                : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+            }`}
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-slate-400">Monthly Collection</div>
-              {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Monthly Collection</div>
+              {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />}
             </div>
-            <div className="text-2xl font-bold text-cyan-400">{getCurrencySymbol()}{thisMonthTotal.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-[var(--accent-primary)]">{getCurrencySymbol()}{thisMonthTotal.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setDateFilter('all')}
-            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'all' ? 'border-white/20 bg-white/5' : 'border-white/5 hover:border-white/20'}`}
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
+              dateFilter === 'all' 
+                ? 'border-[var(--accent-primary)]/40 bg-[var(--bg-surface)]' 
+                : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+            }`}
           >
-            <div className="text-xs text-slate-400 mb-1">Total Collection Till Date</div>
-            <div className="text-2xl font-bold text-white">{getCurrencySymbol()}{totalCollection.toLocaleString('en-IN')}</div>
+            <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Total Collection Till Date</div>
+            <div className="text-2xl font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{totalCollection.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setIsDueModalOpen(true)}
-            className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-amber-500/30 group"
+            className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] hover:border-[var(--status-warning)]/40 group shadow-sm"
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-slate-400 group-hover:text-amber-400/80 transition-colors">Customers with Due</div>
-              <PlusIcon className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider group-hover:text-[var(--status-warning)] transition-colors">Customers with Due</div>
+              <PlusIcon className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--status-warning)] transition-colors" />
             </div>
-            <div className="text-2xl font-bold text-amber-400">
+            <div className="text-2xl font-bold text-[var(--status-warning)]">
               {customers?.filter(c => parseFloat(c.current_balance) > 0).length || 0}
             </div>
           </div>
@@ -894,22 +906,22 @@ export default function Payments() {
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search by customer or reference..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-cyan-500 focus:outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
             />
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+            <div className="flex gap-1 bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-subtle)]">
               <button
                 onClick={() => setFilterMode('all')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  filterMode === 'all' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                  filterMode === 'all' ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] font-semibold shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 All
@@ -919,7 +931,7 @@ export default function Payments() {
                   key={key}
                   onClick={() => setFilterMode(key)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    filterMode === key ? `bg-white/10 ${color} shadow-sm` : 'text-gray-400 hover:text-white'
+                    filterMode === key ? `bg-[var(--bg-primary)] ${color} font-semibold shadow-sm` : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {label}
@@ -928,11 +940,11 @@ export default function Payments() {
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-gray-400 hidden sm:inline">Sort:</span>
+              <span className="text-xs text-[var(--text-secondary)] hidden sm:inline">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               >
                 <option value="date-desc">Date (Newest First)</option>
                 <option value="date-asc">Date (Oldest First)</option>
@@ -948,22 +960,22 @@ export default function Payments() {
         {loadingPolicy.visible ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="bento-card !p-4 animate-pulse">
+              <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 animate-pulse">
                 <div className="flex gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-lg" />
+                  <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-lg" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-white/10 rounded" />
-                    <div className="h-3 w-20 bg-white/5 rounded" />
+                    <div className="h-4 w-32 bg-[var(--bg-primary)] rounded" />
+                    <div className="h-3 w-20 bg-[var(--bg-primary)]/50 rounded" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : sortedAndFilteredPayments.length === 0 ? (
-          <div className="text-center py-16">
-            <BanknotesIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No payments found</h3>
-            <p className="text-slate-400 mb-6">
+          <div className="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl">
+            <BanknotesIcon className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No payments found</h3>
+            <p className="text-[var(--text-secondary)] text-sm mb-6">
               {searchQuery || filterMode !== 'all' 
                 ? 'Try adjusting your search or filters'
                 : 'Start recording customer payments to track cash flow'}
@@ -973,7 +985,7 @@ export default function Payments() {
                 setSelectedPayment(null);
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-cyan-500 text-white rounded-xl hover:opacity-90"
+              className="btn-primary text-sm py-2.5 px-6 inline-flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               Record First Payment
@@ -1025,31 +1037,31 @@ export default function Payments() {
         {/* Delete Confirmation Modal */}
         {isDeleteModalOpen && createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
-            <div className="relative bg-[#0a0a0a] border border-red-500/20 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
+            <div className="relative bg-[var(--bg-surface)] border border-[var(--status-danger)]/30 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
               <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-                  <TrashIcon className="w-6 h-6 text-red-500" />
+                <div className="w-12 h-12 rounded-full bg-[var(--status-danger)]/10 flex items-center justify-center mb-4">
+                  <TrashIcon className="w-6 h-6 text-[var(--status-danger)]" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Delete Payment?</h3>
-                <p className="text-sm text-gray-400 mb-6">
-                  Are you sure you want to delete this payment of <span className="text-white font-medium">{getCurrencySymbol()}{paymentToDelete?.amount}</span> from <span className="text-white font-medium">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Delete Payment?</h3>
+                <p className="text-sm text-[var(--text-secondary)] mb-6">
+                  Are you sure you want to delete this payment of <span className="text-[var(--text-primary)] font-semibold">{getCurrencySymbol()}{paymentToDelete?.amount}</span> from <span className="text-[var(--text-primary)] font-semibold">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
                 </p>
                 <div className="flex w-full gap-3">
                   <button
                     onClick={() => setIsDeleteModalOpen(false)}
-                    className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10"
+                    className="btn-secondary flex-1 py-2.5 text-sm"
                     disabled={deleteMutation.isPending}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => deleteMutation.mutate(paymentToDelete.id)}
-                    className="flex-1 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-colors font-medium border border-red-500/30 flex justify-center items-center"
+                    className="btn-danger flex-1 py-2.5 text-sm flex justify-center items-center"
                     disabled={deleteMutation.isPending}
                   >
                     {deleteMutation.isPending ? (
-                      <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       "Delete"
                     )}
@@ -1063,14 +1075,14 @@ export default function Payments() {
         {/* Due Customers Modal */}
         {isDueModalOpen && createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsDueModalOpen(false)} />
-            <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[80vh] flex flex-col">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsDueModalOpen(false)} />
+            <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <UserIcon className="w-6 h-6 text-amber-400" />
+                <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <UserIcon className="w-6 h-6 text-[var(--status-warning)]" />
                   Customers with Due
                 </h2>
-                <button onClick={() => setIsDueModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => setIsDueModalOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
@@ -1083,20 +1095,20 @@ export default function Payments() {
                     .map(c => (
                       <div 
                         key={c.id} 
-                        className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center hover:bg-white/10 transition-all cursor-default group"
+                        className="p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl flex justify-between items-center hover:border-[var(--accent-primary)]/40 transition-all cursor-default group"
                       >
                         <div>
-                          <div className="text-white font-medium group-hover:text-amber-400 transition-colors">{c.name}</div>
-                          <div className="text-xs text-slate-400 font-mono">ID: {c.id.slice(0, 8)}</div>
+                          <div className="text-[var(--text-primary)] font-semibold group-hover:text-[var(--status-warning)] transition-colors">{c.name}</div>
+                          <div className="text-xs text-[var(--text-muted)] font-mono">ID: {c.id.slice(0, 8)}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-amber-500">{getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString()}</div>
+                          <div className="text-lg font-bold text-[var(--status-warning)]">{getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString()}</div>
                           <button 
                             onClick={() => {
                               setIsDueModalOpen(false);
                               setSearchQuery(c.name);
                             }}
-                            className="text-[10px] text-cyan-400 uppercase tracking-wider font-bold hover:underline"
+                            className="text-[10px] text-[var(--accent-primary)] uppercase tracking-wider font-bold hover:underline"
                           >
                             View History
                           </button>
@@ -1104,14 +1116,14 @@ export default function Payments() {
                       </div>
                     ))
                 ) : (
-                  <div className="text-center py-10 text-slate-400 font-medium">No customers have outstanding balances.</div>
+                  <div className="text-center py-10 text-[var(--text-muted)] font-medium">No customers have outstanding balances.</div>
                 )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/5">
+              <div className="mt-6 pt-4 border-t border-[var(--border-subtle)]">
                 <button
                   onClick={() => setIsDueModalOpen(false)}
-                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10"
+                  className="btn-secondary w-full py-2.5 text-sm"
                 >
                   Close
                 </button>

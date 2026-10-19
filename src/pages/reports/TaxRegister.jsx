@@ -67,25 +67,25 @@ export default function TaxRegister() {
   return (
     <>
       <div className="p-6 md:p-10 space-y-6 animate-fade-up">
-        <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
-          <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
+        <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors group">
+          <span className="p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg group-hover:border-[var(--accent-primary)]/40 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
           <ChartBarIcon className="w-3.5 h-3.5" /> Back to Reports
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">{country === 'IN' ? 'GST Tax Register' : 'Tax Register'}</h1>
-          <p className="text-gray-400 text-sm">{country === 'IN' ? 'Invoice-wise GST breakup' : 'Invoice-wise tax breakup'}, HSN summary, and GSTR-1 export.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1">{country === 'IN' ? 'GST Tax Register' : 'Tax Register'}</h1>
+          <p className="text-[var(--text-secondary)] text-sm">{country === 'IN' ? 'Invoice-wise GST breakup' : 'Invoice-wise tax breakup'}, HSN summary, and GSTR-1 export.</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white/5 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-1 w-fit">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-white/10 text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm font-semibold'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {tab.label}
@@ -97,20 +97,20 @@ export default function TaxRegister() {
         <div className="bento-card p-4">
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <label className="text-xs text-gray-400 block mb-1">From</label>
+              <label className="text-xs text-[var(--text-secondary)] block mb-1 font-semibold">From</label>
               <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-                className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50" />
+                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none" />
             </div>
             <div>
-              <label className="text-xs text-gray-400 block mb-1">To</label>
+              <label className="text-xs text-[var(--text-secondary)] block mb-1 font-semibold">To</label>
               <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-                className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50" />
+                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none" />
             </div>
             {activeTab !== 'gstr1' && (
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Type</label>
+                <label className="text-xs text-[var(--text-secondary)] block mb-1 font-semibold">Type</label>
                 <select value={reportType} onChange={e => setReportType(e.target.value)}
-                  className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50">
+                  className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none">
                   <option value="sales">Sales</option>
                   <option value="purchase">Purchase</option>
                 </select>
@@ -130,7 +130,7 @@ export default function TaxRegister() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/10 text-gray-400 text-xs uppercase bg-white/5">
+                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs uppercase tracking-wider bg-[var(--bg-primary)]">
                     <th className="p-4 font-medium">Invoice</th>
                     <th className="p-4 font-medium">Date</th>
                     <th className="p-4 font-medium">Party</th>
@@ -148,46 +148,46 @@ export default function TaxRegister() {
                     <th className="p-4 font-medium text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-[var(--border-subtle)]/50">
                   {regLoading ? (
-                    <tr><td colSpan="9" className="p-8 text-center text-slate-400 font-medium">Loading...</td></tr>
+                    <tr><td colSpan="9" className="p-8 text-center text-[var(--text-muted)] font-medium">Loading...</td></tr>
                   ) : !registerData?.results?.length ? (
-                    <tr><td colSpan="9" className="p-8 text-center text-slate-400 font-medium">No invoices found for this period.</td></tr>
+                    <tr><td colSpan="9" className="p-8 text-center text-[var(--text-muted)] font-medium">No invoices found for this period.</td></tr>
                   ) : (
                     <>
                       {registerData.results.map((row, i) => (
-                        <tr key={i} className="hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setSelectedInvoice(row)}>
-                          <td className="p-4 text-white font-medium text-sm">{row.invoice_number}</td>
-                          <td className="p-4 text-gray-300 text-sm">{row.date}</td>
-                          <td className="p-4 text-gray-300 text-sm">{row.party_name}</td>
-                          <td className="p-4 text-gray-400 text-xs font-mono">{row.gstin || '—'}</td>
-                          <td className="p-4 text-right text-gray-300 text-sm">{getCurrencySymbol()}{fmt(row.taxable_value)}</td>
+                        <tr key={i} className="hover:bg-[var(--bg-primary)]/50 transition-colors cursor-pointer" onClick={() => setSelectedInvoice(row)}>
+                          <td className="p-4 text-[var(--text-primary)] font-medium text-sm">{row.invoice_number}</td>
+                          <td className="p-4 text-[var(--text-secondary)] text-sm">{row.date}</td>
+                          <td className="p-4 text-[var(--text-secondary)] text-sm">{row.party_name}</td>
+                          <td className="p-4 text-[var(--text-secondary)] text-xs font-mono">{row.gstin || '—'}</td>
+                          <td className="p-4 text-right text-[var(--text-secondary)] text-sm">{getCurrencySymbol()}{fmt(row.taxable_value)}</td>
                           {country === 'IN' ? (
                             <>
-                              <td className="p-4 text-right text-blue-400 text-sm">{getCurrencySymbol()}{fmt(row.cgst)}</td>
-                              <td className="p-4 text-right text-emerald-400 text-sm">{getCurrencySymbol()}{fmt(row.sgst)}</td>
-                              <td className="p-4 text-right text-purple-400 text-sm">{getCurrencySymbol()}{fmt(row.igst)}</td>
+                              <td className="p-4 text-right text-[var(--status-info)] text-sm">{getCurrencySymbol()}{fmt(row.cgst)}</td>
+                              <td className="p-4 text-right text-[var(--status-success)] text-sm">{getCurrencySymbol()}{fmt(row.sgst)}</td>
+                              <td className="p-4 text-right text-[var(--accent-primary)] text-sm">{getCurrencySymbol()}{fmt(row.igst)}</td>
                             </>
                           ) : (
-                            <td className="p-4 text-right text-amber-400 text-sm">{getCurrencySymbol()}{fmt((row.cgst || 0) + (row.sgst || 0) + (row.igst || 0))}</td>
+                            <td className="p-4 text-right text-[var(--status-warning)] text-sm">{getCurrencySymbol()}{fmt((row.cgst || 0) + (row.sgst || 0) + (row.igst || 0))}</td>
                           )}
-                          <td className="p-4 text-right text-white font-semibold text-sm">{getCurrencySymbol()}{fmt(row.total_amount)}</td>
+                          <td className="p-4 text-right text-[var(--text-primary)] font-semibold text-sm">{getCurrencySymbol()}{fmt(row.total_amount)}</td>
                         </tr>
                       ))}
                       {/* Totals Row */}
-                      <tr className="bg-white/5 border-t border-white/10 font-semibold">
-                        <td colSpan="4" className="p-4 text-white">Totals ({registerData.count} invoices)</td>
-                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(registerData.totals?.taxable)}</td>
+                      <tr className="bg-[var(--bg-primary)]/50 border-t border-[var(--border-subtle)] font-semibold">
+                        <td colSpan="4" className="p-4 text-[var(--text-primary)]">Totals ({registerData.count} invoices)</td>
+                        <td className="p-4 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(registerData.totals?.taxable)}</td>
                         {country === 'IN' ? (
                           <>
-                            <td className="p-4 text-right text-blue-400">{getCurrencySymbol()}{fmt(registerData.totals?.cgst)}</td>
-                            <td className="p-4 text-right text-emerald-400">{getCurrencySymbol()}{fmt(registerData.totals?.sgst)}</td>
-                            <td className="p-4 text-right text-purple-400">{getCurrencySymbol()}{fmt(registerData.totals?.igst)}</td>
+                            <td className="p-4 text-right text-[var(--status-info)]">{getCurrencySymbol()}{fmt(registerData.totals?.cgst)}</td>
+                            <td className="p-4 text-right text-[var(--status-success)]">{getCurrencySymbol()}{fmt(registerData.totals?.sgst)}</td>
+                            <td className="p-4 text-right text-[var(--accent-primary)]">{getCurrencySymbol()}{fmt(registerData.totals?.igst)}</td>
                           </>
                         ) : (
-                          <td className="p-4 text-right text-amber-400">{getCurrencySymbol()}{fmt((registerData.totals?.cgst || 0) + (registerData.totals?.sgst || 0) + (registerData.totals?.igst || 0))}</td>
+                          <td className="p-4 text-right text-[var(--status-warning)]">{getCurrencySymbol()}{fmt((registerData.totals?.cgst || 0) + (registerData.totals?.sgst || 0) + (registerData.totals?.igst || 0))}</td>
                         )}
-                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(registerData.totals?.total)}</td>
+                        <td className="p-4 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(registerData.totals?.total)}</td>
                       </tr>
                     </>
                   )}
@@ -203,7 +203,7 @@ export default function TaxRegister() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/10 text-gray-400 text-xs uppercase bg-white/5">
+                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs uppercase tracking-wider bg-[var(--bg-primary)]">
                     <th className="p-4 font-medium">{country === 'IN' ? 'HSN Code' : 'Tax Code'}</th>
                     <th className="p-4 font-medium text-right">Qty</th>
                     <th className="p-4 font-medium text-right">Taxable Value</th>
@@ -220,37 +220,37 @@ export default function TaxRegister() {
                     <th className="p-4 font-medium text-right">Total Value</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-[var(--border-subtle)]/50">
                   {hsnLoading ? (
-                    <tr><td colSpan="8" className="p-8 text-center text-slate-400 font-medium">Loading...</td></tr>
+                    <tr><td colSpan="8" className="p-8 text-center text-[var(--text-muted)] font-medium">Loading...</td></tr>
                   ) : !hsnData?.results?.length ? (
-                    <tr><td colSpan="8" className="p-8 text-center text-slate-400 font-medium">No HSN data found.</td></tr>
+                    <tr><td colSpan="8" className="p-8 text-center text-[var(--text-muted)] font-medium">No HSN data found.</td></tr>
                   ) : (
                     <>
                       {hsnData.results.map((row, i) => (
-                        <tr key={i} className="hover:bg-white/5 transition-colors">
-                          <td className="p-4 text-white font-mono font-medium">{row.hsn_code}</td>
-                          <td className="p-4 text-right text-gray-300">{row.quantity}</td>
-                          <td className="p-4 text-right text-gray-300">{getCurrencySymbol()}{fmt(row.taxable_value)}</td>
+                        <tr key={i} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                          <td className="p-4 text-[var(--text-primary)] font-mono font-medium">{row.hsn_code}</td>
+                          <td className="p-4 text-right text-[var(--text-secondary)]">{row.quantity}</td>
+                          <td className="p-4 text-right text-[var(--text-secondary)]">{getCurrencySymbol()}{fmt(row.taxable_value)}</td>
                           {country === 'IN' ? (
                             <>
-                              <td className="p-4 text-right text-blue-400 ">{getCurrencySymbol()}{fmt(row.cgst)}</td>
-                              <td className="p-4 text-right text-emerald-400 ">{getCurrencySymbol()}{fmt(row.sgst)}</td>
-                              <td className="p-4 text-right text-purple-400 ">{getCurrencySymbol()}{fmt(row.igst)}</td>
+                              <td className="p-4 text-right text-[var(--status-info)]">{getCurrencySymbol()}{fmt(row.cgst)}</td>
+                              <td className="p-4 text-right text-[var(--status-success)]">{getCurrencySymbol()}{fmt(row.sgst)}</td>
+                              <td className="p-4 text-right text-[var(--accent-primary)]">{getCurrencySymbol()}{fmt(row.igst)}</td>
                             </>
                           ) : (
-                            <td className="p-4 text-right text-amber-400 ">{getCurrencySymbol()}{fmt((row.cgst || 0) + (row.sgst || 0) + (row.igst || 0))}</td>
+                            <td className="p-4 text-right text-[var(--status-warning)]">{getCurrencySymbol()}{fmt((row.cgst || 0) + (row.sgst || 0) + (row.igst || 0))}</td>
                           )}
-                          <td className="p-4 text-right text-amber-400">{getCurrencySymbol()}{fmt(row.total_tax)}</td>
-                          <td className="p-4 text-right text-white font-semibold">{getCurrencySymbol()}{fmt(row.total_value)}</td>
+                          <td className="p-4 text-right text-[var(--status-warning)]">{getCurrencySymbol()}{fmt(row.total_tax)}</td>
+                          <td className="p-4 text-right text-[var(--text-primary)] font-semibold">{getCurrencySymbol()}{fmt(row.total_value)}</td>
                         </tr>
                       ))}
-                      <tr className="bg-white/5 border-t border-white/10 font-semibold">
-                        <td colSpan="2" className="p-4 text-white">Total ({hsnData.count} HSN codes)</td>
-                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(hsnData.summary?.total_taxable_value)}</td>
-                        <td colSpan="3" className="p-4 text-right text-amber-400">{getCurrencySymbol()}{fmt(hsnData.summary?.total_tax)}</td>
+                      <tr className="bg-[var(--bg-primary)]/50 border-t border-[var(--border-subtle)] font-semibold">
+                        <td colSpan="2" className="p-4 text-[var(--text-primary)]">Total ({hsnData.count} HSN codes)</td>
+                        <td className="p-4 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_taxable_value)}</td>
+                        <td colSpan="3" className="p-4 text-right text-[var(--status-warning)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_tax)}</td>
                         <td className="p-4"></td>
-                        <td className="p-4 text-right text-white">{getCurrencySymbol()}{fmt(hsnData.summary?.total_value)}</td>
+                        <td className="p-4 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_value)}</td>
                       </tr>
                     </>
                   )}
@@ -264,40 +264,40 @@ export default function TaxRegister() {
         {activeTab === 'gstr1' && (
           <div className="space-y-4">
             {gstr1Loading ? (
-              <div className="bento-card p-8 text-center text-slate-400 font-medium">Generating GSTR-1 data...</div>
+              <div className="bento-card p-8 text-center text-[var(--text-muted)] font-medium">Generating GSTR-1 data...</div>
             ) : !gstr1Data ? (
-              <div className="bento-card p-8 text-center text-slate-400 font-medium">No data available.</div>
+              <div className="bento-card p-8 text-center text-[var(--text-muted)] font-medium">No data available.</div>
             ) : (
               <>
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bento-card p-4">
-                    <div className="text-xs text-gray-400 mb-1">GSTIN</div>
-                    <div className="text-white font-mono text-sm">{gstr1Data.gstin || 'Not Set'}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mb-1">GSTIN</div>
+                    <div className="text-[var(--text-primary)] font-mono text-sm">{gstr1Data.gstin || 'Not Set'}</div>
                   </div>
                   <div className="bento-card p-4">
-                    <div className="text-xs text-gray-400 mb-1">Filing Period</div>
-                    <div className="text-white font-semibold">{gstr1Data.fp}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mb-1">Filing Period</div>
+                    <div className="text-[var(--text-primary)] font-semibold">{gstr1Data.fp}</div>
                   </div>
                   <div className="bento-card p-4">
-                    <div className="text-xs text-gray-400 mb-1">B2B Invoices</div>
-                    <div className="text-blue-400 font-bold text-xl">{gstr1Data.b2b?.reduce((sum, b) => sum + b.inv.length, 0) || 0}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mb-1">B2B Invoices</div>
+                    <div className="text-[var(--status-info)] font-bold text-xl">{gstr1Data.b2b?.reduce((sum, b) => sum + b.inv.length, 0) || 0}</div>
                   </div>
                   <div className="bento-card p-4">
-                    <div className="text-xs text-gray-400 mb-1">HSN Entries</div>
-                    <div className="text-emerald-400 font-bold text-xl">{gstr1Data.hsn?.data?.length || 0}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mb-1">HSN Entries</div>
+                    <div className="text-[var(--status-success)] font-bold text-xl">{gstr1Data.hsn?.data?.length || 0}</div>
                   </div>
                 </div>
 
                 {/* Raw JSON Preview */}
                 <div className="bento-card p-4">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-white font-semibold">JSON Preview</h3>
+                    <h3 className="text-[var(--text-primary)] font-semibold">JSON Preview</h3>
                     <button onClick={downloadGSTR1} className="btn-primary text-xs flex items-center gap-1">
                       <ArrowDownTrayIcon className="w-3 h-3" /> Download
                     </button>
                   </div>
-                  <pre className="bg-black/50 rounded-lg p-4 text-xs text-gray-300 overflow-auto max-h-96 font-mono">
+                  <pre className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 text-xs text-[var(--text-secondary)] overflow-auto max-h-96 font-mono">
                     {JSON.stringify(gstr1Data, null, 2)}
                   </pre>
                 </div>
@@ -308,16 +308,16 @@ export default function TaxRegister() {
 
         {selectedInvoice && (
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-2xl border border-white/10 bg-[#0f1017]">
-              <div className="px-5 py-4 border-b border-white/10 flex items-start justify-between gap-4">
+            <div className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xl">
+              <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Invoice Tax Breakdown</h3>
-                  <p className="text-xs text-gray-400 mt-1">{selectedInvoice.invoice_number} • {selectedInvoice.date}</p>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">Invoice Tax Breakdown</h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">{selectedInvoice.invoice_number} • {selectedInvoice.date}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedInvoice(null)}
-                  className="px-3 py-1.5 text-sm rounded-lg border border-white/20 text-gray-300 hover:text-white hover:bg-white/5"
+                  className="px-3 py-1.5 text-sm rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/50 transition-colors"
                 >
                   Close
                 </button>
@@ -325,42 +325,42 @@ export default function TaxRegister() {
 
               <div className="overflow-auto max-h-[70vh]">
                 {invoiceDetailLoading ? (
-                  <div className="p-8 text-center text-slate-400 font-medium">Loading invoice details...</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] font-medium">Loading invoice details...</div>
                 ) : !invoiceDetail ? (
-                  <div className="p-8 text-center text-slate-400 font-medium">Unable to load invoice details.</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] font-medium">Unable to load invoice details.</div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
-                      <div className="rounded-lg border border-white/10 p-2.5">
-                        <div className="text-[11px] text-gray-400">Taxable</div>
-                        <div className="text-sm text-white font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.taxable)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
+                      <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
+                        <div className="text-[11px] text-[var(--text-secondary)]">Taxable</div>
+                        <div className="text-sm text-[var(--text-primary)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.taxable)}</div>
                       </div>
-                      <div className="rounded-lg border border-white/10 p-2.5">
-                        <div className="text-[11px] text-gray-400">CGST</div>
-                        <div className="text-sm text-blue-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.cgst)}</div>
+                      <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
+                        <div className="text-[11px] text-[var(--text-secondary)]">CGST</div>
+                        <div className="text-sm text-[var(--status-info)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.cgst)}</div>
                       </div>
-                      <div className="rounded-lg border border-white/10 p-2.5">
-                        <div className="text-[11px] text-gray-400">SGST</div>
-                        <div className="text-sm text-emerald-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.sgst)}</div>
+                      <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
+                        <div className="text-[11px] text-[var(--text-secondary)]">SGST</div>
+                        <div className="text-sm text-[var(--status-success)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.sgst)}</div>
                       </div>
-                      <div className="rounded-lg border border-white/10 p-2.5">
-                        <div className="text-[11px] text-gray-400">IGST</div>
-                        <div className="text-sm text-violet-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.igst)}</div>
+                      <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
+                        <div className="text-[11px] text-[var(--text-secondary)]">IGST</div>
+                        <div className="text-sm text-[var(--accent-primary)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.igst)}</div>
                       </div>
-                      <div className="rounded-lg border border-white/10 p-2.5">
-                        <div className="text-[11px] text-gray-400">Tax</div>
-                        <div className="text-sm text-amber-300 font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.tax)}</div>
+                      <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
+                        <div className="text-[11px] text-[var(--text-secondary)]">Tax</div>
+                        <div className="text-sm text-[var(--status-warning)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.tax)}</div>
                       </div>
-                      <div className="rounded-lg border border-white/10 p-2.5">
-                        <div className="text-[11px] text-gray-400">Total</div>
-                        <div className="text-sm text-white font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.total_amount)}</div>
+                      <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
+                        <div className="text-[11px] text-[var(--text-secondary)]">Total</div>
+                        <div className="text-sm text-[var(--text-primary)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.total_amount)}</div>
                       </div>
                     </div>
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
                         <thead>
-                          <tr className="border-b border-white/10 text-gray-400 text-xs uppercase bg-white/5">
+                          <tr className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs uppercase tracking-wider bg-[var(--bg-primary)]">
                             <th className="p-3 font-medium">Product</th>
                             <th className="p-3 font-medium">HSN</th>
                             <th className="p-3 font-medium text-right">Qty</th>
@@ -377,29 +377,29 @@ export default function TaxRegister() {
                             <th className="p-3 font-medium text-right">Line Total</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-[var(--border-subtle)]/50">
                           {invoiceDetail.items?.length ? (
                             invoiceDetail.items.map((item) => (
-                              <tr key={item.id} className="hover:bg-white/[0.03]">
-                                <td className="p-3 text-white text-sm">{item.product_name}</td>
-                                <td className="p-3 text-gray-400 text-xs font-mono">{item.hsn_code || '-'}</td>
-                                <td className="p-3 text-right text-gray-300 text-sm">{item.quantity} {item.unit || ''}</td>
-                                <td className="p-3 text-right text-gray-300 text-sm">{getCurrencySymbol()}{fmt(item.price)}</td>
-                                <td className="p-3 text-right text-gray-300 text-sm">{getCurrencySymbol()}{fmt(item.taxable_value)}</td>
+                              <tr key={item.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                                <td className="p-3 text-[var(--text-primary)] text-sm">{item.product_name}</td>
+                                <td className="p-3 text-[var(--text-secondary)] text-xs font-mono">{item.hsn_code || '-'}</td>
+                                <td className="p-3 text-right text-[var(--text-secondary)] text-sm">{item.quantity} {item.unit || ''}</td>
+                                <td className="p-3 text-right text-[var(--text-secondary)] text-sm">{getCurrencySymbol()}{fmt(item.price)}</td>
+                                <td className="p-3 text-right text-[var(--text-secondary)] text-sm">{getCurrencySymbol()}{fmt(item.taxable_value)}</td>
                                 {country === 'IN' ? (
                                   <>
-                                    <td className="p-3 text-right text-blue-300 text-sm">{getCurrencySymbol()}{fmt(item.cgst)}</td>
-                                    <td className="p-3 text-right text-emerald-300 text-sm">{getCurrencySymbol()}{fmt(item.sgst)}</td>
-                                    <td className="p-3 text-right text-violet-300 text-sm">{getCurrencySymbol()}{fmt(item.igst)}</td>
+                                    <td className="p-3 text-right text-[var(--status-info)] text-sm">{getCurrencySymbol()}{fmt(item.cgst)}</td>
+                                    <td className="p-3 text-right text-[var(--status-success)] text-sm">{getCurrencySymbol()}{fmt(item.sgst)}</td>
+                                    <td className="p-3 text-right text-[var(--accent-primary)] text-sm">{getCurrencySymbol()}{fmt(item.igst)}</td>
                                   </>
                                 ) : null}
-                                <td className="p-3 text-right text-amber-300 text-sm">{getCurrencySymbol()}{fmt(item.tax)}</td>
-                                <td className="p-3 text-right text-white text-sm font-semibold">{getCurrencySymbol()}{fmt(item.line_total)}</td>
+                                <td className="p-3 text-right text-[var(--status-warning)] text-sm">{getCurrencySymbol()}{fmt(item.tax)}</td>
+                                <td className="p-3 text-right text-[var(--text-primary)] text-sm font-semibold">{getCurrencySymbol()}{fmt(item.line_total)}</td>
                               </tr>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="10" className="p-8 text-center text-slate-400 font-medium">No line items found for this invoice.</td>
+                              <td colSpan="10" className="p-8 text-center text-[var(--text-muted)] font-medium">No line items found for this invoice.</td>
                             </tr>
                           )}
                         </tbody>

@@ -52,22 +52,22 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
 
   const severityStyles = {
     red: {
-      bg: 'bg-red-500/10',
-      border: 'border-red-500/30',
-      text: 'text-red-400',
-      dot: 'bg-red-500',
+      bg: 'bg-[var(--status-danger)]/10',
+      border: 'border-[var(--status-danger)]/30',
+      text: 'text-[var(--status-danger)]',
+      dot: 'bg-[var(--status-danger)]',
     },
     yellow: {
-      bg: 'bg-amber-500/10',
-      border: 'border-amber-500/30',
-      text: 'text-amber-400',
-      dot: 'bg-amber-500',
+      bg: 'bg-[var(--status-warning)]/10',
+      border: 'border-[var(--status-warning)]/30',
+      text: 'text-[var(--status-warning)]',
+      dot: 'bg-[var(--status-warning)]',
     },
     green: {
-      bg: 'bg-green-500/10',
-      border: 'border-green-500/30',
-      text: 'text-green-400',
-      dot: 'bg-green-500',
+      bg: 'bg-[var(--status-success)]/10',
+      border: 'border-[var(--status-success)]/30',
+      text: 'text-[var(--status-success)]',
+      dot: 'bg-[var(--status-success)]',
     },
   };
 
@@ -81,16 +81,16 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAllAlerts(false)} />
 
-        <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-2xl flex flex-col">
-          <div className="flex items-start justify-between gap-4 border-b border-white/10 bg-white/[0.03] p-5">
+        <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xl flex flex-col">
+          <div className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-5">
             <div>
-              <h3 className="text-xl font-bold text-white">All Alerts</h3>
-              <p className="mt-1 text-xs text-gray-500">Showing every alert currently available in the dashboard.</p>
+              <h3 className="text-xl font-bold text-[var(--text-primary)]">All Alerts</h3>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Showing every alert currently available in the dashboard.</p>
             </div>
             <button
               type="button"
               onClick={() => setShowAllAlerts(false)}
-              className="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -110,7 +110,7 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className={`text-sm font-medium ${styles.text}`}>{warning.title}</div>
-                      <div className="mt-0.5 text-xs text-gray-500 whitespace-pre-line">{warning.message}</div>
+                      <div className="mt-0.5 text-xs text-[var(--text-muted)] whitespace-pre-line">{warning.message}</div>
                     </div>
                     {warning.action && (
                       <div className={`rounded-md px-2.5 py-1 text-xs font-medium ${styles.bg} ${styles.text} border ${styles.border}`}>
@@ -136,8 +136,8 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
       {/* Header with Health Status */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Alerts</h2>
-          <span className="text-xs px-2 py-0.5 bg-white/5 text-gray-500 rounded-full">
+          <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Alerts</h2>
+          <span className="text-xs px-2 py-0.5 bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] rounded-full">
             {warnings.length} items
           </span>
         </div>
@@ -145,7 +145,7 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
         {/* Traffic Light Status */}
         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${severityStyles[health.status]?.bg} ${severityStyles[health.status]?.border} border`}>
           <HealthIcon className={`w-4 h-4 ${severityStyles[health.status]?.text}`} />
-          <span className={`text-xs font-medium ${severityStyles[health.status]?.text}`}>
+          <span className={`text-xs font-semibold ${severityStyles[health.status]?.text}`}>
             {health.message}
           </span>
         </div>
@@ -154,9 +154,9 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
       {/* Warning List — fills remaining card height; themed scrollbar */}
       {warnings.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
-          <CheckCircleIcon className="w-12 h-12 text-green-500/30 mb-3" />
-          <p className="text-sm text-gray-500">No alerts right now!</p>
-          <p className="text-xs text-gray-600">Your business is running smoothly 🎉</p>
+          <CheckCircleIcon className="w-12 h-12 text-[var(--status-success)]/40 mb-3" />
+          <p className="text-sm text-[var(--text-muted)]">No alerts right now!</p>
+          <p className="text-xs text-[var(--text-muted)]/80">Your business is running smoothly 🎉</p>
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2 pr-1">
@@ -167,7 +167,7 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
             return (
               <div 
                 key={i}
-                className={`flex items-start gap-3 p-3 rounded-lg border ${styles.bg} ${styles.border} hover:bg-white/5 transition-colors cursor-pointer`}
+                className={`flex items-start gap-3 p-3 rounded-lg border ${styles.bg} ${styles.border} hover:opacity-90 transition-opacity cursor-pointer`}
               >
                 {/* Severity Dot */}
                 <div className={`w-2 h-2 rounded-full ${styles.dot} mt-1.5 flex-shrink-0`} />
@@ -179,17 +179,17 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-medium ${styles.text}`}>
+                  <div className={`text-sm font-semibold ${styles.text}`}>
                     {warning.title}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                  <div className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">
                     {warning.message}
                   </div>
                 </div>
                 
                 {/* Action Button */}
                 {warning.action && (
-                  <button className={`text-xs px-2 py-1 rounded ${styles.bg} ${styles.text} hover:bg-white/10 flex-shrink-0`}>
+                  <button className={`text-xs px-2 py-1 rounded ${styles.bg} ${styles.text} hover:opacity-80 flex-shrink-0 font-medium`}>
                     {warning.action === 'reorder' ? 'Reorder' :
                      warning.action === 'collect' ? 'Collect' :
                      warning.action === 'discount' ? 'Discount' :
@@ -203,11 +203,11 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
       )}
       
       {warnings.length > 5 && (
-        <div className="mt-3 pt-3 border-t border-white/5 text-center flex-shrink-0">
+        <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] text-center flex-shrink-0">
           <button
             type="button"
             onClick={() => setShowAllAlerts(true)}
-            className="text-xs text-cyan-400 hover:text-cyan-300"
+            className="text-xs text-[var(--accent-primary)] hover:underline font-semibold"
           >
             View all {warnings.length} alerts →
           </button>

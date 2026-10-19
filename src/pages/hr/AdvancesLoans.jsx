@@ -51,21 +51,21 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
   };
 
   if (!isOpen) return null;
-  const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
+  const ic = "w-full px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-xl font-semibold text-white">Disburse Advance / Loan</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)]">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Disburse Advance / Loan</h2>
+          <button type="button" onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Employee *</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Employee *</label>
             <select required value={form.employee} onChange={e => setForm(p => ({ ...p, employee: e.target.value }))} className={ic}>
               <option value="">Select Employee</option>
               {employees.map(e => (
@@ -76,37 +76,37 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Type *</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Type *</label>
               <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} className={ic}>
                 <option value="advance">Salary Advance</option>
                 <option value="loan">Personal Loan</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Disbursement Date *</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Disbursement Date *</label>
               <input required type="date" value={form.disbursement_date} onChange={e => setForm(p => ({ ...p, disbursement_date: e.target.value }))} className={ic} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Principal Amount (₹) *</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Principal Amount (₹) *</label>
               <input required type="number" step="0.01" value={form.principal_amount} onChange={e => setForm(p => ({ ...p, principal_amount: e.target.value, monthly_installment: p.type === 'advance' ? e.target.value : p.monthly_installment }))} className={ic} placeholder="50000" />
             </div>
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Monthly Deduction (₹) *</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Monthly Deduction (₹) *</label>
               <input required type="number" step="0.01" value={form.monthly_installment} onChange={e => setForm(p => ({ ...p, monthly_installment: e.target.value }))} className={ic} placeholder="5000" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Reason / Purpose</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason / Purpose</label>
             <textarea rows={2} value={form.reason} onChange={e => setForm(p => ({ ...p, reason: e.target.value }))} className={ic + ' resize-none'} placeholder="Medical emergency / Home renovation..." />
           </div>
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-400 bg-white/5 rounded-xl hover:text-white">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">
+          <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
+            <button type="button" onClick={onClose} className="btn-secondary px-5 py-2 text-sm font-medium rounded-xl">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary px-5 py-2 text-sm font-semibold rounded-xl disabled:opacity-50">
               {saving ? 'Creating...' : 'Submit'}
             </button>
           </div>
@@ -128,27 +128,27 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
   const remainingInstallments = installment > 0 ? Math.ceil(balance / installment) : 0;
 
   const STATUS_STYLES = {
-    active: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    requested: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    fully_recovered: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    closed: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+    active: 'bg-[var(--status-success)]/15 text-[var(--status-success)] border-[var(--status-success)]/30',
+    requested: 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border-[var(--status-warning)]/30',
+    fully_recovered: 'bg-[var(--status-info)]/15 text-[var(--status-info)] border-[var(--status-info)]/30',
+    closed: 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]',
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+        <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/40">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <div className="p-2 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 text-[var(--accent-primary)]">
               <BanknotesIcon className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Advance / Loan Details</h2>
-              <p className="text-xs text-gray-400">Recovery progress, purpose, and repayment schedule</p>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Advance / Loan Details</h2>
+              <p className="text-xs text-[var(--text-muted)]">Recovery progress, purpose, and repayment schedule</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition">
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -156,21 +156,19 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
         {/* Content */}
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Employee & Type */}
-          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-4">
+          <div className="p-4 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] flex items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-white">{loan.employee_name}</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Disbursed on: <span className="text-gray-200">{loan.disbursement_date}</span>
-                {loan.disbursed_by_name && <span> • By: <span className="text-gray-200">{loan.disbursed_by_name}</span></span>}
+              <h3 className="text-base font-bold text-[var(--text-primary)]">{loan.employee_name}</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                Disbursed on: <span className="text-[var(--text-secondary)]">{loan.disbursement_date}</span>
+                {loan.disbursed_by_name && <span> • By: <span className="text-[var(--text-secondary)]">{loan.disbursed_by_name}</span></span>}
               </p>
             </div>
             <div className="flex flex-col items-end gap-1.5">
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                loanType === 'advance' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-              }`}>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                 {loanType === 'advance' ? 'Salary Advance' : 'Personal Loan'}
               </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider border ${STATUS_STYLES[loan.status] || 'bg-white/10 text-white'}`}>
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider border ${STATUS_STYLES[loan.status] || 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'}`}>
                 {loan.status}
               </span>
             </div>
@@ -178,53 +176,53 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
 
           {/* Financial Breakdown */}
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-              <p className="text-[11px] text-gray-400">Principal</p>
-              <p className="text-base font-bold text-white mt-1">₹{principal.toLocaleString('en-IN')}</p>
+            <div className="p-3 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
+              <p className="text-[11px] text-[var(--text-muted)]">Principal</p>
+              <p className="text-base font-bold text-[var(--text-primary)] mt-1">₹{principal.toLocaleString('en-IN')}</p>
             </div>
-            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-              <p className="text-[11px] text-indigo-300">Monthly Deduction</p>
-              <p className="text-base font-bold text-indigo-300 mt-1">₹{installment.toLocaleString('en-IN')}</p>
+            <div className="p-3 rounded-xl bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20">
+              <p className="text-[11px] text-[var(--accent-primary)]">Monthly Deduction</p>
+              <p className="text-base font-bold text-[var(--accent-primary)] mt-1">₹{installment.toLocaleString('en-IN')}</p>
             </div>
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <p className="text-[11px] text-emerald-300">Balance</p>
-              <p className="text-base font-bold text-emerald-400 mt-1">₹{balance.toLocaleString('en-IN')}</p>
+            <div className="p-3 rounded-xl bg-[var(--status-success)]/10 border border-[var(--status-success)]/20">
+              <p className="text-[11px] text-[var(--status-success)]">Balance</p>
+              <p className="text-base font-bold text-[var(--status-success)] mt-1">₹{balance.toLocaleString('en-IN')}</p>
             </div>
           </div>
 
           {/* Recovery Progress Bar */}
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+          <div className="p-4 rounded-xl bg-[var(--bg-primary)]/30 border border-[var(--border-subtle)] space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-400">Recovery Progress</span>
-              <span className="font-semibold text-emerald-400">{progress}% recovered ({remainingInstallments} installments remaining)</span>
+              <span className="text-[var(--text-muted)]">Recovery Progress</span>
+              <span className="font-semibold text-[var(--status-success)]">{progress}% recovered ({remainingInstallments} installments remaining)</span>
             </div>
-            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-              <div className="bg-emerald-400 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full h-2 overflow-hidden">
+              <div className="bg-[var(--status-success)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
             </div>
           </div>
 
           {/* Stated Purpose */}
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+          <div className="p-4 rounded-xl bg-[var(--bg-primary)]/30 border border-[var(--border-subtle)] space-y-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300">Stated Purpose / Reason</h4>
-              <span className="text-[11px] text-gray-500">Recorded on application</span>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Stated Purpose / Reason</h4>
+              <span className="text-[11px] text-[var(--text-muted)]">Recorded on application</span>
             </div>
             {loan.reason ? (
-              <p className="text-sm text-gray-200 bg-black/40 p-3 rounded-lg border border-white/5 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-[var(--text-secondary)] bg-[var(--bg-primary)]/60 p-3 rounded-lg border border-[var(--border-subtle)] leading-relaxed whitespace-pre-wrap">
                 {loan.reason}
               </p>
             ) : (
-              <p className="text-xs text-gray-500 italic bg-black/20 p-3 rounded-lg">No specific reason provided for this disbursement.</p>
+              <p className="text-xs text-[var(--text-muted)] italic bg-[var(--bg-primary)]/40 p-3 rounded-lg">No specific reason provided for this disbursement.</p>
             )}
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-white/10 flex items-center justify-between bg-white/[0.01]">
+        <div className="p-4 border-t border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/20">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-white/5 rounded-xl transition"
+            className="btn-secondary px-4 py-2 text-sm rounded-xl transition"
           >
             Close
           </button>
@@ -236,7 +234,7 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
                   onApprove(loan.id);
                   onClose();
                 }}
-                className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition inline-flex items-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                className="btn-primary px-4 py-2 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5"
               >
                 <CheckBadgeIcon className="w-4 h-4" /> Approve & Activate
               </button>
@@ -248,7 +246,7 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
                   onCloseLoan(loan.id);
                   onClose();
                 }}
-                className="px-3.5 py-2 text-xs font-medium text-gray-300 hover:text-white bg-white/10 hover:bg-white/15 rounded-xl transition"
+                className="btn-secondary px-3.5 py-2 text-xs font-medium rounded-xl transition"
               >
                 Close Loan (Write-off balance)
               </button>
@@ -316,21 +314,21 @@ export default function AdvancesLoans() {
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
-        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <section className="relative rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-2">Employee Financials</p>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white flex items-center gap-3">
-                <BanknotesIcon className="w-9 h-9 text-indigo-300" />
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">Employee Financials</p>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+                <BanknotesIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Advances & Loans
               </h1>
-              <p className="text-white/65 text-sm mt-2">
+              <p className="text-[var(--text-secondary)] text-sm mt-2">
                 Manage employee salary advances, personal loans, and automated payroll recovery schedules. Click any row to view stated reason and repayment details.
               </p>
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300 shadow-lg shadow-indigo-500/20"
+              className="btn-primary inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
             >
               <PlusIcon className="h-4 w-4" />
               New Advance / Loan
@@ -340,32 +338,32 @@ export default function AdvancesLoans() {
 
         {/* Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Active Loans</p>
-            <p className="text-3xl font-bold text-white">{loans.filter(l => l.status === 'active').length}</p>
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 shadow-sm">
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total Active Loans</p>
+            <p className="text-3xl font-bold text-[var(--text-primary)]">{loans.filter(l => l.status === 'active').length}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Pending Approval</p>
-            <p className="text-3xl font-bold text-amber-400">{loans.filter(l => l.status === 'requested').length}</p>
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 shadow-sm">
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Pending Approval</p>
+            <p className="text-3xl font-bold text-[var(--status-warning)]">{loans.filter(l => l.status === 'requested').length}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Outstanding Recovery</p>
-            <p className="text-3xl font-bold text-emerald-400">₹{totalOutstanding.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 shadow-sm">
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total Outstanding Recovery</p>
+            <p className="text-3xl font-bold text-[var(--status-success)]">₹{totalOutstanding.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
           </div>
         </div>
 
         {/* Loans Table */}
-        <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Loan & Advance Ledger</h2>
-            <button onClick={fetchLoans} className="text-gray-400 hover:text-white text-xs inline-flex items-center gap-1">
+        <section className="relative rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0 overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/40">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Loan & Advance Ledger</h2>
+            <button onClick={fetchLoans} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs inline-flex items-center gap-1 transition">
               <ArrowPathIcon className="w-3.5 h-3.5" /> Refresh
             </button>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)]/60 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Type</th>
@@ -378,9 +376,9 @@ export default function AdvancesLoans() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="7" className="px-6 py-8 text-center">Loading records...</td></tr>
+                  <tr><td colSpan="7" className="px-6 py-8 text-center text-[var(--text-muted)]">Loading records...</td></tr>
                 ) : loans.length === 0 ? (
-                  <tr><td colSpan="7" className="px-6 py-10 text-center text-gray-400">No advance or loan records found.</td></tr>
+                  <tr><td colSpan="7" className="px-6 py-10 text-center text-[var(--text-muted)]">No advance or loan records found.</td></tr>
                 ) : (
                   loans.map(loan => {
                     const principal = parseFloat(loan.principal_amount || loan.original_amount || 0);
@@ -392,41 +390,39 @@ export default function AdvancesLoans() {
                       <tr
                         key={loan.id}
                         onClick={() => setSelectedLoan(loan)}
-                        className="border-b border-white/10 hover:bg-white/5 cursor-pointer transition-colors"
+                        className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors"
                         title="Click to view complete details, repayment schedule, and purpose"
                       >
-                        <td className="px-6 py-4 font-medium text-white">
+                        <td className="px-6 py-4 font-medium text-[var(--text-primary)]">
                           <p>{loan.employee_name}</p>
-                          <p className="text-xs text-gray-400">Disbursed: {loan.disbursement_date}</p>
+                          <p className="text-xs text-[var(--text-muted)]">Disbursed: {loan.disbursement_date}</p>
                           {loan.reason && (
-                            <p className="text-xs text-gray-400 italic truncate max-w-xs mt-0.5">
+                            <p className="text-xs text-[var(--text-muted)] italic truncate max-w-xs mt-0.5">
                               “{loan.reason}”
                             </p>
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                            loanType === 'advance' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'
-                          }`}>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                             {loanType}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-semibold text-white">₹{principal.toLocaleString('en-IN')}</td>
-                        <td className="px-6 py-4">₹{parseFloat(loan.monthly_installment || 0).toLocaleString('en-IN')}/mo</td>
+                        <td className="px-6 py-4 font-semibold text-[var(--text-primary)]">₹{principal.toLocaleString('en-IN')}</td>
+                        <td className="px-6 py-4 text-[var(--text-secondary)]">₹{parseFloat(loan.monthly_installment || 0).toLocaleString('en-IN')}/mo</td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-semibold text-emerald-400">₹{balance.toLocaleString('en-IN')}</p>
-                            <div className="w-24 bg-white/10 rounded-full h-1.5 mt-1 overflow-hidden">
-                              <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: `${progress}%` }} />
+                            <p className="font-semibold text-[var(--status-success)]">₹{balance.toLocaleString('en-IN')}</p>
+                            <div className="w-24 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full h-1.5 mt-1 overflow-hidden">
+                              <div className="bg-[var(--status-success)] h-1.5 rounded-full" style={{ width: `${progress}%` }} />
                             </div>
-                            <span className="text-[10px] text-gray-400">{progress}% recovered</span>
+                            <span className="text-[10px] text-[var(--text-muted)]">{progress}% recovered</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium uppercase ${
-                            loan.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                            loan.status === 'requested' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                            'bg-gray-500/10 text-gray-400'
+                            loan.status === 'active' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
+                            loan.status === 'requested' ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30' :
+                            'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]'
                           }`}>
                             {loan.status}
                           </span>
@@ -437,7 +433,7 @@ export default function AdvancesLoans() {
                               e.stopPropagation();
                               setSelectedLoan(loan);
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 text-xs font-medium inline-flex items-center gap-1 transition"
+                            className="px-2.5 py-1 rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25 text-xs font-medium inline-flex items-center gap-1 transition"
                             title="View details & purpose"
                           >
                             <EyeIcon className="w-3.5 h-3.5" /> Details
@@ -448,7 +444,7 @@ export default function AdvancesLoans() {
                                 e.stopPropagation();
                                 handleApprove(loan.id);
                               }}
-                              className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-semibold"
+                              className="btn-primary px-3 py-1 text-xs font-semibold rounded-lg"
                             >
                               Approve
                             </button>
@@ -459,7 +455,7 @@ export default function AdvancesLoans() {
                                 e.stopPropagation();
                                 handleClose(loan.id);
                               }}
-                              className="px-2.5 py-1 rounded-lg bg-white/5 text-gray-400 hover:text-white text-xs font-medium"
+                              className="btn-secondary px-2.5 py-1 text-xs font-medium rounded-lg"
                             >
                               Close
                             </button>

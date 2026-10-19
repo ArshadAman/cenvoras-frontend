@@ -169,25 +169,25 @@ export default function DeliveryChallanList() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 sm:px-0">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-              <TruckIcon className="w-8 h-8 text-cyan-400" />
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+              <TruckIcon className="w-8 h-8 text-[var(--accent-primary)]" />
               Delivery Challans
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-[var(--text-secondary)] text-sm">
               Create and dispatch delivery notes, track transport & vehicles, and convert directly to sales invoices.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50 w-full sm:w-auto">
-              <span className="text-xs text-gray-400 font-medium">PREFIX:</span>
+            <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 focus-within:border-[var(--accent-primary)] w-full sm:w-auto">
+              <span className="text-xs text-[var(--text-secondary)] font-medium">PREFIX:</span>
               <input
                 type="text"
                 value={challanPrefix}
                 onChange={(e) => setChallanPrefix(normalizePrefix(e.target.value))}
                 onBlur={handlePrefixBlur}
                 disabled={!canEditPrefix}
-                className="bg-transparent border-none text-white text-sm w-20 outline-none p-0 font-mono focus:ring-0"
+                className="bg-transparent border-none text-[var(--text-primary)] text-sm w-20 outline-none p-0 font-mono focus:ring-0"
                 placeholder="DC"
                 maxLength={8}
                 title={!canEditPrefix ? "Delivery challan prefix is managed by the main account." : ""}
@@ -199,7 +199,7 @@ export default function DeliveryChallanList() {
                 setEditChallan(null);
                 setShowForm(true);
               }}
-              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex-1 sm:flex-none flex items-center justify-center gap-2 w-full sm:w-auto"
+              className="btn-primary text-sm py-2 px-4 shadow-sm flex-1 sm:flex-none flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <PlusIcon className="w-4 h-4" /> New Challan
             </button>
@@ -208,52 +208,52 @@ export default function DeliveryChallanList() {
 
         {/* Quick Summary Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bento-card p-5 bg-gradient-to-br from-white/5 to-white/[0.02]">
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Challans</span>
-              <TruckIcon className="w-5 h-5 text-gray-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Total Challans</span>
+              <TruckIcon className="w-5 h-5 text-[var(--text-muted)]" />
             </div>
-            <div className="text-2xl font-black text-white">{totalCount}</div>
-            <div className="text-xs text-gray-500 mt-1">Recorded to date</div>
+            <div className="text-2xl font-black text-[var(--text-primary)]">{totalCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Recorded to date</div>
           </div>
 
-          <div className="bento-card p-5 bg-gradient-to-br from-amber-500/10 to-amber-500/[0.02]">
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Drafts</span>
-              <DocumentTextIcon className="w-5 h-5 text-amber-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--status-warning)]">Drafts</span>
+              <DocumentTextIcon className="w-5 h-5 text-[var(--status-warning)]" />
             </div>
-            <div className="text-2xl font-black text-amber-300">{draftCount}</div>
-            <div className="text-xs text-amber-400/60 mt-1">Unconfirmed drafts</div>
+            <div className="text-2xl font-black text-[var(--status-warning)]">{draftCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Unconfirmed drafts</div>
           </div>
 
-          <div className="bento-card p-5 bg-gradient-to-br from-cyan-500/10 to-cyan-500/[0.02]">
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Open / Dispatched</span>
-              <ClockIcon className="w-5 h-5 text-cyan-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--status-info)]">Open / Dispatched</span>
+              <ClockIcon className="w-5 h-5 text-[var(--status-info)]" />
             </div>
-            <div className="text-2xl font-black text-cyan-300">{openCount}</div>
-            <div className="text-xs text-cyan-400/60 mt-1">Awaiting invoicing</div>
+            <div className="text-2xl font-black text-[var(--status-info)]">{openCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Awaiting invoicing</div>
           </div>
 
-          <div className="bento-card p-5 bg-gradient-to-br from-emerald-500/10 to-emerald-500/[0.02]">
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Invoiced</span>
-              <DocumentCheckIcon className="w-5 h-5 text-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--status-success)]">Invoiced</span>
+              <DocumentCheckIcon className="w-5 h-5 text-[var(--status-success)]" />
             </div>
-            <div className="text-2xl font-black text-emerald-300">{invoicedCount}</div>
-            <div className="text-xs text-emerald-400/60 mt-1">Billed into Sales Invoice</div>
+            <div className="text-2xl font-black text-[var(--status-success)]">{invoicedCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Billed into Sales Invoice</div>
           </div>
 
-          <div className="bento-card p-5 bg-blue-500/[0.04] border-blue-500/20">
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">Total Goods Value</span>
-              <CurrencyRupeeIcon className="w-5 h-5 text-blue-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Total Goods Value</span>
+              <CurrencyRupeeIcon className="w-5 h-5 text-[var(--accent-primary)]" />
             </div>
-            <div className="text-2xl font-black font-mono text-blue-300">
+            <div className="text-2xl font-black font-mono text-[var(--text-primary)]">
               {getCurrencySymbol()}
               {totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
-            <div className="text-xs text-blue-400/60 mt-1">Dispatched inventory value</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Dispatched inventory value</div>
           </div>
         </div>
 
@@ -261,8 +261,8 @@ export default function DeliveryChallanList() {
         <div className="bento-card p-3 sm:p-6">
           <div className="mb-6 flex items-center justify-between px-1 sm:px-0">
             <div>
-              <h2 className="text-lg font-bold text-white mb-1">Delivery Challan Records</h2>
-              <p className="text-xs text-gray-400">
+              <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1">Delivery Challan Records</h2>
+              <p className="text-xs text-[var(--text-secondary)]">
                 Track status, vehicle dispatches, items, and convert directly to sales invoices
               </p>
             </div>

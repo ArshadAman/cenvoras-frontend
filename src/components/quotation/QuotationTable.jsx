@@ -109,21 +109,21 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
   };
 
   return (
-    <div className="lg:bg-white/5 lg:backdrop-blur-20 rounded-lg lg:shadow p-0 lg:p-6 lg:border lg:border-white/10 bg-transparent border-none shadow-none backdrop-blur-none">
+    <div className="rounded-2xl p-0 lg:p-6 bg-transparent">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 px-4 lg:px-0">
         <input
           type="text"
           placeholder="Search quotations..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-4 py-2 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-500"
+          className="w-full sm:w-72 px-4 py-2 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="px-3 py-2 border border-white/20 rounded-lg bg-[#111] text-white"
+          className="w-full sm:w-auto px-3 py-2 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-surface)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
         >
-          <option value="all">All</option>
+          <option value="all">All Statuses</option>
           <option value="draft">Draft</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
@@ -134,90 +134,99 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
       </div>
 
       {isLoading ? (
-        <p className="text-gray-400">Loading quotations...</p>
+        <p className="text-[var(--text-secondary)] text-sm">Loading quotations...</p>
       ) : (
         <>
           {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="min-w-full text-sm border-separate border-spacing-y-2">
               <thead>
-                <tr className="border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <tr className="border-b border-[var(--border-subtle)] text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--bg-primary)]/40">
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
                     onClick={() => handleSort('number')}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Quotation #</span>
                       {sortField === 'number' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
                       )}
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
                     onClick={() => handleSort('date')}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Date</span>
                       {sortField === 'date' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
                       )}
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
                     onClick={() => handleSort('customer')}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Customer</span>
                       {sortField === 'customer' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
                       )}
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
                     onClick={() => handleSort('amount')}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Amount</span>
                       {sortField === 'amount' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
                       )}
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
                     onClick={() => handleSort('status')}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>Status</span>
                       {sortField === 'status' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" />
+                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-gray-600 opacity-60" />
+                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-gray-400">Actions</th>
+                  <th className="px-4 py-3 text-left text-[var(--text-secondary)]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedRows.map((q) => (
-                  <tr key={q.id} className="border-b border-white/5">
-                    <td className="px-4 py-3 text-white font-medium">{q.quotation_number || q.invoice_number}</td>
-                    <td className="px-4 py-3 text-gray-300">{q.quotation_date || q.invoice_date}</td>
-                    <td className="px-4 py-3 text-white">{q.customer_name}</td>
-                    <td className="px-4 py-3 text-cyan-400">{getCurrencySymbol()}{Number(q.total_amount || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-gray-300 capitalize">{q.status}</td>
+                  <tr key={q.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/30 transition-colors">
+                    <td className="px-4 py-3 text-[var(--text-primary)] font-mono font-medium">{q.quotation_number || q.invoice_number}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">{q.quotation_date || q.invoice_date}</td>
+                    <td className="px-4 py-3 text-[var(--text-primary)]">{q.customer_name}</td>
+                    <td className="px-4 py-3 text-[var(--text-primary)] font-mono font-semibold">{getCurrencySymbol()}{Number(q.total_amount || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                        q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
+                        q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
+                        q.status === 'partially_converted' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :
+                        'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
+                      }`}>
+                        {q.status?.replace('_', ' ')}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <button
@@ -225,7 +234,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                           onClick={() => onView?.(q)}
                           title="View Quotation"
                           aria-label="View Quotation"
-                          className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                          className="p-1.5 rounded-lg bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/20 transition-all"
                         >
                           <EyeIcon className="w-4 h-4" />
                         </button>
@@ -234,7 +243,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                           onClick={() => onEdit(q)}
                           title="Edit Quotation"
                           aria-label="Edit Quotation"
-                          className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                          className="p-1.5 rounded-lg bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] transition-all"
                         >
                           <PencilSquareIcon className="w-4 h-4" />
                         </button>
@@ -244,7 +253,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                             onClick={() => setQuotationStatus(q, 'approved')}
                             title="Approve Quotation"
                             aria-label="Approve Quotation"
-                            className="p-1.5 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 hover:text-green-300 transition-all drop-shadow"
+                            className="p-1.5 rounded-lg bg-[var(--status-success)]/10 text-[var(--status-success)] border border-[var(--status-success)]/30 hover:bg-[var(--status-success)]/20 transition-all"
                           >
                             <CheckCircleIcon className="w-4 h-4" />
                           </button>
@@ -255,7 +264,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                             onClick={() => setQuotationStatus(q, 'rejected')}
                             title="Reject Quotation"
                             aria-label="Reject Quotation"
-                            className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 transition-all drop-shadow"
+                            className="p-1.5 rounded-lg bg-[var(--status-warning)]/10 text-[var(--status-warning)] border border-[var(--status-warning)]/30 hover:bg-[var(--status-warning)]/20 transition-all"
                           >
                             <XCircleIcon className="w-4 h-4" />
                           </button>
@@ -266,7 +275,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                             onClick={() => setConvertTarget(q)}
                             title="Convert Quotation"
                             aria-label="Convert Quotation"
-                            className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all drop-shadow"
+                            className="p-1.5 rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/25 transition-all"
                           >
                             <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                           </button>
@@ -280,7 +289,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                           }}
                           title="Delete Quotation"
                           aria-label="Delete Quotation"
-                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                          className="p-1.5 rounded-lg bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-all"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -317,41 +326,41 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
               />
             ) : (
               sortedRows.map((q) => (
-                <div key={q.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">
+                <div key={q.id} className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-subtle)] p-4 shadow-sm">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <div className="text-base font-bold text-white">#{q.quotation_number || q.invoice_number}</div>
-                      <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">{q.quotation_date || q.invoice_date}</div>
+                      <div className="text-base font-bold text-[var(--text-primary)] font-mono">#{q.quotation_number || q.invoice_number}</div>
+                      <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-mono">{q.quotation_date || q.invoice_date}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-black text-cyan-400">{getCurrencySymbol()}{Number(q.total_amount || 0).toLocaleString()}</div>
+                      <div className="text-lg font-bold text-[var(--text-primary)] font-mono">{getCurrencySymbol()}{Number(q.total_amount || 0).toLocaleString()}</div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/5 mb-4">
+                  <div className="grid grid-cols-2 gap-4 pb-4 border-b border-[var(--border-subtle)] mb-4">
                      <div>
-                        <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Customer</div>
-                        <div className="text-xs font-bold text-white truncate">{q.customer_name}</div>
+                        <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Customer</div>
+                        <div className="text-xs font-bold text-[var(--text-primary)] truncate">{q.customer_name}</div>
                      </div>
                      <div className="text-right">
-                        <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Status</div>
-                        <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
-                            q.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                            q.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
-                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                         }`}>
-                            {q.status}
-                        </div>
+                        <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
+                          q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 
+                          q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' : 
+                          'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
+                        }`}>
+                          {q.status?.replace('_', ' ')}
+                        </span>
                      </div>
                   </div>
 
-                  <div className="flex items-center justify-end flex-wrap gap-2 pt-2 border-t border-white/5">
+                  <div className="flex items-center justify-end flex-wrap gap-2 pt-2 border-t border-[var(--border-subtle)]">
                     <button
                       type="button"
                       onClick={() => onView?.(q)}
                       title="View Quotation"
                       aria-label="View Quotation"
-                      className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
+                      className="p-2 rounded-lg bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/20 transition-all"
                     >
                       <EyeIcon className="w-4 h-4" />
                     </button>
@@ -360,7 +369,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                       onClick={() => onEdit(q)}
                       title="Edit Quotation"
                       aria-label="Edit Quotation"
-                      className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                      className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] transition-all"
                     >
                       <PencilSquareIcon className="w-4 h-4" />
                     </button>
@@ -370,7 +379,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                         onClick={() => setQuotationStatus(q, 'approved')}
                         title="Approve Quotation"
                         aria-label="Approve Quotation"
-                        className="p-2 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 hover:text-green-300 transition-all"
+                        className="p-2 rounded-lg bg-[var(--status-success)]/10 text-[var(--status-success)] border border-[var(--status-success)]/30 hover:bg-[var(--status-success)]/20 transition-all"
                       >
                         <CheckCircleIcon className="w-4 h-4" />
                       </button>
@@ -381,7 +390,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                         onClick={() => setQuotationStatus(q, 'rejected')}
                         title="Reject Quotation"
                         aria-label="Reject Quotation"
-                        className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 transition-all"
+                        className="p-2 rounded-lg bg-[var(--status-warning)]/10 text-[var(--status-warning)] border border-[var(--status-warning)]/30 hover:bg-[var(--status-warning)]/20 transition-all"
                       >
                         <XCircleIcon className="w-4 h-4" />
                       </button>
@@ -392,7 +401,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                         onClick={() => setConvertTarget(q)}
                         title="Convert Quotation"
                         aria-label="Convert Quotation"
-                        className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-all"
+                        className="p-2 rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/25 transition-all"
                       >
                         <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                       </button>
@@ -406,7 +415,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                       }}
                       title="Delete Quotation"
                       aria-label="Delete Quotation"
-                      className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                      className="p-2 rounded-lg bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-all"
                     >
                       <TrashIcon className="w-4 h-4" />
                     </button>

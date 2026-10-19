@@ -35,18 +35,18 @@ export default function StockLedgerReport() {
     return (
         <>
             <div className="p-6 md:p-10 space-y-8 animate-fade-up">
-                <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
-                  <span className="p-1.5 bg-white/5 border border-white/10 rounded-lg group-hover:bg-white/10 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
+                <Link to="/reports" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors group">
+                  <span className="p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg group-hover:border-[var(--accent-primary)]/40 transition-colors"><ArrowLeftIcon className="w-4 h-4" /></span>
                   <ChartBarIcon className="w-3.5 h-3.5" /> Back to Reports
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Item Cardex / Stock Ledger</h1>
-                    <p className="text-gray-400">Detailed transaction history and running balance for items.</p>
+                    <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Item Cardex / Stock Ledger</h1>
+                    <p className="text-[var(--text-secondary)]">Detailed transaction history and running balance for items.</p>
                 </div>
 
-                <div className="bento-card p-6 border border-white/10 flex flex-wrap gap-4 items-end">
+                <div className="bento-card p-6 border border-[var(--border-subtle)] flex flex-wrap gap-4 items-end">
                     <div className="flex-1 min-w-[200px]">
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Select Product</label>
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Select Product</label>
                         <select
                             value={selectedProduct}
                             onChange={(e) => setSelectedProduct(e.target.value)}
@@ -59,7 +59,7 @@ export default function StockLedgerReport() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Start Date</label>
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Start Date</label>
                         <input
                             type="date"
                             value={startDate}
@@ -68,7 +68,7 @@ export default function StockLedgerReport() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">End Date</label>
+                        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">End Date</label>
                         <input
                             type="date"
                             value={endDate}
@@ -78,52 +78,52 @@ export default function StockLedgerReport() {
                     </div>
                 </div>
 
-                {isLoading && <div className="text-white text-center py-10">Loading ledger...</div>}
+                {isLoading && <div className="text-[var(--text-secondary)] text-center py-10">Loading ledger...</div>}
 
                 {!isLoading && selectedProduct && (
-                    <div className="bento-card overflow-hidden border border-white/10">
+                    <div className="bento-card overflow-hidden border border-[var(--border-subtle)]">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-white/10 bg-white/5">
-                                    <th className="p-4 text-sm font-medium text-gray-400">Date</th>
-                                    <th className="p-4 text-sm font-medium text-gray-400">Type</th>
-                                    <th className="p-4 text-sm font-medium text-gray-400">Reference</th>
-                                    <th className="p-4 text-sm font-medium text-gray-400">Batch</th>
-                                    <th className="p-4 text-sm font-medium text-green-400 text-right">In (+)</th>
-                                    <th className="p-4 text-sm font-medium text-red-400 text-right">Out (-)</th>
-                                    <th className="p-4 text-sm font-medium text-white text-right">Balance</th>
+                                <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+                                    <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Date</th>
+                                    <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Type</th>
+                                    <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Reference</th>
+                                    <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Batch</th>
+                                    <th className="p-4 text-xs font-bold text-[var(--status-success)] uppercase tracking-wider text-right">In (+)</th>
+                                    <th className="p-4 text-xs font-bold text-[var(--status-danger)] uppercase tracking-wider text-right">Out (-)</th>
+                                    <th className="p-4 text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider text-right">Balance</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {ledgerItems.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="p-8 text-center text-gray-500">
+                                        <td colSpan="7" className="p-8 text-center text-[var(--text-muted)]">
                                             <DocumentTextIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                             No transactions found for this period.
                                         </td>
                                     </tr>
                                 ) : (
                                     ledgerItems.map((t) => (
-                                        <tr key={t.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                            <td className="p-4 text-sm text-gray-300 font-mono">{t.date}</td>
-                                            <td className="p-4 text-sm text-white">{t.type}</td>
-                                            <td className="p-4 text-sm text-gray-400 font-mono">{t.reference}</td>
-                                            <td className="p-4 text-sm text-gray-500">{t.batch || '-'}</td>
-                                            <td className="p-4 text-sm text-green-400 text-right">
+                                        <tr key={t.id} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--bg-primary)]/50 transition-colors">
+                                            <td className="p-4 text-sm text-[var(--text-secondary)] font-mono">{t.date}</td>
+                                            <td className="p-4 text-sm text-[var(--text-primary)] font-medium">{t.type}</td>
+                                            <td className="p-4 text-sm text-[var(--text-secondary)] font-mono">{t.reference}</td>
+                                            <td className="p-4 text-sm text-[var(--text-muted)]">{t.batch || '-'}</td>
+                                            <td className="p-4 text-sm text-[var(--status-success)] text-right">
                                                 {t.qty_in > 0 ? (
-                                                    <span className="flex items-center justify-end gap-1">
+                                                    <span className="flex items-center justify-end gap-1 font-semibold">
                                                         {t.qty_in} <ArrowDownCircleIcon className="w-4 h-4" />
                                                     </span>
                                                 ) : '-'}
                                             </td>
-                                            <td className="p-4 text-sm text-red-400 text-right">
+                                            <td className="p-4 text-sm text-[var(--status-danger)] text-right">
                                                 {t.qty_out > 0 ? (
-                                                    <span className="flex items-center justify-end gap-1">
+                                                    <span className="flex items-center justify-end gap-1 font-semibold">
                                                         {t.qty_out} <ArrowUpCircleIcon className="w-4 h-4" />
                                                     </span>
                                                 ) : '-'}
                                             </td>
-                                            <td className="p-4 text-sm text-white font-bold text-right">{t.balance}</td>
+                                            <td className="p-4 text-sm text-[var(--text-primary)] font-bold text-right">{t.balance}</td>
                                         </tr>
                                     ))
                                 )}

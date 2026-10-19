@@ -18,10 +18,10 @@ import {
 import { getCurrencySymbol } from '../../utils/currency';
 
 const PAYMENT_MODES = {
-  cash: { label: 'Cash', icon: BanknotesIcon, color: 'text-green-400', bg: 'bg-green-500/10' },
-  upi: { label: 'UPI', icon: DevicePhoneMobileIcon, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  cheque: { label: 'Cheque', icon: DocumentTextIcon, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  cash: { label: 'Cash', icon: BanknotesIcon },
+  upi: { label: 'UPI', icon: DevicePhoneMobileIcon },
+  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon },
+  cheque: { label: 'Cheque', icon: DocumentTextIcon },
 };
 
 // Customer Autocomplete for payment form
@@ -69,12 +69,12 @@ function PaymentCustomerAutocomplete({ setFieldValue }) {
     }
   };
 
-  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-xl px-4 py-2.5 pl-10 text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 pl-10 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
 
   return (
     <div className="relative">
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-slate-400 pointer-events-none" />
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-[var(--text-muted)] pointer-events-none" />
         <input
           type="text"
           value={inputValue}
@@ -91,15 +91,15 @@ function PaymentCustomerAutocomplete({ setFieldValue }) {
         />
       </div>
       {showDropdown && (
-        <div className="absolute z-10 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl w-full max-h-40 overflow-y-auto mt-1">
+        <div className="absolute z-10 bg-[var(--bg-surface)] backdrop-blur-xl border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-40 overflow-y-auto mt-1">
           {filteredCustomers.map(customer => (
             <div
               key={customer.id}
-              className="px-4 py-2.5 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0"
+              className="px-4 py-2.5 hover:bg-[var(--bg-primary)] cursor-pointer transition-colors border-b border-[var(--border-subtle)] last:border-0"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium text-white">{customer.name}</div>
-              <div className="text-gray-400 text-xs mt-0.5">
+              <div className="font-medium text-[var(--text-primary)]">{customer.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 {customer.email && `${customer.email}`}
                 {customer.phone && ` • ${customer.phone}`}
               </div>
@@ -223,8 +223,8 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     }
   };
 
-  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-xl px-4 py-2.5 text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
-  const labelClass = "block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
+  const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide";
 
   return (
     <Formik
@@ -248,19 +248,19 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
             />
 
             {initialInvoice ? (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Selected Invoice</div>
-                    <div className="text-white font-semibold">#{initialInvoice.invoice_number}</div>
-                    <div className="text-xs text-gray-400 mt-1">{customerName || 'Customer'}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Selected Invoice</div>
+                    <div className="text-[var(--text-primary)] font-semibold">#{initialInvoice.invoice_number}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mt-1">{customerName || 'Customer'}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Outstanding</div>
-                    <div className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Outstanding</div>
+                    <div className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
                   </div>
                 </div>
-                <div className="text-[11px] text-cyan-300/80">
+                <div className="text-[11px] text-[var(--text-secondary)]">
                   This payment will be linked directly to the selected invoice.
                 </div>
               </div>
@@ -304,7 +304,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                     );
                   })}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-500">
+                <p className="mt-1 text-[11px] text-[var(--text-muted)]">
                   {values.invoice
                     ? 'Payment will be applied directly to the selected invoice.'
                     : 'If no invoice is selected, payment automatically knocks off oldest unpaid invoices first (FIFO).'}
@@ -314,14 +314,14 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
 
             <Field name="customer" type="hidden" />
             <Field name="invoice" type="hidden" />
-            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
 
             {/* Amount and Date */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Amount Paid *</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
+                  <span className="absolute left-3 top-2.5 text-[var(--text-muted)]">{getCurrencySymbol()}</span>
                   <Field
                     id="amount"
                     name="amount"
@@ -332,7 +332,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                     placeholder="0.00"
                   />
                 </div>
-                <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
+                <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
               </div>
 
               <div>
@@ -343,20 +343,20 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                   type="date"
                   className={inputClass}
                 />
-                <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+                <ErrorMessage name="date" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
               </div>
             </div>
 
             {/* Total Due & Remaining Card */}
             {activeInvoice && (
-              <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
+              <div className="grid grid-cols-2 gap-4 p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] animate-fade-in">
                 <div>
-                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                  <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(activeOutstanding)}</div>
+                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Total Due</div>
+                  <div className="text-base font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{formatAmount(activeOutstanding)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
-                  <div className={`text-base font-bold ${Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Remaining</div>
+                  <div className={`text-base font-bold ${Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                     {getCurrencySymbol()}{formatAmount(Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0))}
                   </div>
                 </div>
@@ -374,14 +374,14 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                   onClick={() => setFieldValue('mode', key)}
                   className={`p-3 rounded-xl border text-center transition-all ${
                     values.mode === key
-                      ? `${modeItem.bg} border-white/30 ring-2 ring-white/20`
-                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                      ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] border-[var(--accent-primary)] shadow-md'
+                      : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
                   }`}
                 >
                   {React.createElement(modeItem.icon, {
-                    className: `w-5 h-5 mx-auto mb-1 ${values.mode === key ? modeItem.color : 'text-gray-400'}`
+                    className: `w-5 h-5 mx-auto mb-1 ${values.mode === key ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-muted)]'}`
                   })}
-                  <span className={`text-xs font-medium ${values.mode === key ? 'text-white' : 'text-gray-400'}`}>
+                  <span className={`text-xs font-semibold ${values.mode === key ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-secondary)]'}`}>
                     {modeItem.label}
                   </span>
                 </button>
@@ -412,26 +412,26 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
               className={inputClass}
               placeholder="Any additional details..."
             />
-            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-red-400" />
+            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm font-medium"
+              className="btn-secondary text-sm px-4 py-2 rounded-xl"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || recordPaymentMutation.isPending}
-              className="btn-primary py-2.5 px-6 shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+              className="btn-primary py-2.5 px-6 font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
               {isSubmitting || recordPaymentMutation.isPending ? (
                 <span className="flex items-center gap-2">
-                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                   <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
@@ -439,7 +439,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                 </span>
               ) : (
                 <>
-                  <CheckCircleIcon className="w-5 h-5 text-white" />
+                  <CheckCircleIcon className="w-5 h-5" />
                   <span>Record Payment</span>
                 </>
               )}

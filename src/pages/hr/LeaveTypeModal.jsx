@@ -99,22 +99,22 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
     }
   };
 
-  const inputCls = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-sm";
-  const labelCls = "block text-sm font-medium text-gray-300 mb-1";
+  const inputCls = "w-full px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
+  const labelCls = "block text-sm font-medium text-[var(--text-secondary)] mb-1";
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-xl font-semibold text-white">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/30">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">
             {isEdit ? "Edit Leave Type" : "Add Leave Type"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition"
+            className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition"
           >
-            <XMarkIcon className="w-6 h-6" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -170,8 +170,8 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
                 onClick={() => setForm((p) => ({ ...p, is_paid: true }))}
                 className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
                   form.is_paid
-                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                    ? 'bg-[var(--status-success)]/15 border-[var(--status-success)]/30 text-[var(--status-success)]'
+                    : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 ✓ Paid Leave
@@ -181,14 +181,14 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
                 onClick={() => setForm((p) => ({ ...p, is_paid: false }))}
                 className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
                   !form.is_paid
-                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                    ? 'bg-[var(--status-warning)]/15 border-[var(--status-warning)]/30 text-[var(--status-warning)]'
+                    : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 Unpaid / Free Leave
               </button>
             </div>
-            <p className="text-[11px] text-gray-400 mt-1.5">
+            <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
               {form.is_paid
                 ? "Paid leaves are capped at the annual entitlement quota. Once an employee exhausts their quota, additional paid leave cannot be taken."
                 : "Unpaid / Free leaves are unpaid (Leave Without Pay) and can be used once paid leave is exhausted."}
@@ -196,31 +196,30 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
           </div>
 
           <div className="space-y-3 pt-2">
-
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 name="requires_approval"
                 checked={form.requires_approval}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-0"
+                className="w-4 h-4 rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--accent-primary)] focus:ring-0"
               />
-              <span className="text-sm text-gray-300">Requires Manager Approval</span>
+              <span className="text-sm text-[var(--text-secondary)]">Requires Manager Approval</span>
             </label>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
+          <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition"
+              className="px-5 py-2 text-sm font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl hover:text-[var(--text-primary)] transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-sm font-semibold text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 transition disabled:opacity-50"
+              className="btn-primary px-5 py-2 text-sm font-semibold rounded-xl transition disabled:opacity-50"
             >
               {saving ? "Saving..." : isEdit ? "Update Leave Type" : "Save Leave Type"}
             </button>

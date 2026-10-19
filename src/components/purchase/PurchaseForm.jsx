@@ -694,7 +694,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="relative group">
                       <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
-                        Bill Number <span className="text-red-500">*</span>
+                        Bill Number <span className="text-[var(--status-danger)]">*</span>
                       </label>
                       <Field
                         name="bill_number"
@@ -705,12 +705,12 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                         data-1p-ignore="true"
                         className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none transition-all hover:border-[var(--border-subtle)] text-xs font-bold"
                       />
-                      <ErrorMessage name="bill_number" component="div" className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium" />
+                      <ErrorMessage name="bill_number" component="div" className="text-[var(--status-danger)] text-[10px] mt-1.5 ml-1 font-medium" />
                     </div>
                     
                     <div className="relative group">
                       <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
-                        Bill Date <span className="text-red-500">*</span>
+                        Bill Date <span className="text-[var(--status-danger)]">*</span>
                       </label>
                       <DateInputField
                         name="bill_date"
@@ -763,10 +763,10 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     <div className="md:col-span-4 space-y-6">
                       <div className="relative group">
                         <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
-                          Vendor Name <span className="text-red-500">*</span>
+                          Vendor Name <span className="text-[var(--status-danger)]">*</span>
                         </label>
                         <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
-                        <ErrorMessage name="vendor_name" component="div" className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium" />
+                        <ErrorMessage name="vendor_name" component="div" className="text-[var(--status-danger)] text-[10px] mt-1.5 ml-1 font-medium" />
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4">

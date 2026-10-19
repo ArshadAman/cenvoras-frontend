@@ -86,22 +86,22 @@ export default function HRReports() {
   return (
     <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
       {/* Header */}
-      <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+      <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-2">Analytics & Compliance</p>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white flex items-center gap-3">
-              <BookOpenIcon className="w-9 h-9 text-indigo-300" />
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Analytics & Compliance</p>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+              <BookOpenIcon className="w-9 h-9 text-[var(--accent-primary)]" />
               HR & Payroll Reports
             </h1>
-            <p className="text-white/65 text-sm mt-2">
+            <p className="text-[var(--text-secondary)] text-sm mt-2">
               Generate audit-ready payroll registers, department expense breakdowns, and statutory liability summaries.
             </p>
           </div>
 
           <button
             onClick={exportCSV}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition"
+            className="btn-secondary"
           >
             <ArrowDownTrayIcon className="w-4 h-4" /> Export CSV
           </button>
@@ -109,7 +109,7 @@ export default function HRReports() {
       </section>
 
       {/* Controls */}
-      <div className="flex flex-wrap gap-4 items-center justify-between bg-black/25 border border-white/10 p-4 rounded-2xl">
+      <div className="flex flex-wrap gap-4 items-center justify-between bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-4 rounded-2xl shadow-sm">
         <div className="flex gap-2">
           {[
             { id: 'payroll_register', label: 'Payroll Register' },
@@ -120,7 +120,9 @@ export default function HRReports() {
               key={t.id}
               onClick={() => setReportType(t.id)}
               className={`px-4 py-2 text-xs font-semibold rounded-xl transition ${
-                reportType === t.id ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                reportType === t.id
+                  ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)] shadow-sm'
+                  : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
               }`}
             >
               {t.label}
@@ -129,7 +131,7 @@ export default function HRReports() {
         </div>
 
         <div className="flex items-center gap-3">
-          <select value={month} onChange={e => setMonth(Number(e.target.value))} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-white text-xs">
+          <select value={month} onChange={e => setMonth(Number(e.target.value))} className="px-3 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs">
             {MONTHS.map((m, i) => (
               <option key={i + 1} value={i + 1}>{m}</option>
             ))}
@@ -138,28 +140,28 @@ export default function HRReports() {
             type="number"
             value={year}
             onChange={e => setYear(Number(e.target.value))}
-            className="w-20 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-white text-xs"
+            className="w-20 px-3 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs"
           />
         </div>
       </div>
 
       {/* Report Tables */}
-      <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
+      <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0 overflow-hidden shadow-sm">
         {loading ? (
-          <div className="p-16 text-center text-gray-400 text-sm">Generating report...</div>
+          <div className="p-16 text-center text-[var(--text-muted)] text-sm">Generating report...</div>
         ) : !reportData ? (
-          <div className="p-16 text-center text-gray-400 text-sm">No report data generated.</div>
+          <div className="p-16 text-center text-[var(--text-muted)] text-sm">No report data generated.</div>
         ) : reportType === 'payroll_register' ? (
           <div className="overflow-x-auto">
-            <div className="px-5 py-3 bg-indigo-500/10 border-b border-white/10 flex items-center justify-between text-xs text-indigo-200">
+            <div className="px-5 py-3 bg-[var(--accent-primary)]/10 border-b border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-primary)]">
               <div className="flex items-center gap-2">
-                <InformationCircleIcon className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                <InformationCircleIcon className="w-4 h-4 text-[var(--accent-primary)] flex-shrink-0" />
                 <span>Click on any employee to view their full itemized payroll audit report with attendance proration, tax rationales, and banking details.</span>
               </div>
             </div>
 
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)]/70 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-5 py-4">Employee</th>
                   <th className="px-5 py-4">Department / Branch</th>
@@ -174,40 +176,40 @@ export default function HRReports() {
               </thead>
               <tbody>
                 {(!reportData.records || reportData.records.length === 0) ? (
-                  <tr><td colSpan="9" className="px-5 py-10 text-center text-gray-400">No payslips found for this cycle.</td></tr>
+                  <tr><td colSpan="9" className="px-5 py-10 text-center text-[var(--text-muted)]">No payslips found for this cycle.</td></tr>
                 ) : (
                   reportData.records.map((r, i) => (
                     <tr
                       key={i}
                       onClick={() => setSelectedRecord(r)}
-                      className="border-b border-white/10 hover:bg-white/[0.08] cursor-pointer transition-colors group"
+                      className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors group"
                     >
-                      <td className="px-5 py-4 font-medium text-white">
-                        <p className="group-hover:text-indigo-300 transition-colors font-semibold">{r.employee_name}</p>
+                      <td className="px-5 py-4 font-medium text-[var(--text-primary)]">
+                        <p className="group-hover:text-[var(--accent-primary)] transition-colors font-semibold">{r.employee_name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-xs text-gray-400">{r.employee_code}</span>
+                          <span className="text-xs text-[var(--text-muted)] font-mono">{r.employee_code}</span>
                           {r.tax_regime && (
-                            <span className="text-[9px] px-1 py-0.2 rounded bg-white/5 text-gray-400 border border-white/10 uppercase font-mono">
+                            <span className="text-[9px] px-1 py-0.2 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] uppercase font-mono">
                               {r.tax_regime}
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-white">{r.department}</p>
-                        <p className="text-xs text-indigo-300">{r.branch}</p>
+                        <p className="text-[var(--text-primary)]">{r.department}</p>
+                        <p className="text-xs text-[var(--accent-primary)]">{r.branch}</p>
                       </td>
                       <td className="px-5 py-4 text-xs font-mono">
-                        <p>{r.bank_account}</p>
-                        <p className="text-gray-400">{r.ifsc}</p>
+                        <p className="text-[var(--text-primary)]">{r.bank_account}</p>
+                        <p className="text-[var(--text-muted)]">{r.ifsc}</p>
                       </td>
                       <td className="px-5 py-4 text-xs">
-                        <span className="text-emerald-400">{r.working_days}d</span> / <span className="text-red-400">{r.lop_days}d</span>
+                        <span className="text-[var(--status-success)] font-medium">{r.working_days}d</span> / <span className="text-[var(--status-danger)] font-medium">{r.lop_days}d</span>
                       </td>
-                      <td className="px-5 py-4 font-medium text-white">₹{parseFloat(r.gross_salary).toLocaleString('en-IN')}</td>
-                      <td className="px-5 py-4 text-red-400">₹{parseFloat(r.total_deductions).toLocaleString('en-IN')}</td>
-                      <td className="px-5 py-4 font-bold text-emerald-400">₹{parseFloat(r.net_salary).toLocaleString('en-IN')}</td>
-                      <td className="px-5 py-4 text-xs text-indigo-300">₹{parseFloat(r.employer_contribution).toLocaleString('en-IN')}</td>
+                      <td className="px-5 py-4 font-medium text-[var(--text-primary)]">₹{parseFloat(r.gross_salary).toLocaleString('en-IN')}</td>
+                      <td className="px-5 py-4 text-[var(--status-danger)] font-medium">₹{parseFloat(r.total_deductions).toLocaleString('en-IN')}</td>
+                      <td className="px-5 py-4 font-bold text-[var(--status-success)]">₹{parseFloat(r.net_salary).toLocaleString('en-IN')}</td>
+                      <td className="px-5 py-4 text-xs text-[var(--accent-primary)]">₹{parseFloat(r.employer_contribution).toLocaleString('en-IN')}</td>
                       <td className="px-4 py-4 text-right">
                         <button
                           type="button"
@@ -215,7 +217,7 @@ export default function HRReports() {
                             e.stopPropagation();
                             setSelectedRecord(r);
                           }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 transition"
                         >
                           <EyeIcon className="w-3.5 h-3.5" /> Details
                         </button>
@@ -228,8 +230,8 @@ export default function HRReports() {
           </div>
         ) : reportType === 'department_expenses' ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)]/70 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Department</th>
                   <th className="px-6 py-4">Headcount</th>
@@ -241,16 +243,16 @@ export default function HRReports() {
               </thead>
               <tbody>
                 {(!reportData.results || reportData.results.length === 0) ? (
-                  <tr><td colSpan="6" className="px-6 py-10 text-center text-gray-400">No departmental data for this cycle.</td></tr>
+                  <tr><td colSpan="6" className="px-6 py-10 text-center text-[var(--text-muted)]">No departmental data for this cycle.</td></tr>
                 ) : (
                   reportData.results.map((d, i) => (
-                    <tr key={i} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-semibold text-white">{d.department}</td>
+                    <tr key={i} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                      <td className="px-6 py-4 font-semibold text-[var(--text-primary)]">{d.department}</td>
                       <td className="px-6 py-4">{d.headcount}</td>
-                      <td className="px-6 py-4">₹{parseFloat(d.gross).toLocaleString('en-IN')}</td>
-                      <td className="px-6 py-4 text-red-400">₹{parseFloat(d.deductions).toLocaleString('en-IN')}</td>
-                      <td className="px-6 py-4 font-bold text-emerald-400">₹{parseFloat(d.net).toLocaleString('en-IN')}</td>
-                      <td className="px-6 py-4 text-indigo-300">₹{parseFloat(d.employer_contribution).toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-4 text-[var(--text-primary)]">₹{parseFloat(d.gross).toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-4 text-[var(--status-danger)]">₹{parseFloat(d.deductions).toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-4 font-bold text-[var(--status-success)]">₹{parseFloat(d.net).toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-4 text-[var(--accent-primary)]">₹{parseFloat(d.employer_contribution).toLocaleString('en-IN')}</td>
                     </tr>
                   ))
                 )}
@@ -259,51 +261,51 @@ export default function HRReports() {
           </div>
         ) : (
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-5 rounded-2xl border border-white/10 bg-white/5 space-y-3">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Provident Fund (EPFO)</h3>
+            <div className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 space-y-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Provident Fund (EPFO)</h3>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Employee Contribution (12%):</span>
-                <span className="font-semibold text-white">₹{parseFloat(reportData.employee_pf || 0).toLocaleString('en-IN')}</span>
+                <span className="text-[var(--text-muted)]">Employee Contribution (12%):</span>
+                <span className="font-semibold text-[var(--text-primary)]">₹{parseFloat(reportData.employee_pf || 0).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Employer Contribution (12%):</span>
-                <span className="font-semibold text-white">₹{parseFloat(reportData.employer_pf || 0).toLocaleString('en-IN')}</span>
+                <span className="text-[var(--text-muted)]">Employer Contribution (12%):</span>
+                <span className="font-semibold text-[var(--text-primary)]">₹{parseFloat(reportData.employer_pf || 0).toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between text-sm border-t border-white/10 pt-2 font-bold text-emerald-400">
+              <div className="flex justify-between text-sm border-t border-[var(--border-subtle)] pt-2 font-bold text-[var(--status-success)]">
                 <span>Total PF Remittance Liability:</span>
                 <span>₹{parseFloat(reportData.total_pf_liability || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl border border-white/10 bg-white/5 space-y-3">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Employee State Insurance (ESIC)</h3>
+            <div className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 space-y-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Employee State Insurance (ESIC)</h3>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Employee Contribution (0.75%):</span>
-                <span className="font-semibold text-white">₹{parseFloat(reportData.employee_esi || 0).toLocaleString('en-IN')}</span>
+                <span className="text-[var(--text-muted)]">Employee Contribution (0.75%):</span>
+                <span className="font-semibold text-[var(--text-primary)]">₹{parseFloat(reportData.employee_esi || 0).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Employer Contribution (3.25%):</span>
-                <span className="font-semibold text-white">₹{parseFloat(reportData.employer_esi || 0).toLocaleString('en-IN')}</span>
+                <span className="text-[var(--text-muted)]">Employer Contribution (3.25%):</span>
+                <span className="font-semibold text-[var(--text-primary)]">₹{parseFloat(reportData.employer_esi || 0).toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between text-sm border-t border-white/10 pt-2 font-bold text-emerald-400">
+              <div className="flex justify-between text-sm border-t border-[var(--border-subtle)] pt-2 font-bold text-[var(--status-success)]">
                 <span>Total ESI Remittance Liability:</span>
                 <span>₹{parseFloat(reportData.total_esi_liability || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl border border-white/10 bg-white/5 space-y-3">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Professional Tax (PT)</h3>
+            <div className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 space-y-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Professional Tax (PT)</h3>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Total State PT Deducted:</span>
-                <span className="font-bold text-white">₹{parseFloat(reportData.professional_tax || 0).toLocaleString('en-IN')}</span>
+                <span className="text-[var(--text-muted)]">Total State PT Deducted:</span>
+                <span className="font-bold text-[var(--text-primary)]">₹{parseFloat(reportData.professional_tax || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl border border-white/10 bg-white/5 space-y-3">
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Tax Deducted at Source (TDS)</h3>
+            <div className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 space-y-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Tax Deducted at Source (TDS)</h3>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Total TDS Payable (Income Tax):</span>
-                <span className="font-bold text-white">₹{parseFloat(reportData.tds_payable || 0).toLocaleString('en-IN')}</span>
+                <span className="text-[var(--text-muted)]">Total TDS Payable (Income Tax):</span>
+                <span className="font-bold text-[var(--text-primary)]">₹{parseFloat(reportData.tds_payable || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>

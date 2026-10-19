@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-sans flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans flex items-center justify-center p-6">
       <Seo
         title="Reset Password"
         description="Reset your Cenvora password to regain access to billing and inventory tools."
@@ -34,15 +34,15 @@ export default function ForgotPassword() {
         noindex
       />
       {loading && <Loader />}
-      <div className="w-full max-w-md bg-[#111827] border border-slate-800 rounded-2xl p-8 shadow-xl">
-        <h1 className="text-2xl font-bold">Forgot Password</h1>
-        <p className="text-slate-400 mt-2 text-sm">
+      <div className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-8 shadow-2xl">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Forgot Password</h1>
+        <p className="text-[var(--text-secondary)] mt-2 text-sm">
           {otpSent
             ? 'Enter the OTP sent to your email and set a new password.'
             : 'Enter your email to receive a password reset OTP.'}
         </p>
 
-        {message ? <div className="mt-4 text-sm text-cyan-300">{message}</div> : null}
+        {message ? <div className="mt-4 text-sm text-[var(--status-success)]">{message}</div> : null}
 
         {!otpSent ? (
           <Formik
@@ -65,20 +65,20 @@ export default function ForgotPassword() {
             {({ isSubmitting }) => (
               <Form className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">Email</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Email</label>
                   <Field
                     name="email"
                     type="email"
-                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white"
+                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
                     placeholder="name@company.com"
                   />
-                  <ErrorMessage name="email" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="email" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-semibold flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-3.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
                   {!isSubmitting && <ArrowRightIcon className="w-4 h-4" />}
@@ -112,51 +112,51 @@ export default function ForgotPassword() {
             {({ isSubmitting }) => (
               <Form className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">Email</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Email</label>
                   <Field
                     name="email"
                     type="email"
-                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl text-white"
+                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
                   />
-                  <ErrorMessage name="email" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="email" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">OTP</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">OTP</label>
                   <Field
                     name="otp"
                     type="text"
-                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl text-white"
+                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm font-mono tracking-widest text-center"
                     placeholder="6-digit OTP"
                   />
-                  <ErrorMessage name="otp" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="otp" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">New Password</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">New Password</label>
                   <Field
                     name="password"
                     type="password"
-                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl text-white"
+                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
                     placeholder="Minimum 8 characters"
                   />
-                  <ErrorMessage name="password" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="password" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">Confirm Password</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Confirm Password</label>
                   <Field
                     name="confirmPassword"
                     type="password"
-                    className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl text-white"
+                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
                   />
-                  <ErrorMessage name="confirmPassword" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="confirmPassword" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-semibold"
+                  className="btn-primary w-full py-3.5 text-xs font-bold rounded-xl"
                 >
                   {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
                 </button>
@@ -165,9 +165,9 @@ export default function ForgotPassword() {
           </Formik>
         )}
 
-        <p className="text-sm text-slate-400 mt-6 text-center">
+        <p className="text-sm text-[var(--text-muted)] mt-6 text-center">
           Remembered your password?{' '}
-          <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-semibold">Sign in</Link>
+          <Link to="/login" className="text-[var(--accent-primary)] hover:underline font-semibold">Sign in</Link>
         </p>
       </div>
     </div>

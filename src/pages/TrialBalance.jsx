@@ -29,11 +29,11 @@ const fmt = (v) =>
   });
 
 const ACCOUNT_TYPE_CONFIG = {
-  asset: { label: 'Assets', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' },
-  liability: { label: 'Liabilities', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-  equity: { label: 'Equity', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-  revenue: { label: 'Revenue', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-  expense: { label: 'Expenses', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
+  asset: { label: 'Assets', color: 'text-[var(--status-info)]', bg: 'bg-[var(--status-info)]/10', border: 'border-[var(--status-info)]/20' },
+  liability: { label: 'Liabilities', color: 'text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10', border: 'border-[var(--status-warning)]/20' },
+  equity: { label: 'Equity', color: 'text-[var(--accent-primary)]', bg: 'bg-[var(--accent-primary)]/10', border: 'border-[var(--accent-primary)]/20' },
+  revenue: { label: 'Revenue', color: 'text-[var(--status-success)]', bg: 'bg-[var(--status-success)]/10', border: 'border-[var(--status-success)]/20' },
+  expense: { label: 'Expenses', color: 'text-[var(--status-danger)]', bg: 'bg-[var(--status-danger)]/10', border: 'border-[var(--status-danger)]/20' },
 };
 
 export default function TrialBalance() {
@@ -157,17 +157,17 @@ export default function TrialBalance() {
           <div className="flex items-center gap-3">
             <Link
               to="/reports"
-              className="p-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-all border border-white/5"
+              className="p-2 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl transition-all border border-[var(--border-subtle)]"
               title="Back to Reports"
             >
               <ArrowLeftIcon className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-                <ScaleIcon className="w-8 h-8 text-cyan-400" />
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+                <ScaleIcon className="w-8 h-8 text-[var(--accent-primary)]" />
                 Trial Balance
               </h1>
-              <p className="text-gray-400 text-sm mt-0.5">
+              <p className="text-[var(--text-secondary)] text-sm mt-0.5">
                 Double-entry verification of debit and credit balances
               </p>
             </div>
@@ -177,19 +177,19 @@ export default function TrialBalance() {
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* As-Of Date Picker */}
-          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 gap-2">
-            <span className="text-xs text-gray-400 font-medium">As of:</span>
+          <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 gap-2">
+            <span className="text-xs text-[var(--text-secondary)] font-medium">As of:</span>
             <input
               type="date"
               value={asOfDate}
               onChange={(e) => setAsOfDate(e.target.value)}
-              className="bg-transparent text-white text-xs focus:outline-none"
+              className="bg-transparent text-[var(--text-primary)] text-xs focus:outline-none"
             />
           </div>
 
           <button
             onClick={() => refetch()}
-            className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl border border-white/10 transition-all"
+            className="p-2.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl border border-[var(--border-subtle)] transition-all"
             title="Refresh Report"
           >
             <ArrowPathIcon className="w-4 h-4" />
@@ -197,7 +197,7 @@ export default function TrialBalance() {
 
           <button
             onClick={handleExportCsv}
-            className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-cyan-400 rounded-xl border border-white/10 transition-all"
+            className="p-2.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-xl border border-[var(--border-subtle)] transition-all"
             title="Export CSV"
           >
             <ArrowDownTrayIcon className="w-4 h-4" />
@@ -205,7 +205,7 @@ export default function TrialBalance() {
 
           <button
             onClick={() => window.print()}
-            className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl border border-white/10 transition-all"
+            className="p-2.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl border border-[var(--border-subtle)] transition-all"
             title="Print Report"
           >
             <PrinterIcon className="w-4 h-4" />
@@ -214,7 +214,7 @@ export default function TrialBalance() {
           <button
             onClick={() => repairMutation.mutate()}
             disabled={repairMutation.isPending}
-            className="p-2.5 bg-white/5 hover:bg-amber-500/10 text-gray-300 hover:text-amber-400 rounded-xl border border-white/10 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+            className="p-2.5 bg-[var(--bg-surface)] hover:bg-[var(--status-warning)]/10 text-[var(--text-secondary)] hover:text-[var(--status-warning)] rounded-xl border border-[var(--border-subtle)] transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
             title="Repair Accounting Entries & Round-offs"
           >
             <WrenchScrewdriverIcon className={`w-4 h-4 ${repairMutation.isPending ? 'animate-spin' : ''}`} />
@@ -223,13 +223,13 @@ export default function TrialBalance() {
       </div>
 
       {isError && (
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 text-center text-rose-400">
-          <ExclamationTriangleIcon className="w-10 h-10 mx-auto mb-2 text-rose-400" />
-          <h3 className="text-base font-bold text-white mb-1">Failed to load Trial Balance</h3>
-          <p className="text-xs text-rose-300/80 mb-4">An error occurred while fetching double-entry account balances.</p>
+        <div className="bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-2xl p-6 text-center text-[var(--status-danger)]">
+          <ExclamationTriangleIcon className="w-10 h-10 mx-auto mb-2 text-[var(--status-danger)]" />
+          <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">Failed to load Trial Balance</h3>
+          <p className="text-xs text-[var(--text-secondary)] mb-4">An error occurred while fetching double-entry account balances.</p>
           <button
             onClick={() => refetch()}
-            className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition-colors"
+            className="btn-danger text-xs px-4 py-2 inline-block"
           >
             Retry
           </button>
@@ -241,76 +241,76 @@ export default function TrialBalance() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Status Card */}
           <div
-            className={`bento-card !p-5 border ${
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-5 shadow-sm ${
               isBalanced
-                ? 'border-emerald-500/30 bg-emerald-500/5'
-                : 'border-rose-500/30 bg-rose-500/5'
+                ? 'border-[var(--status-success)]/30 bg-[var(--status-success)]/5'
+                : 'border-[var(--status-danger)]/30 bg-[var(--status-danger)]/5'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs uppercase tracking-wider font-semibold text-gray-400">
+              <span className="text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)]">
                 Ledger State
               </span>
               {isBalanced ? (
-                <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+                <CheckCircleIcon className="w-5 h-5 text-[var(--status-success)]" />
               ) : (
-                <ExclamationTriangleIcon className="w-5 h-5 text-rose-400 animate-pulse" />
+                <ExclamationTriangleIcon className="w-5 h-5 text-[var(--status-danger)] animate-pulse" />
               )}
             </div>
-            <div className={`text-xl font-bold ${isBalanced ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className={`text-xl font-bold ${isBalanced ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
               {isBalanced ? 'Balanced' : 'Imbalanced'}
             </div>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-[var(--text-muted)] mt-1">
               {isBalanced ? 'Debits and Credits equal exactly' : `Difference of ${getCurrencySymbol()}${fmt(Math.abs(diff))}`}
             </p>
           </div>
 
           {/* Total Debits */}
-          <div className="bento-card !p-5 border border-white/10">
-            <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm">
+            <div className="text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-2">
               Total Debits (Dr)
             </div>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-[var(--text-primary)]">
               {getCurrencySymbol()}{fmt(totalDebits)}
             </div>
-            <p className="text-xs text-gray-400 mt-1">All accounts debit sum</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">All accounts debit sum</p>
           </div>
 
           {/* Total Credits */}
-          <div className="bento-card !p-5 border border-white/10">
-            <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm">
+            <div className="text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-2">
               Total Credits (Cr)
             </div>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-[var(--text-primary)]">
               {getCurrencySymbol()}{fmt(totalCredits)}
             </div>
-            <p className="text-xs text-gray-400 mt-1">All accounts credit sum</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">All accounts credit sum</p>
           </div>
 
           {/* Net Difference */}
-          <div className="bento-card !p-5 border border-white/10">
-            <div className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-2">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm">
+            <div className="text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)] mb-2">
               Dr - Cr Difference
             </div>
-            <div className={`text-2xl font-bold ${Math.abs(diff) < 0.01 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className={`text-2xl font-bold ${Math.abs(diff) < 0.01 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
               {getCurrencySymbol()}{fmt(diff)}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Target is {getCurrencySymbol()}0.00</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Target is {getCurrencySymbol()}0.00</p>
           </div>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white/5 border border-white/10 p-3 rounded-2xl">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-3 rounded-2xl">
         <div className="flex flex-1 items-center gap-3">
           <div className="relative flex-1 max-w-sm">
-            <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <MagnifyingGlassIcon className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search account name or code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#111] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl pl-9 pr-4 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)]"
             />
           </div>
 
@@ -318,23 +318,23 @@ export default function TrialBalance() {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+            className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
           >
-            <option value="all">All Account Types</option>
-            <option value="asset">Assets</option>
-            <option value="liability">Liabilities</option>
-            <option value="equity">Equity</option>
-            <option value="revenue">Revenue</option>
-            <option value="expense">Expenses</option>
+            <option value="all" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">All Account Types</option>
+            <option value="asset" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Assets</option>
+            <option value="liability" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Liabilities</option>
+            <option value="equity" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Equity</option>
+            <option value="revenue" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Revenue</option>
+            <option value="expense" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Expenses</option>
           </select>
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 select-none">
+        <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--text-secondary)] select-none">
           <input
             type="checkbox"
             checked={hideZeroBalances}
             onChange={(e) => setHideZeroBalances(e.target.checked)}
-            className="rounded border-white/20 bg-white/10 text-cyan-500 focus:ring-0"
+            className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--accent-primary)] focus:ring-0"
           />
           <span>Hide Zero Balances</span>
         </label>
@@ -342,17 +342,17 @@ export default function TrialBalance() {
 
       {/* Main Grouped Tables */}
       {isLoading ? (
-        <div className="bento-card p-12 text-center text-gray-400 animate-pulse">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-12 text-center text-[var(--text-muted)] animate-pulse">
           <ScaleIcon className="w-10 h-10 mx-auto mb-3 opacity-30 animate-spin" />
           Loading Trial Balance...
         </div>
       ) : isError ? (
-        <div className="bento-card p-12 text-center text-rose-400">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-12 text-center text-[var(--status-danger)]">
           <ExclamationTriangleIcon className="w-10 h-10 mx-auto mb-3" />
           Failed to load trial balance. Please try again.
         </div>
       ) : filteredAccounts.length === 0 ? (
-        <div className="bento-card p-12 text-center text-gray-400">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-12 text-center text-[var(--text-muted)]">
           <DocumentChartBarIcon className="w-10 h-10 mx-auto mb-3 opacity-40" />
           No accounts matched your filters.
         </div>
@@ -362,9 +362,9 @@ export default function TrialBalance() {
             if (!items.length) return null;
             const config = ACCOUNT_TYPE_CONFIG[typeKey] || {
               label: typeKey,
-              color: 'text-white',
-              bg: 'bg-white/5',
-              border: 'border-white/10',
+              color: 'text-[var(--text-primary)]',
+              bg: 'bg-[var(--bg-primary)]',
+              border: 'border-[var(--border-subtle)]',
             };
             const isCollapsed = collapsedSections[typeKey];
 
@@ -372,35 +372,35 @@ export default function TrialBalance() {
             const groupCr = items.reduce((s, it) => s + Number(it.credit_total || 0), 0);
 
             return (
-              <div key={typeKey} className="bento-card overflow-hidden border border-white/10">
+              <div key={typeKey} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-sm">
                 {/* Collapsible Section Header */}
                 <button
                   type="button"
                   onClick={() => toggleSection(typeKey)}
-                  className={`w-full px-5 py-3.5 flex items-center justify-between border-b border-white/10 hover:bg-white/[0.02] transition-colors text-left ${config.bg}`}
+                  className={`w-full px-5 py-3.5 flex items-center justify-between border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors text-left ${config.bg}`}
                 >
                   <div className="flex items-center gap-3">
                     {isCollapsed ? (
-                      <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+                      <ChevronRightIcon className="w-4 h-4 text-[var(--text-secondary)]" />
                     ) : (
-                      <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                      <ChevronDownIcon className="w-4 h-4 text-[var(--text-secondary)]" />
                     )}
                     <span className={`font-bold text-base ${config.color}`}>
                       {config.label}
                     </span>
-                    <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)]">
                       {items.length} {items.length === 1 ? 'account' : 'accounts'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-6 text-xs tabular-nums">
                     <div>
-                      <span className="text-gray-400 mr-1.5">Dr:</span>
-                      <span className="font-semibold text-white">{getCurrencySymbol()}{fmt(groupDr)}</span>
+                      <span className="text-[var(--text-secondary)] mr-1.5">Dr:</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(groupDr)}</span>
                     </div>
                     <div>
-                      <span className="text-gray-400 mr-1.5">Cr:</span>
-                      <span className="font-semibold text-white">{getCurrencySymbol()}{fmt(groupCr)}</span>
+                      <span className="text-[var(--text-secondary)] mr-1.5">Cr:</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(groupCr)}</span>
                     </div>
                   </div>
                 </button>
@@ -409,7 +409,7 @@ export default function TrialBalance() {
                 {!isCollapsed && (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-white/[0.02] border-b border-white/5 text-gray-400 uppercase tracking-wider text-[10px]">
+                      <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
                         <tr>
                           <th className="py-2.5 px-5 font-semibold w-24">Code</th>
                           <th className="py-2.5 px-4 font-semibold">Account Name</th>
@@ -419,7 +419,7 @@ export default function TrialBalance() {
                           <th className="py-2.5 px-4 font-semibold text-center w-16">Drill</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.03]">
+                      <tbody className="divide-y divide-[var(--border-subtle)]">
                         {items.map((item) => {
                           const acc = item.account || {};
                           const dr = Number(item.debit_total || 0);
@@ -430,29 +430,29 @@ export default function TrialBalance() {
                           const netLabel = netDrCr >= 0 ? 'Dr' : 'Cr';
 
                           return (
-                            <tr key={acc.id} className="hover:bg-white/[0.02] transition-colors group">
-                              <td className="py-3 px-5 font-mono text-cyan-400 font-medium">
+                            <tr key={acc.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors group">
+                              <td className="py-3 px-5 font-mono text-[var(--accent-primary)] font-semibold">
                                 {acc.code || '—'}
                               </td>
                               <td className="py-3 px-4">
-                                <div className="font-medium text-white">{acc.name}</div>
+                                <div className="font-medium text-[var(--text-primary)]">{acc.name}</div>
                                 {acc.description && (
-                                  <div className="text-[11px] text-gray-500 line-clamp-1">{acc.description}</div>
+                                  <div className="text-[11px] text-[var(--text-muted)] line-clamp-1">{acc.description}</div>
                                 )}
                               </td>
-                              <td className="py-3 px-4 text-right font-mono font-medium text-white">
+                              <td className="py-3 px-4 text-right font-mono font-medium text-[var(--text-primary)]">
                                 {dr > 0.001 ? `${getCurrencySymbol()}${fmt(dr)}` : '—'}
                               </td>
-                              <td className="py-3 px-4 text-right font-mono font-medium text-white">
+                              <td className="py-3 px-4 text-right font-mono font-medium text-[var(--text-primary)]">
                                 {cr > 0.001 ? `${getCurrencySymbol()}${fmt(cr)}` : '—'}
                               </td>
-                              <td className={`py-3 px-4 text-right font-mono font-semibold ${netDrCr >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                              <td className={`py-3 px-4 text-right font-mono font-semibold ${netDrCr >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                                 {getCurrencySymbol()}{fmt(Math.abs(netDrCr))} {netLabel}
                               </td>
                               <td className="py-3 px-4 text-center">
                                 <Link
                                   to={`/ledger?account=${acc.id}`}
-                                  className="p-1.5 inline-flex items-center justify-center text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors border border-transparent hover:border-cyan-500/20"
+                                  className="p-1.5 inline-flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 rounded-lg transition-colors border border-transparent hover:border-[var(--accent-primary)]/20"
                                   title={`View general ledger for ${acc.name}`}
                                 >
                                   <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
@@ -470,27 +470,27 @@ export default function TrialBalance() {
           })}
 
           {/* Grand Totals Footer */}
-          <div className="bento-card !p-5 border border-white/20 bg-white/[0.02] flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <ScaleIcon className="w-6 h-6 text-cyan-400" />
+              <ScaleIcon className="w-6 h-6 text-[var(--accent-primary)]" />
               <div>
-                <span className="font-bold text-white text-base">Grand Totals</span>
-                <p className="text-xs text-gray-400">Sum of all general ledger accounts</p>
+                <span className="font-bold text-[var(--text-primary)] text-base">Grand Totals</span>
+                <p className="text-xs text-[var(--text-secondary)]">Sum of all general ledger accounts</p>
               </div>
             </div>
 
             <div className="flex items-center gap-8 text-sm tabular-nums font-mono">
               <div>
-                <span className="text-xs text-gray-400 block uppercase tracking-wider mb-0.5">Debits</span>
-                <span className="font-bold text-white text-base">{getCurrencySymbol()}{fmt(totalDebits)}</span>
+                <span className="text-xs text-[var(--text-secondary)] block uppercase tracking-wider mb-0.5">Debits</span>
+                <span className="font-bold text-[var(--text-primary)] text-base">{getCurrencySymbol()}{fmt(totalDebits)}</span>
               </div>
               <div>
-                <span className="text-xs text-gray-400 block uppercase tracking-wider mb-0.5">Credits</span>
-                <span className="font-bold text-white text-base">{getCurrencySymbol()}{fmt(totalCredits)}</span>
+                <span className="text-xs text-[var(--text-secondary)] block uppercase tracking-wider mb-0.5">Credits</span>
+                <span className="font-bold text-[var(--text-primary)] text-base">{getCurrencySymbol()}{fmt(totalCredits)}</span>
               </div>
               <div>
-                <span className="text-xs text-gray-400 block uppercase tracking-wider mb-0.5">Diff</span>
-                <span className={`font-bold text-base ${isBalanced ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <span className="text-xs text-[var(--text-secondary)] block uppercase tracking-wider mb-0.5">Diff</span>
+                <span className={`font-bold text-base ${isBalanced ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
                   {getCurrencySymbol()}{fmt(diff)}
                 </span>
               </div>

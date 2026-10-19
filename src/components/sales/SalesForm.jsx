@@ -217,7 +217,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 setTimeout(() => setShowDropdown(false), 100);
               }}
               placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded px-2 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-xs"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-xs"
               autoComplete="off"
               onKeyDown={(e) => {
                 const exactMatch = (filteredProducts || []).some(
@@ -276,10 +276,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               }}
             />
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+              <div className="text-[var(--status-danger)] text-xs mt-1">{meta.error}</div>
             )}
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+              <div className="text-[8px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -300,7 +300,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
                   }}
                   placeholder="Enter a description / note..."
-                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-cyan-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic"
+                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic"
                 />
               </div>
             )}
@@ -321,15 +321,15 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
           return createPortal(
             <div
               style={dropdownStyle}
-              className="max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a1a] shadow-2xl backdrop-blur-xl"
+              className="max-h-60 overflow-y-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xl backdrop-blur-xl"
             >
               {filteredProducts.slice(0, 50).map((product, index) => (
                 <div
                   key={product.id}
-                  className={`cursor-pointer border-b border-white/5 px-4 py-3 text-sm transition-colors last:border-0 ${
+                  className={`cursor-pointer border-b border-[var(--border-subtle)] px-4 py-3 text-sm transition-colors last:border-0 ${
                     index === selectedIndex
-                      ? 'bg-cyan-500/20 text-white'
-                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]'
                   }`}
                   onMouseDown={(event) => {
                     event.preventDefault();
@@ -337,30 +337,30 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     selectProduct(product);
                   }}
                 >
-                  <div className="font-medium text-white flex items-center justify-between">
+                  <div className="font-medium text-[var(--text-primary)] flex items-center justify-between">
                     <span>{product.name}</span>
-                    {product.item_code && <span className="text-[10px] text-gray-400 font-mono">{product.item_code}</span>}
+                    {product.item_code && <span className="text-[10px] text-[var(--text-muted)] font-mono">{product.item_code}</span>}
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-400 flex items-center gap-2 flex-wrap">
-                    {product.manufacturer && <span className="text-cyan-400 font-medium italic">Mfr: {product.manufacturer}</span>}
-                    {product.internal_reference && <span className="text-amber-400 font-mono text-[10px]">Ref: {product.internal_reference}</span>}
+                  <div className="mt-0.5 text-xs text-[var(--text-muted)] flex items-center gap-2 flex-wrap">
+                    {product.manufacturer && <span className="text-[var(--accent-primary)] font-medium italic">Mfr: {product.manufacturer}</span>}
+                    {product.internal_reference && <span className="text-[var(--status-warning)] font-mono text-[10px]">Ref: {product.internal_reference}</span>}
                     <span>Unit: {product.unit || 'pcs'}</span>
                     <span>Price: {getCurrencySymbol()}{product.sale_price ?? product.price ?? 0}</span>
                   </div>
                 </div>
               ))}
               {filteredProducts.length > 50 && (
-                <div className="border-t border-white/5 px-4 py-2 text-center text-xs italic text-gray-500">
+                <div className="border-t border-[var(--border-subtle)] px-4 py-2 text-center text-xs italic text-[var(--text-muted)]">
                   Showing top 50 results...
                 </div>
               )}
               {showAddButton && (
                 <button
                   type="button"
-                  className={`w-full border-t border-white/5 px-4 py-3 text-left text-sm transition-colors ${
+                  className={`w-full border-t border-[var(--border-subtle)] px-4 py-3 text-left text-sm transition-colors font-medium ${
                     selectedIndex === Math.min(filteredProducts.length, 50)
-                      ? 'bg-cyan-500/20 text-white ring-1 ring-cyan-400'
-                      : 'text-cyan-300 hover:bg-cyan-500/10 hover:text-cyan-200'
+                      ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]'
+                      : 'text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)]'
                   }`}
                   onMouseDown={(event) => {
                     event.preventDefault();
@@ -517,23 +517,23 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 }
               }}
               placeholder="Customer name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
             />
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-sm mt-1">{meta.error}</div>
+              <div className="text-[var(--status-danger)] text-sm mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1.5 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-64 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-64 overflow-y-auto backdrop-blur-xl">
           {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' 
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]'
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -541,32 +541,32 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 selectCustomer(customer);
               }}
             >
-              <div className="font-semibold text-white flex items-center justify-between">
+              <div className="font-semibold text-[var(--text-primary)] flex items-center justify-between">
                 <span>{customer.name}</span>
                 {customer.gstin && (
-                  <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 font-mono">
+                  <span className="text-[10px] bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] px-2 py-0.5 rounded border border-[var(--accent-primary)]/30 font-mono">
                     GST: {customer.gstin}
                   </span>
                 )}
               </div>
-              <div className="text-gray-400 text-xs mt-1 flex items-center gap-3 truncate">
+              <div className="text-[var(--text-muted)] text-xs mt-1 flex items-center gap-3 truncate">
                 {customer.phone && <span>📞 {customer.phone}</span>}
                 {customer.email && <span className="truncate">✉️ {customer.email}</span>}
-                {customer.address && <span className="truncate text-gray-500">📍 {customer.address}</span>}
+                {customer.address && <span className="truncate">📍 {customer.address}</span>}
               </div>
             </div>
           ))}
           {filteredCustomers.length > 50 && (
-             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+             <div className="px-4 py-2 text-xs text-[var(--text-muted)] text-center italic border-t border-[var(--border-subtle)]">
                 Showing top 50 results...
              </div>
           )}
           {inputValue.trim() && !(customers || []).some((c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
             <div
-              className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
+              className={`px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' 
+                  : 'text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)] font-medium'
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -575,7 +575,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 setShowDropdown(false);
               }}
             >
-              <div className="font-medium text-cyan-400 flex items-center gap-2">
+              <div className="font-medium text-[var(--accent-primary)] flex items-center gap-2">
                 <span>➕</span> Add New Customer: "{inputValue}"
               </div>
             </div>
@@ -586,15 +586,15 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       {/* Add New Customer Modal */}
       {showNewCustomerModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
-          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-blue-900/30 animate-fade-up overflow-hidden">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white">Add New Customer</h3>
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)]">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Add New Customer</h3>
               <button
                 type="button"
                 onClick={() => setShowNewCustomerModal(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -605,47 +605,47 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
             {/* Form */}
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Name *</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Name *</label>
                 <input
                   type="text"
                   defaultValue={inputValue}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
                   id="new-customer-name"
                   placeholder="Customer name"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Email</label>
                 <input
                   type="email"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
                   id="new-customer-email"
                   placeholder="email@example.com"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Phone</label>
                 <input
                   type="tel"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
                   id="new-customer-phone"
                   placeholder="+91 98765 43210"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Address</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Address</label>
                 <textarea
                   rows={2}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all resize-none"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all resize-none"
                   id="new-customer-address"
                   placeholder="Full address"
                 ></textarea>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">GSTIN</label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">GSTIN</label>
                 <input
                   type="text"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
                   id="new-customer-gstin"
                   placeholder="e.g., 29AAKCG6382L1ZU"
                 />
@@ -657,7 +657,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               <button
                 type="button"
                 onClick={() => setShowNewCustomerModal(false)}
-                className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+                className="btn-secondary px-4 py-2 text-sm"
               >
                 Cancel
               </button>
@@ -697,7 +697,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                     setIsCreatingCustomer(false);
                   }
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-lg transition-all shadow-lg shadow-blue-900/30 text-sm font-medium disabled:opacity-50"
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
               >
                 {isCreatingCustomer ? "Adding..." : "Add Customer"}
               </button>
@@ -1555,23 +1555,23 @@ export default function SalesForm({
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-6">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={handleBeforeClose}></div>
-      <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-white/10 bg-[#0c0c0e] overflow-hidden">
-        <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-white/5 bg-[#0c0c0e]/80 backdrop-blur-xl z-40">
+      <div className="relative flex flex-col w-full h-full sm:h-[96vh] sm:max-h-[1200px] sm:max-w-[1600px] sm:w-[96vw] sm:rounded-[24px] shadow-2xl shadow-black/50 animate-fade-up sm:border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+        <div className="flex-none flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-xl z-40">
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
               {isEdit
                 ? `Edit ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`
                 : `New ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`}
             </h2>
-             <p className="text-xs text-gray-400 flex items-center gap-2">
-              <span>Press <kbd className="bg-white/10 px-1 rounded text-white">F2</kbd> to save</span>
+             <p className="text-xs text-[var(--text-secondary)] flex items-center gap-2">
+              <span>Press <kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">F2</kbd> to save</span>
               <span>•</span>
-              <span><kbd className="bg-white/10 px-1 rounded text-white">Esc</kbd> to close</span>
+              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">Esc</kbd> to close</span>
             </p>
           </div>
           <button
             onClick={handleBeforeClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
           >
            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1906,17 +1906,17 @@ export default function SalesForm({
                 <div className="flex-1 overflow-y-auto p-0">
                   <div className="p-6 sm:p-8 space-y-8">
                   {/* Top Document Meta Row: Invoice #, Date, Due Date, PO #, PO Date */}
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-                    <div className="flex items-center gap-2 pb-3 mb-4 border-b border-white/5">
-                      <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">
+                  <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5">
+                    <div className="flex items-center gap-2 pb-3 mb-4 border-b border-[var(--border-subtle)]">
+                      <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]"></div>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                         {isSalesOrder ? 'Order Details' : isDeliveryChallan ? 'Challan Details' : isQuotation ? 'Quotation Details' : 'Invoice Details'}
                       </h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                       {/* Document / Invoice Number */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                           {isSalesOrder ? 'Order Number *' : isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                         </label>
                         <Field
@@ -1926,19 +1926,19 @@ export default function SalesForm({
                           autoCorrect="off"
                           spellCheck="false"
                           data-1p-ignore="true"
-                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm font-mono"
                           placeholder={
                             !isEdit && nextInvData?.next_number
                               ? `Auto on save (next: ${nextInvData.next_number})`
                               : (isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001")
                           }
                         />
-                        <ErrorMessage name="invoice_number" component="div" className="text-red-400 text-xs mt-1" />
+                        <ErrorMessage name="invoice_number" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                       </div>
 
                       {/* Document / Invoice Date */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                           {isSalesOrder ? 'Order Date *' : isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                         </label>
                         <DateInputField
@@ -1947,12 +1947,12 @@ export default function SalesForm({
                           onChange={(e) => setFieldValue('invoice_date', e.target.value)}
                           placeholder="DD/MM/YYYY"
                         />
-                        <ErrorMessage name="invoice_date" component="div" className="text-red-400 text-xs mt-1" />
+                        <ErrorMessage name="invoice_date" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                       </div>
 
                       {/* Due Date */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                           Due Date
                         </label>
                         <DateInputField
@@ -1965,18 +1965,18 @@ export default function SalesForm({
 
                       {/* PO Number */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Number</label>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Number</label>
                         <Field
                           name="po_number"
                           type="text"
-                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm font-mono"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm font-mono"
                           placeholder="e.g. PO-8921"
                         />
                       </div>
 
                       {/* PO Date */}
                       <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">PO Date</label>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Date</label>
                         <DateInputField
                           name="po_date"
                           value={values.po_date}
@@ -1990,13 +1990,13 @@ export default function SalesForm({
                   {/* Header Columns: Billing Details & Shipping Details */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Column 1: Billing Details */}
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
-                      <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5 space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Billing Details</h3>
+                          <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]"></div>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Billing Details</h3>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-mono">CUSTOMER</span>
+                        <span className="text-[10px] text-[var(--text-muted)] font-mono">CUSTOMER</span>
                       </div>
 
                       {/* Customer Autocomplete */}
@@ -2012,14 +2012,14 @@ export default function SalesForm({
                           return (
                             <>
                               <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+                                <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                                   Customer *
                                 </label>
                                 {matchedCustomer && (
                                   <button
                                     type="button"
                                     onClick={() => setEditingCustomer(matchedCustomer)}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--accent-primary)] hover:opacity-80 transition-opacity"
                                   >
                                     <PencilSquareIcon className="w-3.5 h-3.5" />
                                     <span>Edit Customer</span>
@@ -2034,24 +2034,24 @@ export default function SalesForm({
                             </>
                           );
                         })()}
-                        <ErrorMessage name="customer_name" component="div" className="text-red-400 text-xs mt-1" />
+                        <ErrorMessage name="customer_name" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                         {(values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
-                          <div className="mt-3 rounded-xl border border-white/10 bg-[#141416] p-3 text-xs text-gray-300 space-y-1.5">
+                          <div className="mt-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-primary)] space-y-1.5">
                             {values.customer_gstin && (
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-500 font-medium">GSTIN:</span>
-                                <span className="font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded text-[11px] font-semibold">{values.customer_gstin}</span>
+                                <span className="text-[var(--text-secondary)] font-medium">GSTIN:</span>
+                                <span className="font-mono bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 px-2 py-0.5 rounded text-[11px] font-semibold">{values.customer_gstin}</span>
                               </div>
                             )}
                             {values.customer_address && (
-                              <div className="text-gray-400 flex items-start gap-1">
-                                <span className="text-gray-500 shrink-0">Address:</span>
-                                <span className="text-gray-300">{values.customer_address}</span>
+                              <div className="text-[var(--text-secondary)] flex items-start gap-1">
+                                <span className="text-[var(--text-muted)] shrink-0">Address:</span>
+                                <span className="text-[var(--text-primary)]">{values.customer_address}</span>
                               </div>
                             )}
-                            <div className="flex flex-wrap gap-4 text-gray-400 pt-1 border-t border-white/5">
-                              {values.customer_phone && <div><span className="text-gray-500">Phone:</span> {values.customer_phone}</div>}
-                              {values.customer_email && <div><span className="text-gray-500">Email:</span> {values.customer_email}</div>}
+                            <div className="flex flex-wrap gap-4 text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]">
+                              {values.customer_phone && <div><span className="text-[var(--text-muted)]">Phone:</span> {values.customer_phone}</div>}
+                              {values.customer_email && <div><span className="text-[var(--text-muted)]">Email:</span> {values.customer_email}</div>}
                             </div>
                           </div>
                         )}
@@ -2059,17 +2059,17 @@ export default function SalesForm({
                     </div>
 
                     {/* Column 2: Shipping Details */}
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
-                      <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5 space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200">Shipping Details</h3>
+                          <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]"></div>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Shipping Details</h3>
                         </div>
                         {values.customer_address && (
                           <button
                             type="button"
                             onClick={() => setFieldValue('delivery_address', values.customer_address)}
-                            className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium transition-colors flex items-center gap-1"
+                            className="text-[11px] text-[var(--accent-primary)] hover:opacity-80 font-medium transition-opacity flex items-center gap-1"
                           >
                             <span>Copy from Billing</span>
                           </button>
@@ -2093,7 +2093,7 @@ export default function SalesForm({
 
                           return (
                             <div className="mb-2">
-                              <label className="block text-[11px] font-medium text-gray-400 mb-1">
+                              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                                 Saved Shipping Addresses ({savedList.length})
                               </label>
                               <select
@@ -2103,11 +2103,11 @@ export default function SalesForm({
                                     setFieldValue('delivery_address', e.target.value);
                                   }
                                 }}
-                                className="w-full bg-[#161616] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-cyan-500 mb-2"
+                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] mb-2"
                               >
                                 <option value="">-- Select from saved shipping addresses --</option>
                                 {savedList.map((addr, idx) => (
-                                  <option key={idx} value={addr} className="bg-[#18181b]">
+                                  <option key={idx} value={addr} className="bg-[var(--bg-surface)]">
                                     {addr.length > 60 ? `${addr.slice(0, 60)}...` : addr}
                                   </option>
                                 ))}
@@ -2117,14 +2117,14 @@ export default function SalesForm({
                         })()}
 
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+                          <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                             Shipping Address
                           </label>
-                          <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer hover:text-cyan-400 transition-colors">
+                          <label className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)] cursor-pointer hover:text-[var(--text-primary)] transition-colors">
                             <Field
                               type="checkbox"
                               name="save_shipping_address"
-                              className="rounded border-white/20 text-cyan-500 focus:ring-cyan-500 bg-white/5 h-3 w-3"
+                              className="rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] bg-[var(--bg-surface)] h-3 w-3"
                             />
                             <span>Save for future</span>
                           </label>
@@ -2133,18 +2133,18 @@ export default function SalesForm({
                           name="delivery_address"
                           as="textarea"
                           rows="2"
-                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm"
                           placeholder="123 Shipping Address, City, State, PIN"
                         />
                       </div>
 
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
+                          <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                             Place of Supply
                           </label>
                           {values.place_of_supply && values.customer_gstin && (
-                            <span className="text-[10px] text-emerald-400 font-mono">
+                            <span className="text-[10px] text-[var(--status-success)] font-mono">
                               Auto-detected from GSTIN
                             </span>
                           )}
@@ -2152,7 +2152,7 @@ export default function SalesForm({
                         <Field
                           name="place_of_supply"
                           as="select"
-                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm"
                         >
                           <option value="">Select State</option>
                           {INDIAN_STATES.map(s => (
@@ -2163,31 +2163,31 @@ export default function SalesForm({
 
                       {/* Transport & Vehicle Details if Delivery Challan */}
                       {isDeliveryChallan && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-white/5">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-[var(--border-subtle)]">
                           <div>
-                            <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">Vehicle #</label>
+                            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Vehicle #</label>
                             <Field
                               name="vehicle_number"
                               type="text"
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none"
+                              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                               placeholder="e.g. KA-01-1234"
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">Transport</label>
+                            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Transport</label>
                             <Field
                               name="transport_mode"
                               type="text"
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none"
+                              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                               placeholder="e.g. Road / Tempo"
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">E-Way Bill #</label>
+                            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">E-Way Bill #</label>
                             <Field
                               name="eway_bill_number"
                               type="text"
-                              className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none"
+                              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                               placeholder="E-Way Bill #"
                             />
                           </div>
@@ -2200,21 +2200,21 @@ export default function SalesForm({
                   {!isDeliveryChallan && !isQuotation && !isSalesOrder && (
                     <FieldArray name="delivery_challans">
                       {({ push: pushChallan, remove: removeChallan }) => (
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-3">
-                          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5 space-y-3">
+                          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                             <div className="flex items-center gap-2">
-                              <DocumentPlusIcon className="w-4 h-4 text-cyan-400" />
-                              <span className="text-xs font-bold uppercase tracking-wider text-gray-200">
+                              <DocumentPlusIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                              <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                                 Delivery Challans
                               </span>
-                              <span className="text-[11px] text-gray-500 font-mono">
+                              <span className="text-[11px] text-[var(--text-muted)] font-mono">
                                 ({values.delivery_challans?.length || 0} attached)
                               </span>
                             </div>
                             <button
                               type="button"
                               onClick={() => pushChallan({ challan_number: '', challan_date: '' })}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold border border-cyan-500/30 transition-colors"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-xs font-semibold border border-[var(--accent-primary)]/30 transition-colors"
                             >
                               <PlusIcon className="w-3.5 h-3.5" />
                               <span>Add Challan</span>
@@ -2223,20 +2223,20 @@ export default function SalesForm({
 
                           <div className="space-y-2.5">
                             {(values.delivery_challans || []).map((ch, chIdx) => (
-                              <div key={chIdx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-center bg-[#111]/60 p-3 rounded-xl border border-white/5">
+                              <div key={chIdx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-center bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
                                 <div>
-                                  <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">
+                                  <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
                                     Challan Number #{chIdx + 1}
                                   </label>
                                   <Field
                                     name={`delivery_challans.${chIdx}.challan_number`}
                                     type="text"
                                     placeholder="e.g. DC-2026-001"
-                                    className="w-full bg-[#161618] border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono"
+                                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none font-mono"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide">
+                                  <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
                                     Challan Date (DD/MM/YYYY)
                                   </label>
                                   <DateInputField
@@ -2251,7 +2251,7 @@ export default function SalesForm({
                                     type="button"
                                     onClick={() => removeChallan(chIdx)}
                                     disabled={values.delivery_challans.length <= 1}
-                                    className="p-2 text-gray-400 hover:text-red-400 disabled:opacity-20 hover:bg-white/5 rounded-lg transition-colors"
+                                    className="p-2 text-[var(--text-muted)] hover:text-[var(--status-danger)] disabled:opacity-20 hover:bg-[var(--bg-primary)] rounded-lg transition-colors"
                                     title="Remove Challan"
                                   >
                                     <TrashIcon className="w-4 h-4" />
@@ -2267,21 +2267,21 @@ export default function SalesForm({
                 </div>
 
                 {/* Items */}
-                <div className="p-8 bg-[#151515] border-t border-b border-white/5">
+                <div className="p-8 bg-[var(--bg-surface)] border-t border-b border-[var(--border-subtle)]">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h3 className="text-lg font-bold text-white">Items</h3>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">Items</h3>
                     <div className="relative" ref={columnPickerRef}>
                       <button
                         type="button"
                         onClick={() => setShowColumnPicker((prev) => !prev)}
-                        className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:bg-[var(--bg-primary)]/80 text-xs text-[var(--text-secondary)] transition-colors"
                       >
                         Columns
                       </button>
 
                       {showColumnPicker && (
-                        <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
-                          <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
+                        <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-2xl">
+                          <div className="mb-2 text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">Show/Hide Columns</div>
                           {[
                             ["show_item_description", "Description"],
                             ["show_item_manufacturer", "Manufacturer"],
@@ -2297,12 +2297,12 @@ export default function SalesForm({
                           ].map(([key, label]) => {
                             if (key === "require_item_batch" && !itemSettings.show_item_batch) return null;
                             return (
-                              <label key={key} className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                              <label key={key} className="flex items-center gap-2 py-1 text-sm text-[var(--text-primary)] cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={!!itemSettings[key]}
                                   onChange={() => handleToggleItemSetting(key)}
-                                  className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                                  className="h-3.5 w-3.5 rounded border-[var(--border-subtle)] bg-transparent text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
                                 />
                                 <span>{label}</span>
                               </label>
@@ -2313,7 +2313,7 @@ export default function SalesForm({
                     </div>
                   </div>
                   {!canAccessInventory && isStarterPlan && (
-                    <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                    <div className="mb-4 rounded-xl border border-[var(--status-info)]/20 bg-[var(--status-info)]/10 px-4 py-3 text-xs text-[var(--status-info)]">
                       Inventory browsing is locked on Starter. You can still create this sales bill by typing item name, quantity, and price manually.
                     </div>
                   )}
@@ -2388,8 +2388,8 @@ export default function SalesForm({
 
                             return (
                               <>
-                                <div className="hidden md:block overflow-x-auto border-y border-hairline bg-obsidian-card/90">
-                                  <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                <div className="hidden md:block overflow-x-auto border-y border-[var(--border-subtle)] bg-[var(--bg-primary)]/50">
+                                  <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-[var(--text-secondary)]" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
                                         key={col.key}
@@ -2442,19 +2442,19 @@ export default function SalesForm({
                                             setDragOverRowIndex(null);
                                           }}
                                           className={[
-                                            "border-b border-amber-500/20 bg-amber-500/5 px-3 py-2 flex items-center gap-2 transition-all duration-150",
-                                            draggedRowIndex === index ? "opacity-35 bg-amber-950/40 ring-1 ring-amber-500/50" : "",
-                                            dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-amber-400 bg-amber-500/10" : "",
+                                            "border-b border-[var(--status-warning)]/20 bg-[var(--status-warning)]/5 px-3 py-2 flex items-center gap-2 transition-all duration-150",
+                                            draggedRowIndex === index ? "opacity-40 ring-1 ring-[var(--status-warning)]/50" : "",
+                                            dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-[var(--status-warning)] bg-[var(--status-warning)]/10" : "",
                                           ].join(" ")}
                                           style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}
                                         >
                                           <div
-                                            className="flex items-center justify-center cursor-grab active:cursor-grabbing text-amber-500/70 hover:text-amber-300 p-1 rounded hover:bg-white/10 transition-colors select-none shrink-0"
+                                            className="flex items-center justify-center cursor-grab active:cursor-grabbing text-[var(--status-warning)]/70 hover:text-[var(--status-warning)] p-1 rounded hover:bg-[var(--bg-primary)] transition-colors select-none shrink-0"
                                             title="Hold and drag to reorder row"
                                           >
                                             <Bars3Icon className="w-4 h-4" />
                                           </div>
-                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-wider shrink-0">
+                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 text-[var(--status-warning)] text-[10px] font-black uppercase tracking-wider shrink-0">
                                             <DocumentTextIcon className="w-3.5 h-3.5" />
                                             <span>Note</span>
                                           </div>
@@ -2464,7 +2464,7 @@ export default function SalesForm({
                                               name={`items.${index}.description`}
                                               rows={1}
                                               placeholder="Enter note or section title (e.g. Terms for items above, scope of work, warranty details...)"
-                                              className="w-full bg-[#111] border border-amber-500/30 focus:border-amber-400 rounded-lg px-3 py-1.5 text-xs text-amber-100 placeholder-gray-500 focus:ring-1 focus:ring-amber-400 outline-none resize-y"
+                                              className="w-full bg-[var(--bg-primary)] border border-[var(--status-warning)]/30 focus:border-[var(--status-warning)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-1 focus:ring-[var(--status-warning)] outline-none resize-y"
                                             />
                                           </div>
                                           <div className="flex items-center gap-1 shrink-0">
@@ -2486,7 +2486,7 @@ export default function SalesForm({
                                                 tax: 0,
                                                 amount: 0,
                                               })}
-                                              className="p-1 text-gray-400 hover:text-amber-300 transition-colors"
+                                              className="p-1 text-[var(--text-muted)] hover:text-[var(--status-warning)] transition-colors"
                                               title="Add Note Below"
                                               tabIndex={-1}
                                             >
@@ -2496,7 +2496,7 @@ export default function SalesForm({
                                               type="button"
                                               onClick={() => remove(index)}
                                               disabled={values.items.length === 1}
-                                              className="text-gray-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30"
+                                              className="text-[var(--text-muted)] hover:text-[var(--status-danger)] transition-colors p-1 disabled:opacity-30"
                                               title="Remove Note"
                                               tabIndex={-1}
                                             >
@@ -2544,9 +2544,9 @@ export default function SalesForm({
                                           setDragOverRowIndex(null);
                                         }}
                                         className={[
-                                          "border-b border-hairline transition-all duration-150",
-                                          draggedRowIndex === index ? "opacity-35 bg-blue-950/40 ring-1 ring-blue-500/50" : "hover:bg-obsidian-active/40",
-                                          dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-blue-500 bg-blue-500/10" : "",
+                                          "border-b border-[var(--border-subtle)] transition-all duration-150",
+                                          draggedRowIndex === index ? "opacity-40 ring-1 ring-[var(--accent-primary)]/50" : "hover:bg-[var(--bg-primary)]/40",
+                                          dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-[var(--accent-primary)] bg-[var(--accent-primary)]/10" : "",
                                         ].join(" ")}
                                       >
                                         <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
@@ -2555,7 +2555,7 @@ export default function SalesForm({
                                              return (
                                                <div key={col.key} className="flex items-center justify-center pt-2.5">
                                                  <div
-                                                   className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-cyan-400 p-1 rounded hover:bg-white/10 transition-colors select-none"
+                                                   className="cursor-grab active:cursor-grabbing text-[var(--text-muted)] hover:text-[var(--accent-primary)] p-1 rounded hover:bg-[var(--bg-surface)] transition-colors select-none"
                                                    title="Hold and drag to reorder row"
                                                  >
                                                    <Bars3Icon className="w-4 h-4" />
@@ -2579,13 +2579,13 @@ export default function SalesForm({
                                                    onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                                  />
                                                   {itemSettings.show_item_storage_condition && (
-                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-cyan-300">
-                                                      <span className="text-[10px] uppercase font-semibold text-gray-400 select-none">Storage:</span>
+                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                                                      <span className="text-[10px] uppercase font-semibold text-[var(--text-muted)] select-none">Storage:</span>
                                                       <Field
                                                         name={`items.${index}.storage_condition`}
                                                         type="text"
                                                         placeholder="e.g. Store in cool, dry place"
-                                                        className="flex-1 bg-transparent border-0 border-b border-cyan-500/30 hover:border-cyan-500/60 focus:border-cyan-400 px-1 py-0.5 text-xs text-cyan-200 placeholder-gray-500 outline-none transition-colors"
+                                                        className="flex-1 bg-transparent border-0 border-b border-[var(--border-subtle)] focus:border-[var(--accent-primary)] px-1 py-0.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none transition-colors"
                                                       />
                                                     </div>
                                                   )}
@@ -2606,7 +2606,7 @@ export default function SalesForm({
                                                            description: item.description || item.product_description || "",
                                                            unit: item.unit || "pcs",
                                                          })}
-                                                         className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-1.5 py-0.5 rounded transition-colors"
+                                                         className="inline-flex items-center gap-1 text-[10px] text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
                                                          title="Update master catalog item with these values"
                                                        >
                                                          <ArrowPathIcon className="w-3 h-3" />
@@ -2627,7 +2627,7 @@ export default function SalesForm({
                                                            description: item.description || item.product_description || "",
                                                            unit: item.unit || "pcs",
                                                          })}
-                                                         className="inline-flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-1.5 py-0.5 rounded transition-colors"
+                                                         className="inline-flex items-center gap-1 text-[10px] text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
                                                          title="Save this line item as a new product in your catalog"
                                                        >
                                                          <PlusIcon className="w-3 h-3" />
@@ -2637,14 +2637,14 @@ export default function SalesForm({
                                                    </div>
                                                  )}
                                                  {matchedScheme && (
-                                                   <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded w-fit">
+                                                   <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
                                                      <span>🎁</span>
                                                      <span>{matchedScheme.name}</span>
                                                      {matchedScheme.scheme_type === 'bogo' && (
-                                                       <span className="text-emerald-300">(Buy {matchedScheme.min_qty} Get {matchedScheme.free_qty} Free)</span>
+                                                       <span className="opacity-90">(Buy {matchedScheme.min_qty} Get {matchedScheme.free_qty} Free)</span>
                                                      )}
                                                      {matchedScheme.scheme_type === 'percentage_discount' && (
-                                                       <span className="text-emerald-300">({matchedScheme.discount_percent}% Off)</span>
+                                                       <span className="opacity-90">({matchedScheme.discount_percent}% Off)</span>
                                                      )}
                                                    </div>
                                                  )}
@@ -2659,7 +2659,7 @@ export default function SalesForm({
                                                     name={`items.${index}.manufacturer`}
                                                     type="text"
                                                     placeholder="Manufacturer"
-                                                    className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200 placeholder-gray-500 focus:border-cyan-500 outline-none"
+                                                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                                                   />
                                                 </div>
                                               );
@@ -2672,7 +2672,7 @@ export default function SalesForm({
                                                     name={`items.${index}.internal_reference`}
                                                     type="text"
                                                     placeholder="Internal Ref"
-                                                    className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200 placeholder-gray-500 focus:border-cyan-500 outline-none"
+                                                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                                                   />
                                                 </div>
                                               );
@@ -2686,7 +2686,7 @@ export default function SalesForm({
                                                      <input
                                                        {...field}
                                                        type="text"
-                                                       className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                       className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                                                        onBlur={async (e) => {
                                                          field.onBlur(e);
                                                          await autofillTaxFromLearnedHsn(
@@ -2707,7 +2707,7 @@ export default function SalesForm({
                                                <div key={col.key}>
                                                  <Field name={`items.${index}.batch`}>
                                                    {({ field }) => (
-                                                     <select {...field} className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" disabled={!item.product_id}>
+                                                     <select {...field} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none" disabled={!item.product_id}>
                                                        <option value="">Auto (FEFO)</option>
                                                        {productBatches.map((b) => (
                                                          <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -2726,7 +2726,7 @@ export default function SalesForm({
                                                    name={`items.${index}.quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className="w-full text-center bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-100 focus:border-blue-500 outline-none"
+                                                   className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                                                    onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                                  />
                                                </div>
@@ -2742,11 +2742,11 @@ export default function SalesForm({
                                                    name={`items.${index}.free_quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-green-300 font-bold focus:border-green-500"
+                                                   className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--status-success)] font-bold focus:border-[var(--accent-primary)] outline-none"
                                                  />
                                                  {matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0 && (
                                                    <span
-                                                     className="absolute -top-1.5 -right-1 bg-emerald-500/30 text-emerald-300 text-[8px] font-black px-1 rounded border border-emerald-400/40 pointer-events-none"
+                                                     className="absolute -top-1.5 -right-1 bg-[var(--status-success)]/30 text-[var(--status-success)] text-[8px] font-black px-1 rounded border border-[var(--status-success)]/40 pointer-events-none"
                                                      title={`${matchedScheme.name}: Buy ${matchedScheme.min_qty} Get ${matchedScheme.free_qty} Free`}
                                                    >
                                                      +{freeQtyNum}
@@ -2774,10 +2774,10 @@ export default function SalesForm({
                                                       setFieldValue(`items.${index}.unit`, val);
                                                     }
                                                   }}
-                                                  className="w-full bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs text-gray-200 focus:border-blue-500 outline-none"
+                                                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                                                 >
-                                                  {availableUnits.map((u) => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
-                                                  <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
+                                                  {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
+                                                  <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                                                 </select>
                                               </div>
                                             );
@@ -2791,7 +2791,7 @@ export default function SalesForm({
                                                   readOnly
                                                   value={item.purchase_price ?? item.cost_price ?? 0}
                                                   title="Purchase / Cost Price (Internal Drafting Reference Only - Never Printed)"
-                                                  className="w-full text-right bg-white/5 border border-white/5 rounded px-2 py-2 text-xs font-mono text-amber-300/90 cursor-not-allowed select-all"
+                                                  className="w-full text-right bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono text-[var(--text-muted)] cursor-not-allowed select-all"
                                                 />
                                               </div>
                                             );
@@ -2805,7 +2805,7 @@ export default function SalesForm({
                                                    type="number"
                                                    min="0"
                                                    step="0.0001"
-                                                   className="w-full text-right bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-100 focus:border-blue-500 outline-none"
+                                                   className="w-full text-right bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                                                    onChange={(e) => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -2822,7 +2822,7 @@ export default function SalesForm({
                                           if (col.key === "discount") {
                                             return (
                                               <div key={col.key}>
-                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-200 focus:border-blue-500 outline-none" />
+                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none" />
                                               </div>
                                             );
                                           }
@@ -2834,7 +2834,7 @@ export default function SalesForm({
                                                   name={`items.${index}.tax`}
                                                   type="number"
                                                   step="1"
-                                                  className="w-full text-center bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-200 focus:border-blue-500 outline-none"
+                                                  className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                                                   onKeyDown={(e) => {
                                                     if (e.key === "Tab" && !e.shiftKey) {
                                                       const isLastRow = index === values.items.length - 1;
@@ -2876,7 +2876,7 @@ export default function SalesForm({
 
                                           if (col.key === "amount") {
                                             return (
-                                              <div key={col.key} className="text-right px-2 py-1.5 font-mono font-bold font-tabular text-white text-xs">
+                                              <div key={col.key} className="text-right px-2 py-1.5 font-mono font-bold font-tabular text-[var(--text-primary)] text-xs">
                                                 {item.amount?.toFixed(2) || "0.00"}
                                               </div>
                                             );
@@ -2903,7 +2903,7 @@ export default function SalesForm({
                                                     tax: 0,
                                                     amount: 0,
                                                   })}
-                                                  className="p-1 text-gray-400 hover:text-amber-300 transition-colors"
+                                                  className="p-1 text-[var(--text-muted)] hover:text-[var(--status-warning)] transition-colors"
                                                   title="Add Note Below"
                                                   tabIndex={-1}
                                                 >
@@ -2924,7 +2924,7 @@ export default function SalesForm({
                                                       description: item.description || item.product_description || "",
                                                       unit: item.unit || "pcs",
                                                     })}
-                                                    className="text-gray-400 hover:text-cyan-400 transition-colors p-1"
+                                                    className="text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors p-1"
                                                     title={item.product_id ? "Update Catalog Item" : "Save as New Product in Catalog"}
                                                     tabIndex={-1}
                                                   >
@@ -2935,7 +2935,7 @@ export default function SalesForm({
                                                   type="button"
                                                   onClick={() => remove(index)}
                                                   disabled={values.items.length === 1}
-                                                  className="text-gray-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30"
+                                                  className="text-[var(--text-muted)] hover:text-[var(--status-danger)] transition-colors p-1 disabled:opacity-30"
                                                   title="Remove Item"
                                                   tabIndex={-1}
                                                 >
@@ -2960,11 +2960,11 @@ export default function SalesForm({
                                       return (
                                         <div
                                           key={item._key ? `mobile-${item._key}` : `mobile-${index}`}
-                                          className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex flex-col gap-3"
+                                          className="bg-[var(--status-warning)]/5 border border-[var(--status-warning)]/20 rounded-xl p-4 flex flex-col gap-3"
                                         >
                                           <div className="flex items-center justify-between">
-                                            <span className="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
-                                              <DocumentTextIcon className="w-4 h-4 text-amber-400" />
+                                            <span className="text-xs font-semibold text-[var(--status-warning)] flex items-center gap-1.5">
+                                              <DocumentTextIcon className="w-4 h-4 text-[var(--status-warning)]" />
                                               Note Row #{index + 1}
                                             </span>
                                             <div className="flex items-center gap-1">
@@ -2972,7 +2972,7 @@ export default function SalesForm({
                                                 type="button"
                                                 onClick={() => remove(index)}
                                                 disabled={values.items.length === 1}
-                                                className="p-1.5 text-red-400 hover:text-red-300 disabled:opacity-20"
+                                                className="p-1.5 text-[var(--status-danger)] hover:opacity-80 disabled:opacity-20 transition-opacity"
                                                 title="Remove Note"
                                               >
                                                 <TrashIcon className="w-4 h-4" />
@@ -2984,7 +2984,7 @@ export default function SalesForm({
                                             name={`items.${index}.description`}
                                             rows={2}
                                             placeholder="Enter section header, remarks, or notes..."
-                                            className="w-full bg-[#0a0a0a] border border-amber-500/30 rounded-xl p-2.5 text-amber-100 placeholder-gray-500 text-xs focus:ring-1 focus:ring-amber-400 outline-none"
+                                            className="w-full bg-[var(--bg-primary)] border border-[var(--status-warning)]/30 rounded-xl p-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] text-xs focus:ring-1 focus:ring-[var(--status-warning)] outline-none"
                                           />
                                         </div>
                                       );
@@ -2992,10 +2992,10 @@ export default function SalesForm({
 
                                     const productBatches = getProductBatchesForItem(item);
                                     return (
-                                      <div key={item._key ? `mobile-${item._key}` : `mobile-${index}`} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-4 hover:bg-white/10 transition-all">
+                                      <div key={item._key ? `mobile-${item._key}` : `mobile-${index}`} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 flex flex-col gap-4">
                                       {/* Row 1: Product */}
                                       <div className="w-full">
-                                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
+                                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Product Name</label>
                                           <ProductAutocomplete
                                             idx={index}
                                             values={values}
@@ -3008,13 +3008,13 @@ export default function SalesForm({
                                             onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
                                           />
                                                   {itemSettings.show_item_storage_condition && (
-                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-cyan-300">
-                                                      <span className="text-[10px] uppercase font-semibold text-gray-400 select-none">Storage:</span>
+                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                                                      <span className="text-[10px] uppercase font-semibold text-[var(--text-muted)] select-none">Storage:</span>
                                                       <Field
                                                         name={`items.${index}.storage_condition`}
                                                         type="text"
                                                         placeholder="e.g. Store in cool, dry place"
-                                                        className="flex-1 bg-transparent border-0 border-b border-cyan-500/30 hover:border-cyan-500/60 focus:border-cyan-400 px-1 py-0.5 text-xs text-cyan-200 placeholder-gray-500 outline-none transition-colors"
+                                                        className="flex-1 bg-transparent border-0 border-b border-[var(--border-subtle)] focus:border-[var(--accent-primary)] px-1 py-0.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none transition-colors"
                                                       />
                                                     </div>
                                                   )}
@@ -3035,7 +3035,7 @@ export default function SalesForm({
                                                     description: item.description || item.product_description || "",
                                                     unit: item.unit || "pcs",
                                                   })}
-                                                  className="inline-flex items-center gap-1.5 text-xs text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-2 py-1 rounded-lg transition-colors font-medium"
+                                                  className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 px-2 py-1 rounded-lg transition-colors font-medium"
                                                 >
                                                   <ArrowPathIcon className="w-3.5 h-3.5" />
                                                   <span>Update Catalog Item</span>
@@ -3055,7 +3055,7 @@ export default function SalesForm({
                                                     description: item.description || item.product_description || "",
                                                     unit: item.unit || "pcs",
                                                   })}
-                                                  className="inline-flex items-center gap-1.5 text-xs text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-2 py-1 rounded-lg transition-colors font-medium"
+                                                  className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 px-2 py-1 rounded-lg transition-colors font-medium"
                                                 >
                                                   <PlusIcon className="w-3.5 h-3.5" />
                                                   <span>Save to Catalog</span>
@@ -3067,14 +3067,14 @@ export default function SalesForm({
                                             const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                             if (!matchedScheme) return null;
                                             return (
-                                              <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded w-fit">
+                                              <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
                                                 <span>🎁</span>
                                                 <span>{matchedScheme.name}</span>
                                                 {matchedScheme.scheme_type === 'bogo' && (
-                                                  <span className="text-emerald-300">(Buy {matchedScheme.min_qty} Get {matchedScheme.free_qty} Free)</span>
+                                                  <span className="opacity-90">(Buy {matchedScheme.min_qty} Get {matchedScheme.free_qty} Free)</span>
                                                 )}
                                                 {matchedScheme.scheme_type === 'percentage_discount' && (
-                                                  <span className="text-emerald-300">({matchedScheme.discount_percent}% Off)</span>
+                                                  <span className="opacity-90">({matchedScheme.discount_percent}% Off)</span>
                                                 )}
                                               </div>
                                             );
@@ -3086,14 +3086,14 @@ export default function SalesForm({
                                            <div className="grid grid-cols-2 gap-4">
                                                {itemSettings.show_item_manufacturer && (
                                                  <div>
-                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Manufacturer</label>
-                                                     <Field name={`items.${index}.manufacturer`} type="text" placeholder="Manufacturer" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
+                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Manufacturer</label>
+                                                     <Field name={`items.${index}.manufacturer`} type="text" placeholder="Manufacturer" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" />
                                                  </div>
                                                )}
                                                {itemSettings.show_item_internal_reference && (
                                                  <div>
-                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Internal Ref</label>
-                                                     <Field name={`items.${index}.internal_reference`} type="text" placeholder="Internal Ref" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" />
+                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Internal Ref</label>
+                                                     <Field name={`items.${index}.internal_reference`} type="text" placeholder="Internal Ref" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" />
                                                  </div>
                                                )}
                                            </div>
@@ -3104,13 +3104,13 @@ export default function SalesForm({
                                           <div className="grid grid-cols-2 gap-4">
                                               {itemSettings.show_item_hsn && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">HSN/SAC Code</label>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">HSN/SAC Code</label>
                                                     <Field name={`items.${index}.hsn_sac_code`}>
                                                       {({ field }) => (
                                                         <input
                                                           {...field}
                                                           type="text"
-                                                          className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm"
+                                                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none"
                                                           onBlur={async (e) => {
                                                             field.onBlur(e);
                                                             await autofillTaxFromLearnedHsn(
@@ -3126,10 +3126,10 @@ export default function SalesForm({
                                               )}
                                               {itemSettings.show_item_batch && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Batch</label>
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Batch</label>
                                                     <Field name={`items.${index}.batch`}>
                                                       {({ field }) => (
-                                                        <select {...field} className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm" disabled={!item.product_id}>
+                                                        <select {...field} className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" disabled={!item.product_id}>
                                                           <option value="">Auto (FEFO)</option>
                                                           {productBatches.map((b) => (
                                                             <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -3145,17 +3145,17 @@ export default function SalesForm({
                                       {/* Row 2: Qty, Unit, Price */}
                                       <div className="grid grid-cols-3 gap-4">
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Qty</label>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Qty</label>
                                               <Field
                                                 name={`items.${index}.quantity`}
                                                 type="number"
                                                 min="0"
-                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center font-bold"
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center font-bold focus:border-[var(--accent-primary)] outline-none"
                                                 onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                               />
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Unit</label>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Unit</label>
                                               <select
                                                 value={item.unit || "pcs"}
                                                 onChange={(e) => {
@@ -3171,20 +3171,20 @@ export default function SalesForm({
                                                     setFieldValue(`items.${index}.unit`, val);
                                                   }
                                                 }}
-                                                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-2 py-2.5 text-white text-sm text-center"
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-2 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none"
                                               >
-                                                {availableUnits.map((u) => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
-                                                <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
+                                                {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
+                                                <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                                               </select>
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Price</label>
                                               <Field
                                                  name={`items.${index}.price`}
                                                  type="number"
                                                  min="0"
                                                  step="0.0001"
-                                                 className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-right font-mono"
+                                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-right font-mono focus:border-[var(--accent-primary)] outline-none"
                                                  onChange={(e) => {
                                                    const price = e.target.value;
                                                    setFieldValue(`items.${index}.price`, price);
@@ -3203,13 +3203,13 @@ export default function SalesForm({
                                             {itemSettings.show_item_free_quantity && (
                                                 <div className="relative">
                                                     <div className="flex items-center justify-between mb-2">
-                                                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Free</label>
+                                                      <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Free</label>
                                                       {(() => {
                                                         const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                                         const freeQtyNum = Number(values.items[index]?.free_quantity) || 0;
                                                         if (matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0) {
                                                           return (
-                                                            <span className="bg-emerald-500/30 text-emerald-300 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-400/40">
+                                                            <span className="bg-[var(--status-success)]/30 text-[var(--status-success)] text-[8px] font-black px-1.5 py-0.5 rounded border border-[var(--status-success)]/40">
                                                               +{freeQtyNum} Free
                                                             </span>
                                                           );
@@ -3217,29 +3217,29 @@ export default function SalesForm({
                                                         return null;
                                                       })()}
                                                     </div>
-                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-green-300 font-bold text-sm text-center" />
+                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--status-success)] font-bold text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_discount && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Disc %</label>
-                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Disc %</label>
+                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_tax && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Tax %</label>
-                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm text-center" />
+                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Tax %</label>
+                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
                                                 </div>
                                             )}
                                           </div>
                                       )}
 
                                       {/* Row 4: Amount & Actions */}
-                                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                                      <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)]">
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Subtotal</label>
-                                              <div className="text-xl font-mono font-black text-cyan-400">
+                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">Subtotal</label>
+                                              <div className="text-xl font-mono font-black text-[var(--accent-primary)]">
                                                   {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
                                           </div>
@@ -3262,7 +3262,7 @@ export default function SalesForm({
                                                 tax: 0,
                                                 amount: 0,
                                               })}
-                                              className="p-1.5 text-gray-400 hover:text-amber-300"
+                                              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--status-warning)] transition-colors"
                                               title="Add Note Below"
                                             >
                                               <DocumentPlusIcon className="w-4 h-4" />
@@ -3271,7 +3271,7 @@ export default function SalesForm({
                                               type="button"
                                               onClick={() => remove(index)}
                                               disabled={values.items.length === 1}
-                                              className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+                                              className="px-3 py-1.5 bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/20 rounded-xl transition-all hover:bg-[var(--status-danger)]/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
                                               tabIndex={-1}
                                             >
                                               Remove
@@ -3335,33 +3335,33 @@ export default function SalesForm({
                                 tax: 0,
                                 amount: 0,
                               })}
-                              className="px-4 py-2 border border-amber-500/30 hover:border-amber-400/50 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-sm text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                              className="px-4 py-2 border border-[var(--status-warning)]/30 hover:border-[var(--status-warning)]/50 bg-[var(--status-warning)]/10 hover:bg-[var(--status-warning)]/20 rounded-xl text-sm text-[var(--status-warning)] transition-colors flex items-center gap-2 cursor-pointer font-medium"
                             >
-                              <DocumentPlusIcon className="w-4 h-4 text-amber-400" />
+                              <DocumentPlusIcon className="w-4 h-4 text-[var(--status-warning)]" />
                               <span>+ Add Note</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => setShowDocNote(!showDocNote)}
-                              className="px-3.5 py-2 border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-2 border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/40 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] rounded-xl text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-1.5 cursor-pointer"
                             >
-                              <DocumentTextIcon className="w-4 h-4 text-cyan-400" />
+                              <DocumentTextIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                               <span>{showDocNote ? "Hide Document Terms" : "+ Terms & Remarks"}</span>
                             </button>
                           </div>
 
                           {(showDocNote || values.notes) && (
-                            <div className="mt-3 p-4 bg-white/5 border border-white/10 rounded-xl">
+                            <div className="mt-3 p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl">
                               <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-semibold text-gray-300">Document Notes & Terms</label>
-                                <span className="text-[10px] text-gray-500">Will appear in the printed bill footer</span>
+                                <label className="text-xs font-semibold text-[var(--text-primary)]">Document Notes & Terms</label>
+                                <span className="text-[10px] text-[var(--text-muted)]">Will appear in the printed bill footer</span>
                               </div>
                               <Field
                                 as="textarea"
                                 name="notes"
                                 rows={2}
                                 placeholder="Enter delivery instructions, terms & conditions, client reference, or remarks..."
-                                className="w-full bg-[#111] border border-white/10 rounded-lg p-2.5 text-xs text-white placeholder-gray-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg p-2.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                               />
                             </div>
                           )}
@@ -3373,54 +3373,54 @@ export default function SalesForm({
                 </div>
 
                 {/* Totals */}
-                <div className="bg-obsidian-card border border-hairline p-6 sm:p-8 rounded-2xl shadow-xl">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-6 sm:p-8 rounded-2xl shadow-xl">
                   <div className="space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-400">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Subtotal</span>
-                      <span className="text-white font-medium font-mono font-tabular">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
+                      <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-emerald-400">
+                    <div className="flex justify-between text-[var(--status-success)]">
                       <span>Total Discount</span>
                       <span className="font-mono font-tabular">-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-300">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Total Tax (GST)</span>
-                      <span className="text-white font-medium font-mono font-tabular">{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
+                      <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                     </div>
                     {isIGST ? (
-                      <div className="flex justify-between text-blue-400 text-xs pl-2 font-mono font-tabular">
+                      <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
                         <span>↳ IGST (Inter-state)</span>
                         <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                       </div>
                     ) : (
                       <>
-                        <div className="flex justify-between text-blue-400 text-xs pl-2 font-mono font-tabular">
+                        <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
                           <span>↳ CGST (Intra-state)</span>
                           <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-blue-400 text-xs pl-2 font-mono font-tabular">
+                        <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
                           <span>↳ SGST (Intra-state)</span>
                           <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
                         </div>
                       </>
                     )}
-                    <div className="h-px bg-hairline my-3"></div>
+                    <div className="h-px bg-[var(--border-subtle)] my-3"></div>
                     {roundOffApplied && (
-                      <div className="flex justify-between text-amber-300 font-mono font-tabular">
+                      <div className="flex justify-between text-[var(--status-warning)] font-mono font-tabular">
                         <span>Round Off</span>
                         <span>{roundOffDelta >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOffDelta.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-2xl font-mono font-tabular pt-1">
-                      <span className="text-white">Grand Total</span>
-                      <span className="text-white">{getCurrencySymbol()}{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
+                      <span className="text-[var(--text-primary)]">Grand Total</span>
+                      <span className="text-[var(--text-primary)]">{getCurrencySymbol()}{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
                     </div>
                     <div className="text-right">
                       {!roundOffApplied ? (
                         <button
                           type="button"
                           onClick={() => setRoundOffApplied(true)}
-                          className="text-xs text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
+                          className="text-xs text-[var(--accent-primary)] hover:opacity-80 underline font-medium cursor-pointer"
                         >
                           Apply round off
                         </button>
@@ -3428,13 +3428,13 @@ export default function SalesForm({
                         <button
                           type="button"
                           onClick={() => setRoundOffApplied(false)}
-                          className="text-[11px] text-gray-400 hover:text-white underline"
+                          className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] underline"
                         >
                           Revert round off
                         </button>
                       )}
                     </div>
-                    <div className="text-right text-xs text-gray-500 mt-1 uppercase tracking-wide">
+                    <div className="text-right text-xs text-[var(--text-muted)] mt-1 uppercase tracking-wide">
                       {grandTotal > 0 ? "Amount Payable" : ""}
                     </div>
                   </div>
@@ -3442,10 +3442,10 @@ export default function SalesForm({
                 </div>{/* End flex-1 scrollable */}
 
                 {/* Actions */}
-                <div className="flex-none p-6 sm:p-8 bg-[#0c0c0e]/95 backdrop-blur-xl border-t border-white/5 flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
+                <div className="flex-none p-6 sm:p-8 bg-[var(--bg-surface)] backdrop-blur-xl border-t border-[var(--border-subtle)] flex justify-end space-x-3 rounded-b-[24px] items-center z-40 relative">
                   {isLocked ? (
                     <>
-                      <div className="text-amber-400/90 text-xs flex-1 mr-4">
+                      <div className="text-[var(--status-warning)] text-xs flex-1 mr-4">
                         {isQuotation
                           ? 'This quotation has been converted and is locked. Editing is disabled.'
                           : 'This document is read-only.'}
@@ -3453,14 +3453,14 @@ export default function SalesForm({
                       <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
+                        className="btn-secondary px-6 py-3 rounded-[14px]"
                       >
                         Close
                       </button>
                     </>
                   ) : (
                     <>
-                  <div className="text-gray-500 text-xs flex-1 mr-4 hidden sm:block">
+                  <div className="text-[var(--text-muted)] text-xs flex-1 mr-4 hidden sm:block">
                     Closing this window automatically saves as a draft. Or click Save Draft.
                   </div>
                   {!forceDraft && (
@@ -3470,7 +3470,7 @@ export default function SalesForm({
                           submitActionRef.current = 'draft';
                           handleSubmit();
                       }}
-                      className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-[14px] transition-colors font-medium border-dashed text-sm focus:ring-2 focus:ring-gray-500/50 focus:outline-none"
+                      className="btn-secondary px-6 py-3 rounded-[14px] border-dashed text-sm"
                     >
                       Save Draft
                     </button>
@@ -3478,7 +3478,7 @@ export default function SalesForm({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-6 py-3 bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 rounded-[14px] transition-colors font-medium text-sm focus:ring-2 focus:ring-red-500/50 focus:outline-none"
+                    className="btn-secondary px-6 py-3 rounded-[14px] text-sm hover:text-[var(--status-danger)] hover:border-[var(--status-danger)]/30"
                   >
                     Cancel
                   </button>
@@ -3488,7 +3488,7 @@ export default function SalesForm({
                     onClick={() => {
                       submitActionRef.current = forceDraft ? 'draft' : 'final';
                     }}
-                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 min-w-[150px] rounded-[14px] focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
+                    className="btn-primary min-w-[150px] rounded-[14px] px-6 py-3 text-sm font-semibold"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
@@ -3520,19 +3520,19 @@ export default function SalesForm({
             onClick={() => setCatalogSyncModal(null)}
           >
             <div
-              className="bg-[#18181b] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+              className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400">
+                <div className="p-2.5 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl text-[var(--accent-primary)]">
                   <ArrowPathIcon className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Sync Catalog Product</h3>
-                  <p className="text-xs text-gray-400">"{catalogSyncModal.name || 'Custom Product'}"</p>
+                  <h3 className="text-base font-bold text-[var(--text-primary)]">Sync Catalog Product</h3>
+                  <p className="text-xs text-[var(--text-secondary)]">"{catalogSyncModal.name || 'Custom Product'}"</p>
                 </div>
               </div>
-              <p className="text-xs text-gray-300 leading-relaxed">
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                 {catalogSyncModal.product_id
                   ? "You modified item details for this catalog line. Would you like to update the existing catalog master record or save this configuration as a new product in your inventory?"
                   : "This custom item is not yet in your inventory catalog. Would you like to save it as a new product in your catalog so you can reuse it in future invoices?"}
@@ -3542,24 +3542,24 @@ export default function SalesForm({
                   <button
                     type="button"
                     onClick={handleUpdateCatalogItem}
-                    className="w-full py-2.5 px-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
+                    className="w-full py-2.5 px-4 bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/25 text-[var(--text-primary)] font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
                   >
                     <span>Update Catalog Item</span>
-                    <span className="text-[10px] text-cyan-400/70">Overwrites master name/price/HSN/tax</span>
+                    <span className="text-[10px] text-[var(--accent-primary)]">Overwrites master name/price/HSN/tax</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={handleSaveAsNewCatalogItem}
-                  className="w-full py-2.5 px-4 bg-purple-500/20 border border-purple-500/40 hover:bg-purple-500/30 text-purple-300 font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
+                  className="w-full py-2.5 px-4 btn-primary text-xs rounded-xl transition-colors text-left flex items-center justify-between"
                 >
                   <span>Save as New Product</span>
-                  <span className="text-[10px] text-purple-400/70">Creates new catalog master product</span>
+                  <span className="text-[10px] opacity-80">Creates new catalog master product</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setCatalogSyncModal(null)}
-                  className="w-full py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white text-xs rounded-xl transition-colors text-center"
+                  className="btn-secondary w-full py-2 px-4 text-xs rounded-xl transition-colors text-center"
                 >
                   Keep For This Document Only
                 </button>
@@ -3571,65 +3571,65 @@ export default function SalesForm({
         {productCreationState && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setProductCreationState(null)}></div>
-            <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#111] p-6 shadow-2xl shadow-cyan-950/40 animate-fade-up">
+            <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 shadow-2xl animate-fade-up">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Add Inventory Item</h3>
-                  <p className="mt-1 text-xs text-gray-400">Create the product first, then it will be inserted into this quotation row.</p>
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">Add Inventory Item</h3>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">Create the product first, then it will be inserted into this quotation row.</p>
                 </div>
-                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300 hover:text-white">
+                <button type="button" onClick={() => setProductCreationState(null)} className="btn-secondary px-3 py-1 text-xs">
                   Close
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Product Name</label>
-                  <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none" />
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Product Name</label>
+                  <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] outline-none" />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Manufacturer</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Manufacturer</label>
                   <input
                     value={productCreationState.manufacturer || ""}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, manufacturer: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                     placeholder="e.g. Acme Corp"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Internal Reference</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Internal Reference</label>
                   <input
                     value={productCreationState.internal_reference || ""}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, internal_reference: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                     placeholder="e.g. SKU-1234"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Sale Price</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Sale Price</label>
                   <input
                     type="number"
                     step="any"
                     min="0"
                     value={productCreationState.sale_price}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, sale_price: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Cost Price (Internal)</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Cost Price (Internal)</label>
                   <input
                     type="number"
                     step="any"
                     min="0"
                     value={productCreationState.cost_price || ""}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, cost_price: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                     placeholder="Purchase / Cost price"
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Unit</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Unit</label>
                   <select
                     value={productCreationState.unit || "pcs"}
                     onChange={(e) => {
@@ -3645,51 +3645,51 @@ export default function SalesForm({
                         setProductCreationState((current) => ({ ...current, unit: val }));
                       }
                     }}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                   >
-                    {availableUnits.map((u) => <option key={u} value={u} className="bg-[#18181b]">{u}</option>)}
-                    <option value="__custom__" className="bg-[#18181b] text-cyan-400 font-bold">+ Custom Unit...</option>
+                    {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
+                    <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">GST %</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">GST %</label>
                   <select
                     value={productCreationState.tax !== undefined ? String(productCreationState.tax) : "0"}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                   >
                     {GST_RATES.map((rate) => (
-                      <option key={rate.value} value={String(rate.value)} className="bg-[#18181b]">
+                      <option key={rate.value} value={String(rate.value)} className="bg-[var(--bg-surface)]">
                         {rate.label}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">HSN/SAC Code</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">HSN/SAC Code</label>
                   <input
                     value={productCreationState.hsn_sac_code}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, hsn_sac_code: e.target.value }))}
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                     placeholder="Optional"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-400">Description</label>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Description</label>
                   <textarea
                     rows={3}
                     value={productCreationState.description}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, description: e.target.value }))}
-                    className="w-full resize-none rounded-xl border border-white/10 bg-[#0f0f0f] px-4 py-2.5 text-white outline-none"
+                    className="w-full resize-none rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                     placeholder="Optional product description"
                   />
                 </div>
               </div>
               <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={() => setProductCreationState(null)} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 hover:text-white">
+                <button type="button" onClick={() => setProductCreationState(null)} className="btn-secondary px-4 py-2 text-sm">
                   Cancel
                 </button>
-                <button type="button" onClick={handleSaveInventoryProduct} className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-400">
+                <button type="button" onClick={handleSaveInventoryProduct} className="btn-primary px-4 py-2 text-sm font-medium">
                   Create Product
                 </button>
               </div>

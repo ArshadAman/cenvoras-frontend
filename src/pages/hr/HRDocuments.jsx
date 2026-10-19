@@ -65,21 +65,22 @@ function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
   };
 
   if (!isOpen) return null;
-  const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
+  const ic = "w-full px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
+  const labelCls = "block text-sm font-medium text-[var(--text-primary)] mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-xl font-semibold text-white">Upload Employee Document</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)]">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Upload Employee Document</h2>
+          <button type="button" onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Employee *</label>
+            <label className={labelCls}>Employee *</label>
             <select required value={form.employee} onChange={e => setForm(p => ({ ...p, employee: e.target.value }))} className={ic}>
               <option value="">Select Employee</option>
               {employees.map(e => (
@@ -89,12 +90,12 @@ function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Document Title *</label>
+            <label className={labelCls}>Document Title *</label>
             <input required type="text" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className={ic} placeholder="e.g. Signed Offer Letter 2026" />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Document Category *</label>
+            <label className={labelCls}>Document Category *</label>
             <select value={form.document_type} onChange={e => setForm(p => ({ ...p, document_type: e.target.value }))} className={ic}>
               <option value="offer_letter">Offer Letter</option>
               <option value="appointment_letter">Appointment Letter</option>
@@ -107,28 +108,28 @@ function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Upload File</label>
+            <label className={labelCls}>Upload File</label>
             <input
               type="file"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full text-sm text-gray-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30"
+              className="w-full text-sm text-[var(--text-secondary)] file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--accent-primary)]/15 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/25 transition cursor-pointer"
             />
-            {file && <p className="mt-1 text-xs text-gray-500 truncate">{file.name}</p>}
+            {file && <p className="mt-1 text-xs text-[var(--text-muted)] truncate">{file.name}</p>}
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Or Document Link / URL</label>
+            <label className={labelCls}>Or Document Link / URL</label>
             <input type="url" value={form.file_url} onChange={e => setForm(p => ({ ...p, file_url: e.target.value }))} className={ic} placeholder="https://..." />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Notes</label>
+            <label className={labelCls}>Notes</label>
             <textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className={ic + ' resize-none'} />
           </div>
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-400 bg-white/5 rounded-xl hover:text-white">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">
+          <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
+            <button type="button" onClick={onClose} className="btn-secondary text-sm">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary text-sm disabled:opacity-50">
               {saving ? 'Uploading...' : 'Save Document'}
             </button>
           </div>
@@ -179,21 +180,21 @@ export default function HRDocuments() {
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
-        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-lg">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-2">Compliance & Records</p>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white flex items-center gap-3">
-                <FolderIcon className="w-9 h-9 text-indigo-300" />
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Compliance & Records</p>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+                <FolderIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Employee Documents
               </h1>
-              <p className="text-white/65 text-sm mt-2">
+              <p className="text-[var(--text-secondary)] text-sm mt-2">
                 Centralized digital repository for employee offer letters, contracts, KYC proofs, and tax declarations.
               </p>
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300 shadow-lg shadow-indigo-500/20"
+              className="btn-primary"
             >
               <PlusIcon className="h-4 w-4" />
               Upload Document
@@ -202,17 +203,17 @@ export default function HRDocuments() {
         </section>
 
         {/* Documents Table */}
-        <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Document Vault</h2>
-            <button onClick={fetchDocs} className="text-gray-400 hover:text-white text-xs inline-flex items-center gap-1">
+        <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0 overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/40">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Document Vault</h2>
+            <button onClick={fetchDocs} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs inline-flex items-center gap-1 transition">
               <ArrowPathIcon className="w-3.5 h-3.5" /> Refresh
             </button>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)]/70 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Title</th>
                   <th className="px-6 py-4">Employee</th>
@@ -223,26 +224,26 @@ export default function HRDocuments() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" className="px-6 py-8 text-center">Loading vault...</td></tr>
+                  <tr><td colSpan="5" className="px-6 py-8 text-center text-[var(--text-muted)]">Loading vault...</td></tr>
                 ) : documents.length === 0 ? (
-                  <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-400">No documents uploaded yet.</td></tr>
+                  <tr><td colSpan="5" className="px-6 py-10 text-center text-[var(--text-muted)]">No documents uploaded yet.</td></tr>
                 ) : (
                   documents.map(doc => (
-                    <tr key={doc.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">
+                    <tr key={doc.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">
                         <p>{doc.title}</p>
-                        {doc.notes && <p className="text-xs text-gray-400">{doc.notes}</p>}
+                        {doc.notes && <p className="text-xs text-[var(--text-muted)]">{doc.notes}</p>}
                       </td>
                       <td className="px-6 py-4">
-                        <p>{doc.employee_name}</p>
-                        <p className="text-xs text-indigo-300">{doc.employee_code}</p>
+                        <p className="text-[var(--text-primary)] font-medium">{doc.employee_name}</p>
+                        <p className="text-xs text-[var(--accent-primary)] font-mono">{doc.employee_code}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white uppercase">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 uppercase">
                           {doc.document_type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-xs">{(() => {
+                      <td className="px-6 py-4 text-[var(--text-secondary)] text-xs">{(() => {
                         try {
                           return new Intl.DateTimeFormat('en-GB', {
                             timeZone: 'Asia/Kolkata',
@@ -260,7 +261,7 @@ export default function HRDocuments() {
                             href={doc.file_url || doc.file}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition inline-flex items-center"
+                            className="p-1.5 rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 transition inline-flex items-center"
                             title="Download / View"
                           >
                             <DocumentArrowDownIcon className="w-4 h-4" />
@@ -268,7 +269,7 @@ export default function HRDocuments() {
                         )}
                         <button
                           onClick={() => handleDelete(doc.id)}
-                          className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition inline-flex items-center"
+                          className="p-1.5 rounded-lg text-[var(--status-danger)] hover:bg-[var(--status-danger)]/15 border border-transparent hover:border-[var(--status-danger)]/30 transition inline-flex items-center"
                           title="Delete"
                         >
                           <TrashIcon className="w-4 h-4" />

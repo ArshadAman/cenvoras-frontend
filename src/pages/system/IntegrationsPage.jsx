@@ -22,26 +22,26 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 const TABS = [
   { id: 'email', label: 'Email Automation', icon: EnvelopeIcon },
   { id: 'backup', label: 'Data Backup', icon: CloudArrowDownIcon },
-  { id: 'whatsapp', label: 'WhatsApp Automation', icon: ChatBubbleLeftIcon, badge: 'On demand', badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' },
+  { id: 'whatsapp', label: 'WhatsApp Automation', icon: ChatBubbleLeftIcon, badge: 'On demand', badgeClass: 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' },
   { id: 'apikeys', label: 'API Keys', icon: KeyIcon, comingSoon: true },
 ];
 
 // ─── ComingSoon Placeholder ───
-function ComingSoonPlaceholder({ title, description, icon: Icon, badge = 'Soon', badgeClass = 'bg-gradient-to-r from-pink-500 to-orange-400 text-white', note = "We'll notify you when this is available" }) {
+function ComingSoonPlaceholder({ title, description, icon: Icon, badge = 'Soon', badgeClass = 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30', note = "We'll notify you when this is available" }) {
   return (
-    <div className="bento-card p-10 flex flex-col items-center justify-center text-center max-w-lg mx-auto">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-10 flex flex-col items-center justify-center text-center max-w-lg mx-auto shadow-sm">
       <div className="relative mb-6">
-        <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
-          <Icon className="w-12 h-12 text-gray-500" />
+        <div className="p-5 bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-subtle)]">
+          <Icon className="w-12 h-12 text-[var(--text-muted)]" />
         </div>
         <span className={`absolute -top-2 -right-2 px-2.5 py-1 ${badgeClass} text-[10px] font-extrabold uppercase rounded-full tracking-wider shadow-md`}>
           {badge}
         </span>
       </div>
-      <h2 className="text-xl font-bold text-white mb-2">{title}</h2>
-      <p className="text-gray-400 text-sm leading-relaxed mb-6">{description}</p>
-      <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-gray-400 text-sm">
-        <SparklesIcon className="w-4 h-4 text-emerald-400" />
+      <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{title}</h2>
+      <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">{description}</p>
+      <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] text-[var(--text-secondary)] text-sm">
+        <SparklesIcon className="w-4 h-4 text-[var(--accent-primary)]" />
         {note}
       </div>
     </div>
@@ -115,24 +115,24 @@ function EmailTab() {
     <div className="space-y-6">
 
       {/* Payment Reminder Automation */}
-      <div className="bento-card p-6">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 bg-amber-500/10 rounded-xl">
-            <BellAlertIcon className="w-5 h-5 text-amber-400" />
+          <div className="p-2.5 bg-[var(--status-warning)]/10 rounded-xl">
+            <BellAlertIcon className="w-5 h-5 text-[var(--status-warning)]" />
           </div>
           <div>
-            <h3 className="text-white font-bold">Automated Payment Reminders</h3>
-            <p className="text-sm text-gray-400">Send outstanding balance reminders to all customers with unpaid dues</p>
+            <h3 className="text-[var(--text-primary)] font-bold">Automated Payment Reminders</h3>
+            <p className="text-sm text-[var(--text-secondary)]">Send outstanding balance reminders to all customers with unpaid dues</p>
           </div>
         </div>
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mb-4 text-sm text-amber-200">
-          <ExclamationTriangleIcon className="w-4 h-4 inline mr-2 text-amber-400" />
+        <div className="bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/30 rounded-xl p-4 mb-4 text-sm text-[var(--status-warning)]">
+          <ExclamationTriangleIcon className="w-4 h-4 inline mr-2 text-[var(--status-warning)]" />
           This will email <strong>every customer with an outstanding balance</strong>.
         </div>
         <button
           onClick={() => remindersMutation.mutate()}
           disabled={remindersMutation.isPending}
-          className="flex items-center gap-2 px-6 py-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl font-semibold hover:bg-amber-500/20 transition-colors disabled:opacity-40"
+          className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm font-semibold disabled:opacity-40"
         >
           {remindersMutation.isPending ? (
             <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
@@ -141,19 +141,19 @@ function EmailTab() {
           )}
         </button>
         {lastReminderDispatch && (
-          <p className="mt-3 text-xs text-gray-400">
+          <p className="mt-3 text-xs text-[var(--text-muted)]">
             Last queue: {lastReminderDispatch.queued} reminder(s), {lastReminderDispatch.stagger}s stagger, {lastReminderDispatch.dispatchWindow}s dispatch window.
           </p>
         )}
       </div>
 
       {/* Manual Email Send — Customer-Only */}
-      <div className="bento-card p-6">
-        <h3 className="text-white font-bold mb-1">Send Email to Customer</h3>
-        <p className="text-xs text-gray-500 mb-4">You can only send emails to registered customers with an email address on file.</p>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
+        <h3 className="text-[var(--text-primary)] font-bold mb-1">Send Email to Customer</h3>
+        <p className="text-xs text-[var(--text-muted)] mb-4">You can only send emails to registered customers with an email address on file.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="relative">
-            <label className="text-xs text-gray-400 block mb-1">Customer</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-1.5">Customer</label>
             <input
               type="text"
               value={selectedCustomer ? `${selectedCustomer.name} (${selectedCustomer.email})` : customerSearch}
@@ -164,12 +164,12 @@ function EmailTab() {
               }}
               onFocus={() => setShowDropdown(true)}
               placeholder="Type customer name or email..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500/50"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)]"
             />
             {showDropdown && !form.recipient && (
-              <div className="absolute z-50 top-full mt-1 w-full max-h-48 overflow-y-auto bg-[#111] border border-white/10 rounded-xl shadow-xl">
+              <div className="absolute z-50 top-full mt-1 w-full max-h-48 overflow-y-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl">
                 {filteredCustomers.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-gray-500">
+                  <div className="px-4 py-3 text-sm text-[var(--text-muted)]">
                     {customersWithEmail.length === 0 ? 'No customers have email addresses' : 'No matching customers'}
                   </div>
                 ) : (
@@ -181,10 +181,10 @@ function EmailTab() {
                         setCustomerSearch('');
                         setShowDropdown(false);
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0 transition-colors"
+                      className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] last:border-0 transition-colors"
                     >
-                      <div className="text-sm text-white font-medium">{c.name}</div>
-                      <div className="text-xs text-gray-400">{c.email}</div>
+                      <div className="text-sm text-[var(--text-primary)] font-medium">{c.name}</div>
+                      <div className="text-xs text-[var(--text-muted)]">{c.email}</div>
                     </button>
                   ))
                 )}
@@ -192,51 +192,51 @@ function EmailTab() {
             )}
           </div>
           <div>
-            <label className="text-xs text-gray-400 block mb-1">Subject</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-1.5">Subject</label>
             <input
               type="text"
               value={form.subject}
               onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
               placeholder="Invoice / Payment Reminder..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500/50"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)]"
             />
           </div>
         </div>
         <div className="mb-4">
-          <label className="text-xs text-gray-400 block mb-1">Message</label>
+          <label className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-1.5">Message</label>
           <textarea
             value={form.body}
             onChange={e => setForm(p => ({ ...p, body: e.target.value }))}
             rows={4}
             placeholder="Type your message here..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500/50 resize-none"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)] resize-none"
           />
         </div>
         <button
           onClick={handleSend}
           disabled={sending || !form.recipient}
-          className="flex items-center gap-2 px-6 py-2.5 bg-blue-500/10 border border-blue-500/20 text-blue-300 rounded-xl font-semibold hover:bg-blue-500/20 transition-colors disabled:opacity-40"
+          className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm font-semibold disabled:opacity-40"
         >
           {sending ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</> : <><EnvelopeIcon className="w-4 h-4" /> Send Email</>}
         </button>
       </div>
 
       {/* Notification History */}
-      <div className="bento-card p-0 overflow-hidden">
-        <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-          <h3 className="text-white font-bold text-sm uppercase tracking-wider">Email History</h3>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-0 overflow-hidden shadow-sm">
+        <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]">
+          <h3 className="text-[var(--text-primary)] font-bold text-xs uppercase tracking-wider">Email History</h3>
           <button 
             onClick={() => queryClient.invalidateQueries({ queryKey: ['notification-logs'] })}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+            className="p-1.5 hover:bg-[var(--bg-surface)] rounded-lg transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             title="Refresh logs"
           >
             <ArrowPathIcon className="w-4 h-4" />
           </button>
         </div>
         {logsLoading ? (
-          <div className="p-8 text-center text-gray-500">Loading...</div>
+          <div className="p-8 text-center text-[var(--text-muted)]">Loading...</div>
         ) : logList.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-[var(--text-muted)]">
             <EnvelopeIcon className="w-10 h-10 mx-auto mb-2 opacity-20" />
             No emails sent yet.
           </div>
@@ -244,34 +244,34 @@ function EmailTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/5 text-gray-400 text-xs uppercase">
-                  <th className="px-5 py-3 text-left font-medium">Recipient</th>
-                  <th className="px-5 py-3 text-left font-medium">Subject</th>
-                  <th className="px-5 py-3 text-left font-medium">Status</th>
-                  <th className="px-5 py-3 text-left font-medium">Date</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-xs uppercase font-semibold">
+                  <th className="px-5 py-3 text-left">Recipient</th>
+                  <th className="px-5 py-3 text-left">Subject</th>
+                  <th className="px-5 py-3 text-left">Status</th>
+                  <th className="px-5 py-3 text-left">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {logList.filter(l => l.channel === 'email').map(log => (
-                  <tr key={log.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                    <td className="px-5 py-3 text-gray-300">{log.recipient}</td>
-                    <td className="px-5 py-3 text-gray-400">{log.subject || '—'}</td>
+                  <tr key={log.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <td className="px-5 py-3 text-[var(--text-primary)] font-medium">{log.recipient}</td>
+                    <td className="px-5 py-3 text-[var(--text-secondary)]">{log.subject || '—'}</td>
                     <td className="px-5 py-3">
                       {log.status === 'sent' ? (
-                        <span className="flex items-center gap-1 text-emerald-400 text-xs font-semibold">
+                        <span className="flex items-center gap-1 text-[var(--status-success)] text-xs font-semibold">
                           <CheckCircleIcon className="w-4 h-4" /> Sent
                         </span>
                       ) : log.status === 'queued' ? (
-                        <span className="flex items-center gap-1 text-blue-400 text-xs font-semibold">
+                        <span className="flex items-center gap-1 text-[var(--status-info)] text-xs font-semibold">
                           <ArrowPathIcon className="w-4 h-4 animate-spin" /> Queued
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-red-400 text-xs font-semibold">
+                        <span className="flex items-center gap-1 text-[var(--status-danger)] text-xs font-semibold">
                           <XCircleIcon className="w-4 h-4" /> Failed
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-gray-500 text-xs">{new Date(log.sent_at).toLocaleDateString('en-IN')}</td>
+                    <td className="px-5 py-3 text-[var(--text-muted)] text-xs">{new Date(log.sent_at).toLocaleDateString('en-IN')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -369,8 +369,8 @@ function BarcodeTab() {
   return (
     <div className="space-y-6">
       {/* Mode Selector */}
-      <div className="bento-card p-6">
-        <h3 className="text-white font-bold mb-4">Scan Mode</h3>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
+        <h3 className="text-[var(--text-primary)] font-bold mb-4">Scan Mode</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
             { id: 'manual', icon: QrCodeIcon, label: 'Manual Entry', desc: 'Type or paste barcode / scan into input field' },
@@ -382,11 +382,15 @@ function BarcodeTab() {
               onClick={() => {
                 setScanMode(mode.id);
               }}
-              className={`text-left p-4 rounded-xl border transition-all ${scanMode === mode.id ? 'border-purple-500/50 bg-purple-500/10' : 'border-white/10 bg-white/[0.03] hover:bg-white/5'}`}
+              className={`text-left p-4 rounded-xl border transition-all ${
+                scanMode === mode.id 
+                  ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--text-primary)]' 
+                  : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+              }`}
             >
-              <mode.icon className={`w-6 h-6 mb-2 ${scanMode === mode.id ? 'text-purple-400' : 'text-gray-400'}`} />
-              <div className={`font-semibold text-sm mb-1 ${scanMode === mode.id ? 'text-white' : 'text-gray-300'}`}>{mode.label}</div>
-              <div className="text-xs text-gray-500 leading-snug">{mode.desc}</div>
+              <mode.icon className={`w-6 h-6 mb-2 ${scanMode === mode.id ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+              <div className={`font-semibold text-sm mb-1 ${scanMode === mode.id ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{mode.label}</div>
+              <div className="text-xs text-[var(--text-muted)] leading-snug">{mode.desc}</div>
             </button>
           ))}
         </div>
@@ -394,10 +398,10 @@ function BarcodeTab() {
 
       {/* Camera View */}
       {scanMode === 'camera' && (
-        <div className="bento-card p-6">
-          <h3 className="text-white font-bold mb-3">Camera Scanner</h3>
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
+          <h3 className="text-[var(--text-primary)] font-bold mb-3">Camera Scanner</h3>
           <div id="reader" className="w-full bg-black rounded-2xl overflow-hidden mb-4 min-h-[300px]"></div>
-          <div className="mt-4 p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl text-xs text-blue-300">
+          <div className="mt-4 p-3 bg-[var(--status-info)]/10 border border-[var(--status-info)]/30 rounded-xl text-xs text-[var(--status-info)]">
             💡 For reliable scanning, connect an external barcode scanner gun in <strong>Hardware Scanner</strong> mode.
           </div>
         </div>
@@ -405,21 +409,21 @@ function BarcodeTab() {
 
       {/* Hardware Scanner Status */}
       {scanMode === 'hardware' && (
-        <div className="bento-card p-6 border-green-500/20 bg-green-500/5">
+        <div className="bg-[var(--bg-surface)] border border-[var(--status-success)]/30 bg-[var(--status-success)]/5 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-green-500/10 rounded-xl">
-              <ShieldCheckIcon className="w-6 h-6 text-green-400" />
+            <div className="p-2.5 bg-[var(--status-success)]/10 rounded-xl">
+              <ShieldCheckIcon className="w-6 h-6 text-[var(--status-success)]" />
             </div>
             <div>
-              <h3 className="text-white font-bold">Hardware Scanner Active</h3>
-              <p className="text-sm text-green-300">Listening for barcode input from USB/Bluetooth scanner</p>
+              <h3 className="text-[var(--text-primary)] font-bold">Hardware Scanner Active</h3>
+              <p className="text-sm text-[var(--status-success)]">Listening for barcode input from USB/Bluetooth scanner</p>
             </div>
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-green-400 font-bold">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="ml-auto flex items-center gap-1.5 text-xs text-[var(--status-success)] font-bold">
+              <span className="w-2 h-2 bg-[var(--status-success)] rounded-full animate-pulse" />
               Listening
             </span>
           </div>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)]">
             Point your barcode scanner gun at any barcode. The device will automatically send the barcode as keyboard input —
             this mode captures it regardless of which field is focused. Works with all USB HID and Bluetooth scanners.
           </p>
@@ -427,8 +431,8 @@ function BarcodeTab() {
       )}
 
       {/* Manual Input */}
-      <div className="bento-card p-6">
-        <h3 className="text-white font-bold mb-3">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
+        <h3 className="text-[var(--text-primary)] font-bold mb-3">
           {scanMode === 'hardware' ? 'Last Scanned Barcode' : 'Enter Barcode Manually'}
         </h3>
         <div className="flex gap-3">
@@ -439,12 +443,12 @@ function BarcodeTab() {
             onChange={e => setBarcodeInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') lookupProduct(barcodeInput); }}
             placeholder={scanMode === 'hardware' ? 'Scan a barcode to populate...' : 'Enter barcode / EAN / UPC...'}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 outline-none font-mono"
+            className="flex-1 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none font-mono"
           />
           <button
             onClick={() => lookupProduct(barcodeInput)}
             disabled={isLookingUp || !barcodeInput.trim()}
-            className="px-5 py-3 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-xl font-semibold hover:bg-purple-500/20 transition-colors disabled:opacity-40 flex items-center gap-2"
+            className="btn-primary px-5 py-3 flex items-center gap-2 text-sm disabled:opacity-40"
           >
             {isLookingUp ? <ArrowPathIcon className="w-4 h-4 animate-spin" /> : <QrCodeIcon className="w-4 h-4" />}
             Lookup
@@ -453,14 +457,14 @@ function BarcodeTab() {
 
         {/* Result */}
         {lookupError && (
-          <div className="mt-4 p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-300 text-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="mt-4 p-4 bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl text-[var(--status-danger)] text-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <XCircleIcon className="w-5 h-5 shrink-0" /> {lookupError}
             </div>
             {notFoundBarcode && (
               <button
                 onClick={() => navigate(`/inventory?addBarcode=${notFoundBarcode}`)}
-                className="px-4 py-2 bg-purple-500 border border-purple-400 text-white rounded-lg text-xs font-bold hover:bg-purple-600 transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2"
+                className="btn-primary px-4 py-2 text-xs font-bold flex items-center gap-2"
               >
                 <PlusIcon className="w-4 h-4" /> Add to Inventory
               </button>
@@ -468,10 +472,10 @@ function BarcodeTab() {
           </div>
         )}
         {scannedProduct && (
-          <div className="mt-4 p-5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+          <div className="mt-4 p-5 bg-[var(--status-success)]/5 border border-[var(--status-success)]/20 rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
-              <span className="text-emerald-400 font-semibold text-sm">Product Found</span>
+              <CheckCircleIcon className="w-5 h-5 text-[var(--status-success)]" />
+              <span className="text-[var(--status-success)] font-semibold text-sm">Product Found</span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -481,8 +485,8 @@ function BarcodeTab() {
                 { label: 'HSN/SAC', value: scannedProduct.hsn_sac_code || '—' },
               ].map(f => (
                 <div key={f.label}>
-                  <div className="text-xs text-gray-500 uppercase mb-0.5">{f.label}</div>
-                  <div className="text-white font-semibold">{f.value}</div>
+                  <div className="text-xs text-[var(--text-muted)] uppercase mb-0.5">{f.label}</div>
+                  <div className="text-[var(--text-primary)] font-semibold">{f.value}</div>
                 </div>
               ))}
             </div>
@@ -553,17 +557,17 @@ function BackupTab() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bento-card p-5 border-purple-500/20 bg-purple-500/5 flex items-start gap-4">
-        <div className="p-3 bg-purple-500/10 rounded-xl shrink-0">
-          <CloudArrowDownIcon className="w-7 h-7 text-purple-400" />
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 flex items-start gap-4 shadow-sm">
+        <div className="p-3 bg-[var(--accent-primary)]/10 rounded-xl shrink-0">
+          <CloudArrowDownIcon className="w-7 h-7 text-[var(--accent-primary)]" />
         </div>
         <div>
-          <h3 className="text-white font-bold mb-1">Complete System Backup</h3>
-          <p className="text-sm text-gray-400">
+          <h3 className="text-[var(--text-primary)] font-bold mb-1">Complete System Backup</h3>
+          <p className="text-sm text-[var(--text-secondary)]">
             Export a complete backup of all your data in JSON or CSV (separate module files in a ZIP).
             Store it securely and use it to restore your data on any Cenvora instance.
           </p>
-          <div className="mt-3 inline-flex bg-white/5 border border-white/10 rounded-lg p-1 gap-1">
+          <div className="mt-3 inline-flex bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-1 gap-1">
             {['json', 'csv'].map((fmt) => (
               <button
                 key={fmt}
@@ -572,8 +576,8 @@ function BackupTab() {
                   setImportFile(null);
                   setImportResult(null);
                 }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide ${
-                  backupFormat === fmt ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors ${
+                  backupFormat === fmt ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 {fmt}
@@ -585,17 +589,17 @@ function BackupTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Export */}
-        <div className="bento-card p-6">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-purple-500/10 rounded-xl">
-              <CloudArrowDownIcon className="w-6 h-6 text-purple-400" />
+            <div className="p-2.5 bg-[var(--accent-primary)]/10 rounded-xl">
+              <CloudArrowDownIcon className="w-6 h-6 text-[var(--accent-primary)]" />
             </div>
             <div>
-              <h3 className="text-white font-bold">Export & Download</h3>
-              <p className="text-sm text-gray-500">Full data backup as {backupFormat.toUpperCase()}</p>
+              <h3 className="text-[var(--text-primary)] font-bold">Export & Download</h3>
+              <p className="text-sm text-[var(--text-muted)]">Full data backup as {backupFormat.toUpperCase()}</p>
             </div>
           </div>
-          <div className="space-y-2 text-sm text-gray-400 mb-5">
+          <div className="space-y-2 text-sm text-[var(--text-secondary)] mb-5">
             {['✦ All Products & Inventory', '✦ All Customers & Balances', '✦ All Sales Invoices', '✦ Payment History'].map(item => (
               <div key={item} className="flex items-center gap-2">{item}</div>
             ))}
@@ -603,12 +607,12 @@ function BackupTab() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="w-full py-3 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-xl font-semibold hover:bg-purple-500/20 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+            className="btn-primary w-full py-3 flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-40"
           >
             {exporting ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Preparing...</> : <><CloudArrowDownIcon className="w-4 h-4" /> Export Now</>}
           </button>
           {exportResult && (
-            <div className="mt-4 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-sm text-emerald-400">
+            <div className="mt-4 p-3 bg-[var(--status-success)]/10 border border-[var(--status-success)]/30 rounded-xl text-sm text-[var(--status-success)]">
               {backupFormat === 'csv'
                 ? '✅ products.csv, customers.csv, invoices.csv, payments.csv exported in ZIP'
                 : `✅ ${exportResult.summary?.total_products} products · ${exportResult.summary?.total_customers} customers · ${exportResult.summary?.total_invoices} invoices exported`}
@@ -617,39 +621,39 @@ function BackupTab() {
         </div>
 
         {/* Import */}
-        <div className="bento-card p-6">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-cyan-500/10 rounded-xl">
-              <CloudArrowUpIcon className="w-6 h-6 text-cyan-400" />
+            <div className="p-2.5 bg-[var(--status-info)]/10 rounded-xl">
+              <CloudArrowUpIcon className="w-6 h-6 text-[var(--status-info)]" />
             </div>
             <div>
-              <h3 className="text-white font-bold">Restore from Backup</h3>
-              <p className="text-sm text-gray-500">Import a {backupFormat === 'csv' ? '.zip' : '.json'} backup file</p>
+              <h3 className="text-[var(--text-primary)] font-bold">Restore from Backup</h3>
+              <p className="text-sm text-[var(--text-muted)]">Import a {backupFormat === 'csv' ? '.zip' : '.json'} backup file</p>
             </div>
           </div>
-          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200">
+          <div className="mb-4 p-3 bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/30 rounded-xl text-xs text-[var(--status-warning)]">
             ⚠ Existing records will be updated by name. No data will be deleted before import.
           </div>
           <div className="mb-4">
-            <label className="block text-xs text-gray-400 mb-1">
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
               Select Backup File ({backupFormat === 'csv' ? '.zip' : '.json'})
             </label>
             <input
               type="file"
               accept={backupFormat === 'csv' ? '.zip' : '.json'}
               onChange={e => { setImportFile(e.target.files?.[0]); setImportResult(null); }}
-              className="w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:font-medium file:cursor-pointer"
+              className="w-full text-sm text-[var(--text-secondary)] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[var(--bg-primary)] file:text-[var(--text-primary)] file:font-semibold file:cursor-pointer"
             />
           </div>
           <button
             onClick={handleImport}
             disabled={!importFile || importing}
-            className="w-full py-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 rounded-xl font-semibold hover:bg-cyan-500/20 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+            className="btn-primary w-full py-3 flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-40"
           >
             {importing ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Importing...</> : <><CloudArrowUpIcon className="w-4 h-4" /> Restore Data</>}
           </button>
           {importResult && (
-            <div className={`mt-4 p-3 rounded-xl text-sm ${importResult.error ? 'bg-red-500/5 border border-red-500/10 text-red-400' : 'bg-emerald-500/5 border border-emerald-500/10 text-emerald-400'}`}>
+            <div className={`mt-4 p-3 rounded-xl text-sm ${importResult.error ? 'bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 text-[var(--status-danger)]' : 'bg-[var(--status-success)]/10 border border-[var(--status-success)]/30 text-[var(--status-success)]'}`}>
               {importResult.error
                 ? `❌ ${importResult.error}`
                 : `✅ Restored: ${importResult.imported?.products || 0} products, ${importResult.imported?.customers || 0} customers, ${importResult.imported?.invoices || 0} invoices, ${importResult.imported?.payments || 0} payments`}
@@ -669,28 +673,23 @@ export default function IntegrationsPage() {
   return (
     <>
       <div className="relative p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-fade-up">
-        <div className="pointer-events-none absolute inset-0 opacity-80">
-          <div className="absolute -top-8 -left-12 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-          <div className="absolute top-1/3 -right-12 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-        </div>
-
-        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80 mb-2">System Hub</p>
-              <h1 className="text-3xl md:text-4xl font-semibold text-white mb-2">Business Tools</h1>
-              <p className="text-white/65 text-sm md:text-base max-w-2xl">Centralized automation for communication, backup, and platform operations.</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-bold">System Hub</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-2">Business Tools</h1>
+              <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-2xl">Centralized automation for communication, backup, and platform operations.</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-sm text-white/85">
-              <span className="text-white/50">Active Tool:</span>{' '}
-              <span className="font-semibold text-cyan-300">{activeTabConfig?.label}</span>
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-3 text-sm text-[var(--text-primary)]">
+              <span className="text-[var(--text-secondary)]">Active Tool:</span>{' '}
+              <span className="font-semibold text-[var(--accent-primary)]">{activeTabConfig?.label}</span>
             </div>
           </div>
         </section>
 
         <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6">
           <aside className="lg:col-span-3">
-            <div className="rounded-3xl border border-white/10 bg-black/30 p-3 backdrop-blur-xl space-y-1">
+            <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-sm space-y-1">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -700,22 +699,22 @@ export default function IntegrationsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full rounded-2xl px-4 py-3.5 text-left transition-all border flex items-center justify-between gap-3 ${
                       isActive
-                        ? 'bg-white/10 border-white/20 text-white shadow-sm'
-                        : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                        ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold shadow-sm'
+                        : 'bg-transparent border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/50'
                     }`}
                   >
                     <span className="flex items-center gap-3">
-                      <span className={`p-2 rounded-xl ${isActive ? 'bg-cyan-500/20 text-cyan-300' : 'bg-white/5 text-gray-400'}`}>
+                      <span className={`p-2 rounded-xl ${isActive ? 'bg-[var(--accent-primary)]/10 text-[var(--accent-primary)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}>
                         <Icon className="w-4 h-4" />
                       </span>
                       <span className="text-sm font-medium">{tab.label}</span>
                     </span>
                     {tab.badge ? (
-                      <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${tab.badgeClass || 'bg-amber-500/20 text-amber-300 border border-amber-500/30'} leading-none`}>
+                      <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${tab.badgeClass || 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'} leading-none`}>
                         {tab.badge}
                       </span>
                     ) : tab.comingSoon ? (
-                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-gradient-to-r from-pink-500 to-orange-400 text-white leading-none">
+                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 leading-none">
                         Soon
                       </span>
                     ) : null}
@@ -726,7 +725,7 @@ export default function IntegrationsPage() {
           </aside>
 
           <section className="lg:col-span-9">
-            <div className="rounded-3xl border border-white/10 bg-black/25 p-5 md:p-6 backdrop-blur-xl">
+            <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 md:p-6 shadow-sm">
               {/* Tab Content */}
               {activeTab === 'email' && <EmailTab />}
               {activeTab === 'backup' && <BackupTab />}
@@ -736,7 +735,7 @@ export default function IntegrationsPage() {
                   description="Send invoices, payment reminders, order updates, and low-stock alerts automatically to customers via the official WhatsApp Business Cloud API. Dedicated business number provisioning and custom templates are available on demand."
                   icon={ChatBubbleLeftIcon}
                   badge="On demand"
-                  badgeClass="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  badgeClass="bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30"
                   note="Available on demand — contact support to activate for your business"
                 />
               )}

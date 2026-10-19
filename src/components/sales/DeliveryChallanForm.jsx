@@ -59,7 +59,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm"
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)]"
               autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === 'Tab') {
@@ -78,7 +78,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               }}
             />
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+              <div className="text-[8px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -97,17 +97,17 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
               }}
               placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-blue-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)]/40 rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto">
           {filteredProducts.slice(0, 50).map((product) => (
             <div
               key={product.id}
-              className="px-4 py-3 cursor-pointer text-sm border-b border-white/5 hover:bg-white/5 text-gray-300"
+              className="px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/40 text-[var(--text-primary)]"
               onClick={() => selectProduct(product)}
             >
               {product.name}
@@ -167,14 +167,14 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up border border-white/10 bg-[#111]">
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
-          <h2 className="text-xl font-bold text-white">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="absolute inset-0" onClick={onClose}></div>
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl animate-fade-up border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+        <div className="flex justify-between items-center p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">
             {isEdit ? "Edit Delivery Challan" : "New Delivery Challan"}
           </h2>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-white">×</button>
+          <button onClick={onClose} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">×</button>
         </div>
         
         <Formik
@@ -225,47 +225,47 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
         >
           {({ values, setFieldValue, isSubmitting }) => (
             <Form className="p-0">
-                <div className="p-8 space-y-8">
+                <div className="p-6 space-y-6">
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Customer</label>
-                           <Field name="customer_name" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase">Customer</label>
+                           <Field name="customer_name" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]" />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Challan No.</label>
-                           <Field name="challan_number" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase">Challan No.</label>
+                           <Field name="challan_number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]" />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Date</label>
-                           <Field name="date" type="date" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase">Date</label>
+                           <Field name="date" type="date" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]" />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Vehicle No.</label>
-                           <Field name="vehicle_number" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase">Vehicle No.</label>
+                           <Field name="vehicle_number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]" />
                         </div>
                    </div>
 
                    {/* Items Header */}
-                   <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                     <h3 className="text-base font-bold text-white">Challan Items</h3>
+                   <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                     <h3 className="text-base font-bold text-[var(--text-primary)]">Challan Items</h3>
                      <div className="relative">
                        <button
                          type="button"
                          onClick={() => setShowColumnPicker((prev) => !prev)}
-                         className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                         className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)]/40 text-xs text-[var(--text-secondary)]"
                        >
                          Columns
                        </button>
 
                        {showColumnPicker && (
-                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
-                           <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
-                           <label className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-2xl">
+                           <div className="mb-2 text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-secondary)] cursor-pointer">
                              <input
                                type="checkbox"
                                checked={showManufacturer}
                                onChange={() => setShowManufacturer((prev) => !prev)}
-                               className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                               className="h-3.5 w-3.5 rounded border-[var(--border-subtle)] bg-transparent text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
                              />
                              <span>Manufacturer</span>
                            </label>
@@ -278,28 +278,28 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                     {({ push, remove }) => (
                         <div className="space-y-4">
                             {values.items.map((item, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-[var(--bg-primary)]/20 p-4 rounded-xl border border-[var(--border-subtle)]">
                                     <div className="col-span-6">
-                                        <label className="block text-xs text-gray-400 mb-1">Product</label>
+                                        <label className="block text-xs text-[var(--text-secondary)] mb-1">Product</label>
                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                     </div>
                                     <div className="col-span-4">
-                                        <label className="block text-xs text-gray-400 mb-1">Qty</label>
-                                        <Field name={`items.${index}.quantity`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" />
+                                        <label className="block text-xs text-[var(--text-secondary)] mb-1">Qty</label>
+                                        <Field name={`items.${index}.quantity`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]" />
                                     </div>
                                     <div className="col-span-2 flex justify-end">
-                                        <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-300">Remove</button>
+                                        <button type="button" onClick={() => remove(index)} className="text-[var(--status-danger)] hover:underline text-xs font-semibold">Remove</button>
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, unit: "pcs" })} className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, unit: "pcs" })} className="text-[var(--accent-primary)] hover:underline text-sm font-medium">
                                 + Add Item
                             </button>
                         </div>
                     )}
                    </FieldArray>
 
-                   <div className="flex justify-end pt-6 border-t border-white/10">
+                   <div className="flex justify-end pt-6 border-t border-[var(--border-subtle)]">
                         <button type="submit" disabled={isSubmitting} className="btn-primary">
                             {isSubmitting ? "Saving..." : "Save Challan"}
                         </button>

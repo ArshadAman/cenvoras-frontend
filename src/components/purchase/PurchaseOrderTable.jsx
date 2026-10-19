@@ -166,10 +166,10 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                      order.status === 'received' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' :
-                      order.status === 'cancelled' ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)]' :
-                      order.status === 'sent' ? 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]' :
-                      'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]'
+                      order.status === 'received' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
+                      order.status === 'cancelled' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
+                      order.status === 'sent' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :
+                      'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
                     }`}>
                       {order.status || 'draft'}
                     </span>
@@ -198,7 +198,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                         className={`p-1.5 rounded-lg transition-colors ${
                           order.status !== 'draft' && order.status !== 'cancelled'
                             ? 'text-[var(--text-muted)] cursor-not-allowed opacity-50'
-                            : 'text-[var(--text-primary)] border border-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+                            : 'text-[var(--status-danger)] border border-[var(--status-danger)]/20 hover:bg-[var(--status-danger)]/10'
                         }`}
                         title={order.status !== 'draft' && order.status !== 'cancelled' ? "Only draft or cancelled orders can be deleted" : "Delete Order"}
                       >
@@ -207,7 +207,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                     </div>
                     {/* Fallback for touch devices where hover doesn't work well */}
                     <div className="md:hidden flex justify-end">
-                      <button className="p-1.5 text-gray-400">
+                      <button className="p-1.5 text-[var(--text-muted)]">
                         <EllipsisVerticalIcon className="w-5 h-5" />
                       </button>
                     </div>

@@ -125,22 +125,22 @@ const Ledger = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
            <div>
-             <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-                <BanknotesIcon className="w-8 h-8 text-green-400" />
+             <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+                <BanknotesIcon className="w-8 h-8 text-[var(--accent-primary)]" />
                 Ledger & Sub-Accounts
              </h1>
-             <p className="text-gray-400 text-sm">Real-time double-entry sub-ledgers, debtor & creditor accounts, and running statements.</p>
+             <p className="text-[var(--text-secondary)] text-sm">Real-time double-entry sub-ledgers, debtor & creditor accounts, and running statements.</p>
            </div>
            
            <div className="flex flex-wrap gap-3">
              <Link to="/ledger/manual-journal"
-               className="btn-secondary text-sm py-2 px-4 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 text-indigo-300 flex items-center gap-2"
+               className="btn-secondary text-sm py-2 px-4 flex items-center gap-2"
              >
                <PlusIcon className="h-4 w-4" />
                <span>Manual Journal Entry</span>
              </Link>
              <Link to="/payments"
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-green-500/20 flex items-center gap-2"
+               className="btn-primary text-sm py-2 px-4 flex items-center gap-2 shadow-lg"
              >
                <PlusIcon className="h-4 w-4" />
                <span>Record Payment</span>
@@ -149,13 +149,13 @@ const Ledger = () => {
         </div>
 
         {/* 3-Way Sub-Ledger Tab Switcher */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-subtle)] pb-4">
           <button
             onClick={() => setActiveTab('customers')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
               activeTab === 'customers'
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/10'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-transparent'
             }`}
           >
             <UsersIcon className="w-4 h-4" />
@@ -165,8 +165,8 @@ const Ledger = () => {
             onClick={() => setActiveTab('vendors')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
               activeTab === 'vendors'
-                ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30 shadow-lg shadow-orange-500/10'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-transparent'
             }`}
           >
             <BuildingOfficeIcon className="w-4 h-4" />
@@ -176,8 +176,8 @@ const Ledger = () => {
             onClick={() => setActiveTab('general')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
               activeTab === 'general'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-lg shadow-cyan-500/10'
-                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-transparent'
             }`}
           >
             <BookOpenIcon className="w-4 h-4" />
@@ -187,13 +187,13 @@ const Ledger = () => {
 
         {/* Dynamic Partner Selector */}
         {activeTab === 'customers' && (
-          <div className="bento-card !p-4 !overflow-visible relative z-30 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="bento-card !p-4 !overflow-visible relative z-30 flex flex-col md:flex-row items-start md:items-center gap-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center gap-2 shrink-0">
-              <UsersIcon className="w-5 h-5 text-purple-400" />
-              <span className="text-sm font-semibold text-gray-300">Filter by Customer:</span>
+              <UsersIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">Filter by Customer:</span>
             </div>
             <div className="relative flex-1 w-full md:max-w-sm">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 z-10" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] z-10" />
               <input
                 type="text"
                 placeholder="Search customer..."
@@ -205,7 +205,7 @@ const Ledger = () => {
                   setShowCustomerDropdown(true);
                 }}
                 onFocus={() => setShowCustomerDropdown(true)}
-                className="w-full pl-9 pr-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                className="w-full pl-9 pr-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
               />
               {showCustomerDropdown && (
                 <div 
@@ -214,11 +214,11 @@ const Ledger = () => {
                 />
               )}
               {showCustomerDropdown && filteredCustomers.length > 0 && (
-                <div className="absolute left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-white/15 rounded-xl shadow-2xl max-h-52 overflow-y-auto">
+                <div className="absolute left-0 right-0 z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl max-h-52 overflow-y-auto">
                   {filteredCustomers.slice(0, 20).map(c => (
                     <div
                       key={c.id}
-                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/10 border-b border-white/5 transition-colors"
+                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] last:border-0 transition-colors"
                       onClick={() => {
                         setSelectedCustomer(c.id);
                         setSelectedCustomerName(c.name);
@@ -226,9 +226,9 @@ const Ledger = () => {
                         setShowCustomerDropdown(false);
                       }}
                     >
-                      <span className="text-white font-medium">{c.name}</span>
+                      <span className="text-[var(--text-primary)] font-medium">{c.name}</span>
                       {c.current_balance > 0 && (
-                        <span className="ml-2 text-amber-400 text-xs">({getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
+                        <span className="ml-2 text-[var(--status-warning)] text-xs font-semibold">({getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString('en-IN')} due)</span>
                       )}
                     </div>
                   ))}
@@ -238,28 +238,28 @@ const Ledger = () => {
             {selectedCustomer && (
               <button
                 onClick={() => { setSelectedCustomer(''); setSelectedCustomerName(''); setCustomerSearch(''); }}
-                className="text-xs text-gray-400 hover:text-white px-3 py-2 bg-white/5 rounded-lg border border-white/10"
+                className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-2 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-subtle)]"
               >
                 Clear Filter
               </button>
             )}
             {selectedCustomerData?.current_balance > 0 && (
-              <div className="ml-auto flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
-                <span className="text-xs text-amber-400 font-medium">Outstanding Receivable:</span>
-                <span className="text-amber-300 font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
+              <div className="ml-auto flex items-center gap-2 bg-[var(--status-warning)]/15 border border-[var(--status-warning)]/30 rounded-xl px-4 py-2">
+                <span className="text-xs text-[var(--status-warning)] font-medium">Outstanding Receivable:</span>
+                <span className="text-[var(--status-warning)] font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedCustomerData.current_balance).toLocaleString('en-IN')}</span>
               </div>
             )}
           </div>
         )}
 
         {activeTab === 'vendors' && (
-          <div className="bento-card !p-4 !overflow-visible relative z-30 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="bento-card !p-4 !overflow-visible relative z-30 flex flex-col md:flex-row items-start md:items-center gap-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <div className="flex items-center gap-2 shrink-0">
-              <BuildingOfficeIcon className="w-5 h-5 text-orange-400" />
-              <span className="text-sm font-semibold text-gray-300">Filter by Vendor:</span>
+              <BuildingOfficeIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">Filter by Vendor:</span>
             </div>
             <div className="relative flex-1 w-full md:max-w-sm">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 z-10" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] z-10" />
               <input
                 type="text"
                 placeholder="Search vendor / supplier..."
@@ -271,7 +271,7 @@ const Ledger = () => {
                   setShowVendorDropdown(true);
                 }}
                 onFocus={() => setShowVendorDropdown(true)}
-                className="w-full pl-9 pr-4 py-2.5 bg-[#111] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+                className="w-full pl-9 pr-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
               />
               {showVendorDropdown && (
                 <div 
@@ -280,11 +280,11 @@ const Ledger = () => {
                 />
               )}
               {showVendorDropdown && filteredVendors.length > 0 && (
-                <div className="absolute left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-white/15 rounded-xl shadow-2xl max-h-52 overflow-y-auto">
+                <div className="absolute left-0 right-0 z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl max-h-52 overflow-y-auto">
                   {filteredVendors.slice(0, 20).map(v => (
                     <div
                       key={v.id}
-                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-white/10 border-b border-white/5 transition-colors"
+                      className="px-4 py-2.5 cursor-pointer text-sm hover:bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] last:border-0 transition-colors"
                       onClick={() => {
                         setSelectedVendor(v.id);
                         setSelectedVendorName(v.name);
@@ -292,9 +292,9 @@ const Ledger = () => {
                         setShowVendorDropdown(false);
                       }}
                     >
-                      <span className="text-white font-medium">{v.name}</span>
+                      <span className="text-[var(--text-primary)] font-medium">{v.name}</span>
                       {v.gstin && (
-                        <span className="ml-2 text-gray-400 text-xs">({v.gstin})</span>
+                        <span className="ml-2 text-[var(--text-muted)] text-xs">({v.gstin})</span>
                       )}
                     </div>
                   ))}
@@ -304,15 +304,15 @@ const Ledger = () => {
             {selectedVendor && (
               <button
                 onClick={() => { setSelectedVendor(''); setSelectedVendorName(''); setVendorSearch(''); }}
-                className="text-xs text-gray-400 hover:text-white px-3 py-2 bg-white/5 rounded-lg border border-white/10"
+                className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-2 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-subtle)]"
               >
                 Clear Filter
               </button>
             )}
             {selectedVendorData?.outstanding_balance > 0 && (
-              <div className="ml-auto flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-2">
-                <span className="text-xs text-orange-400 font-medium">Outstanding Payable:</span>
-                <span className="text-orange-300 font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedVendorData.outstanding_balance).toLocaleString('en-IN')}</span>
+              <div className="ml-auto flex items-center gap-2 bg-[var(--status-warning)]/15 border border-[var(--status-warning)]/30 rounded-xl px-4 py-2">
+                <span className="text-xs text-[var(--status-warning)] font-medium">Outstanding Payable:</span>
+                <span className="text-[var(--status-warning)] font-bold text-lg">{getCurrencySymbol()}{parseFloat(selectedVendorData.outstanding_balance).toLocaleString('en-IN')}</span>
               </div>
             )}
           </div>
@@ -323,27 +323,27 @@ const Ledger = () => {
           <>
             <LedgerSummary customerFilter={selectedCustomer} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="bento-card !p-0 overflow-hidden">
-                <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Overdue Invoices</h2>
-                  <span className="text-xs text-amber-300">{overdueData?.count || 0} items</span>
+              <div className="bento-card !p-0 overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+                <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Overdue Invoices</h2>
+                  <span className="text-xs text-[var(--status-warning)] font-semibold">{overdueData?.count || 0} items</span>
                 </div>
                 <div className="p-4 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
                   {isOverdueLoading ? (
-                    <p className="text-sm text-gray-400">Loading overdue invoices...</p>
+                    <p className="text-sm text-[var(--text-muted)]">Loading overdue invoices...</p>
                   ) : overdueInvoices.length === 0 ? (
-                    <p className="text-sm text-gray-400">No overdue invoices found for current filters.</p>
+                    <p className="text-sm text-[var(--text-muted)]">No overdue invoices found for current filters.</p>
                   ) : (
                     overdueInvoices.slice(0, 8).map((invoice) => (
-                      <div key={invoice.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div key={invoice.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-3">
                         <div className="flex items-center justify-between gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-white">{invoice.invoice_number}</p>
-                            <p className="text-xs text-gray-400">{invoice.customer_name}</p>
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">{invoice.invoice_number}</p>
+                            <p className="text-xs text-[var(--text-secondary)]">{invoice.customer_name}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-amber-300">{getCurrencySymbol()}{parseFloat(invoice.outstanding_amount || 0).toLocaleString('en-IN')}</p>
-                            <p className="text-xs text-gray-500">{invoice.days_overdue} days overdue</p>
+                            <p className="text-sm font-semibold text-[var(--status-warning)]">{getCurrencySymbol()}{parseFloat(invoice.outstanding_amount || 0).toLocaleString('en-IN')}</p>
+                            <p className="text-xs text-[var(--text-muted)]">{invoice.days_overdue} days overdue</p>
                           </div>
                         </div>
                       </div>
@@ -352,26 +352,26 @@ const Ledger = () => {
                 </div>
               </div>
 
-              <div className="bento-card !p-0 overflow-hidden">
-                <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Balance Reconciliation</h2>
-                  <span className="text-xs text-cyan-300">Top mismatches</span>
+              <div className="bento-card !p-0 overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+                <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Balance Reconciliation</h2>
+                  <span className="text-xs text-[var(--accent-primary)] font-semibold">Top mismatches</span>
                 </div>
                 <div className="p-4 space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
                   {isReconciliationLoading ? (
-                    <p className="text-sm text-gray-400">Loading reconciliation gaps...</p>
+                    <p className="text-sm text-[var(--text-muted)]">Loading reconciliation gaps...</p>
                   ) : topMismatches.length === 0 ? (
-                    <p className="text-sm text-gray-400">No balance mismatch found. Customer balances match invoice outstanding.</p>
+                    <p className="text-sm text-[var(--text-muted)]">No balance mismatch found. Customer balances match invoice outstanding.</p>
                   ) : (
                     topMismatches.map((row) => (
-                      <div key={row.customer_id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div key={row.customer_id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-3">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-white truncate">{row.customer_name}</p>
-                          <p className={`text-sm font-semibold ${parseFloat(row.difference) < 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                          <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{row.customer_name}</p>
+                          <p className={`text-sm font-semibold ${parseFloat(row.difference) < 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
                             {getCurrencySymbol()}{Math.abs(parseFloat(row.difference || 0)).toLocaleString('en-IN')}
                           </p>
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-[var(--text-secondary)] mt-1">
                           {parseFloat(row.difference) < 0
                             ? 'Unmapped outstanding on customer balance'
                             : 'Likely unapplied credits from unlinked payments'}
@@ -386,12 +386,12 @@ const Ledger = () => {
         )}
 
         {/* Ledger Table Container */}
-        <div className="bento-card !p-0 overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
+        <div className="bento-card !p-0 overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                {activeTab === 'customers' ? 'Customer Account Statement' : (activeTab === 'vendors' ? 'Vendor Account Statement' : 'General Ledger Entries')}
             </h2>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-[var(--text-muted)]">
               {activeTab === 'customers' && (selectedCustomerName ? `Viewing: ${selectedCustomerName}` : 'All Customers')}
               {activeTab === 'vendors' && (selectedVendorName ? `Viewing: ${selectedVendorName}` : 'All Vendors')}
               {activeTab === 'general' && 'All Chart of Accounts'}
@@ -413,19 +413,19 @@ const Ledger = () => {
       {/* Payment Form Modal */}
       {showPaymentForm && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowPaymentForm(false)}></div>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPaymentForm(false)}></div>
           
-          <div className="relative w-full max-w-lg bento-card !p-0 shadow-2xl shadow-green-900/20 animate-fade-up bg-[#111] border border-white/10">
-             <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
-                <h3 className="text-xl font-bold text-white">Record Payment</h3>
+          <div className="relative w-full max-w-lg rounded-2xl shadow-2xl animate-fade-up bg-[var(--bg-surface)] border border-[var(--border-subtle)] overflow-hidden">
+             <div className="flex justify-between items-center p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+                <h3 className="text-xl font-bold text-[var(--text-primary)]">Record Payment</h3>
                 <button
                   onClick={() => setShowPaymentForm(false)}
-                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                 >
                   <XMarkIcon className="w-6 h-6" />
                 </button>
              </div>
-             <div className="p-8">
+             <div className="p-6">
                 <PaymentForm
                   onSuccess={handlePaymentSuccess}
                   onCancel={() => setShowPaymentForm(false)}
@@ -439,22 +439,22 @@ const Ledger = () => {
       {/* Edit Entry Modal */}
       {showEditForm && selectedEntry && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => {setShowEditForm(false); setSelectedEntry(null);}}></div>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => {setShowEditForm(false); setSelectedEntry(null);}}></div>
           
-          <div className="relative w-full max-w-lg bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up bg-[#111] border border-white/10">
-             <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
-                <h3 className="text-xl font-bold text-white">Edit Ledger Entry</h3>
+          <div className="relative w-full max-w-lg rounded-2xl shadow-2xl animate-fade-up bg-[var(--bg-surface)] border border-[var(--border-subtle)] overflow-hidden">
+             <div className="flex justify-between items-center p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+                <h3 className="text-xl font-bold text-[var(--text-primary)]">Edit Ledger Entry</h3>
                 <button
                   onClick={() => {
                     setShowEditForm(false);
                     setSelectedEntry(null);
                   }}
-                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                 >
                   <XMarkIcon className="w-6 h-6" />
                 </button>
              </div>
-             <div className="p-8">
+             <div className="p-6">
               <LedgerEntryForm
                   entry={selectedEntry}
                   onSuccess={handleEditSuccess}

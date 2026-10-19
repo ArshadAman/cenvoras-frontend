@@ -151,44 +151,47 @@ export default function VendorPayments() {
     : "1%/2% on taxable";
 
   return (
-    <div className="p-6 space-y-8 text-white">
+    <div className="p-6 space-y-8 text-[var(--text-primary)]">
       <div>
-        <h1 className="text-2xl font-semibold">Vendor Payments</h1>
-        <p className="text-sm text-gray-400">Pay unpaid bills, optional TDS 194C/J/Q, and review Rule 37 ITC.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Vendor Payments</h1>
+        <p className="text-sm text-[var(--text-secondary)]">Pay unpaid bills, optional TDS 194C/J/Q, and review Rule 37 ITC.</p>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">Unpaid Bills</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Unpaid Bills</h2>
         {loading ? (
-          <p className="text-gray-500 text-sm">Loading…</p>
+          <p className="text-[var(--text-muted)] text-sm">Loading…</p>
         ) : (
-          <div className="overflow-x-auto border border-white/10 rounded-xl">
+          <div className="overflow-x-auto border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)] shadow-sm">
             <table className="min-w-full text-sm">
-              <thead className="bg-white/5 text-gray-400 text-left">
+              <thead className="bg-[var(--bg-primary)] text-[var(--text-secondary)] text-left">
                 <tr>
-                  <th className="px-4 py-3">Bill</th>
-                  <th className="px-4 py-3">Vendor</th>
-                  <th className="px-4 py-3">Due</th>
-                  <th className="px-4 py-3">Days</th>
-                  <th className="px-4 py-3"></th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Bill</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Vendor</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Due</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Days</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider"></th>
                 </tr>
               </thead>
               <tbody>
                 {bills.map((b) => (
-                  <tr key={b.id} className="border-t border-white/5">
-                    <td className="px-4 py-3">{b.bill_number}<div className="text-xs text-gray-500">{b.bill_date}</div></td>
-                    <td className="px-4 py-3">{b.vendor_name}</td>
-                    <td className="px-4 py-3 font-mono">{getCurrencySymbol()}{parseFloat(b.balance_due).toLocaleString("en-IN")}</td>
-                    <td className="px-4 py-3">{b.days_outstanding}</td>
+                  <tr key={b.id} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-[var(--text-primary)]">
+                      {b.bill_number}
+                      <div className="text-xs text-[var(--text-muted)]">{b.bill_date}</div>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--text-primary)]">{b.vendor_name}</td>
+                    <td className="px-4 py-3 font-mono text-[var(--text-primary)] font-semibold">{getCurrencySymbol()}{parseFloat(b.balance_due).toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">{b.days_outstanding}</td>
                     <td className="px-4 py-3 text-right">
-                      <button type="button" onClick={() => openPay(b)} className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-xs font-semibold">
+                      <button type="button" onClick={() => openPay(b)} className="btn-primary text-xs py-1.5 px-3">
                         Pay
                       </button>
                     </td>
                   </tr>
                 ))}
                 {!bills.length && (
-                  <tr><td colSpan={5} className="px-4 py-6 text-gray-500">No unpaid bills</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-6 text-[var(--text-muted)] text-center">No unpaid bills</td></tr>
                 )}
               </tbody>
             </table>
@@ -198,32 +201,32 @@ export default function VendorPayments() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">Rule 37 — ITC at risk (180+ days unpaid)</h2>
-          <button type="button" onClick={applyRule37} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Rule 37 — ITC at risk (180+ days unpaid)</h2>
+          <button type="button" onClick={applyRule37} className="px-3 py-1.5 rounded-xl bg-[var(--status-warning)]/15 text-[var(--status-warning)] text-xs font-semibold border border-[var(--status-warning)]/30 hover:bg-[var(--status-warning)]/25 transition-colors">
             Apply reversals
           </button>
         </div>
-        <div className="overflow-x-auto border border-white/10 rounded-xl">
+        <div className="overflow-x-auto border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)] shadow-sm">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/5 text-gray-400 text-left">
+            <thead className="bg-[var(--bg-primary)] text-[var(--text-secondary)] text-left">
               <tr>
-                <th className="px-4 py-3">Bill</th>
-                <th className="px-4 py-3">Vendor</th>
-                <th className="px-4 py-3">ITC at risk</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Bill</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Vendor</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">ITC at risk</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody>
               {rule37.map((r) => (
-                <tr key={r.id} className="border-t border-white/5">
-                  <td className="px-4 py-3">{r.bill_number}</td>
-                  <td className="px-4 py-3">{r.vendor_name}</td>
-                  <td className="px-4 py-3 font-mono">{getCurrencySymbol()}{parseFloat(r.itc_at_risk).toLocaleString("en-IN")}</td>
-                  <td className="px-4 py-3">{r.already_reversed ? "Reversed" : "Pending"}</td>
+                <tr key={r.id} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                  <td className="px-4 py-3 text-[var(--text-primary)]">{r.bill_number}</td>
+                  <td className="px-4 py-3 text-[var(--text-primary)]">{r.vendor_name}</td>
+                  <td className="px-4 py-3 font-mono text-[var(--status-warning)] font-semibold">{getCurrencySymbol()}{parseFloat(r.itc_at_risk).toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{r.already_reversed ? "Reversed" : "Pending"}</td>
                 </tr>
               ))}
               {!rule37.length && (
-                <tr><td colSpan={4} className="px-4 py-6 text-gray-500">No Rule 37 candidates</td></tr>
+                <tr><td colSpan={4} className="px-4 py-6 text-[var(--text-muted)] text-center">No Rule 37 candidates</td></tr>
               )}
             </tbody>
           </table>
@@ -231,60 +234,60 @@ export default function VendorPayments() {
       </section>
 
       {selectedBill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <form onSubmit={submitPay} className="w-full max-w-md bg-[#111116] border border-white/10 rounded-2xl p-6 space-y-4">
-            <h3 className="text-lg font-semibold">Pay {selectedBill.bill_number}</h3>
-            <p className="text-xs text-gray-400">Due {formatCurrency(selectedBill.balance_due)}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <form onSubmit={submitPay} className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">Pay {selectedBill.bill_number}</h3>
+            <p className="text-xs text-[var(--text-secondary)]">Due {formatCurrency(selectedBill.balance_due)}</p>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Amount</label>
-              <input required type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10" />
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Amount</label>
+              <input required type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Bank / Cash account</label>
-              <select required value={accountId} onChange={(e) => setAccountId(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Bank / Cash account</label>
+              <select required value={accountId} onChange={(e) => setAccountId(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
                 {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
+                  <option key={a.id} value={a.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     {a.name} ({a.code}) — Bal: ₹{parseFloat(a.current_balance || 0).toLocaleString("en-IN")}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">TDS section (optional; on taxable value ex-GST)</label>
-              <select value={tdsSection} onChange={(e) => setTdsSection(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                <option value="">None</option>
-                <option value="194C">194C ({rate194cLabel})</option>
-                <option value="194J">194J (10% on taxable)</option>
-                <option value="194Q">194Q (0.1% on taxable)</option>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">TDS section (optional; on taxable value ex-GST)</label>
+              <select value={tdsSection} onChange={(e) => setTdsSection(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">None</option>
+                <option value="194C" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">194C ({rate194cLabel})</option>
+                <option value="194J" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">194J (10% on taxable)</option>
+                <option value="194Q" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">194Q (0.1% on taxable)</option>
               </select>
             </div>
             {tdsSection && (
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs space-y-1">
-                <div className="flex justify-between text-gray-400">
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-3 py-2 text-xs space-y-1">
+                <div className="flex justify-between text-[var(--text-secondary)]">
                   <span>Taxable base (ex-GST)</span>
-                  <span className="font-mono text-white">{formatCurrency(tdsPreview.taxable)}</span>
+                  <span className="font-mono text-[var(--text-primary)] font-semibold">{formatCurrency(tdsPreview.taxable)}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
+                <div className="flex justify-between text-[var(--text-secondary)]">
                   <span>TDS @ {tdsPreview.rate}%</span>
-                  <span className="font-mono text-amber-300">{formatCurrency(tdsPreview.tds)}</span>
+                  <span className="font-mono text-[var(--status-warning)] font-semibold">{formatCurrency(tdsPreview.tds)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 font-semibold pt-1 border-t border-white/5">
+                <div className="flex justify-between text-[var(--text-primary)] font-semibold pt-1 border-t border-[var(--border-subtle)]">
                   <span>Net payable from account</span>
-                  <span className="font-mono text-emerald-300">{formatCurrency(tdsPreview.net)}</span>
+                  <span className="font-mono text-[var(--status-success)] font-semibold">{formatCurrency(tdsPreview.net)}</span>
                 </div>
                 {tdsPreview.note ? (
-                  <p className="text-amber-200/80 pt-1">{tdsPreview.note}</p>
+                  <p className="text-[var(--status-warning)] pt-1 text-[11px]">{tdsPreview.note}</p>
                 ) : null}
               </div>
             )}
             {insufficient && (
-              <p className="text-xs text-red-400">
+              <p className="text-xs text-[var(--status-danger)]">
                 Insufficient balance. Available ₹{bal.toLocaleString("en-IN")}, required ₹{requiredNet.toLocaleString("en-IN")}.
               </p>
             )}
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setSelectedBill(null)} className="px-4 py-2 text-sm text-gray-400">Cancel</button>
-              <button type="submit" disabled={paying || insufficient} className="px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-400 text-slate-950 disabled:opacity-50">
+              <button type="button" onClick={() => setSelectedBill(null)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+              <button type="submit" disabled={paying || insufficient} className="btn-primary px-4 py-2 text-sm disabled:opacity-50">
                 {paying ? "Saving…" : "Confirm payment"}
               </button>
             </div>

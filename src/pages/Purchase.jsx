@@ -100,7 +100,7 @@ export default function Purchase() {
 
         {/* Purchase Table Container */}
         <div className="bento-card !p-0 overflow-hidden">
-          <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-primary)]/40">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/40">
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                Purchase History
             </h2>

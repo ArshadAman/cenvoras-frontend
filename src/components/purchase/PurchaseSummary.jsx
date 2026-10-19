@@ -44,9 +44,9 @@ export default function PurchaseSummary() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+          <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-4 rounded-xl animate-pulse">
+            <div className="h-4 bg-[var(--border-subtle)] rounded w-3/4 mb-2"></div>
+            <div className="h-8 bg-[var(--border-subtle)] rounded w-1/2"></div>
           </div>
         ))}
       </div>
@@ -108,10 +108,10 @@ export default function PurchaseSummary() {
               <p className="text-sm text-[var(--text-muted)]">Overdue Bills</p>
               <p className="text-2xl font-bold text-[var(--text-primary)]">{overdueBills.length}</p>
               {overdueBills.length > 0 && (
-                <p className="text-xs text-[var(--text-muted)] font-medium">Needs attention!</p>
+                <p className="text-xs text-[var(--status-danger)] font-medium">Needs attention!</p>
               )}
             </div>
-            <div className="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full text-[var(--text-primary)]">
+            <div className="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full text-[var(--status-danger)]">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
@@ -124,22 +124,22 @@ export default function PurchaseSummary() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Alerts */}
         {overdueBills.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/20 rounded-xl p-4">
             <div className="flex items-center mb-3">
-              <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-[var(--status-danger)] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">Overdue Bills Alert</h3>
+              <h3 className="text-sm font-semibold text-[var(--status-danger)]">Overdue Bills Alert</h3>
             </div>
             <div className="space-y-2">
               {overdueBills.slice(0, 3).map(bill => (
                 <div key={bill.id} className="flex justify-between items-center text-sm">
-                  <span className="text-red-700 dark:text-red-300">{bill.bill_number} - {bill.vendor_name}</span>
-                  <span className="font-medium text-red-800 dark:text-red-200">{getCurrencySymbol()}{parseFloat(bill.total_amount).toFixed(2)}</span>
+                  <span className="text-[var(--text-secondary)]">{bill.bill_number} - {bill.vendor_name}</span>
+                  <span className="font-medium text-[var(--status-danger)]">{getCurrencySymbol()}{parseFloat(bill.total_amount).toFixed(2)}</span>
                 </div>
               ))}
               {overdueBills.length > 3 && (
-                <p className="text-xs text-red-600 dark:text-red-400">
+                <p className="text-xs text-[var(--status-danger)]">
                   +{overdueBills.length - 3} more overdue bills
                 </p>
               )}
@@ -149,20 +149,20 @@ export default function PurchaseSummary() {
 
         {/* Top Vendors */}
         {topVendors.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-4">
             <div className="flex items-center mb-3">
-              <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-[var(--accent-primary)] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200">Top Vendors</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Top Vendors</h3>
             </div>
             <div className="space-y-2">
               {topVendors.map(([vendor, amount], index) => (
                 <div key={vendor} className="flex justify-between items-center text-sm">
-                  <span className="text-blue-700 dark:text-blue-300">
+                  <span className="text-[var(--text-secondary)]">
                     {index + 1}. {vendor}
                   </span>
-                  <span className="font-medium text-blue-800 dark:text-blue-200">
+                  <span className="font-medium text-[var(--text-primary)]">
                     {getCurrencySymbol()}{amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 </div>
