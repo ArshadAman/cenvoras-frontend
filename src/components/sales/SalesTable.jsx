@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesCsvJobStatus, downloadSalesCsv } from "../../api/sales";
@@ -15,9 +15,12 @@ import {
   XMarkIcon,
   AdjustmentsHorizontalIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
   ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
-import { useEffect } from "react";
 import PaymentForm from "../ledger/PaymentForm";
 import { getCurrencySymbol } from '../../utils/currency';
 
@@ -56,7 +59,19 @@ export default function SalesTable({
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("-invoice_date"); // default: newest first
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_table_page_size");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if ([10, 20, 25, 50, 100].includes(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return 20;
+  });
+  const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
+  const tableTopRef = useRef(null);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [internalStatusFilter, setInternalStatusFilter] = useState(initialStatusFilter); // "all", "final", "draft"
@@ -228,8 +243,8 @@ export default function SalesTable({
   const closePaymentModal = () => setPaymentInvoice(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
-    queryFn: () => getSalesInvoices({ search, ordering, page, status: statusFilterTab }),
+    queryKey: ["salesInvoices", search, ordering, statusFilterTab],
+    queryFn: () => getSalesInvoices({ search, ordering, status: statusFilterTab }),
   });
 
   if (error) {
@@ -342,13 +357,60 @@ export default function SalesTable({
       return 0;
     });
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+    setSelectAllAcrossPages(false);
+  }, [search, statusFilterTab, advancedFilters, sortConfig]);
+
+  // Optimized pagination calculations
+  const totalItems = filteredInvoices.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+
+  const paginatedInvoices = useMemo(() => {
+    const startIdx = (safePage - 1) * pageSize;
+    return filteredInvoices.slice(startIdx, startIdx + pageSize);
+  }, [filteredInvoices, safePage, pageSize]);
+
+  const startIndex = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const endIndex = Math.min(safePage * pageSize, totalItems);
+
+  const isAllCurrentPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.every(inv => selectedInvoices.has(inv.id));
+  const isSomeCurrentPageSelected = paginatedInvoices.some(inv => selectedInvoices.has(inv.id)) && !isAllCurrentPageSelected;
+
   // Bulk operations functions
   const handleSelectAll = (checked) => {
+    setSelectAllAcrossPages(false);
     if (checked) {
-      setSelectedInvoices(new Set(filteredInvoices.map(invoice => invoice.id)));
+      const pageIds = paginatedInvoices.map(invoice => invoice.id);
+      setSelectedInvoices(new Set(pageIds));
     } else {
       setSelectedInvoices(new Set());
     }
+  };
+
+  const handleSelectAllAcrossPages = () => {
+    setSelectAllAcrossPages(true);
+    setSelectedInvoices(new Set(filteredInvoices.map(invoice => invoice.id)));
+  };
+
+  const handlePageChange = (newPage) => {
+    const target = Math.min(Math.max(1, newPage), totalPages);
+    setPage(target);
+    setSelectAllAcrossPages(false);
+    if (tableTopRef.current) {
+      tableTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setPage(1);
+    setSelectAllAcrossPages(false);
+    try {
+      localStorage.setItem("sales_table_page_size", String(newSize));
+    } catch (e) {}
   };
 
   const handleSelectBill = (invoiceId, checked) => {
@@ -673,8 +735,39 @@ export default function SalesTable({
         </div>
       )}
 
+      {/* Selection Across Pages Banner */}
+      {isAllCurrentPageSelected && totalPages > 1 && (
+        <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl px-4 py-2.5 mb-3 text-xs text-sky-200 flex items-center justify-between">
+          <span>
+            {selectAllAcrossPages
+              ? `All ${totalItems} invoices across all ${totalPages} pages are selected.`
+              : `All ${paginatedInvoices.length} invoices on this page are selected.`}
+          </span>
+          {!selectAllAcrossPages ? (
+            <button
+              type="button"
+              onClick={handleSelectAllAcrossPages}
+              className="font-bold text-sky-400 hover:text-white underline ml-2 transition-colors"
+            >
+              Select all {totalItems} invoices across all pages
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectAllAcrossPages(false);
+                setSelectedInvoices(new Set());
+              }}
+              className="font-bold text-sky-400 hover:text-white underline ml-2 transition-colors"
+            >
+              Clear selection
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Table for desktop, Cards for mobile */}
-      <div className="hidden lg:block">
+      <div ref={tableTopRef} className="hidden lg:block">
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-sm border-separate border-spacing-y-2">
             <colgroup>
@@ -694,7 +787,10 @@ export default function SalesTable({
                 <th className="relative px-3 py-3 text-left rounded-l-lg select-none">
                   <input
                     type="checkbox"
-                    checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
+                    checked={isAllCurrentPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomeCurrentPageSelected;
+                    }}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     className="rounded border-white/30 text-blue-500 focus:ring-blue-500 bg-white/10"
                   />
@@ -822,7 +918,7 @@ export default function SalesTable({
                 </td>
               </tr>
             ) : (
-              filteredInvoices.map((invoice) => {
+              paginatedInvoices.map((invoice) => {
                 const compactRowStyle = { paddingTop: '1.0px', paddingBottom: '1.0px', margin: 0, lineHeight: 1.25 };
                 return (
               <tr key={invoice.id} style={compactRowStyle} className="bg-transparent border-b border-hairline hover:bg-obsidian-active transition-colors">
@@ -1032,7 +1128,7 @@ export default function SalesTable({
             No invoices found matching your criteria.
           </div>
         ) : (
-          filteredInvoices.map((invoice) => (
+          paginatedInvoices.map((invoice) => (
           <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">
             {/* Card Header */}
             <div className="flex items-start justify-between mb-4">
@@ -1183,6 +1279,135 @@ export default function SalesTable({
           </div>
         )))}
       </div>
+
+      {/* Optimized Pagination Bar */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-hairline px-2 sm:px-1">
+          {/* Left: Showing range and rows-per-page selector */}
+          <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400">
+            <span>
+              Showing <span className="font-semibold text-white font-mono">{startIndex}</span>–<span className="font-semibold text-white font-mono">{endIndex}</span> of <span className="font-semibold text-white font-mono">{totalItems}</span> {totalItems === 1 ? 'invoice' : 'invoices'}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400">Rows per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="bg-obsidian-card border border-hairline rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer"
+              >
+                <option value={10} className="bg-slate-900 text-white">10</option>
+                <option value={20} className="bg-slate-900 text-white">20</option>
+                <option value={25} className="bg-slate-900 text-white">25</option>
+                <option value={50} className="bg-slate-900 text-white">50</option>
+                <option value={100} className="bg-slate-900 text-white">100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Right: Page Navigation Buttons */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1 sm:gap-1.5 select-none">
+              {/* First Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 sm:px-2 sm:py-1.5 rounded-lg text-xs font-medium border border-hairline transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white"
+                title="First page"
+              >
+                <ChevronDoubleLeftIcon className="w-4 h-4" />
+              </button>
+
+              {/* Prev Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(safePage - 1)}
+                disabled={safePage <= 1}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-hairline transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white flex items-center gap-1"
+              >
+                <ChevronLeftIcon className="w-3.5 h-3.5" /> Prev
+              </button>
+
+              {/* Numbered Page Buttons with dynamic window */}
+              {(() => {
+                const maxButtons = 5;
+                let startP = Math.max(1, safePage - Math.floor(maxButtons / 2));
+                let endP = Math.min(totalPages, startP + maxButtons - 1);
+                if (endP - startP + 1 < maxButtons) {
+                  startP = Math.max(1, endP - maxButtons + 1);
+                }
+                const pageNumbers = [];
+                for (let p = startP; p <= endP; p++) {
+                  pageNumbers.push(p);
+                }
+                return (
+                  <>
+                    {startP > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(1)}
+                          className="w-8 h-8 rounded-lg text-xs font-semibold border border-hairline text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          1
+                        </button>
+                        {startP > 2 && <span className="px-1 text-slate-500">…</span>}
+                      </>
+                    )}
+                    {pageNumbers.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => handlePageChange(p)}
+                        className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-all ${
+                          p === safePage
+                            ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 shadow-sm font-bold'
+                            : 'border-hairline text-slate-300 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    {endP < totalPages && (
+                      <>
+                        {endP < totalPages - 1 && <span className="px-1 text-slate-500">…</span>}
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(totalPages)}
+                          className="w-8 h-8 rounded-lg text-xs font-semibold border border-hairline text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Next Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(safePage + 1)}
+                disabled={safePage >= totalPages}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-hairline transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white flex items-center gap-1"
+              >
+                Next <ChevronRightIcon className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Last Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 sm:px-2 sm:py-1.5 rounded-lg text-xs font-medium border border-hairline transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 text-slate-300 hover:text-white"
+                title="Last page"
+              >
+                <ChevronDoubleRightIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {filteredInvoices.length === 0 && (
         <div className="text-center py-12">
