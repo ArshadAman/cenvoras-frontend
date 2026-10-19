@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import ThemeToggle from './common/ThemeToggle';
+import BrandLogo from './common/BrandLogo';
 
 const renderLink = (item, className, onClick) => {
   if (item.href?.startsWith('http')) {
@@ -58,7 +59,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
           >
             {/* Logo */}
             <Link to="/" className="flex items-center transition-all duration-300 hover:opacity-90 active:scale-95">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-auto w-[110px] object-contain sm:w-[130px]" />
+              <BrandLogo className="h-auto w-[110px] object-contain sm:w-[130px]" />
             </Link>
 
             {/* Desktop Navigation */}
