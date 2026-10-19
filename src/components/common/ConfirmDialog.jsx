@@ -5,6 +5,7 @@ import { ExclamationTriangleIcon, TrashIcon, InformationCircleIcon } from '@hero
 
 /**
  * Universal Confirmation & Destructive Action Dialog
+ * Strictly adheres to Cenvora's 8-color design system.
  * Protects against accidental triggers, provides dependency explanations,
  * and handles in-flight loading states.
  */
@@ -50,29 +51,31 @@ export default function ConfirmDialog({
       <div className="flex flex-col items-center text-center pt-2 pb-1">
         {/* Warning Icon Badge */}
         <div
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-xl ${
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-md ${
             variant === 'destructive'
-              ? 'bg-rose-500/15 border border-rose-500/30 text-rose-400 shadow-rose-950/40'
-              : 'bg-amber-500/15 border border-amber-500/30 text-amber-400 shadow-amber-950/40'
+              ? 'bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] text-[var(--status-danger)]'
+              : 'bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] text-[var(--status-warning)]'
           }`}
         >
           <IconComponent className="w-6 h-6" />
         </div>
 
         {/* Title & Description */}
-        <h3 className="text-lg font-bold text-white mb-2 tracking-tight">{title}</h3>
-        <p className="text-sm text-gray-300 leading-relaxed mb-4">{description}</p>
+        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 tracking-tight">{title}</h3>
+        {description && (
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">{description}</p>
+        )}
 
         {/* Dependency Alert if blocked */}
         {dependencyWarning && (
-          <div className="w-full text-left p-3.5 mb-5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs leading-relaxed flex items-start gap-2.5">
-            <InformationCircleIcon className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+          <div className="w-full text-left p-3.5 mb-5 rounded-xl bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] text-[var(--status-warning)] text-xs leading-relaxed flex items-start gap-2.5">
+            <InformationCircleIcon className="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--status-warning)]" />
             <span>{dependencyWarning}</span>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 w-full pt-4 border-t border-white/10 mt-2">
+        <div className="flex items-center justify-end gap-3 w-full pt-4 border-t border-[var(--border-subtle)] mt-2">
           <Button
             ref={cancelBtnRef}
             variant="secondary"

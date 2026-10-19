@@ -116,12 +116,12 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
 
   if (isLoading) {
     return (
-      <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg p-6">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-sm rounded-xl p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-white/20 rounded w-1/4"></div>
+          <div className="h-4 bg-[var(--bg-primary)] rounded w-1/4"></div>
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-white/20 rounded"></div>
+              <div key={i} className="h-4 bg-[var(--bg-primary)] rounded"></div>
             ))}
           </div>
         </div>
@@ -131,8 +131,8 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
 
   if (error) {
     return (
-      <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg p-6">
-        <div className="text-center text-red-300 font-bold drop-shadow-lg">
+      <div className="bg-[var(--bg-surface)] border border-[var(--status-danger-border)] shadow-sm rounded-xl p-6">
+        <div className="text-center text-[var(--status-danger)] font-semibold">
           Error loading vendors: {error.message}
         </div>
       </div>
@@ -143,12 +143,12 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
   const isIndeterminate = selectedVendors.size > 0 && selectedVendors.size < vendors.length;
 
   return (
-        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-sm rounded-xl overflow-hidden">
       {/* Header with search and actions */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6 border-b border-[var(--border-subtle)]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <h2 className="text-xl font-black text-white tracking-tight">
-            Vendors <span className="text-indigo-400/50 text-sm font-normal ml-2 tracking-normal">({totalCount} total)</span>
+          <h2 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
+            Vendors <span className="text-[var(--text-muted)] text-sm font-normal ml-2">({totalCount} total)</span>
           </h2>
           
           {/* Search and Controls */}
@@ -157,7 +157,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
               <input
                 type="text"
                 placeholder="Search vendors..."
-                className="w-full px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white placeholder-white/30 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                className="w-full px-3.5 py-2 border border-[var(--border-default)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--border-focus)] outline-none text-sm transition-all"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -167,7 +167,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
             </div>
             
             <select
-              className="w-full sm:w-48 px-4 py-2.5 border border-white/10 rounded-xl bg-[#0a0a0a] text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all cursor-pointer"
+              className="w-full sm:w-48 px-3.5 py-2 border border-[var(--border-default)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:border-[var(--border-focus)] outline-none text-sm transition-all cursor-pointer"
               value={ordering}
               onChange={(e) => {
                 setOrdering(e.target.value);
@@ -186,20 +186,20 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
 
         {/* Bulk Actions */}
         {showBulkActions && (
-          <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-            <span className="text-sm text-indigo-400 font-bold uppercase tracking-widest">
+          <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 p-3 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-lg">
+            <span className="text-xs text-[var(--text-primary)] font-bold uppercase tracking-wider">
               {selectedVendors.size} Selected
             </span>
             <div className="flex gap-2 w-full sm:w-auto">
               <button
                 onClick={handleBulkDelete}
-                className="flex-1 sm:flex-none px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs rounded-lg border border-red-500/30 font-black uppercase tracking-widest transition-all"
+                className="btn-danger text-xs px-3 py-1.5 cursor-pointer"
               >
                 Delete
               </button>
               <button
                 onClick={exportToCSV}
-                className="flex-1 sm:flex-none px-4 py-2 bg-green-500/20 hover:bg-green-500/40 text-green-400 text-xs rounded-lg border border-green-500/30 font-black uppercase tracking-widest transition-all"
+                className="btn-secondary text-xs px-3 py-1.5 cursor-pointer"
               >
                 Export CSV
               </button>
@@ -211,8 +211,8 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-hairline">
-          <thead className="bg-obsidian-card border-b border-hairline">
+          <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
             <tr>
               <th className="px-6 py-3.5 text-left">
                 <input
@@ -222,68 +222,68 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                     if (input) input.indeterminate = isIndeterminate;
                   }}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
+                  className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-[var(--bg-surface)] cursor-pointer"
                 />
               </th>
               <th 
                 onClick={() => handleSort("name")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Name</span>
                   {(ordering === "name" || ordering === "-name") && (
-                    <span className="text-sky-400 font-bold">{ordering === "name" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "name" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("email")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Contact</span>
                   {(ordering === "email" || ordering === "-email") && (
-                    <span className="text-sky-400 font-bold">{ordering === "email" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "email" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("gstin")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>GSTIN</span>
                   {(ordering === "gstin" || ordering === "-gstin") && (
-                    <span className="text-sky-400 font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Category
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Credit Limit
               </th>
               <th 
                 onClick={() => handleSort("created_at")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created</span>
                   {(ordering === "created_at" || ordering === "-created_at") && (
-                    <span className="text-sky-400 font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
+          <tbody className="bg-[var(--bg-surface)] divide-y divide-[var(--border-subtle)]">
             {vendors.length === 0 ? (
               <tr>
-                <td colSpan="6" className="p-0">
+                <td colSpan="8" className="p-0">
                   <EmptyState
                     icon={BuildingStorefrontIcon}
                     title={search ? "No vendors match your search" : "No vendors registered yet"}
@@ -295,13 +295,13 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
               </tr>
             ) : (
               vendors.map((vendor) => (
-                <tr key={vendor.id} className="hover:bg-white/10 transition-colors">
+                <tr key={vendor.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
                       checked={selectedVendors.has(vendor.id)}
                       onChange={(e) => handleVendorSelect(vendor.id, e.target.checked)}
-                      className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
+                      className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-[var(--bg-surface)] cursor-pointer"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -309,43 +309,43 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                       <button
                         type="button"
                         onClick={() => onView(vendor)}
-                        className="text-left text-sm font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-colors cursor-pointer inline-flex items-center gap-1.5 group"
+                        className="text-left text-sm font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] hover:underline transition-colors cursor-pointer inline-flex items-center gap-1.5 group"
                         title="View Detailed Ledger & Purchase Bills"
                       >
                         <span>{vendor.name}</span>
-                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-sky-400/70 group-hover:text-sky-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                       </button>
-                      <div className="text-sm text-slate-400">
-                        {vendor.email}
+                      <div className="text-xs text-[var(--text-secondary)]">
+                        {vendor.email || '-'}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium">
+                    <div className="text-sm text-[var(--text-primary)] font-medium">
                       {vendor.phone || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-slate-300 font-mono">
+                    <div className="text-sm text-[var(--text-primary)] font-mono">
                       {vendor.gstin || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-slate-300 font-medium">
+                    <div className="text-sm text-[var(--text-secondary)] font-medium">
                       {vendor.meta?.party_category ? (
-                        <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30 uppercase">
+                        <span className="px-2 py-0.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-xs uppercase font-medium">
                           {vendor.meta.party_category}
                         </span>
                       ) : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium">
+                    <div className="text-sm text-[var(--text-primary)] font-medium">
                       {vendor.meta?.credit_limit ? `${getCurrencySymbol()}${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-slate-400 font-medium">
+                    <div className="text-sm text-[var(--text-muted)] font-medium">
                       {vendor.created_at ? format(new Date(vendor.created_at), 'dd/MM/yyyy') : '-'}
                     </div>
                   </td>
@@ -356,7 +356,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                         onClick={() => onView(vendor)}
                         title="View Vendor Details & Ledger"
                         aria-label="View Vendor Details & Ledger"
-                        className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                        className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                       >
                         <EyeIcon className="w-4 h-4" />
                       </button>
@@ -365,7 +365,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                         onClick={() => onEdit(vendor)}
                         title="Edit Vendor"
                         aria-label="Edit Vendor"
-                        className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                        className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                       >
                         <PencilSquareIcon className="w-4 h-4" />
                       </button>
@@ -374,7 +374,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                         onClick={() => onDelete(vendor)}
                         title="Delete Vendor"
                         aria-label="Delete Vendor"
-                        className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                        className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--status-danger)] border border-[var(--border-default)] hover:bg-[var(--status-danger-bg)] transition-all cursor-pointer"
                       >
                         <TrashIcon className="w-4 h-4" />
                       </button>
@@ -392,35 +392,35 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
       <div className="lg:hidden space-y-4 p-2">
         {isLoading ? (
           Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
-              <div className="h-4 bg-white/20 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            <div key={i} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 animate-pulse space-y-3">
+              <div className="h-4 bg-[var(--bg-surface)] rounded w-1/2"></div>
+              <div className="h-3 bg-[var(--bg-surface)] rounded w-3/4"></div>
+              <div className="h-3 bg-[var(--bg-surface)] rounded w-2/3"></div>
             </div>
           ))
         ) : (
           vendors.map((vendor) => (
-            <div key={vendor.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+            <div key={vendor.id} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 hover:border-[var(--border-default)] transition-all">
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedVendors.has(vendor.id)}
-                      onChange={(e) => handleVendorSelect(vendor.id, e.target.checked)}
-                      className="rounded border-white/10 text-indigo-500 focus:ring-indigo-500 bg-white/5 w-5 h-5"
-                    />
+                  <input
+                    type="checkbox"
+                    checked={selectedVendors.has(vendor.id)}
+                    onChange={(e) => handleVendorSelect(vendor.id, e.target.checked)}
+                    className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-[var(--bg-surface)] w-5 h-5 cursor-pointer"
+                  />
                   <div>
                     <button
                       type="button"
                       onClick={() => onView(vendor)}
-                      className="text-left text-lg font-semibold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors inline-flex items-center gap-1.5 group"
+                      className="text-left text-base font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
                       title="View Detailed Ledger & Purchase Bills"
                     >
                       <span>{vendor.name}</span>
-                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-cyan-400/70 group-hover:text-cyan-300 transition-all" />
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-all" />
                     </button>
-                    <div className="text-sm text-white/70">
+                    <div className="text-sm text-[var(--text-secondary)]">
                       {vendor.email || 'No email'}
                     </div>
                   </div>
@@ -428,44 +428,46 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
               </div>
 
               {/* Card Content */}
-              <div className="space-y-3">
+              <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Phone:</span>
-                  <span className="text-sm font-medium text-white">{vendor.phone || 'N/A'}</span>
+                  <span className="text-[var(--text-muted)]">Phone:</span>
+                  <span className="font-medium text-[var(--text-primary)]">{vendor.phone || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">GSTIN:</span>
-                  <span className="text-sm text-white font-mono">{vendor.gstin || 'N/A'}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">GSTIN:</span>
+                  <span className="text-sm text-[var(--text-primary)] font-mono">{vendor.gstin || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">Category:</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded border border-indigo-400/20">{vendor.meta?.party_category || '-'}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Category:</span>
+                  <span className="text-xs font-medium uppercase tracking-wider px-2 py-0.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)]">
+                    {vendor.meta?.party_category || '-'}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Credit Limit:</span>
-                  <span className="text-sm text-white">
+                  <span className="text-[var(--text-muted)]">Credit Limit:</span>
+                  <span className="font-semibold text-[var(--text-primary)]">
                     {vendor.meta?.credit_limit ? `${getCurrencySymbol()}${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
                   </span>
                 </div>
 
                 {vendor.address && (
                   <div className="flex justify-between items-start">
-                    <span className="text-sm text-white/70">Address:</span>
-                    <span className="text-sm text-white text-right max-w-[60%]">{vendor.address}</span>
+                    <span className="text-[var(--text-muted)]">Address:</span>
+                    <span className="text-[var(--text-secondary)] text-right max-w-[60%] line-clamp-2">{vendor.address}</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => onView(vendor)}
                   title="View Vendor Details & Ledger"
                   aria-label="View Vendor Details & Ledger"
-                  className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                 >
                   <EyeIcon className="w-4 h-4" />
                 </button>
@@ -474,7 +476,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                   onClick={() => onEdit(vendor)}
                   title="Edit Vendor"
                   aria-label="Edit Vendor"
-                  className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                 >
                   <PencilSquareIcon className="w-4 h-4" />
                 </button>
@@ -483,7 +485,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                   onClick={() => onDelete(vendor)}
                   title="Delete Vendor"
                   aria-label="Delete Vendor"
-                  className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--status-danger)] border border-[var(--border-default)] hover:bg-[var(--status-danger-bg)] transition-all cursor-pointer"
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>
@@ -506,23 +508,23 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
+        <div className="px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-[var(--text-muted)]">
               Page {page} of {totalPages} ({totalCount} total vendors)
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 text-sm border border-white/20 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10 bg-white/10 text-white font-bold transition-colors"
+                className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1 text-sm border border-white/20 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10 bg-white/10 text-white font-bold transition-colors"
+                className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Next
               </button>

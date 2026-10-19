@@ -118,12 +118,12 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
 
   if (isLoading) {
     return (
-      <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg p-6">
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-white/20 rounded w-1/4"></div>
-          <div className="space-y-2">
+          <div className="h-6 bg-[var(--border-subtle)] rounded w-1/4"></div>
+          <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-white/20 rounded"></div>
+              <div key={i} className="h-10 bg-[var(--border-subtle)]/60 rounded-xl"></div>
             ))}
           </div>
         </div>
@@ -133,10 +133,8 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
 
   if (error) {
     return (
-      <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg p-6">
-        <div className="text-center text-red-300 font-bold drop-shadow-lg">
-          Error loading customers: {error.message}
-        </div>
+      <div className="rounded-2xl border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-6 text-center text-[var(--status-danger)] font-semibold">
+        Error loading customers: {error.message}
       </div>
     );
   }
@@ -145,12 +143,12 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
   const isIndeterminate = selectedCustomers.size > 0 && selectedCustomers.size < customers.length;
 
   return (
-        <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
       {/* Header with search and actions */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6 border-b border-[var(--border-subtle)]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <h2 className="text-xl font-black text-white tracking-tight">
-            Customers <span className="text-cyan-400/50 text-sm font-normal ml-2 tracking-normal">({totalCount} total)</span>
+          <h2 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
+            Customers <span className="text-[var(--text-muted)] text-sm font-normal ml-2 tracking-normal">({totalCount} total)</span>
           </h2>
           
           {/* Search and Controls */}
@@ -159,7 +157,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
               <input
                 type="text"
                 placeholder="Search customers..."
-                className="w-full px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                className="w-full px-4 py-2.5 border border-[var(--input-border)] rounded-xl bg-[var(--input-bg)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -169,7 +167,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
             </div>
             
             <select
-              className="w-full sm:w-48 px-4 py-2.5 border border-white/10 rounded-xl bg-[#0a0a0a] text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all cursor-pointer"
+              className="w-full sm:w-48 px-4 py-2.5 border border-[var(--input-border)] rounded-xl bg-[var(--input-bg)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all cursor-pointer"
               value={ordering}
               onChange={(e) => {
                 setOrdering(e.target.value);
@@ -188,20 +186,20 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
 
         {/* Bulk Actions */}
         {showBulkActions && (
-          <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl">
-            <span className="text-sm text-cyan-400 font-bold uppercase tracking-widest">
+          <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 p-4 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl">
+            <span className="text-sm text-[var(--accent-primary)] font-bold uppercase tracking-wider">
               {selectedCustomers.size} Selected
             </span>
             <div className="flex gap-2 w-full sm:w-auto">
               <button
                 onClick={handleBulkDelete}
-                className="flex-1 sm:flex-none px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs rounded-lg border border-red-500/30 font-black uppercase tracking-widest transition-all"
+                className="flex-1 sm:flex-none px-4 py-2 bg-[var(--status-danger-bg)] hover:opacity-90 text-[var(--status-danger)] text-xs rounded-xl border border-[var(--status-danger-border)] font-bold uppercase tracking-wider transition-all"
               >
                 Delete
               </button>
               <button
                 onClick={exportToCSV}
-                className="flex-1 sm:flex-none px-4 py-2 bg-green-500/20 hover:bg-green-500/40 text-green-400 text-xs rounded-lg border border-green-500/30 font-black uppercase tracking-widest transition-all"
+                className="flex-1 sm:flex-none px-4 py-2 bg-[var(--status-success-bg)] hover:opacity-90 text-[var(--status-success)] text-xs rounded-xl border border-[var(--status-success-border)] font-bold uppercase tracking-wider transition-all"
               >
                 Export CSV
               </button>
@@ -213,8 +211,8 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-hairline">
-          <thead className="bg-obsidian-card border-b border-hairline">
+          <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
             <tr>
               <th className="px-6 py-3.5 text-left">
                 <input
@@ -224,68 +222,68 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                     if (input) input.indeterminate = isIndeterminate;
                   }}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
+                  className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-transparent"
                 />
               </th>
               <th 
                 onClick={() => handleSort("name")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Name</span>
                   {(ordering === "name" || ordering === "-name") && (
-                    <span className="text-sky-400 font-bold">{ordering === "name" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "name" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("email")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Contact</span>
                   {(ordering === "email" || ordering === "-email") && (
-                    <span className="text-sky-400 font-bold">{ordering === "email" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "email" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("gstin")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>GSTIN</span>
                   {(ordering === "gstin" || ordering === "-gstin") && (
-                    <span className="text-sky-400 font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Category
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Credit Limit
               </th>
               <th 
                 onClick={() => handleSort("created_at")}
-                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created</span>
                   {(ordering === "created_at" || ordering === "-created_at") && (
-                    <span className="text-sky-400 font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {customers.length === 0 ? (
               <tr>
-                <td colSpan="6" className="p-6 sm:p-10">
+                <td colSpan="8" className="p-6 sm:p-10">
                   <EmptyState
                     icon={UsersIcon}
                     title={debouncedSearch ? "No matching customers found" : "No customers registered yet"}
@@ -301,13 +299,13 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
               </tr>
             ) : (
               customers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-white/10 transition-colors">
+                <tr key={customer.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
                       checked={selectedCustomers.has(customer.id)}
                       onChange={(e) => handleCustomerSelect(customer.id, e.target.checked)}
-                      className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
+                      className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-transparent"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -315,43 +313,43 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                       <button
                         type="button"
                         onClick={() => onView(customer)}
-                        className="text-left text-sm font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-colors cursor-pointer inline-flex items-center gap-1.5 group"
+                        className="text-left text-sm font-semibold text-[var(--accent-primary)] hover:underline transition-colors cursor-pointer inline-flex items-center gap-1.5 group"
                         title="View Detailed Ledger & Invoices"
                       >
                         <span>{customer.name}</span>
-                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-sky-400/70 group-hover:text-sky-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]/70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                       </button>
-                      <div className="text-sm text-slate-400">
+                      <div className="text-sm text-[var(--text-muted)]">
                         {customer.email}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium">
+                    <div className="text-sm text-[var(--text-primary)] font-medium">
                       {customer.phone || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-slate-300 font-mono">
+                    <div className="text-sm text-[var(--text-secondary)] font-mono">
                       {customer.gstin || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-slate-300 font-medium">
+                    <div className="text-sm">
                       {customer.meta?.party_category ? (
-                        <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30 uppercase">
+                        <span className="badge-info text-xs font-semibold">
                           {customer.meta.party_category}
                         </span>
                       ) : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium">
+                    <div className="text-sm text-[var(--text-primary)] font-mono font-medium">
                       {customer.meta?.credit_limit ? `${getCurrencySymbol()}${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-slate-400 font-medium">
+                    <div className="text-sm text-[var(--text-muted)] font-medium">
                       {customer.created_at ? format(new Date(customer.created_at), 'dd/MM/yyyy') : '-'}
                     </div>
                   </td>
@@ -362,7 +360,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                         onClick={() => onView(customer)}
                         title="View Customer Details & Ledger"
                         aria-label="View Customer Details & Ledger"
-                        className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                        className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--accent-primary)] border border-[var(--border-default)] hover:bg-[var(--bg-surface)] transition-all"
                       >
                         <EyeIcon className="w-4 h-4" />
                       </button>
@@ -371,7 +369,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                         onClick={() => onEdit(customer)}
                         title="Edit Customer"
                         aria-label="Edit Customer"
-                        className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                        className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--status-success)] border border-[var(--border-default)] hover:bg-[var(--bg-surface)] transition-all"
                       >
                         <PencilSquareIcon className="w-4 h-4" />
                       </button>
@@ -380,7 +378,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                         onClick={() => onDelete(customer)}
                         title="Delete Customer"
                         aria-label="Delete Customer"
-                        className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                        className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--status-danger)] border border-[var(--border-default)] hover:bg-[var(--bg-surface)] transition-all"
                       >
                         <TrashIcon className="w-4 h-4" />
                       </button>
@@ -398,35 +396,35 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
       <div className="lg:hidden space-y-4 p-2">
         {isLoading ? (
           Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
-              <div className="h-4 bg-white/20 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            <div key={i} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 animate-pulse space-y-3">
+              <div className="h-4 bg-[var(--bg-surface)] rounded w-1/2"></div>
+              <div className="h-3 bg-[var(--bg-surface)] rounded w-3/4"></div>
+              <div className="h-3 bg-[var(--bg-surface)] rounded w-2/3"></div>
             </div>
           ))
         ) : (
           customers.map((customer) => (
-            <div key={customer.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+            <div key={customer.id} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 hover:border-[var(--border-default)] transition-all">
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedCustomers.has(customer.id)}
-                      onChange={(e) => handleCustomerSelect(customer.id, e.target.checked)}
-                      className="rounded border-white/10 text-cyan-500 focus:ring-cyan-500 bg-white/5 w-5 h-5"
-                    />
+                  <input
+                    type="checkbox"
+                    checked={selectedCustomers.has(customer.id)}
+                    onChange={(e) => handleCustomerSelect(customer.id, e.target.checked)}
+                    className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-[var(--bg-surface)] w-5 h-5 cursor-pointer"
+                  />
                   <div>
                     <button
                       type="button"
                       onClick={() => onView(customer)}
-                      className="text-left text-lg font-semibold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors inline-flex items-center gap-1.5 group"
+                      className="text-left text-base font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
                       title="View Detailed Ledger & Invoices"
                     >
                       <span>{customer.name}</span>
-                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-cyan-400/70 group-hover:text-cyan-300 transition-all" />
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-all" />
                     </button>
-                    <div className="text-sm text-white/70">
+                    <div className="text-sm text-[var(--text-secondary)]">
                       {customer.email || 'No email'}
                     </div>
                   </div>
@@ -434,44 +432,46 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
               </div>
 
               {/* Card Content */}
-              <div className="space-y-3">
+              <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Phone:</span>
-                  <span className="text-sm font-medium text-white">{customer.phone || 'N/A'}</span>
+                  <span className="text-[var(--text-muted)]">Phone:</span>
+                  <span className="font-medium text-[var(--text-primary)]">{customer.phone || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">GSTIN:</span>
-                  <span className="text-sm text-white font-mono">{customer.gstin || 'N/A'}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">GSTIN:</span>
+                  <span className="text-sm text-[var(--text-primary)] font-mono">{customer.gstin || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-500">Category:</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded border border-cyan-400/20">{customer.meta?.party_category || '-'}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Category:</span>
+                  <span className="text-xs font-medium uppercase tracking-wider px-2 py-0.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)]">
+                    {customer.meta?.party_category || '-'}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Credit Limit:</span>
-                  <span className="text-sm text-white">
+                  <span className="text-[var(--text-muted)]">Credit Limit:</span>
+                  <span className="font-semibold text-[var(--text-primary)]">
                     {customer.meta?.credit_limit ? `${getCurrencySymbol()}${Number(customer.meta.credit_limit).toLocaleString()}` : '-'}
                   </span>
                 </div>
 
                 {customer.address && (
                   <div className="flex justify-between items-start">
-                    <span className="text-sm text-white/70">Address:</span>
-                    <span className="text-sm text-white text-right max-w-[60%]">{customer.address}</span>
+                    <span className="text-[var(--text-muted)]">Address:</span>
+                    <span className="text-[var(--text-secondary)] text-right max-w-[60%] line-clamp-2">{customer.address}</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => onView(customer)}
                   title="View Customer Details & Ledger"
                   aria-label="View Customer Details & Ledger"
-                  className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                 >
                   <EyeIcon className="w-4 h-4" />
                 </button>
@@ -480,7 +480,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                   onClick={() => onEdit(customer)}
                   title="Edit Customer"
                   aria-label="Edit Customer"
-                  className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                 >
                   <PencilSquareIcon className="w-4 h-4" />
                 </button>
@@ -489,7 +489,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                   onClick={() => onDelete(customer)}
                   title="Delete Customer"
                   aria-label="Delete Customer"
-                  className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-surface)] text-[var(--status-danger)] border border-[var(--border-default)] hover:bg-[var(--status-danger-bg)] transition-all cursor-pointer"
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>
@@ -516,23 +516,23 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
+        <div className="px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-[var(--text-muted)]">
               Page {page} of {totalPages} ({totalCount} total customers)
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 text-sm border border-white/20 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10 bg-white/10 text-white font-bold transition-colors"
+                className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1 text-sm border border-white/20 rounded hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed backdrop-filter backdrop-blur-10 bg-white/10 text-white font-bold transition-colors"
+                className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Next
               </button>
