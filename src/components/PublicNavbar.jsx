@@ -59,7 +59,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
           >
             {/* Logo */}
             <Link to="/" className="flex items-center transition-all duration-300 hover:opacity-90 active:scale-95">
-              <BrandLogo className="h-auto w-[110px] object-contain sm:w-[130px]" />
+              <BrandLogo className="h-10 sm:h-11 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
