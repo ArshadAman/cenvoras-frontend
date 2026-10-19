@@ -155,19 +155,19 @@ export default function SalesOrderList() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 sm:px-0">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Sales Orders</h1>
-            <p className="text-gray-400 text-sm">Manage customer orders before invoicing.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1">Sales Orders</h1>
+            <p className="text-[var(--text-secondary)] text-sm">Manage customer orders before invoicing.</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-cyan-500/50 w-full sm:w-auto">
-              <span className="text-xs text-gray-400 font-medium">PREFIX:</span>
+            <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 focus-within:border-[var(--accent-primary)] w-full sm:w-auto">
+              <span className="text-xs text-[var(--text-secondary)] font-medium">PREFIX:</span>
               <input 
                 type="text" 
                 value={salesOrderPrefix}
                 onChange={(e) => setSalesOrderPrefix(normalizePrefix(e.target.value))}
                 onBlur={handlePrefixBlur}
                 disabled={!canEditPrefix}
-                className="bg-transparent border-none text-white text-sm flex-1 sm:w-28 outline-none placeholder-gray-600 focus:ring-0 p-0"
+                className="bg-transparent border-none text-[var(--text-primary)] text-sm flex-1 sm:w-28 outline-none placeholder-[var(--text-muted)] focus:ring-0 p-0"
                 placeholder="SO"
                 maxLength={10}
                 title={!canEditPrefix ? 'Sales Order prefix is managed by the main account.' : ''}
@@ -178,7 +178,7 @@ export default function SalesOrderList() {
                 setEditOrder(null);
                 setShowForm(true);
               }}
-              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2 w-full sm:w-auto justify-center"
+              className="btn-primary text-sm py-2 px-4 shadow-sm flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <PlusIcon className="w-4 h-4"/> New Order
             </button>

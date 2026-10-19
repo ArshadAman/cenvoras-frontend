@@ -681,10 +681,10 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       {/* Email Prompt Modal */}
       {emailPromptOpen && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEmailPromptOpen(false)}></div>
-          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl p-6 animate-fade-up">
-            <h3 className="text-lg font-bold text-white mb-2">Enter Customer Email</h3>
-            <p className="text-sm text-gray-400 mb-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEmailPromptOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl p-6 animate-fade-up">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Enter Customer Email</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
               No email is on file for this customer. Enter an email to send this invoice.
             </p>
             <input
@@ -693,20 +693,20 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               onChange={(e) => setManualEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && manualEmail.includes('@') && sendInvoiceEmail(manualEmail)}
               placeholder="customer@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-cyan-500/50 mb-4"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)] mb-4"
               autoFocus
             />
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => { setEmailPromptOpen(false); setManualEmail(''); }}
-                className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors"
+                className="btn-secondary px-4 py-2 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={() => sendInvoiceEmail(manualEmail)}
                 disabled={!manualEmail.includes('@') || sendingEmail}
-                className="px-5 py-2 bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-lg text-sm font-semibold hover:bg-cyan-500/30 transition-colors disabled:opacity-40 flex items-center gap-2"
+                className="btn-primary px-5 py-2 text-sm flex items-center gap-2"
               >
                 {sendingEmail ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</> : <><EnvelopeIcon className="w-4 h-4" /> Send Invoice</>}
               </button>
@@ -719,42 +719,42 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
         {/* Backdrop */}
         <div 
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
           onClick={onClose}
         />
         
         {/* Modal Content */}
-        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
           
           {/* Modernized Header */}
-          <div className="relative z-30 flex flex-col md:flex-row items-start md:items-center justify-between px-5 py-3 border-b border-white/10 bg-[#0d0d14]/95 backdrop-blur-md gap-3">
+          <div className="relative z-30 flex flex-col md:flex-row items-start md:items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] gap-3">
             {/* Left section: Document Title, Badge, Theme & Bank Selectors */}
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               <div className="flex items-center gap-2.5">
-                <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight">
+                <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)] tracking-tight">
                   {isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}
                 </h2>
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                   {enrichedInvoice.invoice_number || 'Draft'}
                 </span>
               </div>
 
               {/* Subtle separator */}
-              <div className="hidden sm:block h-4 w-px bg-white/10 mx-0.5" />
+              <div className="hidden sm:block h-4 w-px bg-[var(--border-subtle)] mx-0.5" />
 
               {/* Theme & Bank Switcher Controls */}
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Instant Template Switcher Dropdown */}
-                <div className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-gray-300 rounded-lg px-2.5 py-1.5 transition-colors shadow-sm">
-                  <SwatchIcon className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-lg px-2.5 py-1.5 transition-colors shadow-sm">
+                  <SwatchIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
                   <select
                     value={template?.id || 'classic'}
                     onChange={(e) => handleTemplateSwitch(e.target.value)}
-                    className="bg-transparent text-gray-200 text-xs font-medium outline-none cursor-pointer pr-1"
+                    className="bg-transparent text-[var(--text-primary)] text-xs font-medium outline-none cursor-pointer pr-1"
                     title="Switch template"
                   >
                     {getInvoiceTemplates().map((t) => (
-                      <option key={t.id} value={t.id} className="bg-[#14141f] text-white">
+                      <option key={t.id} value={t.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                         {t.name}
                       </option>
                     ))}
@@ -763,19 +763,19 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
 
                 {/* Instant Bank Account Switcher Dropdown */}
                 {allBankAccounts.length > 0 && (
-                  <div className="flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-gray-300 rounded-lg px-2.5 py-1.5 transition-colors shadow-sm max-w-[210px]">
-                    <BuildingLibraryIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-lg px-2.5 py-1.5 transition-colors shadow-sm max-w-[210px]">
+                    <BuildingLibraryIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
                     <select
                       value={selectedBankAccountId || 'none'}
                       onChange={(e) => handleBankSelect(e.target.value)}
-                      className="bg-transparent text-gray-200 text-xs font-medium outline-none cursor-pointer truncate pr-1"
+                      className="bg-transparent text-[var(--text-primary)] text-xs font-medium outline-none cursor-pointer truncate pr-1"
                       title="Select bank account to display on bill"
                     >
-                      <option value="none" className="bg-[#14141f] text-gray-400">
+                      <option value="none" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">
                         No Bank Details
                       </option>
                       {allBankAccounts.map((acc, idx) => (
-                        <option key={acc.id || idx} value={acc.id} className="bg-[#14141f] text-white">
+                        <option key={acc.id || idx} value={acc.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                           {acc.account_name || `Account ${idx + 1}`}{acc.bank_name ? ` (${acc.bank_name})` : ''}{billingProfile.default_bank_account_sections?.[sectionKey] === acc.id ? ' [Default]' : ''}
                         </option>
                       ))}
@@ -786,19 +786,19 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
             </div>
 
             {/* Right section: Clean Icon-Based Action Toolbar */}
-            <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/10 backdrop-blur-md self-end md:self-center shrink-0">
+            <div className="flex items-center gap-1 bg-[var(--bg-primary)] p-1 rounded-xl border border-[var(--border-subtle)] self-end md:self-center shrink-0">
               {/* Customize Template Button */}
               <div className="relative group">
                 <button
                   type="button"
                   onClick={() => setShowDesigner(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-purple-300 hover:bg-purple-500/15 active:scale-95 transition-all duration-150"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all duration-150"
                   title="Customize Template"
                   aria-label="Customize Template"
                 >
                   <PaintBrushIcon className="w-4 h-4" />
                 </button>
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#181824] text-gray-200 text-[11px] font-medium rounded-md shadow-2xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Customize Template
                 </div>
               </div>
@@ -808,30 +808,30 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-300 hover:bg-blue-500/15 active:scale-95 transition-all duration-150"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all duration-150"
                   title="Print Document"
                   aria-label="Print Document"
                 >
                   <PrinterIcon className="w-4 h-4" />
                 </button>
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#181824] text-gray-200 text-[11px] font-medium rounded-md shadow-2xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Print Document
                 </div>
               </div>
 
               {/* PDF Download Split Button */}
               <div ref={pdfMenuRef} className="relative group/pdf">
-                <div className={`flex items-center rounded-lg transition-colors ${pdfMenuOpen ? 'bg-white/10 text-emerald-400 ring-1 ring-emerald-500/30' : 'hover:bg-white/5'}`}>
+                <div className={`flex items-center rounded-lg transition-colors ${pdfMenuOpen ? 'bg-[var(--bg-surface-hover)] text-[var(--accent-primary)]' : 'hover:bg-[var(--bg-surface-hover)]'}`}>
                   <button
                     type="button"
                     disabled={downloadingPDF}
                     onClick={() => handleDownloadPDF('vector')}
-                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/15 rounded-l-lg transition-colors disabled:opacity-50"
+                    className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-l-lg transition-colors disabled:opacity-50"
                     title="Download Vector PDF"
                     aria-label="Download Vector PDF"
                   >
                     {downloadingPDF ? (
-                      <ArrowPathIcon className="w-4 h-4 animate-spin text-emerald-400" />
+                      <ArrowPathIcon className="w-4 h-4 animate-spin text-[var(--accent-primary)]" />
                     ) : (
                       <ArrowDownTrayIcon className="w-4 h-4" />
                     )}
@@ -840,61 +840,61 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                     type="button"
                     disabled={downloadingPDF}
                     onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
-                    className="w-4 h-8 flex items-center justify-center text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/15 rounded-r-lg transition-colors disabled:opacity-50 border-l border-white/5"
+                    className="w-4 h-8 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-r-lg transition-colors disabled:opacity-50 border-l border-[var(--border-subtle)]"
                     title="PDF Download Options"
                     aria-label="PDF Download Options"
                   >
-                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${pdfMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${pdfMenuOpen ? 'rotate-180 text-[var(--accent-primary)]' : ''}`} />
                   </button>
                 </div>
 
                 {!pdfMenuOpen && (
-                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[#181824] text-gray-200 text-[11px] font-medium rounded-md shadow-2xl border border-white/10 whitespace-nowrap opacity-0 group-hover/pdf:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover/pdf:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                     Download PDF
                   </div>
                 )}
 
                 {pdfMenuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-72 bg-[#14141f] border border-white/15 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 backdrop-blur-xl">
+                  <div className="absolute top-full right-0 mt-2 w-72 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                     <button
                       type="button"
                       onClick={() => handleDownloadPDF('vector')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 group/opt"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-[var(--bg-surface-hover)] transition-colors flex items-start gap-2.5 group/opt"
                     >
-                      <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <BoltIcon className="w-3.5 h-3.5 text-amber-400" />
+                      <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <BoltIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">Download Vector PDF</span>
-                        <span className="text-[11px] text-gray-400">~20KB, crystal-clear direct vector file</span>
+                        <span className="font-semibold text-[var(--text-primary)]">Download Vector PDF</span>
+                        <span className="text-[11px] text-[var(--text-muted)]">~20KB, crystal-clear direct vector file</span>
                       </div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleDownloadPDF('client')}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 mt-1 border-t border-white/5 pt-2 group/opt"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-[var(--bg-surface-hover)] transition-colors flex items-start gap-2.5 mt-1 border-t border-[var(--border-subtle)] pt-2 group/opt"
                     >
-                      <div className="w-6 h-6 rounded-md bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <SparklesIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <SparklesIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">Direct Canvas Download</span>
-                        <span className="text-[11px] text-gray-400">~45KB, high-res client fallback</span>
+                        <span className="font-semibold text-[var(--text-primary)]">Direct Canvas Download</span>
+                        <span className="text-[11px] text-[var(--text-muted)]">~45KB, high-res client fallback</span>
                       </div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors flex items-start gap-2.5 mt-1 border-t border-white/5 pt-2 group/opt"
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-[var(--bg-surface-hover)] transition-colors flex items-start gap-2.5 mt-1 border-t border-[var(--border-subtle)] pt-2 group/opt"
                     >
-                      <div className="w-6 h-6 rounded-md bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <PrinterIcon className="w-3.5 h-3.5 text-purple-400" />
+                      <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <PrinterIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-gray-200 group-hover/opt:text-white">System Print Dialog</span>
-                        <span className="text-[11px] text-gray-400">Print or choose destination printer</span>
+                        <span className="font-semibold text-[var(--text-primary)]">System Print Dialog</span>
+                        <span className="text-[11px] text-[var(--text-muted)]">Print or choose destination printer</span>
                       </div>
                     </button>
                   </div>
@@ -907,17 +907,17 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   type="button"
                   disabled={sendingEmail}
                   onClick={handleEmailClick}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-sky-300 hover:bg-sky-500/15 active:scale-95 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--status-info)] hover:bg-[var(--status-info)]/15 active:scale-95 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Send via Email"
                   aria-label="Send via Email"
                 >
                   {sendingEmail ? (
-                    <ArrowPathIcon className="w-4 h-4 animate-spin text-sky-400" />
+                    <ArrowPathIcon className="w-4 h-4 animate-spin text-[var(--status-info)]" />
                   ) : (
                     <EnvelopeIcon className="w-4 h-4" />
                   )}
                 </button>
-                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[#181824] text-gray-200 text-[11px] font-medium rounded-md shadow-2xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Send via Email
                 </div>
               </div>
@@ -927,33 +927,33 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); toast.info('WhatsApp automation is available on demand. Contact support to activate.'); }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/15 active:scale-95 transition-all duration-150 relative"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--status-success)] hover:bg-[var(--status-success)]/15 active:scale-95 transition-all duration-150 relative"
                   title="WhatsApp (On Demand)"
                   aria-label="WhatsApp"
                 >
                   <WhatsAppIcon className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
                 </button>
-                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[#181824] text-gray-200 text-[11px] font-medium rounded-md shadow-2xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   WhatsApp (On Demand)
                 </div>
               </div>
 
               {/* Divider */}
-              <div className="w-px h-4 bg-white/10 mx-0.5" />
+              <div className="w-px h-4 bg-[var(--border-subtle)] mx-0.5" />
 
               {/* Close Button */}
               <div className="relative group">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all duration-150"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all duration-150"
                   title="Close (Esc)"
                   aria-label="Close"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
-                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[#181824] text-gray-200 text-[11px] font-medium rounded-md shadow-2xl border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Close (Esc)
                 </div>
               </div>
@@ -961,11 +961,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div ref={previewContainerRef} className="flex-1 overflow-auto p-2 sm:p-8 bg-gray-950/70 flex justify-center items-start">
+          <div ref={previewContainerRef} className="flex-1 overflow-auto p-2 sm:p-8 bg-[var(--bg-primary)] flex justify-center items-start">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
-                <p className="text-gray-400">{isDeliveryChallan ? "Loading delivery challan..." : isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-primary)] mb-4" />
+                <p className="text-[var(--text-muted)]">{isDeliveryChallan ? "Loading delivery challan..." : isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
               <div className="w-full flex justify-center pb-10">
@@ -1015,11 +1015,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 </div>
               </div>
             ) : (
-              <div className="text-center py-20 text-gray-400">
+              <div className="text-center py-20 text-[var(--text-muted)]">
                 <p>No template loaded</p>
                 <button
                   onClick={() => setShowDesigner(true)}
-                  className="mt-4 text-cyan-400 hover:text-cyan-300"
+                  className="mt-4 text-[var(--accent-primary)] hover:underline font-medium"
                 >
                   Create a template
                 </button>

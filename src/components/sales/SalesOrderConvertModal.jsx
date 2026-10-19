@@ -214,19 +214,19 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
       />
 
       <div className="flex min-h-full items-center justify-center p-3 sm:p-6">
-        <div className="relative w-full max-w-2xl bg-[#141416] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-up">
+        <div className="relative w-full max-w-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-up">
           
           {/* Header */}
-          <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/40 flex-shrink-0">
+          <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/40 flex-shrink-0">
             <div>
-              <h3 className="text-white text-lg font-bold tracking-tight">Convert Sales Order</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Order: <span className="text-cyan-400 font-mono font-medium">{order.order_number}</span> &bull; {customerName}
+              <h3 className="text-[var(--text-primary)] text-lg font-bold tracking-tight">Convert Sales Order</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                Order: <span className="text-[var(--accent-primary)] font-mono font-medium">{order.order_number}</span> &bull; {customerName}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/50 rounded-xl transition-all"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -248,23 +248,23 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 }}
                 className={`p-3.5 rounded-xl border-2 transition-all flex items-start gap-3 select-none ${
                   allDispatched
-                    ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/5'
+                    ? 'opacity-40 cursor-not-allowed bg-[var(--bg-surface)]/50 border-[var(--border-subtle)]'
                     : conversionType === 'challan'
-                    ? 'bg-blue-500/10 border-blue-500 shadow-md shadow-blue-500/10 cursor-pointer'
-                    : 'bg-white/5 border-white/10 hover:border-white/20 cursor-pointer'
+                    ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)] shadow-sm cursor-pointer'
+                    : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/50 cursor-pointer'
                 }`}
               >
-                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'challan' && !allDispatched ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'challan' && !allDispatched ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}>
                   <TruckIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                  <div className="text-xs font-bold text-[var(--text-primary)] flex items-center justify-between">
                     <span>Delivery Challan</span>
-                    <span className="text-[10px] text-blue-400 font-medium">
+                    <span className="text-[10px] text-[var(--accent-primary)] font-medium">
                       {allDispatched ? 'Fully Dispatched' : 'Dispatch'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-1 leading-tight">
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-tight">
                     {allDispatched 
                       ? 'All items of this order were already dispatched via Challan.' 
                       : 'Dispatches goods & reduces inventory stock. No ledger/receivable entry created.'}
@@ -277,21 +277,21 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 onClick={() => setConversionType('invoice')}
                 className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
                   conversionType === 'invoice'
-                    ? 'bg-cyan-500/10 border-cyan-500 shadow-md shadow-cyan-500/10'
-                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                    ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)] shadow-sm'
+                    : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/50'
                 }`}
               >
-                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'invoice' ? 'bg-cyan-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                <div className={`p-2 rounded-lg flex-shrink-0 ${conversionType === 'invoice' ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'}`}>
                   <DocumentTextIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-white flex items-center justify-between">
+                  <div className="text-xs font-bold text-[var(--text-primary)] flex items-center justify-between">
                     <span>Sales Invoice</span>
-                    <span className="text-[10px] text-cyan-400 font-medium">
+                    <span className="text-[10px] text-[var(--accent-primary)] font-medium">
                       {isPostDeliveryInvoicing ? 'Invoice Delivered Goods' : 'Direct Billing'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-1 leading-tight">
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-tight">
                     {isPostDeliveryInvoicing
                       ? 'Converts delivered order items into Sales Invoice referencing Delivery Challan without double-deducting stock.'
                       : 'Converts selected items directly into a final GST tax invoice with ledger accounting.'}
@@ -303,9 +303,9 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
             {/* Items Selection & Quantity Customization for both Challan & Invoice */}
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-2">
                   <span>Select Items to {conversionType === 'challan' ? 'Dispatch' : 'Invoice'}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 font-mono">
                     {selectedItemIds.size} of {orderItems.length} selected
                   </span>
                 </div>
@@ -313,7 +313,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                   <button
                     type="button"
                     onClick={toggleAllItems}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 font-medium px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 transition-all"
+                    className="text-xs text-[var(--accent-primary)] hover:underline font-medium px-2 py-1 rounded bg-[var(--accent-primary)]/10 transition-all"
                   >
                     {selectedItemIds.size === orderItems.length ? 'Deselect All' : 'Select All'}
                   </button>
@@ -321,7 +321,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
               </div>
 
               {orderItems.length === 0 ? (
-                <div className="p-6 text-center text-xs text-gray-400 bg-white/5 rounded-xl border border-white/5">
+                <div className="p-6 text-center text-xs text-[var(--text-muted)] bg-[var(--bg-primary)]/30 rounded-xl border border-[var(--border-subtle)]">
                   No items available in this sales order.
                 </div>
               ) : (
@@ -338,8 +338,8 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                         key={item.id}
                         className={`p-3 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isSelected
-                            ? 'bg-cyan-500/10 border-cyan-500/40'
-                            : 'bg-white/5 border-white/5 opacity-70 hover:opacity-100'
+                            ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40'
+                            : 'bg-[var(--bg-primary)]/20 border-[var(--border-subtle)] opacity-70 hover:opacity-100'
                         }`}
                       >
                         {/* Item Left: Checkbox + Product Name */}
@@ -349,20 +349,20 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                         >
                           <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
                             isSelected 
-                              ? 'bg-cyan-500 border-cyan-500 text-black' 
-                              : 'border-gray-500 bg-white/5'
+                              ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-[var(--text-on-accent)]' 
+                              : 'border-[var(--border-subtle)] bg-[var(--bg-surface)]'
                           }`}>
                             {isSelected && <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
                           <div className="min-w-0">
-                            <p className={`text-xs font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                            <p className={`text-xs font-semibold truncate ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
                               {item.product_name}
                             </p>
-                            <p className="text-[11px] text-gray-400">
+                            <p className="text-[11px] text-[var(--text-secondary)]">
                               {isPostDeliveryInvoicing ? 'Delivered Qty: ' : 'Pending Qty: '}
-                              <strong className="text-gray-200">{maxQty} {item.unit || 'pcs'}</strong>
+                              <strong className="text-[var(--text-primary)]">{maxQty} {item.unit || 'pcs'}</strong>
                               {item.dispatched_quantity > 0 && !isPostDeliveryInvoicing && (
-                                <span className="text-purple-300 ml-1.5">(Dispatched: {item.dispatched_quantity})</span>
+                                <span className="text-[var(--accent-primary)] ml-1.5">(Dispatched: {item.dispatched_quantity})</span>
                               )}
                               {' '}&bull; Rate: {getCurrencySymbol()}{Number(item.price || 0).toFixed(2)}
                             </p>
@@ -372,7 +372,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                         {/* Item Right: Quantity Input & Line Amount */}
                         <div className="flex items-center justify-between sm:justify-end gap-3 pl-8 sm:pl-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] text-gray-400 font-medium">
+                            <span className="text-[11px] text-[var(--text-secondary)] font-medium">
                               {conversionType === 'challan' ? 'Dispatch Qty:' : 'Invoice Qty:'}
                             </span>
                             <input
@@ -382,13 +382,13 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                               value={currentQty}
                               disabled={!isSelected}
                               onChange={(e) => handleQuantityChange(item.id, maxQty, e.target.value)}
-                              className="w-20 px-2.5 py-1.5 bg-[#111] border border-white/20 rounded-lg text-white text-xs text-center font-bold font-mono focus:border-cyan-400 focus:outline-none disabled:opacity-40"
+                              className="w-20 px-2.5 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] text-xs text-center font-bold font-mono focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-40"
                             />
-                            <span className="text-[11px] text-gray-400">{item.unit || 'pcs'}</span>
+                            <span className="text-[11px] text-[var(--text-secondary)]">{item.unit || 'pcs'}</span>
                           </div>
 
                           <div className="text-right min-w-[70px]">
-                            <span className="text-xs font-bold text-cyan-400 font-mono">
+                            <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
                               {getCurrencySymbol()}{(() => {
                                 const q = Number(currentQty) || 0;
                                 const p = Number(item.price || 0);
@@ -411,50 +411,50 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
 
               {/* Optional Transport Info Accordion (Only for Delivery Challan) */}
               {conversionType === 'challan' && (
-                <div className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.02]">
+                <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-primary)]/20">
                   <button
                     type="button"
                     onClick={() => setShowTransportFields(!showTransportFields)}
-                    className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-gray-300 hover:text-white transition-colors"
+                    className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     <span>Optional Transport & Dispatch Details</span>
                     {showTransportFields ? (
-                      <ChevronUpIcon className="w-4 h-4 text-gray-400" />
+                      <ChevronUpIcon className="w-4 h-4 text-[var(--text-secondary)]" />
                     ) : (
-                      <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                      <ChevronDownIcon className="w-4 h-4 text-[var(--text-secondary)]" />
                     )}
                   </button>
 
                   {showTransportFields && (
-                    <div className="p-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/20">
+                    <div className="p-4 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--bg-surface)]">
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Vehicle No.</label>
+                        <label className="block text-[10px] uppercase font-bold text-[var(--text-secondary)] mb-1">Vehicle No.</label>
                         <input
                           type="text"
                           placeholder="e.g. MH12AB1234"
                           value={vehicleNumber}
                           onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-                          className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white uppercase font-mono outline-none focus:border-cyan-500"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] uppercase font-mono outline-none focus:border-[var(--accent-primary)]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Transport Mode</label>
+                        <label className="block text-[10px] uppercase font-bold text-[var(--text-secondary)] mb-1">Transport Mode</label>
                         <input
                           type="text"
                           placeholder="Road, Air, Courier..."
                           value={transportMode}
                           onChange={(e) => setTransportMode(e.target.value)}
-                          className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-500"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">E-Way Bill No.</label>
+                        <label className="block text-[10px] uppercase font-bold text-[var(--text-secondary)] mb-1">E-Way Bill No.</label>
                         <input
                           type="text"
                           placeholder="12-digit number"
                           value={ewayBillNumber}
                           onChange={(e) => setEwayBillNumber(e.target.value)}
-                          className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-cyan-500"
+                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] font-mono outline-none focus:border-[var(--accent-primary)]"
                         />
                       </div>
                     </div>
@@ -466,12 +466,12 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
+          <div className="px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
             <div className="text-xs">
-              <span className="text-gray-400 block text-[10px] uppercase font-bold">
+              <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">
                 {conversionType === 'challan' ? 'Challan Dispatch Value' : 'Invoice Value'}
               </span>
-              <span className="text-cyan-400 font-bold text-base font-mono">
+              <span className="text-[var(--text-primary)] font-bold text-base font-mono">
                 {getCurrencySymbol()}
                 {Number(dispatchSummary.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
@@ -482,7 +482,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+                className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl transition-colors"
               >
                 Cancel
               </button>
@@ -490,11 +490,11 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 type="button"
                 onClick={handleConvert}
                 disabled={isSubmitting || (conversionType === 'challan' && selectedItemIds.size === 0)}
-                className="flex-1 sm:flex-none px-5 py-2 text-xs font-bold text-black bg-cyan-500 hover:bg-cyan-400 rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                className="btn-primary flex-1 sm:flex-none px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     Converting...
                   </>
                 ) : conversionType === 'challan' ? (

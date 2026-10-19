@@ -251,9 +251,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-        <h3 className="text-lg font-bold text-white mb-1">Error loading delivery challans</h3>
-        <p className="text-sm text-red-300 mb-4">{error.message}</p>
+      <div className="bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/20 rounded-xl p-6 text-center">
+        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Error loading delivery challans</h3>
+        <p className="text-sm text-[var(--status-danger)] mb-4">{error.message}</p>
         <button
           onClick={() => queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] })}
           className="btn-secondary text-sm"
@@ -322,15 +322,15 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Status Filter Tabs & Bulk Actions */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 p-1 bg-white/5 border border-white/10 rounded-xl overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl overflow-x-auto no-scrollbar">
             {statusTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setStatusFilterTab(tab.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   statusFilterTab === tab.id
-                    ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/20"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/50"
                 }`}
               >
                 {tab.label}
@@ -344,7 +344,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 type="button"
                 onClick={handleBulkConvert}
                 disabled={bulkConvertMutation.isPending || bulkDeleteMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+                className="btn-primary flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                 title="Convert selected delivery challans into a single consolidated Sales Invoice"
               >
                 <CurrencyRupeeIcon className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 type="button"
                 onClick={handleBulkDelete}
                 disabled={bulkDeleteMutation.isPending || bulkConvertMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-rose-500/20 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/25 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                 title="Bulk delete selected delivery challans and restore inventory"
               >
                 <TrashIcon className="w-4 h-4" />
@@ -368,13 +368,13 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
         {/* Search & Columns */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-72">
-            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type="text"
               placeholder="Search challan, order #, vehicle..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500/50 bg-[#111] text-white text-sm placeholder-gray-500 outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)]"
             />
           </div>
 
@@ -383,12 +383,12 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
             <button
               type="button"
               onClick={() => setShowColumnDropdown((prev) => !prev)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/50 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl text-sm font-medium transition-colors"
               title="Toggle Columns"
             >
-              <AdjustmentsHorizontalIcon className="w-4 h-4 text-cyan-400" />
+              <AdjustmentsHorizontalIcon className="w-4 h-4 text-[var(--accent-primary)]" />
               <span className="hidden sm:inline">Columns</span>
-              <ChevronDownIcon className="w-3.5 h-3.5 text-gray-400" />
+              <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
             </button>
 
             {showColumnDropdown && (
@@ -397,21 +397,21 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                   className="fixed inset-0 z-20" 
                   onClick={() => setShowColumnDropdown(false)}
                 />
-                <div className="absolute right-0 mt-2 w-56 bg-[#161616] border border-white/15 rounded-xl shadow-2xl p-2 z-30 backdrop-blur-xl">
-                  <div className="px-2 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-white/10 mb-1">
+                <div className="absolute right-0 mt-2 w-56 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-2 z-30">
+                  <div className="px-2 py-1.5 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border-subtle)] mb-1">
                     Toggle Columns
                   </div>
                   <div className="space-y-1">
                     {COLUMN_OPTIONS.map((col) => (
                       <label
                         key={col.id}
-                        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer text-xs text-gray-200 select-none"
+                        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-[var(--bg-primary)]/40 cursor-pointer text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] select-none"
                       >
                         <input
                           type="checkbox"
                           checked={!!visibleColumns[col.id]}
                           onChange={() => toggleColumn(col.id)}
-                          className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                          className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                         />
                         <span>{col.label}</span>
                       </label>
@@ -428,36 +428,36 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
       <div className="hidden lg:block overflow-x-auto">
         <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
-            <tr className="bg-white/5 border-b border-white/10 text-left">
-              <th className="px-4 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-l-lg w-10 text-center">
+            <tr className="bg-[var(--bg-primary)]/40 border-b border-[var(--border-subtle)] text-left">
+              <th className="px-4 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider rounded-l-lg w-10 text-center">
                 <input
                   type="checkbox"
                   checked={filteredChallans.length > 0 && selectedChallans.size === filteredChallans.length}
                   onChange={toggleSelectAll}
-                  className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                  className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                   title="Select All"
                 />
               </th>
               <th
                 onClick={() => handleSort("challan_number")}
-                className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Challan #</span>
                   {sortConfig.key === "challan_number" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               {visibleColumns.date && (
                 <th
                   onClick={() => handleSort("date")}
-                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Date</span>
                     {sortConfig.key === "date" && (
-                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
@@ -465,40 +465,40 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
               {visibleColumns.customer && (
                 <th
                   onClick={() => handleSort("customer_name")}
-                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Customer</span>
                     {sortConfig.key === "customer_name" && (
-                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
               )}
               {visibleColumns.sales_order && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                   Ref Order
                 </th>
               )}
               {visibleColumns.transport && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                   Transport / Vehicle
                 </th>
               )}
               {visibleColumns.items && (
-                <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                   Items
                 </th>
               )}
               {visibleColumns.total_amount && (
                 <th
                   onClick={() => handleSort("total_amount")}
-                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Total Value</span>
                     {sortConfig.key === "total_amount" && (
-                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
@@ -506,17 +506,17 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
               {visibleColumns.status && (
                 <th
                   onClick={() => handleSort("status")}
-                  className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white select-none transition-colors"
+                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Status</span>
                     {sortConfig.key === "status" && (
-                      <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
               )}
-              <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg text-right">
+              <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider rounded-r-lg text-right">
                 Actions
               </th>
             </tr>
@@ -526,13 +526,13 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
               <tr>
                 <td colSpan={visibleColumnCount} className="px-6 py-12 text-center">
                   <div className="flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
                   </div>
                 </td>
               </tr>
             ) : filteredChallans.length === 0 ? (
               <tr>
-                <td colSpan={visibleColumnCount} className="px-6 py-12 text-center text-gray-400">
+                <td colSpan={visibleColumnCount} className="px-6 py-12 text-center text-[var(--text-muted)]">
                   No delivery challans found matching your criteria.
                 </td>
               </tr>
@@ -544,8 +544,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 return (
                   <tr
                     key={challan.id}
-                    className={`bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors ${
-                      isSelected ? "bg-cyan-500/5" : ""
+                    className={`bg-transparent border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/30 transition-colors ${
+                      isSelected ? "bg-[var(--accent-primary)]/10" : ""
                     }`}
                   >
                     <td className="px-4 py-3.5 whitespace-nowrap text-center">
@@ -553,12 +553,12 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelectChallan(challan.id)}
-                        className="rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                        className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                       />
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <div className="font-bold text-white flex items-center gap-1.5">
-                        <TruckIcon className="w-4 h-4 text-cyan-400" />
+                      <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                        <TruckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                         #{challan.challan_number}
                       </div>
                       {challan.converted_invoice && (
@@ -573,25 +573,25 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                                 navigate(`/sales?invoice=${challan.converted_invoice}`);
                               }
                             }}
-                            className="text-[11px] font-mono font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                            className="text-[11px] font-mono font-semibold text-[var(--status-success)] hover:underline flex items-center gap-1 transition-colors cursor-pointer"
                             title="Click to view converted invoice"
                           >
                             <span>Inv #{challan.converted_invoice_number || challan.converted_invoice}</span>
-                            <ArrowTopRightOnSquareIcon className="w-3 h-3 text-emerald-400" />
+                            <ArrowTopRightOnSquareIcon className="w-3 h-3 text-[var(--status-success)]" />
                           </button>
                         </div>
                       )}
                     </td>
                     {visibleColumns.date && (
-                      <td className="px-5 py-3.5 whitespace-nowrap text-gray-400">
+                      <td className="px-5 py-3.5 whitespace-nowrap text-[var(--text-secondary)]">
                         {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </td>
                     )}
                     {visibleColumns.customer && (
                       <td className="px-5 py-3.5 whitespace-nowrap">
-                        <div className="font-medium text-white">{challan.customer_name}</div>
+                        <div className="font-medium text-[var(--text-primary)]">{challan.customer_name}</div>
                         {challan.customer_gstin && (
-                          <div className="text-[11px] text-gray-500 font-mono">
+                          <div className="text-[11px] text-[var(--text-muted)] font-mono">
                             {challan.customer_gstin}
                           </div>
                         )}
@@ -606,41 +606,41 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                               e.stopPropagation();
                               handleOpenSalesOrder(challan.sales_order, challan.sales_order_number);
                             }}
-                            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 hover:border-purple-400/50 transition-all font-mono text-xs font-semibold cursor-pointer shadow-sm shadow-purple-500/5"
+                            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--accent-primary)]/15 hover:bg-[var(--accent-primary)]/25 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 transition-all font-mono text-xs font-semibold cursor-pointer shadow-sm"
                             title={`Click to open Sales Order ${challan.sales_order_number || ''} in Sales Orders page`}
                           >
-                            <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+                            <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
                             <span>{challan.sales_order_number || challan.sales_order_details?.order_number || `SO #${String(challan.sales_order).slice(0, 8)}`}</span>
-                            <ArrowTopRightOnSquareIcon className="w-3 h-3 text-purple-400/70 group-hover:text-purple-200 transition-colors" />
+                            <ArrowTopRightOnSquareIcon className="w-3 h-3 text-[var(--accent-primary)] transition-colors" />
                           </button>
                         ) : (
-                          <span className="text-gray-500 text-xs italic">—</span>
+                          <span className="text-[var(--text-muted)] text-xs italic">—</span>
                         )}
                       </td>
                     )}
                     {visibleColumns.transport && (
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         {challan.vehicle_number ? (
-                          <div className="text-sm text-gray-200 font-mono font-medium">
+                          <div className="text-sm text-[var(--text-primary)] font-mono font-medium">
                             {challan.vehicle_number}
                           </div>
                         ) : (
-                          <span className="text-gray-500 text-xs italic">Not specified</span>
+                          <span className="text-[var(--text-muted)] text-xs italic">Not specified</span>
                         )}
                         {challan.transport_mode && (
-                          <div className="text-[10px] uppercase text-gray-400 tracking-wider">
+                          <div className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">
                             Mode: {challan.transport_mode}
                           </div>
                         )}
                       </td>
                     )}
                     {visibleColumns.items && (
-                      <td className="px-5 py-3.5 whitespace-nowrap text-gray-300">
+                      <td className="px-5 py-3.5 whitespace-nowrap text-[var(--text-secondary)]">
                         {challan.items?.length || 0} item{challan.items?.length === 1 ? "" : "s"}
                       </td>
                     )}
                     {visibleColumns.total_amount && (
-                      <td className="px-5 py-3.5 whitespace-nowrap font-bold text-cyan-400">
+                      <td className="px-5 py-3.5 whitespace-nowrap font-bold text-[var(--text-primary)]">
                         {getCurrencySymbol()}
                         {Number(challan.total_amount || 0).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -651,16 +651,16 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                     {visibleColumns.status && (
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         {isInvoiced ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                             <DocumentCheckIcon className="w-3.5 h-3.5" />
                             Invoiced
                           </span>
                         ) : isDraft ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] uppercase font-bold tracking-wider bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
                             Draft
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[11px] uppercase font-bold tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] uppercase font-bold tracking-wider bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30">
                             Open / Dispatched
                           </span>
                         )}
@@ -673,7 +673,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                           onClick={() => onView(challan)}
                           title="View Preview & PDF"
                           aria-label="View Preview & PDF"
-                          className="p-1.5 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
+                          className="p-1.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors"
                         >
                           <EyeIcon className="w-4 h-4" />
                         </button>
@@ -685,7 +685,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                               onClick={() => onEdit(challan)}
                               title="Edit Challan"
                               aria-label="Edit Challan"
-                              className="p-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors"
+                              className="p-1.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors"
                             >
                               <PencilSquareIcon className="w-4 h-4" />
                             </button>
@@ -695,7 +695,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                                 onClick={() => handleConvert(challan)}
                                 title="Convert to Sales Invoice (No double stock decrement)"
                                 aria-label="Convert to Sales Invoice"
-                                className="p-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors"
+                                className="p-1.5 bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 rounded-lg hover:bg-[var(--accent-primary)]/25 transition-colors"
                               >
                                 <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                               </button>
@@ -705,7 +705,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                               onClick={() => handleDelete(challan)}
                               title={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
                               aria-label={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
-                              className="p-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
+                              className="p-1.5 bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/20 rounded-lg hover:bg-[var(--status-danger)]/20 hover:text-[var(--status-danger)] transition-colors"
                             >
                               <TrashIcon className="w-4 h-4" />
                             </button>
@@ -725,10 +725,10 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
       <div className="lg:hidden space-y-3">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mx-auto"></div>
           </div>
         ) : filteredChallans.length === 0 ? (
-          <div className="text-center py-12 text-gray-400 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-center py-12 text-[var(--text-muted)] bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
             No delivery challans found.
           </div>
         ) : (
@@ -739,8 +739,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
             return (
               <div
                 key={challan.id}
-                className={`bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border p-4 space-y-4 hover:bg-white/10 transition-all ${
-                  isSelected ? "border-cyan-500/50 bg-cyan-500/5" : "border-white/10"
+                className={`bg-[var(--bg-surface)] rounded-xl border p-4 space-y-4 transition-all ${
+                  isSelected ? "border-[var(--accent-primary)]/50 bg-[var(--accent-primary)]/5" : "border-[var(--border-subtle)]"
                 }`}
               >
                 {/* Header */}
@@ -750,14 +750,14 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleSelectChallan(challan.id)}
-                      className="mt-1 rounded border-white/20 bg-black/40 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                      className="mt-1 rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                     />
                     <div>
-                      <div className="text-base font-bold text-white flex items-center gap-1.5">
-                        <TruckIcon className="w-4 h-4 text-cyan-400" />
+                      <div className="text-base font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                        <TruckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                         #{challan.challan_number}
                       </div>
-                      <div className="text-[11px] text-gray-400">
+                      <div className="text-[11px] text-[var(--text-muted)]">
                         {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </div>
                       {challan.converted_invoice && (
@@ -771,17 +771,17 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                               navigate(`/sales?invoice=${challan.converted_invoice}`);
                             }
                           }}
-                          className="mt-1 text-[11px] font-mono font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline transition-colors"
+                          className="mt-1 text-[11px] font-mono font-semibold text-[var(--status-success)] hover:underline flex items-center gap-1 transition-colors"
                           title="Click to view converted invoice"
                         >
                           <span>Inv #{challan.converted_invoice_number || challan.converted_invoice}</span>
-                          <ArrowTopRightOnSquareIcon className="w-3 h-3 text-emerald-400" />
+                          <ArrowTopRightOnSquareIcon className="w-3 h-3 text-[var(--status-success)]" />
                         </button>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-base font-bold text-cyan-400">
+                    <div className="text-base font-bold text-[var(--text-primary)]">
                       {getCurrencySymbol()}
                       {Number(challan.total_amount || 0).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -790,15 +790,15 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                     </div>
                     <div className="mt-1">
                       {isInvoiced ? (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                           Invoiced
                         </span>
                       ) : isDraft ? (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
                           Draft
                         </span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30">
                           Open
                         </span>
                       )}
@@ -807,58 +807,58 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 </div>
 
                 {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-3 py-3 border-y border-white/5 text-xs">
+                <div className="grid grid-cols-2 gap-3 py-3 border-y border-[var(--border-subtle)] text-xs">
                   {visibleColumns.customer && (
                     <div>
-                      <span className="text-gray-500 block text-[10px] uppercase font-bold">Customer</span>
-                      <span className="text-white font-medium truncate block">{challan.customer_name}</span>
+                      <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Customer</span>
+                      <span className="text-[var(--text-primary)] font-medium truncate block">{challan.customer_name}</span>
                     </div>
                   )}
                   {visibleColumns.transport && (
                     <div>
-                      <span className="text-gray-500 block text-[10px] uppercase font-bold">Vehicle</span>
-                      <span className="text-white font-mono">{challan.vehicle_number || "—"}</span>
+                      <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Vehicle</span>
+                      <span className="text-[var(--text-primary)] font-mono">{challan.vehicle_number || "—"}</span>
                     </div>
                   )}
                   {visibleColumns.items && (
                     <div>
-                      <span className="text-gray-500 block text-[10px] uppercase font-bold">Items</span>
-                      <span className="text-white">{challan.items?.length || 0} items</span>
+                      <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Items</span>
+                      <span className="text-[var(--text-primary)]">{challan.items?.length || 0} items</span>
                     </div>
                   )}
                   <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-bold">E-Way Bill</span>
-                    <span className="text-white font-mono">{challan.eway_bill_number || "—"}</span>
+                    <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">E-Way Bill</span>
+                    <span className="text-[var(--text-primary)] font-mono">{challan.eway_bill_number || "—"}</span>
                   </div>
                 </div>
 
                 {/* Ref Sales Order (Mobile) */}
                 {visibleColumns.sales_order && (challan.sales_order || challan.sales_order_number) && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                    <span className="text-[10px] text-purple-300/80 font-bold uppercase tracking-wider flex items-center gap-1">
-                      <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-purple-400" />
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30">
+                    <span className="text-[10px] text-[var(--accent-primary)] font-bold uppercase tracking-wider flex items-center gap-1">
+                      <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       Ref Sales Order
                     </span>
                     <button
                       type="button"
                       onClick={() => handleOpenSalesOrder(challan.sales_order, challan.sales_order_number)}
-                      className="text-xs font-mono font-bold text-purple-300 hover:text-purple-100 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 transition-colors"
+                      className="text-xs font-mono font-bold text-[var(--accent-primary)] hover:underline flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 transition-colors"
                       title="Click to open this Sales Order"
                     >
                       <span>{challan.sales_order_number || challan.sales_order_details?.order_number || `SO #${String(challan.sales_order).slice(0, 8)}`}</span>
-                      <ArrowTopRightOnSquareIcon className="w-3 h-3 text-purple-400" />
+                      <ArrowTopRightOnSquareIcon className="w-3 h-3 text-[var(--accent-primary)]" />
                     </button>
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
                   <button
                     type="button"
                     onClick={() => onView(challan)}
                     title="View Preview & PDF"
                     aria-label="View Preview & PDF"
-                    className="p-2 bg-white/5 text-gray-300 border border-white/10 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
+                    className="p-2 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors"
                   >
                     <EyeIcon className="w-4 h-4" />
                   </button>
@@ -870,7 +870,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                         onClick={() => onEdit(challan)}
                         title="Edit Challan"
                         aria-label="Edit Challan"
-                        className="p-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors"
+                        className="p-2 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors"
                       >
                         <PencilSquareIcon className="w-4 h-4" />
                       </button>
@@ -880,7 +880,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                           onClick={() => handleConvert(challan)}
                           title="Convert to Sales Invoice (No double stock decrement)"
                           aria-label="Convert to Sales Invoice"
-                          className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors"
+                          className="p-2 bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 rounded-lg hover:bg-[var(--accent-primary)]/25 transition-colors"
                         >
                           <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                         </button>
@@ -890,7 +890,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                         onClick={() => handleDelete(challan)}
                         title={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
                         aria-label={isDraft ? "Delete Draft" : "Delete Challan & Restore Stock"}
-                        className="p-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
+                        className="p-2 bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/20 rounded-lg hover:bg-[var(--status-danger)]/20 hover:text-[var(--status-danger)] transition-colors"
                       >
                         <TrashIcon className="w-4 h-4" />
                       </button>

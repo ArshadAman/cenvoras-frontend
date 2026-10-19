@@ -141,28 +141,28 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
       
       <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
         {/* Modal Container */}
-        <div className="relative w-full max-w-3xl flex flex-col h-[85vh] min-h-[550px] max-h-[900px] bg-[#141416] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+        <div className="relative w-full max-w-3xl flex flex-col h-[85vh] min-h-[550px] max-h-[900px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
         
           {/* Header */}
-          <div className="flex-shrink-0 px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/40">
+          <div className="flex-shrink-0 px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/50">
             <div>
-              <h3 className="text-white text-lg font-bold tracking-tight">Convert to Sales Order</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Quotation Ref: <span className="text-cyan-400 font-mono font-medium">{quotation.quotation_number}</span>
+              <h3 className="text-[var(--text-primary)] text-lg font-bold tracking-tight">Convert to Sales Order</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                Quotation Ref: <span className="text-[var(--accent-primary)] font-mono font-medium">{quotation.quotation_number}</span>
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded-xl transition-all"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
 
           {/* Customer PO Details Section */}
-          <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 px-6 py-3 bg-white/[0.02] border-b border-white/10">
+          <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 px-6 py-3 bg-[var(--bg-primary)]/30 border-b border-[var(--border-subtle)]">
             <div>
-              <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Customer PO Number
               </label>
               <input
@@ -170,29 +170,29 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                 value={poNumber}
                 onChange={(e) => setPoNumber(e.target.value)}
                 placeholder="e.g. PO-2026-9811"
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)]"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Customer PO Date
               </label>
               <input
                 type="date"
                 value={poDate}
                 onChange={(e) => setPoDate(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 [color-scheme:dark]"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               />
             </div>
           </div>
 
           {/* Extra Discount Toolbar & Selection Controls */}
           {approvedItems.length > 0 && (
-            <div className="flex-shrink-0 px-6 py-2.5 bg-black/20 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex-shrink-0 px-6 py-2.5 bg-[var(--bg-primary)]/20 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <TagIcon className="w-4 h-4 text-amber-400" />
-                <span className="text-gray-300 font-medium">Extra Discount:</span>
-                <div className="flex items-center bg-black/50 border border-white/15 rounded-lg px-2 py-0.5">
+                <TagIcon className="w-4 h-4 text-[var(--status-warning)]" />
+                <span className="text-[var(--text-secondary)] font-medium">Extra Discount:</span>
+                <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2 py-0.5">
                   <input
                     type="number"
                     min="0"
@@ -201,28 +201,28 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                     value={bulkDiscount}
                     onChange={(e) => setBulkDiscount(e.target.value)}
                     placeholder="0"
-                    className="w-12 bg-transparent border-none text-white text-xs p-0 outline-none focus:ring-0 text-right pr-1 font-mono"
+                    className="w-12 bg-transparent border-none text-[var(--text-primary)] text-xs p-0 outline-none focus:ring-0 text-right pr-1 font-mono"
                   />
-                  <span className="text-amber-400 font-bold text-xs">%</span>
+                  <span className="text-[var(--status-warning)] font-bold text-xs">%</span>
                 </div>
                 <button
                   type="button"
                   onClick={handleApplyBulkDiscount}
                   disabled={selected.size === 0}
-                  className="px-2.5 py-1 text-xs font-semibold rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-2.5 py-1 text-xs font-semibold rounded bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   Apply to Selected ({selected.size})
                 </button>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-gray-400">
+                <span className="text-[var(--text-secondary)]">
                   {selected.size} of {approvedItems.length} selected
                 </span>
                 <button
                   type="button"
                   onClick={toggleAll}
-                  className="text-cyan-400 hover:text-cyan-300 font-medium px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 transition-all text-xs"
+                  className="text-[var(--accent-primary)] hover:opacity-80 font-medium px-2 py-0.5 rounded bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/20 transition-all text-xs"
                 >
                   {allSelected ? 'Deselect All' : 'Select All'}
                 </button>
@@ -233,7 +233,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
           {/* Items List Body */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
             {approvedItems.length === 0 ? (
-              <div className="rounded-xl border border-white/5 bg-white/5 p-8 text-center text-gray-400 text-sm font-medium">
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-8 text-center text-[var(--text-secondary)] text-sm font-medium">
                 No pending approved items available for conversion.
               </div>
             ) : (
@@ -252,8 +252,8 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                     key={item.id}
                     className={`p-4 rounded-xl border transition-all select-none ${
                       isChecked 
-                        ? 'bg-cyan-500/10 border-cyan-500/40 shadow-sm shadow-cyan-500/10' 
-                        : 'bg-white/5 border-white/5 opacity-70 hover:opacity-100'
+                        ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 shadow-sm' 
+                        : 'bg-[var(--bg-primary)]/40 border-[var(--border-subtle)] opacity-70 hover:opacity-100'
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -273,8 +273,8 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                       >
                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
                           isChecked 
-                            ? 'bg-cyan-500 border-cyan-500 text-black' 
-                            : 'border-gray-500 bg-white/5 hover:border-gray-400'
+                            ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-[var(--text-on-accent)]' 
+                            : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent-primary)]/50'
                         }`}>
                           {isChecked && (
                             <CheckIcon className="w-3.5 h-3.5 stroke-[3]" />
@@ -289,14 +289,14 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                             onClick={() => toggle(item.id)}
                             className="cursor-pointer flex-1 min-w-0"
                           >
-                            <p className={`font-semibold text-sm truncate ${isChecked ? 'text-white' : 'text-gray-300'}`}>
+                            <p className="font-semibold text-sm truncate text-[var(--text-primary)]">
                               {item.product_name}
                             </p>
-                            <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
+                            <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                               <span>Rate: {getCurrencySymbol()}{Number(item.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                               {Number(item.tax || 0) > 0 && (
                                 <>
-                                  <span className="w-1 h-1 rounded-full bg-gray-600"></span>
+                                  <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]"></span>
                                   <span>Tax: {item.tax}%</span>
                                 </>
                               )}
@@ -304,16 +304,16 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                           </div>
 
                           <div className="text-right">
-                            <p className={`font-bold text-sm whitespace-nowrap font-mono ${isChecked ? 'text-cyan-400' : 'text-gray-400'}`}>
+                            <p className={`font-bold text-sm whitespace-nowrap font-mono ${isChecked ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>
                               {getCurrencySymbol()}{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                           </div>
                         </div>
 
                         {/* Editable Quantity & Discount Inputs */}
-                        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs pt-2.5 border-t border-white/5">
+                        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs pt-2.5 border-t border-[var(--border-subtle)]">
                           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-gray-400 font-medium">Qty:</span>
+                            <span className="text-[var(--text-secondary)] font-medium">Qty:</span>
                             <input
                               type="number"
                               min="0.01"
@@ -321,14 +321,14 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                               value={itemInfo.quantity}
                               onChange={(e) => handleQtyChange(item.id, e.target.value)}
                               disabled={!isChecked}
-                              className="w-20 bg-black/60 border border-white/20 rounded px-2 py-1 text-white text-xs text-center focus:border-cyan-400 focus:outline-none disabled:opacity-40 font-mono"
+                              className="w-20 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded px-2 py-1 text-[var(--text-primary)] text-xs text-center focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-40 font-mono"
                             />
-                            <span className="text-gray-400">{item.unit || 'pcs'}</span>
+                            <span className="text-[var(--text-secondary)]">{item.unit || 'pcs'}</span>
                           </div>
 
                           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-gray-400 font-medium">Disc:</span>
-                            <div className="flex items-center bg-black/60 border border-white/20 rounded px-1.5 py-0.5">
+                            <span className="text-[var(--text-secondary)] font-medium">Disc:</span>
+                            <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded px-1.5 py-0.5">
                               <input
                                 type="number"
                                 min="0"
@@ -337,9 +337,9 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                                 value={itemInfo.discount}
                                 onChange={(e) => handleDiscountChange(item.id, e.target.value)}
                                 disabled={!isChecked}
-                                className="w-14 bg-transparent border-none text-white text-xs text-right pr-0.5 focus:outline-none disabled:opacity-40 font-mono p-0"
+                                className="w-14 bg-transparent border-none text-[var(--text-primary)] text-xs text-right pr-0.5 focus:outline-none disabled:opacity-40 font-mono p-0"
                               />
-                              <span className="text-amber-400 font-semibold">%</span>
+                              <span className="text-[var(--status-warning)] font-semibold">%</span>
                             </div>
                           </div>
                         </div>
@@ -352,18 +352,18 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
           </div>
 
           {/* Footer */}
-          <div className="flex-shrink-0 bg-black/40 px-6 py-4 border-t border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="flex-shrink-0 bg-[var(--bg-primary)]/50 px-6 py-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 text-xs">
               <div className="flex flex-col">
-                <span className="text-gray-400 uppercase font-bold text-[10px] tracking-wider">Selected</span>
-                <span className="text-white font-bold text-sm">
-                  {selectedIds.length} <span className="text-xs font-normal text-gray-400">of {approvedItems.length} items</span>
+                <span className="text-[var(--text-secondary)] uppercase font-bold text-[10px] tracking-wider">Selected</span>
+                <span className="text-[var(--text-primary)] font-bold text-sm">
+                  {selectedIds.length} <span className="text-xs font-normal text-[var(--text-muted)]">of {approvedItems.length} items</span>
                 </span>
               </div>
-              <div className="w-px h-7 bg-white/10"></div>
+              <div className="w-px h-7 bg-[var(--border-subtle)]"></div>
               <div className="flex flex-col">
-                <span className="text-gray-400 uppercase font-bold text-[10px] tracking-wider">Order Value</span>
-                <span className="text-cyan-400 font-bold text-sm font-mono">
+                <span className="text-[var(--text-secondary)] uppercase font-bold text-[10px] tracking-wider">Order Value</span>
+                <span className="text-[var(--accent-primary)] font-bold text-sm font-mono">
                   {getCurrencySymbol()}{selectedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
@@ -373,7 +373,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 py-2.5 text-gray-300 font-medium hover:bg-white/10 bg-white/5 border border-white/10 rounded-xl transition-colors text-xs"
+                className="btn-secondary flex-1 sm:flex-none px-4 py-2.5 text-xs"
               >
                 Cancel
               </button>
@@ -381,11 +381,11 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                 type="button"
                 onClick={handleConfirmSubmit}
                 disabled={isSubmitting || selectedIds.length === 0}
-                className="flex-1 sm:flex-none px-5 py-2.5 bg-cyan-500 text-black font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-cyan-500/20 text-xs flex items-center justify-center gap-1.5"
+                className="btn-primary flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     Converting...
                   </>
                 ) : (

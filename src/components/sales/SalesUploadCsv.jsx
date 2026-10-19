@@ -124,30 +124,30 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999]">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl p-6 w-full max-w-md animate-fade-up">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
             Upload Sales Bills CSV
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--bg-surface-hover)] transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Template Download */}
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+        <div className="mb-4 p-3.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl">
+          <p className="text-xs text-[var(--text-secondary)] mb-2">
             Need a template? Download our CSV template to get started.
           </p>
           <button
             onClick={downloadTemplate}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 underline"
+            className="text-xs text-[var(--accent-primary)] hover:underline font-semibold"
           >
             Download Template CSV
           </button>
@@ -155,10 +155,10 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
 
         {/* File Upload Area */}
         <div
-          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
             dragOver
-              ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600'
+              ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/10'
+              : 'border-[var(--border-subtle)] bg-[var(--bg-primary)]'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -166,29 +166,29 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
         >
           {file ? (
             <div className="space-y-2">
-              <svg className="w-12 h-12 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10 mx-auto text-[var(--status-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs text-[var(--text-primary)] font-medium">
                 Selected: {file.name}
               </p>
               <button
                 onClick={() => setFile(null)}
-                className="text-sm text-red-600 hover:text-red-800"
+                className="text-xs text-[var(--status-danger)] hover:underline"
               >
                 Remove file
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10 mx-auto text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Drag and drop your CSV file here, or
                 </p>
-                <label className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer underline">
+                <label className="text-xs text-[var(--accent-primary)] hover:underline cursor-pointer font-semibold ml-1">
                   browse to select
                   <input
                     type="file"
@@ -198,7 +198,7 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-[11px] text-[var(--text-muted)]">
                 Only CSV files are supported
               </p>
             </div>
@@ -206,11 +206,11 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
         </div>
 
         {/* CSV Format Info */}
-        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">
+        <div className="mt-4 p-3.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl">
+          <p className="text-xs text-[var(--text-secondary)] mb-2 font-medium">
             CSV Format Requirements:
           </p>
-          <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+          <ul className="text-xs text-[var(--text-muted)] space-y-1">
             <li>• Include headers: bill_number, sale_date, customer_name, etc.</li>
             <li>• Date format: YYYY-MM-DD</li>
             <li>• Use comma separator</li>
@@ -227,14 +227,14 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+            className="btn-secondary px-4 py-2 text-sm"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!file || uploadMutation.isPending}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploadMutation.isPending ? "Uploading..." : "Upload CSV"}
           </button>
