@@ -7,6 +7,7 @@ import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol } from '../../utils/currency';
 
 // Customer Autocomplete for ledger entry form
 function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) {
@@ -56,12 +57,12 @@ function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) 
     }
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 pl-10 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
 
   return (
     <div className="relative">
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-500 pointer-events-none" />
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-[var(--text-muted)] pointer-events-none" />
         <input
           type="text"
           value={inputValue}
@@ -78,15 +79,15 @@ function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) 
       </div>
       
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 shadow-2xl max-h-60 rounded-xl py-1 overflow-auto">
+        <div className="absolute z-50 mt-1 w-full bg-[var(--bg-surface)] backdrop-blur-xl border border-[var(--border-subtle)] shadow-2xl max-h-60 rounded-xl py-1 overflow-auto">
           {filteredCustomers.map((customer) => (
             <div
               key={customer.id}
-              className="px-4 py-2.5 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0"
+              className="px-4 py-2.5 hover:bg-[var(--bg-primary)] cursor-pointer transition-colors border-b border-[var(--border-subtle)] last:border-0"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-bold text-white">{customer.name}</div>
-              <div className="text-gray-400 text-xs mt-0.5">
+              <div className="font-bold text-[var(--text-primary)]">{customer.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 {customer.email && `${customer.email}`}
                 {customer.phone && ` • ${customer.phone}`}
               </div>
@@ -176,8 +177,8 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
     credit: entry?.credit || "",
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
+  const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide";
 
   return (
     <Formik
@@ -197,7 +198,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
               initialCustomer={customerName}
             />
             <Field name="customer" type="hidden" />
-            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -209,7 +210,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
                 type="date"
                 className={inputClass}
               />
-              <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
+              <ErrorMessage name="date" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
             </div>
 
             {/* Invoice (optional) */}
@@ -221,7 +222,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
                 className={inputClass}
                 placeholder="INV-..."
               />
-              <ErrorMessage name="invoice" component="div" className="mt-1 text-xs text-red-400" />
+              <ErrorMessage name="invoice" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
             </div>
           </div>
 
@@ -235,15 +236,15 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
               className={inputClass}
               placeholder="Enter transaction description..."
             />
-            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-red-400" />
+            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
           </div>
 
           {/* Debit and Credit */}
-          <div className="grid grid-cols-2 gap-5 p-4 bg-white/5 rounded-xl border border-white/10">
+          <div className="grid grid-cols-2 gap-5 p-4 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
             <div>
               <label className={labelClass}>Debit (Receivable)</label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                <span className="absolute left-3 top-2.5 text-[var(--text-muted)]">{getCurrencySymbol()}</span>
                 <Field
                   name="debit"
                   type="number"
@@ -253,13 +254,13 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
                   placeholder="0.00"
                 />
               </div>
-              <ErrorMessage name="debit" component="div" className="mt-1 text-xs text-red-400" />
+              <ErrorMessage name="debit" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
             </div>
 
             <div>
               <label className={labelClass}>Credit (Received)</label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+                <span className="absolute left-3 top-2.5 text-[var(--text-muted)]">{getCurrencySymbol()}</span>
                 <Field
                   name="credit"
                   type="number"
@@ -269,31 +270,31 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
                   placeholder="0.00"
                 />
               </div>
-              <ErrorMessage name="credit" component="div" className="mt-1 text-xs text-red-400" />
+              <ErrorMessage name="credit" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
             </div>
           </div>
 
-          <div className="text-xs text-cyan-400/80 italic text-center">
+          <div className="text-xs text-[var(--text-muted)] italic text-center">
             * Either debit or credit must be greater than 0.
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm font-medium"
+              className="btn-secondary text-sm px-4 py-2 rounded-xl"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || updateEntryMutation.isPending}
-              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+              className="btn-primary py-2 px-6 font-semibold rounded-xl shadow-lg disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
               {isSubmitting || updateEntryMutation.isPending ? (
                 <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>

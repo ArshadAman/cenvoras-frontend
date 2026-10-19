@@ -200,11 +200,11 @@ const LedgerTable = ({
 
   const getSortIcon = (field) => {
     if (sortBy !== field) {
-      return <ArrowsUpDownIcon className="w-4 h-4 text-gray-500 ml-1 inline" />;
+      return <ArrowsUpDownIcon className="w-4 h-4 text-[var(--text-muted)] ml-1 inline" />;
     }
     return sortOrder === 'asc' ? 
-      <ChevronUpIcon className="w-4 h-4 text-cyan-400 ml-1 inline" /> : 
-      <ChevronDownIcon className="w-4 h-4 text-cyan-400 ml-1 inline" />;
+      <ChevronUpIcon className="w-4 h-4 text-[var(--accent-primary)] ml-1 inline" /> : 
+      <ChevronDownIcon className="w-4 h-4 text-[var(--accent-primary)] ml-1 inline" />;
   };
 
   const formatCurrency = (amount) => {
@@ -263,7 +263,7 @@ const LedgerTable = ({
 
   if (loadingPolicy.visible) {
     return (
-      <div className="bento-card p-4">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4">
         {loadingPolicy.shouldShowProgress ? (
           <div className="flex justify-center items-center h-48">
             <Loader />
@@ -277,22 +277,22 @@ const LedgerTable = ({
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+      <div className="bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 rounded-2xl p-6 text-center">
         <div className="flex flex-col items-center justify-center">
-          <div className="bg-red-500/20 p-3 rounded-full mb-3">
-            <svg className="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <div className="bg-[var(--status-danger)]/20 p-3 rounded-full mb-3">
+            <svg className="h-6 w-6 text-[var(--status-danger)]" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-white mb-1">
+          <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">
             Error loading entries
           </h3>
-          <p className="text-sm text-red-300 mb-4">
+          <p className="text-sm text-[var(--text-secondary)] mb-4">
             {error?.message || 'Failed to fetch ledger data'}
           </p>
           <button
             onClick={() => refetch()}
-            className="btn-secondary text-sm"
+            className="btn-secondary text-sm px-4 py-2 rounded-xl"
           >
             Try Again
           </button>
@@ -303,13 +303,13 @@ const LedgerTable = ({
 
   return (
     <>
-    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-2xl overflow-hidden">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-lg rounded-2xl overflow-hidden">
       <div className="p-4 sm:p-6">
         {/* Filters Toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className="border border-white/20 rounded-xl px-3.5 py-2 text-sm bg-white/5 backdrop-filter backdrop-blur-10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 min-w-[220px]"
+              className="border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] min-w-[220px]"
               placeholder="Search descriptions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -318,7 +318,7 @@ const LedgerTable = ({
               <select
                 value={selectedAccount}
                 onChange={(e) => setSelectedAccount(e.target.value)}
-                className="border border-white/20 rounded-xl px-3.5 py-2 text-sm bg-[#151515] text-white focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+                className="border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               >
                 <option value="">All Accounts</option>
                 {accounts.map((account) => (
@@ -328,19 +328,19 @@ const LedgerTable = ({
                 ))}
               </select>
             )}
-            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-xl p-1">
+            <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-1">
               <input
                 type="date"
                 value={dateFilter.startDate}
                 onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-                className="bg-transparent text-white text-xs px-2 py-1 outline-none cursor-pointer"
+                className="bg-transparent text-[var(--text-primary)] text-xs px-2 py-1 outline-none cursor-pointer"
               />
-              <span className="text-gray-400 text-xs">to</span>
+              <span className="text-[var(--text-muted)] text-xs">to</span>
               <input
                 type="date"
                 value={dateFilter.endDate}
                 onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-                className="bg-transparent text-white text-xs px-2 py-1 outline-none cursor-pointer"
+                className="bg-transparent text-[var(--text-primary)] text-xs px-2 py-1 outline-none cursor-pointer"
               />
             </div>
             <button
@@ -354,7 +354,7 @@ const LedgerTable = ({
                    endDate: format(new Date(), 'yyyy-MM-dd')
                  });
               }}
-              className="px-3 py-2 bg-white/5 text-gray-300 border border-white/10 rounded-xl hover:bg-white/10 hover:text-white transition text-xs font-semibold"
+              className="btn-secondary px-3 py-2 text-xs rounded-xl font-semibold"
             >
               Reset
             </button>
@@ -362,28 +362,28 @@ const LedgerTable = ({
 
           {/* Quick Date Presets & PDF Download */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+            <div className="flex items-center gap-1 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-1">
               <button
                 onClick={() => applyDatePreset('this_month')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
               >
                 This Month
               </button>
               <button
                 onClick={() => applyDatePreset('this_quarter')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
               >
                 Quarter
               </button>
               <button
                 onClick={() => applyDatePreset('this_fy')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
               >
                 This FY
               </button>
               <button
                 onClick={() => applyDatePreset('all_time')}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition"
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
               >
                 All
               </button>
@@ -393,7 +393,7 @@ const LedgerTable = ({
               <button
                 onClick={handleDownloadPdf}
                 disabled={isDownloadingPdf}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 transition text-xs font-bold disabled:opacity-50"
+                className="btn-primary flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md disabled:opacity-50"
                 title="Download Vector PDF Statement"
               >
                 <ArrowDownTrayIcon className="w-3.5 h-3.5" />
@@ -405,32 +405,32 @@ const LedgerTable = ({
 
         {/* Sub-Ledger KPI Balance Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
-            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Opening Balance</div>
-            <div className="text-base sm:text-lg font-bold font-mono text-white mt-1 flex items-center gap-1.5">
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Opening Balance</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--text-primary)] mt-1 flex items-center gap-1.5">
               <span>{formatCurrency(ledgerData?.opening_balance || 0)}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.opening_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.opening_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
                 {ledgerData?.opening_balance_type || 'Dr'}
               </span>
             </div>
           </div>
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
-            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Period Debits (Dr)</div>
-            <div className="text-base sm:text-lg font-bold font-mono text-rose-400 mt-1">
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Debits (Dr)</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--status-danger)] mt-1">
               {formatCurrency(ledgerData?.period_debit_total || 0)}
             </div>
           </div>
-          <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10">
-            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Period Credits (Cr)</div>
-            <div className="text-base sm:text-lg font-bold font-mono text-emerald-400 mt-1">
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Credits (Cr)</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--status-success)] mt-1">
               {formatCurrency(ledgerData?.period_credit_total || 0)}
             </div>
           </div>
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Closing Balance</div>
-            <div className="text-base sm:text-lg font-bold font-mono text-emerald-300 mt-1 flex items-center gap-1.5">
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Closing Balance</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--text-primary)] mt-1 flex items-center gap-1.5">
               <span>{formatCurrency(ledgerData?.closing_balance || 0)}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.closing_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.closing_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
                 {ledgerData?.closing_balance_type || 'Dr'}
               </span>
             </div>
@@ -439,13 +439,13 @@ const LedgerTable = ({
 
         {ledgerEntries.length === 0 ? (
           <div className="text-center py-20">
-            <div className="bg-white/5 p-4 rounded-full inline-block mb-4">
-               <svg className="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-[var(--bg-primary)] p-4 rounded-full inline-block mb-4 border border-[var(--border-subtle)]">
+               <svg className="mx-auto h-10 w-10 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                </svg>
             </div>
-            <h3 className="mt-2 text-lg font-bold text-white">No ledger entries</h3>
-            <p className="mt-2 text-sm text-gray-400 max-w-sm mx-auto">
+            <h3 className="mt-2 text-lg font-bold text-[var(--text-primary)]">No ledger entries</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)] max-w-sm mx-auto">
               No entries found matching your criteria. Try adjusting your filters or record a new transaction.
             </p>
           </div>
@@ -454,14 +454,14 @@ const LedgerTable = ({
             {/* Table for desktop, Cards for mobile */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-hairline bg-obsidian-card border border-hairline rounded-2xl overflow-hidden shadow-xl">
-                <thead className="bg-obsidian-card/90 border-b border-hairline">
+                <table className="min-w-full divide-y divide-[var(--border-subtle)] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-xl">
+                <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
                   <tr>
                     {onBulkSelect && (
                       <th scope="col" className="relative px-6 py-4">
                         <input
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-blue-500 focus:ring-blue-500 bg-white/10 cursor-pointer"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] cursor-pointer"
                           checked={isAllCurrentPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -472,42 +472,42 @@ const LedgerTable = ({
                     )}
                     <th
                       scope="col"
-                      className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('date')}
                     >
                       Date {getSortIcon('date')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('account_name')}
                     >
                       Account / Entity {getSortIcon('account_name')}
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Reference
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Description
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('debit')}
                     >
                       Debit (Dr) {getSortIcon('debit')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('credit')}
                     >
                       Credit (Cr) {getSortIcon('credit')}
                     </th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Running Balance
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Source
                     </th>
                     <th scope="col" className="relative px-6 py-4">
@@ -515,60 +515,60 @@ const LedgerTable = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-transparent divide-y divide-hairline">
+                <tbody className="bg-transparent divide-y divide-[var(--border-subtle)]">
                   {ledgerEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-obsidian-active transition-colors">
+                    <tr key={entry.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
                       {onBulkSelect && (
-                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                           <input
                             type="checkbox"
-                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-blue-500 focus:ring-blue-500 bg-white/10"
+                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] bg-[var(--bg-primary)]"
                             checked={selectedEntries.includes(entry.id)}
                             onChange={(e) => handleSelectEntry(entry.id, e.target.checked)}
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white drop-shadow-lg font-mono">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)] font-mono">
                         {formatDate(entry.date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-white drop-shadow-lg">
+                        <div className="text-sm font-semibold text-[var(--text-primary)]">
                           {entry.customer_name ? entry.customer_name : (entry.vendor_name ? entry.vendor_name : `${entry.account_code || ''} ${entry.account_name || ''}`)}
                         </div>
-                        <div className="text-xs text-cyan-300 capitalize">
+                        <div className="text-xs text-[var(--text-muted)] capitalize">
                           {entry.account_name} ({entry.account_type})
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                         {entry.payment ? (
-                          <Link to="/payments" className="text-emerald-400 hover:text-emerald-300 hover:underline font-medium inline-flex items-center gap-1" title="View Payments">
+                          <Link to="/payments" className="text-[var(--status-success)] hover:underline font-medium inline-flex items-center gap-1" title="View Payments">
                             <span>{getCleanReference(entry)}</span>
                             <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                           </Link>
                         ) : entry.sales_invoice ? (
-                          <Link to="/sales" className="text-cyan-400 hover:text-cyan-300 hover:underline font-medium inline-flex items-center gap-1" title="View Sales Invoices">
+                          <Link to="/sales" className="text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1" title="View Sales Invoices">
                             <span>{getCleanReference(entry)}</span>
                             <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                           </Link>
                         ) : entry.purchase_bill ? (
-                          <Link to="/purchases" className="text-orange-400 hover:text-orange-300 hover:underline font-medium inline-flex items-center gap-1" title="View Purchase Bills">
+                          <Link to="/purchases" className="text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1" title="View Purchase Bills">
                             <span>{getCleanReference(entry)}</span>
                             <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                           </Link>
                         ) : (
-                          <span className="font-mono text-gray-300">{getCleanReference(entry)}</span>
+                          <span className="font-mono text-[var(--text-secondary)]">{getCleanReference(entry)}</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-white">
+                      <td className="px-6 py-4 text-sm text-[var(--text-primary)]">
                         <button
                           onClick={() => setViewEntry(entry)}
                           className="text-left group"
                           title="Click for full details"
                         >
-                          <div className="max-w-xs truncate group-hover:text-cyan-300 transition-colors underline-offset-2 group-hover:underline drop-shadow-lg" title={entry.description}>
+                          <div className="max-w-xs truncate text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors underline-offset-2 group-hover:underline" title={entry.description}>
                             {entry.description || 'General Ledger Entry'}
                           </div>
-                          <div className="text-xs text-cyan-300">
+                          <div className="text-xs text-[var(--text-muted)]">
                             <span>Created: {formatDate(entry.created_at)}</span>
                             {entry.entry_number && (
                               <span className="ml-2">Entry #{entry.entry_number}</span>
@@ -577,41 +577,41 @@ const LedgerTable = ({
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
-                        <div className={`font-mono font-bold font-tabular text-sm ${entry.debit > 0 ? 'text-rose-400' : 'text-gray-500'}`}>
+                        <div className={`font-mono font-bold font-tabular text-sm ${entry.debit > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>
                           {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
-                        <div className={`font-mono font-bold font-tabular text-sm ${entry.credit > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
+                        <div className={`font-mono font-bold font-tabular text-sm ${entry.credit > 0 ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
                           {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
-                        <div className="font-mono font-bold font-tabular text-white text-sm flex items-center justify-end gap-1.5">
+                        <div className="font-mono font-bold font-tabular text-[var(--text-primary)] text-sm flex items-center justify-end gap-1.5">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
                             {entry.running_balance_type || 'Dr'}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                         {entry.sales_invoice_number && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                             📄 Sales #{entry.sales_invoice_number}
                           </span>
                         )}
                         {entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                             🧾 Purchase #{entry.purchase_bill_number}
                           </span>
                         )}
                         {entry.payment && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                             💳 Payment
                           </span>
                         )}
                         {!entry.sales_invoice_number && !entry.purchase_bill_number && !entry.payment && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
                             📝 Manual Entry
                           </span>
                         )}
@@ -619,7 +619,7 @@ const LedgerTable = ({
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => setViewEntry(entry)}
-                          className="text-gray-400 hover:text-cyan-300 p-1.5 rounded-lg hover:bg-white/5 transition"
+                          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition"
                           title="View Details"
                         >
                           <DocumentTextIcon className="w-5 h-5" />
@@ -636,15 +636,15 @@ const LedgerTable = ({
             <div className="lg:hidden space-y-4">
               {isLoading ? (
                 Array(3).fill(0).map((_, i) => (
-                  <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
-                    <div className="h-4 bg-white/20 rounded mb-2"></div>
-                    <div className="h-3 bg-white/10 rounded mb-2"></div>
-                    <div className="h-3 bg-white/10 rounded w-3/4"></div>
+                  <div key={i} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 animate-pulse">
+                    <div className="h-4 bg-[var(--bg-surface)] rounded mb-2"></div>
+                    <div className="h-3 bg-[var(--bg-surface)] rounded mb-2"></div>
+                    <div className="h-3 bg-[var(--bg-surface)] rounded w-3/4"></div>
                   </div>
                 ))
               ) : (
                 ledgerEntries.map((entry) => (
-                  <div key={entry.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+                  <div key={entry.id} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 hover:border-[var(--accent-primary)] transition-all">
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
@@ -657,13 +657,13 @@ const LedgerTable = ({
                               : selectedEntries.filter(id => id !== entry.id);
                             onBulkSelect(newSelected);
                           }}
-                          className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                          className="rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] bg-[var(--bg-surface)]"
                         />
                         <div>
-                          <div className="text-base font-bold text-white">
+                          <div className="text-base font-bold text-[var(--text-primary)]">
                             {entry.customer_name || entry.vendor_name || entry.account_name || 'N/A'}
                           </div>
-                          <div className="text-xs text-gray-400 font-mono">
+                          <div className="text-xs text-[var(--text-muted)] font-mono">
                             {formatDate(entry.date)} &bull; {getCleanReference(entry)}
                           </div>
                         </div>
@@ -672,32 +672,32 @@ const LedgerTable = ({
 
                     {/* Card Content */}
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between items-center text-gray-300">
+                      <div className="flex justify-between items-center text-[var(--text-secondary)]">
                         <span>Account:</span>
-                        <span className="font-medium text-white">{entry.account_name}</span>
+                        <span className="font-medium text-[var(--text-primary)]">{entry.account_name}</span>
                       </div>
 
-                      <div className="flex justify-between items-start text-gray-300">
+                      <div className="flex justify-between items-start text-[var(--text-secondary)]">
                         <span>Description:</span>
-                        <span className="font-medium text-white text-right max-w-[200px] truncate">{entry.description || '-'}</span>
+                        <span className="font-medium text-[var(--text-primary)] text-right max-w-[200px] truncate">{entry.description || '-'}</span>
                       </div>
 
-                      <div className="flex justify-between items-center pt-1 border-t border-white/5">
-                        <span className="text-gray-400">Transaction:</span>
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border-subtle)]">
+                        <span className="text-[var(--text-muted)]">Transaction:</span>
                         <span className="font-mono font-bold text-sm">
                           {entry.debit > 0 ? (
-                            <span className="text-rose-400">Dr {formatCurrency(entry.debit)}</span>
+                            <span className="text-[var(--status-danger)]">Dr {formatCurrency(entry.debit)}</span>
                           ) : (
-                            <span className="text-emerald-400">Cr {formatCurrency(entry.credit)}</span>
+                            <span className="text-[var(--status-success)]">Cr {formatCurrency(entry.credit)}</span>
                           )}
                         </span>
                       </div>
 
-                      <div className="flex justify-between items-center pt-1 border-t border-white/5">
-                        <span className="text-gray-400">Running Balance:</span>
-                        <span className="font-mono font-bold text-white text-sm flex items-center gap-1">
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border-subtle)]">
+                        <span className="text-[var(--text-muted)]">Running Balance:</span>
+                        <span className="font-mono font-bold text-[var(--text-primary)] text-sm flex items-center gap-1">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
-                          <span className={`text-[10px] px-1 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                          <span className={`text-[10px] px-1 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'}`}>
                             {entry.running_balance_type || 'Dr'}
                           </span>
                         </span>
@@ -705,10 +705,10 @@ const LedgerTable = ({
                     </div>
 
                     {/* Card Actions */}
-                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-end">
+                    <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-end">
                       <button
                         onClick={() => setViewEntry(entry)}
-                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-cyan-300 border border-white/10 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
+                        className="btn-secondary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                       >
                         <DocumentTextIcon className="w-4 h-4" />
                         <span>View Details</span>
@@ -720,7 +720,7 @@ const LedgerTable = ({
 
               {/* No data message for mobile */}
               {!isLoading && ledgerEntries.length === 0 && (
-                <div className="p-8 text-center text-white/80">
+                <div className="p-8 text-center text-[var(--text-secondary)]">
                   <p>No ledger entries found.</p>
                   <p className="text-sm mt-2">
                     Click "Record Payment" to create your first ledger entry.
@@ -731,34 +731,34 @@ const LedgerTable = ({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="bg-white/5 px-4 py-3 flex items-center justify-between border-t border-white/10 sm:px-6">
+              <div className="bg-[var(--bg-primary)] px-4 py-3 flex items-center justify-between border-t border-[var(--border-subtle)] sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-white/10 text-sm font-medium rounded-md text-gray-300 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary text-sm font-medium px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-white/10 text-sm font-medium rounded-md text-gray-300 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary text-sm font-medium px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed ml-3"
                   >
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-[var(--text-secondary)]">
                       Showing{' '}
-                      <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{(currentPage - 1) * itemsPerPage + 1}</span>
                       {' '}to{' '}
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[var(--text-primary)]">
                         {Math.min(currentPage * itemsPerPage, totalCount)}
                       </span>
                       {' '}of{' '}
-                      <span className="font-bold text-white">{totalCount}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{totalCount}</span>
                       {' '}results
                     </p>
                   </div>
@@ -767,7 +767,7 @@ const LedgerTable = ({
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-white/10 bg-white/5 text-sm font-medium text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="sr-only">Previous</span>
                         <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -789,10 +789,10 @@ const LedgerTable = ({
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg mx-0.5 ${
                               currentPage === pageNum
-                                ? 'z-10 bg-indigo-500/20 border-indigo-500 text-indigo-300'
-                                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                ? 'z-10 bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-semibold border-[var(--accent-primary)]'
+                                : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
                             }`}
                           >
                             {pageNum}
@@ -803,7 +803,7 @@ const LedgerTable = ({
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-white/10 bg-white/5 text-sm font-medium text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="sr-only">Next</span>
                         <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
@@ -821,20 +821,20 @@ const LedgerTable = ({
     {/* Entry Detail Modal */}
     {viewEntry && createPortal(
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setViewEntry(null)} />
-        <div className="relative w-full max-w-lg bg-[#111] border border-white/10 rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setViewEntry(null)} />
+        <div className="relative w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
           {/* Modal Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+          <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-xl">
-                <DocumentTextIcon className="w-5 h-5 text-purple-400" />
+              <div className="p-2 bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 rounded-xl">
+                <DocumentTextIcon className="w-5 h-5 text-[var(--accent-primary)]" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Entry Details</h2>
-                {viewEntry.entry_number && <p className="text-xs text-gray-400">Entry #{viewEntry.entry_number}</p>}
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">Entry Details</h2>
+                {viewEntry.entry_number && <p className="text-xs text-[var(--text-muted)]">Entry #{viewEntry.entry_number}</p>}
               </div>
             </div>
-            <button onClick={() => setViewEntry(null)} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+            <button onClick={() => setViewEntry(null)} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] rounded-xl transition-colors">
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
@@ -842,53 +842,53 @@ const LedgerTable = ({
           {/* Modal Body */}
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Date</div>
-                <div className="text-white font-medium">{formatDate(viewEntry.date)}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Date</div>
+                <div className="text-[var(--text-primary)] font-medium">{formatDate(viewEntry.date)}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Reference</div>
-                <div className="text-white font-medium">{getCleanReference(viewEntry)}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Reference</div>
+                <div className="text-[var(--text-primary)] font-medium">{getCleanReference(viewEntry)}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3 col-span-2">
-                <div className="text-xs text-gray-500 mb-1">Account</div>
-                <div className="text-white font-medium">{viewEntry.account_code} - {viewEntry.account_name}</div>
-                <div className="text-xs text-cyan-300 capitalize mt-0.5">{viewEntry.account_type}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Account</div>
+                <div className="text-[var(--text-primary)] font-medium">{viewEntry.account_code} - {viewEntry.account_name}</div>
+                <div className="text-xs text-[var(--text-muted)] capitalize mt-0.5">{viewEntry.account_type}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3 col-span-2">
-                <div className="text-xs text-gray-500 mb-1">Description</div>
-                <div className="text-white text-sm leading-relaxed">{viewEntry.description || 'General Ledger Entry'}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Description</div>
+                <div className="text-[var(--text-primary)] text-sm leading-relaxed">{viewEntry.description || 'General Ledger Entry'}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Debit</div>
-                <div className={`font-bold text-xl ${viewEntry.debit > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Debit</div>
+                <div className={`font-bold text-xl ${viewEntry.debit > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>
                   {viewEntry.debit > 0 ? formatCurrency(viewEntry.debit) : '—'}
                 </div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Credit</div>
-                <div className={`font-bold text-xl ${viewEntry.credit > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Credit</div>
+                <div className={`font-bold text-xl ${viewEntry.credit > 0 ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
                   {viewEntry.credit > 0 ? formatCurrency(viewEntry.credit) : '—'}
                 </div>
               </div>
             </div>
 
             {/* Source Links */}
-            <div className="pt-2 border-t border-white/10">
-              <div className="text-xs text-gray-500 mb-2">Source Document</div>
+            <div className="pt-2 border-t border-[var(--border-subtle)]">
+              <div className="text-xs text-[var(--text-muted)] mb-2 uppercase tracking-wider">Source Document</div>
               <div className="flex flex-wrap gap-2">
                 {viewEntry.sales_invoice_number && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                     📄 Sales Invoice #{viewEntry.sales_invoice_number}
                   </span>
                 )}
                 {viewEntry.purchase_bill_number && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                     🧾 Purchase Bill #{viewEntry.purchase_bill_number}
                   </span>
                 )}
                 {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && !viewEntry.payment && (
-                  <div className="w-full flex items-center gap-2 mt-4 pt-3 border-t border-white/5">
+                  <div className="w-full flex items-center gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)]">
                     {onEdit && (
                       <button
                         onClick={() => {
@@ -896,7 +896,7 @@ const LedgerTable = ({
                           setViewEntry(null);
                           onEdit(e);
                         }}
-                        className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white rounded-lg transition"
+                        className="btn-secondary text-xs px-3 py-1.5 rounded-lg"
                       >
                         Edit Entry
                       </button>
@@ -908,7 +908,7 @@ const LedgerTable = ({
                           setViewEntry(null);
                           onDelete(e);
                         }}
-                        className="px-3 py-1.5 text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg transition"
+                        className="px-3 py-1.5 text-xs bg-[var(--status-danger)]/15 hover:bg-[var(--status-danger)]/25 text-[var(--status-danger)] border border-[var(--status-danger)]/30 rounded-lg transition"
                       >
                         Delete Entry
                       </button>

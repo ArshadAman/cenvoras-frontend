@@ -39,14 +39,14 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bento-card p-5 animate-pulse">
+          <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 animate-pulse">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-white/10 rounded"></div>
+                <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-xl"></div>
               </div>
               <div className="ml-5 w-0 flex-1">
-                <div className="h-4 bg-white/10 rounded mb-2 w-1/2"></div>
-                <div className="h-6 bg-white/10 rounded w-3/4"></div>
+                <div className="h-3 bg-[var(--bg-primary)] rounded mb-2 w-1/2"></div>
+                <div className="h-6 bg-[var(--bg-primary)] rounded w-3/4"></div>
               </div>
             </div>
           </div>
@@ -57,24 +57,24 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-8">
+      <div className="bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 rounded-2xl p-4 mb-8">
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-5 w-5 text-[var(--status-danger)]" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-200">
+            <h3 className="text-sm font-semibold text-[var(--status-danger)]">
               Error loading summary
             </h3>
-            <div className="mt-2 text-sm text-red-300">
+            <div className="mt-1 text-sm text-[var(--text-secondary)]">
               <p>{error?.message || 'Failed to fetch ledger statistics'}</p>
             </div>
-            <div className="mt-4">
+            <div className="mt-3">
               <button
                 onClick={() => refetch()}
-                className="bg-red-500/20 px-3 py-2 rounded-lg text-sm font-medium text-red-200 hover:bg-red-500/30 transition-colors"
+                className="btn-secondary text-xs px-3 py-1.5 rounded-lg font-medium"
               >
                 Try Again
               </button>
@@ -105,26 +105,22 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     {
       name: 'Total Payments',
       value: formatCurrency(stats.total_payments),
-      icon: <BanknotesIcon className="w-8 h-8 text-green-400" />,
-      color: 'green'
+      icon: <BanknotesIcon className="w-6 h-6 text-[var(--accent-primary)]" />,
     },
     {
       name: 'Total Invoices',
       value: formatCurrency(stats.total_invoices),
-      icon: <DocumentTextIcon className="w-8 h-8 text-blue-400" />,
-      color: 'blue'
+      icon: <DocumentTextIcon className="w-6 h-6 text-[var(--accent-primary)]" />,
     },
     {
       name: 'Net Balance',
       value: formatCurrency(stats.net_balance),
-      icon: <WalletIcon className="w-8 h-8 text-indigo-400" />,
-      color: stats.net_balance >= 0 ? 'green' : 'red'
+      icon: <WalletIcon className={`w-6 h-6 ${stats.net_balance >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`} />,
     },
     {
       name: 'Active Customers',
       value: stats.total_customers?.toString() || '0',
-      icon: <UserGroupIcon className="w-8 h-8 text-blue-400" />,
-      color: 'blue'
+      icon: <UserGroupIcon className="w-6 h-6 text-[var(--accent-primary)]" />,
     }
   ];
 
@@ -133,15 +129,15 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryCards.map((item) => (
-          <div key={item.name} className="bg-obsidian-card border border-hairline rounded-2xl p-5 flex items-center shadow-lg shadow-black/20 hover:border-hairline-hover transition-colors">
-            <div className={`flex-shrink-0 p-3 rounded-xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
+          <div key={item.name} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 flex items-center shadow-lg transition-colors">
+            <div className="flex-shrink-0 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
               {item.icon}
             </div>
             <div className="ml-5">
-              <dt className="text-sm font-medium text-gray-400 truncate uppercase tracking-wide">
+              <dt className="text-xs font-semibold text-[var(--text-secondary)] truncate uppercase tracking-wider">
                 {item.name}
               </dt>
-              <dd className="mt-1 text-2xl font-bold text-white drop-shadow-md font-mono font-tabular">
+              <dd className="mt-1 text-2xl font-bold text-[var(--text-primary)] font-mono">
                 {item.value}
               </dd>
             </div>
