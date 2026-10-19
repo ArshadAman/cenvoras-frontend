@@ -443,23 +443,23 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     }).format(d);
   })();
 
-  const inputCls = 'w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500';
-  const labelCls = 'block text-sm font-medium text-gray-300 mb-1';
+  const inputCls = 'w-full px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm';
+  const labelCls = 'block text-sm font-medium text-[var(--text-secondary)] mb-1';
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl my-8">
-        <div className="flex justify-between items-center p-5 border-b border-white/10 sticky top-0 bg-[#111116] z-10 rounded-t-2xl">
-          <h2 className="text-xl font-semibold text-white">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-4xl shadow-2xl my-8">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] sticky top-0 bg-[var(--bg-surface)] z-10 rounded-t-2xl">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">
             {employee ? `Edit Employee (${employee.employee_code})` : 'Add New Employee'}
           </h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">
+          <button type="button" onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-white/10 bg-white/[0.02] px-5 pt-3 gap-2 overflow-x-auto">
+        <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 px-5 pt-3 gap-2 overflow-x-auto">
           {[
             { id: 'personal', label: 'Personal & Family' },
             { id: 'employment', label: 'Employment & Branch' },
@@ -477,8 +477,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 px-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-indigo-400 text-indigo-300'
-                  : 'border-transparent text-gray-400 hover:text-white'
+                  ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-semibold'
+                  : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
               {tab.label}
@@ -522,7 +522,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className={labelCls + ' mb-0'}>Date of Birth *</label>
-                    <span className="text-[11px] text-gray-400 font-medium">At least 13 yrs old</span>
+                    <span className="text-[11px] text-[var(--text-muted)] font-medium">At least 13 yrs old</span>
                   </div>
                   <input required type="date" name="date_of_birth" max={maxDobDate} value={formData.date_of_birth} onChange={handleChange} className={inputCls} />
                 </div>
@@ -592,7 +592,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     <button
                       type="button"
                       onClick={() => setShowAddDept(true)}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 transition"
+                      className="text-xs text-[var(--accent-primary)] hover:underline font-semibold inline-flex items-center gap-1 transition"
                     >
                       <PlusIcon className="w-3.5 h-3.5" />
                       Add New
@@ -611,7 +611,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     <button
                       type="button"
                       onClick={() => setShowAddDesig(true)}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 transition"
+                      className="text-xs text-[var(--accent-primary)] hover:underline font-semibold inline-flex items-center gap-1 transition"
                     >
                       <PlusIcon className="w-3.5 h-3.5" />
                       Add New
@@ -718,15 +718,15 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           {/* TAB KYC: KYC & VERIFICATION DOCUMENTS */}
           {activeTab === 'kyc' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-start gap-2.5">
+              <div className="p-4 rounded-xl bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-xs flex items-start gap-2.5">
                 <span className="text-base shrink-0">🛡️</span>
                 <p className="leading-relaxed">
-                  <strong className="text-white">DPDPA 2023 & Aadhaar Act Compliant Partition:</strong> Identity and educational credentials are encrypted at rest and stored in a private tenant partition. Files are never stored on public servers or shared folders.
+                  <strong className="text-[var(--text-primary)]">DPDPA 2023 & Aadhaar Act Compliant Partition:</strong> Identity and educational credentials are encrypted at rest and stored in a private tenant partition. Files are never stored on public servers or shared folders.
                 </p>
               </div>
 
               {/* Aadhaar Card */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] space-y-2">
                 <div className="flex justify-between items-center">
                   <label className={labelCls + ' mb-0'}>Aadhaar Card (PDF / Image)</label>
                   {employee?.kyc_documents?.find(d => d.document_type === 'aadhaar') && (
@@ -734,7 +734,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       href={employee.kyc_documents.find(d => d.document_type === 'aadhaar').file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded hover:underline"
+                      className="text-[11px] text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
                     </a>
@@ -744,15 +744,15 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   type="file"
                   accept=".pdf,image/png,image/jpeg,image/jpg"
                   onChange={(e) => setAadhaarFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                  className="w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent-primary)]/20 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/30 cursor-pointer"
                 />
                 {aadhaarFile && (
-                  <p className="text-[11px] text-indigo-300">Selected: {aadhaarFile.name} ({(aadhaarFile.size / 1024).toFixed(1)} KB)</p>
+                  <p className="text-[11px] text-[var(--accent-primary)]">Selected: {aadhaarFile.name} ({(aadhaarFile.size / 1024).toFixed(1)} KB)</p>
                 )}
               </div>
 
               {/* PAN Card */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] space-y-2">
                 <div className="flex justify-between items-center">
                   <label className={labelCls + ' mb-0'}>PAN Card (PDF / Image)</label>
                   {employee?.kyc_documents?.find(d => d.document_type === 'pan') && (
@@ -760,7 +760,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       href={employee.kyc_documents.find(d => d.document_type === 'pan').file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded hover:underline"
+                      className="text-[11px] text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
                     </a>
@@ -770,15 +770,15 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   type="file"
                   accept=".pdf,image/png,image/jpeg,image/jpg"
                   onChange={(e) => setPanFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                  className="w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent-primary)]/20 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/30 cursor-pointer"
                 />
                 {panFile && (
-                  <p className="text-[11px] text-indigo-300">Selected: {panFile.name} ({(panFile.size / 1024).toFixed(1)} KB)</p>
+                  <p className="text-[11px] text-[var(--accent-primary)]">Selected: {panFile.name} ({(panFile.size / 1024).toFixed(1)} KB)</p>
                 )}
               </div>
 
               {/* 10th Marksheet */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] space-y-2">
                 <div className="flex justify-between items-center">
                   <label className={labelCls + ' mb-0'}>10th Marksheet / Education Certificate (PDF / Image)</label>
                   {employee?.kyc_documents?.find(d => d.document_type === 'marksheet_10th') && (
@@ -786,7 +786,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       href={employee.kyc_documents.find(d => d.document_type === 'marksheet_10th').file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded hover:underline"
+                      className="text-[11px] text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
                     </a>
@@ -796,10 +796,10 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   type="file"
                   accept=".pdf,image/png,image/jpeg,image/jpg"
                   onChange={(e) => setMarksheetFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                  className="w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent-primary)]/20 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/30 cursor-pointer"
                 />
                 {marksheetFile && (
-                  <p className="text-[11px] text-indigo-300">Selected: {marksheetFile.name} ({(marksheetFile.size / 1024).toFixed(1)} KB)</p>
+                  <p className="text-[11px] text-[var(--accent-primary)]">Selected: {marksheetFile.name} ({(marksheetFile.size / 1024).toFixed(1)} KB)</p>
                 )}
               </div>
             </div>
@@ -809,20 +809,20 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           {activeTab === 'compensation' && (
             <div className="space-y-4 pt-1">
               {formData.employment_type === 'contract' ? (
-                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+                <div className="p-5 rounded-2xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-base font-semibold text-white">Contract Remuneration & Terms</h3>
-                      <p className="text-xs text-gray-400 mt-0.5">Fixed contract fee for professional / freelance personnel.</p>
+                      <h3 className="text-base font-semibold text-[var(--text-primary)]">Contract Remuneration & Terms</h3>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">Fixed contract fee for professional / freelance personnel.</p>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
                       Contract Personnel
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 space-y-1">
-                    <p className="font-semibold text-white">Exempt from Statutory Payroll & PF/ESI</p>
-                    <p className="text-amber-300/90">
+                  <div className="p-3.5 rounded-xl bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 text-xs text-[var(--status-warning)] space-y-1">
+                    <p className="font-semibold text-[var(--text-primary)]">Exempt from Statutory Payroll & PF/ESI</p>
+                    <p className="opacity-90">
                       Contract personnel receive their agreed monthly remuneration without deductions for Employee Provident Fund (PF) or Employee State Insurance (ESI). They are automatically excluded from permanent monthly statutory payroll runs.
                     </p>
                   </div>
@@ -830,7 +830,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   <div>
                     <label className={labelCls}>Agreed Monthly Contract Fee (₹) *</label>
                     <div className="relative">
-                      <span className="absolute left-3.5 top-2.5 text-gray-400 font-semibold text-sm">₹</span>
+                      <span className="absolute left-3.5 top-2.5 text-[var(--text-muted)] font-semibold text-sm">₹</span>
                       <input
                         required
                         type="number"
@@ -844,7 +844,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       />
                     </div>
                     {formData.contract_fee && Number(formData.contract_fee) > 0 && (
-                      <p className="text-xs text-indigo-300 mt-1.5">
+                      <p className="text-xs text-[var(--accent-primary)] mt-1.5 font-medium">
                         Annual Contract Value: ₹{(Number(formData.contract_fee) * 12).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </p>
                     )}
@@ -891,7 +891,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           )}
 
           {/* Actions */}
-          <div className="pt-4 flex justify-between items-center border-t border-white/10">
+          <div className="pt-4 flex justify-between items-center border-t border-[var(--border-subtle)]">
             <div className="flex gap-2">
               {activeTab !== 'personal' && (
                 <button
@@ -901,7 +901,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     const idx = tabs.indexOf(activeTab);
                     if (idx > 0) setActiveTab(tabs[idx - 1]);
                   }}
-                  className="px-4 py-2 text-xs font-medium text-gray-400 bg-white/5 rounded-xl hover:text-white"
+                  className="btn-secondary px-4 py-2 text-xs font-medium rounded-xl"
                 >
                   ← Back
                 </button>
@@ -914,7 +914,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     const idx = tabs.indexOf(activeTab);
                     if (idx < tabs.length - 1) setActiveTab(tabs[idx + 1]);
                   }}
-                  className="px-4 py-2 text-xs font-medium text-indigo-300 bg-indigo-500/20 rounded-xl hover:bg-indigo-500/30"
+                  className="btn-secondary px-4 py-2 text-xs font-medium rounded-xl"
                 >
                   Next →
                 </button>
@@ -922,10 +922,10 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             </div>
 
             <div className="flex gap-3">
-              <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+              <button type="button" onClick={onClose} className="btn-secondary px-5 py-2 text-sm font-medium rounded-xl">
                 Cancel
               </button>
-              <button type="submit" disabled={loading} className="px-5 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 transition disabled:opacity-50">
+              <button type="submit" disabled={loading} className="btn-primary px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-50">
                 {loading ? 'Saving...' : 'Save Employee'}
               </button>
             </div>
@@ -936,20 +936,20 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       {/* Quick Add Department Modal */}
       {showAddDept && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#181820] border border-white/15 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl animate-fade-in">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl animate-fade-in">
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-semibold text-white">Add New Department</h3>
+              <h3 className="text-base font-semibold text-[var(--text-primary)]">Add New Department</h3>
               <button
                 type="button"
                 onClick={() => setShowAddDept(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleQuickAddDepartment} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-300 mb-1">Department Name *</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Department Name *</label>
                 <input
                   type="text"
                   required
@@ -957,21 +957,21 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   placeholder="e.g. Sales, Marketing, IT"
                   value={newDeptName}
                   onChange={(e) => setNewDeptName(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddDept(false)}
-                  className="px-3 py-1.5 text-xs text-gray-300 bg-white/5 rounded-lg hover:bg-white/10"
+                  className="btn-secondary px-3 py-1.5 text-xs rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addingDept}
-                  className="px-4 py-1.5 text-xs font-semibold text-slate-950 bg-indigo-400 rounded-lg hover:bg-indigo-300 disabled:opacity-50"
+                  className="btn-primary px-4 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50"
                 >
                   {addingDept ? 'Creating...' : 'Create Department'}
                 </button>
@@ -984,20 +984,20 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       {/* Quick Add Designation Modal */}
       {showAddDesig && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#181820] border border-white/15 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl animate-fade-in">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl animate-fade-in">
             <div className="flex justify-between items-center">
-              <h3 className="text-base font-semibold text-white">Add New Designation</h3>
+              <h3 className="text-base font-semibold text-[var(--text-primary)]">Add New Designation</h3>
               <button
                 type="button"
                 onClick={() => setShowAddDesig(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleQuickAddDesignation} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-300 mb-1">Designation Title *</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Designation Title *</label>
                 <input
                   type="text"
                   required
@@ -1005,21 +1005,21 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   placeholder="e.g. Senior Developer, Sales Executive"
                   value={newDesigName}
                   onChange={(e) => setNewDesigName(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddDesig(false)}
-                  className="px-3 py-1.5 text-xs text-gray-300 bg-white/5 rounded-lg hover:bg-white/10"
+                  className="btn-secondary px-3 py-1.5 text-xs rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addingDesig}
-                  className="px-4 py-1.5 text-xs font-semibold text-slate-950 bg-indigo-400 rounded-lg hover:bg-indigo-300 disabled:opacity-50"
+                  className="btn-primary px-4 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50"
                 >
                   {addingDesig ? 'Creating...' : 'Create Designation'}
                 </button>

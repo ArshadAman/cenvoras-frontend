@@ -48,12 +48,12 @@ export default function HRMSSettings() {
     }
   };
 
-  const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
-  const labelCls = "block text-sm font-medium text-gray-300 mb-1";
+  const ic = "w-full px-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
+  const labelCls = "block text-sm font-medium text-[var(--text-primary)] mb-1";
 
   if (loading || !settings) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-gray-400">
+      <div className="flex items-center justify-center min-h-[60vh] text-[var(--text-muted)]">
         Loading HRMS settings...
       </div>
     );
@@ -62,15 +62,15 @@ export default function HRMSSettings() {
   return (
     <div className="relative p-6 md:p-10 space-y-8 animate-fade-up max-w-5xl mx-auto">
       {/* Header */}
-      <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+      <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-2">Configuration</p>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white flex items-center gap-3">
-              <AdjustmentsHorizontalIcon className="w-9 h-9 text-indigo-300" />
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Configuration</p>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+              <AdjustmentsHorizontalIcon className="w-9 h-9 text-[var(--accent-primary)]" />
               HRMS & Payroll Settings
             </h1>
-            <p className="text-white/65 text-sm mt-2">
+            <p className="text-[var(--text-secondary)] text-sm mt-2">
               Configure LOP proration rules, overtime rate multipliers, and statutory contribution ceilings.
             </p>
           </div>
@@ -80,8 +80,8 @@ export default function HRMSSettings() {
       {/* Settings Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Payroll & LOP Calculation */}
-        <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-xl space-y-4">
-          <h2 className="text-base font-semibold text-white uppercase tracking-wider border-b border-white/10 pb-3">
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 space-y-4 shadow-sm">
+          <h2 className="text-base font-semibold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-3">
             Payroll & LOP Calculation Rules
           </h2>
 
@@ -142,15 +142,15 @@ export default function HRMSSettings() {
 
           <div className="pt-2">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" name="allow_negative_salary" checked={settings.allow_negative_salary} onChange={handleChange} className="w-4 h-4 rounded text-indigo-500 bg-white/5 border-white/20" />
-              <span className="text-sm text-gray-300">Allow negative net salary when deductions exceed gross earnings</span>
+              <input type="checkbox" name="allow_negative_salary" checked={settings.allow_negative_salary} onChange={handleChange} className="w-4 h-4 rounded text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-subtle)] focus:ring-0" />
+              <span className="text-sm text-[var(--text-primary)]">Allow negative net salary when deductions exceed gross earnings</span>
             </label>
           </div>
         </div>
 
         {/* Section 2: Statutory Contribution Rates */}
-        <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-xl space-y-4">
-          <h2 className="text-base font-semibold text-white uppercase tracking-wider border-b border-white/10 pb-3">
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 space-y-4 shadow-sm">
+          <h2 className="text-base font-semibold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-3">
             Statutory Rates (Provident Fund & ESI)
           </h2>
 
@@ -172,13 +172,13 @@ export default function HRMSSettings() {
             </div>
             <div className="flex items-center pt-6">
               <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="pf_apply_ceiling" checked={settings.pf_apply_ceiling} onChange={handleChange} className="w-4 h-4 rounded text-indigo-500 bg-white/5 border-white/20" />
-                <span className="text-sm text-gray-300">Cap PF deduction at wage ceiling (₹15,000 max basic)</span>
+                <input type="checkbox" name="pf_apply_ceiling" checked={settings.pf_apply_ceiling} onChange={handleChange} className="w-4 h-4 rounded text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-subtle)] focus:ring-0" />
+                <span className="text-sm text-[var(--text-primary)]">Cap PF deduction at wage ceiling (₹15,000 max basic)</span>
               </label>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2 border-t border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2 border-t border-[var(--border-subtle)]">
             <div>
               <label className={labelCls}>Employee ESI Rate (%)</label>
               <input type="number" step="0.01" name="esi_employee_rate" value={settings.esi_employee_rate} onChange={handleChange} className={ic} />
@@ -195,15 +195,15 @@ export default function HRMSSettings() {
         </div>
 
         {/* Section 3: Recruitment & Onboarding Communications */}
-        <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-xl space-y-4">
-          <h2 className="text-base font-semibold text-white uppercase tracking-wider border-b border-white/10 pb-3">
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 space-y-4 shadow-sm">
+          <h2 className="text-base font-semibold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-3">
             Onboarding & Offer Letter Automation
           </h2>
 
-          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-4 rounded-2xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-white">Automatic Offer Letter on Employee Onboarding</h3>
-              <p className="text-xs text-gray-400 mt-1 max-w-xl">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Automatic Offer Letter on Employee Onboarding</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xl">
                 When enabled, an official corporate employment offer letter will automatically be emailed to newly created employees with their position, terms, and compensation, sent using your business name.
               </p>
             </div>
@@ -215,14 +215,14 @@ export default function HRMSSettings() {
                 onChange={handleChange}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+              <div className="w-11 h-6 bg-[var(--border-subtle)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-primary)]"></div>
             </label>
           </div>
         </div>
 
         {/* Submit */}
         <div className="flex justify-end gap-3">
-          <button type="submit" disabled={saving} className="px-6 py-2.5 text-sm font-semibold text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 shadow-lg shadow-indigo-500/20 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="btn-primary text-sm disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
         </div>

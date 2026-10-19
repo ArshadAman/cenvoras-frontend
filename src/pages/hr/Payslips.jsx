@@ -16,24 +16,24 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
   if (!isOpen || !payslip) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex justify-between items-center p-5 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/30">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <div className="p-2 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 text-[var(--accent-primary)]">
               <DocumentTextIcon className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                 Payslip Breakdown — {MONTHS[(payslip.month || 1) - 1]} {payslip.year}
               </h2>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 {payslip.employee_name} ({payslip.employee_code}) • {payslip.designation_name || payslip.department_name || 'Staff'}
               </p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5">
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -52,37 +52,37 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
             const lopAmt = parseFloat(payslip.lop_amount || 0);
 
             return (
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+              <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Attendance & Working Days</h4>
-                  <span className="text-xs text-gray-400">Monthly Standard: <span className="text-white font-semibold">{attendance.working_days} Days</span></span>
+                  <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Attendance & Working Days</h4>
+                  <span className="text-xs text-[var(--text-muted)]">Monthly Standard: <span className="text-[var(--text-primary)] font-semibold">{attendance.working_days} Days</span></span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/5">
-                    <p className="text-[11px] text-gray-400">Working Days</p>
-                    <p className="text-sm font-semibold text-white mt-0.5">{attendance.working_days ?? '—'}</p>
+                  <div className="p-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                    <p className="text-[11px] text-[var(--text-muted)]">Working Days</p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)] mt-0.5">{attendance.working_days ?? '—'}</p>
                   </div>
-                  <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <p className="text-[11px] text-emerald-400">Present Days</p>
-                    <p className="text-sm font-semibold text-emerald-300 mt-0.5">{attendance.present_days ?? '—'}</p>
+                  <div className="p-2.5 rounded-lg bg-[var(--status-success)]/10 border border-[var(--status-success)]/30">
+                    <p className="text-[11px] text-[var(--status-success)]">Present Days</p>
+                    <p className="text-sm font-semibold text-[var(--status-success)] mt-0.5">{attendance.present_days ?? '—'}</p>
                   </div>
-                  <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <p className="text-[11px] text-blue-400">Paid Leaves</p>
-                    <p className="text-sm font-semibold text-blue-300 mt-0.5">{attendance.paid_leaves ?? 0}</p>
+                  <div className="p-2.5 rounded-lg bg-[var(--status-info)]/10 border border-[var(--status-info)]/30">
+                    <p className="text-[11px] text-[var(--status-info)]">Paid Leaves</p>
+                    <p className="text-sm font-semibold text-[var(--status-info)] mt-0.5">{attendance.paid_leaves ?? 0}</p>
                   </div>
-                  <div className={`p-2 rounded-lg border ${unpaidDays > 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-white/5 border-white/5'}`}>
-                    <p className={`text-[11px] ${unpaidDays > 0 ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>Loss of Pay (LOP)</p>
-                    <p className={`text-sm font-semibold mt-0.5 ${unpaidDays > 0 ? 'text-red-300' : 'text-gray-400'}`}>{unpaidDays} days</p>
+                  <div className={`p-2.5 rounded-lg border ${unpaidDays > 0 ? 'bg-[var(--status-danger)]/10 border-[var(--status-danger)]/30' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)]'}`}>
+                    <p className={`text-[11px] ${unpaidDays > 0 ? 'text-[var(--status-danger)] font-semibold' : 'text-[var(--text-muted)]'}`}>Loss of Pay (LOP)</p>
+                    <p className={`text-sm font-semibold mt-0.5 ${unpaidDays > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>{unpaidDays} days</p>
                   </div>
                 </div>
 
                 {unpaidDays > 0 && (
-                  <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300 space-y-1">
+                  <div className="p-2.5 rounded-lg bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 text-xs text-[var(--status-danger)] space-y-1">
                     <div className="flex items-center justify-between font-semibold">
                       <span>Loss of Pay (LOP) Applied: {unpaidDays} Day(s)</span>
                       {lopAmt > 0 && <span>Amount Docked: ₹{lopAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>}
                     </div>
-                    <p className="text-[11px] text-red-300/80 leading-relaxed">
+                    <p className="text-[11px] text-[var(--status-danger)]/80 leading-relaxed">
                       Salary prorated based on attendance. Unpaid leaves or absences are docked from gross compensation.
                     </p>
                   </div>
@@ -125,7 +125,6 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
             if (parseFloat(payslip.loan_recovery || 0) > 0 && !deductionsMap['Loan Recovery']) {
               deductionsMap['Loan Recovery'] = payslip.loan_recovery;
             }
-            // LOP is already in prorated gross — do not add as a deduction line
             delete deductionsMap['Loss of Pay (LOP)'];
             delete deductionsMap['LOP'];
             if (Object.keys(deductionsMap).length === 0 && parseFloat(payslip.total_deductions || 0) > 0) {
@@ -135,30 +134,30 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Earnings */}
-                <div className="p-4 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/20 space-y-3">
-                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Earnings</span>
-                    <span className="text-xs font-bold text-emerald-400">₹{parseFloat(payslip.gross_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <div className="p-4 rounded-xl bg-[var(--status-success)]/5 border border-[var(--status-success)]/20 space-y-3">
+                  <div className="flex items-center justify-between border-b border-[var(--status-success)]/20 pb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--status-success)]">Earnings</span>
+                    <span className="text-xs font-bold text-[var(--status-success)]">₹{parseFloat(payslip.gross_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="space-y-2 max-h-56 overflow-y-auto">
                     {Object.entries(earningsMap).length > 0 ? (
                       Object.entries(earningsMap).map(([k, v]) => (
                         <div key={k} className="flex justify-between items-center text-xs">
-                          <span className="text-gray-300 capitalize">{k.replace(/_/g, ' ')}</span>
-                          <span className="font-medium text-white">₹{parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          <span className="text-[var(--text-secondary)] capitalize">{k.replace(/_/g, ' ')}</span>
+                          <span className="font-medium text-[var(--text-primary)]">₹{parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-gray-500">No earnings recorded</p>
+                      <p className="text-xs text-[var(--text-muted)]">No earnings recorded</p>
                     )}
                   </div>
                 </div>
 
                 {/* Deductions with Detailed Explanations */}
-                <div className="p-4 rounded-xl bg-red-500/[0.03] border border-red-500/20 space-y-3">
-                  <div className="flex items-center justify-between border-b border-red-500/20 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-red-400">Deductions & Explanations</span>
-                    <span className="text-xs font-bold text-red-400">₹{parseFloat(payslip.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <div className="p-4 rounded-xl bg-[var(--status-danger)]/5 border border-[var(--status-danger)]/20 space-y-3">
+                  <div className="flex items-center justify-between border-b border-[var(--status-danger)]/20 pb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--status-danger)]">Deductions & Explanations</span>
+                    <span className="text-xs font-bold text-[var(--status-danger)]">₹{parseFloat(payslip.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="space-y-2.5 max-h-56 overflow-y-auto">
                     {Object.entries(deductionsMap).length > 0 ? (
@@ -177,13 +176,13 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
                         }
 
                         return (
-                          <div key={k} className="p-2.5 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1">
+                          <div key={k} className="p-2.5 rounded-lg bg-[var(--status-danger)]/5 border border-[var(--status-danger)]/15 space-y-1">
                             <div className="flex justify-between items-center text-xs">
-                              <span className="font-semibold text-red-300 capitalize">{k.replace(/_/g, ' ')}</span>
-                              <span className="font-semibold text-red-400">₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              <span className="font-semibold text-[var(--status-danger)] capitalize">{k.replace(/_/g, ' ')}</span>
+                              <span className="font-semibold text-[var(--status-danger)]">₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                             {reason && (
-                              <p className="text-[11px] text-gray-300 leading-relaxed italic bg-black/40 p-1.5 rounded border border-white/5">
+                              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed italic bg-[var(--bg-primary)] p-1.5 rounded border border-[var(--border-subtle)]">
                                 💡 {reason}
                               </p>
                             )}
@@ -191,7 +190,7 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
                         );
                       })
                     ) : (
-                      <p className="text-xs text-gray-500">No deductions applied for this employee</p>
+                      <p className="text-xs text-[var(--text-muted)]">No deductions applied for this employee</p>
                     )}
                   </div>
                 </div>
@@ -201,15 +200,15 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
 
           {/* Employer Statutory Benefits */}
           {payslip.employer_contributions && Object.keys(payslip.employer_contributions).length > 0 && (
-            <div className="p-4 rounded-xl bg-purple-500/[0.03] border border-purple-500/20">
-              <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wider mb-2">
+            <div className="p-4 rounded-xl bg-[var(--status-info)]/5 border border-[var(--status-info)]/20">
+              <h4 className="text-xs font-bold text-[var(--status-info)] uppercase tracking-wider mb-2">
                 Employer Statutory Benefits (Non-docked)
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(payslip.employer_contributions).map(([k, v]) => (
-                  <div key={k} className="p-2 rounded-lg bg-white/5 border border-white/5 text-xs">
-                    <p className="text-gray-400 capitalize">{k.replace(/_/g, ' ')}</p>
-                    <p className="font-semibold text-purple-300 mt-0.5">₹{parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                  <div key={k} className="p-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs">
+                    <p className="text-[var(--text-muted)] capitalize">{k.replace(/_/g, ' ')}</p>
+                    <p className="font-semibold text-[var(--status-info)] mt-0.5">₹{parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                   </div>
                 ))}
               </div>
@@ -217,14 +216,14 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
           )}
 
           {/* Net Salary Summary */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-teal-950/20 to-black/40 border border-emerald-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--status-success)]/30 flex items-center justify-between">
             <div>
-              <p className="text-xs text-emerald-400 uppercase tracking-wider font-semibold">Net Take-Home Pay</p>
-              <p className="text-2xl font-bold text-white mt-0.5">₹{parseFloat(payslip.net_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-[var(--status-success)] uppercase tracking-wider font-semibold">Net Take-Home Pay</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] mt-0.5">₹{parseFloat(payslip.net_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
             </div>
             <button
               onClick={() => onDownloadPdf(payslip)}
-              className="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30 text-xs font-semibold inline-flex items-center gap-1.5 transition"
+              className="btn-primary px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition shadow-sm"
             >
               <ArrowDownTrayIcon className="w-4 h-4" /> Download PDF
             </button>
@@ -310,27 +309,27 @@ export default function Payslips() {
   const availableYears = Array.from(new Set(payslips.map(p => p.year).filter(Boolean))).sort((a, b) => b - a);
   if (availableYears.length === 0) availableYears.push(new Date().getFullYear());
 
-  const selectCls = "px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500";
+  const selectCls = "px-3 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]";
 
   return (
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
-        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-2">Payroll Operations</p>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white flex items-center gap-3">
-                <DocumentTextIcon className="w-9 h-9 text-indigo-300" />
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Payroll Operations</p>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+                <DocumentTextIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Employee Payslips
               </h1>
-              <p className="text-white/65 text-sm mt-2">
+              <p className="text-[var(--text-secondary)] text-sm mt-2">
                 Inspect salary computations, transparent deduction reasons, and download or dispatch payslips.
               </p>
             </div>
             <button
               onClick={fetchPayslips}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 px-3.5 py-2 text-xs font-medium text-gray-300 hover:text-white transition"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] px-3.5 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
             >
               <ArrowPathIcon className="w-4 h-4" /> Refresh
             </button>
@@ -338,15 +337,15 @@ export default function Payslips() {
         </section>
 
         {/* Filter Bar */}
-        <section className="p-4 rounded-2xl border border-white/10 bg-black/25 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3">
+        <section className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-wrap items-center justify-between gap-3 shadow-sm">
           <div className="relative flex-1 min-w-[220px]">
-            <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+            <MagnifyingGlassIcon className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder="Filter by employee name, code, dept..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)]"
             />
           </div>
 
@@ -392,7 +391,7 @@ export default function Payslips() {
             {(searchTerm || selectedMonth || selectedYear || selectedDept) && (
               <button
                 onClick={() => { setSearchTerm(''); setSelectedMonth(''); setSelectedYear(''); setSelectedDept(''); }}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2 py-1"
+                className="text-xs text-[var(--accent-primary)] hover:underline font-medium px-2 py-1 transition"
               >
                 Reset
               </button>
@@ -401,15 +400,15 @@ export default function Payslips() {
         </section>
 
         {/* Payslips Table */}
-        <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
+        <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-0 overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/30">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
               Payslips ({filteredPayslips.length})
             </h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)]/60 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Period</th>
@@ -421,39 +420,39 @@ export default function Payslips() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-400">Loading payslips...</td></tr>
+                  <tr><td colSpan="6" className="px-6 py-8 text-center text-[var(--text-muted)]">Loading payslips...</td></tr>
                 ) : filteredPayslips.length === 0 ? (
-                  <tr><td colSpan="6" className="px-6 py-10 text-center text-gray-400">No payslips match your filter criteria</td></tr>
+                  <tr><td colSpan="6" className="px-6 py-10 text-center text-[var(--text-muted)]">No payslips match your filter criteria</td></tr>
                 ) : (
                   filteredPayslips.map(ps => (
-                    <tr key={ps.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">
+                    <tr key={ps.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">
                         <div>
-                          <p className="font-semibold text-white">{ps.employee_name || ps.employee}</p>
-                          <p className="text-xs text-gray-400">
+                          <p className="font-semibold text-[var(--text-primary)]">{ps.employee_name || ps.employee}</p>
+                          <p className="text-xs text-[var(--text-muted)]">
                             {ps.employee_code} • {ps.designation_name || ps.department_name || 'Staff'}
                           </p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-semibold text-gray-300">
+                        <span className="text-xs font-semibold text-[var(--text-secondary)]">
                           {MONTHS[(ps.month || 1) - 1]} {ps.year}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-medium text-white">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">
                         ₹{parseFloat(ps.gross_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-6 py-4 text-red-400 font-medium">
+                      <td className="px-6 py-4 text-[var(--status-danger)] font-medium">
                         ₹{parseFloat(ps.total_deductions || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-6 py-4 text-emerald-400 font-bold">
+                      <td className="px-6 py-4 text-[var(--status-success)] font-bold">
                         ₹{parseFloat(ps.net_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                         {/* Quick View */}
                         <button
                           onClick={() => setQuickViewPayslip(ps)}
-                          className="px-2.5 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition text-xs font-semibold inline-flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 transition text-xs font-semibold inline-flex items-center gap-1"
                           title="Quick View Breakdown & Reasons"
                         >
                           <EyeIcon className="w-3.5 h-3.5" /> View
@@ -462,7 +461,7 @@ export default function Payslips() {
                         {/* Download PDF */}
                         <button 
                           onClick={() => handleDownload(ps)}
-                          className="p-1.5 rounded-lg bg-white/5 text-white hover:bg-white/10 transition inline-flex items-center"
+                          className="p-1.5 rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] transition inline-flex items-center"
                           title="Download PDF"
                         >
                           <ArrowDownTrayIcon className="w-4 h-4" />
@@ -478,7 +477,7 @@ export default function Payslips() {
                               toast.error('Failed to send email');
                             }
                           }}
-                          className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition text-xs font-medium"
+                          className="px-2.5 py-1.5 rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] transition text-xs font-medium"
                           title="Send Email"
                         >
                           ✉️
@@ -494,7 +493,7 @@ export default function Payslips() {
                               toast.error('Failed to send WhatsApp');
                             }
                           }}
-                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition text-xs font-medium"
+                          className="px-2.5 py-1.5 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 transition text-xs font-medium"
                           title="Send WhatsApp"
                         >
                           💬
