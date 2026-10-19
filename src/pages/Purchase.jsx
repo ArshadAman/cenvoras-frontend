@@ -8,6 +8,7 @@ import PurchaseDeleteDialog from "../components/purchase/PurchaseDeleteDialog";
 import PurchaseUploadCsv from "../components/purchase/PurchaseUploadCsv";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Button from "../components/common/Button";
 import { ShoppingBagIcon, DocumentArrowUpIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function Purchase() {
@@ -70,35 +71,37 @@ export default function Purchase() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
            <div>
-             <h1 className="text-2xl font-bold tracking-tight text-white mb-0.5 flex items-center gap-2.5">
-                <ShoppingBagIcon className="w-6 h-6 text-purple-400" />
+             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] mb-0.5 flex items-center gap-2.5">
+                <ShoppingBagIcon className="w-6 h-6 text-[var(--accent-primary)]" />
                 Purchase Bills
              </h1>
-             <p className="text-gray-400 text-xs">Track procurement and supplier relationships.</p>
+             <p className="text-[var(--text-muted)] text-xs">Track procurement and supplier relationships.</p>
            </div>
            
            <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setShowUpload(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/10 shadow-sm uppercase tracking-widest"
+                icon={DocumentArrowUpIcon}
               >
-                <DocumentArrowUpIcon className="h-4 w-4" />
-                <span>Upload CSV</span>
-              </button>
-              <button
+                Upload CSV
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setShowForm(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-purple-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-purple-400 shadow-lg shadow-purple-500/20 uppercase tracking-widest"
+                icon={PlusIcon}
               >
-                <PlusIcon className="h-4 w-4" />
-                <span>New Purchase</span>
-              </button>
+                New Purchase
+              </Button>
             </div>
         </div>
 
         {/* Purchase Table Container */}
         <div className="bento-card !p-0 overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
+          <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-primary)]/40">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                Purchase History
             </h2>
           </div>

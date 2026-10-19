@@ -242,23 +242,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     event.target.value = '';
   };
 
-  if (error) {
-    return (
-      <div className="p-4 text-red-300 font-bold drop-shadow-lg">
-        Error loading inventory: {error.message}
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.href = "/login";
-          }}
-          className="ml-4 px-2 py-1 bg-red-500/80 text-white rounded text-xs backdrop-filter backdrop-blur-10 border border-red-300/30 font-bold transition-colors"
-        >
-          Clear Auth & Re-login
-        </button>
-      </div>
-    );
-  }
-
   // Get the raw products array from API response
   const productsRaw = useMemo(
     () => (Array.isArray(data) ? data : data?.results || data?.data || []),
@@ -291,9 +274,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   };
 
   const renderSortIndicator = (field) => {
-    if (ordering === field) return <span className="ml-1 text-cyan-300 font-bold">▲</span>;
-    if (ordering === `-${field}`) return <span className="ml-1 text-cyan-300 font-bold">▼</span>;
-    return <span className="ml-1 text-white/30 text-xs">↕</span>;
+    if (ordering === field) return <span className="ml-1 text-[var(--accent-primary)] font-bold">▲</span>;
+    if (ordering === `-${field}`) return <span className="ml-1 text-[var(--accent-primary)] font-bold">▼</span>;
+    return <span className="ml-1 text-[var(--text-muted)] text-xs">↕</span>;
   };
 
   // Backend handles search across all products; frontend applies additional filters only.
@@ -525,18 +508,35 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
 
     if (currentStock < 0) {
-      return { text: "Critical", className: "bg-red-600/30 text-red-200 border border-red-500/60 backdrop-filter backdrop-blur-10 font-bold" };
+      return { text: "Critical", className: "bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] font-bold uppercase" };
     } else if (currentStock === 0) {
-      return { text: "Out of Stock", className: "bg-red-500/30 text-red-200 border border-red-300/50 backdrop-filter backdrop-blur-10 font-bold" };
+      return { text: "Out of Stock", className: "bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] font-bold" };
     } else if (minStock > 0 && currentStock > 0 && currentStock <= minStock) {
-      return { text: "Low Stock", className: "bg-yellow-500/30 text-yellow-200 border border-yellow-300/50 backdrop-filter backdrop-blur-10 font-bold" };
+      return { text: "Low Stock", className: "bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] font-medium" };
     } else {
-      return { text: "In Stock", className: "bg-green-500/30 text-green-200 border border-green-300/50 backdrop-filter backdrop-blur-10 font-bold" };
+      return { text: "In Stock", className: "bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 font-bold" };
     }
   };
 
+  if (error) {
+    return (
+      <div className="p-4 bg-[var(--bg-surface)] border-2 border-[var(--text-primary)] rounded-xl text-[var(--text-primary)] font-bold">
+        Error loading inventory: {error.message}
+        <button
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = "/login";
+          }}
+          className="btn-destructive ml-4 text-xs py-1 px-3"
+        >
+          Clear Auth & Re-login
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg p-4 rounded">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-lg p-4 rounded-xl text-[var(--text-primary)]">
       {/* Background CSV Import Progress Widget (Non-blocking) */}
       <InventoryCsvProgressBar
         job={csvJob}
@@ -551,7 +551,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           <input
-            className="w-full sm:w-56 border border-hairline rounded-lg px-3 py-1.5 text-sm bg-obsidian-card text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
+            className="w-full sm:w-56 border border-[var(--border-default)] rounded-lg px-3 py-1.5 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)] transition-all outline-none"
             placeholder="Search products..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -562,19 +562,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               setOrdering(e.target.value);
               setPage(1);
             }}
-            className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
+            className="border border-[var(--border-default)] rounded-lg px-2.5 py-1.5 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)] transition-all outline-none"
           >
-            <option value="name" className="bg-slate-900 text-white">Name (A-Z)</option>
-            <option value="-name" className="bg-slate-900 text-white">Name (Z-A)</option>
-            <option value="-updated_at" className="bg-slate-900 text-white">Recently Modified</option>
-            <option value="updated_at" className="bg-slate-900 text-white">Modified (Oldest)</option>
-            <option value="-created_at" className="bg-slate-900 text-white">Recently Added</option>
-            <option value="-current_stock" className="bg-slate-900 text-white">Stock (High to Low)</option>
-            <option value="current_stock" className="bg-slate-900 text-white">Stock (Low to High)</option>
-            <option value="-sale_price" className="bg-slate-900 text-white">Sale Price (High to Low)</option>
-            <option value="sale_price" className="bg-slate-900 text-white">Sale Price (Low to High)</option>
-            <option value="-unit_price" className="bg-slate-900 text-white">Cost Price (High to Low)</option>
-            <option value="unit_price" className="bg-slate-900 text-white">Cost Price (Low to High)</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="-name">Name (Z-A)</option>
+            <option value="-updated_at">Recently Modified</option>
+            <option value="updated_at">Modified (Oldest)</option>
+            <option value="-created_at">Recently Added</option>
+            <option value="-current_stock">Stock (High to Low)</option>
+            <option value="current_stock">Stock (Low to High)</option>
+            <option value="-sale_price">Sale Price (High to Low)</option>
+            <option value="sale_price">Sale Price (Low to High)</option>
+            <option value="-unit_price">Cost Price (High to Low)</option>
+            <option value="unit_price">Cost Price (Low to High)</option>
           </select>
           <select
             value={stockFilter}
@@ -582,13 +582,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               setStockFilter(e.target.value);
               setPage(1);
             }}
-            className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
+            className="border border-[var(--border-default)] rounded-lg px-2.5 py-1.5 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)] transition-all outline-none"
           >
-            <option value="all" className="bg-slate-900 text-white">All Stock</option>
-            <option value="in-stock" className="bg-slate-900 text-white">In Stock (&gt;0)</option>
-            <option value="low-stock" className="bg-slate-900 text-white">Low Stock</option>
-            <option value="out-of-stock" className="bg-slate-900 text-white">Out of Stock (0)</option>
-            <option value="critical" className="bg-slate-900 text-white">Critical (&lt;0)</option>
+            <option value="all">All Stock</option>
+            <option value="in-stock">In Stock (&gt;0)</option>
+            <option value="low-stock">Low Stock</option>
+            <option value="out-of-stock">Out of Stock (0)</option>
+            <option value="critical">Critical (&lt;0)</option>
           </select>
           {availableManufacturers.length > 0 && (
             <select
@@ -597,11 +597,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 setSelectedManufacturer(e.target.value);
                 setPage(1);
               }}
-              className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none max-w-[180px] truncate"
+              className="border border-[var(--border-default)] rounded-lg px-2.5 py-1.5 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)] transition-all outline-none max-w-[180px] truncate"
             >
-              <option value="" className="bg-slate-900 text-white">All Manufacturers</option>
+              <option value="">All Manufacturers</option>
               {availableManufacturers.map((mfg) => (
-                <option key={mfg} value={mfg} className="bg-slate-900 text-white">
+                <option key={mfg} value={mfg}>
                   {mfg}
                 </option>
               ))}
@@ -615,11 +615,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               setShowBulkActions(false);
               setPage(1);
             }}
-            className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
+            className="border border-[var(--border-default)] rounded-lg px-2.5 py-1.5 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)] transition-all outline-none"
           >
-            <option value="active" className="bg-slate-900 text-white">Active</option>
-            <option value="archived" className="bg-slate-900 text-white">Archived</option>
-            <option value="all" className="bg-slate-900 text-white">All Status</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+            <option value="all">All Status</option>
           </select>
         </div>
 
@@ -629,18 +629,18 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <button
               type="button"
               onClick={() => setShowColumnPicker(!showColumnPicker)}
-              className="px-3 py-1.5 bg-white/10 text-white/90 border border-white/20 rounded hover:bg-white/20 transition text-xs font-semibold flex items-center gap-1.5 backdrop-filter backdrop-blur-10"
+              className="px-3 py-1.5 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] rounded-lg hover:border-[var(--accent-primary)] transition text-xs font-semibold flex items-center gap-1.5"
               title="Show / Hide Columns"
             >
-              <AdjustmentsHorizontalIcon className="w-4 h-4 text-cyan-300" />
+              <AdjustmentsHorizontalIcon className="w-4 h-4 text-[var(--accent-primary)]" />
               <span>Columns</span>
             </button>
             {showColumnPicker && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 mt-2 w-52 bg-gray-900/95 border border-white/20 rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl space-y-2"
+                className="absolute right-0 mt-2 w-52 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl space-y-2"
               >
-                <div className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider mb-2">Display Columns</div>
+                <div className="text-[11px] font-bold text-[var(--accent-primary)] uppercase tracking-wider mb-2">Display Columns</div>
                 {[
                   { key: 'product', label: 'Product Name' },
                   { key: 'quantity', label: 'Quantity / Stock' },
@@ -651,12 +651,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   { key: 'status', label: 'Stock Status' },
                   { key: 'warranty', label: 'Warranty' },
                 ].map((col) => (
-                  <label key={col.key} className="flex items-center gap-2 text-xs text-white/90 hover:text-white cursor-pointer select-none">
+                  <label key={col.key} className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={visibleColumns[col.key]}
                       onChange={() => toggleColumn(col.key)}
-                      className="rounded border-white/30 text-cyan-400 focus:ring-cyan-400 bg-white/10"
+                      className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                     />
                     {col.label}
                   </label>
@@ -668,7 +668,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           <button
             type="button"
             onClick={() => setShowItemDetails(!showItemDetails)}
-            className={`px-3 py-1.5 border rounded transition text-xs font-semibold flex items-center gap-1.5 backdrop-filter backdrop-blur-10 ${showItemDetails ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/30' : 'bg-white/10 text-white/70 border-white/20'}`}
+            className={`px-3 py-1.5 border rounded-lg transition text-xs font-semibold flex items-center gap-1.5 ${showItemDetails ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] border-transparent font-bold' : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-default)]'}`}
             title={showItemDetails ? "Hide Item Details" : "Show Item Details"}
           >
             {showItemDetails ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
@@ -682,19 +682,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {selectedProducts.size > 0 && (
             <>
-              <span className="text-sm text-cyan-300 font-bold drop-shadow-lg">
+              <span className="text-sm text-[var(--accent-primary)] font-bold">
                 {selectedProducts.size} selected
               </span>
               <button
                 onClick={() => setShowBulkActions(!showBulkActions)}
-                className="px-3 py-1 bg-blue-500/30 text-blue-200 border border-blue-300/50 rounded hover:bg-blue-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+                className="btn-secondary text-xs py-1.5 px-3"
               >
                 Bulk Actions
               </button>
               {statusFilter === "archived" && (
                 <button
                   onClick={handleBulkRestore}
-                  className="px-3 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+                  className="btn-primary text-xs py-1.5 px-3"
                 >
                   Restore Selected ({selectedProducts.size})
                 </button>
@@ -705,13 +705,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <div className="flex gap-2">
               <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-500/30 text-red-200 border border-red-300/50 rounded hover:bg-red-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+                className="btn-destructive text-xs py-1 px-3"
               >
                 Delete Selected
               </button>
               <button
                 onClick={handleBulkRestore}
-                className="px-3 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-300/50 rounded hover:bg-emerald-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+                className="btn-primary text-xs py-1 px-3"
               >
                 Restore Selected
               </button>
@@ -722,11 +722,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={handleDownloadTemplate}
-            className="px-3 py-1 bg-cyan-500/30 text-cyan-200 border border-cyan-300/50 rounded hover:bg-cyan-400/40 transition text-sm backdrop-filter backdrop-blur-10 font-bold"
+            className="btn-secondary text-xs py-1.5 px-3"
           >
             Download Template
           </button>
-          <label className={`px-3 py-1 border rounded transition text-sm backdrop-filter backdrop-blur-10 font-bold cursor-pointer ${isUploadingCsv ? 'bg-gray-600/30 text-gray-300 border-gray-400/40' : 'bg-blue-500/30 text-blue-200 border-blue-300/50 hover:bg-blue-400/40'}`}>
+          <label className={`btn-secondary text-xs py-1.5 px-3 cursor-pointer ${isUploadingCsv ? 'opacity-50 pointer-events-none' : ''}`}>
             {isUploadingCsv ? 'Uploading...' : 'Upload CSV'}
             <input
               type="file"
@@ -738,7 +738,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           </label>
           <button
             onClick={exportToCSV}
-            className="px-3 py-1 bg-green-500/30 text-green-200 border border-green-300/50 rounded hover:bg-green-400/40 transition text-sm flex items-center gap-1 backdrop-filter backdrop-blur-10 font-bold"
+            className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -759,21 +759,21 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-sm border-separate border-spacing-y-2">
           <thead>
-            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
+            <tr className="bg-[var(--bg-primary)]/70 border-b border-[var(--border-default)]">
               {visibleColumns.checkbox && (
                 <th className="w-12 text-left py-3 px-4 rounded-l-lg">
                   <input
                     type="checkbox"
                     checked={filteredProducts.length > 0 && selectedProducts.size === filteredProducts.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                    className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                   />
                 </th>
               )}
               {visibleColumns.product && (
                 <th
                   onClick={() => handleSort('name')}
-                  className="w-[28%] min-w-[200px] text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                  className="w-[28%] min-w-[200px] text-left py-3 px-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Product</span>
@@ -784,7 +784,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               {visibleColumns.quantity && (
                 <th
                   onClick={() => handleSort('current_stock')}
-                  className="w-24 text-center py-3 px-3 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                  className="w-24 text-center py-3 px-3 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span>Quantity</span>
@@ -793,14 +793,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 </th>
               )}
               {visibleColumns.unit && (
-                <th className="w-20 text-center py-3 px-2 font-black text-white drop-shadow-lg">
+                <th className="w-20 text-center py-3 px-2 font-bold text-[var(--text-primary)]">
                   Unit
                 </th>
               )}
               {visibleColumns.cost_price && (
                 <th
                   onClick={() => handleSort('cost_price')}
-                  className="w-28 text-right py-3 px-3 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                  className="w-28 text-right py-3 px-3 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span>Cost Price</span>
@@ -811,7 +811,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               {visibleColumns.sale_price && (
                 <th
                   onClick={() => handleSort('sale_price')}
-                  className="w-28 text-right py-3 px-3 font-black text-white drop-shadow-lg cursor-pointer select-none hover:text-cyan-200 transition-colors"
+                  className="w-28 text-right py-3 px-3 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span>Sale Price</span>
@@ -820,22 +820,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 </th>
               )}
               {visibleColumns.total_value && (
-                <th className="w-28 text-right py-3 px-3 font-black text-white drop-shadow-lg">
+                <th className="w-28 text-right py-3 px-3 font-bold text-[var(--text-primary)]">
                   Total Value
                 </th>
               )}
               {visibleColumns.status && (
-                <th className="w-28 text-center py-3 px-3 font-black text-white drop-shadow-lg">
+                <th className="w-28 text-center py-3 px-3 font-bold text-[var(--text-primary)]">
                   Status
                 </th>
               )}
               {visibleColumns.warranty && (
-                <th className="w-24 text-center py-3 px-2 font-black text-white drop-shadow-lg">
+                <th className="w-24 text-center py-3 px-2 font-bold text-[var(--text-primary)]">
                   Warranty
                 </th>
               )}
               {visibleColumns.actions && (
-                <th className="w-36 text-center py-3 px-3 rounded-r-lg font-black text-white drop-shadow-lg">
+                <th className="w-36 text-center py-3 px-3 rounded-r-lg font-bold text-[var(--text-primary)]">
                   Actions
                 </th>
               )}
@@ -849,7 +849,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     <tr key={i}>
                       <td
                         colSpan={10}
-                        className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
+                        className="py-6 animate-pulse bg-[var(--bg-surface)] rounded-lg"
                       />
                     </tr>
                   ))
@@ -862,7 +862,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   return (
                     <tr
                       key={product.id}
-                      className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300"
+                      className="bg-[var(--bg-surface)] shadow-sm rounded-lg border border-[var(--border-default)] hover:border-[var(--accent-primary)]/50 transition-all duration-150"
                     >
                       {visibleColumns.checkbox && (
                         <td className="py-3 px-4">
@@ -870,39 +870,39 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                             type="checkbox"
                             checked={selectedProducts.has(product.id)}
                             onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                            className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                            className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                           />
                         </td>
                       )}
                       {visibleColumns.product && (
                         <td className="py-3 px-4 break-words min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-white drop-shadow-lg break-words">
+                            <span className="font-semibold text-[var(--text-primary)] break-words">
                               {product.name}
                             </span>
                             {product.item_code && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20" title={`Item Code: ${product.item_code}`}>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Item Code: ${product.item_code}`}>
                                 {product.item_code}
                               </span>
                             )}
                             {showItemDetails && product.internal_reference && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-teal-300 bg-teal-500/10 border border-teal-500/20" title={`Internal Ref: ${product.internal_reference}`}>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Internal Ref: ${product.internal_reference}`}>
                                 Ref: {product.internal_reference}
                               </span>
                             )}
                             {showItemDetails && product.manufacturer && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-purple-300 bg-purple-500/10 border border-purple-500/20" title={`Manufacturer: ${product.manufacturer}`}>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Manufacturer: ${product.manufacturer}`}>
                                 {product.manufacturer}
                               </span>
                             )}
                             {product.is_active === false && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] border-2 border-[var(--border-default)]">
                                 Archived
                               </span>
                             )}
                           </div>
                           {showItemDetails && product.description && (
-                            <div className="text-xs text-white/70 drop-shadow-md mt-1 break-words line-clamp-2">
+                            <div className="text-xs text-[var(--text-muted)] mt-1 break-words line-clamp-2">
                               {product.description}
                             </div>
                           )}
@@ -910,11 +910,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       )}
                       {visibleColumns.quantity && (
                         <td className="py-3 px-3 text-center">
-                          <div className={`font-semibold drop-shadow-lg ${parseFloat(product.stock ?? product.current_stock ?? 0) < 0 ? 'text-red-400 font-bold' : 'text-white'}`}>
+                          <div className={`font-semibold ${parseFloat(product.stock ?? product.current_stock ?? 0) < 0 ? 'text-[var(--text-primary)] font-bold underline' : 'text-[var(--text-primary)]'}`}>
                             {parseFloat(product.stock ?? product.current_stock ?? 0).toLocaleString()}
                           </div>
                           {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
-                            <div className="text-[11px] text-amber-300/80 drop-shadow-md mt-0.5">
+                            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
                               Min: {parseFloat(product.low_stock_alert ?? product.min_stock_level).toLocaleString()}
                             </div>
                           )}
@@ -923,7 +923,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       {visibleColumns.unit && (
                         <td className="py-3 px-2 text-center">
                           <span 
-                            className="inline-block px-2 py-0.5 rounded-md text-xs font-medium text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 font-mono truncate max-w-full"
+                            className="inline-block px-2 py-0.5 rounded-md text-xs font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)] font-mono truncate max-w-full"
                             title={product.unit || 'pcs'}
                           >
                             {product.unit || 'pcs'}
@@ -931,17 +931,17 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         </td>
                       )}
                       {visibleColumns.cost_price && (
-                        <td className="py-3 px-3 text-right font-medium text-white drop-shadow-lg">
+                        <td className="py-3 px-3 text-right font-medium text-[var(--text-primary)]">
                           {getCurrencySymbol()}{costPrice.toFixed(2)}
                         </td>
                       )}
                       {visibleColumns.sale_price && (
-                        <td className="py-3 px-3 text-right font-medium text-white drop-shadow-lg">
+                        <td className="py-3 px-3 text-right font-medium text-[var(--text-primary)]">
                           {salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}
                         </td>
                       )}
                       {visibleColumns.total_value && (
-                        <td className="py-3 px-3 text-right font-bold text-white drop-shadow-lg">
+                        <td className="py-3 px-3 text-right font-bold text-[var(--text-primary)]">
                           {getCurrencySymbol()}{totalValue.toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
@@ -958,11 +958,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       {visibleColumns.warranty && (
                         <td className="py-3 px-2 text-center">
                           {(product.warranty_months && product.warranty_months > 0) ? (
-                            <span className="px-2 py-0.5 rounded text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+                            <span className="px-2 py-0.5 rounded text-xs font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]">
                               {product.warranty_months} mo
                             </span>
                           ) : (
-                            <span className="text-gray-500 text-xs">—</span>
+                            <span className="text-[var(--text-muted)] text-xs">—</span>
                           )}
                         </td>
                       )}
@@ -974,7 +974,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                               onClick={() => onView(product)}
                               title="View Product Details"
                               aria-label="View Product Details"
-                              className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                              className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition-all"
                             >
                               <EyeIcon className="w-4 h-4" />
                             </button>
@@ -984,7 +984,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                                 onClick={() => handleRestore(product)}
                                 title="Restore Product to Active Inventory"
                                 aria-label="Restore Product"
-                                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-200 hover:border-emerald-500/40 transition-all drop-shadow"
+                                className="p-1.5 rounded-lg bg-[var(--accent-primary)] text-[var(--text-on-accent)] border border-transparent hover:brightness-110 transition-all"
                               >
                                 <ArrowPathIcon className="w-4 h-4" />
                               </button>
@@ -996,7 +996,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                                     onClick={() => onStockAdjustment(product)}
                                     title="Adjust Stock"
                                     aria-label="Adjust Stock"
-                                    className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 hover:border-amber-500/40 transition-all drop-shadow"
+                                    className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
                                   >
                                     <AdjustmentsVerticalIcon className="w-4 h-4" />
                                   </button>
@@ -1006,7 +1006,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                                   onClick={() => onEdit(product)}
                                   title="Edit Product"
                                   aria-label="Edit Product"
-                                  className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 transition-all drop-shadow"
+                                  className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
                                 >
                                   <PencilSquareIcon className="w-4 h-4" />
                                 </button>
@@ -1015,7 +1015,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                                   onClick={() => onDelete(product)}
                                   title="Delete Product"
                                   aria-label="Delete Product"
-                                  className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                                  className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all"
                                 >
                                   <TrashIcon className="w-4 h-4" />
                                 </button>
@@ -1038,7 +1038,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               ? data.length === 0
               : ((!data.data || data.data.length === 0) &&
                   (!data.results || data.results.length === 0)))) && (
-          <div className="p-8 text-center text-white/80 drop-shadow-lg">
+          <div className="p-8 text-center text-[var(--text-muted)]">
             <p>No products found.</p>
             <p className="text-sm mt-2">
               Click "Add Product" to create your first inventory item.
@@ -1051,15 +1051,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       <div className="lg:hidden space-y-4">
         {loadingPolicy.visible ? (
           Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
-              <div className="h-4 bg-white/20 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded mb-2"></div>
-              <div className="h-3 bg-white/10 rounded w-3/4"></div>
+            <div key={i} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border-default)] p-4 animate-pulse">
+              <div className="h-4 bg-[var(--bg-primary)] rounded mb-2"></div>
+              <div className="h-3 bg-[var(--bg-primary)] rounded mb-2"></div>
+              <div className="h-3 bg-[var(--bg-primary)] rounded w-3/4"></div>
             </div>
           ))
         ) : (
           filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+            <div key={product.id} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border-default)] p-4 transition-all duration-150">
               {(() => {
                 const currentStock = parseFloat(product.stock ?? product.current_stock ?? 0);
                 const lowStockLevel = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
@@ -1074,19 +1074,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     type="checkbox"
                     checked={selectedProducts.has(product.id)}
                     onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                    className="flex-shrink-0 mt-1.5 rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="flex-shrink-0 mt-1.5 rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-lg font-semibold text-white break-words flex items-center gap-2 flex-wrap">
+                    <div className="text-lg font-semibold text-[var(--text-primary)] break-words flex items-center gap-2 flex-wrap">
                       <span>{product.name}</span>
                       {product.item_code && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/20">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]">
                           {product.item_code}
                         </span>
                       )}
                     </div>
                     {product.manufacturer && (
-                      <div className="text-xs text-white/60">Mfg: {product.manufacturer}</div>
+                      <div className="text-xs text-[var(--text-muted)]">Mfg: {product.manufacturer}</div>
                     )}
                   </div>
                 </div>
@@ -1095,26 +1095,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               {/* Card Content */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Category / HSN:</span>
-                  <span className="text-sm font-medium text-white">{product.hsn_sac_code || 'N/A'}</span>
+                  <span className="text-sm text-[var(--text-muted)]">Category / HSN:</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">{product.hsn_sac_code || 'N/A'}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Quantity:</span>
+                  <span className="text-sm text-[var(--text-muted)]">Quantity:</span>
                   <div className="text-right">
                     <span className={`text-sm font-semibold ${
                       currentStock < 0
-                        ? 'text-red-400 font-bold'
-                        : isLowStock
-                          ? 'text-red-400' 
-                          : currentStock <= lowStockLevel * 2 && lowStockLevel > 0
-                            ? 'text-yellow-400' 
-                            : 'text-green-400'
+                        ? 'text-[var(--text-primary)] underline font-bold'
+                        : 'text-[var(--text-primary)]'
                     }`}>
                       {currentStock.toLocaleString()}
                     </span>
                     {lowStockLevel > 0 && (
-                      <div className="text-[11px] text-amber-300/80">
+                      <div className="text-[11px] text-[var(--text-muted)]">
                         Min: {lowStockLevel.toLocaleString()}
                       </div>
                     )}
@@ -1122,45 +1118,45 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Unit:</span>
-                  <span className="px-2 py-0.5 rounded text-xs font-medium text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 font-mono">
+                  <span className="text-sm text-[var(--text-muted)]">Unit:</span>
+                  <span className="px-2 py-0.5 rounded text-xs font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)] font-mono">
                     {product.unit || 'pcs'}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Cost Price:</span>
-                  <span className="text-lg font-semibold text-[#7fd3f7]">
+                  <span className="text-sm text-[var(--text-muted)]">Cost Price:</span>
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">
                     {getCurrencySymbol()}{Number(costPrice || 0).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white/70">Sale Price:</span>
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm text-[var(--text-muted)]">Sale Price:</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     {product.sale_price == null ? '-' : `${getCurrencySymbol()}${Number(product.sale_price).toLocaleString()}`}
                   </span>
                 </div>
 
                 {currentStock < 0 ? (
-                  <div className="text-xs text-red-300 bg-red-600/30 border border-red-500/50 px-2 py-1 rounded font-bold">
+                  <div className="text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] border-2 border-[var(--text-primary)] px-2 py-1 rounded font-bold uppercase">
                     Critical (Negative Stock)
                   </div>
                 ) : isLowStock ? (
-                  <div className="text-xs text-yellow-400 bg-yellow-500/20 px-2 py-1 rounded">
+                  <div className="text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] px-2 py-1 rounded font-medium">
                     Low Stock Alert
                   </div>
                 ) : null}
               </div>
 
               {/* Card Actions */}
-              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => onView(product)}
                   title="View Product Details"
                   aria-label="View Product Details"
-                  className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
                 >
                   <EyeIcon className="w-4 h-4" />
                 </button>
@@ -1170,7 +1166,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     onClick={() => handleRestore(product)}
                     title="Restore Product to Active Inventory"
                     aria-label="Restore Product"
-                    className="px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                    className="px-3 py-2 rounded-lg bg-[var(--accent-primary)] text-[var(--text-on-accent)] border border-transparent hover:brightness-110 transition-all flex items-center gap-1.5 text-xs font-semibold"
                   >
                     <ArrowPathIcon className="w-4 h-4" />
                     <span>Restore</span>
@@ -1183,7 +1179,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                         onClick={() => onStockAdjustment(product)}
                         title="Adjust Stock"
                         aria-label="Adjust Stock"
-                        className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300 transition-all"
+                        className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
                       >
                         <AdjustmentsVerticalIcon className="w-4 h-4" />
                       </button>
@@ -1193,7 +1189,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       onClick={() => onEdit(product)}
                       title="Edit Product"
                       aria-label="Edit Product"
-                      className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                      className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
                     >
                       <PencilSquareIcon className="w-4 h-4" />
                     </button>
@@ -1202,7 +1198,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       onClick={() => onDelete(product)}
                       title="Delete Product"
                       aria-label="Delete Product"
-                      className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 transition-all"
+                      className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all"
                     >
                       <TrashIcon className="w-4 h-4" />
                     </button>
@@ -1218,7 +1214,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
 
         {/* No data message for mobile */}
         {!isLoading && filteredProducts.length === 0 && (
-          <div className="p-8 text-center text-white/80">
+          <div className="p-8 text-center text-[var(--text-muted)]">
             <p>No products found.</p>
             <p className="text-sm mt-2">
               Click "Add Product" to create your first inventory item.

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import ThemeToggle from './common/ThemeToggle';
 
 const renderLink = (item, className, onClick) => {
   if (item.href?.startsWith('http')) {
@@ -45,9 +46,16 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-2 pb-6 bg-gradient-to-b from-black via-black/80 to-transparent ${className}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-2 pb-6 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-transparent ${className}`}>
         <div className="w-full max-w-7xl">
-          <div className="flex items-center justify-between rounded-2xl bg-obsidian-card/80 px-6 py-2.5 backdrop-blur-md border border-hairline shadow-lg transition-all duration-300">
+          <div 
+            className="flex items-center justify-between rounded-2xl px-6 py-2.5 backdrop-blur-md shadow-lg transition-all duration-300"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-primary)',
+            }}
+          >
             {/* Logo */}
             <Link to="/" className="flex items-center transition-all duration-300 hover:opacity-90 active:scale-95">
               <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-auto w-[110px] object-contain sm:w-[130px]" />
@@ -57,36 +65,44 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
             <div className="hidden items-center gap-6 text-sm md:flex">
               {links.map((item, idx) => (
                 <div key={idx} className="relative group">
-                  {renderLink(item, 'font-medium text-slate-300 transition-all duration-300 hover:text-white relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-sky-400 after:transition-all after:duration-300 group-hover:after:w-full')}
+                  {renderLink(item, 'font-medium transition-all duration-300 hover:opacity-100 opacity-80 relative')}
                 </div>
               ))}
             </div>
 
-            {/* Desktop Auth Links */}
+            {/* Desktop Actions & Theme Toggle */}
             <div className="hidden items-center gap-3 md:flex">
+              <ThemeToggle />
               {authLinks ? (
                 <>
-                  <Link to="/login" className="px-5 py-2 text-sm font-semibold text-slate-300 transition-all duration-300 hover:text-white rounded-lg hover:bg-white/5">
+                  <Link 
+                    to="/login" 
+                    className="btn-ghost !text-xs !py-1.5 !px-3 font-semibold"
+                  >
                     Log In
                   </Link>
-                  <Link to="/signup" className="px-5 py-2 text-sm font-bold text-slate-950 bg-white rounded-lg transition-all duration-300 hover:bg-slate-200 active:scale-95">
+                  <Link 
+                    to="/signup" 
+                    className="btn-primary !text-xs !py-2 !px-4"
+                  >
                     Get Started
                   </Link>
                 </>
               ) : null}
             </div>
 
-            {/* Mobile Menu Button & Sign Up */}
+            {/* Mobile Actions: Theme Toggle & Menu Button */}
             <div className="flex items-center gap-2 md:hidden">
+              <ThemeToggle />
               {authLinks ? (
-                <Link to="/signup" className="inline-flex items-center justify-center text-center px-3.5 py-1.5 text-xs font-bold text-slate-950 bg-white rounded-lg transition-all duration-300 active:scale-95">
+                <Link to="/signup" className="btn-primary !text-xs !py-1.5 !px-3">
                   Sign Up
                 </Link>
               ) : null}
               <button
                 type="button"
                 onClick={() => setMenuOpen((open) => !open)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-obsidian-elevated text-white transition-all duration-300 hover:bg-slate-800 active:scale-95"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] transition-all duration-300 active:scale-95"
                 aria-label="Toggle navigation menu"
                 aria-expanded={menuOpen}
               >
@@ -100,36 +116,39 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
           {/* Mobile Menu */}
           <div
-            className={`absolute left-4 right-4 top-20 origin-top rounded-2xl bg-obsidian-card/95 backdrop-blur-lg border border-hairline shadow-2xl transition-all duration-300 md:hidden ${
+            className={`absolute left-4 right-4 top-20 origin-top rounded-2xl backdrop-blur-lg border shadow-2xl transition-all duration-300 md:hidden ${
               menuOpen ? 'scale-y-100 opacity-100 visible' : 'scale-y-95 opacity-0 invisible'
             }`}
             style={{
               transformOrigin: 'top center',
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-default)',
+              color: 'var(--text-primary)',
             }}
           >
             <div className="flex flex-col gap-0 p-4">
               {links.map((item, idx) => (
-                <div key={idx} className="border-b border-hairline last:border-b-0 py-0">
+                <div key={idx} className="border-b border-[var(--border-subtle)] last:border-b-0 py-0">
                   {renderLink(
                     item,
-                    'block px-4 py-3 text-sm font-medium text-slate-300 transition-all duration-300 rounded-lg hover:bg-white/10 hover:text-white active:scale-95',
+                    'block px-4 py-3 text-sm font-medium transition-all duration-300 rounded-lg hover:bg-[var(--bg-primary)] active:scale-95',
                     () => setMenuOpen(false)
                   )}
                 </div>
               ))}
 
               {authLinks ? (
-                <div className="mt-4 flex flex-col gap-2 border-t border-hairline pt-4">
+                <div className="mt-4 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-4">
                   <Link
                     to="/login"
-                    className="block px-4 py-3 text-center text-sm font-semibold text-slate-300 transition-all duration-300 rounded-lg hover:bg-white/10 hover:text-white active:scale-95"
+                    className="block px-4 py-3 text-center text-sm font-semibold rounded-lg hover:bg-[var(--bg-primary)] active:scale-95"
                     onClick={() => setMenuOpen(false)}
                   >
                     Log In
                   </Link>
                   <Link
                     to="/signup"
-                    className="block px-4 py-3 text-center text-sm font-bold text-slate-950 bg-white rounded-lg transition-all duration-300 hover:bg-slate-200 active:scale-95"
+                    className="btn-primary w-full text-center"
                     onClick={() => setMenuOpen(false)}
                   >
                     Get Started

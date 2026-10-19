@@ -178,12 +178,12 @@ export default function DebitNoteForm({ isOpen, onClose }) {
       <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <div className="fixed inset-0 bg-black/80" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-[#0F0F12] border border-white/10 p-6 text-left align-middle shadow-xl transition-all">
+          <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-6 text-left align-middle shadow-xl transition-all">
             <div className="flex justify-between items-center mb-6">
-              <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-white">
+              <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-[var(--text-primary)]">
                 New Debit Note (Purchase Return)
               </Dialog.Title>
-              <button onClick={handleClose} className="text-gray-400 hover:text-white">
+              <button onClick={handleClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
@@ -191,7 +191,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 gap-4 relative">
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Vendor Name (Type to search)</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Vendor Name (Type to search)</label>
                   <VendorAutocomplete 
                      vendorName={vendorName} 
                      setVendorName={setVendorName} 
@@ -201,21 +201,21 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                   />
                 </div>
                 <div>
-                   <label className="block text-sm font-medium text-gray-400 mb-1">Vendor GSTIN (Auto-filled on selection)</label>
+                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Vendor GSTIN (Auto-filled on selection)</label>
                    <input
                      type="text"
                      value={vendorGstin}
                      onChange={(e) => setVendorGstin(e.target.value)}
-                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                      placeholder="Enter GSTIN"
                    />
                 </div>
                 <div>
-                   <label className="block text-sm font-medium text-gray-400 mb-1">Original Purchase Bill *</label>
+                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Original Purchase Bill *</label>
                    <select
                      value={originalBillId}
                      onChange={(e) => handleBillSelect(e.target.value)}
-                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                      required
                    >
                      <option value="">{vendorName ? "Select bill..." : "Enter vendor first..."}</option>
@@ -231,11 +231,11 @@ export default function DebitNoteForm({ isOpen, onClose }) {
               {/* Step 2: Return Details */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Reason</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Reason</label>
                   <select 
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                   >
                     <option value="return">Goods Returned</option>
                     <option value="defective">Defective</option>
@@ -245,27 +245,27 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
                   <input 
                     type="text" 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                     placeholder="Optional remarks"
                   />
                 </div>
               </div>
 
               {/* Step 3: Add Items */}
-              <div className="border border-white/10 rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-medium text-gray-300">Return Items</h4>
+              <div className="border border-[var(--border-subtle)] rounded-lg p-4 space-y-4">
+                <h4 className="text-sm font-medium text-[var(--text-primary)]">Return Items</h4>
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
-                    <label className="block text-xs text-gray-400 mb-1">Product</label>
+                    <label className="block text-xs text-[var(--text-muted)] mb-1">Product</label>
                     <select 
                       value={selectedProductId}
                       onChange={(e) => setSelectedProductId(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
                     >
                       <option value="">{vendorName ? "Select Product..." : "Please enter a Vendor first..."}</option>
                       {productList.map(p => (
@@ -274,39 +274,39 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                     </select>
                   </div>
                   <div className="w-24">
-                    <label className="block text-xs text-gray-400 mb-1">Price</label>
+                    <label className="block text-xs text-[var(--text-muted)] mb-1">Price</label>
                     <input 
                       type="number" 
                       min="0"
                       step="0.01"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
                     />
                   </div>
                   <div className="w-24">
-                    <label className="block text-xs text-gray-400 mb-1">Qty</label>
+                    <label className="block text-xs text-[var(--text-muted)] mb-1">Qty</label>
                     <input 
                       type="number" 
                       min="1"
                       value={returnQty}
                       onChange={(e) => setReturnQty(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-purple-500"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
                     />
                   </div>
                   <button 
                     type="button"
                     onClick={handleAddProduct}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm transition-colors"
+                    className="btn-primary px-4 py-1.5 rounded text-sm transition-colors"
                   >
                     Add
                   </button>
                 </div>
 
                 {returnItems.length > 0 && (
-                  <div className="mt-4 border border-white/10 rounded-lg overflow-hidden">
+                  <div className="mt-4 border border-[var(--border-subtle)] rounded-lg overflow-hidden">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-white/5 text-gray-400">
+                      <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)]">
                         <tr>
                           <th className="p-3">Product</th>
                           <th className="p-3 text-right">Price</th>
@@ -315,11 +315,11 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                           <th className="p-3 text-center w-12"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5">
+                      <tbody className="divide-y divide-[var(--border-subtle)]">
                         {returnItems.map((item, idx) => (
                           <tr key={idx}>
-                            <td className="p-3 text-white">{item.product_name}</td>
-                            <td className="p-3 text-right text-gray-400">{getCurrencySymbol()}{item.price}</td>
+                            <td className="p-3 text-[var(--text-primary)]">{item.product_name}</td>
+                            <td className="p-3 text-right text-[var(--text-muted)]">{getCurrencySymbol()}{item.price}</td>
                             <td className="p-3">
                               <input 
                                 type="number"
@@ -332,12 +332,12 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                                   newItems[idx].amount = newItems[idx].price * newQty;
                                   setReturnItems(newItems);
                                 }}
-                                className="w-full bg-black/20 border border-white/10 rounded px-2 py-1 text-right text-white focus:border-purple-500"
+                                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1 text-right text-[var(--text-primary)] focus:border-[var(--accent-primary)]"
                               />
                             </td>
-                            <td className="p-3 text-right text-white">{getCurrencySymbol()}{item.amount.toFixed(2)}</td>
+                            <td className="p-3 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{item.amount.toFixed(2)}</td>
                             <td className="p-3 text-center">
-                              <button type="button" onClick={() => handleRemoveProduct(idx)} className="text-red-400 hover:text-red-300">
+                              <button type="button" onClick={() => handleRemoveProduct(idx)} className="btn-secondary text-xs px-2 py-1 rounded">
                                 <XMarkIcon className="w-4 h-4 mx-auto" />
                               </button>
                             </td>
@@ -353,7 +353,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors"
+                  className="px-4 py-2 rounded-lg btn-secondary transition-colors"
                 >
                   Cancel
                 </button>
@@ -415,27 +415,27 @@ function VendorAutocomplete({ vendorName, setVendorName, vendorGstin, setVendorG
         }}
         onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
         placeholder="Search for vendor..."
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500 transition-all"
+        className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
         autoComplete="off"
         required
       />
       
       {showDropdown && (
-        <div className="absolute z-50 bg-[#1a1a1a] border border-white/10 rounded-md shadow-2xl w-full max-h-48 overflow-y-auto mt-1">
+        <div className="absolute z-50 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md shadow-2xl w-full max-h-48 overflow-y-auto mt-1">
           {filteredVendors.slice(0, 50).map(vendor => (
             <div
               key={vendor.id}
-              className="px-3 py-3 hover:bg-white/5 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors"
+              className="px-3 py-3 hover:bg-[var(--bg-primary)] cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors"
               onClick={() => selectVendor(vendor)}
             >
-              <div className="font-bold text-cyan-400">{vendor.name}</div>
-              <div className="text-gray-500 text-xs mt-1 flex gap-3">
+              <div className="font-bold text-[var(--accent-primary)]">{vendor.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-1 flex gap-3">
                  {vendor.gstin && <span>GSTIN: {vendor.gstin}</span>}
               </div>
             </div>
           ))}
           {filteredVendors.length === 0 && (
-             <div className="px-3 py-3 text-sm text-gray-500 italic">
+             <div className="px-3 py-3 text-sm text-[var(--text-muted)] italic">
                 No saved vendors found. 
              </div>
           )}

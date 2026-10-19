@@ -97,18 +97,18 @@ export default function DetailedFeatures() {
               onClick={() => setActiveCategory(cat.id)}
               className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                 isActive 
-                  ? 'bg-obsidian-elevated border-hairline text-white shadow-lg shadow-black/20' 
-                  : 'bg-obsidian-card/60 border-hairline text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  ? 'bg-obsidian-elevated border-hairline text-[var(--text-primary)] shadow-md' 
+                  : 'bg-obsidian-card/60 border-hairline text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
               }`}
             >
-              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-obsidian-card text-white border border-hairline' : 'bg-obsidian-elevated text-slate-500'}`}>
+              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-obsidian-card text-[var(--text-primary)] border border-hairline' : 'bg-obsidian-elevated text-[var(--text-muted)]'}`}>
                 <cat.icon className="w-5 h-5" />
               </div>
               <div>
-                <h4 className={`text-sm font-semibold mb-0.5 ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                <h4 className={`text-sm font-semibold mb-0.5 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                   {cat.title}
                 </h4>
-                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed line-clamp-2">
                   {cat.description}
                 </p>
               </div>
@@ -121,18 +121,18 @@ export default function DetailedFeatures() {
       <div className="w-full lg:w-2/3">
         <div className="bg-obsidian-card border border-hairline rounded-2xl p-6 sm:p-8 h-full">
           <div className="mb-6 pb-5 border-b border-hairline">
-            <h3 className="text-xl font-bold text-white font-display">{activeData?.title}</h3>
-            <p className="text-slate-400 text-sm mt-1">{activeData?.description}</p>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] font-display">{activeData?.title}</h3>
+            <p className="text-[var(--text-muted)] text-sm mt-1">{activeData?.description}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeData?.features.map((feature, idx) => (
               <div key={idx} className="p-4 rounded-xl border border-hairline bg-obsidian-canvas/60">
                 <div className="flex items-start gap-2.5">
-                  <CheckIcon className="w-4 h-4 text-emerald-400 mt-1 shrink-0" />
+                  <CheckIcon className="w-4 h-4 text-[var(--accent-primary)] mt-1 shrink-0" />
                   <div>
-                    <h5 className="text-white text-sm font-semibold mb-1">{feature.name}</h5>
-                    <p className="text-xs text-slate-400 leading-relaxed">{feature.desc}</p>
+                    <h5 className="text-[var(--text-primary)] text-sm font-semibold mb-1">{feature.name}</h5>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">{feature.desc}</p>
                   </div>
                 </div>
               </div>
