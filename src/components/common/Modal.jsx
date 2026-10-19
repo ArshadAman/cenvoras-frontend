@@ -53,17 +53,17 @@ export default function Modal({
       {/* Modal Surface */}
       <div
         className={clsx(
-          'relative w-full rounded-2xl bg-[#121418] border border-white/10 shadow-2xl overflow-hidden animate-fade-up z-10 my-auto',
+          'relative w-full rounded-2xl bg-obsidian-elevated border border-hairline shadow-2xl overflow-hidden animate-fade-up z-10 my-auto',
           maxWidth,
           className
         )}
       >
         {/* Header */}
         {(title || !hideCloseButton) && (
-          <div className="flex items-center justify-between p-5 sm:p-6 border-b border-white/10 bg-white/[0.02]">
+          <div className="flex items-center justify-between p-5 sm:p-6 border-b border-hairline bg-white/[0.02]">
             <div className="flex items-center gap-3">
               {Icon && (
-                <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-cyan-400">
+                <div className="p-2 rounded-xl bg-white/5 border border-hairline text-blue-400">
                   <Icon className="w-5 h-5" />
                 </div>
               )}

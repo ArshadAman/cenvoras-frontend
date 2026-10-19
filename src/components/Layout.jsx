@@ -390,7 +390,7 @@ export default function Layout({ children, onLogout }) {
 
 
   return (
-    <div className="flex min-h-screen bg-black text-white font-sans selection:bg-purple-500/30">
+    <div className="flex min-h-screen bg-obsidian-canvas text-white font-sans selection:bg-blue-500/30">
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
@@ -400,7 +400,7 @@ export default function Layout({ children, onLogout }) {
       }`}>
         
         {/* Logo & Collapse Header Area */}
-        <div className={`h-20 flex items-center border-b border-white/5 transition-all duration-300 shrink-0 ${
+        <div className={`h-20 flex items-center border-b border-hairline transition-all duration-300 shrink-0 ${
           isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-5'
         }`}>
           {!isSidebarCollapsed ? (
@@ -461,13 +461,13 @@ export default function Layout({ children, onLogout }) {
           <button
             type="button"
             onClick={() => setIsCommandPaletteOpen(true)}
-            className={`flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium cursor-pointer ${
+            className={`flex items-center gap-2 rounded-xl border border-hairline bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium cursor-pointer ${
               isSidebarCollapsed ? 'p-2 justify-center w-full' : 'w-full px-3 py-2 justify-between'
             }`}
             title="Quick Search & Actions (⌘K / Ctrl+K)"
           >
             <div className="flex items-center gap-2 truncate">
-              <MagnifyingGlassIcon className="w-4 h-4 text-cyan-400 shrink-0" />
+              <MagnifyingGlassIcon className="w-4 h-4 text-blue-400 shrink-0" />
               {!isSidebarCollapsed && <span>Quick Search...</span>}
             </div>
             {!isSidebarCollapsed && (
@@ -606,7 +606,7 @@ export default function Layout({ children, onLogout }) {
                           className={baseClass}
                           title={item.label}
                         >
-                          <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                          <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
                           <span className="text-sm truncate flex-1">{item.label}</span>
                         </Link>
                       );
@@ -719,7 +719,7 @@ export default function Layout({ children, onLogout }) {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 h-16">
+        <header className="md:hidden sticky top-0 z-40 bg-obsidian-canvas/90 backdrop-blur-xl border-b border-hairline flex items-center justify-between px-4 h-16">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -772,11 +772,11 @@ export default function Layout({ children, onLogout }) {
           
           {/* Mobile Sidebar */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 w-72 bg-[#111] border-r border-white/10 transform transition-transform duration-300 flex flex-col ${
+            className={`absolute top-0 bottom-0 left-0 w-72 bg-obsidian-card border-r border-hairline transform transition-transform duration-300 flex flex-col ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-hairline">
               <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}

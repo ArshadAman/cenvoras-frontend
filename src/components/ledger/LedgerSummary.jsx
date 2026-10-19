@@ -123,8 +123,8 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
     {
       name: 'Active Customers',
       value: stats.total_customers?.toString() || '0',
-      icon: <UserGroupIcon className="w-8 h-8 text-purple-400" />,
-      color: 'purple'
+      icon: <UserGroupIcon className="w-8 h-8 text-blue-400" />,
+      color: 'blue'
     }
   ];
 
@@ -133,7 +133,7 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryCards.map((item) => (
-          <div key={item.name} className="bento-card p-5 flex items-center shadow-lg shadow-black/20">
+          <div key={item.name} className="bg-obsidian-card border border-hairline rounded-2xl p-5 flex items-center shadow-lg shadow-black/20 hover:border-hairline-hover transition-colors">
             <div className={`flex-shrink-0 p-3 rounded-xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
               {item.icon}
             </div>
@@ -141,7 +141,7 @@ const LedgerSummary = ({ dateFilter, customerFilter }) => {
               <dt className="text-sm font-medium text-gray-400 truncate uppercase tracking-wide">
                 {item.name}
               </dt>
-              <dd className="mt-1 text-2xl font-bold text-white drop-shadow-md">
+              <dd className="mt-1 text-2xl font-bold text-white drop-shadow-md font-mono font-tabular">
                 {item.value}
               </dd>
             </div>

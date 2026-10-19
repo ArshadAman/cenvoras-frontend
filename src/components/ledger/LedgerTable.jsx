@@ -454,14 +454,14 @@ const LedgerTable = ({
             {/* Table for desktop, Cards for mobile */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-white/5 border-b border-white/10">
+                <table className="min-w-full divide-y divide-hairline bg-obsidian-card border border-hairline rounded-2xl overflow-hidden shadow-xl">
+                <thead className="bg-obsidian-card/90 border-b border-hairline">
                   <tr>
                     {onBulkSelect && (
                       <th scope="col" className="relative px-6 py-4">
                         <input
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-blue-500 focus:ring-blue-500 bg-white/10 cursor-pointer"
                           checked={isAllCurrentPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -515,14 +515,14 @@ const LedgerTable = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
+                <tbody className="bg-transparent divide-y divide-hairline">
                   {ledgerEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-white/10 transition-colors">
+                    <tr key={entry.id} className="hover:bg-obsidian-active transition-colors">
                       {onBulkSelect && (
                         <td className="relative px-6 py-4 whitespace-nowrap text-sm text-white">
                           <input
                             type="checkbox"
-                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10 backdrop-filter backdrop-blur-10"
+                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-blue-500 focus:ring-blue-500 bg-white/10"
                             checked={selectedEntries.includes(entry.id)}
                             onChange={(e) => handleSelectEntry(entry.id, e.target.checked)}
                           />
@@ -576,18 +576,18 @@ const LedgerTable = ({
                           </div>
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={`drop-shadow-lg font-mono font-bold text-base ${entry.debit > 0 ? 'text-rose-400' : 'text-gray-500'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <div className={`font-mono font-bold font-tabular text-sm ${entry.debit > 0 ? 'text-rose-400' : 'text-gray-500'}`}>
                           {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={`drop-shadow-lg font-mono font-bold text-base ${entry.credit > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <div className={`font-mono font-bold font-tabular text-sm ${entry.credit > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
                           {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className="font-mono font-bold text-white flex items-center justify-end gap-1.5">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <div className="font-mono font-bold font-tabular text-white text-sm flex items-center justify-end gap-1.5">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
                             {entry.running_balance_type || 'Dr'}
