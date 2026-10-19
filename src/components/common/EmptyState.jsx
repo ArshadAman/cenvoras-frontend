@@ -31,7 +31,7 @@ export default function EmptyState({
       <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-1.5 tracking-tight">
         {title}
       </h3>
-      <p className="text-xs sm:text-sm text-[var(--text-muted)] max-w-md leading-relaxed mb-6">
+      <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-md leading-relaxed mb-6">
         {description}
       </p>
 

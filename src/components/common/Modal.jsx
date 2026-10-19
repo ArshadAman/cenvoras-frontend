@@ -73,11 +73,11 @@ export default function Modal({
               )}
               <div>
                 {title && (
-                  <h3 id="cenvora-modal-title" className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
+                  <h3 id="cenvora-modal-title" className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight">
                     {title}
                   </h3>
                 )}
-                {subtitle && <p className="text-xs text-[var(--text-muted)] mt-0.5">{subtitle}</p>}
+                {subtitle && <p className="text-sm text-[var(--text-secondary)] mt-0.5">{subtitle}</p>}
               </div>
             </div>
             {!hideCloseButton && (

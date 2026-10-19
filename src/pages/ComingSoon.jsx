@@ -84,7 +84,7 @@ export default function ComingSoon() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span
-                      className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${
+                      className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded-md border ${
                         feature.status === "On demand"
                           ? "bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]"
                           : "bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-subtle)]"

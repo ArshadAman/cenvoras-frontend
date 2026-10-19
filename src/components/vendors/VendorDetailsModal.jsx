@@ -164,7 +164,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 }`}
               >
                 <span>Ledger (Bills)</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
                   activeTab === "bills" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
                 }`}>
                   {vendorBills.length}
@@ -180,7 +180,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 }`}
               >
                 <span>Orders</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
                   activeTab === "orders" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
                 }`}>
                   {vendorOrders.length}
@@ -251,12 +251,12 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 </h1>
                 <div className="flex flex-wrap justify-center gap-2">
                    {vendorDetails.meta?.party_category && (
-                     <span className="badge-info text-[10px] font-bold uppercase tracking-wider">
+                     <span className="badge-info text-xs font-semibold uppercase tracking-wider">
                        {vendorDetails.meta.party_category}
                      </span>
                    )}
                    {vendorDetails.gstin && (
-                     <span className="badge-success text-[10px] font-bold uppercase tracking-wider font-mono">
+                     <span className="badge-success text-xs font-semibold uppercase tracking-wider font-mono">
                        GSTIN: {vendorDetails.gstin}
                      </span>
                    )}
@@ -266,25 +266,25 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
               {/* Financial Quick Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Billed</span>
+                  <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Billed</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-mono mt-2">
                     {getCurrencySymbol()}{totalBilled.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
+                  <span className="text-xs font-semibold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--status-success-text)] font-mono mt-2">
                     {getCurrencySymbol()}{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
+                  <span className="text-xs font-semibold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--status-warning-text)] font-mono mt-2">
                     {getCurrencySymbol()}{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
+                  <span className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--accent-primary)] font-mono mt-2">
                     {vendorBills.length} Bills / {vendorOrders.length} PO
                   </span>
@@ -301,15 +301,15 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Email</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Email</span>
                         <span className="text-sm text-[var(--text-primary)] font-medium break-all">{vendorDetails.email || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Phone</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Phone</span>
                         <span className="text-sm text-[var(--text-primary)] font-medium">{vendorDetails.phone || 'N/A'}</span>
                       </div>
                       <div className="pt-2">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">Billing Address</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">Billing Address</span>
                         <span className="text-sm text-[var(--text-secondary)] leading-relaxed block bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
                           {vendorDetails.address || 'No address provided'}
                         </span>
@@ -324,21 +324,21 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Vendor ID</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Vendor ID</span>
                         <span className="text-xs text-[var(--accent-primary)] font-mono bg-[var(--accent-primary)]/10 px-2 py-1 rounded self-start sm:self-auto">{vendorDetails.id?.substring(0, 8)}...</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Created At</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Created At</span>
                         <span className="text-sm text-[var(--text-primary)]">
                           {vendorDetails.created_at ? format(new Date(vendorDetails.created_at), 'MMM dd, yyyy') : 'N/A'}
                         </span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Place of Supply</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Place of Supply</span>
                         <span className="text-sm text-[var(--text-primary)] uppercase tracking-wider font-semibold">{vendorDetails.state || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-[var(--border-subtle)]">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credit Limit</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credit Limit</span>
                         <span className="text-lg font-bold text-[var(--text-primary)] font-mono">
                           {getCurrencySymbol()}{vendorDetails.meta?.credit_limit ? Number(vendorDetails.meta.credit_limit).toLocaleString() : '0.00'}
                         </span>
@@ -415,13 +415,13 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                 <td className="py-3 px-4">
                                   {ref ? (
                                     <span
-                                      className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-[11px] font-mono font-medium"
+                                      className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-xs font-mono font-medium"
                                       title={`PO / Reference: ${ref}`}
                                     >
                                       #{ref}
                                     </span>
                                   ) : (
-                                    <span className="text-[var(--text-muted)] font-mono text-[11px]">—</span>
+                                    <span className="text-[var(--text-muted)] font-mono text-xs">—</span>
                                   )}
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono font-bold text-[var(--text-primary)]">
@@ -434,7 +434,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                   {getCurrencySymbol()}{bal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                                     status === 'paid' ? 'badge-success' :
                                     status === 'partial' ? 'badge-warning' :
                                     'badge-danger'
@@ -512,7 +512,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                                     status === 'received' ? 'badge-success' :
                                     status === 'sent' ? 'badge-info' :
                                     'badge-neutral'
