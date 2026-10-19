@@ -63,7 +63,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           onClick={() => onPageChange(page)}
           className={`w-9 h-9 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
             page === currentPage
-              ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-900/30 scale-105'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-900/40 border border-blue-400/40 font-bold'
               : 'text-gray-300 hover:text-white hover:bg-white/10 active:scale-95'
           }`}
         >

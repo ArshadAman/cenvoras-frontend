@@ -80,11 +80,11 @@ export default function ComingSoon() {
       <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 animate-fade-up">
         {/* Header section */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center justify-center p-3 bg-purple-500/10 rounded-2xl mb-4 text-purple-400">
+          <div className="inline-flex items-center justify-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl mb-4 text-blue-400">
             <BeakerIcon className="w-10 h-10" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
-            Building the Future of <span className="p-1 rounded bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 font-extrabold italic pr-2">Cenvora</span>
+            Building the Future of <span className="text-blue-400 font-extrabold">Cenvora</span>
           </h1>
           <p className="text-lg text-gray-400">
             We are constantly working to bring you powerful new features. Here is a sneak peek at what is cooking in our development labs.
@@ -96,14 +96,11 @@ export default function ComingSoon() {
           {upcomingFeatures.map((feature, idx) => (
             <div 
               key={idx}
-              className="relative group bg-[#111] border border-white/5 rounded-2xl p-6 transition-all duration-300 hover:bg-white/[0.02] hover:border-purple-500/30 overflow-hidden"
+              className="relative group bg-slate-900/70 border border-slate-800 rounded-2xl p-6 transition-all duration-200 hover:bg-slate-900 hover:border-blue-500/40 overflow-hidden"
             >
-              {/* Background Glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              
               <div className="relative z-10 flex flex-col h-full">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-white/5 rounded-xl text-cyan-400 group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl transition-colors">
                     <feature.icon className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col items-end gap-1">
@@ -114,7 +111,7 @@ export default function ComingSoon() {
                      }`}>
                        {feature.status}
                      </span>
-                     <span className="text-xs text-purple-400 font-medium">
+                     <span className="text-xs text-slate-400 font-medium font-mono">
                         ETA: {feature.eta}
                      </span>
                   </div>
@@ -124,20 +121,13 @@ export default function ComingSoon() {
                 <p className="text-sm text-gray-400 leading-relaxed flex-grow">
                   {feature.description}
                 </p>
-                
-                {/* Decorative dots */}
-                <div className="mt-6 flex gap-1 opacity-20">
-                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                </div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Newsletter/Feedback prompt */}
-        <div className="mt-16 bg-gradient-to-r from-purple-900/20 to-cyan-900/20 border border-white/10 rounded-2xl p-8 text-center max-w-3xl mx-auto">
+        <div className="mt-16 bg-slate-900/80 border border-slate-700/60 rounded-2xl p-8 text-center max-w-3xl mx-auto shadow-2xl">
           <h3 className="text-xl font-bold text-white mb-2">Want to shape our roadmap?</h3>
           <p className="text-gray-400 text-sm mb-6">
             We prioritize features based on your feedback. Tell us what you need next!

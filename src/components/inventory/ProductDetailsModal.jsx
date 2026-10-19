@@ -220,17 +220,17 @@ export default function ProductDetailsModal({ productId, onClose }) {
 
               {/* Stock Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-blue-400">{product.stock ?? product.current_stock}</div>
-                  <div className="text-sm text-blue-700">Current Stock</div>
+                <div className="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold font-mono text-blue-400">{product.stock ?? product.current_stock}</div>
+                  <div className="text-xs uppercase tracking-wider font-semibold text-slate-400 mt-1">Current Stock</div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{costPrice.toFixed(2)}</div>
-                  <div className="text-sm text-green-700">Cost Price</div>
+                <div className="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold font-mono text-emerald-400">{getCurrencySymbol()}{costPrice.toFixed(2)}</div>
+                  <div className="text-xs uppercase tracking-wider font-semibold text-slate-400 mt-1">Cost Price</div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-purple-600">{getCurrencySymbol()}{totalValue.toFixed(2)}</div>
-                  <div className="text-sm text-purple-700">Total Value</div>
+                <div className="bg-slate-800/50 border border-slate-700/60 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold font-mono text-cyan-400">{getCurrencySymbol()}{totalValue.toFixed(2)}</div>
+                  <div className="text-xs uppercase tracking-wider font-semibold text-slate-400 mt-1">Total Value</div>
                 </div>
               </div>
 

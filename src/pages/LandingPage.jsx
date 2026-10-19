@@ -348,7 +348,7 @@ export default function LandingPage() {
               className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]"
             >
               Own your billing software.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400">Forever.</span>
+              <span className="text-sky-400">Forever.</span>
             </motion.h1>
 
             <motion.p

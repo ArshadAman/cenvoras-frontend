@@ -128,13 +128,13 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Profile */}
               <div className="md:col-span-2 flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
+                <div className="w-12 h-12 rounded-full bg-blue-600 border border-blue-400/30 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
                   {record.employee_name?.charAt(0) || 'E'}
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">{record.employee_name}</h3>
                   <div className="text-xs text-gray-400 space-x-2 mt-0.5">
-                    <span className="font-mono text-indigo-300 font-medium">{record.employee_code}</span>
+                    <span className="font-mono text-blue-300 font-medium">{record.employee_code}</span>
                     <span>•</span>
                     <span>{record.designation || 'Staff'}</span>
                   </div>

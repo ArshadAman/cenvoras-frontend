@@ -492,7 +492,7 @@ export default function EmployeePortal() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-300" />
                   <div>
                     <div className="flex justify-between items-start gap-4 mb-4">
-                      <span className="px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      <span className="px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-blue-500/10 text-blue-300 border border-blue-500/20">
                         Broadcast
                       </span>
                       <span className="text-xs font-mono text-gray-500">
@@ -503,7 +503,7 @@ export default function EmployeePortal() {
                         })}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white group-hover:text-indigo-200 transition-colors mb-3 leading-snug">{n.title}</h3>
+                    <h3 className="text-xl font-bold text-white group-hover:text-blue-200 transition-colors mb-3 leading-snug">{n.title}</h3>
                     <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{n.message}</p>
                   </div>
                   <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
