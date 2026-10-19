@@ -72,7 +72,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
+              className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm"
               autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === 'Tab') {
@@ -91,10 +91,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               }}
             />
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+              <div className="text-[var(--status-danger)] text-xs mt-1">{meta.error}</div>
             )}
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[8px] text-gray-400 font-medium italic mt-0.5 tracking-wide">
+              <div className="text-[10px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -113,25 +113,25 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
               }}
               placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/10 focus:border-cyan-500/50 focus:bg-[#161616] rounded px-1.5 py-0.5 text-gray-300 placeholder-gray-600 focus:placeholder-gray-500 outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-default)] focus:border-[var(--border-focus)] focus:bg-[var(--input-bg)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
           {filteredProducts.map((product, index) => (
             <div
               key={product.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex 
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] font-semibold' 
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
               }`}
               onClick={() => selectProduct(product)}
             >
-              <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
+              <div className="font-medium text-[var(--text-primary)]">{product.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 Unit: {product.unit} | Price: {getCurrencySymbol()}{product.price}
               </div>
             </div>
@@ -232,51 +232,51 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 }
               }}
               placeholder="Customer name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+              className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
             />
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-sm mt-1">{meta.error}</div>
+              <div className="text-[var(--status-danger-text)] text-sm mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
           {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' 
+                  : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
               }`}
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium">{customer.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
+              <div className="font-medium text-[var(--text-primary)]">{customer.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 {customer.email && `${customer.email} | `}
                 {customer.address} {customer.gstin && `| GSTIN: ${customer.gstin}`}
               </div>
             </div>
           ))}
           {filteredCustomers.length > 50 && (
-             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+             <div className="px-4 py-2 text-xs text-[var(--text-muted)] text-center italic border-t border-[var(--border-subtle)]">
                 Showing top 50 results...
              </div>
           )}
           {inputValue.trim() && !(customers || []).some((c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
             <div
-              className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
+              className={`px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-default)] ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' 
+                  : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
               }`}
               onClick={() => {
                 setShowNewCustomerModal(true);
                 setShowDropdown(false);
               }}
             >
-              <div className="font-medium text-cyan-400 flex items-center gap-2">
+              <div className="font-medium text-[var(--accent-primary)] flex items-center gap-2">
                 <span>➕</span> Add New Customer: "{inputValue}"
               </div>
             </div>
@@ -287,15 +287,15 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       {/* Add New Customer Modal */}
       {showNewCustomerModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
-          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-cyan-900/30 animate-fade-up overflow-hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white">Add New Customer</h3>
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)]">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Add New Customer</h3>
               <button
                 type="button"
                 onClick={() => setShowNewCustomerModal(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -306,29 +306,29 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
             {/* Form */}
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Name *</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Name *</label>
                 <input
                   type="text"
                   defaultValue={inputValue}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                   id="new-customer-name"
                   placeholder="Customer name"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Email</label>
                 <input
                   type="email"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                   id="new-customer-email"
                   placeholder="email@example.com"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Phone</label>
                 <input
                   type="tel"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                   id="new-customer-phone"
                   placeholder="+91 98765 43210"
                 />
@@ -340,7 +340,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               <button
                 type="button"
                 onClick={() => setShowNewCustomerModal(false)}
-                className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+                className="btn-secondary text-sm"
               >
                 Cancel
               </button>
@@ -357,7 +357,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   setInputValue(name);
                   setShowNewCustomerModal(false);
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-lg transition-all shadow-lg shadow-cyan-900/30 text-sm font-medium"
+                className="btn-primary text-sm"
               >
                 Add Customer
               </button>
@@ -435,19 +435,19 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl p-0 shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        <div className="flex justify-between items-center p-6 md:p-8 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
               {isEdit ? "Edit Sales Order" : "New Sales Order"}
             </h2>
-             <p className="text-xs text-gray-400">
+             <p className="text-xs text-[var(--text-muted)]">
                Create a new sales order for a customer.
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">
-           <span className="text-2xl">×</span>
+          <button onClick={onClose} className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors">
+           <span className="text-2xl leading-none">&times;</span>
           </button>
         </div>
         
@@ -539,44 +539,44 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
         >
           {({ values, setFieldValue, isSubmitting }) => (
             <Form className="p-0">
-                <div className="p-8 space-y-8">
+                <div className="p-6 md:p-8 space-y-8">
                      {/* Header */}
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Customer *</label>
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Customer *</label>
                            <CustomerAutocomplete values={values} setFieldValue={setFieldValue} customers={customers} />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Order Number</label>
-                           <Field name="order_number" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Order Number</label>
+                           <Field name="order_number" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all" />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Date</label>
-                           <Field name="date" type="date" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Date</label>
+                           <Field name="date" type="date" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all" />
                         </div>
                    </div>
 
                    {/* Items Header */}
-                   <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                     <h3 className="text-base font-bold text-white">Order Items</h3>
+                   <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                     <h3 className="text-base font-bold text-[var(--text-primary)]">Order Items</h3>
                      <div className="relative">
                        <button
                          type="button"
                          onClick={() => setShowColumnPicker((prev) => !prev)}
-                         className="px-3 py-1.5 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-gray-300"
+                         className="px-3 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] hover:bg-[var(--bg-surface)] text-xs font-medium text-[var(--text-secondary)] transition-colors"
                        >
                          Columns
                        </button>
 
                        {showColumnPicker && (
-                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-white/10 bg-[#1a1a1f] p-3 shadow-2xl">
-                           <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">Show/Hide Columns</div>
-                           <label className="flex items-center gap-2 py-1 text-sm text-gray-200 cursor-pointer">
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3 shadow-2xl">
+                           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-primary)] cursor-pointer">
                              <input
                                type="checkbox"
                                checked={showManufacturer}
                                onChange={() => setShowManufacturer((prev) => !prev)}
-                               className="h-3.5 w-3.5 rounded border-white/30 bg-transparent text-cyan-400 focus:ring-cyan-400"
+                               className="h-3.5 w-3.5 rounded border-[var(--border-default)] bg-transparent text-[var(--accent-primary)] focus:ring-[var(--border-focus)]"
                              />
                              <span>Manufacturer</span>
                            </label>
@@ -590,19 +590,19 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                     {({ push, remove }) => (
                         <div className="space-y-4">
                              {values.items.map((item, index) => (
-                                 <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end hover:bg-white/10 transition-all">
+                                 <div key={index} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end transition-all">
                                      {/* Row 1: Product (Full width on mobile, col-span-4 on desktop) */}
                                      <div className="lg:col-span-4">
-                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
+                                         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Product Name</label>
                                          <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                          {isEdit && item.id && (
                                              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                                                      (item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
-                                                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                                         ? "badge-success"
                                                          : (item.dispatched_quantity || 0) > 0
-                                                         ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                                         : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                                                         ? "badge-warning"
+                                                         : "badge-info"
                                                  }`}>
                                                      {(item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
                                                          ? "Fulfilled"
@@ -610,10 +610,10 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                                          ? "Partial"
                                                          : "Pending"}
                                                  </span>
-                                                 <span className="text-gray-400 text-[11px]">
-                                                     Dispatched: <strong className="text-white font-mono">{item.dispatched_quantity || 0}</strong> / {item.quantity || 0}
+                                                 <span className="text-[var(--text-muted)] text-[11px]">
+                                                     Dispatched: <strong className="text-[var(--text-primary)] font-mono">{item.dispatched_quantity || 0}</strong> / {item.quantity || 0}
                                                      {Number(item.dispatched_quantity || 0) > 0 && (
-                                                         <span className="text-amber-400 ml-1 font-mono">
+                                                         <span className="text-[var(--status-warning-text)] ml-1 font-mono">
                                                              ({Math.max(0, Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))} pending)
                                                          </span>
                                                      )}
@@ -625,8 +625,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      {/* Row 2: Qty & Price (Side-by-side on mobile, col-span-4 on desktop) */}
                                      <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
                                          <div>
-                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quantity</label>
-                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all text-sm text-center" 
+                                             <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Quantity</label>
+                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm text-center" 
                                                  onChange={e => {
                                                      const qty = e.target.value;
                                                      setFieldValue(`items.${index}.quantity`, qty);
@@ -635,8 +635,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                              />
                                          </div>
                                          <div>
-                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
-                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all text-sm text-right font-mono"
+                                             <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Price</label>
+                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm text-right font-mono" 
                                                  onChange={e => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -648,8 +648,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
                                      {/* Row 3: Amount Display (Full width on mobile, col-span-2 on desktop) */}
                                      <div className="flex justify-between items-center lg:col-span-2 lg:block lg:text-left">
-                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 lg:mb-2">Subtotal</label>
-                                         <div className="text-xl lg:text-base font-black text-cyan-400 font-mono">
+                                         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] lg:mb-2">Subtotal</label>
+                                         <div className="text-xl lg:text-base font-bold text-[var(--accent-primary)] font-mono">
                                              {getCurrencySymbol()}{Number(values.items[index].amount || 0).toLocaleString()}
                                          </div>
                                      </div>
@@ -657,30 +657,30 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      {/* Row 4: Actions (Full width on mobile, col-span-2 on desktop) */}
                                      <div className="lg:col-span-2">
                                          <button 
-                                            type="button" 
-                                            onClick={() => remove(index)} 
-                                            disabled={values.items.length === 1 || Number(item.dispatched_quantity || 0) > 0}
-                                            title={Number(item.dispatched_quantity || 0) > 0 ? "Cannot delete item with dispatched quantity" : "Remove Item"}
-                                            className="w-full py-3 lg:py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                                             type="button" 
+                                             onClick={() => remove(index)} 
+                                             disabled={values.items.length === 1 || Number(item.dispatched_quantity || 0) > 0}
+                                             title={Number(item.dispatched_quantity || 0) > 0 ? "Cannot delete item with dispatched quantity" : "Remove Item"}
+                                             className="w-full py-3 lg:py-2.5 bg-[var(--status-danger-bg)] text-[var(--status-danger-text)] border border-[var(--status-danger-border)] rounded-xl hover:opacity-90 transition-all font-bold text-[10px] uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed"
                                          >
                                              Remove Item
                                          </button>
                                      </div>
                                  </div>
-                             ))}
-                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: "", dispatched_quantity: 0, pending_quantity: 0, price: "", amount: 0, unit: "pcs", isExistingProduct: false })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium">
-                                + Add Item
-                            </button>
-                        </div>
-                    )}
-                   </FieldArray>
+                              ))}
+                             <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: "", dispatched_quantity: 0, pending_quantity: 0, price: "", amount: 0, unit: "pcs", isExistingProduct: false })} className="inline-flex items-center gap-1.5 text-[var(--accent-primary)] hover:opacity-80 text-sm font-semibold transition-colors">
+                                 + Add Item
+                             </button>
+                         </div>
+                     )}
+                    </FieldArray>
 
-                   {/* Footer Actions */}
-                   <div className="flex justify-end pt-6 border-t border-white/10">
-                        <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="btn-primary">
-                          {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Order"}
-                        </button>
-                   </div>
+                    {/* Footer Actions */}
+                    <div className="flex justify-end pt-6 border-t border-[var(--border-subtle)]">
+                         <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="btn-primary">
+                           {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Order"}
+                         </button>
+                    </div>
                 </div>
             </Form>
           )}

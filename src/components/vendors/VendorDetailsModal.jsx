@@ -145,26 +145,28 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   if (!isOpen || !vendor) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-[#0F0F12] border border-white/10 rounded-2xl shadow-2xl w-full max-w-5xl my-8 transform animate-fade-up">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl w-full max-w-5xl my-8 transform animate-fade-up">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#0F0F12]/80 backdrop-blur-md z-10 print-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between sticky top-0 bg-[var(--bg-surface)]/90 backdrop-blur-md z-10 print-hidden">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-black text-white uppercase tracking-tight">
-              Vendor <span className="text-indigo-400">Profile & Ledger</span>
+            <h2 className="text-xl font-bold text-[var(--text-primary)] uppercase tracking-tight">
+              Vendor <span className="text-[var(--accent-primary)]">Profile & Ledger</span>
             </h2>
-            <div className="flex bg-white/5 border border-white/10 rounded-xl p-0.5 text-xs font-bold">
+            <div className="flex bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-0.5 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setActiveTab("bills")}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeTab === "bills"
-                    ? "bg-indigo-500 text-white font-black shadow-lg shadow-indigo-500/20"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-md"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 <span>Ledger (Bills)</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-mono">
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                  activeTab === "bills" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
+                }`}>
                   {vendorBills.length}
                 </span>
               </button>
@@ -173,12 +175,14 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 onClick={() => setActiveTab("orders")}
                 className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeTab === "orders"
-                    ? "bg-indigo-500 text-white font-black shadow-lg shadow-indigo-500/20"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-md"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 <span>Orders</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/30 font-mono">
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                  activeTab === "orders" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
+                }`}>
                   {vendorOrders.length}
                 </span>
               </button>
@@ -187,8 +191,8 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 onClick={() => setActiveTab("overview")}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   activeTab === "overview"
-                    ? "bg-indigo-500 text-white font-black shadow-lg shadow-indigo-500/20"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-md"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Overview
@@ -199,27 +203,27 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="p-2 sm:px-4 sm:py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all flex items-center gap-2"
+              className="p-2 sm:px-4 sm:py-2 bg-[var(--bg-primary)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] rounded-xl transition-all flex items-center gap-2"
               title="Print Profile"
             >
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
-              <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Print</span>
+              <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">Print</span>
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="p-2 sm:px-4 sm:py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-all flex items-center gap-2"
+              className="p-2 sm:px-4 sm:py-2 bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 rounded-xl transition-all flex items-center gap-2"
               title="Download PDF"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">PDF</span>
+              <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">PDF</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-gray-500 hover:text-white transition-colors"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -232,27 +236,27 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         <div ref={printRef} data-print-target className="p-6 sm:p-10">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <div className="text-gray-500 text-xs font-black uppercase tracking-widest">Loading Profile...</div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-primary)]"></div>
+              <div className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">Loading Profile...</div>
             </div>
           ) : (
             <div className="space-y-8">
               {/* Vendor Header */}
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 border border-blue-400/30 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-black mb-2 shadow-xl shadow-blue-500/20">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[var(--accent-primary)] rounded-2xl flex items-center justify-center text-[var(--text-on-accent)] text-2xl sm:text-3xl font-black mb-2 shadow-xl">
                   {vendorDetails.name?.charAt(0).toUpperCase() || 'V'}
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">
                   {vendorDetails.name || 'N/A'}
                 </h1>
                 <div className="flex flex-wrap justify-center gap-2">
                    {vendorDetails.meta?.party_category && (
-                     <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
+                     <span className="badge-info text-[10px] font-bold uppercase tracking-wider">
                        {vendorDetails.meta.party_category}
                      </span>
                    )}
                    {vendorDetails.gstin && (
-                     <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/20 font-mono">
+                     <span className="badge-success text-[10px] font-bold uppercase tracking-wider font-mono">
                        GSTIN: {vendorDetails.gstin}
                      </span>
                    )}
@@ -261,27 +265,27 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
 
               {/* Financial Quick Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Billed</span>
-                  <span className="text-lg sm:text-xl font-black text-white font-mono mt-2">
+                <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Billed</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-mono mt-2">
                     {getCurrencySymbol()}{totalBilled.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Total Paid</span>
-                  <span className="text-lg sm:text-xl font-black text-emerald-400 font-mono mt-2">
+                <div className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-2xl p-4 flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--status-success-text)] font-mono mt-2">
                     {getCurrencySymbol()}{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Outstanding Due</span>
-                  <span className="text-lg sm:text-xl font-black text-amber-400 font-mono mt-2">
+                <div className="bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-2xl p-4 flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--status-warning-text)] font-mono mt-2">
                     {getCurrencySymbol()}{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Total Documents</span>
-                  <span className="text-lg sm:text-xl font-black text-indigo-400 font-mono mt-2">
+                <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-2xl p-4 flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--accent-primary)] font-mono mt-2">
                     {vendorBills.length} Bills / {vendorOrders.length} PO
                   </span>
                 </div>
@@ -291,22 +295,22 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
               {activeTab === "overview" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   {/* Contact Details */}
-                  <div className="bg-white/5 border border-white/10 p-5 sm:p-6 rounded-2xl space-y-6">
-                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-white/5 pb-3">
+                  <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-5 sm:p-6 rounded-2xl space-y-6">
+                    <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-3">
                       Contact Details
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Email</span>
-                        <span className="text-sm text-white font-medium break-all">{vendorDetails.email || 'N/A'}</span>
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Email</span>
+                        <span className="text-sm text-[var(--text-primary)] font-medium break-all">{vendorDetails.email || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</span>
-                        <span className="text-sm text-white font-medium">{vendorDetails.phone || 'N/A'}</span>
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Phone</span>
+                        <span className="text-sm text-[var(--text-primary)] font-medium">{vendorDetails.phone || 'N/A'}</span>
                       </div>
                       <div className="pt-2">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Billing Address</span>
-                        <span className="text-sm text-gray-300 leading-relaxed block bg-black/20 p-3 rounded-xl border border-white/5">
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">Billing Address</span>
+                        <span className="text-sm text-[var(--text-secondary)] leading-relaxed block bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
                           {vendorDetails.address || 'No address provided'}
                         </span>
                       </div>
@@ -314,28 +318,28 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                   </div>
 
                   {/* Account Summary */}
-                  <div className="bg-white/5 border border-white/10 p-5 sm:p-6 rounded-2xl space-y-6">
-                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-white/5 pb-3">
+                  <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-5 sm:p-6 rounded-2xl space-y-6">
+                    <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-3">
                       Account Summary
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Vendor ID</span>
-                        <span className="text-xs text-indigo-400 font-mono bg-indigo-400/10 px-2 py-1 rounded self-start sm:self-auto">{vendorDetails.id?.substring(0, 8)}...</span>
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Vendor ID</span>
+                        <span className="text-xs text-[var(--accent-primary)] font-mono bg-[var(--accent-primary)]/10 px-2 py-1 rounded self-start sm:self-auto">{vendorDetails.id?.substring(0, 8)}...</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Created At</span>
-                        <span className="text-sm text-white">
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Created At</span>
+                        <span className="text-sm text-[var(--text-primary)]">
                           {vendorDetails.created_at ? format(new Date(vendorDetails.created_at), 'MMM dd, yyyy') : 'N/A'}
                         </span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Place of Supply</span>
-                        <span className="text-sm text-white uppercase tracking-wider font-bold">{vendorDetails.state || 'N/A'}</span>
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Place of Supply</span>
+                        <span className="text-sm text-[var(--text-primary)] uppercase tracking-wider font-semibold">{vendorDetails.state || 'N/A'}</span>
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-white/5">
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Credit Limit</span>
-                        <span className="text-lg font-black text-white font-mono">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-[var(--border-subtle)]">
+                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credit Limit</span>
+                        <span className="text-lg font-bold text-[var(--text-primary)] font-mono">
                           {getCurrencySymbol()}{vendorDetails.meta?.credit_limit ? Number(vendorDetails.meta.credit_limit).toLocaleString() : '0.00'}
                         </span>
                       </div>
@@ -346,30 +350,30 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
 
               {/* TAB 2: PURCHASE BILLS */}
               {activeTab === "bills" && (
-                <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
+                  <div className="p-4 sm:p-6 border-b border-[var(--border-subtle)] flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-black text-white uppercase tracking-wider">Purchase Bills Ledger</h3>
-                      <p className="text-xs text-gray-400 mt-1">Detailed purchase bills & order references for {vendorDetails.name}</p>
+                      <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Purchase Bills Ledger</h3>
+                      <p className="text-xs text-[var(--text-muted)] mt-1">Detailed purchase bills & order references for {vendorDetails.name}</p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full">
+                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-3 py-1 rounded-full">
                       {vendorBills.length} Records
                     </span>
                   </div>
 
                   {isLoadingBills ? (
                     <div className="py-12 flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
                     </div>
                   ) : vendorBills.length === 0 ? (
-                    <div className="py-12 text-center text-gray-500 text-xs font-bold uppercase tracking-wider">
+                    <div className="py-12 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">
                       No purchase bills recorded for this vendor yet.
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="bg-white/5 border-b border-white/10 text-gray-400 font-bold uppercase tracking-wider">
+                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-semibold uppercase tracking-wider">
                             <th className="py-3 px-4">Bill #</th>
                             <th className="py-3 px-4">Date</th>
                             <th className="py-3 px-4">Due Date</th>
@@ -381,7 +385,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             <th className="py-3 px-4 text-center print-hidden">Action</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-[var(--border-subtle)]">
                           {vendorBills.map((bill) => {
                             const tot = Number(bill.total_amount) || 0;
                             const paid = Number(bill.amount_paid) || 0;
@@ -390,50 +394,50 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             const ref = getReferenceForBill(bill);
 
                             return (
-                              <tr key={bill.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-3 px-4 font-mono font-black">
+                              <tr key={bill.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                                <td className="py-3 px-4 font-mono font-bold">
                                   <button
                                     type="button"
                                     onClick={() => setPreviewBillId(bill.id)}
-                                    className="text-indigo-400 hover:text-indigo-300 hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
+                                    className="text-[var(--accent-primary)] hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
                                     title="View Full Bill Details & Print / Download"
                                   >
                                     <span>{bill.bill_number || bill.id?.slice(0, 8)}</span>
                                     <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
                                   </button>
                                 </td>
-                                <td className="py-3 px-4 text-gray-300">
+                                <td className="py-3 px-4 text-[var(--text-secondary)]">
                                   {bill.bill_date ? format(new Date(bill.bill_date), 'dd MMM yyyy') : '-'}
                                 </td>
-                                <td className="py-3 px-4 text-gray-400">
+                                <td className="py-3 px-4 text-[var(--text-muted)]">
                                   {bill.due_date ? format(new Date(bill.due_date), 'dd MMM yyyy') : '-'}
                                 </td>
                                 <td className="py-3 px-4">
                                   {ref ? (
                                     <span
-                                      className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[11px] font-mono font-medium"
+                                      className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-[11px] font-mono font-medium"
                                       title={`PO / Reference: ${ref}`}
                                     >
                                       #{ref}
                                     </span>
                                   ) : (
-                                    <span className="text-gray-500 font-mono text-[11px]">—</span>
+                                    <span className="text-[var(--text-muted)] font-mono text-[11px]">—</span>
                                   )}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono font-bold text-white">
+                                <td className="py-3 px-4 text-right font-mono font-bold text-[var(--text-primary)]">
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono text-emerald-400">
+                                <td className="py-3 px-4 text-right font-mono text-[var(--status-success-text)] font-semibold">
                                   {getCurrencySymbol()}{paid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono text-amber-400 font-bold">
+                                <td className="py-3 px-4 text-right font-mono text-[var(--status-warning-text)] font-bold">
                                   {getCurrencySymbol()}{bal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                    status === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                    status === 'partial' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                                    'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                    status === 'paid' ? 'badge-success' :
+                                    status === 'partial' ? 'badge-warning' :
+                                    'badge-danger'
                                   }`}>
                                     {status}
                                   </span>
@@ -442,7 +446,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                   <button
                                     type="button"
                                     onClick={() => setPreviewBillId(bill.id)}
-                                    className="p-1 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 border border-indigo-500/20 transition-all inline-flex items-center"
+                                    className="p-1 rounded-md bg-[var(--bg-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-default)] transition-all inline-flex items-center"
                                     title="View & Print Bill"
                                     aria-label="View & Print Bill"
                                   >
@@ -461,57 +465,57 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
 
               {/* TAB 3: PURCHASE ORDERS */}
               {activeTab === "orders" && (
-                <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
+                  <div className="p-4 sm:p-6 border-b border-[var(--border-subtle)] flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-black text-white uppercase tracking-wider">Purchase Orders</h3>
-                      <p className="text-xs text-gray-400 mt-1">Orders placed to {vendorDetails.name}</p>
+                      <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Purchase Orders</h3>
+                      <p className="text-xs text-[var(--text-muted)] mt-1">Orders placed to {vendorDetails.name}</p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full">
+                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-3 py-1 rounded-full">
                       {vendorOrders.length} Records
                     </span>
                   </div>
 
                   {isLoadingOrders ? (
                     <div className="py-12 flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
                     </div>
                   ) : vendorOrders.length === 0 ? (
-                    <div className="py-12 text-center text-gray-500 text-xs font-bold uppercase tracking-wider">
+                    <div className="py-12 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">
                       No purchase orders recorded for this vendor yet.
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="bg-white/5 border-b border-white/10 text-gray-400 font-bold uppercase tracking-wider">
+                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-semibold uppercase tracking-wider">
                             <th className="py-3 px-4">PO #</th>
                             <th className="py-3 px-4">Date</th>
                             <th className="py-3 px-4 text-right">Total Amount</th>
                             <th className="py-3 px-4 text-center">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-[var(--border-subtle)]">
                           {vendorOrders.map((po) => {
                             const tot = Number(po.total_amount) || 0;
                             const status = po.status || 'draft';
 
                             return (
-                              <tr key={po.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-3 px-4 font-mono font-black text-indigo-400">
+                              <tr key={po.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                                <td className="py-3 px-4 font-mono font-bold text-[var(--accent-primary)]">
                                   {po.po_number || po.id?.slice(0, 8)}
                                 </td>
-                                <td className="py-3 px-4 text-gray-300">
+                                <td className="py-3 px-4 text-[var(--text-secondary)]">
                                   {po.created_at ? format(new Date(po.created_at), 'dd MMM yyyy') : '-'}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono font-bold text-white">
+                                <td className="py-3 px-4 text-right font-mono font-bold text-[var(--text-primary)]">
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                    status === 'received' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                    status === 'sent' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                    'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                    status === 'received' ? 'badge-success' :
+                                    status === 'sent' ? 'badge-info' :
+                                    'badge-neutral'
                                   }`}>
                                     {status}
                                   </span>
@@ -527,8 +531,8 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
               )}
 
               {/* System Note */}
-              <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-xl text-center">
-                <p className="text-xs text-indigo-400/70 font-medium">
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-4 rounded-xl text-center">
+                <p className="text-xs text-[var(--text-muted)] font-medium">
                   This profile was automatically generated on {format(new Date(), 'PPPP')}
                 </p>
               </div>
@@ -537,11 +541,11 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/10 print-hidden">
+        <div className="px-6 py-4 border-t border-[var(--border-subtle)] print-hidden">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="w-full sm:w-auto px-8 py-3 text-xs font-black text-gray-400 uppercase tracking-widest bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+              className="btn-secondary w-full sm:w-auto px-8"
             >
               Close Profile
             </button>

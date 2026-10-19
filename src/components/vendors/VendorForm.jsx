@@ -103,8 +103,8 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
 
   if (!isOpen) return null;
 
-  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-xl px-4 py-2.5 text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
-  const labelClass = "block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all";
+  const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wider";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -115,16 +115,16 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up border border-hairline">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)]">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-hairline bg-obsidian-card">
-          <h2 className="text-xl font-bold text-white">
+        <div className="flex justify-between items-center p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">
             {isEdit ? "Edit Vendor" : "New Vendor"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -299,18 +299,18 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
               </div>
 
               {/* Form Actions */}
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-white/10">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:w-auto px-6 py-3 sm:py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+                  className="btn-secondary w-full sm:w-auto px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                  className="btn-primary w-full sm:w-auto py-3 sm:py-2.5 px-8 text-sm font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary w-full sm:w-auto py-2.5 px-8 text-xs font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting || createMutation.isPending || updateMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2">

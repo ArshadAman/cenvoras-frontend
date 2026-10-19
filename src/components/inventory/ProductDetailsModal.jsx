@@ -28,13 +28,13 @@ export default function ProductDetailsModal({ productId, onClose }) {
     const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
     
     if (currentStock < 0) {
-      return { text: "Critical", className: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/40 font-bold" };
+      return { text: "Critical", className: "badge-danger font-bold" };
     } else if (currentStock === 0) {
-      return { text: "Out of Stock", className: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-medium" };
+      return { text: "Out of Stock", className: "badge-danger font-medium" };
     } else if (minStock > 0 && currentStock <= minStock) {
-      return { text: "Low Stock", className: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-medium" };
+      return { text: "Low Stock", className: "badge-warning font-medium" };
     } else {
-      return { text: "In Stock", className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium" };
+      return { text: "In Stock", className: "badge-success font-medium" };
     }
   };
 
@@ -45,7 +45,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] pt-20 sm:pt-0 p-4">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl animate-fade-up">
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-0 shadow-2xl animate-fade-up">
         {/* Action Buttons */}
         {/* Header Top */}
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
@@ -137,11 +137,11 @@ export default function ProductDetailsModal({ productId, onClose }) {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-[var(--text-secondary)]">Cost Price:</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{getCurrencySymbol()}{costPrice.toFixed(2)}</span>
+                        <span className="font-bold text-[var(--status-success-text)] font-mono">{getCurrencySymbol()}{costPrice.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-[var(--text-secondary)]">Sale Price:</span>
-                        <span className="font-bold text-[var(--accent-primary)]">{salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}</span>
+                        <span className="font-bold text-[var(--accent-primary)] font-mono">{salePrice === null ? '-' : `${getCurrencySymbol()}${salePrice.toFixed(2)}`}</span>
                       </div>
                       {product.meta?.storage_condition && (
                         <div className="flex justify-between">
@@ -152,7 +152,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
                       {product.meta?.expiry_date && (
                         <div className="flex justify-between">
                           <span className="font-medium text-[var(--text-secondary)]">Expiry Date/Warranty:</span>
-                          <span className="text-amber-600 dark:text-amber-400 font-mono">
+                          <span className="text-[var(--status-warning-text)] font-mono">
                             {(() => {
                               const parts = String(product.meta.expiry_date).split('-');
                               return parts.length === 3 && parts[0].length === 4
@@ -225,7 +225,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
                   <div className="text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)] mt-1">Current Stock</div>
                 </div>
                 <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-4 rounded-xl text-center shadow-sm">
-                  <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{getCurrencySymbol()}{costPrice.toFixed(2)}</div>
+                  <div className="text-2xl font-bold font-mono text-[var(--status-success-text)]">{getCurrencySymbol()}{costPrice.toFixed(2)}</div>
                   <div className="text-xs uppercase tracking-wider font-semibold text-[var(--text-secondary)] mt-1">Cost Price</div>
                 </div>
                 <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-4 rounded-xl text-center shadow-sm">
@@ -249,10 +249,10 @@ export default function ProductDetailsModal({ productId, onClose }) {
                       <div
                         className={`h-2 rounded-full ${
                           parseFloat(product.stock ?? product.current_stock ?? 0) <= parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0)
-                            ? 'bg-rose-500'
+                            ? 'bg-[var(--status-danger-text)]'
                             : parseFloat(product.stock ?? product.current_stock ?? 0) <= parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) * 2
-                            ? 'bg-amber-500'
-                            : 'bg-emerald-500'
+                            ? 'bg-[var(--status-warning-text)]'
+                            : 'bg-[var(--status-success-text)]'
                         }`}
                         style={{
                           width: `${Math.min(
@@ -309,7 +309,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
                               <td className="px-4 py-3 whitespace-nowrap text-sm text-[var(--accent-primary)] font-semibold">{getCurrencySymbol()}{parseFloat(batch.sale_price || 0).toFixed(2)}</td>
                               <td className="px-4 py-3 whitespace-nowrap text-sm text-[var(--text-secondary)]">
                                 {batch.expiry_date ? (
-                                  <span className={new Date(batch.expiry_date) < new Date() ? 'text-rose-500 font-bold' : ''}>
+                                  <span className={new Date(batch.expiry_date) < new Date() ? 'text-[var(--status-danger-text)] font-bold' : ''}>
                                     {batch.expiry_date}
                                   </span>
                                 ) : '-'}

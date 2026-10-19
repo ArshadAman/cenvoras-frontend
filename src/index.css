@@ -27,18 +27,22 @@
 
   /* LIGHT MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #E6D8C3) */
   --status-success: #2B6B48;
+  --status-success-text: #2B6B48;
   --status-success-bg: rgba(43, 107, 72, 0.12);
   --status-success-border: rgba(43, 107, 72, 0.32);
 
   --status-warning: #8C5A18;
+  --status-warning-text: #8C5A18;
   --status-warning-bg: rgba(140, 90, 24, 0.12);
   --status-warning-border: rgba(140, 90, 24, 0.32);
 
   --status-danger: #9B2C2C;
+  --status-danger-text: #9B2C2C;
   --status-danger-bg: rgba(155, 44, 44, 0.12);
   --status-danger-border: rgba(155, 44, 44, 0.32);
 
   --status-info: #275A75;
+  --status-info-text: #275A75;
   --status-info-bg: rgba(39, 90, 117, 0.12);
   --status-info-border: rgba(39, 90, 117, 0.32);
 }
@@ -66,18 +70,22 @@
 
   /* DARK MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #393E46) */
   --status-success: #78B896;
+  --status-success-text: #78B896;
   --status-success-bg: rgba(120, 184, 150, 0.14);
   --status-success-border: rgba(120, 184, 150, 0.28);
 
   --status-warning: #DEB070;
+  --status-warning-text: #DEB070;
   --status-warning-bg: rgba(222, 176, 112, 0.14);
   --status-warning-border: rgba(222, 176, 112, 0.28);
 
   --status-danger: #E07A7A;
+  --status-danger-text: #E07A7A;
   --status-danger-bg: rgba(224, 122, 122, 0.14);
   --status-danger-border: rgba(224, 122, 122, 0.28);
 
   --status-info: #8EB4C7;
+  --status-info-text: #8EB4C7;
   --status-info-bg: rgba(142, 180, 199, 0.14);
   --status-info-border: rgba(142, 180, 199, 0.28);
 }

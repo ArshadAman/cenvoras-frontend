@@ -18,8 +18,8 @@ export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
               Stock Journal Details
               <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border
                 ${['excess', 'internal_return'].includes(journal.adjustment_type) 
-                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                  : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'}
+                  ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]' 
+                  : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border-[var(--status-danger-border)]'}
               `}>
                 {journal.adjustment_type.replace('_', ' ')}
               </span>
@@ -90,7 +90,7 @@ export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
                       <td className="p-3 text-[var(--text-secondary)]">{item.batch_number}</td>
                       <td className="p-3 text-right">
                         <span className={`font-mono font-medium ${
-                          item.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                          item.quantity > 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'
                         }`}>
                           {item.quantity > 0 ? '+' : ''}{item.quantity}
                         </span>

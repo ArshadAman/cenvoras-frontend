@@ -201,13 +201,13 @@ function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
         onChange={handleSelectChange}
         className={inputClass}
       >
-        <option value="" className="bg-slate-900 text-white">Select storage condition...</option>
+        <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Select storage condition...</option>
         {STORAGE_PRESETS.map((preset) => (
-          <option key={preset} value={preset} className="bg-slate-900 text-white">
+          <option key={preset} value={preset} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
             {preset}
           </option>
         ))}
-        <option value="custom" className="bg-slate-900 text-sky-400 font-semibold">Custom...</option>
+        <option value="custom" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-semibold">Custom...</option>
       </select>
 
       {selectedOption === "custom" && (
@@ -267,7 +267,7 @@ function ManufacturerCombobox({ value, onChange, options, inputClass, labelClass
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           tabIndex={-1}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -276,7 +276,7 @@ function ManufacturerCombobox({ value, onChange, options, inputClass, labelClass
         </button>
       </div>
       {isOpen && filtered.length > 0 && (
-        <ul className="absolute z-50 mt-1 max-h-36 w-full overflow-auto rounded-lg border border-white/20 bg-gray-900/95 p-1 shadow-2xl backdrop-blur-xl text-xs">
+        <ul className="absolute z-50 mt-1 max-h-36 w-full overflow-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-1 shadow-2xl backdrop-blur-xl text-xs">
           {filtered.map((item) => (
             <li
               key={item}
@@ -440,8 +440,8 @@ export default function ProductForm({ product, onClose }) {
     [product?.tax]
   );
 
-  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
-  const labelClass = "block text-[11px] font-semibold text-slate-300 mb-1 uppercase tracking-wide";
+  const inputClass = "w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all";
+  const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wider";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
@@ -452,16 +452,16 @@ export default function ProductForm({ product, onClose }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-4xl max-h-[94vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-sky-950/30 animate-fade-up">
+      <div className="relative w-full max-w-4xl max-h-[94vh] overflow-y-auto bento-card !p-0 shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)]">
         
         {/* Header */}
-        <div className="flex justify-between items-center px-5 py-3 border-b border-hairline bg-obsidian-card">
-          <h2 className="text-lg font-bold text-white">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">
             {isEdit ? "Edit Product" : "New Product"}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
