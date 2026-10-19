@@ -127,13 +127,18 @@ export default function AccountForm({
           <Formik
             initialValues={initialValues}
             validationSchema={AccountSchema}
-            onSubmit={(values, { setSubmitting }) => {
-              if (editData) {
-                updateMutation.mutate({ id: editData.id, data: values });
-              } else {
-                createMutation.mutate(values);
+            onSubmit={async (values, { setSubmitting }) => {
+              try {
+                if (editData) {
+                  await updateMutation.mutateAsync({ id: editData.id, data: values });
+                } else {
+                  await createMutation.mutateAsync(values);
+                }
+              } catch {
+                // handled in onError
+              } finally {
+                setSubmitting(false);
               }
-              setSubmitting(false);
             }}
           >
             {({ isSubmitting, values }) => (
@@ -259,10 +264,10 @@ export default function AccountForm({
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
-                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed py-2.5 px-6"
+                    disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                    className="btn-primary shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed py-2.5 px-6 active:scale-[0.98] transition-all duration-150 cursor-pointer"
                   >
-                    {isSubmitting || createMutation.isLoading || updateMutation.isLoading
+                    {isSubmitting || createMutation.isPending || updateMutation.isPending
                       ? (editData ? 'Updating...' : 'Creating...')
                       : (editData ? 'Update Account' : 'Create Account')
                     }

@@ -202,7 +202,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     },
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     // Clean up the data for submission
     const paymentData = {
       customer: values.customer,
@@ -214,7 +214,13 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       invoice: values.invoice || undefined,
     };
 
-    recordPaymentMutation.mutate(paymentData);
+    try {
+      await recordPaymentMutation.mutateAsync(paymentData);
+    } catch {
+      // handled in onError
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
@@ -420,10 +426,10 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || recordPaymentMutation.isLoading}
-              className="btn-primary py-2.5 px-6 shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
+              disabled={isSubmitting || recordPaymentMutation.isPending}
+              className="btn-primary py-2.5 px-6 shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
-              {isSubmitting || recordPaymentMutation.isLoading ? (
+              {isSubmitting || recordPaymentMutation.isPending ? (
                 <span className="flex items-center gap-2">
                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

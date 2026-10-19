@@ -122,6 +122,10 @@ export default function Quotations() {
               setShowForm(true);
             }}
             onView={(q) => setViewData(q)}
+            onAddNewQuotation={() => {
+              setEditData(null);
+              setShowForm(true);
+            }}
           />
         </div>
       </div>

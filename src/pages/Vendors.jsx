@@ -72,6 +72,7 @@ export default function Vendors() {
             onEdit={handleEdit}
             onView={(vendor) => setShowDetails(vendor)}
             onDelete={(vendor) => setDeleteVendor(vendor)}
+            onAddNewVendor={() => setShowForm(true)}
           />
         </section>
       </div>

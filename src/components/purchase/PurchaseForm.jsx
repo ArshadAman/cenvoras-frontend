@@ -12,6 +12,7 @@ import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import DateInputField from "../common/DateInputField";
 import useEscKey from "../../hooks/useEscStack";
+import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
 import { getUserProfile } from "../../api/users";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
@@ -438,9 +439,19 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
     onClose();
   };
 
-  // Register hierarchical ESC key navigation for this form (auto-saves on exit if data entered)
   useEscKey(handleBeforeClose, isOpen, 10);
   useEscKey(() => setShowColumnPicker(false), showColumnPicker, 30);
+
+  const isFormDirty = Boolean(
+    isOpen && formikRef.current?.dirty &&
+    (formikRef.current?.values?.vendor_name || (formikRef.current?.values?.items && formikRef.current.values.items.some(it => it.product_name || it.quantity > 0)))
+  );
+
+  useUnsavedPrompt(isFormDirty, {
+    storageKey: `purchase_bill_${bill?.id || 'new'}`,
+    formData: formikRef.current?.values,
+    message: 'You have an unsaved purchase bill. Leaving now will discard entered line items.',
+  });
 
   // Keyboard Shortcuts Logic
   useEffect(() => {

@@ -4,9 +4,10 @@ import { getCustomers, deleteCustomer } from "../../api/customers";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import { EyeIcon, PencilSquareIcon, TrashIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilSquareIcon, TrashIcon, ArrowTopRightOnSquareIcon, UsersIcon } from "@heroicons/react/24/outline";
+import EmptyState from "../common/EmptyState";
 
-export default function CustomerTable({ onEdit, onView, onDelete }) {
+export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustomer }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -284,8 +285,18 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
           <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
             {customers.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-white font-bold drop-shadow-lg">
-                  No customers found
+                <td colSpan="6" className="p-6 sm:p-10">
+                  <EmptyState
+                    icon={UsersIcon}
+                    title={debouncedSearch ? "No matching customers found" : "No customers registered yet"}
+                    description={
+                      debouncedSearch
+                        ? `No customer matched "${debouncedSearch}". Check your spelling or clear the search filter.`
+                        : "Add your first customer to start tracking billing history, GST compliance, and balances."
+                    }
+                    action={onAddNewCustomer ? { label: "Add Customer", onClick: onAddNewCustomer } : null}
+                    secondaryAction={debouncedSearch ? { label: "Clear Search", onClick: () => setSearch("") } : null}
+                  />
                 </td>
               </tr>
             ) : (
@@ -489,12 +500,17 @@ export default function CustomerTable({ onEdit, onView, onDelete }) {
 
         {/* No data message for mobile */}
         {!isLoading && customers.length === 0 && (
-          <div className="p-8 text-center text-white/80">
-            <p>No customers found.</p>
-            <p className="text-sm mt-2">
-              Click "Add Customer" to create your first customer.
-            </p>
-          </div>
+          <EmptyState
+            icon={UsersIcon}
+            title={debouncedSearch ? "No matching customers" : "No customers registered yet"}
+            description={
+              debouncedSearch
+                ? `No customer matched "${debouncedSearch}".`
+                : "Add your first customer to start tracking billing history, GST compliance, and balances."
+            }
+            action={onAddNewCustomer ? { label: "Add Customer", onClick: onAddNewCustomer } : null}
+            secondaryAction={debouncedSearch ? { label: "Clear Search", onClick: () => setSearch("") } : null}
+          />
         )}
       </div>
 

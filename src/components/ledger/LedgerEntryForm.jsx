@@ -147,7 +147,7 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
     },
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     const entryData = {
       customer: values.customer,
       date: values.date,
@@ -157,7 +157,13 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
       credit: parseFloat(values.credit) || 0,
     };
 
-    updateEntryMutation.mutate({ id: entry.id, data: entryData });
+    try {
+      await updateEntryMutation.mutateAsync({ id: entry.id, data: entryData });
+    } catch {
+      // handled in onError
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const initialValues = {
@@ -282,10 +288,10 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || updateEntryMutation.isLoading}
-              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20"
+              disabled={isSubmitting || updateEntryMutation.isPending}
+              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
-              {isSubmitting || updateEntryMutation.isLoading ? (
+              {isSubmitting || updateEntryMutation.isPending ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

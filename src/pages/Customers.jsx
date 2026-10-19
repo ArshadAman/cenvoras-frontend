@@ -72,6 +72,7 @@ export default function Customers() {
             onEdit={handleEdit}
             onView={(customer) => setShowDetails(customer)}
             onDelete={(customer) => setDeleteCustomer(customer)}
+            onAddNewCustomer={() => setShowForm(true)}
           />
         </section>
       </div>

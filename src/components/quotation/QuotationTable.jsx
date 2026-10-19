@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathRoundedSquareIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import {
   convertQuotationToSalesOrder,
@@ -20,8 +21,9 @@ import {
 } from '../../api/quotation';
 import QuotationConvertModal from './QuotationConvertModal';
 import { getCurrencySymbol } from '../../utils/currency';
+import EmptyState from '../common/EmptyState';
 
-export default function QuotationTable({ onEdit, onView }) {
+export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
@@ -288,8 +290,14 @@ export default function QuotationTable({ onEdit, onView }) {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                      No quotations found.
+                    <td colSpan={6} className="p-0">
+                      <EmptyState
+                        icon={DocumentTextIcon}
+                        title={search ? "No quotations match your search" : "No quotations created yet"}
+                        description={search ? `No quotations matched "${search}". Try clearing filters or searching another keyword.` : "Draft detailed pricing estimates and proposals for your leads and customers."}
+                        actionLabel={!search && onAddNewQuotation ? "Create Quotation" : undefined}
+                        onAction={!search && onAddNewQuotation ? onAddNewQuotation : undefined}
+                      />
                     </td>
                   </tr>
                 )}
@@ -300,9 +308,13 @@ export default function QuotationTable({ onEdit, onView }) {
           {/* Mobile Card Layout */}
           <div className="lg:hidden space-y-3 px-2">
             {sortedRows.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
-                No quotations found.
-              </div>
+              <EmptyState
+                icon={DocumentTextIcon}
+                title={search ? "No matching quotations" : "No quotations yet"}
+                description={search ? `No results for "${search}".` : "Start sending formal price quotes to prospective clients."}
+                actionLabel={!search && onAddNewQuotation ? "New Quotation" : undefined}
+                onAction={!search && onAddNewQuotation ? onAddNewQuotation : undefined}
+              />
             ) : (
               sortedRows.map((q) => (
                 <div key={q.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">

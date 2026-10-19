@@ -161,13 +161,20 @@ export default function UpgradePromptModal({
       });
 
       const confirmRes = await confirmPlanPayment(order.order_id);
-      if (!confirmRes?.success) {
-        throw new Error('Payment not confirmed yet. Please wait a moment and retry.');
+      if (confirmRes?.success) {
+        toast.success(`Plan upgraded to ${targetPlanName}!`);
+        onClose();
+        window.location.reload();
+        return;
       }
 
-      toast.success(`Plan upgraded to ${targetPlanName}.`);
-      onClose();
-      window.location.reload();
+      const status = confirmRes?.data?.order_status || confirmRes?.order_status || '';
+      if (status === 'USER_DROPPED' || status === 'CANCELLED' || !status || status === 'ACTIVE') {
+        toast.info('Checkout paused. You can resume upgrading whenever you are ready.');
+        return;
+      }
+
+      throw new Error(confirmRes?.message || 'Payment not completed yet. Please retry or contact support.');
     } catch (error) {
       const message = error?.response?.data?.error || error?.message || 'Upgrade payment failed.';
       toast.error(message);

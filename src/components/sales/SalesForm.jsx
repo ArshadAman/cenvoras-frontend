@@ -20,6 +20,7 @@ import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon,
 import DateInputField from "../common/DateInputField";
 import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
+import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES } from "../../utils/gstRates";
@@ -871,6 +872,17 @@ export default function SalesForm({
   const [productCreationState, setProductCreationState] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [catalogSyncModal, setCatalogSyncModal] = useState(null);
+
+  const isFormDirty = Boolean(
+    isOpen && !isLocked && formikRef.current?.dirty &&
+    (formikRef.current?.values?.customer_name || (formikRef.current?.values?.items && formikRef.current.values.items.some(it => it.product || it.quantity > 0)))
+  );
+
+  useUnsavedPrompt(isFormDirty, {
+    storageKey: `sales_form_${documentType}_${editData?.id || 'new'}`,
+    formData: formikRef.current?.values,
+    message: 'You have unsaved changes in this document. Leaving now will discard entered line items.',
+  });
 
   // Hierarchical ESC key handlers
   useEscKey(() => setShowColumnPicker(false), showColumnPicker, 30);

@@ -213,11 +213,11 @@ export default function TrialBalance() {
 
           <button
             onClick={() => repairMutation.mutate()}
-            disabled={repairMutation.isLoading}
-            className="p-2.5 bg-white/5 hover:bg-amber-500/10 text-gray-300 hover:text-amber-400 rounded-xl border border-white/10 transition-all"
+            disabled={repairMutation.isPending}
+            className="p-2.5 bg-white/5 hover:bg-amber-500/10 text-gray-300 hover:text-amber-400 rounded-xl border border-white/10 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
             title="Repair Accounting Entries & Round-offs"
           >
-            <WrenchScrewdriverIcon className={`w-4 h-4 ${repairMutation.isLoading ? 'animate-spin' : ''}`} />
+            <WrenchScrewdriverIcon className={`w-4 h-4 ${repairMutation.isPending ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
