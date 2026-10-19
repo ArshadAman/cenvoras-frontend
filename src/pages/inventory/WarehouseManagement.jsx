@@ -21,20 +21,20 @@ function BatchStockModal({ batch, warehouseName, onClose }) {
   if (!batch) return null;
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/5">
+        <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-cyan-500/10 rounded-xl">
-              <TagIcon className="w-5 h-5 text-cyan-400" />
+            <div className="p-2 bg-[var(--accent-primary)]/15 rounded-xl">
+              <TagIcon className="w-5 h-5 text-[var(--accent-primary)]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Batch Details</h2>
-              <p className="text-xs text-gray-400">Warehouse: {warehouseName}</p>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Batch Details</h2>
+              <p className="text-xs text-[var(--text-muted)]">Warehouse: {warehouseName}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+          <button onClick={onClose} className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] rounded-xl transition-colors">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -42,49 +42,49 @@ function BatchStockModal({ batch, warehouseName, onClose }) {
         {/* Body */}
         <div className="p-5 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/5 rounded-xl p-3 col-span-2">
-              <div className="text-xs text-gray-500 mb-1">Product</div>
-              <div className="text-white font-bold text-lg">{batch.product_name || batch.batch?.product_name || "—"}</div>
+            <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+              <div className="text-xs text-[var(--text-muted)] mb-1">Product</div>
+              <div className="text-[var(--text-primary)] font-bold text-lg">{batch.product_name || batch.batch?.product_name || "—"}</div>
               {(batch.product_id || batch.batch?.product) && (
-                <div className="text-xs text-gray-500 mt-0.5">ID: {batch.product_id || batch.batch?.product}</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">ID: {batch.product_id || batch.batch?.product}</div>
               )}
             </div>
-            <div className="bg-white/5 rounded-xl p-3">
-              <div className="text-xs text-gray-500 mb-1">Batch Number</div>
-              <div className="text-cyan-300 font-bold">{batch.batch_number || batch.batch?.batch_number || "—"}</div>
+            <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3">
+              <div className="text-xs text-[var(--text-muted)] mb-1">Batch Number</div>
+              <div className="text-[var(--accent-primary)] font-bold">{batch.batch_number || batch.batch?.batch_number || "—"}</div>
             </div>
-            <div className="bg-white/5 rounded-xl p-3">
-              <div className="text-xs text-gray-500 mb-1">Quantity</div>
-              <div className={`font-bold text-xl ${batch.quantity > 0 ? "text-green-400" : "text-red-400"}`}>
+            <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3">
+              <div className="text-xs text-[var(--text-muted)] mb-1">Quantity</div>
+              <div className={`font-bold text-xl ${batch.quantity > 0 ? "text-green-500" : "text-red-500"}`}>
                 {batch.quantity}
               </div>
             </div>
             {(batch.expiry_date || batch.batch?.expiry_date) && (
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Expiry Date</div>
-                <div className="text-amber-300 font-medium">
+              <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1">Expiry Date</div>
+                <div className="text-amber-500 font-medium">
                   {new Date(batch.expiry_date || batch.batch?.expiry_date).toLocaleDateString("en-IN")}
                 </div>
               </div>
             )}
             {(batch.manufacturing_date || batch.batch?.manufacturing_date) && (
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Mfg. Date</div>
-                <div className="text-gray-300 font-medium">
+              <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1">Mfg. Date</div>
+                <div className="text-[var(--text-secondary)] font-medium">
                   {new Date(batch.manufacturing_date || batch.batch?.manufacturing_date).toLocaleDateString("en-IN")}
                 </div>
               </div>
             )}
-            <div className="bg-white/5 rounded-xl p-3 col-span-2">
-              <div className="text-xs text-gray-500 mb-1">Last Updated</div>
-              <div className="text-gray-300 font-medium">
+            <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+              <div className="text-xs text-[var(--text-muted)] mb-1">Last Updated</div>
+              <div className="text-[var(--text-secondary)] font-medium">
                 {batch.last_updated ? new Date(batch.last_updated).toLocaleString("en-IN") : "—"}
               </div>
             </div>
             {batch.notes && (
-              <div className="bg-white/5 rounded-xl p-3 col-span-2">
-                <div className="text-xs text-gray-500 mb-1">Notes</div>
-                <div className="text-gray-300 text-sm leading-relaxed">{batch.notes}</div>
+              <div className="bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+                <div className="text-xs text-[var(--text-muted)] mb-1">Notes</div>
+                <div className="text-[var(--text-secondary)] text-sm leading-relaxed">{batch.notes}</div>
               </div>
             )}
           </div>
@@ -199,7 +199,7 @@ export default function WarehouseManagement() {
               <BuildingStorefrontIcon className="w-8 h-8 text-purple-400" />
               Godown / Multi-Store
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-[var(--text-muted)] text-sm">
               Manage warehouses, godowns, and view stock distribution.
             </p>
           </div>
@@ -208,7 +208,7 @@ export default function WarehouseManagement() {
               resetForm();
               setShowForm(true);
             }}
-            className="btn-primary text-sm py-2 px-4 shadow-lg shadow-purple-500/20 flex items-center gap-2"
+            className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
           >
             <PlusIcon className="h-4 w-4" />
             <span>Add Warehouse</span>
@@ -217,18 +217,18 @@ export default function WarehouseManagement() {
 
         {/* Add/Edit Form */}
         {showForm && (
-          <div className="bento-card p-6 border-purple-500/30">
-            <h2 className="text-lg font-bold text-white mb-4">
+          <div className="bento-card p-6">
+            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">
               {editingWarehouse ? "Edit Warehouse" : "New Warehouse"}
             </h2>
             {error && (
-              <div className="p-3 mb-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+              <div className="p-3 mb-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500 text-sm">
                 {error}
               </div>
             )}
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                   Warehouse Name *
                 </label>
                 <input
@@ -238,11 +238,11 @@ export default function WarehouseManagement() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="e.g. Main Godown, Cold Storage #2"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none"
+                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-4 py-3 text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">
                   Address
                 </label>
                 <input
@@ -252,14 +252,14 @@ export default function WarehouseManagement() {
                     setFormData({ ...formData, address: e.target.value })
                   }
                   placeholder="e.g. Plot 12, Industrial Area"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none"
+                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-4 py-3 text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
                 />
               </div>
               <div className="flex items-end gap-2">
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 border border-blue-400/30 text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-blue-900/30 active:scale-[0.98]"
+                  className="btn-primary px-5 py-3 rounded-lg text-sm font-bold flex items-center gap-2 disabled:opacity-50"
                 >
                   <CheckIcon className="w-4 h-4" />
                   {editingWarehouse ? "Update" : "Create"}
@@ -267,7 +267,7 @@ export default function WarehouseManagement() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10"
+                  className="px-4 py-3 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-sm hover:bg-[var(--bg-primary)]"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
@@ -305,7 +305,7 @@ export default function WarehouseManagement() {
                 key={wh.id}
                 className={`bento-card p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] ${
                   expandedWarehouse === wh.id
-                    ? "ring-2 ring-purple-500/50"
+                    ? "ring-2 ring-[var(--accent-primary)]/50"
                     : ""
                 }`}
                 onClick={() =>
@@ -316,15 +316,15 @@ export default function WarehouseManagement() {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-purple-500/10">
-                      <BuildingStorefrontIcon className="w-6 h-6 text-purple-400" />
+                    <div className="p-2 rounded-lg bg-[var(--accent-primary)]/15">
+                      <BuildingStorefrontIcon className="w-6 h-6 text-[var(--accent-primary)]" />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-lg">
+                      <h3 className="text-[var(--text-primary)] font-bold text-lg">
                         {wh.name}
                       </h3>
                       {wh.address && (
-                        <p className="text-gray-400 text-xs flex items-center gap-1 mt-0.5">
+                        <p className="text-[var(--text-muted)] text-xs flex items-center gap-1 mt-0.5">
                           <MapPinIcon className="w-3 h-3" /> {wh.address}
                         </p>
                       )}
@@ -333,17 +333,17 @@ export default function WarehouseManagement() {
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleEdit(wh)}
-                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                      className="p-2 rounded-lg hover:bg-[var(--bg-primary)] transition-colors"
                       title="Edit"
                     >
-                      <PencilIcon className="w-4 h-4 text-gray-400 hover:text-white" />
+                      <PencilIcon className="w-4 h-4 text-[var(--text-muted)] hover:text-[var(--text-primary)]" />
                     </button>
                     <button
                       onClick={() => handleDelete(wh)}
                       className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                       title="Delete"
                     >
-                      <TrashIcon className="w-4 h-4 text-gray-400 hover:text-red-400" />
+                      <TrashIcon className="w-4 h-4 text-[var(--text-muted)] hover:text-red-500" />
                     </button>
                   </div>
                 </div>
@@ -352,13 +352,13 @@ export default function WarehouseManagement() {
                   <span
                     className={`px-2 py-0.5 rounded text-xs font-bold ${
                       wh.is_active
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-gray-500/20 text-gray-400"
+                        ? "bg-green-500/20 text-green-500"
+                        : "bg-[var(--bg-primary)] text-[var(--text-muted)]"
                     }`}
                   >
                     {wh.is_active ? "Active" : "Inactive"}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-[var(--text-muted)]">
                     Click to view stock
                   </span>
                 </div>
@@ -370,12 +370,12 @@ export default function WarehouseManagement() {
         {/* Stock Points for Expanded Warehouse */}
         {expandedWarehouse && (
           <div className="bento-card overflow-hidden animate-fade-up">
-            <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
-              <CubeIcon className="w-5 h-5 text-purple-400" />
-              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
+            <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 flex items-center gap-2">
+              <CubeIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+              <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                 Stock in {expandedWarehouseName}
               </h2>
-              <span className="ml-auto text-xs text-gray-500 flex items-center gap-1">
+              <span className="ml-auto text-xs text-[var(--text-muted)] flex items-center gap-1">
                 <InformationCircleIcon className="w-4 h-4" />
                 Click a row for batch details
               </span>
@@ -383,17 +383,17 @@ export default function WarehouseManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/10 bg-white/5">
-                    <th className="p-4 text-xs font-bold text-gray-400 uppercase">
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/50">
+                    <th className="p-4 text-xs font-bold text-[var(--text-muted)] uppercase">
                       Product
                     </th>
-                    <th className="p-4 text-xs font-bold text-gray-400 uppercase">
+                    <th className="p-4 text-xs font-bold text-[var(--text-muted)] uppercase">
                       Batch
                     </th>
-                    <th className="p-4 text-xs font-bold text-gray-400 uppercase text-right">
+                    <th className="p-4 text-xs font-bold text-[var(--text-muted)] uppercase text-right">
                       Quantity
                     </th>
-                    <th className="p-4 text-xs font-bold text-gray-400 uppercase">
+                    <th className="p-4 text-xs font-bold text-[var(--text-muted)] uppercase">
                       Last Updated
                     </th>
                   </tr>
@@ -403,7 +403,7 @@ export default function WarehouseManagement() {
                     <tr>
                       <td
                         colSpan="4"
-                        className="p-8 text-center text-gray-500"
+                        className="p-8 text-center text-[var(--text-muted)]"
                       >
                         No stock recorded in this warehouse.
                       </td>
@@ -412,33 +412,33 @@ export default function WarehouseManagement() {
                     stockList.map((sp, idx) => (
                       <tr
                         key={idx}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                        className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer"
                         onClick={() => setViewBatch(sp)}
                       >
                         <td className="p-4">
-                          <div className="text-sm text-white font-semibold">
+                          <div className="text-sm text-[var(--text-primary)] font-semibold">
                             {sp.product_name || sp.batch?.product_name || "—"}
                           </div>
                           {(sp.product_id || sp.batch?.product) && (
-                            <div className="text-xs text-gray-500 mt-0.5">
+                            <div className="text-xs text-[var(--text-muted)] mt-0.5">
                               ID: {sp.product_id || sp.batch?.product}
                             </div>
                           )}
                         </td>
                         <td className="p-4">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-lg text-cyan-300 text-xs font-bold">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 rounded-lg text-[var(--accent-primary)] text-xs font-bold">
                             <TagIcon className="w-3 h-3" />
                             {sp.batch_number || sp.batch?.batch_number || "—"}
                           </span>
                         </td>
                         <td
                           className={`p-4 text-sm font-bold text-right ${
-                            sp.quantity > 0 ? "text-green-400" : "text-red-400"
+                            sp.quantity > 0 ? "text-green-500" : "text-red-500"
                           }`}
                         >
                           {sp.quantity}
                         </td>
-                        <td className="p-4 text-sm text-gray-400">
+                        <td className="p-4 text-sm text-[var(--text-muted)]">
                           {sp.last_updated
                             ? new Date(sp.last_updated).toLocaleDateString("en-IN")
                             : "—"}

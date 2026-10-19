@@ -418,7 +418,7 @@ export default function Layout({ children, onLogout }) {
                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border truncate max-w-[85px] ${
                     isVipAccess
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                      : 'bg-white/10 text-gray-300 border-white/10'
+                      : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-default)]'
                   }`}
                   title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
                 >
@@ -427,7 +427,7 @@ export default function Layout({ children, onLogout }) {
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded-lg transition-colors cursor-pointer"
                   title="Collapse sidebar (Ctrl+B)"
                   aria-label="Collapse sidebar"
                 >
@@ -441,13 +441,13 @@ export default function Layout({ children, onLogout }) {
                 <img 
                   src="/pwa-192x192.png" 
                   alt="Cenvora" 
-                  className="w-8 h-8 rounded-lg object-contain shadow-sm border border-white/10" 
+                  className="w-8 h-8 rounded-lg object-contain shadow-sm border border-[var(--border-default)]" 
                 />
               </Link>
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer"
+                className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded-md transition-colors cursor-pointer"
                 title="Expand sidebar (Ctrl+B)"
                 aria-label="Expand sidebar"
               >
@@ -462,17 +462,17 @@ export default function Layout({ children, onLogout }) {
           <button
             type="button"
             onClick={() => setIsCommandPaletteOpen(true)}
-            className={`flex items-center gap-2 rounded-xl border border-hairline bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium cursor-pointer ${
+            className={`flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all text-xs font-medium cursor-pointer ${
               isSidebarCollapsed ? 'p-2 justify-center w-full' : 'w-full px-3 py-2 justify-between'
             }`}
             title="Quick Search & Actions (⌘K / Ctrl+K)"
           >
             <div className="flex items-center gap-2 truncate">
-              <MagnifyingGlassIcon className="w-4 h-4 text-blue-400 shrink-0" />
+              <MagnifyingGlassIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" />
               {!isSidebarCollapsed && <span>Quick Search...</span>}
             </div>
             {!isSidebarCollapsed && (
-              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-gray-300 border border-white/10">⌘K</kbd>
+              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-default)]">⌘K</kbd>
             )}
           </button>
         </div>
@@ -492,18 +492,18 @@ export default function Layout({ children, onLogout }) {
                   <button
                     type="button"
                     onClick={() => toggleSection(group.title)}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500/90 hover:text-gray-200 transition-colors group mb-1 cursor-pointer select-none"
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
                     title={isCollapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
                   >
                     <span className="truncate">{group.title}</span>
                     <ChevronDownIcon
-                      className={`w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 transition-transform duration-200 shrink-0 ${
+                      className={`w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-transform duration-200 shrink-0 ${
                         isCollapsed ? "-rotate-90" : "rotate-0"
                       }`}
                     />
                   </button>
                 ) : (
-                  groupIdx > 0 && <div className="border-t border-white/5 my-2 mx-1" />
+                  groupIdx > 0 && <div className="border-t border-[var(--border-default)] my-2 mx-1" />
                 )}
                 
                 {/* Category Items with Smooth Accordion Transition */}
@@ -775,15 +775,15 @@ export default function Layout({ children, onLogout }) {
           
           {/* Mobile Sidebar */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 w-72 bg-obsidian-card border-r border-hairline transform transition-transform duration-300 flex flex-col ${
+            className={`absolute top-0 bottom-0 left-0 w-72 bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-300 flex flex-col ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="h-20 flex items-center justify-between px-6 border-b border-hairline">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-[var(--border-default)]">
               <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-white"
+                className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <XMarkIcon className="w-6 h-6" />
               </button>
@@ -799,11 +799,11 @@ export default function Layout({ children, onLogout }) {
                     <button
                       type="button"
                       onClick={() => toggleSection(group.title)}
-                      className="w-full flex items-center justify-between px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500/90 hover:text-gray-200 transition-colors group mb-1 cursor-pointer select-none"
+                      className="w-full flex items-center justify-between px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
                     >
                       <span>{group.title}</span>
                       <ChevronDownIcon
-                        className={`w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 transition-transform duration-200 ${
+                        className={`w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-transform duration-200 ${
                           isCollapsed ? "-rotate-90" : "rotate-0"
                         }`}
                       />
@@ -814,8 +814,8 @@ export default function Layout({ children, onLogout }) {
                       const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
                       const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                         isActive
-                          ? 'bg-blue-600/15 text-white ring-1 ring-blue-500/30'
-                          : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                          ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]/60 hover:text-[var(--text-primary)]'
                       }`;
                       
                       if (isLocked) {
@@ -838,7 +838,7 @@ export default function Layout({ children, onLogout }) {
                             })}
                             className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
                           >
-                            <Icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
+                            <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-sm flex-1">{item.label}</span>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                           </button>
@@ -853,9 +853,9 @@ export default function Layout({ children, onLogout }) {
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={baseClass}
                           >
-                            <Icon className="w-5 h-5 text-gray-500" />
+                            <Icon className="w-5 h-5 text-[var(--text-muted)]" />
                             <span className="text-sm flex-1">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase">Soon</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">Soon</span>
                           </Link>
                         );
                       }
@@ -867,7 +867,7 @@ export default function Layout({ children, onLogout }) {
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={baseClass}
                         >
-                          <Icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                           <span className="text-sm">{item.label}</span>
                         </Link>
                       );
@@ -878,17 +878,17 @@ export default function Layout({ children, onLogout }) {
             </nav>
 
             {/* Bottom section — always pinned */}
-            <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
+            <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-[var(--border-default)] space-y-2">
               <Link
                 to="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/contact'
-                    ? 'bg-blue-600/15 text-white ring-1 ring-blue-500/30'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]/60 hover:text-[var(--text-primary)]'
                 }`}
               >
-                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-blue-400' : 'text-gray-500'}`} />
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                 <span className="text-sm flex-1">Contact Us</span>
               </Link>
 
@@ -897,17 +897,17 @@ export default function Layout({ children, onLogout }) {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-blue-600/15 text-white ring-1 ring-blue-500/30'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]/60 hover:text-[var(--text-primary)]'
                 }`}
               >
-                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-blue-400' : 'text-gray-500'}`} />
+                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                 <span className="text-sm flex-1">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase">New</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">New</span>
               </Link>
               <button
                 onClick={() => { handleSignOut(); setIsMobileMenuOpen(false); }}
-                className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
+                className="w-full btn-secondary !py-2.5 !text-sm flex items-center justify-center cursor-pointer"
               >
                 Sign Out
               </button>
@@ -975,14 +975,14 @@ export default function Layout({ children, onLogout }) {
           {showFreeLock && !isAllowedFreeRoute(location.pathname) ? (
             <div className="p-6 md:p-10">
               <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-                <h2 className="text-2xl font-bold text-white mb-2">This section is locked on Free</h2>
-                <p className="text-sm text-gray-300 mb-4">
+                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">This section is locked on Free</h2>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
                   Your Free plan can access only Sales Invoices, Customers, and Profile. Upgrade to unlock dashboard, inventory, reports, integrations, and advanced features.
                 </p>
                 <div className="flex gap-3">
                   <Link
                     to="/sales"
-                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors text-sm font-medium"
+                    className="btn-secondary !text-sm"
                   >
                     Go to Sales Invoices
                   </Link>
@@ -998,7 +998,7 @@ export default function Layout({ children, onLogout }) {
                       ctaLabel: '',
                       subtitle: '',
                     })}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 transition-all text-sm font-semibold"
+                    className="btn-primary !text-sm"
                   >
                     Upgrade Plan
                   </button>

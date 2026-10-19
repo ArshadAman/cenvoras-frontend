@@ -83,40 +83,40 @@ const BulkDeleteModal = ({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-lg bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-red-900/20 animate-fade-up">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-2xl animate-fade-up">
         <div className="p-8">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-500/10 border border-red-500/20">
-              <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-rose-500/10 border border-rose-500/20">
+              <svg className="h-6 w-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">
                 {title}
               </h3>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-[var(--text-secondary)] mt-1">
                 {description}
               </p>
             </div>
           </div>
           
           {/* Selected items preview */}
-          <div className="mt-6 p-4 bg-[#1a1a1a] rounded-lg border border-white/5">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">
+          <div className="mt-6 p-4 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-subtle)]">
+            <p className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3">
               Selected {itemType}s ({selectedItems.length}):
             </p>
             <div className="max-h-32 overflow-y-auto pr-2 custom-scrollbar">
-              <div className="text-xs font-mono text-gray-500 space-y-1.5">
+              <div className="text-xs font-mono text-[var(--text-muted)] space-y-1.5">
                 {selectedItems.slice(0, 10).map((id) => (
                   <div key={id} className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500/50"></span>
-                    ID: <span className="text-gray-300">{id}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500/50"></span>
+                    ID: <span className="text-[var(--text-primary)]">{id}</span>
                   </div>
                 ))}
                 {selectedItems.length > 10 && (
-                  <div className="text-gray-600 italic pl-3.5">
+                  <div className="text-[var(--text-muted)] italic pl-3.5">
                     ... and {selectedItems.length - 10} more
                   </div>
                 )}
@@ -127,18 +127,18 @@ const BulkDeleteModal = ({
           {/* Progress indicator during deletion */}
           {isDeleting && (
             <div className="mt-6">
-              <div className="flex justify-between text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">
+              <div className="flex justify-between text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">
                 <span>Deleting {itemType}s...</span>
                 <span>{progress.completed} / {progress.total}</span>
               </div>
-              <div className="w-full bg-[#1a1a1a] rounded-full h-2 border border-white/5 overflow-hidden">
+              <div className="w-full bg-[var(--bg-primary)] rounded-full h-2 border border-[var(--border-subtle)] overflow-hidden">
                 <div 
-                  className="bg-red-500 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+                  className="bg-rose-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
                 ></div>
               </div>
               {progress.failed.length > 0 && (
-                <p className="text-xs text-red-400 mt-2 font-medium">
+                <p className="text-xs text-rose-500 mt-2 font-medium">
                   {progress.failed.length} deletion{progress.failed.length === 1 ? '' : 's'} failed
                 </p>
               )}
@@ -147,12 +147,12 @@ const BulkDeleteModal = ({
         </div>
         
         {/* Action buttons */}
-        <div className="p-6 bg-black/20 flex justify-end gap-3 rounded-b-xl border-t border-white/5">
+        <div className="p-6 bg-[var(--bg-primary)]/40 flex justify-end gap-3 rounded-b-xl border-t border-[var(--border-default)]">
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+            className="btn-secondary !text-sm"
           >
             Cancel
           </button>
@@ -160,7 +160,7 @@ const BulkDeleteModal = ({
             type="button"
             onClick={handleConfirmDelete}
             disabled={isDeleting}
-            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-900/20 flex items-center gap-2"
+            className="px-4 py-2 bg-rose-500/15 text-rose-500 border border-rose-500/30 hover:bg-rose-500/25 rounded-lg text-sm font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isDeleting ? (
               <>

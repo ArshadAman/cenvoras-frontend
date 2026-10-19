@@ -110,42 +110,42 @@ const originalCyclePriceForPlan = (plan, cycle) => {
 const customSelectStyles = {
     control: (provided, state) => ({
         ...provided,
-        backgroundColor: '#0f1014',
-        borderColor: state.isFocused ? '#67e8f9' : 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: state.isFocused ? 'var(--accent-primary)' : 'var(--border-subtle)',
         borderRadius: '0.75rem',
         padding: '2px',
-        color: 'white',
-        boxShadow: state.isFocused ? '0 0 0 1px #67e8f9' : 'none',
+        color: 'var(--text-primary)',
+        boxShadow: state.isFocused ? '0 0 0 1px var(--accent-primary)' : 'none',
         '&:hover': {
-            borderColor: 'rgba(255, 255, 255, 0.2)'
+            borderColor: 'var(--accent-primary)'
         }
     }),
     menu: (provided) => ({
         ...provided,
-        backgroundColor: '#0f1014',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: '0.75rem',
         zIndex: 50
     }),
     option: (provided, state) => ({
         ...provided,
-        backgroundColor: state.isSelected ? '#22d3ee' : state.isFocused ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-        color: state.isSelected ? '#0f172a' : 'white',
+        backgroundColor: state.isSelected ? 'var(--accent-primary)' : state.isFocused ? 'var(--bg-primary)' : 'transparent',
+        color: state.isSelected ? 'var(--text-on-accent)' : 'var(--text-primary)',
         '&:active': {
-            backgroundColor: '#22d3ee'
+            backgroundColor: 'var(--accent-primary)'
         }
     }),
     singleValue: (provided) => ({
         ...provided,
-        color: 'white'
+        color: 'var(--text-primary)'
     }),
     input: (provided) => ({
         ...provided,
-        color: 'white'
+        color: 'var(--text-primary)'
     }),
     placeholder: (provided) => ({
         ...provided,
-        color: 'rgba(255, 255, 255, 0.3)'
+        color: 'var(--text-muted)'
     })
 };
 
@@ -221,36 +221,36 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bento-card w-full max-w-md p-8 relative animate-fade-up shadow-2xl shadow-cyan-900/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bento-card border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] w-full max-w-md p-8 relative animate-fade-up shadow-2xl">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
           <XMarkIcon className="w-6 h-6" />
         </button>
         
-        <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-          <KeyIcon className="w-6 h-6 mr-2 text-cyan-400" />
+        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex items-center">
+          <KeyIcon className="w-6 h-6 mr-2 text-[var(--accent-primary)]" />
           Change Password
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Current Password</label>
+            <label className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">Current Password</label>
             <div className="relative">
               <input
                 type={showCurrentPassword ? "text" : "password"}
                 name="current_password"
                 value={passwordData.current_password}
                 onChange={handleInputChange}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all pr-12"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none transition-all pr-12"
                 placeholder="Enter current password"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 {showCurrentPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
@@ -258,20 +258,20 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">New Password</label>
+            <label className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">New Password</label>
             <div className="relative">
               <input
                 type={showNewPassword ? "text" : "password"}
                 name="new_password"
                 value={passwordData.new_password}
                 onChange={handleInputChange}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all pr-12"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none transition-all pr-12"
                 placeholder="Min 8 characters"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 {showNewPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
@@ -279,20 +279,20 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Confirm New Password</label>
+            <label className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">Confirm New Password</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirm_new_password"
                 value={passwordData.confirm_new_password}
                 onChange={handleInputChange}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all pr-12"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none transition-all pr-12"
                 placeholder="Re-enter new password"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
@@ -303,7 +303,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={changePasswordMutation.isPending}
-              className="btn-primary w-full shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {changePasswordMutation.isPending ? 'Updating Password...' : 'Update Password'}
             </button>
@@ -1062,32 +1062,31 @@ const Profile = ({ onLogout }) => {
   return (
     <>
       <div className="page-bg relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 opacity-70">
-          <div className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-          <div className="absolute right-0 top-52 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 opacity-40">
+          <div className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-[var(--accent-primary)]/10 blur-3xl" />
+          <div className="absolute right-0 top-52 h-96 w-96 rounded-full bg-[var(--accent-primary)]/10 blur-3xl" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 py-8 lg:py-12">
           <div className="mx-auto max-w-7xl space-y-7">
-            <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-8">
+            <section className="bento-card p-6 md:p-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/30 to-blue-500/20 ring-1 ring-white/20 md:h-20 md:w-20">
-                    <span className="text-2xl font-semibold tracking-wide text-white md:text-3xl">{initials}</span>
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-primary)]/15 border border-[var(--border-subtle)] md:h-20 md:w-20">
+                    <span className="text-2xl font-semibold tracking-wide text-[var(--accent-primary)] md:text-3xl">{initials}</span>
                     {isAdmin && profileExpiryBadge && (
-                      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-300/40 bg-slate-900 px-3 py-1 text-xs font-bold text-cyan-100 shadow-lg shadow-black/50">
+                      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs font-bold text-[var(--text-primary)] shadow-md">
                         {profileExpiryBadge}
                       </span>
                     )}
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-300/80">Profile Workspace</p>
-                    <h1 className="mt-1 text-3xl font-semibold text-white md:text-4xl">{fullName}</h1>
-                    <p className="mt-2 text-sm text-white/65">{roleLabel}</p>
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] font-semibold">Profile Workspace</p>
+                    <h1 className="mt-1 text-3xl font-semibold text-[var(--text-primary)] md:text-4xl">{fullName}</h1>
+                    <p className="mt-2 text-sm text-[var(--text-secondary)]">{roleLabel}</p>
                     {isAdmin && (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/85">
-                        <ShieldCheckIcon className={`h-4 w-4 ${(userProfile?.profile?.plan_name || '').includes('Starter') ? 'text-amber-300' : 'text-emerald-300'}`} />
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-3 py-1.5 text-xs text-[var(--text-primary)]">
+                        <ShieldCheckIcon className={`h-4 w-4 ${(userProfile?.profile?.plan_name || '').includes('Starter') ? 'text-amber-500' : 'text-emerald-500'}`} />
                         {userProfile?.profile?.plan_name || 'Plan'}
                       </div>
                     )}
@@ -1097,15 +1096,15 @@ const Profile = ({ onLogout }) => {
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setIsPasswordModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/30 px-4 py-2.5 text-sm font-medium text-white/90 transition hover:border-white/30 hover:bg-white/10"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-primary)]"
                   >
-                    <KeyIcon className="h-4 w-4 text-cyan-300" />
+                    <KeyIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                     Change Password
                   </button>
                   {!isEditing && role !== 'employee' && (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                      className="btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
                     >
                       <SparklesIcon className="h-4 w-4" />
                       Edit Profile
@@ -1118,219 +1117,57 @@ const Profile = ({ onLogout }) => {
             <div className="grid grid-cols-1 gap-7 xl:grid-cols-12">
               <aside className="space-y-6 xl:col-span-4">
                 {isAdmin && (
-                  <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
-                  <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-white">
-                    <ChartBarIcon className="h-5 w-5 text-cyan-300" />
+                  <section className="bento-card p-6">
+                  <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-[var(--text-primary)]">
+                    <ChartBarIcon className="h-5 w-5 text-[var(--accent-primary)]" />
                     Account Signals
                   </h3>
                   <div className="space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Member Since</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{memberDays} days</p>
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Member Since</p>
+                      <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{memberDays} days</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Trial Status</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{trialDays} days left</p>
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Trial Status</p>
+                      <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{trialDays} days left</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Plan Expiry</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{expiryLabel}</p>
-                      <p className="mt-1 text-xs text-white/55">{expirySubLabel}</p>
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Plan Expiry</p>
+                      <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{expiryLabel}</p>
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">{expirySubLabel}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Invoices Generated</p>
-                      <p className="mt-1 text-lg font-semibold text-white">{totalInvoices}</p>
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Invoices Generated</p>
+                      <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{totalInvoices}</p>
                     </div>
                   </div>
                 </section>
                 )}
 
-                {/* Plan Management */}
-                {/* {isAdmin && (
-                <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
-                  <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-white">
-                    <CalendarIcon className="h-5 w-5 text-cyan-300" />
-                    Plan Management
-                  </h3>
-                  <div className="space-y-4">
-                    {isVipAccess ? (
-                      <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
-                        <p className="text-sm font-semibold text-amber-300">✦ VIP Customer</p>
-                        <p className="mt-2 text-xs text-white/70">You have VIP access. Plan management is not available for VIP customers. Contact support for any changes.</p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-white/45">Current Plan</p>
-                          <p className="mt-1 text-lg font-semibold text-white">{entitlementPlanName}</p>
-                        </div>
-
-                        {isAdmin ? (
-                          <>
-                            <div>
-                              <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Choose Plan</label>
-                              <select
-                                value={selectedTargetPlanCode}
-                                onChange={(e) => {
-                                  const nextPlanCode = e.target.value;
-                                  setSelectedTargetPlanCode(nextPlanCode);
-                                  if (nextPlanCode === 'free' || nextPlanCode === 'starter') {
-                                    setSelectedBillingCycle('monthly');
-                                  }
-                                }}
-                                className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
-                                disabled={isPlanActionLoading}
-                              >
-                                {availablePlanOptions.map((planOption) => {
-                                  const isDiscounted = planOption.originalMonthlyPrice > 0 && Number(planOption.originalMonthlyPrice) > Number(planOption.monthlyPrice);
-                                  return (
-                                    <option key={planOption.code} value={planOption.code}>
-                                      {planOption.name}
-                                      {isDiscounted 
-                                        ? ` (Early Bird: INR ${formatINR(planOption.monthlyPrice)}/mo, was INR ${formatINR(planOption.originalMonthlyPrice)})`
-                                        : (planOption.code !== 'free' && planOption.code !== 'starter' 
-                                          ? ` (INR ${formatINR(planOption.monthlyPrice)}/month)` 
-                                          : ' (INR 0)')
-                                      }
-                                    </option>
-                                  );
-                                })}
-                              </select>
-                            </div>
-
-                            {selectedPlanIsPaid && (
-                              <div>
-                                <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/55">Billing Cycle</label>
-                                <select
-                                  value={selectedBillingCycle}
-                                  onChange={(e) => setSelectedBillingCycle(e.target.value)}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white focus:border-cyan-300/60 focus:outline-none"
-                                  disabled={isPlanActionLoading}
-                                >
-                                  {BILLING_CYCLE_OPTIONS.map((cycle) => (
-                                    <option key={cycle.value} value={cycle.value}>
-                                      {cycle.label}{cycle.discount ? ` (${cycle.discount})` : ''}
-                                    </option>
-                                  ))}
-                                </select>
-                                {!!selectedCyclePrice && (
-                                  <p className="mt-2 text-xs text-white/60">
-                                    INR {formatINR(selectedCyclePrice)}
-                                    {selectedCycleHasDiscount && (
-                                      <span className="ml-2 line-through">INR {formatINR(selectedCycleOriginalPrice)}</span>
-                                    )}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-
-                            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                              {quoteLoading ? (
-                                <p className="text-sm text-white/85">Loading quote...</p>
-                              ) : quote ? (
-                                <div className="space-y-3">
-                                  {!!quote.summary && <p className="text-sm font-medium text-white/90">{quote.summary}</p>}
-                                  
-                                  <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
-                                    <div className="flex justify-between text-xs text-white/60">
-                                      <span>Plan Value ({formatINR(quote.base_price_before_discount / (CYCLE_MULTIPLIERS[selectedBillingCycle] || 1))} × {CYCLE_MULTIPLIERS[selectedBillingCycle] || 1} months)</span>
-                                      <span>INR {formatINR(quote.base_price_before_discount)}</span>
-                                    </div>
-                                    
-                                    {Number(quote.base_price_before_discount) > Number(quote.new_plan_full_price) && (
-                                      <div className="flex justify-between text-xs text-emerald-400/80">
-                                        <span>Plan Discount ({selectedBillingCycle === 'yearly' ? '30%' : '15%'} off)</span>
-                                        <span>- INR {formatINR(Number(quote.base_price_before_discount) - Number(quote.new_plan_full_price))}</span>
-                                      </div>
-                                    )}
-
-                                    <div className="flex justify-between text-xs text-white/80 font-medium border-t border-white/5 pt-1">
-                                      <span>Discounted Plan Price</span>
-                                      <span>INR {formatINR(quote.new_plan_full_price)}</span>
-                                    </div>
-
-                                    {Number(quote.credit || 0) > 0 && (
-                                      <div className="flex justify-between text-xs text-cyan-400/90 italic">
-                                        <span>Credit for unused days</span>
-                                        <span>- INR {formatINR(quote.credit)}</span>
-                                      </div>
-                                    )}
-                                    
-                                    <div className="flex justify-between border-t border-white/10 pt-2 text-sm font-bold text-cyan-300">
-                                      <span>Total Final Payment</span>
-                                      <span>INR {formatINR(quote.amount)}</span>
-                                    </div>
-                                    
-                                    {Number(quote.credit || 0) > 0 && (
-                                      <p className="mt-2 text-[10px] italic text-white/40">
-                                        Credit based on {quote.days_used} day(s) used at INR {formatINR(quote.current_daily_rate)}/day.
-                                      </p>
-                                    )}
-                                  </div>
-
-                                  {!Number(quote.credit || 0) && !!quote.effective_at && (
-                                    <p className="mt-2 text-xs text-white/55">
-                                      Effective on {new Date(quote.effective_at).toLocaleDateString()}
-                                      {quote.action === 'renewal' && " (appends to current period)"}
-                                    </p>
-                                  )}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-white/85">Choose a plan to see exact billing behavior.</p>
-                              )}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={handlePlanAction}
-                              disabled={
-                                isPlanActionLoading ||
-                                quoteLoading ||
-                                !quote ||
-                                quote?.action === 'downgrade_not_allowed' ||
-                                quote?.action === 'unsupported_paid_schedule' ||
-                                (selectedTargetPlanCode === entitlementPlanCode && !quote?.payment_required)
-                              }
-                              className="w-full rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isPlanActionLoading ? 'Processing...' : planActionLabel}
-                            </button>
-                          </>
-                        ) : (
-                          <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
-                            Only tenant admin can change billing plans.
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </section>
-                )} */}
-
-                <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
-                  <h3 className="mb-4 text-base font-semibold text-white">Identity Snapshot</h3>
-                  <div className="space-y-3 text-sm text-white/75">
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                      <EnvelopeIcon className="h-4 w-4 text-cyan-300" />
+                <section className="bento-card p-6">
+                  <h3 className="mb-4 text-base font-semibold text-[var(--text-primary)]">Identity Snapshot</h3>
+                  <div className="space-y-3 text-sm text-[var(--text-secondary)]">
+                    <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-3 py-2.5">
+                      <EnvelopeIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                       <span className="truncate">{formData.email || 'No email added'}</span>
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                      <PhoneIcon className="h-4 w-4 text-cyan-300" />
+                    <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-3 py-2.5">
+                      <PhoneIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                       <span>{formData.phone || 'No phone added'}</span>
                     </div>
                     {isAdmin && (
-                      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                        <BuildingOfficeIcon className="h-4 w-4 text-cyan-300" />
+                      <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-3 py-2.5">
+                        <BuildingOfficeIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                         <span className="truncate">{formData.business_name || 'No business name'}</span>
                       </div>
                     )}
                     {isAdmin && (
-                      <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                        <MapPinIcon className="mt-0.5 h-4 w-4 text-cyan-300" />
+                      <div className="flex items-start gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-3 py-2.5">
+                        <MapPinIcon className="mt-0.5 h-4 w-4 text-[var(--accent-primary)]" />
                         <div>
                           <p className="line-clamp-2">{formData.business_address || 'No address added'}</p>
                           {(formData.city || formData.state) && (
-                            <p className="mt-1 text-xs text-white/50">
+                            <p className="mt-1 text-xs text-[var(--text-muted)]">
                               {[formData.city, State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state].filter(Boolean).join(', ')}
                             </p>
                           )}
@@ -1338,8 +1175,8 @@ const Profile = ({ onLogout }) => {
                       </div>
                     )}
                     {isAdmin && (formData.gstin || formData.pan_number) && (
-                      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                        <DocumentTextIcon className="h-4 w-4 text-cyan-300" />
+                      <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-3 py-2.5">
+                        <DocumentTextIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                         <span className="text-xs">
                           {formData.gstin && `GST: ${formData.gstin}`}
                           {formData.gstin && formData.pan_number && ' • '}
@@ -1348,17 +1185,17 @@ const Profile = ({ onLogout }) => {
                       </div>
                     )}
                     {isAdmin && (formData.bank_name || (formData.bank_accounts && formData.bank_accounts.length > 0)) && (
-                      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                        <BuildingLibraryIcon className="h-4 w-4 text-cyan-300" />
+                      <div className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 px-3 py-2.5">
+                        <BuildingLibraryIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                         <div className="text-xs">
-                          <p className="font-semibold text-white">
+                          <p className="font-semibold text-[var(--text-primary)]">
                             {formData.bank_name || ((formData.bank_accounts || [])[0]?.bank_name) || 'Bank Configured'}
                           </p>
-                          <p className="text-white/50 font-mono">
+                          <p className="text-[var(--text-muted)] font-mono">
                             A/C: {formData.bank_account_number || ((formData.bank_accounts || [])[0]?.account_number) || '—'}
                           </p>
                           {(formData.bank_accounts?.length || 0) > 1 && (
-                            <span className="text-[10px] text-cyan-400 font-medium">
+                            <span className="text-[10px] text-[var(--accent-primary)] font-medium">
                               +{formData.bank_accounts.length - 1} more account{formData.bank_accounts.length > 2 ? 's' : ''}
                             </span>
                           )}
@@ -1369,24 +1206,24 @@ const Profile = ({ onLogout }) => {
                 </section>
 
                 {isAdmin && latestPayment && (
-                  <section className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
-                    <h3 className="mb-4 text-base font-semibold text-white">Last Payment Status</h3>
-                    <div className="space-y-3 text-sm text-white/75">
+                  <section className="bento-card p-6">
+                    <h3 className="mb-4 text-base font-semibold text-[var(--text-primary)]">Last Payment Status</h3>
+                    <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                       <div className={`rounded-xl border px-3 py-2 ${paymentStatusTone}`}>
                         <p className="text-xs uppercase tracking-[0.16em]">Status</p>
                         <p className="mt-1 text-sm font-semibold uppercase">{latestPayment.status}</p>
                       </div>
-                      <p><span className="text-white/55">Order:</span> {latestPayment.order_id}</p>
-                      <p><span className="text-white/55">Plan:</span> {latestPayment.plan_name}</p>
-                      <p><span className="text-white/55">Amount:</span> INR {latestPayment.amount}</p>
+                      <p><span className="text-[var(--text-muted)]">Order:</span> {latestPayment.order_id}</p>
+                      <p><span className="text-[var(--text-muted)]">Plan:</span> {latestPayment.plan_name}</p>
+                      <p><span className="text-[var(--text-muted)]">Amount:</span> INR {latestPayment.amount}</p>
                       {!!latestPayment.failure_reason && (
-                        <p><span className="text-white/55">Reason:</span> {latestPayment.failure_reason}</p>
+                        <p><span className="text-[var(--text-muted)]">Reason:</span> {latestPayment.failure_reason}</p>
                       )}
                       {!!latestPayment.created_at && (
-                        <p><span className="text-white/55">Created:</span> {new Date(latestPayment.created_at).toLocaleString()}</p>
+                        <p><span className="text-[var(--text-muted)]">Created:</span> {new Date(latestPayment.created_at).toLocaleString()}</p>
                       )}
                       {!!latestPayment.paid_at && (
-                        <p><span className="text-white/55">Confirmed:</span> {new Date(latestPayment.paid_at).toLocaleString()}</p>
+                        <p><span className="text-[var(--text-muted)]">Confirmed:</span> {new Date(latestPayment.paid_at).toLocaleString()}</p>
                       )}
                     </div>
                   </section>
@@ -1395,31 +1232,27 @@ const Profile = ({ onLogout }) => {
 
               <section className="xl:col-span-8 space-y-8">
                 {isAdmin && userProfile?.setup_progress && (
-                  <div className="rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 backdrop-blur-xl relative overflow-hidden shadow-xl">
-                    {/* Background glow lines */}
-                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                    
+                  <div className="bento-card p-6 md:p-8 relative overflow-hidden">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                       {/* Left: Progress info & Percentage */}
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${userProfile.setup_progress.profile_completed ? 'bg-emerald-400' : 'bg-cyan-400'}`} />
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Profile Setup Progress</h3>
+                          <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${userProfile.setup_progress.profile_completed ? 'bg-emerald-500' : 'bg-[var(--accent-primary)]'}`} />
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Profile Setup Progress</h3>
                         </div>
 
                         <div>
                           <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-extrabold text-white tracking-tight">{userProfile.setup_progress.completion_percentage}%</span>
-                            <span className={`text-sm font-semibold ${userProfile.setup_progress.profile_completed ? 'text-emerald-400' : 'text-cyan-400'}`}>
+                            <span className="text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">{userProfile.setup_progress.completion_percentage}%</span>
+                            <span className={`text-sm font-semibold ${userProfile.setup_progress.profile_completed ? 'text-emerald-500' : 'text-[var(--accent-primary)]'}`}>
                               {userProfile.setup_progress.profile_completed ? 'Fully Completed' : 'In progress'}
                             </span>
                           </div>
                           
                           {/* Sleek Progress Bar */}
-                          <div className="w-full bg-white/5 h-2.5 rounded-full mt-3 overflow-hidden border border-white/5">
+                          <div className="w-full bg-[var(--bg-primary)] h-2.5 rounded-full mt-3 overflow-hidden border border-[var(--border-subtle)]">
                             <div 
-                              className={`h-full bg-gradient-to-r ${userProfile.setup_progress.profile_completed ? 'from-emerald-400 to-teal-500' : 'from-cyan-400 via-blue-500 to-indigo-500'} rounded-full transition-all duration-1000 ease-out`}
+                              className={`h-full ${userProfile.setup_progress.profile_completed ? 'bg-emerald-500' : 'bg-[var(--accent-primary)]'} rounded-full transition-all duration-1000 ease-out`}
                               style={{ width: `${userProfile.setup_progress.completion_percentage}%` }}
                             />
                           </div>
@@ -1428,16 +1261,16 @@ const Profile = ({ onLogout }) => {
                         {/* Checklist items */}
                         {userProfile.setup_progress.next_steps && userProfile.setup_progress.next_steps.length > 0 && (
                           <div className="space-y-2 mt-4">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Remaining Actions:</p>
+                            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Remaining Actions:</p>
                             <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {userProfile.setup_progress.next_steps.map((step, idx) => (
-                                <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-300">
+                                <li key={idx} className="flex items-start gap-2.5 text-sm text-[var(--text-secondary)]">
                                   {step.includes('complete') || step.includes('complete!') ? (
                                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                                      <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                      <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                                     </span>
                                   ) : (
-                                    <span className="flex-shrink-0 w-2 h-2 rounded-full bg-cyan-400/80 mt-1.5" />
+                                    <span className="flex-shrink-0 w-2 h-2 rounded-full bg-[var(--accent-primary)] mt-1.5" />
                                   )}
                                   <span className="leading-tight">{step}</span>
                                 </li>
@@ -1453,12 +1286,12 @@ const Profile = ({ onLogout }) => {
                           <button
                             type="button"
                             onClick={() => setShowWizard(true)}
-                            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 rounded-2xl text-sm font-bold text-white shadow-lg shadow-cyan-500/15 hover:shadow-cyan-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            className="btn-primary flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                           >
-                            <SparklesIcon className="w-4 h-4 text-cyan-200" />
+                            <SparklesIcon className="w-4 h-4 text-white" />
                             Launch Setup Wizard
                           </button>
-                          <p className="text-[11px] text-center md:text-right text-slate-400">
+                          <p className="text-[11px] text-center md:text-right text-[var(--text-muted)]">
                             Configure business details & tax settings in seconds.
                           </p>
                         </div>
@@ -1467,11 +1300,11 @@ const Profile = ({ onLogout }) => {
                   </div>
                 )}
 
-                <div className="rounded-3xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl md:p-8">
+                <div className="bento-card p-6 md:p-8">
                   <div className="mb-8 flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-semibold text-white">Account Details</h2>
-                      <p className="mt-1 text-sm text-white/55">Refined profile controls for daily operations and billing identity.</p>
+                      <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Account Details</h2>
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">Refined profile controls for daily operations and billing identity.</p>
                     </div>
                   </div>
 
@@ -1495,8 +1328,8 @@ const Profile = ({ onLogout }) => {
                   >
                     {role !== 'employee' ? (
                       <>
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
-                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-5 md:p-6">
+                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
                         <UserIcon className="h-4 w-4" />
                         Personal Information
                       </h4>
@@ -1507,7 +1340,7 @@ const Profile = ({ onLogout }) => {
                           value={formData.first_name}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="First name"
                         />
                         <input
@@ -1516,14 +1349,14 @@ const Profile = ({ onLogout }) => {
                           value={formData.last_name}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="Last name"
                         />
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
-                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-5 md:p-6">
+                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
                         <EnvelopeIcon className="h-4 w-4" />
                         Contact Details
                       </h4>
@@ -1534,7 +1367,7 @@ const Profile = ({ onLogout }) => {
                           value={formData.email}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="name@example.com"
                         />
                         <input
@@ -1543,13 +1376,13 @@ const Profile = ({ onLogout }) => {
                           value={formData.phone}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="Phone number"
                         />
                       </div>
                       {isEditing && emailChanged && (
                         <div className="mt-4">
-                          <label className="mb-2 block text-xs uppercase tracking-[0.16em] text-amber-300/80">
+                          <label className="mb-2 block text-xs uppercase tracking-[0.16em] text-amber-500 font-semibold">
                             Confirm Current Password (required for email change)
                           </label>
                           <input
@@ -1558,7 +1391,7 @@ const Profile = ({ onLogout }) => {
                             value={formData.current_password}
                             onChange={handleInputChange}
                             disabled={updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-amber-400/40 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-300/70 focus:outline-none disabled:opacity-60"
+                            className="w-full rounded-xl border border-amber-500/50 bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
                             placeholder="Enter current password"
                           />
                         </div>
@@ -1566,32 +1399,32 @@ const Profile = ({ onLogout }) => {
                       </div>
                       </>
                     ) : (
-                      <div className="rounded-2xl border border-white/10 bg-black/25 p-6 backdrop-blur-sm">
-                        <h3 className="text-lg font-semibold text-white mb-4">Employee Information</h3>
+                      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
+                        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Employee Information</h3>
                         <div className="space-y-3 text-sm">
-                          <div className="flex justify-between border-b border-white/5 pb-2">
-                            <span className="text-gray-400">Employee Code</span>
-                            <span className="text-white font-medium">{employeeData?.employee_code || "—"}</span>
+                          <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                            <span className="text-[var(--text-muted)]">Employee Code</span>
+                            <span className="text-[var(--text-primary)] font-medium">{employeeData?.employee_code || "—"}</span>
                           </div>
-                          <div className="flex justify-between border-b border-white/5 pb-2">
-                            <span className="text-gray-400">Department</span>
-                            <span className="text-white font-medium">{employeeData?.department_name || "—"}</span>
+                          <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                            <span className="text-[var(--text-muted)]">Department</span>
+                            <span className="text-[var(--text-primary)] font-medium">{employeeData?.department_name || "—"}</span>
                           </div>
-                          <div className="flex justify-between border-b border-white/5 pb-2">
-                            <span className="text-gray-400">Designation</span>
-                            <span className="text-white font-medium">{employeeData?.designation_name || "—"}</span>
+                          <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                            <span className="text-[var(--text-muted)]">Designation</span>
+                            <span className="text-[var(--text-primary)] font-medium">{employeeData?.designation_name || "—"}</span>
                           </div>
                           <div className="flex justify-between pb-2">
-                            <span className="text-gray-400">Employment Type</span>
-                            <span className="text-white font-medium capitalize">{(employeeData?.employment_type || "—").replace('_', ' ')}</span>
+                            <span className="text-[var(--text-muted)]">Employment Type</span>
+                            <span className="text-[var(--text-primary)] font-medium capitalize">{(employeeData?.employment_type || "—").replace('_', ' ')}</span>
                           </div>
                         </div>
                       </div>
                     )}
 
                     {isAdmin && (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
-                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-5 md:p-6">
+                      <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
                         <BuildingOfficeIcon className="h-4 w-4" />
                         Business Information
                       </h4>
@@ -1602,11 +1435,11 @@ const Profile = ({ onLogout }) => {
                           value={formData.business_name}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="Business name"
                         />
                         <div className="space-y-1.5">
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Country</label>
+                          <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1">Country</label>
                           <Select
                             options={[
                               { value: 'IN', label: 'India' },
@@ -1628,7 +1461,7 @@ const Profile = ({ onLogout }) => {
                               value={formData.gstin}
                               onChange={handleInputChange}
                               disabled={!isEditing || updateProfileMutation.isPending}
-                              className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                               placeholder="GSTIN (optional)"
                               maxLength={15}
                             />
@@ -1637,8 +1470,8 @@ const Profile = ({ onLogout }) => {
                               const stateCode = getGSTStateCode(formData.state);
                               if (/^\d{2}$/.test(gstinPrefix) && stateCode && gstinPrefix !== stateCode) {
                                 return (
-                                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-xs flex items-start gap-2">
-                                    <ExclamationTriangleIcon className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 text-xs flex items-start gap-2">
+                                    <ExclamationTriangleIcon className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
                                     <span>
                                       Warning: GSTIN starts with state code &apos;{gstinPrefix}&apos;, which does not match your selected state &apos;{formData.state}&apos; (code {stateCode}).
                                     </span>
@@ -1653,7 +1486,7 @@ const Profile = ({ onLogout }) => {
                               value={formData.pan_number}
                               onChange={handleInputChange}
                               disabled={!isEditing || updateProfileMutation.isPending}
-                              className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 uppercase"
+                              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60 uppercase"
                               placeholder="Business PAN (e.g. ABCDE1234F)"
                               maxLength={10}
                             />
@@ -1666,7 +1499,7 @@ const Profile = ({ onLogout }) => {
                             value={formData.trn}
                             onChange={handleInputChange}
                             disabled={!isEditing || updateProfileMutation.isPending}
-                            className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                            className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                             placeholder="TRN (15-digit)"
                             maxLength={15}
                           />
@@ -1678,7 +1511,7 @@ const Profile = ({ onLogout }) => {
                           value={formData.gem_id}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="GEM ID"
                         />
                         <input
@@ -1687,13 +1520,13 @@ const Profile = ({ onLogout }) => {
                           value={formData.dl_number}
                           onChange={handleInputChange}
                           disabled={!isEditing || updateProfileMutation.isPending}
-                          className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                           placeholder="DL Number"
                         />
                         
                         {formData.country && (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">State</label>
+                            <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1">State</label>
                             <Select
                               options={State.getStatesOfCountry(formData.country).map(state => ({ value: state.isoCode, label: state.name }))}
                               value={formData.state ? { value: formData.state, label: State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state } : null}
@@ -1711,7 +1544,7 @@ const Profile = ({ onLogout }) => {
                         )}
                         {formData.country && (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">City</label>
+                            <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1">City</label>
                             <Select
                               options={City.getCitiesOfState(formData.country, formData.state).map(c => ({ value: c.name, label: c.name }))}
                               value={formData.city ? { value: formData.city, label: formData.city } : null}
@@ -1729,21 +1562,21 @@ const Profile = ({ onLogout }) => {
                         onChange={handleInputChange}
                         disabled={!isEditing || updateProfileMutation.isPending}
                         rows={4}
-                        className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                        className="mt-4 w-full resize-none rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                         placeholder="Business address"
                       />
                     </div>
                     )}
 
                     {isAdmin && (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6">
+                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-5 md:p-6">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                         <div>
-                          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                          <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent-primary)]">
                             <BuildingLibraryIcon className="h-4 w-4" />
                             Bank & Payment Details
                           </h4>
-                          <p className="text-[11px] text-white/50 mt-0.5">
+                          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
                             Manage up to 3 bank accounts. Choose which account to print per bill in the preview format.
                           </p>
                         </div>
@@ -1751,7 +1584,7 @@ const Profile = ({ onLogout }) => {
                           <button
                             type="button"
                             onClick={handleAddAccount}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 text-xs font-medium transition-colors"
                           >
                             <span>+ Add Bank Account ({(formData.bank_accounts || []).length}/3)</span>
                           </button>
@@ -1759,7 +1592,7 @@ const Profile = ({ onLogout }) => {
                       </div>
 
                       {/* Bank Account Selection Tabs */}
-                      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 border-b border-white/10">
+                      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 border-b border-[var(--border-subtle)]">
                         {(formData.bank_accounts || []).map((acc, idx) => (
                           <button
                             key={acc.id || idx}
@@ -1767,13 +1600,13 @@ const Profile = ({ onLogout }) => {
                             onClick={() => setActiveBankIndex(idx)}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
                               activeBankIndex === idx
-                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                                : 'bg-white/[0.03] text-white/60 hover:text-white hover:bg-white/[0.06] border border-transparent'
+                                ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/50 shadow-sm font-semibold'
+                                : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
                             }`}
                           >
                             <span>{acc.account_name || `Account ${idx + 1}`}</span>
                             {acc.is_default && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                                 Default
                               </span>
                             )}
@@ -1786,12 +1619,12 @@ const Profile = ({ onLogout }) => {
                         const currentAcc = (formData.bank_accounts || [])[activeBankIndex] || {};
                         return (
                           <div className="space-y-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3 bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                            <div className="flex flex-wrap items-center justify-between gap-3 bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">Account #{activeBankIndex + 1}:</span>
-                                <span className="text-sm font-bold text-white">{currentAcc.account_name || `Account ${activeBankIndex + 1}`}</span>
+                                <span className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Account #{activeBankIndex + 1}:</span>
+                                <span className="text-sm font-bold text-[var(--text-primary)]">{currentAcc.account_name || `Account ${activeBankIndex + 1}`}</span>
                                 {currentAcc.is_default ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
                                     ✓ Primary Default
                                   </span>
                                 ) : (
@@ -1799,7 +1632,7 @@ const Profile = ({ onLogout }) => {
                                     <button
                                       type="button"
                                       onClick={() => handleSetDefaultAccount(activeBankIndex)}
-                                      className="text-xs text-cyan-400 hover:text-cyan-300 underline font-medium"
+                                      className="text-xs text-[var(--accent-primary)] hover:underline font-medium"
                                     >
                                       Make Default
                                     </button>
@@ -1810,7 +1643,7 @@ const Profile = ({ onLogout }) => {
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveAccount(activeBankIndex)}
-                                  className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2.5 py-1 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
+                                  className="text-xs text-rose-500 hover:text-rose-600 font-medium px-2.5 py-1 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
                                 >
                                   Remove Account
                                 </button>
@@ -1819,100 +1652,100 @@ const Profile = ({ onLogout }) => {
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Label / Nickname</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Label / Nickname</label>
                                 <input
                                   type="text"
                                   value={currentAcc.account_name || ''}
                                   onChange={(e) => handleBankAccountChange('account_name', e.target.value)}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                                   placeholder="e.g. Primary Account, Current A/C, GST Account"
                                 />
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Holder Name</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Holder Name</label>
                                 <input
                                   type="text"
                                   value={currentAcc.account_holder || ''}
                                   onChange={(e) => handleBankAccountChange('account_holder', e.target.value)}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                                   placeholder="e.g. Acme Enterprises Pvt Ltd"
                                 />
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Bank Name</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Bank Name</label>
                                 <input
                                   type="text"
                                   value={currentAcc.bank_name || ''}
                                   onChange={(e) => handleBankAccountChange('bank_name', e.target.value)}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                                   placeholder="e.g. HDFC Bank, State Bank of India"
                                 />
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Account Number</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Number</label>
                                 <input
                                   type="text"
                                   value={currentAcc.account_number || ''}
                                   onChange={(e) => handleBankAccountChange('account_number', e.target.value)}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 font-mono"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60 font-mono"
                                   placeholder="e.g. 50100234567890"
                                 />
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">IFSC Code</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">IFSC Code</label>
                                 <input
                                   type="text"
                                   value={currentAcc.ifsc_code || ''}
                                   onChange={(e) => handleBankAccountChange('ifsc_code', e.target.value.toUpperCase())}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60 uppercase font-mono"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60 uppercase font-mono"
                                   placeholder="e.g. HDFC0001234"
                                   maxLength={11}
                                 />
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Branch Name</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Branch Name</label>
                                 <input
                                   type="text"
                                   value={currentAcc.branch || ''}
                                   onChange={(e) => handleBankAccountChange('branch', e.target.value)}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                                   placeholder="e.g. Indiranagar, Bangalore"
                                 />
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
                                 <input
                                   type="text"
                                   value={currentAcc.upi_id || ''}
                                   onChange={(e) => handleBankAccountChange('upi_id', e.target.value)}
                                   disabled={!isEditing || updateProfileMutation.isPending}
-                                  className="w-full rounded-xl border border-white/10 bg-[#0f1014] px-4 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/60 focus:outline-none disabled:opacity-60"
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
                                   placeholder="e.g. business@okaxis"
                                 />
                               </div>
 
                               {/* Payment QR Code Upload */}
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1 mb-1 block">Payment QR Code (Optional)</label>
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Payment QR Code (Optional)</label>
                                 <div className="flex items-center gap-3">
                                   {currentAcc.qr_code ? (
                                     <div className="relative group flex-shrink-0">
                                       <img
                                         src={currentAcc.qr_code}
                                         alt="Payment QR"
-                                        className="w-16 h-16 rounded-xl border border-white/10 object-contain bg-white p-1 shadow-md"
+                                        className="w-16 h-16 rounded-xl border border-[var(--border-subtle)] object-contain bg-white p-1 shadow-md"
                                       />
                                       {isEditing && (
                                         <button
@@ -1927,8 +1760,8 @@ const Profile = ({ onLogout }) => {
                                     </div>
                                   ) : null}
                                   {isEditing && (
-                                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.02] px-4 py-3 text-xs text-white/70 hover:border-cyan-400 hover:text-white transition-all">
-                                      <QrCodeIcon className="w-4 h-4 text-cyan-400" />
+                                    <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-xs text-[var(--text-secondary)] hover:border-[var(--accent-primary)] hover:text-[var(--text-primary)] transition-all">
+                                      <QrCodeIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                                       <span>{currentAcc.qr_code ? 'Change QR Image' : 'Upload QR Image (PNG/JPG)'}</span>
                                       <input
                                         type="file"
@@ -1940,7 +1773,7 @@ const Profile = ({ onLogout }) => {
                                     </label>
                                   )}
                                   {!isEditing && !currentAcc.qr_code && (
-                                    <span className="text-xs text-white/40 italic">No QR code uploaded</span>
+                                    <span className="text-xs text-[var(--text-muted)] italic">No QR code uploaded</span>
                                   )}
                                 </div>
                               </div>
@@ -1953,11 +1786,11 @@ const Profile = ({ onLogout }) => {
                     )}
 
                     {isEditing && role !== 'employee' && (
-                      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-white/10 pt-6">
+                      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--border-subtle)] pt-6">
                         <button
                           type="button"
                           onClick={handleCancel}
-                          className="rounded-xl border border-white/20 px-5 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
+                          className="rounded-xl border border-[var(--border-subtle)] px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--bg-primary)]"
                         >
                           Cancel
                         </button>
@@ -1965,7 +1798,7 @@ const Profile = ({ onLogout }) => {
                           type="button"
                           onClick={handleSubmit}
                           disabled={updateProfileMutation.isPending}
-                          className="rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="btn-primary px-5 py-2.5 text-sm font-semibold rounded-xl disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                         </button>

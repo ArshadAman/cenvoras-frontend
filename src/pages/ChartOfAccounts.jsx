@@ -293,9 +293,9 @@ export default function ChartOfAccounts() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by code, name..."
-                  className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 pl-10 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
                 />
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -303,13 +303,13 @@ export default function ChartOfAccounts() {
 
             {/* Account Type Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
                 Account Type
               </label>
               <select
                 value={accountTypeFilter}
                 onChange={(e) => setAccountTypeFilter(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all appearance-none cursor-pointer"
               >
                 <option value="">All Types</option>
                 {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
@@ -320,13 +320,13 @@ export default function ChartOfAccounts() {
 
             {/* Active Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
                 Status
               </label>
               <select
                 value={activeFilter}
                 onChange={(e) => setActiveFilter(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all appearance-none cursor-pointer"
               >
                 <option value="all">All Accounts</option>
                 <option value="active">Active Only</option>
@@ -336,7 +336,7 @@ export default function ChartOfAccounts() {
 
             {/* Page Size */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
                 Items per Page
               </label>
               <select
@@ -345,7 +345,7 @@ export default function ChartOfAccounts() {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all appearance-none cursor-pointer"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -392,12 +392,12 @@ export default function ChartOfAccounts() {
         <div className="bento-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-white/5">
-              <thead className="bg-white/5">
+              <thead className="bg-[var(--bg-primary)]/50">
                 <tr>
                   <th scope="col" className="relative px-6 py-4">
                     <input
                       type="checkbox"
-                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/20 bg-[#111] text-cyan-500 focus:ring-cyan-500/50"
+                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                       checked={isAllCurrentPageSelected}
                       ref={(el) => {
                         if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -406,7 +406,7 @@ export default function ChartOfAccounts() {
                     />
                   </th>
                   <th 
-                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
+                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-primary)]/40 transition-colors"
                     onClick={() => handleSort('code')}
                   >
                     <div className="flex items-center space-x-1">
@@ -415,7 +415,7 @@ export default function ChartOfAccounts() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
+                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-primary)]/40 transition-colors"
                     onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center space-x-1">
@@ -424,7 +424,7 @@ export default function ChartOfAccounts() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
+                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-primary)]/40 transition-colors"
                     onClick={() => handleSort('account_type')}
                   >
                     <div className="flex items-center space-x-1">
@@ -432,33 +432,33 @@ export default function ChartOfAccounts() {
                       {getSortIcon('account_type')}
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Parent Account
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Balance
                   </th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {accounts.map((account) => (
-                  <tr key={account.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={account.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
                     <td className="relative px-6 py-4 whitespace-nowrap text-sm">
                       <input
                         type="checkbox"
-                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/20 bg-[#111] text-cyan-500 focus:ring-cyan-500/50"
+                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                         checked={selectedAccounts.includes(account.id)}
                         onChange={(e) => handleSelectAccount(account.id, e.target.checked)}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-medium text-[var(--text-primary)]">
                         {account.code}
                       </div>
                     </td>

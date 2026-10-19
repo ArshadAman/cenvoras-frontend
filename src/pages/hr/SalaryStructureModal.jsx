@@ -84,15 +84,15 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
     }
   };
 
-  const inputClass = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm";
-  const selectClass = "w-full px-4 py-2 bg-[#111116] border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm appearance-none";
+  const inputClass = "w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
+  const selectClass = "w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm appearance-none cursor-pointer";
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto pt-10 pb-20">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl animate-fade-up">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">{initialData ? 'Edit Salary Structure' : 'New Salary Structure'}</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-3xl shadow-2xl animate-fade-up">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-default)]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{initialData ? 'Edit Salary Structure' : 'New Salary Structure'}</h2>
+          <button type="button" onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -100,26 +100,26 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
         <form onSubmit={handleSubmit} className="p-5 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Structure Name *</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Structure Name *</label>
               <input required type="text" name="name" value={form.name} onChange={handleChange} className={inputClass} placeholder="e.g. Standard Package" />
             </div>
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Description</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-1">Description</label>
               <input type="text" name="description" value={form.description} onChange={handleChange} className={inputClass} placeholder="Optional description" />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-semibold text-white">Salary Components</label>
-              <button type="button" onClick={addComponent} className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition">
+              <label className="block text-sm font-semibold text-[var(--text-primary)]">Salary Components</label>
+              <button type="button" onClick={addComponent} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-primary)] hover:opacity-80 transition cursor-pointer">
                 <PlusIcon className="w-4 h-4" /> Add Component
               </button>
             </div>
             
             <div className="space-y-3">
               {form.components.map((comp, index) => (
-                <div key={index} className="flex flex-col md:flex-row gap-3 p-4 rounded-xl border border-white/10 bg-white/5 items-start md:items-center">
+                <div key={index} className="flex flex-col md:flex-row gap-3 p-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)]/40 items-start md:items-center">
                   <div className="flex-1 w-full md:w-auto">
                     <input required type="text" value={comp.name} onChange={(e) => handleComponentChange(index, 'name', e.target.value)} placeholder="Component Name (e.g. HRA)" className={inputClass} />
                   </div>
@@ -138,33 +138,33 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
                   </div>
                   <div className="w-full md:w-32 shrink-0 relative">
                     <input required type="number" step="0.01" value={comp.value} onChange={(e) => handleComponentChange(index, 'value', e.target.value)} placeholder="Value" className={`${inputClass} pr-8`} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">{comp.component_type === 'fixed' ? '₹' : '%'}</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">{comp.component_type === 'fixed' ? '₹' : '%'}</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 mt-2 md:mt-0">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={comp.is_basic} onChange={(e) => handleComponentChange(index, 'is_basic', e.target.checked)} className="rounded border-white/10 bg-black/50 text-indigo-500 focus:ring-indigo-500/20" />
-                      <span className="text-xs text-gray-300">Is Basic?</span>
+                      <input type="checkbox" checked={comp.is_basic} onChange={(e) => handleComponentChange(index, 'is_basic', e.target.checked)} className="rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/20" />
+                      <span className="text-xs text-[var(--text-secondary)]">Is Basic?</span>
                     </label>
-                    <button type="button" onClick={() => removeComponent(index)} className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition" title="Remove Component">
+                    <button type="button" onClick={() => removeComponent(index)} className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer" title="Remove Component">
                       <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               ))}
               {form.components.length === 0 && (
-                <div className="text-center py-6 border border-dashed border-white/10 rounded-xl text-gray-500 text-sm">
+                <div className="text-center py-6 border border-dashed border-[var(--border-default)] rounded-xl text-[var(--text-muted)] text-sm">
                   No components added yet.
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-3">Note: Exactly one component must be designated as "Is Basic?". For percentages, value is the percent rate (e.g., 40 for 40%).</p>
+            <p className="text-xs text-[var(--text-muted)] mt-3">Note: Exactly one component must be designated as "Is Basic?". For percentages, value is the percent rate (e.g., 40 for 40%).</p>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+          <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
+            <button type="button" onClick={onClose} className="btn-secondary !text-sm">
               Cancel
             </button>
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50 transition">
+            <button type="submit" disabled={saving} className="btn-primary !text-sm">
               {saving ? 'Saving...' : 'Save Structure'}
             </button>
           </div>

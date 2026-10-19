@@ -29,15 +29,15 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
   
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl my-8 animate-fade-up">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <span className="text-xs uppercase tracking-widest text-indigo-300 font-bold">Task Details</span>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white"><XMarkIcon className="w-5 h-5" /></button>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-lg shadow-2xl my-8 animate-fade-up">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-default)]">
+          <span className="text-xs uppercase tracking-widest text-[var(--accent-primary)] font-bold">Task Details</span>
+          <button type="button" onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer"><XMarkIcon className="w-5 h-5" /></button>
         </div>
         
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-xl font-bold text-white leading-snug">{task.title}</h3>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] leading-snug">{task.title}</h3>
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider ${
                 task.status === "completed" 
@@ -57,7 +57,7 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
             </div>
           </div>
           
-          <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 space-y-4">
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)]/40 p-4 space-y-4">
             {task.description ? (
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-1">Description</span>
@@ -241,7 +241,7 @@ export default function EmployeePortal() {
     return <div className="p-8 text-gray-400">Loading portal...</div>;
   }
 
-  const ic = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500";
+  const ic = "w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
 
   return (
     <>
@@ -529,11 +529,11 @@ export default function EmployeePortal() {
       {/* LEAVE MODAL */}
       {showLeaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Apply for Leave</h2>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-md shadow-2xl p-6 animate-fade-up">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Apply for Leave</h2>
             <form onSubmit={handleApplyLeave} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Leave Type *</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Leave Type *</label>
                 <select required value={leaveForm.leave_type} onChange={(e) => setLeaveForm({...leaveForm, leave_type: e.target.value})} className={ic}>
                   <option value="">Select Leave Type</option>
                   {leaveTypes.map(lt => <option key={lt.id} value={lt.id}>{lt.name}</option>)}
@@ -541,21 +541,21 @@ export default function EmployeePortal() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-gray-300 mb-1">Start Date *</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Start Date *</label>
                   <input required type="date" value={leaveForm.start_date} onChange={(e) => setLeaveForm({...leaveForm, start_date: e.target.value})} className={ic} />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-300 mb-1">End Date *</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">End Date *</label>
                   <input required type="date" value={leaveForm.end_date} onChange={(e) => setLeaveForm({...leaveForm, end_date: e.target.value})} className={ic} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Reason</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason</label>
                 <textarea value={leaveForm.reason} onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})} rows={2} className={ic + " resize-none"} />
               </div>
-              <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowLeaveModal(false)} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
-                <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Submitting..." : "Apply"}</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
+                <button type="button" onClick={() => setShowLeaveModal(false)} className="btn-secondary !text-sm">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary !text-sm">{saving ? "Submitting..." : "Apply"}</button>
               </div>
             </form>
           </div>
@@ -565,20 +565,20 @@ export default function EmployeePortal() {
       {/* QUERY MODAL */}
       {showQueryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Raise HR Query</h2>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-md shadow-2xl p-6 animate-fade-up">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Raise HR Query</h2>
             <form onSubmit={handleRaiseQuerySubmit} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Subject *</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Subject *</label>
                 <input required type="text" value={queryForm.subject} onChange={(e) => setQueryForm({...queryForm, subject: e.target.value})} className={ic} placeholder="e.g. Salary Discrepancy" />
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Message *</label>
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Message *</label>
                 <textarea required value={queryForm.message} onChange={(e) => setQueryForm({...queryForm, message: e.target.value})} rows={4} className={ic + " resize-none"} placeholder="Describe your query..." />
               </div>
-              <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowQueryModal(false)} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10">Cancel</button>
-                <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50">{saving ? "Submitting..." : "Submit"}</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
+                <button type="button" onClick={() => setShowQueryModal(false)} className="btn-secondary !text-sm">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary !text-sm">{saving ? "Submitting..." : "Submit"}</button>
               </div>
             </form>
           </div>

@@ -29,24 +29,24 @@ export default function Warranty() {
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-            <ShieldCheckIcon className="w-8 h-8 text-cyan-400" />
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+            <ShieldCheckIcon className="w-8 h-8 text-[var(--accent-primary)]" />
             Warranty Tracker
           </h1>
-          <p className="text-gray-400 text-sm">Track warranty status for all sold products</p>
+          <p className="text-[var(--text-muted)] text-sm">Track warranty status for all sold products</p>
         </div>
 
         <div className="bento-card !p-4 flex items-center gap-3">
-          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+          <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by invoice number or customer name"
-            className="w-full bg-transparent text-white placeholder-gray-500 outline-none"
+            className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none"
           />
           {search && (
-            <button type="button" onClick={() => setSearch('')} className="text-xs text-cyan-400 hover:text-cyan-300">
+            <button type="button" onClick={() => setSearch('')} className="text-xs text-[var(--accent-primary)] hover:opacity-80">
               Clear
             </button>
           )}
@@ -55,14 +55,14 @@ export default function Warranty() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Active', count: stats.active_count, color: 'text-green-400', bg: 'from-green-500/10 to-green-600/5' },
-            { label: 'Expiring Soon', count: stats.warning_count, color: 'text-yellow-400', bg: 'from-yellow-500/10 to-yellow-600/5' },
-            { label: 'Critical', count: stats.critical_count, color: 'text-red-400', bg: 'from-red-500/10 to-red-600/5' },
-            { label: 'Expired', count: stats.expired_count, color: 'text-gray-400', bg: 'from-gray-500/10 to-gray-600/5' },
+            { label: 'Active', count: stats.active_count, color: 'text-green-500', bg: 'from-green-500/10 to-green-600/5' },
+            { label: 'Expiring Soon', count: stats.warning_count, color: 'text-yellow-500', bg: 'from-yellow-500/10 to-yellow-600/5' },
+            { label: 'Critical', count: stats.critical_count, color: 'text-red-500', bg: 'from-red-500/10 to-red-600/5' },
+            { label: 'Expired', count: stats.expired_count, color: 'text-[var(--text-muted)]', bg: 'from-slate-500/10 to-slate-600/5' },
           ].map(card => (
             <div key={card.label} className={`bento-card !p-5 bg-gradient-to-br ${card.bg}`}>
               <div className={`text-3xl font-bold ${card.color} mb-1`}>{isLoading ? '—' : card.count}</div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-medium">{card.label}</div>
+              <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-medium">{card.label}</div>
             </div>
           ))}
         </div>
@@ -75,8 +75,8 @@ export default function Warranty() {
               onClick={() => setFilter(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 filter === tab
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/40 border border-blue-400/40'
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
+                  ? 'bg-[var(--accent-primary)] text-white shadow-sm border border-[var(--accent-primary)]'
+                  : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
               }`}
             >
               {tab === 'all' ? 'All' : STATUS_CONFIG[tab]?.label || tab}
@@ -87,29 +87,29 @@ export default function Warranty() {
         {/* Warranty Table (Responsive) */}
         <div className="bento-card !p-0 overflow-hidden bg-transparent border-none shadow-none">
           {isLoading ? (
-            <div className="bento-card p-12 text-center text-gray-500 bg-[#0a0a0a]">Loading warranty data...</div>
+            <div className="bento-card p-12 text-center text-[var(--text-muted)]">Loading warranty data...</div>
           ) : filteredItems.length === 0 ? (
-            <div className="bento-card p-12 text-center text-gray-500 bg-[#0a0a0a]">
+            <div className="bento-card p-12 text-center text-[var(--text-muted)]">
               <ShieldCheckIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>No warranty records found</p>
-              <p className="text-xs mt-1 text-gray-600">Warranty tracking starts when you sell products that have a warranty duration set</p>
+              <p className="text-xs mt-1 text-[var(--text-muted)]">Warranty tracking starts when you sell products that have a warranty duration set</p>
             </div>
           ) : (
             <>
               {/* Desktop View */}
-              <div className="hidden lg:block bento-card !p-0 overflow-hidden bg-[#0a0a0a]">
+              <div className="hidden lg:block bento-card !p-0 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="bg-white/[0.03] border-b border-white/10">
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Product</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Invoice</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Warranty Period</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Start</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">End</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Countdown</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                      <tr className="bg-[var(--bg-primary)]/50 border-b border-[var(--border-subtle)]">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Product</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Invoice</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Warranty Period</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Start</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">End</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Countdown</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -117,13 +117,13 @@ export default function Warranty() {
                         const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.active;
                         const Icon = cfg.icon;
                         return (
-                          <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                            <td className="px-6 py-4 text-white font-medium">{item.product_name}</td>
-                            <td className="px-6 py-4 text-gray-300">{item.customer_name}</td>
-                            <td className="px-6 py-4 text-gray-400 font-mono text-xs">{item.invoice_number}</td>
-                            <td className="px-6 py-4 text-gray-300">{item.warranty_months} months</td>
-                            <td className="px-6 py-4 text-gray-400">{item.warranty_start}</td>
-                            <td className="px-6 py-4 text-gray-400">{item.warranty_end}</td>
+                          <tr key={idx} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/40 transition-colors">
+                            <td className="px-6 py-4 text-[var(--text-primary)] font-medium">{item.product_name}</td>
+                            <td className="px-6 py-4 text-[var(--text-secondary)]">{item.customer_name}</td>
+                            <td className="px-6 py-4 text-[var(--text-muted)] font-mono text-xs">{item.invoice_number}</td>
+                            <td className="px-6 py-4 text-[var(--text-secondary)]">{item.warranty_months} months</td>
+                            <td className="px-6 py-4 text-[var(--text-muted)]">{item.warranty_start}</td>
+                            <td className="px-6 py-4 text-[var(--text-muted)]">{item.warranty_end}</td>
                             <td className="px-6 py-4">
                               <span className={`font-semibold ${cfg.color}`}>
                                 {item.countdown}
@@ -149,11 +149,11 @@ export default function Warranty() {
                   const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.active;
                   const Icon = cfg.icon;
                   return (
-                    <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 hover:bg-white/10 transition-all">
+                    <div key={idx} className="bento-card p-5 space-y-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="text-white font-bold text-lg mb-1">{item.product_name}</div>
-                          <div className="text-gray-400 text-sm">{item.customer_name}</div>
+                          <div className="text-[var(--text-primary)] font-bold text-lg mb-1">{item.product_name}</div>
+                          <div className="text-[var(--text-muted)] text-sm">{item.customer_name}</div>
                         </div>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.color}`}>
                           <Icon className="w-3 h-3" />
@@ -161,27 +161,27 @@ export default function Warranty() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
+                      <div className="grid grid-cols-2 gap-4 py-4 border-y border-[var(--border-subtle)]">
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Invoice</div>
-                          <div className="text-white font-mono text-xs">{item.invoice_number}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Invoice</div>
+                          <div className="text-[var(--text-primary)] font-mono text-xs">{item.invoice_number}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Period</div>
-                          <div className="text-white text-xs">{item.warranty_months} Months</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Period</div>
+                          <div className="text-[var(--text-primary)] text-xs">{item.warranty_months} Months</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Starts</div>
-                          <div className="text-gray-400 text-xs">{item.warranty_start}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Starts</div>
+                          <div className="text-[var(--text-secondary)] text-xs">{item.warranty_start}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Ends</div>
-                          <div className="text-gray-400 text-xs">{item.warranty_end}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Ends</div>
+                          <div className="text-[var(--text-secondary)] text-xs">{item.warranty_end}</div>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Remaining Time</div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Remaining Time</div>
                         <div className={`text-sm font-black ${cfg.color} tracking-tighter`}>{item.countdown}</div>
                       </div>
                     </div>
