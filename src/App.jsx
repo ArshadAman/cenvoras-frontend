@@ -80,6 +80,8 @@ import TrialBalance from './pages/TrialBalance'
 import GSTR3B from './pages/reports/GSTR3B'
 import BankReconciliation from './pages/financial/BankReconciliation'
 import ManualJournal from './pages/financial/ManualJournal'
+import ReAuthenticateModal from './components/auth/ReAuthenticateModal'
+import OfflineBanner from './components/common/OfflineBanner'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -116,6 +118,8 @@ function App() {
   return (
     <Router>
       <ToastContainer position="top-right" autoClose={3000} limit={2} pauseOnFocusLoss={false} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
+      <OfflineBanner />
+      <ReAuthenticateModal />
       <Routes>
         <Route
           path="/"

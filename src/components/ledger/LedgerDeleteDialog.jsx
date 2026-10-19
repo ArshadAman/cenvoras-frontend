@@ -147,18 +147,18 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
           <button
             type="button"
             onClick={onClose}
-            disabled={deleteEntryMutation.isLoading}
-            className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+            disabled={deleteEntryMutation.isPending}
+            className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium active:scale-[0.98]"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleDelete}
-            disabled={deleteEntryMutation.isLoading || isDebitEntry}
-            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={deleteEntryMutation.isPending || isDebitEntry}
+            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] cursor-pointer"
           >
-            {deleteEntryMutation.isLoading ? (
+            {deleteEntryMutation.isPending ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

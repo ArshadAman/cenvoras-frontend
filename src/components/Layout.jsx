@@ -40,9 +40,11 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   ArrowRightOnRectangleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
+import CommandPalette from './common/CommandPalette';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
@@ -73,6 +75,20 @@ export default function Layout({ children, onLogout }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Keyboard shortcut Ctrl+K or Cmd+K to toggle Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -440,6 +456,26 @@ export default function Layout({ children, onLogout }) {
           )}
         </div>
         
+        {/* Quick Search / Command Palette Trigger */}
+        <div className={`pt-3 pb-1 shrink-0 ${isSidebarCollapsed ? 'px-2 flex justify-center' : 'px-3.5'}`}>
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className={`flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20 transition-all text-xs font-medium cursor-pointer ${
+              isSidebarCollapsed ? 'p-2 justify-center w-full' : 'w-full px-3 py-2 justify-between'
+            }`}
+            title="Quick Search & Actions (⌘K / Ctrl+K)"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <MagnifyingGlassIcon className="w-4 h-4 text-cyan-400 shrink-0" />
+              {!isSidebarCollapsed && <span>Quick Search...</span>}
+            </div>
+            {!isSidebarCollapsed && (
+              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-gray-300 border border-white/10">⌘K</kbd>
+            )}
+          </button>
+        </div>
+
         {/* Navigation — scrollable middle section */}
         <nav className={`flex-1 min-h-0 py-4 space-y-4 overflow-y-auto custom-scrollbar transition-all duration-300 ${
           isSidebarCollapsed ? 'px-2' : 'px-3.5'
@@ -699,16 +735,27 @@ export default function Layout({ children, onLogout }) {
             <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
           </Link>
           
-          <span
-            className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-              isVipAccess
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                : 'bg-white/10 text-gray-300 border-white/10'
-            }`}
-            title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
-          >
-            {isVipAccess ? 'VIP' : displayPlanName}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Search commands (⌘K)"
+              aria-label="Search commands"
+            >
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-300" />
+            </button>
+            <span
+              className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
+                isVipAccess
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                  : 'bg-white/10 text-gray-300 border-white/10'
+              }`}
+              title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
+            >
+              {isVipAccess ? 'VIP' : displayPlanName}
+            </span>
+          </div>
         </header>
 
         {/* Mobile Menu Overlay */}
@@ -980,6 +1027,11 @@ export default function Layout({ children, onLogout }) {
           onClose={() => setShowOnboarding(false)} 
         />
       )}
+
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
     </div>
   );
 }

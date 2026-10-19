@@ -47,14 +47,19 @@ export default function StockAdjustmentModal({ product, onClose }) {
     notes: "",
   };
 
-  const handleSubmit = (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     const adjustmentData = {
       ...values,
       quantity: parseFloat(values.quantity),
     };
 
-    stockAdjustmentMutation.mutate(adjustmentData);
-    setSubmitting(false);
+    try {
+      await stockAdjustmentMutation.mutateAsync(adjustmentData);
+    } catch {
+      // handled in onError
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getNewStockLevel = (adjustmentType, quantity, currentStock) => {
@@ -209,10 +214,10 @@ export default function StockAdjustmentModal({ product, onClose }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || stockAdjustmentMutation.isLoading}
-                  className="btn-primary py-2 px-6 shadow-lg shadow-purple-500/20"
+                  disabled={isSubmitting || stockAdjustmentMutation.isPending}
+                  className="btn-primary py-2 px-6 shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 >
-                  {isSubmitting || stockAdjustmentMutation.isLoading
+                  {isSubmitting || stockAdjustmentMutation.isPending
                     ? "Saving..."
                     : "Confirm Adjustment"}
                 </button>

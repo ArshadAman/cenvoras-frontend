@@ -343,8 +343,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
               <button
                 type="button"
                 onClick={handleBulkConvert}
-                disabled={bulkConvertMutation.isLoading || bulkDeleteMutation.isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                disabled={bulkConvertMutation.isPending || bulkDeleteMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                 title="Convert selected delivery challans into a single consolidated Sales Invoice"
               >
                 <CurrencyRupeeIcon className="w-4 h-4" />
@@ -354,8 +354,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
               <button
                 type="button"
                 onClick={handleBulkDelete}
-                disabled={bulkDeleteMutation.isLoading || bulkConvertMutation.isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+                disabled={bulkDeleteMutation.isPending || bulkConvertMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-rose-500/20 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                 title="Bulk delete selected delivery challans and restore inventory"
               >
                 <TrashIcon className="w-4 h-4" />

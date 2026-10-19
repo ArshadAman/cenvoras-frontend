@@ -4,9 +4,10 @@ import { getVendors, deleteVendor } from "../../api/vendors";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import { EyeIcon, PencilSquareIcon, TrashIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilSquareIcon, TrashIcon, ArrowTopRightOnSquareIcon, BuildingStorefrontIcon } from "@heroicons/react/24/outline";
+import EmptyState from "../common/EmptyState";
 
-export default function VendorTable({ onEdit, onView, onDelete }) {
+export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -282,8 +283,14 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
           <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
             {vendors.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-white font-bold drop-shadow-lg">
-                  No vendors found
+                <td colSpan="6" className="p-0">
+                  <EmptyState
+                    icon={BuildingStorefrontIcon}
+                    title={search ? "No vendors match your search" : "No vendors registered yet"}
+                    description={search ? `No vendor records matched "${search}". Try adjusting your keywords.` : "Keep your supplier relationships and purchase orders organized in one place."}
+                    actionLabel={!search && onAddNewVendor ? "Add First Vendor" : undefined}
+                    onAction={!search && onAddNewVendor ? onAddNewVendor : undefined}
+                  />
                 </td>
               </tr>
             ) : (
@@ -487,12 +494,13 @@ export default function VendorTable({ onEdit, onView, onDelete }) {
 
         {/* No data message for mobile */}
         {!isLoading && vendors.length === 0 && (
-          <div className="p-8 text-center text-white/80">
-            <p>No vendors found.</p>
-            <p className="text-sm mt-2">
-              Click "Add Vendor" to create your first vendor.
-            </p>
-          </div>
+          <EmptyState
+            icon={BuildingStorefrontIcon}
+            title={search ? "No matching vendors" : "No vendors yet"}
+            description={search ? `No results for "${search}".` : "Add suppliers to track purchases and payables."}
+            actionLabel={!search && onAddNewVendor ? "Add Vendor" : undefined}
+            onAction={!search && onAddNewVendor ? onAddNewVendor : undefined}
+          />
         )}
       </div>
 

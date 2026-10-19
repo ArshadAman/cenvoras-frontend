@@ -76,11 +76,9 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh')
       
       if (!refreshToken) {
-        console.warn('No refresh token available, redirecting to login');
-        localStorage.removeItem('token');
-        localStorage.removeItem('activeSession');
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-            window.location.href = '/login';
+        console.warn('No refresh token available');
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+          window.dispatchEvent(new CustomEvent('cenvora:auth_expired'));
         }
         return Promise.reject(error);
       }
@@ -96,11 +94,8 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch (err) {
         processQueue(err, null)
-        localStorage.removeItem('token')
-        localStorage.removeItem('refresh')
-        localStorage.removeItem('activeSession')
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-            window.location.href = '/login'
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+          window.dispatchEvent(new CustomEvent('cenvora:auth_expired'));
         }
         return Promise.reject(err)
       } finally {
@@ -110,5 +105,15 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('cenvora:auth_recovered', (e) => {
+    const newToken = e?.detail?.token;
+    if (newToken) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      processQueue(null, newToken);
+    }
+  });
+}
 
 export default api
