@@ -68,22 +68,22 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
     }
   };
 
-  const inputClass = "w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm";
-  const selectClass = "w-full px-4 py-2 bg-[#111116] border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm appearance-none";
+  const inputClass = "w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm";
+  const selectClass = "w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm appearance-none cursor-pointer";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111116] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl animate-fade-up">
-        <div className="flex justify-between items-center p-5 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">{initialData ? 'Edit Assignment' : 'New Assignment'}</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white transition">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-lg shadow-2xl animate-fade-up">
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-default)]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{initialData ? 'Edit Assignment' : 'New Assignment'}</h2>
+          <button type="button" onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Employee *</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Employee *</label>
             <select required name="employee" value={form.employee} onChange={handleChange} className={selectClass} disabled={!!initialData}>
               <option value="">Select Employee</option>
               {employees.map(emp => (
@@ -93,7 +93,7 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Salary Structure *</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Salary Structure *</label>
             <select required name="salary_structure" value={form.salary_structure} onChange={handleChange} className={selectClass}>
               <option value="">Select Structure</option>
               {structures.map(st => (
@@ -103,12 +103,12 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Effective From *</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Effective From *</label>
             <input required type="date" name="effective_from" value={form.effective_from} onChange={handleChange} className={inputClass} />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Monthly CTC (₹) *</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Monthly CTC (₹) *</label>
             <input required type="number" step="0.01" name="monthly_ctc" value={form.monthly_ctc} onChange={handleChange} className={inputClass} placeholder="e.g. 50000" />
           </div>
 
@@ -143,15 +143,15 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
             }
 
             return (
-              <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-2">
-                <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">Estimated Component Breakdown</p>
+              <div className="p-4 rounded-xl border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/5 space-y-2">
+                <p className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Estimated Component Breakdown</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {previewRows.map((r, i) => (
-                    <div key={i} className="flex justify-between p-2 rounded bg-black/30 border border-white/5">
-                      <span className={r.type === 'deduction' ? 'text-red-300' : 'text-gray-300'}>
+                    <div key={i} className="flex justify-between p-2 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                      <span className={r.type === 'deduction' ? 'text-rose-500' : 'text-[var(--text-secondary)]'}>
                         {r.name} {r.type === 'deduction' ? '(-)' : ''}
                       </span>
-                      <span className="font-semibold text-white">₹{r.amount.toFixed(2)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">₹{r.amount.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -159,11 +159,11 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
             );
           })()}
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-white/10">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+          <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
+            <button type="button" onClick={onClose} className="btn-secondary !text-sm">
               Cancel
             </button>
-            <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-950 bg-indigo-400 rounded-xl hover:bg-indigo-300 disabled:opacity-50 transition">
+            <button type="submit" disabled={saving} className="btn-primary !text-sm">
               {saving ? 'Saving...' : 'Save Assignment'}
             </button>
           </div>

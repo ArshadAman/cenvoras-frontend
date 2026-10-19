@@ -102,7 +102,7 @@ export default function DateInputField({
         disabled={disabled}
         required={required}
         autoComplete="off"
-        className={`w-full bg-[#111] border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all ${className}`}
+        className={`w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl pl-4 pr-10 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all ${className}`}
       />
 
       {/* Calendar Icon Button */}
@@ -111,7 +111,7 @@ export default function DateInputField({
         tabIndex={-1}
         onClick={triggerPicker}
         disabled={disabled}
-        className="absolute right-2.5 p-1 rounded-lg text-gray-400 hover:text-cyan-400 hover:bg-white/5 transition-colors focus:outline-none"
+        className="absolute right-2.5 p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors focus:outline-none cursor-pointer"
         title="Open calendar"
       >
         <CalendarIcon className="w-5 h-5" />

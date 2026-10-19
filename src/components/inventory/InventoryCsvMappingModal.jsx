@@ -246,22 +246,22 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-950/40 border border-white/10 animate-fade-up">
+      <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up">
         {/* Header */}
-        <div className="flex justify-between items-center p-5 sm:p-6 border-b border-white/10 bg-white/[0.04]">
+        <div className="flex justify-between items-center p-5 sm:p-6 border-b border-[var(--border-default)] bg-[var(--bg-primary)]/40">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
-              <TableCellsIcon className="w-6 h-6 text-cyan-400" />
+            <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
+              <TableCellsIcon className="w-6 h-6 text-[var(--accent-primary)]" />
               Configure CSV Import Specifications
             </h2>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
               Select which row contains column headers, and map your CSV columns to Cenvora inventory fields.
             </p>
           </div>
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors disabled:opacity-50 cursor-pointer"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -273,7 +273,7 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
             <p className="text-sm text-rose-300 font-medium">{parseError}</p>
             <button
               onClick={onClose}
-              className="px-5 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 text-xs font-semibold"
+              className="btn-secondary !text-xs"
             >
               Close
             </button>
@@ -282,12 +282,12 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
           <div className="p-6 md:p-8 space-y-8">
             {/* Step 1: Header Row Selector & Raw Preview */}
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--bg-primary)]/40 border border-[var(--border-default)] p-4 rounded-2xl">
                 <div>
-                  <label className="text-xs font-semibold text-white uppercase tracking-wider block">
+                  <label className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider block">
                     1. Which row contains your column headers?
                   </label>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                     Data rows above the header row will be excluded from the import.
                   </p>
                 </div>
@@ -295,7 +295,7 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                   <select
                     value={headerRowIndex}
                     onChange={(e) => setHeaderRowIndex(Number(e.target.value))}
-                    className="bg-[#111] border border-cyan-500/40 text-cyan-300 font-semibold rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    className="bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] font-semibold rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[var(--accent-primary)]"
                   >
                     {rawRows.slice(0, 10).map((_, idx) => (
                       <option key={idx} value={idx}>
@@ -307,10 +307,10 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
               </div>
 
               {/* Preview Table */}
-              <div className="border border-white/10 rounded-xl overflow-hidden bg-black/40">
-                <div className="px-4 py-2 bg-white/[0.02] border-b border-white/5 text-[11px] font-medium text-gray-400 flex justify-between">
+              <div className="border border-[var(--border-default)] rounded-xl overflow-hidden bg-[var(--bg-primary)]/30">
+                <div className="px-4 py-2 bg-[var(--bg-primary)]/60 border-b border-[var(--border-subtle)] text-[11px] font-medium text-[var(--text-secondary)] flex justify-between">
                   <span>File Preview (First 5 Rows):</span>
-                  <span className="text-cyan-400 font-semibold">Row {headerRowIndex + 1} selected as Headers</span>
+                  <span className="text-[var(--accent-primary)] font-semibold">Row {headerRowIndex + 1} selected as Headers</span>
                 </div>
                 <div className="overflow-x-auto max-h-48 text-xs font-mono">
                   <table className="w-full border-collapse">
@@ -320,16 +320,16 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                         return (
                           <tr 
                             key={rIdx}
-                            className={`border-b border-white/5 transition-colors ${
-                              isHeader ? 'bg-cyan-500/15 text-cyan-200 font-bold' : 'hover:bg-white/[0.02] text-gray-300'
+                            className={`border-b border-[var(--border-subtle)] transition-colors ${
+                              isHeader ? 'bg-[var(--accent-primary)]/15 text-[var(--text-primary)] font-bold' : 'hover:bg-[var(--bg-surface)]/60 text-[var(--text-secondary)]'
                             }`}
                           >
-                            <td className="p-2 px-3 text-gray-500 text-[10px] w-12 border-r border-white/5">
+                            <td className="p-2 px-3 text-[var(--text-muted)] text-[10px] w-12 border-r border-[var(--border-subtle)]">
                               #{rIdx + 1}
                             </td>
                             {row.map((cell, cIdx) => (
-                              <td key={cIdx} className="p-2 px-3 whitespace-nowrap max-w-[200px] truncate border-r border-white/5">
-                                {cell || <span className="text-gray-600 italic">empty</span>}
+                              <td key={cIdx} className="p-2 px-3 whitespace-nowrap max-w-[200px] truncate border-r border-[var(--border-subtle)]">
+                                {cell || <span className="text-[var(--text-muted)] italic">empty</span>}
                               </td>
                             ))}
                           </tr>
@@ -343,10 +343,10 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
 
             {/* Step 2: Column Mapping Grid */}
             <div className="space-y-4">
-              <div className="border-b border-white/10 pb-2">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center justify-between">
+              <div className="border-b border-[var(--border-default)] pb-2">
+                <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center justify-between">
                   <span>2. Map CSV Columns to Cenvora Fields</span>
-                  <span className="text-xs text-gray-400 font-normal normal-case">
+                  <span className="text-xs text-[var(--text-secondary)] font-normal normal-case">
                     Fields marked with <span className="text-rose-400 font-bold">*</span> are required
                   </span>
                 </h3>
@@ -362,14 +362,14 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                       key={field.key}
                       className={`p-3.5 rounded-xl border transition-all ${
                         isMapped 
-                          ? 'border-cyan-500/30 bg-cyan-950/10' 
+                          ? 'border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/5' 
                           : field.required 
-                          ? 'border-rose-500/30 bg-rose-950/5' 
-                          : 'border-white/10 bg-white/[0.02]'
+                          ? 'border-rose-500/30 bg-rose-500/5' 
+                          : 'border-[var(--border-default)] bg-[var(--bg-primary)]/30'
                       }`}
                     >
                       <div className="flex justify-between items-center mb-1.5">
-                        <label className="text-xs font-semibold text-white flex items-center gap-1">
+                        <label className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1">
                           {field.label}
                           {field.required && <span className="text-rose-400">*</span>}
                         </label>
@@ -380,14 +380,14 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                         ) : field.required ? (
                           <span className="text-[10px] font-medium text-rose-400">Required</span>
                         ) : (
-                          <span className="text-[10px] text-gray-500">Optional</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">Optional</span>
                         )}
                       </div>
 
                       <select
                         value={mappedIndex ?? ''}
                         onChange={(e) => handleMappingChange(field.key, e.target.value)}
-                        className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-400 font-medium"
+                        className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                       >
                         <option value="">-- Do not import / None --</option>
                         {availableHeaders.map((header) => (
@@ -404,18 +404,18 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
 
             {/* Progress indicator */}
             {isSubmitting && (
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-white/10 space-y-2">
+              <div className="bg-[var(--bg-primary)]/80 p-4 rounded-xl border border-[var(--border-default)] space-y-2">
                 <InlineProgressBar value={uploadProgress} label="Normalizing and uploading products..." />
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex justify-between items-center pt-4 border-t border-white/10">
+            <div className="flex justify-between items-center pt-4 border-t border-[var(--border-default)]">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 text-gray-300 hover:text-white hover:bg-white/5 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                className="btn-secondary !text-xs !py-2.5 !px-5"
               >
                 Cancel
               </button>
@@ -424,7 +424,7 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                 type="button"
                 onClick={handleImport}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 cursor-pointer active:scale-95"
+                className="btn-primary !text-xs !py-2.5 !px-6 flex items-center gap-2"
               >
                 <span>{isSubmitting ? 'Importing...' : 'Confirm Mapping & Import'}</span>
                 {!isSubmitting && <ArrowRightIcon className="w-4 h-4" />}

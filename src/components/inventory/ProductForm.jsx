@@ -140,7 +140,7 @@ function FormattedDateInput({ value, onChange, className }) {
       <button
         type="button"
         onClick={() => hiddenDateRef.current?.showPicker ? hiddenDateRef.current.showPicker() : hiddenDateRef.current?.focus()}
-        className="absolute right-3 p-1 text-gray-400 hover:text-cyan-400 transition-colors"
+        className="absolute right-3 p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors"
         title="Open calendar"
       >
         <CalendarIcon className="w-5 h-5" />
@@ -285,7 +285,7 @@ function ManufacturerCombobox({ value, onChange, options, inputClass, labelClass
                 onChange(item);
                 setIsOpen(false);
               }}
-              className="cursor-pointer rounded px-2.5 py-1.5 text-white/90 hover:bg-cyan-500/20 hover:text-cyan-300 transition"
+              className="cursor-pointer rounded px-2.5 py-1.5 text-[var(--text-primary)] hover:bg-[var(--accent-primary)]/15 hover:text-[var(--accent-primary)] transition"
             >
               {item}
             </li>
@@ -546,7 +546,7 @@ export default function ProductForm({ product, onClose }) {
                     <button
                       type="button"
                       onClick={() => setIsCustomUnit(!isCustomUnit)}
-                      className="text-[10px] text-cyan-400 hover:text-cyan-300 transition underline"
+                      className="text-[10px] text-[var(--accent-primary)] hover:underline transition font-medium"
                     >
                       {isCustomUnit ? "Predefined" : "+ Custom"}
                     </button>
@@ -579,13 +579,13 @@ export default function ProductForm({ product, onClose }) {
                           }
                         }}
                       >
-                        <option value="">Select Unit</option>
+                        <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Select Unit</option>
                         {availableUnits.map((u) => (
-                          <option key={u} value={u} className="bg-gray-800 text-white">
+                          <option key={u} value={u} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">
                             {u.toUpperCase()}
                           </option>
                         ))}
-                        <option value="__add_custom__" className="bg-gray-800 text-cyan-400 font-semibold">
+                        <option value="__add_custom__" className="bg-[var(--bg-primary)] text-[var(--accent-primary)] font-semibold">
                           + Custom Unit...
                         </option>
                       </select>
@@ -715,18 +715,18 @@ export default function ProductForm({ product, onClose }) {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="flex justify-end gap-3 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-sm text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium hover:bg-[var(--bg-primary)] rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                  className="px-5 py-2 text-sm bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold rounded-lg transition-colors disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-500/20"
+                  className="btn-primary text-sm font-semibold cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting || createMutation.isPending || updateMutation.isPending
                     ? "Saving..."
