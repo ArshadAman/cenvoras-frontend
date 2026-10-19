@@ -409,7 +409,7 @@ export default function Layout({ children, onLogout }) {
             <div className="flex items-center justify-between w-full gap-2 overflow-hidden">
               <Link to="/" className="flex items-center min-w-0" title="Cenvora Home">
                 <BrandLogo 
-                  className="w-[145px] h-auto object-contain transform origin-left transition-transform duration-300" 
+                  className="h-11 sm:h-12 w-auto object-contain transform origin-left transition-transform duration-300" 
                 />
               </Link>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -439,7 +439,7 @@ export default function Layout({ children, onLogout }) {
               <Link to="/" className="flex items-center justify-center hover:opacity-80 transition-opacity" title="Cenvora Home">
                 <BrandLogo 
                   iconOnly
-                  className="w-8 h-8 rounded-lg object-contain shadow-sm border border-[var(--border-default)]" 
+                  className="w-11 h-11 p-0.5 rounded-xl object-contain transition-transform hover:scale-105" 
                 />
               </Link>
               <button
@@ -736,7 +736,7 @@ export default function Layout({ children, onLogout }) {
           </button>
           
           <Link to="/" className="flex items-center">
-            <BrandLogo className="w-[140px] h-auto object-contain" />
+            <BrandLogo className="h-9 sm:h-10 w-auto object-contain" />
           </Link>
           
           <div className="flex items-center gap-2">
@@ -778,7 +778,7 @@ export default function Layout({ children, onLogout }) {
             }`}
           >
             <div className="h-20 flex items-center justify-between px-6 border-b border-[var(--border-default)]">
-              <BrandLogo className="w-[140px] h-auto object-contain" />
+              <BrandLogo className="h-10 sm:h-11 w-auto object-contain" />
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"

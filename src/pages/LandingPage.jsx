@@ -715,7 +715,7 @@ export default function LandingPage() {
           {/* Col 1: Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-3">
-              <BrandLogo className="h-6 w-auto" />
+              <BrandLogo className="h-9 sm:h-10 w-auto" />
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
               Simple business software. GST billing, inventory, and customer management for Indian businesses.

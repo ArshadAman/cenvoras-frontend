@@ -96,7 +96,7 @@ export default function Login({ onLogin }) {
           {/* Top Brand Tagline */}
           <div className="relative z-10">
             <Link to="/" className="inline-flex items-center gap-2 hover:opacity-90 transition-opacity">
-              <BrandLogo className="h-8 w-auto" />
+              <BrandLogo className="h-12 sm:h-14 w-auto" />
             </Link>
             <div className="mt-8">
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--accent-primary)] text-xs font-semibold mb-3">
@@ -139,7 +139,7 @@ export default function Login({ onLogin }) {
             {/* Mobile Header */}
             <div className="lg:hidden text-center mb-8">
               <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
-                <BrandLogo className="h-8 w-auto mx-auto" />
+                <BrandLogo className="h-10 sm:h-11 w-auto mx-auto" />
               </Link>
               <h2 className="text-xl font-bold text-[var(--text-primary)]">Sign in to Cenvora</h2>
             </div>
