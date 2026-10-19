@@ -374,7 +374,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between border-b border-white/10 pb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">Earnings Breakdown</span>
-                    <span className="text-xs text-gray-500">Monthly</span>
+                    <span className="text-xs text-slate-400">Monthly</span>
                   </div>
                   {(() => {
                     const seen = new Set();
@@ -411,7 +411,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                 <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between border-b border-white/10 pb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">Deductions Breakdown</span>
-                    <span className="text-xs text-gray-500">Monthly</span>
+                    <span className="text-xs text-slate-400">Monthly</span>
                   </div>
                   <div className="flex justify-between text-xs py-1 border-b border-white/5">
                     <span className="text-gray-400">Provident Fund (PF)</span>
@@ -501,7 +501,7 @@ function SalaryHistoryModal({ isOpen, onClose, employee }) {
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-gray-400 line-through">₹{parseFloat(item.previous_salary).toLocaleString('en-IN')}</span>
-                    <span className="text-gray-500">→</span>
+                    <span className="text-slate-400 font-bold">→</span>
                     <span className="text-emerald-400 font-bold">₹{parseFloat(item.new_salary).toLocaleString('en-IN')}</span>
                   </div>
                   <p className="text-xs text-gray-300 pt-1">Reason: {item.reason}</p>
@@ -610,7 +610,7 @@ export default function Employees() {
                             {parseFloat(emp.current_ctc || 0) > 0 ? (
                               `₹${parseFloat(emp.current_ctc).toLocaleString('en-IN')}`
                             ) : (
-                              <span className="text-gray-500 font-normal text-xs">Not Set</span>
+                              <span className="text-slate-400 font-normal text-xs">Not Set</span>
                             )}
                           </span>
                           <button

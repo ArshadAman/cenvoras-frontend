@@ -362,61 +362,61 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border-separate border-spacing-y-2">
           <thead>
-            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
-              <th className="text-left py-3 px-4 rounded-l-lg">
+            <tr className="bg-obsidian-card border-b border-hairline">
+              <th className="text-left py-3.5 px-4 rounded-l-lg">
                 <input
                   type="checkbox"
                   checked={filteredBills.length > 0 && selectedBills.size === filteredBills.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                  className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
                 />
               </th>
               <th 
                 onClick={() => handleSort("bill_number")} 
-                className="text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="text-left py-3.5 px-4 font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none text-xs uppercase tracking-wider"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Bill Number</span>
                   {sortConfig.key === "bill_number" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("bill_date")} 
-                className="text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="text-left py-3.5 px-4 font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none text-xs uppercase tracking-wider"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Bill Date</span>
                   {sortConfig.key === "bill_date" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("vendor_name")} 
-                className="text-left py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="text-left py-3.5 px-4 font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none text-xs uppercase tracking-wider"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Vendor</span>
                   {sortConfig.key === "vendor_name" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Items</th>
+              <th className="text-left py-3.5 px-4 font-semibold text-slate-300 text-xs uppercase tracking-wider">Items</th>
               <th 
                 onClick={() => handleSort("total_amount")} 
-                className="text-right py-3 px-4 font-black text-white drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="text-right py-3.5 px-4 font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none text-xs uppercase tracking-wider"
               >
                 <div className="flex items-center justify-end gap-1.5">
                   <span>Total Amount</span>
                   {sortConfig.key === "total_amount" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
+              <th className="text-center py-3.5 px-4 rounded-r-lg font-semibold text-slate-300 text-xs uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -444,13 +444,13 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
                       />
                     </td>
-                    <td className="py-3 px-4 font-semibold text-white drop-shadow-lg">
+                    <td className="py-3 px-4 font-semibold text-white">
                       {bill.bill_number}
                     </td>
-                    <td className="py-3 px-4 text-white drop-shadow-lg">
+                    <td className="py-3 px-4 text-slate-200">
                       {bill.bill_date ? format(new Date(bill.bill_date), 'dd/MM/yyyy') : '-'}
                     </td>
-                    <td className="py-3 px-4 text-white drop-shadow-lg">{bill.vendor_name}</td>
+                    <td className="py-3 px-4 text-white font-medium">{bill.vendor_name}</td>
                     <td className="py-3 px-4">
                       {bill.items && bill.items.length > 0 ? (
                         <div className="flex items-center gap-2">
@@ -475,15 +475,15 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                             </span>
                           )}
                           {/* Total items indicator */}
-                          <span className="text-[10px] text-gray-500 ml-1">
+                          <span className="text-[11px] text-slate-400 font-medium ml-1">
                             ({bill.items.length} items)
                           </span>
                         </div>
                       ) : (
-                        <span className="text-gray-500 text-xs italic">No items</span>
+                        <span className="text-slate-400 text-xs italic">No items</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
+                    <td className="py-3 px-4 text-right font-bold text-white tabular-nums">
                       {getCurrencySymbol()}{Number(bill.total_amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -493,7 +493,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
-                          className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 transition-all drop-shadow"
+                          className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/20 hover:text-sky-300 hover:border-sky-500/40 transition-all"
                           onClick={() => onView(bill.id)}
                           title="View Purchase Bill"
                           aria-label="View Purchase Bill"
@@ -502,10 +502,10 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         </button>
                         <button
                           type="button"
-                          className={`p-1.5 rounded-lg transition-all drop-shadow border ${
+                          className={`p-1.5 rounded-lg transition-all border ${
                             canEditBill(bill)
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40'
-                              : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-40'
+                              : 'bg-white/5 text-slate-500 border-white/5 cursor-not-allowed opacity-60'
                           }`}
                           onClick={() => {
                             if (canEditBill(bill)) {
@@ -520,7 +520,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         </button>
                         <button
                           type="button"
-                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all drop-shadow"
+                          className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 transition-all"
                           onClick={() => onDelete(bill.id)}
                           title="Delete Purchase Bill"
                           aria-label="Delete Purchase Bill"
@@ -542,7 +542,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               ? data.length === 0
               : ((!data.data || data.data.length === 0) &&
                   (!data.results || data.results.length === 0)))) && (
-          <div className="p-8 text-center text-white/80 drop-shadow-lg">
+          <div className="p-8 text-center text-slate-400 font-medium">
             <p>No purchase bills found.</p>
             <p className="text-sm mt-2">
               Click "New Purchase" to create your first purchase bill.

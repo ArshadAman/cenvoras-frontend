@@ -223,7 +223,7 @@ export default function Signup() {
     setLoading(false);
   };
 
-  const fieldClass = "w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-500 text-sm transition-all";
+  const fieldClass = "w-full px-4 py-3 bg-obsidian-card border border-hairline rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-400 text-sm transition-all";
   const fieldErr = (name) => formErrors[name] ? 'border-rose-500/70 focus:border-rose-400 focus:ring-rose-400' : '';
 
   return (
@@ -298,16 +298,16 @@ export default function Signup() {
                   <div id="googleSignUpDiv" className="w-full flex justify-center min-h-[40px]" />
                   <div className="relative my-4">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-800" />
+                      <div className="w-full border-t border-hairline" />
                     </div>
-                    <div className="relative flex justify-center text-[11px] text-slate-500">
+                    <div className="relative flex justify-center text-[11px] text-slate-400 font-medium">
                       <span className="bg-slate-900/50 px-3">or sign up with email</span>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowManualForm(true)}
-                    className="w-full py-3.5 bg-slate-950/80 border border-slate-800 hover:bg-slate-800 text-white font-medium text-xs rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95"
+                    className="w-full py-3.5 bg-obsidian-card border border-hairline hover:bg-obsidian-elevated text-white font-medium text-xs rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95"
                   >
                     <span>Continue with email</span>
                     <ArrowRightIcon className="w-3.5 h-3.5 text-slate-400" />
@@ -319,7 +319,7 @@ export default function Signup() {
               {otpRequested && (
                 <div className="space-y-4">
                   {signupMessage && (
-                    <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300">
+                    <div className="p-3.5 bg-slate-950 border border-hairline rounded-xl text-xs text-slate-300">
                       {signupMessage}
                     </div>
                   )}
@@ -357,11 +357,11 @@ export default function Signup() {
                         <React.Fragment key={label}>
                           <div className="flex flex-col items-center gap-1">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                              isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-500'
+                              isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400'
                             }`}>
                               {isDone ? '✓' : s}
                             </div>
-                            <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-white' : isDone ? 'text-emerald-400' : 'text-slate-600'}`}>
+                            <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-white' : isDone ? 'text-emerald-400' : 'text-slate-400'}`}>
                               {label}
                             </span>
                           </div>
@@ -399,7 +399,7 @@ export default function Signup() {
                           <button
                             type="button"
                             onClick={() => setShowPw(v => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
                           >
                             {showPw ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                           </button>
@@ -418,7 +418,7 @@ export default function Signup() {
                           <button
                             type="button"
                             onClick={() => setShowConfirmPw(v => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
                           >
                             {showConfirmPw ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                           </button>
@@ -435,7 +435,7 @@ export default function Signup() {
                       <button
                         type="button"
                         onClick={() => { setShowManualForm(false); setFormErrors({}); }}
-                        className="w-full text-xs text-slate-500 hover:text-slate-300 flex items-center justify-center gap-1 transition-colors pt-1"
+                        className="w-full text-xs text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1 transition-colors pt-1"
                       >
                         <ArrowLeftIcon className="w-3 h-3" /> Back to Google sign-up
                       </button>
@@ -521,7 +521,7 @@ export default function Signup() {
                         />
                       </InputField>
 
-                      <p className="text-[11px] text-slate-500">You can add this later from your profile settings.</p>
+                      <p className="text-[11px] text-slate-400">You can add this later from your profile settings.</p>
 
                       <div className="pt-1">
                         <label className="flex items-start gap-3 cursor-pointer group">
@@ -532,7 +532,7 @@ export default function Signup() {
                               onChange={e => setField('termsAccepted', e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-4 h-4 rounded border border-slate-700 bg-slate-950 peer-checked:bg-sky-500 peer-checked:border-sky-500 transition-all flex items-center justify-center">
+                            <div className="w-4 h-4 rounded border border-hairline bg-obsidian-card peer-checked:bg-sky-500 peer-checked:border-sky-500 transition-all flex items-center justify-center">
                               {formData.termsAccepted && (
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 12 12">
                                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -573,7 +573,7 @@ export default function Signup() {
                 </div>
               )}
 
-              <div className="mt-8 pt-6 border-t border-slate-800/80 text-center text-xs text-slate-400">
+              <div className="mt-8 pt-6 border-t border-hairline text-center text-xs text-slate-400">
                 Already have an account?{' '}
                 <Link to="/login" className="text-white font-semibold hover:text-sky-300 transition-colors">
                   Sign in
@@ -581,7 +581,7 @@ export default function Signup() {
               </div>
             </div>
 
-            <div className="mt-8 text-center text-xs text-slate-500">
+            <div className="mt-8 text-center text-xs text-slate-400">
               <Link to="/" className="hover:text-slate-300 transition-colors">
                 ← Back to Cenvora homepage
               </Link>

@@ -172,24 +172,24 @@ const ProfessionalTemplate = forwardRef(({
           </h2>
           <div className="grid grid-cols-2 gap-3 text-left ml-auto max-w-sm border border-gray-200 p-3 bg-gray-50/50 rounded-lg">
             <div>
-              <p className="text-xs text-gray-500 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan No' : 'Invoice No'}</p>
+              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan No' : 'Invoice No'}</p>
               <p className="font-bold text-gray-900">{isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
+              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
               <p className="font-bold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</p>
             </div>
             {isDeliveryChallan ? (
               <>
                 {(invoice.sales_order_number || invoice.po_number) && (
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Ref Order / PO</p>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">Ref Order / PO</p>
                     <p className="font-bold text-gray-900">{invoice.sales_order_number || invoice.po_number}</p>
                   </div>
                 )}
                 {invoice.vehicle_number && (
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Vehicle No</p>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">Vehicle No</p>
                     <p className="font-mono font-bold text-gray-900">{invoice.vehicle_number}</p>
                   </div>
                 )}
@@ -198,13 +198,13 @@ const ProfessionalTemplate = forwardRef(({
               <>
                 {(invoice.po_number || invoice.sales_order_number) && (
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-0.5">PO / Order No</p>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">PO / Order No</p>
                     <p className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
                   </div>
                 )}
                 {(invoice.delivery_challan_number || invoice.challan_number) && (
                   <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Challan No</p>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">Challan No</p>
                     <p className="font-bold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</p>
                   </div>
                 )}
@@ -279,17 +279,17 @@ const ProfessionalTemplate = forwardRef(({
                       <div className="leading-tight py-0">
                         <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                         {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                          <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                          <div className="text-[10px] text-gray-700 font-medium italic mt-0.5">
                             Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                           </div>
                         )}
                         {desc && (
-                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-[10px] text-gray-700 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
                         {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                          <div className="text-[10px] text-gray-700 mt-0.5 font-medium">
                             {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                             {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                             {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -350,7 +350,7 @@ const ProfessionalTemplate = forwardRef(({
           <div className="w-1/2 pr-8">
             {sections.showBankDetails && hasBankDetails && (
                <div className="mb-6">
-                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-500">Bank & Payment Details</p>
+                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-700">Bank & Payment Details</p>
                   <div className="text-xs text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-start justify-between gap-4">
                     <div className="space-y-0.5">
                       {bankName && <p><span className="font-semibold w-16 inline-block">Bank:</span> {bankName}</p>}
@@ -366,7 +366,7 @@ const ProfessionalTemplate = forwardRef(({
                           alt="Payment QR" 
                           className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
                         />
-                        <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                        <span className="text-[9px] text-gray-700 block mt-0.5 font-medium">Scan to Pay</span>
                       </div>
                     )}
                   </div>
@@ -374,8 +374,8 @@ const ProfessionalTemplate = forwardRef(({
             )}
             {sections.showTerms && (
                <div>
-                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-500">Notes & Terms</p>
-                  <ul className="text-xs text-gray-600 space-y-1 list-disc pl-4">
+                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-700">Notes & Terms</p>
+                  <ul className="text-xs text-gray-700 space-y-1 list-disc pl-4">
                     {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
                   </ul>
                </div>
@@ -426,7 +426,7 @@ const ProfessionalTemplate = forwardRef(({
 
             {sections.showSignature && (
               <div className="mt-16 text-right">
-                <div className="border-t border-gray-400 inline-block pt-2 w-48 text-center text-xs font-semibold text-gray-500">
+                <div className="border-t border-gray-400 inline-block pt-2 w-48 text-center text-xs font-semibold text-gray-700">
                   {content.signatureLabel || 'Authorized Signatory'}
                 </div>
               </div>
@@ -439,20 +439,20 @@ const ProfessionalTemplate = forwardRef(({
       <div className="mt-auto">
         {isDeliveryChallan && sections.showSignature && (
           <div className="flex justify-end pt-8">
-            <div className="border-t border-gray-400 inline-block pt-2 w-48 text-center text-xs font-semibold text-gray-500">
+            <div className="border-t border-gray-400 inline-block pt-2 w-48 text-center text-xs font-semibold text-gray-700">
               {content.signatureLabel || 'Received By / Signatory'}
             </div>
           </div>
         )}
         <div className="invoice-page-footer">
-          <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-500">
+          <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-700 font-medium">
             {isDeliveryChallan
               ? 'This is a computer generated delivery challan and does not require a signature.'
               : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
 
           {showWatermarkFooter && (
-            <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+            <div className="mt-2 text-center text-[10px] text-gray-600 print-watermark w-full">
               Made with Cenvora: Built for Modern Businesses<br />
               <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
             </div>

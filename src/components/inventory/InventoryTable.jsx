@@ -551,7 +551,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           <input
-            className="w-full sm:w-56 border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/50 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            className="w-full sm:w-56 border border-hairline rounded-lg px-3 py-1.5 text-sm bg-obsidian-card text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
             placeholder="Search products..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -562,19 +562,19 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               setOrdering(e.target.value);
               setPage(1);
             }}
-            className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
           >
-            <option value="name">Name (A-Z)</option>
-            <option value="-name">Name (Z-A)</option>
-            <option value="-updated_at">Recently Modified</option>
-            <option value="updated_at">Modified (Oldest)</option>
-            <option value="-created_at">Recently Added</option>
-            <option value="-current_stock">Stock (High to Low)</option>
-            <option value="current_stock">Stock (Low to High)</option>
-            <option value="-sale_price">Sale Price (High to Low)</option>
-            <option value="sale_price">Sale Price (Low to High)</option>
-            <option value="-unit_price">Cost Price (High to Low)</option>
-            <option value="unit_price">Cost Price (Low to High)</option>
+            <option value="name" className="bg-slate-900 text-white">Name (A-Z)</option>
+            <option value="-name" className="bg-slate-900 text-white">Name (Z-A)</option>
+            <option value="-updated_at" className="bg-slate-900 text-white">Recently Modified</option>
+            <option value="updated_at" className="bg-slate-900 text-white">Modified (Oldest)</option>
+            <option value="-created_at" className="bg-slate-900 text-white">Recently Added</option>
+            <option value="-current_stock" className="bg-slate-900 text-white">Stock (High to Low)</option>
+            <option value="current_stock" className="bg-slate-900 text-white">Stock (Low to High)</option>
+            <option value="-sale_price" className="bg-slate-900 text-white">Sale Price (High to Low)</option>
+            <option value="sale_price" className="bg-slate-900 text-white">Sale Price (Low to High)</option>
+            <option value="-unit_price" className="bg-slate-900 text-white">Cost Price (High to Low)</option>
+            <option value="unit_price" className="bg-slate-900 text-white">Cost Price (Low to High)</option>
           </select>
           <select
             value={stockFilter}
@@ -582,13 +582,13 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               setStockFilter(e.target.value);
               setPage(1);
             }}
-            className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
           >
-            <option value="all">All Stock</option>
-            <option value="in-stock">In Stock (&gt;0)</option>
-            <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock (0)</option>
-            <option value="critical">Critical (&lt;0)</option>
+            <option value="all" className="bg-slate-900 text-white">All Stock</option>
+            <option value="in-stock" className="bg-slate-900 text-white">In Stock (&gt;0)</option>
+            <option value="low-stock" className="bg-slate-900 text-white">Low Stock</option>
+            <option value="out-of-stock" className="bg-slate-900 text-white">Out of Stock (0)</option>
+            <option value="critical" className="bg-slate-900 text-white">Critical (&lt;0)</option>
           </select>
           {availableManufacturers.length > 0 && (
             <select
@@ -597,11 +597,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 setSelectedManufacturer(e.target.value);
                 setPage(1);
               }}
-              className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 max-w-[180px] truncate"
+              className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none max-w-[180px] truncate"
             >
-              <option value="">All Manufacturers</option>
+              <option value="" className="bg-slate-900 text-white">All Manufacturers</option>
               {availableManufacturers.map((mfg) => (
-                <option key={mfg} value={mfg} className="bg-gray-800 text-white">
+                <option key={mfg} value={mfg} className="bg-slate-900 text-white">
                   {mfg}
                 </option>
               ))}
@@ -615,11 +615,11 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               setShowBulkActions(false);
               setPage(1);
             }}
-            className="border border-white/30 rounded px-2.5 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+            className="border border-hairline rounded-lg px-2.5 py-1.5 text-sm bg-obsidian-card text-white focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all outline-none"
           >
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-            <option value="all">All Status</option>
+            <option value="active" className="bg-slate-900 text-white">Active</option>
+            <option value="archived" className="bg-slate-900 text-white">Archived</option>
+            <option value="all" className="bg-slate-900 text-white">All Status</option>
           </select>
         </div>
 

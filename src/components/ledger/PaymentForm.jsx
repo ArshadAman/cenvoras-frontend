@@ -69,12 +69,12 @@ function PaymentCustomerAutocomplete({ setFieldValue }) {
     }
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-xl px-4 py-2.5 pl-10 text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
 
   return (
     <div className="relative">
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-500 pointer-events-none" />
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-slate-400 pointer-events-none" />
         <input
           type="text"
           value={inputValue}
@@ -223,8 +223,8 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     }
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-xl px-4 py-2.5 text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
+  const labelClass = "block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide";
 
   return (
     <Formik

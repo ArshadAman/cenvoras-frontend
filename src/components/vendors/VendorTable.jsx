@@ -211,10 +211,10 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
+          <table className="min-w-full divide-y divide-hairline">
+          <thead className="bg-obsidian-card border-b border-hairline">
             <tr>
-              <th className="px-6 py-3 text-left">
+              <th className="px-6 py-3.5 text-left">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -222,60 +222,60 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                     if (input) input.indeterminate = isIndeterminate;
                   }}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-gray-300 dark:border-gray-600"
+                  className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
                 />
               </th>
-                            <th 
+              <th 
                 onClick={() => handleSort("name")}
-                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Name</span>
                   {(ordering === "name" || ordering === "-name") && (
-                    <span className="text-cyan-400 font-bold">{ordering === "name" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{ordering === "name" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("email")}
-                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Contact</span>
                   {(ordering === "email" || ordering === "-email") && (
-                    <span className="text-cyan-400 font-bold">{ordering === "email" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{ordering === "email" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("gstin")}
-                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>GSTIN</span>
                   {(ordering === "gstin" || ordering === "-gstin") && (
-                    <span className="text-cyan-400 font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Category
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Credit Limit
               </th>
               <th 
                 onClick={() => handleSort("created_at")}
-                className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg cursor-pointer hover:text-cyan-300 transition-colors select-none"
+                className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Created</span>
                   {(ordering === "created_at" || ordering === "-created_at") && (
-                    <span className="text-cyan-400 font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
+                    <span className="text-sky-400 font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-black text-white uppercase tracking-wider drop-shadow-lg">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -301,7 +301,7 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                       type="checkbox"
                       checked={selectedVendors.has(vendor.id)}
                       onChange={(e) => handleVendorSelect(vendor.id, e.target.checked)}
-                      className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                      className="rounded border-hairline text-sky-400 focus:ring-sky-400 bg-obsidian-card"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -309,29 +309,29 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                       <button
                         type="button"
                         onClick={() => onView(vendor)}
-                        className="text-left text-sm font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors drop-shadow-lg cursor-pointer inline-flex items-center gap-1.5 group"
+                        className="text-left text-sm font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-colors cursor-pointer inline-flex items-center gap-1.5 group"
                         title="View Detailed Ledger & Purchase Bills"
                       >
                         <span>{vendor.name}</span>
-                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-cyan-400/70 group-hover:text-cyan-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-sky-400/70 group-hover:text-sky-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                       </button>
-                      <div className="text-sm text-cyan-300 font-medium">
+                      <div className="text-sm text-slate-400">
                         {vendor.email}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium drop-shadow-lg">
+                    <div className="text-sm text-white font-medium">
                       {vendor.phone || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium drop-shadow-lg">
+                    <div className="text-sm text-slate-300 font-mono">
                       {vendor.gstin || 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-cyan-300 font-medium drop-shadow-lg">
+                    <div className="text-sm text-slate-300 font-medium">
                       {vendor.meta?.party_category ? (
                         <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30 uppercase">
                           {vendor.meta.party_category}
@@ -340,12 +340,12 @@ export default function VendorTable({ onEdit, onView, onDelete, onAddNewVendor }
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-white font-medium drop-shadow-lg">
+                    <div className="text-sm text-white font-medium">
                       {vendor.meta?.credit_limit ? `${getCurrencySymbol()}${Number(vendor.meta.credit_limit).toLocaleString()}` : '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-cyan-300 font-medium drop-shadow-lg">
+                    <div className="text-sm text-slate-400 font-medium">
                       {vendor.created_at ? format(new Date(vendor.created_at), 'dd/MM/yyyy') : '-'}
                     </div>
                   </td>

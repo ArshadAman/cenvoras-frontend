@@ -47,7 +47,7 @@ function AlertDetailsModal({ isOpen, onClose, alert, onSelectEmployee }) {
                   <p className="text-xs text-gray-400 mt-0.5 truncate">
                     {item.employee_code && <span className="font-mono text-indigo-300 mr-1.5">{item.employee_code}</span>}
                     {item.department && <span className="text-gray-400">· {item.department} </span>}
-                    {item.designation && <span className="text-gray-500">({item.designation}) </span>}
+                    {item.designation && <span className="text-slate-400">({item.designation}) </span>}
                     {item.reason && <span className="text-amber-300 font-medium">· {item.reason}</span>}
                   </p>
                 </div>
@@ -90,7 +90,7 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
       <div className="min-w-0">
         <p className="text-xs text-gray-400 mb-1">{label}</p>
         <p className="text-2xl font-bold text-white">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -475,30 +475,30 @@ function TaskDetailsModal({ isOpen, onClose, task, employees, onEdit = null, onD
           <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4 space-y-4">
             {task.description ? (
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-1">Description</span>
+                <span className="text-[11px] uppercase font-semibold tracking-wider text-slate-300 block mb-1">Description</span>
                 <p className="text-sm text-gray-300 whitespace-pre-wrap">{task.description}</p>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 italic">No description provided for this task.</p>
+              <p className="text-sm text-slate-400 italic">No description provided for this task.</p>
             )}
             
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 text-sm">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Assigned To</span>
+                <span className="text-[11px] uppercase font-semibold tracking-wider text-slate-300 block mb-0.5">Assigned To</span>
                 <span className="font-semibold text-white">{emp ? `${emp.full_name} (${emp.employee_code})` : "—"}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Assigned By</span>
+                <span className="text-[11px] uppercase font-semibold tracking-wider text-slate-300 block mb-0.5">Assigned By</span>
                 <span className="font-semibold text-white">{task.assigned_by_name || "HR System"}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Deadline</span>
+                <span className="text-[11px] uppercase font-semibold tracking-wider text-slate-300 block mb-0.5">Deadline</span>
                 <span className={`font-mono font-semibold ${isOverdue ? "text-rose-400 font-bold" : "text-indigo-300"}`}>
                   {task.deadline || "No deadline"}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Created At</span>
+                <span className="text-[11px] uppercase font-semibold tracking-wider text-slate-300 block mb-0.5">Created At</span>
                 <span className="text-gray-300">{new Date(task.created_at).toLocaleDateString()}</span>
               </div>
             </div>
@@ -953,7 +953,7 @@ export default function HRDashboard() {
                                   title="Click to view/edit employee"
                                 >
                                   <span>{it.name}</span>
-                                  {it.employee_code && <span className="text-gray-400 font-mono text-[10px]">({it.employee_code})</span>}
+                                  {it.employee_code && <span className="text-slate-300 font-mono text-[11px]">({it.employee_code})</span>}
                                 </button>
                               ))}
                               {alert.items.length > 4 && (
@@ -1008,7 +1008,7 @@ export default function HRDashboard() {
                         <li key={l.id} className="flex justify-between items-center px-5 py-3 hover:bg-white/5">
                           <div>
                             <p className="text-sm text-white">{l.employee_name || l.employee}</p>
-                            <p className="text-xs text-gray-500">{l.leave_type_name} · {l.start_date} → {l.end_date}</p>
+                            <p className="text-xs text-slate-400">{l.leave_type_name} · {l.start_date} → {l.end_date}</p>
                           </div>
                           <span className="text-xs text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full">{l.computed_days}d</span>
                         </li>
@@ -1163,7 +1163,7 @@ export default function HRDashboard() {
                         <tr key={r.id} className="border-b border-white/5 hover:bg-white/5">
                           <td className="px-5 py-3">
                             <span className="text-white font-medium">{r.employee_name || "—"}</span>
-                            {r.employee_code && <span className="ml-2 text-xs text-gray-500">{r.employee_code}</span>}
+                            {r.employee_code && <span className="ml-2 text-xs text-slate-400 font-mono">{r.employee_code}</span>}
                           </td>
                           <td className="px-5 py-3">{r.date}</td>
                           <td className="px-5 py-3"><span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[r.status] || "bg-white/10 text-white"}`}>{r.status?.replace("_", " ")}</span></td>
@@ -1197,9 +1197,9 @@ export default function HRDashboard() {
                           <td className="px-5 py-3 text-white font-medium">{l.employee_name || l.employee}</td>
                           <td className="px-5 py-3">
                             <div className="font-medium">{l.leave_type_name || l.leave_type}</div>
-                            {l.reason && <div className="text-xs text-gray-500 mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
+                            {l.reason && <div className="text-xs text-slate-400 mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
                           </td>
-                          <td className="px-5 py-3">{l.start_date} → {l.end_date}<br /><span className="text-xs text-gray-500">{l.computed_days} days</span></td>
+                          <td className="px-5 py-3">{l.start_date} → {l.end_date}<br /><span className="text-xs text-slate-400">{l.computed_days} days</span></td>
                           <td className="px-5 py-3"><span className={`px-2 py-0.5 rounded text-xs font-medium ${LEAVE_COLORS[l.status] || "bg-white/10 text-white"}`}>{l.status}</span></td>
                           <td className="px-5 py-3 text-right space-x-2">
                             {l.status === "pending" && (<>
@@ -1328,7 +1328,7 @@ export default function HRDashboard() {
                           <td className="px-5 py-3 text-indigo-300 font-medium">{n.employee_name || "All Employees (Broadcast)"}</td>
                           <td className="px-5 py-3 text-white font-medium">{n.title}</td>
                           <td className="px-5 py-3 max-w-sm truncate" title={n.message}>{n.message}</td>
-                          <td className="px-5 py-3 text-xs text-gray-500">{new Date(n.created_at).toLocaleString()}</td>
+                          <td className="px-5 py-3 text-xs text-slate-400">{new Date(n.created_at).toLocaleString()}</td>
                           <td className="px-5 py-3 text-right">
                             <button onClick={() => handleDeleteNotification(n.id)} className="p-1.5 text-gray-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition" title="Delete Notification">
                               <TrashIcon className="w-4 h-4" />

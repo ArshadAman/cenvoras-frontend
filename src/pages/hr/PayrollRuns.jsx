@@ -223,7 +223,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                 <div className="p-3 rounded-lg bg-white/5 border border-white/5 space-y-1">
                   <p className="text-[11px] text-gray-400 uppercase tracking-wider">Created</p>
                   <p className="text-sm font-semibold text-white">{payrollRun.created_by_name || 'System Administrator'}</p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[11px] text-slate-400 font-medium">
                     {payrollRun.created_at ? new Date(payrollRun.created_at).toLocaleDateString('en-IN') : '—'}
                   </p>
                 </div>
@@ -234,7 +234,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                   <p className="text-sm font-semibold text-white">
                     {payrollRun.approved_by_name || (payrollRun.approved_at ? 'Approved' : 'Pending')}
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[11px] text-slate-400 font-medium">
                     {payrollRun.approved_at ? new Date(payrollRun.approved_at).toLocaleDateString('en-IN') : 'Not approved yet'}
                   </p>
                 </div>
@@ -245,7 +245,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                   <p className="text-sm font-semibold text-white">
                     {payrollRun.payment_account_name || (payrollRun.paid_at ? 'Disbursed' : 'Unpaid')}
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[11px] text-slate-400 font-medium">
                     {payrollRun.paid_at ? `Paid on ${new Date(payrollRun.paid_at).toLocaleDateString('en-IN')}` : 'Awaiting payment'}
                   </p>
                 </div>
@@ -256,7 +256,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                   <p className="text-sm font-semibold text-white">
                     {payrollRun.locked_by_name || (payrollRun.locked_at ? 'Locked' : 'Unlocked')}
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[11px] text-slate-400 font-medium">
                     {payrollRun.locked_at ? new Date(payrollRun.locked_at).toLocaleDateString('en-IN') : 'Unlocked'}
                   </p>
                 </div>
@@ -327,7 +327,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xs font-semibold text-emerald-400">₹{parseFloat(ps.net_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                          <p className="text-[10px] text-gray-500">Gross ₹{parseFloat(ps.gross_salary || 0).toLocaleString('en-IN')}</p>
+                          <p className="text-[11px] text-slate-400 font-medium">Gross ₹{parseFloat(ps.gross_salary || 0).toLocaleString('en-IN')}</p>
                         </div>
                       </div>
                     );
@@ -342,7 +342,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                 <div className="text-center p-8">
                   <InformationCircleIcon className="w-10 h-10 text-indigo-400/50 mx-auto mb-2" />
                   <p className="text-sm text-gray-300 font-medium">Select an Employee</p>
-                  <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
+                  <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
                     Click on any employee to inspect their attendance days, itemized earnings, and transparent deduction reasons.
                   </p>
                 </div>
@@ -493,7 +493,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                                 </div>
                               ))
                             ) : (
-                              <p className="text-xs text-gray-500">No earnings recorded</p>
+                              <p className="text-xs text-slate-400 italic">No earnings recorded</p>
                             )}
                           </div>
                         </div>
@@ -535,7 +535,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                                 );
                               })
                             ) : (
-                              <p className="text-xs text-gray-500">No deductions applied for this employee</p>
+                              <p className="text-xs text-slate-400 italic">No deductions applied for this employee</p>
                             )}
                           </div>
                         </div>
