@@ -12,30 +12,30 @@ import AuthPrismCanvas from '../components/3d/AuthPrismCanvas';
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,
-    backgroundColor: '#030712',
-    borderColor: state.isFocused ? '#38bdf8' : '#1e293b',
+    backgroundColor: 'var(--bg-primary)',
+    borderColor: state.isFocused ? 'var(--accent-primary)' : 'var(--border-subtle)',
     borderRadius: '0.75rem',
     padding: '3px',
-    color: 'white',
+    color: 'var(--text-primary)',
     boxShadow: 'none',
-    '&:hover': { borderColor: '#334155' }
+    '&:hover': { borderColor: 'var(--accent-primary)' }
   }),
   menu: (provided) => ({
     ...provided,
-    backgroundColor: '#0f172a',
-    border: '1px solid #1e293b',
+    backgroundColor: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
     borderRadius: '0.75rem',
     zIndex: 50
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected ? '#38bdf8' : state.isFocused ? '#1e293b' : 'transparent',
-    color: state.isSelected ? '#030712' : '#f8fafc',
+    backgroundColor: state.isSelected ? 'var(--accent-primary)' : state.isFocused ? 'var(--bg-primary)' : 'transparent',
+    color: state.isSelected ? 'var(--text-on-accent)' : 'var(--text-primary)',
     fontWeight: state.isSelected ? '600' : 'normal',
     cursor: 'pointer'
   }),
-  singleValue: (provided) => ({ ...provided, color: '#ffffff', fontSize: '0.875rem' }),
-  placeholder: (provided) => ({ ...provided, color: '#64748b', fontSize: '0.875rem' })
+  singleValue: (provided) => ({ ...provided, color: 'var(--text-primary)', fontSize: '0.875rem' }),
+  placeholder: (provided) => ({ ...provided, color: 'var(--text-muted)', fontSize: '0.875rem' })
 };
 
 const stepSchemas = [
@@ -61,11 +61,11 @@ const STEP_LABELS = ['Account', 'Business', 'Finish'];
 function InputField({ label, required, error, children }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-        {label}{required && <span className="text-slate-500 ml-0.5">*</span>}
+      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1.5">
+        {label}{required && <span className="text-[var(--text-muted)] ml-0.5">*</span>}
       </label>
       {children}
-      {error && <p className="text-rose-400 text-xs mt-1">{error}</p>}
+      {error && <p className="text-[var(--status-danger)] text-xs mt-1">{error}</p>}
     </div>
   );
 }
@@ -223,11 +223,11 @@ export default function Signup() {
     setLoading(false);
   };
 
-  const fieldClass = "w-full px-4 py-3 bg-obsidian-card border border-hairline rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-400 text-sm transition-all";
-  const fieldErr = (name) => formErrors[name] ? 'border-rose-500/70 focus:border-rose-400 focus:ring-rose-400' : '';
+  const fieldClass = "w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm transition-all";
+  const fieldErr = (name) => formErrors[name] ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)]' : '';
 
   return (
-    <div className="min-h-screen bg-[#080C14] text-white font-sans flex flex-col justify-between selection:bg-sky-500/20 selection:text-sky-300">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans flex flex-col justify-between">
       <Seo
         title="Start 14-Day Free Trial | Cenvora"
         description="Try Cenvora free for 14 days. Create GST invoices, manage stock, and track customer payments with zero obligation."
@@ -238,20 +238,20 @@ export default function Signup() {
 
       <div className="flex-1 flex w-full">
         {/* Left Panel */}
-        <div className="hidden lg:flex lg:w-1/2 relative bg-[#0B0F19] border-r border-slate-800/80 p-12 flex-col justify-between overflow-hidden">
-          <div className="absolute -top-32 -left-32 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] p-12 flex-col justify-between overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10">
             <Link to="/" className="inline-flex items-center gap-2 hover:opacity-90 transition-opacity">
               <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora" className="h-8 w-auto" />
             </Link>
             <div className="mt-8">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700/80 text-emerald-400 text-xs font-semibold mb-3">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--status-success)] text-xs font-semibold mb-3">
+                <CheckCircleIcon className="w-4 h-4 text-[var(--status-success)]" />
                 No Credit Card Required
               </span>
-              <h2 className="text-3xl font-extrabold text-white tracking-tight leading-snug">
+              <h2 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug">
                 Experience effortless billing and real-time inventory management.
               </h2>
             </div>
@@ -261,11 +261,11 @@ export default function Signup() {
             <AuthPrismCanvas />
           </div>
 
-          <div className="relative z-10 border-t border-slate-800/80 pt-6">
-            <div className="grid grid-cols-2 gap-3 text-xs text-slate-300">
+          <div className="relative z-10 border-t border-[var(--border-subtle)] pt-6">
+            <div className="grid grid-cols-2 gap-3 text-xs text-[var(--text-primary)]">
               {['Instant GST Invoicing', 'Live Stock Valuation', 'Customer Ledgers', 'Multi-Device Access'].map(f => (
-                <div key={f} className="flex items-center gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80">
-                  <CheckCircleIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div key={f} className="flex items-center gap-2 bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-subtle)]">
+                  <CheckCircleIcon className="w-4 h-4 text-[var(--status-success)] shrink-0" />
                   <span>{f}</span>
                 </div>
               ))}
@@ -281,36 +281,36 @@ export default function Signup() {
               <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
                 <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora" className="h-8 w-auto mx-auto" />
               </Link>
-              <h2 className="text-xl font-bold text-white">Start 14-day free trial</h2>
-              <p className="text-xs text-slate-400 mt-1">No credit card required</p>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Start 14-day free trial</h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">No credit card required</p>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800/90 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-white tracking-tight">Create your account</h1>
-                <p className="text-xs text-slate-400 mt-1.5">Start your 14-day full free trial in less than a minute</p>
+                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight">Create your account</h1>
+                <p className="text-xs text-[var(--text-muted)] mt-1.5">Start your 14-day full free trial in less than a minute</p>
               </div>
 
               {/* Google Sign-Up Gate */}
               {!showManualForm && !otpRequested && (
                 <div className="space-y-4">
-                  {googleError && <div className="text-rose-400 text-xs text-center">{googleError}</div>}
+                  {googleError && <div className="text-[var(--status-danger)] text-xs text-center">{googleError}</div>}
                   <div id="googleSignUpDiv" className="w-full flex justify-center min-h-[40px]" />
                   <div className="relative my-4">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-hairline" />
+                      <div className="w-full border-t border-[var(--border-subtle)]" />
                     </div>
-                    <div className="relative flex justify-center text-[11px] text-slate-400 font-medium">
-                      <span className="bg-slate-900/50 px-3">or sign up with email</span>
+                    <div className="relative flex justify-center text-[11px] text-[var(--text-muted)] font-medium">
+                      <span className="bg-[var(--bg-surface)] px-3">or sign up with email</span>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowManualForm(true)}
-                    className="w-full py-3.5 bg-obsidian-card border border-hairline hover:bg-obsidian-elevated text-white font-medium text-xs rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95"
+                    className="btn-secondary w-full py-3.5 text-xs flex items-center justify-center gap-2"
                   >
                     <span>Continue with email</span>
-                    <ArrowRightIcon className="w-3.5 h-3.5 text-slate-400" />
+                    <ArrowRightIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                   </button>
                 </div>
               )}
@@ -319,7 +319,7 @@ export default function Signup() {
               {otpRequested && (
                 <div className="space-y-4">
                   {signupMessage && (
-                    <div className="p-3.5 bg-slate-950 border border-hairline rounded-xl text-xs text-slate-300">
+                    <div className="p-3.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-secondary)]">
                       {signupMessage}
                     </div>
                   )}
@@ -332,11 +332,11 @@ export default function Signup() {
                       placeholder="123456"
                     />
                   </InputField>
-                  <p className="text-[11px] text-slate-400">Sent to {pendingEmail}</p>
+                  <p className="text-[11px] text-[var(--text-muted)]">Sent to {pendingEmail}</p>
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="w-full py-3.5 bg-white text-slate-950 font-bold text-xs rounded-xl hover:bg-slate-200 transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                    className="btn-primary w-full py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
                   >
                     {loading ? 'Verifying...' : 'Verify & Create Account'}
                     {!loading && <ArrowRightIcon className="w-3.5 h-3.5" />}
@@ -357,16 +357,16 @@ export default function Signup() {
                         <React.Fragment key={label}>
                           <div className="flex flex-col items-center gap-1">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                              isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400'
+                              isDone ? 'bg-[var(--status-success)] text-white' : isActive ? 'bg-[var(--accent-primary)] text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-muted)]'
                             }`}>
                               {isDone ? '✓' : s}
                             </div>
-                            <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-white' : isDone ? 'text-emerald-400' : 'text-slate-400'}`}>
+                            <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-[var(--text-primary)]' : isDone ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
                               {label}
                             </span>
                           </div>
                           {i < STEP_LABELS.length - 1 && (
-                            <div className={`flex-1 h-px mt-[-14px] transition-all duration-500 ${isDone ? 'bg-emerald-500/60' : 'bg-slate-800'}`} />
+                            <div className={`flex-1 h-px mt-[-14px] transition-all duration-500 ${isDone ? 'bg-[var(--status-success)]' : 'bg-[var(--border-subtle)]'}`} />
                           )}
                         </React.Fragment>
                       );
@@ -399,7 +399,7 @@ export default function Signup() {
                           <button
                             type="button"
                             onClick={() => setShowPw(v => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                           >
                             {showPw ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                           </button>
@@ -418,7 +418,7 @@ export default function Signup() {
                           <button
                             type="button"
                             onClick={() => setShowConfirmPw(v => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                           >
                             {showConfirmPw ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                           </button>
@@ -427,7 +427,7 @@ export default function Signup() {
 
                       <button
                         onClick={handleNext}
-                        className="w-full mt-2 py-3.5 bg-white text-slate-950 font-bold text-xs rounded-xl hover:bg-slate-200 transition-all shadow-md flex items-center justify-center gap-2 active:scale-95"
+                        className="btn-primary w-full mt-2 py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
                       >
                         Continue <ArrowRightIcon className="w-3.5 h-3.5" />
                       </button>
@@ -435,7 +435,7 @@ export default function Signup() {
                       <button
                         type="button"
                         onClick={() => { setShowManualForm(false); setFormErrors({}); }}
-                        className="w-full text-xs text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1 transition-colors pt-1"
+                        className="w-full text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center justify-center gap-1 transition-colors pt-1"
                       >
                         <ArrowLeftIcon className="w-3 h-3" /> Back to Google sign-up
                       </button>
@@ -492,13 +492,13 @@ export default function Signup() {
                       <div className="flex gap-3 pt-1">
                         <button
                           onClick={handleBack}
-                          className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                          className="btn-secondary flex-1 py-3.5 text-xs flex items-center justify-center gap-1.5"
                         >
                           <ArrowLeftIcon className="w-3.5 h-3.5" /> Back
                         </button>
                         <button
                           onClick={handleNext}
-                          className="flex-[2] py-3.5 bg-white text-slate-950 font-bold text-xs rounded-xl hover:bg-slate-200 transition-all shadow-md flex items-center justify-center gap-2 active:scale-95"
+                          className="btn-primary flex-[2] py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
                         >
                           Continue <ArrowRightIcon className="w-3.5 h-3.5" />
                         </button>
@@ -521,7 +521,7 @@ export default function Signup() {
                         />
                       </InputField>
 
-                      <p className="text-[11px] text-slate-400">You can add this later from your profile settings.</p>
+                      <p className="text-[11px] text-[var(--text-muted)]">You can add this later from your profile settings.</p>
 
                       <div className="pt-1">
                         <label className="flex items-start gap-3 cursor-pointer group">
@@ -532,7 +532,7 @@ export default function Signup() {
                               onChange={e => setField('termsAccepted', e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-4 h-4 rounded border border-hairline bg-obsidian-card peer-checked:bg-sky-500 peer-checked:border-sky-500 transition-all flex items-center justify-center">
+                            <div className="w-4 h-4 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] peer-checked:bg-[var(--accent-primary)] peer-checked:border-[var(--accent-primary)] transition-all flex items-center justify-center">
                               {formData.termsAccepted && (
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 12 12">
                                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -540,29 +540,29 @@ export default function Signup() {
                               )}
                             </div>
                           </div>
-                          <span className="text-xs text-slate-400 leading-relaxed">
+                          <span className="text-xs text-[var(--text-muted)] leading-relaxed">
                             I agree to the{' '}
-                            <Link to="/terms" className="text-white hover:text-sky-300 underline">Terms of Service</Link>
+                            <Link to="/terms" className="text-[var(--accent-primary)] hover:underline font-medium">Terms of Service</Link>
                             {' '}and{' '}
-                            <Link to="/privacy" className="text-white hover:text-sky-300 underline">Privacy Policy</Link>.
+                            <Link to="/privacy" className="text-[var(--accent-primary)] hover:underline font-medium">Privacy Policy</Link>.
                           </span>
                         </label>
                         {formErrors.termsAccepted && (
-                          <p className="text-rose-400 text-xs mt-1.5 ml-7">{formErrors.termsAccepted}</p>
+                          <p className="text-[var(--status-danger)] text-xs mt-1.5 ml-7">{formErrors.termsAccepted}</p>
                         )}
                       </div>
 
                       <div className="flex gap-3 pt-1">
                         <button
                           onClick={handleBack}
-                          className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                          className="btn-secondary flex-1 py-3.5 text-xs flex items-center justify-center gap-1.5"
                         >
                           <ArrowLeftIcon className="w-3.5 h-3.5" /> Back
                         </button>
                         <button
                           onClick={handleSubmit}
                           disabled={loading}
-                          className="flex-[2] py-3.5 bg-white text-slate-950 font-bold text-xs rounded-xl hover:bg-slate-200 transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                          className="btn-primary flex-[2] py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
                         >
                           {loading ? 'Creating account...' : 'Create Free Account'}
                           {!loading && <ArrowRightIcon className="w-3.5 h-3.5" />}
@@ -573,16 +573,16 @@ export default function Signup() {
                 </div>
               )}
 
-              <div className="mt-8 pt-6 border-t border-hairline text-center text-xs text-slate-400">
+              <div className="mt-8 pt-6 border-t border-[var(--border-subtle)] text-center text-xs text-[var(--text-muted)]">
                 Already have an account?{' '}
-                <Link to="/login" className="text-white font-semibold hover:text-sky-300 transition-colors">
+                <Link to="/login" className="text-[var(--accent-primary)] font-semibold hover:underline transition-colors">
                   Sign in
                 </Link>
               </div>
             </div>
 
-            <div className="mt-8 text-center text-xs text-slate-400">
-              <Link to="/" className="hover:text-slate-300 transition-colors">
+            <div className="mt-8 text-center text-xs text-[var(--text-muted)]">
+              <Link to="/" className="hover:text-[var(--text-primary)] transition-colors">
                 ← Back to Cenvora homepage
               </Link>
             </div>

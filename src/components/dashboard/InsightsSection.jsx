@@ -34,39 +34,39 @@ export default function InsightsSection({ data, isLoading }) {
     return `${getCurrencySymbol()}${value.toLocaleString('en-IN')}`;
   };
 
-  const colors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b'];
+  const colors = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--status-info)', 'var(--status-success)', 'var(--status-warning)'];
 
   return (
     <section className="bento-card !p-5 h-full flex flex-col">
       <div className="flex items-center gap-2 mb-5 flex-shrink-0">
-        <TrophyIcon className="w-5 h-5 text-amber-400" />
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Profit Finder</h2>
+        <TrophyIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+        <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Profit Finder</h2>
       </div>
 
       <div className="space-y-6 flex-1">
         {/* Top 5 Bestsellers */}
         <div>
-          <h3 className="text-xs font-medium text-gray-500 mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 bg-cyan-500 rounded-full" />
+          <h3 className="text-xs font-semibold text-[var(--text-muted)] mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 bg-[var(--accent-primary)] rounded-full" />
             Top 5 Bestsellers (30 days)
           </h3>
           
           {topProducts.length === 0 ? (
-            <p className="text-xs text-gray-600 italic">No sales data yet</p>
+            <p className="text-xs text-[var(--text-muted)] italic">No sales data yet</p>
           ) : (
             <div className="space-y-2">
               {topProducts.map((product, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" 
-                       style={{ backgroundColor: `${colors[i]}20`, color: colors[i] }}>
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-[var(--bg-primary)] border border-[var(--border-subtle)]" 
+                       style={{ color: colors[i] }}>
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white truncate">{product.name}</span>
-                      <span className="text-xs text-gray-500 ml-2">{formatCurrency(product.revenue)}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)] truncate">{product.name}</span>
+                      <span className="text-xs text-[var(--text-muted)] ml-2">{formatCurrency(product.revenue)}</span>
                     </div>
-                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-1">
+                    <div className="w-full bg-[var(--border-subtle)] rounded-full h-1.5 mt-1 overflow-hidden">
                       <div 
                         className="h-1.5 rounded-full" 
                         style={{ 
@@ -76,7 +76,7 @@ export default function InsightsSection({ data, isLoading }) {
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] text-gray-600 flex-shrink-0">
+                  <span className="text-[10px] text-[var(--text-muted)] flex-shrink-0">
                     {product.percent_of_total?.toFixed(0)}%
                   </span>
                 </div>
@@ -88,20 +88,20 @@ export default function InsightsSection({ data, isLoading }) {
         {/* Slow Movers */}
         {slowMovers.length > 0 && (
           <div>
-            <h3 className="text-xs font-medium text-gray-500 mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full" />
+            <h3 className="text-xs font-semibold text-[var(--text-muted)] mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-[var(--status-danger)] rounded-full" />
               Slow Movers (Consider discounting)
             </h3>
             <div className="space-y-2">
               {slowMovers.slice(0, 3).map((product, i) => (
-                <div key={i} className="flex items-center justify-between p-2 bg-red-500/5 border border-red-500/10 rounded-lg">
+                <div key={i} className="flex items-center justify-between p-2.5 bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/20 rounded-xl">
                   <div className="flex items-center gap-2">
-                    <ArrowTrendingDownIcon className="w-4 h-4 text-red-400" />
-                    <span className="text-sm text-white truncate">{product.name}</span>
+                    <ArrowTrendingDownIcon className="w-4 h-4 text-[var(--status-danger)]" />
+                    <span className="text-sm font-medium text-[var(--text-primary)] truncate">{product.name}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-red-400">{formatCurrency(product.trapped_value)} stuck</div>
-                    <div className="text-[10px] text-gray-600">{product.stock} units, {product.sales_30d} sold</div>
+                    <div className="text-xs text-[var(--status-danger)] font-bold">{formatCurrency(product.trapped_value)} stuck</div>
+                    <div className="text-[10px] text-[var(--text-muted)]">{product.stock} units, {product.sales_30d} sold</div>
                   </div>
                 </div>
               ))}
@@ -110,8 +110,8 @@ export default function InsightsSection({ data, isLoading }) {
         )}
 
         {/* Peak Hours */}
-        <div className="pt-3 border-t border-white/5">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="pt-3 border-t border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
             <ClockIcon className="w-4 h-4" />
             <span>{peakHours.message}</span>
           </div>

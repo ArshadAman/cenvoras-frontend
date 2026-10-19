@@ -38,31 +38,31 @@ function UdhaarModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+      <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
         {/* Header */}
-        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+        <div className="p-6 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-primary)]/50">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <UserGroupIcon className="w-6 h-6 text-orange-400" />
+            <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <UserGroupIcon className="w-6 h-6 text-[var(--status-warning)]" />
               Udhaar
             </h2>
-            <p className="text-xs text-gray-500 mt-1">List of customers with outstanding balances</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">List of customers with outstanding balances</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-white/5 bg-black/40">
+        <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/30">
           <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
             <input 
               type="text"
               placeholder="Search customers..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg py-2 pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
             />
           </div>
         </div>
@@ -72,7 +72,7 @@ function UdhaarModal({ isOpen, onClose }) {
           {isLoading ? (
             <div className="space-y-2 p-2">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+                <div key={i} className="h-16 bg-[var(--border-subtle)] rounded-xl animate-pulse" />
               ))}
             </div>
           ) : customers.length > 0 ? (
@@ -80,26 +80,26 @@ function UdhaarModal({ isOpen, onClose }) {
               {customers.map((customer) => (
                 <div 
                   key={customer.id} 
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group"
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-[var(--bg-primary)]/50 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 border border-orange-500/20">
+                    <div className="w-10 h-10 rounded-full bg-[var(--status-warning)]/10 flex items-center justify-center text-[var(--status-warning)] border border-[var(--status-warning)]/20">
                       <UserCircleIcon className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">{customer.name}</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-tight">Credit Limit: {getCurrencySymbol()}{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--status-warning)] transition-colors">{customer.name}</div>
+                      <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-tight">Credit Limit: {getCurrencySymbol()}{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-orange-400">{getCurrencySymbol()}{parseFloat(customer.current_balance).toLocaleString()}</div>
-                    <div className="text-[10px] text-gray-500">Balance Due</div>
+                    <div className="text-sm font-bold text-[var(--status-warning)]">{getCurrencySymbol()}{parseFloat(customer.current_balance).toLocaleString()}</div>
+                    <div className="text-[10px] text-[var(--text-muted)]">Balance Due</div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+            <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
               <UserGroupIcon className="w-12 h-12 mb-3 opacity-20" />
               <p className="text-sm">No customers with outstanding balance</p>
             </div>
@@ -107,13 +107,13 @@ function UdhaarModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-white/[0.02] border-t border-white/5 flex justify-between items-center">
-            <div className="text-xs text-gray-500">
-              Total Customers: <span className="text-white font-medium">{customers.length}</span>
+        <div className="p-4 bg-[var(--bg-primary)]/40 border-t border-[var(--border-subtle)] flex justify-between items-center">
+            <div className="text-xs text-[var(--text-muted)]">
+              Total Customers: <span className="text-[var(--text-primary)] font-medium">{customers.length}</span>
             </div>
             <button 
               onClick={onClose}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-lg transition-colors border border-white/10"
+              className="btn-secondary px-4 py-2 text-xs"
             >
               Close
             </button>
@@ -142,9 +142,9 @@ export default function PulseSection({ data, isLoading }) {
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="bento-card !p-5 animate-pulse">
-            <div className="h-10 w-10 bg-white/10 rounded-xl mb-3" />
-            <div className="h-8 w-24 bg-white/10 rounded mb-2" />
-            <div className="h-4 w-32 bg-white/5 rounded" />
+            <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-xl mb-3" />
+            <div className="h-8 w-24 bg-[var(--border-subtle)] rounded mb-2" />
+            <div className="h-4 w-32 bg-[var(--border-subtle)] rounded" />
           </div>
         ))}
       </section>
@@ -210,7 +210,7 @@ export default function PulseSection({ data, isLoading }) {
           <span>G: {formatCurrency(pulse.udhaar_given_today)} | C: {formatCurrency(pulse.udhaar_collected_today)}</span>
           <Link 
             to="/payments" 
-            className="text-cyan-400 hover:underline ml-2" 
+            className="text-[var(--accent-primary)] hover:underline ml-2 font-medium" 
             onClick={(e) => e.stopPropagation()}
           >
             Record Payment
@@ -224,18 +224,18 @@ export default function PulseSection({ data, isLoading }) {
   ];
 
   const colorClasses = {
-    cyan: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20' },
-    green: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/20' },
-    emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-    red: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' },
-    orange: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' },
+    cyan: { bg: 'bg-[var(--status-info)]/10', text: 'text-[var(--status-info)]', border: 'border-[var(--status-info)]/20' },
+    green: { bg: 'bg-[var(--status-success)]/10', text: 'text-[var(--status-success)]', border: 'border-[var(--status-success)]/20' },
+    emerald: { bg: 'bg-[var(--status-success)]/10', text: 'text-[var(--status-success)]', border: 'border-[var(--status-success)]/20' },
+    red: { bg: 'bg-[var(--status-danger)]/10', text: 'text-[var(--status-danger)]', border: 'border-[var(--status-danger)]/20' },
+    orange: { bg: 'bg-[var(--status-warning)]/10', text: 'text-[var(--status-warning)]', border: 'border-[var(--status-warning)]/20' },
   };
 
   return (
     <section>
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Today's Pulse</h2>
-        <span className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full">Live</span>
+        <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Today's Pulse</h2>
+        <span className="text-xs px-2 py-0.5 bg-[var(--status-info)]/15 text-[var(--status-info)] font-semibold rounded-full">Live</span>
       </div>
       
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -247,14 +247,14 @@ export default function PulseSection({ data, isLoading }) {
             <div 
               key={i} 
               onClick={card.onClick}
-              className={`bento-card !p-5 group hover:border-white/20 transition-all duration-300 ${colors.border} ${card.onClick ? 'cursor-pointer active:scale-95' : ''}`}
+              className={`bento-card !p-5 group hover:border-[var(--accent-primary)]/40 transition-all duration-300 ${colors.border} ${card.onClick ? 'cursor-pointer active:scale-95' : ''}`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className={`p-2.5 rounded-xl ${colors.bg}`}>
                   <Icon className={`w-5 h-5 ${colors.text}`} />
                 </div>
                 {card.trend !== undefined && (
-                  <div className={`flex items-center gap-1 text-xs ${card.trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`flex items-center gap-1 text-xs font-semibold ${card.trend >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
                     {card.trend >= 0 ? (
                       <ArrowTrendingUpIcon className="w-3 h-3" />
                     ) : (
@@ -265,15 +265,15 @@ export default function PulseSection({ data, isLoading }) {
                 )}
               </div>
               
-              <div className={`text-2xl font-bold ${colors.text} mb-1`}>
+              <div className={`text-2xl font-bold ${colors.text} mb-1 font-mono font-tabular`}>
                 {card.value}
               </div>
               
-              <div className="text-xs text-gray-500 font-medium">
+              <div className="text-xs text-[var(--text-muted)] font-medium">
                 {card.label}
               </div>
               
-              <div className="text-[10px] text-gray-600 mt-1 truncate">
+              <div className="text-[10px] text-[var(--text-muted)]/80 mt-1 truncate">
                 {card.subtitle}
               </div>
             </div>

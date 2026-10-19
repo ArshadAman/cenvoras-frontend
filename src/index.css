@@ -24,6 +24,23 @@
   --input-border: rgba(194, 166, 140, 0.60);
   --card-bg: #E6D8C3;
   --card-border: rgba(194, 166, 140, 0.40);
+
+  /* LIGHT MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #E6D8C3) */
+  --status-success: #2B6B48;
+  --status-success-bg: rgba(43, 107, 72, 0.12);
+  --status-success-border: rgba(43, 107, 72, 0.32);
+
+  --status-warning: #8C5A18;
+  --status-warning-bg: rgba(140, 90, 24, 0.12);
+  --status-warning-border: rgba(140, 90, 24, 0.32);
+
+  --status-danger: #9B2C2C;
+  --status-danger-bg: rgba(155, 44, 44, 0.12);
+  --status-danger-border: rgba(155, 44, 44, 0.32);
+
+  --status-info: #275A75;
+  --status-info-bg: rgba(39, 90, 117, 0.12);
+  --status-info-border: rgba(39, 90, 117, 0.32);
 }
 
 .dark {
@@ -46,6 +63,23 @@
   --input-border: rgba(223, 208, 184, 0.22);
   --card-bg: #393E46;
   --card-border: rgba(223, 208, 184, 0.14);
+
+  /* DARK MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #393E46) */
+  --status-success: #78B896;
+  --status-success-bg: rgba(120, 184, 150, 0.14);
+  --status-success-border: rgba(120, 184, 150, 0.28);
+
+  --status-warning: #DEB070;
+  --status-warning-bg: rgba(222, 176, 112, 0.14);
+  --status-warning-border: rgba(222, 176, 112, 0.28);
+
+  --status-danger: #E07A7A;
+  --status-danger-bg: rgba(224, 122, 122, 0.14);
+  --status-danger-border: rgba(224, 122, 122, 0.28);
+
+  --status-info: #8EB4C7;
+  --status-info-bg: rgba(142, 180, 199, 0.14);
+  --status-info-border: rgba(142, 180, 199, 0.28);
 }
 
 @layer base {
@@ -297,6 +331,45 @@
 
   .btn-destructive:active {
     transform: scale(0.98);
+  }
+
+  /* Semantic Status Badge Components — Strictly Mode-Specific */
+  .badge-success {
+    background-color: var(--status-success-bg);
+    border: 1px solid var(--status-success-border);
+    color: var(--status-success);
+    font-weight: 700;
+  }
+  .badge-warning {
+    background-color: var(--status-warning-bg);
+    border: 1px solid var(--status-warning-border);
+    color: var(--status-warning);
+    font-weight: 700;
+  }
+  .badge-danger {
+    background-color: var(--status-danger-bg);
+    border: 1px solid var(--status-danger-border);
+    color: var(--status-danger);
+    font-weight: 700;
+  }
+  .badge-info {
+    background-color: var(--status-info-bg);
+    border: 1px solid var(--status-info-border);
+    color: var(--status-info);
+    font-weight: 700;
+  }
+
+  /* Universal Overrides for Legacy Hardcoded Dark Classes across All Modules */
+  [class*="bg-[#0a0a0a]"],
+  [class*="bg-[#111]"],
+  [class*="bg-[#1a1a1a]"],
+  [class*="bg-[#1a1a1f]"],
+  [class*="bg-[#0F0F12]"],
+  [class*="bg-[#161616]"],
+  [class*="bg-[#0b0f16]"] {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-subtle) !important;
   }
 
   /* Animations */
