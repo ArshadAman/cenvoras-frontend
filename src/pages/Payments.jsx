@@ -58,12 +58,12 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
           </div>
           <div>
             <div className="text-sm font-semibold text-white">{payment.customer_name}</div>
-            <div className="text-xs text-gray-500">{mode.label}</div>
+            <div className="text-xs text-slate-400">{mode.label}</div>
           </div>
         </div>
         <div className="text-right">
           <div className="text-lg font-bold text-green-400">{getCurrencySymbol()}{formatAmount(payment.amount)}</div>
-          <div className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+          <div className="text-xs text-slate-400">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       </div>
       
@@ -85,7 +85,7 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
       </div>
       
       {payment.notes && (
-        <div className="text-xs text-gray-500 mt-2 line-clamp-1">{payment.notes}</div>
+        <div className="text-xs text-slate-400 mt-2 line-clamp-1">{payment.notes}</div>
       )}
       
       <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 transition-opacity">
@@ -375,7 +375,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                 onFocus={() => setShowCustomerDropdown(true)}
                 className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
               />
-              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             </div>
             
             {showCustomerDropdown && customerSearch && (
@@ -389,13 +389,13 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                       className="w-full text-left p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
                     >
                       <div className="text-sm font-medium text-white">{c.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-400 font-mono">
                         ID: {c.id.slice(0, 8)} • Balance: {getCurrencySymbol()}{formatAmount(c.current_balance)}
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-sm text-gray-500 italic">
+                  <div className="p-3 text-sm text-slate-400 italic">
                     New customer will be created
                   </div>
                 )}
@@ -457,11 +457,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           {selectedInvoice && (
             <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
               <div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
+                <div className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold mb-1">Total Due</div>
                 <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
+                <div className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold mb-1">Remaining</div>
                 <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
                   {getCurrencySymbol()}{formatAmount(calculateRemainingDue())}
                 </div>
@@ -485,7 +485,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   }`}
                 >
                   <Icon className={`w-5 h-5 mx-auto mb-1 ${formData.mode === key ? color : 'text-gray-400'}`} />
-                  <span className={`text-xs ${formData.mode === key ? 'text-white' : 'text-gray-500'}`}>{label}</span>
+                  <span className={`text-xs ${formData.mode === key ? 'text-white' : 'text-slate-400 font-medium'}`}>{label}</span>
                 </button>
               ))}
             </div>
@@ -616,7 +616,7 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
             <span className="text-gray-400">Payment Amount:</span>
             <span className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
           </div>
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-slate-400">
             <span>Date:</span>
             <span>{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
           </div>
@@ -645,7 +645,7 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
               })}
             </select>
           )}
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-slate-400">
             {selectedInvoice
               ? 'This unlinked payment will pay down the selected invoice.'
               : 'Auto-apply will automatically knock off the oldest unpaid invoices for this customer.'}
@@ -855,7 +855,7 @@ export default function Payments() {
             className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'today' ? 'border-green-500/50 bg-green-500/5' : 'border-white/5 hover:border-white/20'}`}
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-gray-500">Today's Collection</div>
+              <div className="text-xs text-slate-400">Today's Collection</div>
               {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />}
             </div>
             <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{todayTotal.toLocaleString('en-IN')}</div>
@@ -865,7 +865,7 @@ export default function Payments() {
             className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'month' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/5 hover:border-white/20'}`}
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-gray-500">Monthly Collection</div>
+              <div className="text-xs text-slate-400">Monthly Collection</div>
               {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
             </div>
             <div className="text-2xl font-bold text-cyan-400">{getCurrencySymbol()}{thisMonthTotal.toLocaleString('en-IN')}</div>
@@ -874,7 +874,7 @@ export default function Payments() {
             onClick={() => setDateFilter('all')}
             className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'all' ? 'border-white/20 bg-white/5' : 'border-white/5 hover:border-white/20'}`}
           >
-            <div className="text-xs text-gray-500 mb-1">Total Collection Till Date</div>
+            <div className="text-xs text-slate-400 mb-1">Total Collection Till Date</div>
             <div className="text-2xl font-bold text-white">{getCurrencySymbol()}{totalCollection.toLocaleString('en-IN')}</div>
           </div>
           <div 
@@ -882,8 +882,8 @@ export default function Payments() {
             className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-amber-500/30 group"
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-gray-500 group-hover:text-amber-400/80 transition-colors">Customers with Due</div>
-              <PlusIcon className="w-4 h-4 text-gray-600 group-hover:text-amber-400 transition-colors" />
+              <div className="text-xs text-slate-400 group-hover:text-amber-400/80 transition-colors">Customers with Due</div>
+              <PlusIcon className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
             </div>
             <div className="text-2xl font-bold text-amber-400">
               {customers?.filter(c => parseFloat(c.current_balance) > 0).length || 0}
@@ -961,9 +961,9 @@ export default function Payments() {
           </div>
         ) : sortedAndFilteredPayments.length === 0 ? (
           <div className="text-center py-16">
-            <BanknotesIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <BanknotesIcon className="w-16 h-16 text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No payments found</h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-slate-400 mb-6">
               {searchQuery || filterMode !== 'all' 
                 ? 'Try adjusting your search or filters'
                 : 'Start recording customer payments to track cash flow'}
@@ -1087,7 +1087,7 @@ export default function Payments() {
                       >
                         <div>
                           <div className="text-white font-medium group-hover:text-amber-400 transition-colors">{c.name}</div>
-                          <div className="text-xs text-gray-500">ID: {c.id.slice(0, 8)}</div>
+                          <div className="text-xs text-slate-400 font-mono">ID: {c.id.slice(0, 8)}</div>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-amber-500">{getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString()}</div>
@@ -1104,7 +1104,7 @@ export default function Payments() {
                       </div>
                     ))
                 ) : (
-                  <div className="text-center py-10 text-gray-500">No customers have outstanding balances.</div>
+                  <div className="text-center py-10 text-slate-400 font-medium">No customers have outstanding balances.</div>
                 )}
               </div>
 

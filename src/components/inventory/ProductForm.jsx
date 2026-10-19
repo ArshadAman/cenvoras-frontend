@@ -201,13 +201,13 @@ function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
         onChange={handleSelectChange}
         className={inputClass}
       >
-        <option value="">Select storage condition...</option>
+        <option value="" className="bg-slate-900 text-white">Select storage condition...</option>
         {STORAGE_PRESETS.map((preset) => (
-          <option key={preset} value={preset}>
+          <option key={preset} value={preset} className="bg-slate-900 text-white">
             {preset}
           </option>
         ))}
-        <option value="custom">Custom...</option>
+        <option value="custom" className="bg-slate-900 text-sky-400 font-semibold">Custom...</option>
       </select>
 
       {selectedOption === "custom" && (
@@ -440,8 +440,8 @@ export default function ProductForm({ product, onClose }) {
     [product?.tax]
   );
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
-  const labelClass = "block text-[11px] font-medium text-gray-400 mb-1 uppercase tracking-wide";
+  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all";
+  const labelClass = "block text-[11px] font-semibold text-slate-300 mb-1 uppercase tracking-wide";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
@@ -452,16 +452,16 @@ export default function ProductForm({ product, onClose }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-4xl max-h-[94vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up">
+      <div className="relative w-full max-w-4xl max-h-[94vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-sky-950/30 animate-fade-up">
         
         {/* Header */}
-        <div className="flex justify-between items-center px-5 py-3 border-b border-white/10 bg-white/5">
+        <div className="flex justify-between items-center px-5 py-3 border-b border-hairline bg-obsidian-card">
           <h2 className="text-lg font-bold text-white">
             {isEdit ? "Edit Product" : "New Product"}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>

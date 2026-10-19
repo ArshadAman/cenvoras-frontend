@@ -95,16 +95,16 @@ export default function GeneralLedgerModal({
   const totalDebits = entries.reduce((sum, entry) => sum + (parseFloat(entry.debit) || 0), 0);
   const totalCredits = entries.reduce((sum, entry) => sum + (parseFloat(entry.credit) || 0), 0);
   
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all text-sm";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-obsidian-card border border-hairline rounded-xl px-4 py-2 text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 outline-none transition-all text-sm";
+  const labelClass = "block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide";
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative w-full max-w-6xl bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up bg-[#09090b] border border-white/10 max-h-[90vh] flex flex-col rounded-2xl overflow-hidden">
+      <div className="relative w-full max-w-6xl bento-card !p-0 shadow-2xl shadow-black/40 animate-fade-up bg-obsidian-canvas border border-hairline max-h-[90vh] flex flex-col rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+        <div className="flex items-center justify-between p-6 border-b border-hairline bg-obsidian-card">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-3">
               General Ledger

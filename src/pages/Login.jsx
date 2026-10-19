@@ -193,7 +193,7 @@ export default function Login({ onLogin }) {
                       <Field
                         type="email"
                         name="username"
-                        className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-500 text-sm transition-all"
+                        className="w-full px-4 py-3 bg-obsidian-card border border-hairline rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-400 text-sm transition-all"
                         placeholder="name@company.com"
                       />
                       <ErrorMessage name="username" component="div" className="text-rose-400 text-xs mt-1.5" />
@@ -212,7 +212,7 @@ export default function Login({ onLogin }) {
                         <Field
                           type={showPassword ? "text" : "password"}
                           name="password"
-                          className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-500 text-sm pr-16 transition-all"
+                          className="w-full px-4 py-3 bg-obsidian-card border border-hairline rounded-xl focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-white placeholder-slate-400 text-sm pr-16 transition-all"
                           placeholder="••••••••"
                         />
                         <button
@@ -231,7 +231,7 @@ export default function Login({ onLogin }) {
                         <Field 
                           type="checkbox" 
                           name="rememberMe" 
-                          className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-sky-500 focus:ring-0" 
+                          className="w-4 h-4 rounded border-hairline bg-obsidian-card text-sky-500 focus:ring-0" 
                         />
                         <span>Remember me on this device</span>
                       </label>
@@ -248,9 +248,9 @@ export default function Login({ onLogin }) {
 
                     <div className="relative my-5">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-800"></div>
+                        <div className="w-full border-t border-hairline"></div>
                       </div>
-                      <div className="relative flex justify-center text-[11px] text-slate-500">
+                      <div className="relative flex justify-center text-[11px] text-slate-400 font-medium">
                         <span className="bg-slate-900 px-3">or continue with</span>
                       </div>
                     </div>
@@ -264,7 +264,7 @@ export default function Login({ onLogin }) {
                 )}
               </Formik>
 
-              <div className="mt-8 pt-6 border-t border-slate-800/80 text-center text-xs text-slate-400">
+              <div className="mt-8 pt-6 border-t border-hairline text-center text-xs text-slate-400">
                 Don't have an account?{' '}
                 <Link to="/signup" className="text-white font-semibold hover:text-sky-300 transition-colors">
                   Start 14-day free trial
@@ -272,7 +272,7 @@ export default function Login({ onLogin }) {
               </div>
             </div>
 
-            <div className="mt-8 text-center text-xs text-slate-500">
+            <div className="mt-8 text-center text-xs text-slate-400">
               <Link to="/" className="hover:text-slate-300 transition-colors">
                 &larr; Back to Cenvora homepage
               </Link>

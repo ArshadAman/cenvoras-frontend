@@ -150,9 +150,9 @@ export default function TaxRegister() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {regLoading ? (
-                    <tr><td colSpan="9" className="p-8 text-center text-gray-500">Loading...</td></tr>
+                    <tr><td colSpan="9" className="p-8 text-center text-slate-400 font-medium">Loading...</td></tr>
                   ) : !registerData?.results?.length ? (
-                    <tr><td colSpan="9" className="p-8 text-center text-gray-500">No invoices found for this period.</td></tr>
+                    <tr><td colSpan="9" className="p-8 text-center text-slate-400 font-medium">No invoices found for this period.</td></tr>
                   ) : (
                     <>
                       {registerData.results.map((row, i) => (
@@ -222,9 +222,9 @@ export default function TaxRegister() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {hsnLoading ? (
-                    <tr><td colSpan="8" className="p-8 text-center text-gray-500">Loading...</td></tr>
+                    <tr><td colSpan="8" className="p-8 text-center text-slate-400 font-medium">Loading...</td></tr>
                   ) : !hsnData?.results?.length ? (
-                    <tr><td colSpan="8" className="p-8 text-center text-gray-500">No HSN data found.</td></tr>
+                    <tr><td colSpan="8" className="p-8 text-center text-slate-400 font-medium">No HSN data found.</td></tr>
                   ) : (
                     <>
                       {hsnData.results.map((row, i) => (
@@ -264,9 +264,9 @@ export default function TaxRegister() {
         {activeTab === 'gstr1' && (
           <div className="space-y-4">
             {gstr1Loading ? (
-              <div className="bento-card p-8 text-center text-gray-500">Generating GSTR-1 data...</div>
+              <div className="bento-card p-8 text-center text-slate-400 font-medium">Generating GSTR-1 data...</div>
             ) : !gstr1Data ? (
-              <div className="bento-card p-8 text-center text-gray-500">No data available.</div>
+              <div className="bento-card p-8 text-center text-slate-400 font-medium">No data available.</div>
             ) : (
               <>
                 {/* Summary Cards */}
@@ -325,9 +325,9 @@ export default function TaxRegister() {
 
               <div className="overflow-auto max-h-[70vh]">
                 {invoiceDetailLoading ? (
-                  <div className="p-8 text-center text-gray-500">Loading invoice details...</div>
+                  <div className="p-8 text-center text-slate-400 font-medium">Loading invoice details...</div>
                 ) : !invoiceDetail ? (
-                  <div className="p-8 text-center text-gray-500">Unable to load invoice details.</div>
+                  <div className="p-8 text-center text-slate-400 font-medium">Unable to load invoice details.</div>
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
@@ -399,7 +399,7 @@ export default function TaxRegister() {
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="10" className="p-8 text-center text-gray-500">No line items found for this invoice.</td>
+                              <td colSpan="10" className="p-8 text-center text-slate-400 font-medium">No line items found for this invoice.</td>
                             </tr>
                           )}
                         </tbody>

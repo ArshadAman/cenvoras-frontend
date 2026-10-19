@@ -51,9 +51,9 @@ export default function ProfitLossStatement() {
         </div>
 
         {isLoading ? (
-          <div className="bento-card p-8 text-center text-gray-500">Loading...</div>
+          <div className="bento-card p-8 text-center text-slate-400 font-medium">Loading...</div>
         ) : !data ? (
-          <div className="bento-card p-8 text-center text-gray-500">No data available.</div>
+          <div className="bento-card p-8 text-center text-slate-400 font-medium">No data available.</div>
         ) : (
           <>
             {/* Summary Cards */}
@@ -86,7 +86,7 @@ export default function ProfitLossStatement() {
                 <div className={`text-2xl font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {getCurrencySymbol()}{fmt(Math.abs(netProfit))}
                 </div>
-                <div className="text-xs text-gray-500 mt-1">Margin: {data.profit_margin}%</div>
+                <div className="text-xs text-slate-400 font-medium mt-1">Margin: {data.profit_margin}%</div>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export default function ProfitLossStatement() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {data.revenue?.items?.length === 0 ? (
-                    <tr><td colSpan="3" className="p-4 text-center text-gray-500 text-sm">No revenue entries</td></tr>
+                    <tr><td colSpan="3" className="p-4 text-center text-slate-400 font-medium text-sm">No revenue entries</td></tr>
                   ) : (
                     data.revenue?.items?.map((item, i) => (
                       <tr key={i} className="hover:bg-white/5 transition-colors">
@@ -142,7 +142,7 @@ export default function ProfitLossStatement() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {data.expenses?.items?.length === 0 ? (
-                    <tr><td colSpan="3" className="p-4 text-center text-gray-500 text-sm">No expense entries</td></tr>
+                    <tr><td colSpan="3" className="p-4 text-center text-slate-400 font-medium text-sm">No expense entries</td></tr>
                   ) : (
                     data.expenses?.items?.map((item, i) => (
                       <tr key={i} className="hover:bg-white/5 transition-colors">

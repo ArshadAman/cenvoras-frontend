@@ -38,9 +38,9 @@ function SubGroup({ label, items = [], total, color }) {
       >
         <span className="flex items-center gap-2 text-gray-300 font-semibold">
           {open ? (
-            <ChevronDownIcon className="w-3.5 h-3.5 text-gray-500" />
+            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
           ) : (
-            <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500" />
+            <ChevronRightIcon className="w-3.5 h-3.5 text-slate-400" />
           )}
           {label}
         </span>
@@ -56,7 +56,7 @@ function SubGroup({ label, items = [], total, color }) {
               <div>
                 <span className="text-white text-sm">{item.name}</span>
                 {item.code && (
-                  <span className="ml-2 text-xs text-gray-500 font-mono">
+                  <span className="ml-2 text-xs text-slate-400 font-mono">
                     [{item.code}]
                   </span>
                 )}
@@ -91,8 +91,8 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
 
       {/* Table Header */}
       <div className="flex justify-between px-5 py-2 bg-white/[0.02] border-b border-white/5">
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Account</span>
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Amount</span>
+        <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Account</span>
+        <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Amount</span>
       </div>
 
       {/* Rows */}
@@ -103,7 +103,7 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
           ))}
         </>
       ) : items.length === 0 && !extra ? (
-        <div className="px-5 py-8 text-center text-gray-500 text-sm">No entries</div>
+        <div className="px-5 py-8 text-center text-slate-400 text-sm">No entries</div>
       ) : (
         <div className="divide-y divide-white/5">
           {items.map((item, i) => (
@@ -116,7 +116,7 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
               <div>
                 <span className="text-white text-sm">{item.name}</span>
                 {item.code && (
-                  <span className="ml-2 text-xs text-gray-500 font-mono">[{item.code}]</span>
+                  <span className="ml-2 text-xs text-slate-400 font-mono">[{item.code}]</span>
                 )}
               </div>
               <span className={`text-sm font-semibold ${color}`}>{getCurrencySymbol()}{fmt(item.amount)}</span>
@@ -246,17 +246,17 @@ export default function BalanceSheet() {
             {/* Mini Equation */}
             <div className="flex items-center gap-3 text-center shrink-0 bg-white/5 rounded-xl px-5 py-3 border border-white/10">
               <div>
-                <div className="text-xs text-gray-500 mb-1">Assets</div>
+                <div className="text-xs text-slate-400 mb-1">Assets</div>
                 <div className="text-base font-bold text-blue-400 tabular-nums">{getCurrencySymbol()}{fmt(data.assets?.total)}</div>
               </div>
-              <div className="text-gray-600 font-bold">=</div>
+              <div className="text-slate-300 font-mono font-bold text-lg">=</div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">Liabilities</div>
+                <div className="text-xs text-slate-400 mb-1">Liabilities</div>
                 <div className="text-base font-bold text-rose-400 tabular-nums">{getCurrencySymbol()}{fmt(data.liabilities?.total)}</div>
               </div>
-              <div className="text-gray-600 font-bold">+</div>
+              <div className="text-slate-300 font-mono font-bold text-lg">+</div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">Equity</div>
+                <div className="text-xs text-slate-400 mb-1">Equity</div>
                 <div className="text-base font-bold text-emerald-400 tabular-nums">{getCurrencySymbol()}{fmt(data.equity?.total)}</div>
               </div>
             </div>
@@ -266,10 +266,10 @@ export default function BalanceSheet() {
         {isLoading ? (
           <div className="bento-card p-12 text-center">
             <div className="w-8 h-8 border-2 border-indigo-500/50 border-t-indigo-400 rounded-full animate-spin mx-auto mb-3" />
-            <div className="text-gray-500 text-sm">Generating balance sheet...</div>
+            <div className="text-slate-400 text-sm">Generating balance sheet...</div>
           </div>
         ) : !data ? (
-          <div className="bento-card p-12 text-center text-gray-500">No data available for the selected date.</div>
+          <div className="bento-card p-12 text-center text-slate-400">No data available for the selected date.</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left: Assets */}
@@ -330,9 +330,9 @@ export default function BalanceSheet() {
 
               <div className="overflow-auto max-h-[65vh]">
                 {accountDetailLoading ? (
-                  <div className="p-8 text-center text-gray-500">Loading account details...</div>
+                  <div className="p-8 text-center text-slate-400">Loading account details...</div>
                 ) : !accountDetail ? (
-                  <div className="p-8 text-center text-gray-500">Unable to load account details.</div>
+                  <div className="p-8 text-center text-slate-400">Unable to load account details.</div>
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border-b border-white/10 bg-white/[0.02]">
@@ -376,7 +376,7 @@ export default function BalanceSheet() {
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="6" className="p-8 text-center text-gray-500">No ledger entries for this account and date.</td>
+                              <td colSpan="6" className="p-8 text-center text-slate-400">No ledger entries for this account and date.</td>
                             </tr>
                           )}
                         </tbody>

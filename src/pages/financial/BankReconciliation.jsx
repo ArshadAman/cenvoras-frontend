@@ -94,8 +94,8 @@ export function BankReconciliationMVP() {
         </div>
 
         {!statementId ? (
-          <div className="bento-card p-12 text-center text-gray-500 border-dashed border-2 border-white/10 bg-transparent">
-            <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+          <div className="bento-card p-12 text-center text-slate-400 border-dashed border-2 border-hairline bg-transparent">
+            <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-slate-400" />
             <h3 className="text-lg font-medium text-white mb-2">No Statement Selected</h3>
             <p>Upload a CSV file to start reconciliation.</p>
           </div>
@@ -132,7 +132,7 @@ export function BankReconciliationMVP() {
                       </div>
                     </div>
 
-                    <div className="hidden md:block text-gray-600">
+                    <div className="hidden md:block text-slate-400">
                       {line.is_reconciled ? (
                         <CheckCircleIcon className="w-6 h-6 text-green-500" />
                       ) : (
@@ -175,7 +175,7 @@ export function BankReconciliationMVP() {
                                 </div>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 text-gray-500 text-sm italic">
+                            <div className="flex items-center gap-2 text-slate-400 text-sm italic">
                               <ExclamationCircleIcon className="w-4 h-4" /> No automatic matches found
                             </div>
                           )}
