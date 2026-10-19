@@ -640,7 +640,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 onClick={(e) => e.stopPropagation()}
                 className="absolute right-0 mt-2 w-52 bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-xl shadow-2xl p-3 z-50 backdrop-blur-xl space-y-2"
               >
-                <div className="text-[11px] font-bold text-[var(--accent-primary)] uppercase tracking-wider mb-2">Display Columns</div>
+                <div className="text-xs font-bold text-[var(--accent-primary)] uppercase tracking-wider mb-2">Display Columns</div>
                 {[
                   { key: 'product', label: 'Product Name' },
                   { key: 'quantity', label: 'Quantity / Stock' },
@@ -881,22 +881,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                               {product.name}
                             </span>
                             {product.item_code && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Item Code: ${product.item_code}`}>
+                              <span className="px-1.5 py-0.5 rounded text-xs font-mono font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Item Code: ${product.item_code}`}>
                                 {product.item_code}
                               </span>
                             )}
                             {showItemDetails && product.internal_reference && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Internal Ref: ${product.internal_reference}`}>
+                              <span className="px-1.5 py-0.5 rounded text-xs font-mono font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Internal Ref: ${product.internal_reference}`}>
                                 Ref: {product.internal_reference}
                               </span>
                             )}
                             {showItemDetails && product.manufacturer && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Manufacturer: ${product.manufacturer}`}>
+                              <span className="px-1.5 py-0.5 rounded text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-default)]" title={`Manufacturer: ${product.manufacturer}`}>
                                 {product.manufacturer}
                               </span>
                             )}
                             {product.is_active === false && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] border-2 border-[var(--border-default)]">
+                              <span className="px-2 py-0.5 rounded text-xs font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] border-2 border-[var(--border-default)]">
                                 Archived
                               </span>
                             )}
@@ -914,7 +914,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                             {parseFloat(product.stock ?? product.current_stock ?? 0).toLocaleString()}
                           </div>
                           {parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0) > 0 && (
-                            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                            <div className="text-xs text-[var(--text-muted)] mt-0.5">
                               Min: {parseFloat(product.low_stock_alert ?? product.min_stock_level).toLocaleString()}
                             </div>
                           )}
@@ -1080,7 +1080,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                     <div className="text-lg font-semibold text-[var(--text-primary)] break-words flex items-center gap-2 flex-wrap">
                       <span>{product.name}</span>
                       {product.item_code && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-mono font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-default)]">
                           {product.item_code}
                         </span>
                       )}
@@ -1110,7 +1110,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                       {currentStock.toLocaleString()}
                     </span>
                     {lowStockLevel > 0 && (
-                      <div className="text-[11px] text-[var(--text-muted)]">
+                      <div className="text-xs text-[var(--text-muted)]">
                         Min: {lowStockLevel.toLocaleString()}
                       </div>
                     )}

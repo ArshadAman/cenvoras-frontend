@@ -649,7 +649,7 @@ export default function SalesTable({
             </button>
             {showColumnDropdown && (
               <div className="absolute right-0 mt-2 w-52 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-3 z-50">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2 px-1">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2 px-1">
                   Visible Columns
                 </div>
                 <div className="space-y-1.5">
@@ -1006,7 +1006,7 @@ export default function SalesTable({
                             })}
                           </div>
                           {roundOff !== 0 && (
-                            <div className="text-[10px] font-mono font-tabular text-[var(--status-warning)] font-medium">
+                            <div className="text-xs font-mono font-tabular text-[var(--status-warning)] font-medium">
                               Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
                             </div>
                           )}
@@ -1021,14 +1021,14 @@ export default function SalesTable({
                       const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
                       if (isDraft) {
                         return (
-                          <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30">
+                          <span className="px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30">
                             Draft
                           </span>
                         );
                       }
                       const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
                       return (
-                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                        <span className={`px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${
                           isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
                         }`}>
                           {isPaid ? 'Paid' : 'Not Paid'}
@@ -1143,7 +1143,7 @@ export default function SalesTable({
                   <div className="text-base font-bold text-[var(--text-primary)]">
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">
+                  <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
                     {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </div>
@@ -1172,14 +1172,14 @@ export default function SalesTable({
 
                   return (
                     <div>
-                      <div className="text-lg font-black text-[var(--text-primary)]">
+                      <div className="text-lg font-bold text-[var(--text-primary)] font-mono">
                         {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
                         })}
                       </div>
                       {roundOff !== 0 && (
-                        <div className="text-[10px] text-[var(--status-warning)] font-bold text-right">
+                        <div className="text-xs text-[var(--status-warning)] font-semibold text-right">
                           Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
                         </div>
                       )}
@@ -1192,26 +1192,26 @@ export default function SalesTable({
             {/* Card Content Grid */}
             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-[var(--border-subtle)] mb-4">
                <div>
-                  <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Customer</div>
-                  <div className="text-xs font-bold text-[var(--text-primary)] truncate">{invoice.customer_name}</div>
+                  <div className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider mb-1">Customer</div>
+                  <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{invoice.customer_name}</div>
                   {invoice.po_number && (
-                    <div className="text-[10px] text-[var(--text-muted)] mt-0.5">PO: {invoice.po_number}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">PO: {invoice.po_number}</div>
                   )}
                </div>
                <div className="text-right">
-                  <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
+                  <div className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider mb-1">Status</div>
                   {(() => {
                     const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
                     if (isDraft) {
                       return (
-                        <div className="inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30">
+                        <div className="inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30">
                           Draft
                         </div>
                       );
                     }
                     const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
                     return (
-                      <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
+                      <div className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold ${
                         isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
                       }`}>
                         {isPaid ? 'Paid' : 'Not Paid'}
@@ -1225,7 +1225,7 @@ export default function SalesTable({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onView(invoice)}
-                className="btn-secondary flex-1 min-w-[70px] px-3 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5"
+                className="btn-secondary flex-1 min-w-[70px] px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <EyeIcon className="w-3.5 h-3.5" />
                 View
@@ -1235,7 +1235,7 @@ export default function SalesTable({
                 <button
                   type="button"
                   onClick={() => openPaymentForInvoice(invoice)}
-                  className="flex-1 min-w-[70px] px-3 py-2 bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30 rounded-xl hover:bg-[var(--status-success)]/25 transition-all text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95"
+                  className="flex-1 min-w-[70px] px-3 py-2 bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30 rounded-xl hover:bg-[var(--status-success)]/25 transition-all text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   <CurrencyDollarIcon className="w-3.5 h-3.5" />
                   Pay

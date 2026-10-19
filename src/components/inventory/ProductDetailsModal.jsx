@@ -299,7 +299,7 @@ export default function ProductDetailsModal({ productId, onClose }) {
                             <tr key={batch.id} className="hover:bg-[var(--bg-surface)]/50 transition-colors">
                               <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-[var(--text-primary)] border-l-4 border-l-[var(--accent-primary)]">
                                 {batch.batch_number}
-                                {batch.manufacturing_date && <span className="text-[10px] text-[var(--text-secondary)] block">Mfg: {batch.manufacturing_date}</span>}
+                                {batch.manufacturing_date && <span className="text-xs text-[var(--text-muted)] block">Mfg: {batch.manufacturing_date}</span>}
                               </td>
                               <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-[var(--text-primary)]">
                                 {batchStock}

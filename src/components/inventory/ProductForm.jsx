@@ -546,7 +546,7 @@ export default function ProductForm({ product, onClose }) {
                     <button
                       type="button"
                       onClick={() => setIsCustomUnit(!isCustomUnit)}
-                      className="text-[10px] text-[var(--accent-primary)] hover:underline transition font-medium"
+                      className="text-xs text-[var(--accent-primary)] hover:underline transition font-semibold"
                     >
                       {isCustomUnit ? "Predefined" : "+ Custom"}
                     </button>
@@ -650,7 +650,7 @@ export default function ProductForm({ product, onClose }) {
                     min="1"
                     className={inputClass}
                   />
-                  <p className="text-[10px] text-gray-500 mt-1">
+                  <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
                     1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
                   </p>
                 </div>

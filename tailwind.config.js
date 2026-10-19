@@ -129,6 +129,19 @@ export default {
         body: ['DM Sans', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
+      fontSize: {
+        display: ['3rem', { lineHeight: '1.15', letterSpacing: '-0.025em', fontWeight: '700' }],      // 48px
+        h1: ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '700' }],           // 36px
+        h2: ['1.75rem', { lineHeight: '1.25', letterSpacing: '-0.015em', fontWeight: '600' }],        // 28px
+        h3: ['1.375rem', { lineHeight: '1.3', letterSpacing: '-0.01em', fontWeight: '600' }],          // 22px
+        h4: ['1.1875rem', { lineHeight: '1.35', letterSpacing: '-0.005em', fontWeight: '600' }],       // 19px
+        'body-lg': ['1.125rem', { lineHeight: '1.55', letterSpacing: '0', fontWeight: '400' }],       // 18px
+        body: ['1rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '400' }],                   // 16px
+        'body-sm': ['0.875rem', { lineHeight: '1.45', letterSpacing: '0', fontWeight: '400' }],       // 14px
+        caption: ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.02em', fontWeight: '500' }],        // 12px (strict minimum)
+        label: ['0.875rem', { lineHeight: '1.3', letterSpacing: '0.01em', fontWeight: '500' }],         // 14px
+        btn: ['0.9375rem', { lineHeight: '1.25', letterSpacing: '0.01em', fontWeight: '600' }],        // 15px
+      },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(6px)' },

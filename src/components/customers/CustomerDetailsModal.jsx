@@ -186,7 +186,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                 }`}
               >
                 <span>Ledger (Invoices)</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
                   activeTab === "invoices" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
                 }`}>
                   {customerInvoices.length}
@@ -202,7 +202,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                 }`}
               >
                 <span>Challans</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
                   activeTab === "challans" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
                 }`}>
                   {customerChallans.length}
@@ -273,12 +273,12 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                 </h1>
                 <div className="flex flex-wrap justify-center gap-2">
                    {customerDetails.meta?.party_category && (
-                     <span className="badge-info text-[10px] font-bold uppercase tracking-wider">
+                     <span className="badge-info text-xs font-semibold uppercase tracking-wider">
                        {customerDetails.meta.party_category}
                      </span>
                    )}
                    {customerDetails.gstin && (
-                     <span className="badge-success text-[10px] font-bold uppercase tracking-wider font-mono">
+                     <span className="badge-success text-xs font-semibold uppercase tracking-wider font-mono">
                        GSTIN: {customerDetails.gstin}
                      </span>
                    )}
@@ -288,25 +288,25 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
               {/* Financial Quick Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Invoiced</span>
+                  <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Invoiced</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-mono mt-2">
                     {getCurrencySymbol()}{totalInvoiced.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
+                  <span className="text-xs font-semibold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--status-success-text)] font-mono mt-2">
                     {getCurrencySymbol()}{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
+                  <span className="text-xs font-semibold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--status-warning-text)] font-mono mt-2">
                     {getCurrencySymbol()}{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
+                  <span className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
                   <span className="text-lg sm:text-xl font-bold text-[var(--accent-primary)] font-mono mt-2">
                     {customerInvoices.length} Inv / {customerChallans.length} DC
                   </span>
@@ -323,11 +323,11 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Email</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Email</span>
                         <span className="text-sm text-[var(--text-primary)] font-medium break-all">{customerDetails.email || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Phone</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Phone</span>
                         <span className="text-sm text-[var(--text-primary)] font-medium">{customerDetails.phone || 'N/A'}</span>
                       </div>
                       <div className="pt-2">
@@ -346,21 +346,21 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Customer ID</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Customer ID</span>
                         <span className="text-xs text-[var(--accent-primary)] font-mono bg-[var(--accent-primary)]/10 px-2 py-1 rounded self-start sm:self-auto">{customerDetails.id?.substring(0, 8)}...</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Created At</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Created At</span>
                         <span className="text-sm text-[var(--text-primary)]">
                           {customerDetails.created_at ? format(new Date(customerDetails.created_at), 'MMM dd, yyyy') : 'N/A'}
                         </span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Place of Supply</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Place of Supply</span>
                         <span className="text-sm text-[var(--text-primary)] uppercase tracking-wider font-semibold">{customerDetails.state || 'N/A'}</span>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-4 border-t border-[var(--border-subtle)]">
-                        <span className="text-[10px] sm:text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credit Limit</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credit Limit</span>
                         <span className="text-lg font-bold text-[var(--text-primary)] font-mono">
                           {getCurrencySymbol()}{customerDetails.meta?.credit_limit ? Number(customerDetails.meta.credit_limit).toLocaleString() : '0.00'}
                         </span>
@@ -436,7 +436,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                 </td>
                                 <td className="py-3 px-4">
                                   {relatedChallans.length === 0 ? (
-                                    <span className="text-[var(--text-muted)] font-mono text-[11px]">—</span>
+                                    <span className="text-[var(--text-muted)] font-mono text-xs">—</span>
                                   ) : (
                                     <div className="flex flex-wrap gap-1.5 items-center">
                                       {relatedChallans.map((c, idx) => (
@@ -445,20 +445,20 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                             key={c.id || idx}
                                             type="button"
                                             onClick={() => setPreviewDoc({ invoice: c.rawChallan, documentType: "delivery_challan" })}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 text-[11px] font-mono font-bold transition-all cursor-pointer"
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 text-xs font-mono font-bold transition-all cursor-pointer"
                                             title={`View Delivery Challan #${c.number}${c.date ? ` (${format(new Date(c.date), 'dd/MM/yyyy')})` : ''}`}
                                           >
                                             <span>#{c.number}</span>
-                                            {c.date && <span className="text-[10px] text-[var(--accent-primary)]/70 font-normal">({format(new Date(c.date), 'dd/MM')})</span>}
+                                            {c.date && <span className="text-xs text-[var(--accent-primary)]/70 font-normal">({format(new Date(c.date), 'dd/MM')})</span>}
                                           </button>
                                         ) : (
                                           <span
                                             key={idx}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-[11px] font-mono font-medium"
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-xs font-mono font-medium"
                                             title={`Challan Ref: #${c.number}${c.date ? ` (${format(new Date(c.date), 'dd/MM/yyyy')})` : ''}`}
                                           >
                                             <span>#{c.number}</span>
-                                            {c.date && <span className="text-[10px] text-[var(--text-muted)] font-normal">({format(new Date(c.date), 'dd/MM')})</span>}
+                                            {c.date && <span className="text-xs text-[var(--text-muted)] font-normal">({format(new Date(c.date), 'dd/MM')})</span>}
                                           </span>
                                         )
                                       ))}
@@ -475,7 +475,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                   {getCurrencySymbol()}{bal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                                     status === 'paid' ? 'badge-success' :
                                     status === 'partial' ? 'badge-warning' :
                                     'badge-danger'
@@ -584,18 +584,18 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                     <button
                                       type="button"
                                       onClick={() => setPreviewDoc({ invoice: linkedInv, documentType: "invoice" })}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--status-success-bg)] text-[var(--status-success-text)] hover:opacity-80 border border-[var(--status-success-border)] text-[11px] font-mono font-bold transition-all cursor-pointer"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--status-success-bg)] text-[var(--status-success-text)] hover:opacity-80 border border-[var(--status-success-border)] text-xs font-mono font-bold transition-all cursor-pointer"
                                       title={`View Linked Invoice #${linkedInv.invoice_number}`}
                                     >
                                       <span>#{linkedInv.invoice_number}</span>
                                       <ArrowTopRightOnSquareIcon className="w-3 h-3 opacity-70" />
                                     </button>
                                   ) : ch.converted_invoice_number ? (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-[11px] font-mono">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-xs font-mono">
                                       #{ch.converted_invoice_number}
                                     </span>
                                   ) : (
-                                    <span className="text-[var(--text-muted)] text-[10px] uppercase font-bold tracking-wider">Unbilled</span>
+                                    <span className="text-[var(--text-muted)] text-xs uppercase font-semibold tracking-wider">Unbilled</span>
                                   )}
                                 </td>
                                 <td className="py-3 px-4 text-[var(--text-muted)] font-mono">
@@ -605,7 +605,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                                     isInvoiced ? 'badge-success' :
                                     statusLabel === 'Open' ? 'badge-info' :
                                     'badge-neutral'

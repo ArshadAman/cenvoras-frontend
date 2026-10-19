@@ -94,7 +94,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               <div className="text-[var(--status-danger)] text-xs mt-1">{meta.error}</div>
             )}
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[10px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
+              <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -113,7 +113,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
               }}
               placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-default)] focus:border-[var(--border-focus)] focus:bg-[var(--input-bg)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-default)] focus:border-[var(--border-focus)] focus:bg-[var(--input-bg)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
@@ -570,7 +570,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
                        {showColumnPicker && (
                          <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3 shadow-2xl">
-                           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Show/Hide Columns</div>
+                           <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Show/Hide Columns</div>
                            <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-primary)] cursor-pointer">
                              <input
                                type="checkbox"
@@ -593,11 +593,11 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                  <div key={index} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end transition-all">
                                      {/* Row 1: Product (Full width on mobile, col-span-4 on desktop) */}
                                      <div className="lg:col-span-4">
-                                         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Product Name</label>
+                                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Product Name</label>
                                          <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                          {isEdit && item.id && (
                                              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                 <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                                                      (item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
                                                          ? "badge-success"
                                                          : (item.dispatched_quantity || 0) > 0
@@ -610,7 +610,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                                          ? "Partial"
                                                          : "Pending"}
                                                  </span>
-                                                 <span className="text-[var(--text-muted)] text-[11px]">
+                                                 <span className="text-[var(--text-muted)] text-xs">
                                                      Dispatched: <strong className="text-[var(--text-primary)] font-mono">{item.dispatched_quantity || 0}</strong> / {item.quantity || 0}
                                                      {Number(item.dispatched_quantity || 0) > 0 && (
                                                          <span className="text-[var(--status-warning-text)] ml-1 font-mono">
@@ -625,7 +625,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      {/* Row 2: Qty & Price (Side-by-side on mobile, col-span-4 on desktop) */}
                                      <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
                                          <div>
-                                             <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Quantity</label>
+                                             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Quantity</label>
                                              <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm text-center" 
                                                  onChange={e => {
                                                      const qty = e.target.value;
@@ -635,7 +635,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                              />
                                          </div>
                                          <div>
-                                             <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Price</label>
+                                             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Price</label>
                                              <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm text-right font-mono" 
                                                  onChange={e => {
                                                      const price = e.target.value;
@@ -648,7 +648,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
                                      {/* Row 3: Amount Display (Full width on mobile, col-span-2 on desktop) */}
                                      <div className="flex justify-between items-center lg:col-span-2 lg:block lg:text-left">
-                                         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] lg:mb-2">Subtotal</label>
+                                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] lg:mb-2">Subtotal</label>
                                          <div className="text-xl lg:text-base font-bold text-[var(--accent-primary)] font-mono">
                                              {getCurrencySymbol()}{Number(values.items[index].amount || 0).toLocaleString()}
                                          </div>
@@ -661,7 +661,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                              onClick={() => remove(index)} 
                                              disabled={values.items.length === 1 || Number(item.dispatched_quantity || 0) > 0}
                                              title={Number(item.dispatched_quantity || 0) > 0 ? "Cannot delete item with dispatched quantity" : "Remove Item"}
-                                             className="w-full py-3 lg:py-2.5 bg-[var(--status-danger-bg)] text-[var(--status-danger-text)] border border-[var(--status-danger-border)] rounded-xl hover:opacity-90 transition-all font-bold text-[10px] uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed"
+                                             className="w-full py-2.5 bg-[var(--status-danger-bg)] text-[var(--status-danger-text)] border border-[var(--status-danger-border)] rounded-xl hover:opacity-90 transition-all font-semibold text-xs uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                                          >
                                              Remove Item
                                          </button>
