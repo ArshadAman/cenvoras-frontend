@@ -41,7 +41,7 @@ export default function Button({
   };
 
   const baseStyles =
-    'relative inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090A0C]';
+    'relative inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07090E]';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
@@ -51,9 +51,9 @@ export default function Button({
 
   const variantStyles = {
     primary:
-      'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 border border-cyan-400/20 focus-visible:ring-cyan-500',
+      'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 border border-blue-400/30 focus-visible:ring-blue-500',
     secondary:
-      'bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 hover:border-white/20 focus-visible:ring-white/40',
+      'bg-obsidian-card hover:bg-obsidian-elevated text-gray-200 hover:text-white border border-white/10 hover:border-white/20 focus-visible:ring-white/40',
     destructive:
       'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/25 hover:border-rose-500/40 shadow-lg shadow-rose-950/30 focus-visible:ring-rose-500',
     ghost:

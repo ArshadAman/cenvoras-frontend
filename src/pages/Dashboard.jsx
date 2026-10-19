@@ -151,39 +151,39 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  // Legacy card data
+  // Financial Ticker Card Data
   const cardData = [
     {
       label: 'Total Sales',
       value: metrics?.total_sales != null ? `${getCurrencySymbol()}${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
-      icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
-      color: 'text-cyan-400'
+      icon: <CurrencyRupeeIcon className="w-6 h-6 text-blue-400" />,
+      color: 'text-blue-400'
     },
     {
       label: 'Total Purchases',
       value: metrics?.total_purchases != null ? `${getCurrencySymbol()}${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
-      icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
-      color: 'text-purple-400'
+      icon: <ShoppingBagIcon className="w-6 h-6 text-sky-400" />,
+      color: 'text-sky-400'
     },
     {
       label: 'Inventory Value',
       value: metrics?.total_inventory_value != null ? `${getCurrencySymbol()}${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
-      icon: <CubeIcon className="w-6 h-6 text-blue-400" />,
-      color: 'text-blue-400'
+      icon: <CubeIcon className="w-6 h-6 text-blue-500" />,
+      color: 'text-blue-500'
     },
     {
       label: 'Low Stock Items',
       value: metrics?.low_stock_count ?? '--',
-      icon: <ExclamationTriangleIcon className="w-6 h-6 text-red-400" />,
-      color: 'text-red-400'
+      icon: <ExclamationTriangleIcon className="w-6 h-6 text-rose-400" />,
+      color: 'text-rose-400'
     },
     {
       label: metrics?.gst_payable < 0 ? 'GST Credit' : 'GST Payable',
       value: metrics?.gst_payable != null
         ? `${getCurrencySymbol()}${Math.abs(Number(metrics.gst_payable)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : '--',
-      icon: <BanknotesIcon className="w-6 h-6 text-yellow-400" />,
-      color: metrics?.gst_payable < 0 ? 'text-green-400' : 'text-yellow-400'
+      icon: <BanknotesIcon className="w-6 h-6 text-amber-400" />,
+      color: metrics?.gst_payable < 0 ? 'text-emerald-400' : 'text-amber-400'
     },
   ];
 
@@ -230,7 +230,7 @@ export default function Dashboard({ onLogout }) {
   }, [stockPointsRaw, lowStock]);
 
   const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
+  const stockColors = ['#0284c7', '#2563eb', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#0d9488'];
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
@@ -247,14 +247,14 @@ export default function Dashboard({ onLogout }) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-              <SparklesIcon className="w-8 h-8 text-cyan-400" />
+              <SparklesIcon className="w-8 h-8 text-blue-400" />
               {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
                 ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
                 : 'Smart Dashboard'}
             </h1>
             <p className="text-gray-400 text-sm">Your intelligent business assistant</p>
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300">
-              <span className="text-cyan-400 font-semibold">{currentPlanName}</span>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-hairline bg-white/5 px-3 py-1 text-xs text-gray-300">
+              <span className="text-blue-400 font-semibold">{currentPlanName}</span>
               <span className="text-gray-500">plan active</span>
             </div>
           </div>
@@ -263,14 +263,14 @@ export default function Dashboard({ onLogout }) {
             <button 
               onClick={handleRefreshAll}
               disabled={isRefreshing}
-              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white disabled:opacity-50 flex items-center gap-2"
+              className="btn-secondary text-sm py-2 px-4 bg-obsidian-card border border-hairline hover:bg-obsidian-elevated text-white disabled:opacity-50 flex items-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
+              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-blue-600/20"
             >
               <PlusIcon className="w-4 h-4"/> Record Sales
             </button>
@@ -285,20 +285,20 @@ export default function Dashboard({ onLogout }) {
 
         {/* 2. LEGACY OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Overall Summary</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Overall Financial Summary</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
-                  <div key={i} className="bento-card !p-6 flex flex-col justify-between group hover:border-white/20 transition-colors">
+                  <div key={i} className="bg-obsidian-card border border-hairline rounded-2xl p-5 sm:p-6 flex flex-col justify-between group hover:border-hairline-hover transition-all shadow-lg shadow-black/20">
                     <div className="flex justify-between items-start mb-4">
-                      <div className={`p-3 rounded-xl bg-white/5 ${card.color}`}>
+                      <div className={`p-3 rounded-xl bg-white/[0.04] border border-hairline ${card.color}`}>
                         {card.icon}
                       </div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-white mb-1 tracking-tight">{card.value}</div>
-                      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">{card.label}</div>
+                      <div className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-1 tracking-tight font-mono font-tabular">{card.value}</div>
+                      <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{card.label}</div>
                     </div>
                   </div>
               ))

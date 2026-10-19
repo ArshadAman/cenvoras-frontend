@@ -16,11 +16,14 @@ export default function EmptyState({
 }) {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-white/[0.08] bg-[#121418]/60 backdrop-blur-sm animate-fade-up my-4 ${className}`}
+      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-hairline bg-obsidian-card/90 backdrop-blur-sm animate-fade-up my-4 ${className}`}
     >
-      {/* Icon Badge */}
-      <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-cyan-400 mb-4 shadow-xl shadow-black/40">
-        <Icon className="w-7 h-7" />
+      {/* Blueprint Grid Accent */}
+      <div className="relative mb-5">
+        <div className="absolute -inset-4 rounded-full bg-blue-500/10 blur-xl pointer-events-none" />
+        <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-hairline flex items-center justify-center text-blue-400 shadow-xl shadow-black/40 relative z-10">
+          <Icon className="w-8 h-8" />
+        </div>
       </div>
 
       {/* Typography */}

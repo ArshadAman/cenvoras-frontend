@@ -97,18 +97,18 @@ export default function DetailedFeatures() {
               onClick={() => setActiveCategory(cat.id)}
               className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                 isActive 
-                  ? 'bg-zinc-900 border-zinc-700 text-white' 
-                  : 'bg-zinc-950/60 border-zinc-900 text-zinc-400 hover:text-zinc-200 hover:border-zinc-800'
+                  ? 'bg-obsidian-elevated border-hairline text-white shadow-lg shadow-black/20' 
+                  : 'bg-obsidian-card/60 border-hairline text-slate-400 hover:text-slate-200 hover:border-slate-700'
               }`}
             >
-              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-zinc-800 text-white' : 'bg-zinc-900 text-zinc-500'}`}>
+              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-obsidian-card text-white border border-hairline' : 'bg-obsidian-elevated text-slate-500'}`}>
                 <cat.icon className="w-5 h-5" />
               </div>
               <div>
-                <h4 className={`text-sm font-semibold mb-0.5 ${isActive ? 'text-white' : 'text-zinc-300'}`}>
+                <h4 className={`text-sm font-semibold mb-0.5 ${isActive ? 'text-white' : 'text-slate-300'}`}>
                   {cat.title}
                 </h4>
-                <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
                   {cat.description}
                 </p>
               </div>
@@ -119,20 +119,20 @@ export default function DetailedFeatures() {
 
       {/* Feature Details Panel */}
       <div className="w-full lg:w-2/3">
-        <div className="bg-zinc-950 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 h-full">
-          <div className="mb-6 pb-5 border-b border-zinc-800/80">
-            <h3 className="text-xl font-bold text-white">{activeData?.title}</h3>
-            <p className="text-zinc-400 text-sm mt-1">{activeData?.description}</p>
+        <div className="bg-obsidian-card border border-hairline rounded-2xl p-6 sm:p-8 h-full">
+          <div className="mb-6 pb-5 border-b border-hairline">
+            <h3 className="text-xl font-bold text-white font-display">{activeData?.title}</h3>
+            <p className="text-slate-400 text-sm mt-1">{activeData?.description}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeData?.features.map((feature, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-zinc-800/60 bg-zinc-900/40">
+              <div key={idx} className="p-4 rounded-xl border border-hairline bg-obsidian-canvas/60">
                 <div className="flex items-start gap-2.5">
                   <CheckIcon className="w-4 h-4 text-emerald-400 mt-1 shrink-0" />
                   <div>
                     <h5 className="text-white text-sm font-semibold mb-1">{feature.name}</h5>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{feature.desc}</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">{feature.desc}</p>
                   </div>
                 </div>
               </div>

@@ -35,20 +35,20 @@ const Reveal = ({ children, delay = 0, className = '' }) => (
 // Trust Marquee Strip
 const TrustMarquee = () => {
   const items = [
-    '50+ businesses running live',
-    'GST-compliant invoicing',
-    'No per-user monthly charges',
-    'India data centers only',
-    'Unlimited staff logins',
-    'One-time perpetual license',
+    'GST Suvidha Provider (GSP) Gateway Ready',
+    'NIC E-Way Bill & E-Invoice Standard',
+    'ISO/IEC 27001 Security Standard Ready',
+    '100% Indian Data Center Sovereignty',
+    'Unlimited Staff Logins & Zero Per-User Fees',
+    'Perpetual License · Full Database Ownership',
   ];
   const doubled = [...items, ...items];
   return (
-    <div className="relative z-10 overflow-hidden border-y border-slate-800/60 py-4 bg-slate-950/60">
+    <div className="relative z-10 overflow-hidden border-y border-hairline py-4 bg-obsidian-canvas/90 backdrop-blur-md">
       <div className="flex gap-10 animate-marquee whitespace-nowrap">
         {doubled.map((item, i) => (
-          <span key={i} className="flex items-center gap-2 text-xs font-medium text-slate-400 tracking-wide">
-            <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+          <span key={i} className="flex items-center gap-2 text-xs font-mono font-medium text-slate-400 tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
             {item}
           </span>
         ))}
@@ -82,7 +82,7 @@ const ProductShowcase = () => {
               className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors duration-200 ${
                 isActive
                   ? 'text-slate-950 font-bold'
-                  : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800/80'
+                  : 'bg-obsidian-card text-slate-400 hover:text-slate-200 hover:bg-obsidian-elevated border border-hairline'
               }`}
             >
               {isActive && (
@@ -102,20 +102,20 @@ const ProductShowcase = () => {
       </div>
 
       {/* Browser Frame */}
-      <div className="rounded-2xl border border-slate-800/90 bg-slate-950/80 backdrop-blur-xl overflow-hidden shadow-2xl shadow-sky-950/20 ring-1 ring-white/10">
-        <div className="flex items-center px-4 py-3 bg-slate-900/90 border-b border-slate-800/80 text-xs text-slate-400">
+      <div className="rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-xl overflow-hidden shadow-2xl shadow-sky-950/20 ring-1 ring-white/10">
+        <div className="flex items-center px-4 py-3 bg-obsidian-canvas border-b border-hairline text-xs text-slate-400">
           <div className="flex items-center gap-1.5 mr-4">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
           </div>
-          <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1 rounded-md border border-slate-800/60 font-mono text-[11px] text-slate-400">
+          <div className="flex items-center gap-2 bg-obsidian-elevated/80 px-3 py-1 rounded-md border border-hairline font-mono text-[11px] text-slate-400">
             <ShieldCheckIcon className="w-3.5 h-3.5 text-emerald-400" />
             <span>https://app.cenvora.com</span>
           </div>
         </div>
 
-        <div className="relative min-h-[300px] sm:min-h-[500px] bg-slate-950 flex items-center justify-center">
+        <div className="relative min-h-[300px] sm:min-h-[500px] bg-obsidian-canvas flex items-center justify-center">
           {tabs.map((tab) => (
             <img 
               key={tab.id}
@@ -145,7 +145,7 @@ const RentVsOwnCalculator = () => {
   const formatINR = (val) => '₹' + Math.round(val).toLocaleString('en-IN');
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-slate-900/60 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+    <div className="w-full max-w-4xl mx-auto bg-obsidian-card border border-hairline rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
       <div className="max-w-2xl mb-8">
         <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
           Why rent your business software when you can own it?
@@ -156,12 +156,12 @@ const RentVsOwnCalculator = () => {
       </div>
 
       {/* Slider */}
-      <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 mb-8">
+      <div className="bg-obsidian-canvas border border-hairline rounded-2xl p-5 mb-8">
         <div className="flex justify-between items-center mb-3">
           <label className="text-sm font-medium text-slate-300 font-body">
             How many people need access?
           </label>
-          <span className="text-base font-bold text-white bg-slate-800 px-3.5 py-1 rounded-xl border border-slate-700 font-mono">
+          <span className="text-base font-bold text-white bg-obsidian-elevated px-3.5 py-1 rounded-xl border border-hairline font-mono font-tabular">
             {users} Users
           </span>
         </div>
@@ -171,9 +171,9 @@ const RentVsOwnCalculator = () => {
           max="30" 
           value={users} 
           onChange={(e) => setUsers(Number(e.target.value))}
-          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-white"
+          className="w-full h-2 bg-obsidian-elevated rounded-lg appearance-none cursor-pointer accent-white"
         />
-        <div className="flex justify-between text-xs text-slate-500 mt-2 font-medium">
+        <div className="flex justify-between text-xs text-slate-500 mt-2 font-mono font-medium">
           <span>2 users</span>
           <span>15 users</span>
           <span>30 users</span>
@@ -182,22 +182,22 @@ const RentVsOwnCalculator = () => {
 
       {/* Comparison */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="p-6 rounded-2xl border border-slate-800/80 bg-slate-950/50">
+        <div className="p-6 rounded-2xl border border-hairline bg-obsidian-canvas/60">
           <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Monthly Subscription ERP</div>
-          <div className="text-2xl sm:text-3xl font-bold text-slate-300 mt-2 font-mono">{formatINR(saas3YearCost)}</div>
+          <div className="text-2xl sm:text-3xl font-bold text-slate-300 mt-2 font-mono font-tabular">{formatINR(saas3YearCost)}</div>
           <p className="text-xs text-slate-400 mt-1.5">Total cost over 3 years (at ~₹1,500/user/month).</p>
-          <ul className="mt-5 space-y-2.5 text-xs text-slate-400 border-t border-slate-800/60 pt-4">
+          <ul className="mt-5 space-y-2.5 text-xs text-slate-400 border-t border-hairline pt-4">
             <li className="flex items-center gap-2"><span className="text-rose-400 font-bold">✕</span> Recurring fees that never stop</li>
             <li className="flex items-center gap-2"><span className="text-rose-400 font-bold">✕</span> Price hikes every time you hire</li>
             <li className="flex items-center gap-2"><span className="text-rose-400 font-bold">✕</span> Lose your database if you stop paying</li>
           </ul>
         </div>
 
-        <div className="p-6 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-slate-900/90 to-slate-950/90 shadow-xl shadow-emerald-950/20">
+        <div className="p-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-obsidian-elevated/90 to-obsidian-card/90 shadow-xl shadow-emerald-950/20">
           <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Cenvora (Buy Once, Own Forever)</div>
-          <div className="text-2xl sm:text-3xl font-bold text-white mt-2 font-mono">{formatINR(cenvora3YearCost)}</div>
+          <div className="text-2xl sm:text-3xl font-bold text-white mt-2 font-mono font-tabular">{formatINR(cenvora3YearCost)}</div>
           <p className="text-xs text-slate-400 mt-1.5">Total cost over 3 years (One-time license + ₹18k/yr hosting & AMC).</p>
-          <ul className="mt-5 space-y-2.5 text-xs text-slate-200 border-t border-slate-800/60 pt-4">
+          <ul className="mt-5 space-y-2.5 text-xs text-slate-200 border-t border-hairline pt-4">
             <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> One-time license with unlimited users</li>
             <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Flat ₹12,000/year base maintenance</li>
             <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Your database is 100% yours forever</li>
@@ -206,10 +206,10 @@ const RentVsOwnCalculator = () => {
       </div>
 
       {/* Savings */}
-      <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-obsidian-canvas border border-hairline flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="text-xs text-slate-400 font-medium">Estimated 3-Year Savings</div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-0.5 font-mono">Save {formatINR(savings)}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-0.5 font-mono font-tabular">Save {formatINR(savings)}</div>
         </div>
         <a
           href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20checked%20the%20pricing%20calculator%20and%20want%20to%20know%20more%20about%20the%20perpetual%20license."
@@ -251,7 +251,7 @@ const FaqAccordion = () => {
       {FAQ_ITEMS.map((item, idx) => {
         const isOpen = openIdx === idx;
         return (
-          <div key={idx} className="rounded-2xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md overflow-hidden">
+          <div key={idx} className="rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md overflow-hidden">
             <button
               onClick={() => setOpenIdx(isOpen ? null : idx)}
               className="w-full flex items-center justify-between p-6 text-left cursor-pointer group"
@@ -311,7 +311,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="font-body text-white bg-[#080C14] min-h-screen selection:bg-sky-500/20 selection:text-sky-300">
+    <div className="font-body text-white bg-obsidian-canvas min-h-screen selection:bg-sky-500/20 selection:text-sky-300">
       <Seo
         title="Cenvora — GST Billing & Stock Software for India"
         description="Cenvora is a one-time GST billing and stock management software for Indian businesses. Create invoices, track inventory, and manage customer ledgers — no monthly fees."
@@ -378,7 +378,7 @@ export default function LandingPage() {
                 href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
                 target="_blank"
                 rel="noreferrer"
-                className="px-6 py-3.5 bg-slate-900/90 border border-slate-700 text-white font-medium text-sm rounded-xl hover:bg-slate-800 transition-all backdrop-blur-md active:scale-[0.97] flex items-center gap-2"
+                className="px-6 py-3.5 bg-obsidian-card border border-hairline text-white font-medium text-sm rounded-xl hover:bg-obsidian-elevated transition-all backdrop-blur-md active:scale-[0.97] flex items-center gap-2"
               >
                 WhatsApp Us
                 <ArrowRightIcon className="w-4 h-4" />
@@ -392,16 +392,16 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 font-medium"
             >
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
                 50+ businesses live
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
                 No monthly fees
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
                 India-hosted data
               </span>
             </motion.div>
@@ -409,7 +409,7 @@ export default function LandingPage() {
 
           {/* Right Column — 3D Canvas */}
           <div className="flex-1 w-full lg:w-auto">
-            <Suspense fallback={<div className="h-[420px] animate-pulse bg-slate-900/40 rounded-3xl" />}>
+            <Suspense fallback={<div className="h-[420px] animate-pulse bg-obsidian-card rounded-3xl" />}>
               <HeroPrismCanvas />
             </Suspense>
           </div>
@@ -420,7 +420,7 @@ export default function LandingPage() {
       <TrustMarquee />
 
       {/* ─── 2. CORE PILLARS — Asymmetric Bento Grid ─── */}
-      <section id="features" className="relative z-10 py-24 px-6 bg-slate-950/40">
+      <section id="features" className="relative z-10 py-24 px-6 bg-obsidian-canvas">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mb-14">
@@ -436,7 +436,7 @@ export default function LandingPage() {
           {/* Bento: 1 large left + 2 stacked right */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
             {/* Large cell */}
-            <Reveal className="md:col-span-3 p-8 rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-900/60 to-slate-950/80 backdrop-blur-md hover:border-sky-500/40 transition-all duration-300 shadow-xl group">
+            <Reveal className="md:col-span-3 p-8 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md hover:border-sky-500/40 transition-all duration-300 shadow-xl group">
               <div className="w-14 h-14 rounded-xl bg-sky-950/80 border border-sky-500/30 flex items-center justify-center text-sky-400 mb-6 group-hover:scale-105 transition-transform">
                 <BoltIcon className="w-7 h-7" />
               </div>
@@ -448,7 +448,7 @@ export default function LandingPage() {
 
             {/* 2 stacked right */}
             <div className="md:col-span-2 flex flex-col gap-5">
-              <Reveal delay={0.1} className="flex-1 p-7 rounded-2xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md hover:border-emerald-500/40 transition-all duration-300 shadow-xl group">
+              <Reveal delay={0.1} className="flex-1 p-7 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md hover:border-emerald-500/40 transition-all duration-300 shadow-xl group">
                 <div className="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-105 transition-transform">
                   <ArchiveBoxIcon className="w-6 h-6" />
                 </div>
@@ -458,7 +458,7 @@ export default function LandingPage() {
                 </p>
               </Reveal>
 
-              <Reveal delay={0.2} className="flex-1 p-7 rounded-2xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md hover:border-cyan-500/40 transition-all duration-300 shadow-xl group">
+              <Reveal delay={0.2} className="flex-1 p-7 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md hover:border-cyan-500/40 transition-all duration-300 shadow-xl group">
                 <div className="w-12 h-12 rounded-xl bg-cyan-950/80 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-105 transition-transform">
                   <DocumentChartBarIcon className="w-6 h-6" />
                 </div>
@@ -506,7 +506,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 6. PRICING ─── */}
-      <section id="pricing" className="relative z-10 py-24 border-t border-slate-900/80 px-6 bg-slate-950/40">
+      <section id="pricing" className="relative z-10 py-24 border-t border-hairline px-6 bg-obsidian-canvas">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-16">
@@ -522,21 +522,21 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Tier 1 */}
             <Reveal delay={0}>
-              <div className="h-full p-7 rounded-3xl border border-slate-800 bg-slate-900/50 backdrop-blur-md flex flex-col justify-between hover:border-slate-700 transition-all">
+              <div className="h-full p-7 rounded-3xl border border-hairline bg-obsidian-card backdrop-blur-md flex flex-col justify-between hover:border-slate-700 transition-all">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tier 1</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Tier 1</div>
                   <h3 className="font-display text-xl font-bold text-white mt-1">Hosted Standard</h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed font-body">
                     Best for single-business shops and distributors wanting zero setup headaches.
                   </p>
 
-                  <div className="mt-6 pb-6 border-b border-slate-800">
-                    <div className="text-3xl font-extrabold text-white font-mono">₹1,00,000</div>
+                  <div className="mt-6 pb-6 border-b border-hairline">
+                    <div className="text-3xl font-extrabold text-white font-mono font-tabular">₹1,00,000</div>
                     <div className="text-xs text-slate-500 mt-0.5 font-medium">One-time software license</div>
-                    <div className="mt-4 p-3.5 bg-slate-950/80 rounded-xl text-xs space-y-1.5 text-slate-400 border border-slate-800/80">
+                    <div className="mt-4 p-3.5 bg-obsidian-canvas rounded-xl text-xs space-y-1.5 text-slate-400 border border-hairline font-mono font-tabular">
                       <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-white font-medium">₹12,000/yr</span></div>
                       <div className="flex justify-between"><span>Cloud Server Hosting:</span><span>~₹6,000/yr</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-slate-800 text-slate-200 font-semibold"><span>Total Ongoing:</span><span>₹18,000/yr</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-hairline text-slate-200 font-semibold"><span>Total Ongoing:</span><span>₹18,000/yr</span></div>
                     </div>
                   </div>
 
@@ -553,7 +553,7 @@ export default function LandingPage() {
                     href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20am%20interested%20in%20the%20Hosted%20Standard%20plan%20(Rs%201%2C00%2C000)."
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full py-3 text-center bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                    className="block w-full py-3 text-center bg-obsidian-elevated hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-colors shadow-sm active:scale-[0.97] border border-hairline"
                   >
                     Inquire on WhatsApp
                   </a>
@@ -563,25 +563,25 @@ export default function LandingPage() {
 
             {/* Tier 2: Popular */}
             <Reveal delay={0.1}>
-              <div className="h-full p-7 rounded-3xl border-2 border-emerald-500/60 bg-gradient-to-b from-slate-900/95 to-slate-950/95 flex flex-col justify-between relative shadow-2xl shadow-emerald-950/30">
+              <div className="h-full p-7 rounded-3xl border-2 border-emerald-500/50 bg-gradient-to-b from-obsidian-elevated to-obsidian-card flex flex-col justify-between relative shadow-2xl shadow-emerald-950/30">
                 <div className="absolute -top-3.5 left-6 px-3 py-0.5 bg-emerald-400 text-slate-950 text-[10px] font-black uppercase rounded-full shadow-md">
                   Most Popular
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Tier 2</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">Tier 2</div>
                   <h3 className="font-display text-xl font-bold text-white mt-1">White-Label Custom Domain</h3>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed font-body">
                     Your own website domain (erp.yourbrand.com) with your logo and dedicated server.
                   </p>
 
-                  <div className="mt-6 pb-6 border-b border-slate-800">
-                    <div className="text-3xl font-extrabold text-white font-mono">₹1,50,000</div>
+                  <div className="mt-6 pb-6 border-b border-hairline">
+                    <div className="text-3xl font-extrabold text-white font-mono font-tabular">₹1,50,000</div>
                     <div className="text-xs text-slate-400 mt-0.5 font-medium">One-time software license</div>
-                    <div className="mt-4 p-3.5 bg-slate-950/90 rounded-xl text-xs space-y-1.5 text-slate-300 border border-slate-800/80">
+                    <div className="mt-4 p-3.5 bg-obsidian-canvas rounded-xl text-xs space-y-1.5 text-slate-300 border border-hairline font-mono font-tabular">
                       <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-white font-medium">₹12,000/yr</span></div>
                       <div className="flex justify-between"><span>Dedicated Server Container:</span><span>~₹12,000/yr</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-slate-800 text-white font-semibold"><span>Total Ongoing:</span><span>₹24,000/yr</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-hairline text-white font-semibold"><span>Total Ongoing:</span><span>₹24,000/yr</span></div>
                     </div>
                   </div>
 
@@ -608,21 +608,21 @@ export default function LandingPage() {
 
             {/* Tier 3 */}
             <Reveal delay={0.2}>
-              <div className="h-full p-7 rounded-3xl border border-slate-800 bg-slate-900/50 backdrop-blur-md flex flex-col justify-between hover:border-slate-700 transition-all">
+              <div className="h-full p-7 rounded-3xl border border-hairline bg-obsidian-card backdrop-blur-md flex flex-col justify-between hover:border-slate-700 transition-all">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tier 3</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Tier 3</div>
                   <h3 className="font-display text-xl font-bold text-white mt-1">Enterprise / Self-Hosted</h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed font-body">
                     For businesses that want the software on their own private cloud or local server.
                   </p>
 
-                  <div className="mt-6 pb-6 border-b border-slate-800">
-                    <div className="text-3xl font-extrabold text-white font-mono">₹2,00,000+</div>
+                  <div className="mt-6 pb-6 border-b border-hairline">
+                    <div className="text-3xl font-extrabold text-white font-mono font-tabular">₹2,00,000+</div>
                     <div className="text-xs text-slate-500 mt-0.5 font-medium">One-time software license</div>
-                    <div className="mt-4 p-3.5 bg-slate-950/80 rounded-xl text-xs space-y-1.5 text-slate-400 border border-slate-800/80">
+                    <div className="mt-4 p-3.5 bg-obsidian-canvas rounded-xl text-xs space-y-1.5 text-slate-400 border border-hairline font-mono font-tabular">
                       <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-white font-medium">₹12,000/yr</span></div>
                       <div className="flex justify-between"><span>Server Hosting:</span><span className="text-emerald-400">₹0 to Cenvora</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-slate-800 text-slate-200 font-semibold"><span>Hosting Paid:</span><span>Direct to your cloud (AWS/DigitalOcean)</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-hairline text-slate-200 font-semibold"><span>Hosting Paid:</span><span>Direct to your cloud (AWS/DigitalOcean)</span></div>
                     </div>
                   </div>
 
@@ -636,7 +636,7 @@ export default function LandingPage() {
                 <div className="mt-8 pt-4">
                   <button
                     onClick={() => setIsCalendlyOpen(true)}
-                    className="block w-full py-3 text-center bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition-colors shadow-sm cursor-pointer active:scale-[0.97]"
+                    className="block w-full py-3 text-center bg-obsidian-elevated hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-colors shadow-sm cursor-pointer active:scale-[0.97] border border-hairline"
                   >
                     Schedule Consultation
                   </button>
@@ -646,7 +646,7 @@ export default function LandingPage() {
           </div>
 
           {/* AMC Note */}
-          <Reveal className="mt-12 p-6 rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-md text-xs text-slate-400 leading-relaxed max-w-3xl mx-auto font-body">
+          <Reveal className="mt-12 p-6 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md text-xs text-slate-400 leading-relaxed max-w-3xl mx-auto font-body">
             <strong className="text-white block mb-1 text-sm font-display">What does the ₹12,000/year maintenance fee cover?</strong>
             It covers software updates, statutory GST tax calculation adjustments when government rates change, automated backups, and priority support over WhatsApp. Even if you choose not to renew the maintenance fee, your software license and your historical database remain 100% yours forever.
           </Reveal>
@@ -654,7 +654,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 7. FAQ ─── */}
-      <section className="relative z-10 py-24 border-t border-slate-900/80 px-6">
+      <section className="relative z-10 py-24 border-t border-hairline px-6">
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <div className="text-center mb-14">
@@ -668,7 +668,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 8. FINAL CTA ─── */}
-      <section className="relative z-10 py-20 border-t border-slate-900/80 px-6 text-center bg-slate-950/40">
+      <section className="relative z-10 py-20 border-t border-hairline px-6 text-center bg-obsidian-canvas">
         <Reveal>
           <div className="max-w-2xl mx-auto">
             <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
@@ -689,7 +689,7 @@ export default function LandingPage() {
                 href="https://wa.me/917205289643"
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto px-7 py-3.5 bg-slate-900/90 border border-slate-700 text-white font-medium text-sm rounded-xl hover:bg-slate-800 transition-colors backdrop-blur-md active:scale-[0.97]"
+                className="w-full sm:w-auto px-7 py-3.5 bg-obsidian-card border border-hairline text-white font-medium text-sm rounded-xl hover:bg-obsidian-elevated transition-colors backdrop-blur-md active:scale-[0.97]"
               >
                 Chat on WhatsApp
               </a>
@@ -709,7 +709,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 9. FOOTER — 3-Column ─── */}
-      <footer className="relative z-10 py-14 border-t border-slate-900/80 px-6 text-xs text-slate-500">
+      <footer className="relative z-10 py-14 border-t border-hairline px-6 text-xs text-slate-500 bg-obsidian-canvas">
         <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
           {/* Col 1: Brand */}
           <div>
@@ -719,7 +719,7 @@ export default function LandingPage() {
             <p className="text-slate-500 leading-relaxed">
               Simple business software. GST billing, inventory, and customer management for Indian businesses.
             </p>
-            <p className="mt-4 text-slate-600">&copy; {new Date().getFullYear()} Cenvora.</p>
+            <p className="mt-4 text-slate-600 font-mono">&copy; {new Date().getFullYear()} Cenvora.</p>
           </div>
 
           {/* Col 2: Product */}

@@ -2388,7 +2388,7 @@ export default function SalesForm({
 
                             return (
                               <>
-                                <div className="hidden md:block overflow-x-auto border-y border-white/10 bg-[#1b2030]">
+                                <div className="hidden md:block overflow-x-auto border-y border-hairline bg-obsidian-card/90">
                                   <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-gray-300" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
@@ -2544,9 +2544,9 @@ export default function SalesForm({
                                           setDragOverRowIndex(null);
                                         }}
                                         className={[
-                                          "border-b border-white/10 transition-all duration-150",
-                                          draggedRowIndex === index ? "opacity-35 bg-cyan-950/40 ring-1 ring-cyan-500/50" : "hover:bg-white/[0.02]",
-                                          dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-cyan-400 bg-cyan-500/10" : "",
+                                          "border-b border-hairline transition-all duration-150",
+                                          draggedRowIndex === index ? "opacity-35 bg-blue-950/40 ring-1 ring-blue-500/50" : "hover:bg-obsidian-active/40",
+                                          dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-blue-500 bg-blue-500/10" : "",
                                         ].join(" ")}
                                       >
                                         <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
@@ -2726,7 +2726,7 @@ export default function SalesForm({
                                                    name={`items.${index}.quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                   className="w-full text-center bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-100 focus:border-blue-500 outline-none"
                                                    onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                                  />
                                                </div>
@@ -2774,7 +2774,7 @@ export default function SalesForm({
                                                       setFieldValue(`items.${index}.unit`, val);
                                                     }
                                                   }}
-                                                  className="w-full bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                  className="w-full bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs text-gray-200 focus:border-blue-500 outline-none"
                                                 >
                                                   {availableUnits.map((u) => <option key={u} value={u} className="bg-[#111]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[#1a2341] text-cyan-400 font-bold">+ Custom Unit...</option>
@@ -2805,7 +2805,7 @@ export default function SalesForm({
                                                    type="number"
                                                    min="0"
                                                    step="0.0001"
-                                                   className="w-full text-right bg-transparent border border-white/10 rounded px-2 py-2 text-sm font-mono text-gray-100"
+                                                   className="w-full text-right bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-100 focus:border-blue-500 outline-none"
                                                    onChange={(e) => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -2822,7 +2822,7 @@ export default function SalesForm({
                                           if (col.key === "discount") {
                                             return (
                                               <div key={col.key}>
-                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200" />
+                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-200 focus:border-blue-500 outline-none" />
                                               </div>
                                             );
                                           }
@@ -2834,7 +2834,7 @@ export default function SalesForm({
                                                   name={`items.${index}.tax`}
                                                   type="number"
                                                   step="1"
-                                                  className="w-full text-center bg-transparent border border-white/10 rounded px-2 py-2 text-xs text-gray-200"
+                                                  className="w-full text-center bg-obsidian-canvas/60 border border-hairline rounded px-2 py-1.5 text-xs font-mono font-tabular text-gray-200 focus:border-blue-500 outline-none"
                                                   onKeyDown={(e) => {
                                                     if (e.key === "Tab" && !e.shiftKey) {
                                                       const isLastRow = index === values.items.length - 1;
@@ -2876,7 +2876,7 @@ export default function SalesForm({
 
                                           if (col.key === "amount") {
                                             return (
-                                              <div key={col.key} className="text-right px-1 py-2 font-semibold text-cyan-300 text-sm">
+                                              <div key={col.key} className="text-right px-2 py-1.5 font-mono font-bold font-tabular text-white text-xs">
                                                 {item.amount?.toFixed(2) || "0.00"}
                                               </div>
                                             );
@@ -3373,54 +3373,54 @@ export default function SalesForm({
                 </div>
 
                 {/* Totals */}
-                <div className="bg-[#111] border border-white/10 p-8 rounded-xl shadow-inner">
+                <div className="bg-obsidian-card border border-hairline p-6 sm:p-8 rounded-2xl shadow-xl">
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between text-gray-400">
                       <span>Subtotal</span>
-                      <span className="text-white font-medium">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
+                      <span className="text-white font-medium font-mono font-tabular">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-green-400">
+                    <div className="flex justify-between text-emerald-400">
                       <span>Total Discount</span>
-                      <span>-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
+                      <span className="font-mono font-tabular">-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-red-400">
-                      <span>Total Tax</span>
-                      <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
+                    <div className="flex justify-between text-gray-300">
+                      <span>Total Tax (GST)</span>
+                      <span className="text-white font-medium font-mono font-tabular">{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                     </div>
                     {isIGST ? (
-                      <div className="flex justify-between text-orange-400 text-xs pl-2">
-                        <span>↳ IGST</span>
+                      <div className="flex justify-between text-blue-400 text-xs pl-2 font-mono font-tabular">
+                        <span>↳ IGST (Inter-state)</span>
                         <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                       </div>
                     ) : (
                       <>
-                        <div className="flex justify-between text-orange-400 text-xs pl-2">
-                          <span>↳ CGST</span>
+                        <div className="flex justify-between text-blue-400 text-xs pl-2 font-mono font-tabular">
+                          <span>↳ CGST (Intra-state)</span>
                           <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-orange-400 text-xs pl-2">
-                          <span>↳ SGST</span>
+                        <div className="flex justify-between text-blue-400 text-xs pl-2 font-mono font-tabular">
+                          <span>↳ SGST (Intra-state)</span>
                           <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
                         </div>
                       </>
                     )}
-                    <div className="h-px bg-white/10 my-3"></div>
+                    <div className="h-px bg-hairline my-3"></div>
                     {roundOffApplied && (
-                      <div className="flex justify-between text-amber-300">
+                      <div className="flex justify-between text-amber-300 font-mono font-tabular">
                         <span>Round Off</span>
                         <span>{roundOffDelta >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOffDelta.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between font-bold text-xl">
+                    <div className="flex justify-between font-bold text-2xl font-mono font-tabular pt-1">
                       <span className="text-white">Grand Total</span>
-                      <span className="text-cyan-400">{getCurrencySymbol()}{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
+                      <span className="text-white">{getCurrencySymbol()}{(roundOffApplied ? roundedGrandTotal : grandTotal).toFixed(2)}</span>
                     </div>
                     <div className="text-right">
                       {!roundOffApplied ? (
                         <button
                           type="button"
                           onClick={() => setRoundOffApplied(true)}
-                          className="text-[11px] text-cyan-400 hover:text-cyan-300 underline"
+                          className="text-xs text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
                         >
                           Apply round off
                         </button>

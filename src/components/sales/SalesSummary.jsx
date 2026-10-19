@@ -136,10 +136,10 @@ export default function SalesSummary() {
       label: 'Active Invoices',
       value: invoices.filter(inv => inv.status !== 'draft').length,
       subValue: `${invoices.filter(inv => inv.status === 'draft').length} draft in queue`,
-      icon: <ShoppingBagIcon className="w-5 h-5 text-purple-400" />,
-      color: 'purple',
-      glow: 'from-purple-500/10 via-purple-500/5 to-transparent',
-      borderColor: 'border-purple-500/20 group-hover:border-purple-500/40',
+      icon: <ShoppingBagIcon className="w-5 h-5 text-blue-400" />,
+      color: 'blue',
+      glow: 'from-blue-500/10 via-blue-500/5 to-transparent',
+      borderColor: 'border-blue-500/20 group-hover:border-blue-500/40',
       badgeText: 'Pipeline'
     }
   ];
@@ -147,15 +147,15 @@ export default function SalesSummary() {
   return (
     <div className="space-y-5 mb-8 mt-2 transition-all duration-300">
       {/* Analytics Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-white/[0.04] to-white/[0.01] border border-white/10 backdrop-blur-xl shadow-lg shadow-black/20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-obsidian-card border border-hairline backdrop-blur-xl shadow-lg shadow-black/20">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
             <h3 className="text-white text-sm font-bold tracking-tight">Sales Analytics</h3>
           </div>
 
           {!isCollapsed && (
-            <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
+            <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-hairline">
               {[
                 { id: "today", label: "Today" },
                 { id: "month", label: "This Month" },
@@ -178,7 +178,7 @@ export default function SalesSummary() {
           )}
 
           {analyticsFetching && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-bold animate-pulse">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[10px] font-bold animate-pulse">
               <SparklesIcon className="w-3 h-3" />
               <span>Updating...</span>
             </div>
@@ -192,7 +192,7 @@ export default function SalesSummary() {
                 type="date"
                 min={minDate}
                 max={maxDate}
-                className="bg-black/40 text-white text-xs border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-cyan-500"
+                className="bg-black/40 text-white text-xs border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-blue-500"
                 value={customRange.start}
                 onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
               />
@@ -201,7 +201,7 @@ export default function SalesSummary() {
                 type="date"
                 min={customRange.start || minDate}
                 max={maxDate}
-                className="bg-black/40 text-white text-xs border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-cyan-500"
+                className="bg-black/40 text-white text-xs border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-blue-500"
                 value={customRange.end}
                 onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
               />
@@ -211,11 +211,11 @@ export default function SalesSummary() {
           <button
             type="button"
             onClick={toggleCollapse}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer select-none"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-hairline rounded-xl transition-all cursor-pointer select-none"
             title={isCollapsed ? "Expand Analytics" : "Collapse Analytics"}
           >
             <span>{isCollapsed ? "Show Analytics" : "Hide Analytics"}</span>
-            {isCollapsed ? <ChevronDownIcon className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUpIcon className="w-3.5 h-3.5 text-gray-400" />}
+            {isCollapsed ? <ChevronDownIcon className="w-3.5 h-3.5 text-blue-400" /> : <ChevronUpIcon className="w-3.5 h-3.5 text-gray-400" />}
           </button>
         </div>
       </div>
@@ -227,16 +227,16 @@ export default function SalesSummary() {
             {summaryCards.map((card, i) => (
               <div 
                 key={i} 
-                className={`relative overflow-hidden rounded-2xl bg-[#0f0f10] border ${card.borderColor} p-5 flex flex-col justify-between group transition-all duration-300 hover:shadow-xl hover:shadow-black/40`}
+                className={`relative overflow-hidden rounded-2xl bg-obsidian-card border border-hairline p-5 flex flex-col justify-between group transition-all duration-300 hover:shadow-xl hover:shadow-black/40`}
               >
                 {/* Background glow gradient */}
                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${card.glow} rounded-full blur-2xl pointer-events-none`}></div>
                 
                 <div className="flex justify-between items-start mb-3 relative z-10">
-                  <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 backdrop-blur-md">
+                  <div className="p-2.5 rounded-xl bg-white/[0.04] border border-hairline backdrop-blur-md">
                     {card.icon}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded-md border border-hairline">
                     {card.badgeText}
                   </span>
                 </div>
@@ -249,10 +249,10 @@ export default function SalesSummary() {
                     </div>
                   ) : (
                     <>
-                      <div className="text-2xl font-black text-white tracking-tight tabular-nums mb-1">
+                      <div className="text-2xl font-black text-white tracking-tight font-mono font-tabular mb-1">
                         {card.value}
                       </div>
-                      <div className="text-sm font-semibold text-cyan-300 tabular-nums mb-1">
+                      <div className="text-sm font-semibold text-white font-mono font-tabular mb-1">
                         {card.subValue}
                       </div>
                       <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -268,11 +268,11 @@ export default function SalesSummary() {
           {/* Secondary Row: Top Customers & Action Required */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Top Customers */}
-            <div className="lg:col-span-2 rounded-2xl bg-[#0f0f10] border border-white/10 p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+            <div className="lg:col-span-2 rounded-2xl bg-obsidian-card border border-hairline p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-3 border-b border-hairline mb-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-bold text-white tracking-tight">Top Customers</h4>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-hairline">
                     By Volume
                   </span>
                 </div>

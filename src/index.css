@@ -14,7 +14,7 @@
   }
   
   body {
-    background-color: #090a0f;
+    background-color: #07090E;
     color: #f8fafc;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -23,6 +23,39 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     letter-spacing: -0.02em;
+  }
+
+  .font-tabular {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+
+  .hairline-border {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hairline-border-b {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hairline-border-t {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .surface-canvas {
+    background-color: #07090E;
+  }
+
+  .surface-card {
+    background-color: #0E111A;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .surface-elevated {
+    background-color: #151926;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
   }
 
   input[type="date"],
