@@ -48,14 +48,14 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
 
   if (error) {
     return (
-      <div className="p-4 text-red-600">
+      <div className="p-4 text-[var(--status-danger)]">
         Error loading purchase bills: {error.message}
         <button
           onClick={() => {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="ml-4 px-2 py-1 bg-red-500 text-white rounded text-xs"
+          className="ml-4 px-2 py-1 bg-[var(--status-danger)] text-white rounded text-xs"
         >
           Clear Auth & Re-login
         </button>
@@ -520,7 +520,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         </button>
                         <button
                           type="button"
-                          className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all"
+                          className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--status-danger)] border border-[var(--border-subtle)] hover:bg-[var(--status-danger)]/10 transition-all"
                           onClick={() => onDelete(bill.id)}
                           title="Delete Purchase Bill"
                           aria-label="Delete Purchase Bill"
@@ -642,7 +642,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                   onClick={() => onDelete(bill.id)}
                   title="Delete Purchase Bill"
                   aria-label="Delete Purchase Bill"
-                  className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-all"
+                  className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--status-danger)] border border-[var(--border-subtle)] hover:bg-[var(--status-danger)]/10 transition-all"
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>

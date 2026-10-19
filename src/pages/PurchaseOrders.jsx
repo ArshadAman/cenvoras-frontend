@@ -72,9 +72,9 @@ export default function PurchaseOrders() {
     return (
       <>
         <div className="p-6">
-          <div className="rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--text-primary)] p-4">
-            <h3 className="text-[var(--text-primary)] font-semibold">Error loading purchase orders</h3>
-            <p className="text-[var(--text-muted)] text-sm mt-1">{error?.message || 'Unknown error'}</p>
+          <div className="rounded-xl bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 p-4">
+            <h3 className="text-[var(--status-danger)] font-semibold">Error loading purchase orders</h3>
+            <p className="text-[var(--status-danger)]/80 text-sm mt-1">{error?.message || 'Unknown error'}</p>
           </div>
         </div>
       </>
