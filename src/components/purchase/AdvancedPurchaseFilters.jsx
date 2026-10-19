@@ -188,7 +188,7 @@ export default function AdvancedPurchaseFilters({ onFiltersChange, onClose }) {
           </button>
           <button
             onClick={handleApplyFilters}
-            className="btn-primary bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20"
+            className="btn-primary"
           >
             Apply Filters
           </button>

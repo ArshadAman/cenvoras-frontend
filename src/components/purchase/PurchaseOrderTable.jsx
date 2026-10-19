@@ -49,8 +49,8 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8 text-gray-400">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mr-3"></div>
+      <div className="flex justify-center p-8 text-[var(--text-muted)]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mr-3"></div>
         Loading purchase orders...
       </div>
     );
@@ -61,115 +61,115 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
       {/* Filters */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
           <input
             type="text"
             placeholder="Search by PO Number or Vendor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/50 appearance-none"
+          className="bg-[var(--bg-primary)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] appearance-none"
         >
-          <option value="all" className="bg-[#111]">All Statuses</option>
-          <option value="draft" className="bg-[#111]">Draft</option>
-          <option value="sent" className="bg-[#111]">Sent</option>
-          <option value="received" className="bg-[#111]">Received (Converted)</option>
-          <option value="cancelled" className="bg-[#111]">Cancelled</option>
+          <option value="all">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="sent">Sent</option>
+          <option value="received">Received (Converted)</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.02]">
+      <div className="overflow-x-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-gray-400">
+          <thead className="bg-[var(--bg-primary)]/70 border-b border-[var(--border-default)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
             <tr>
               <th 
                 onClick={() => handleSort("po_number")}
-                className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors"
+                className="px-6 py-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Order Details</span>
                   {sortConfig.key === "po_number" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("vendor")}
-                className="px-6 py-4 font-medium cursor-pointer hover:text-white select-none transition-colors"
+                className="px-6 py-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Vendor</span>
                   {sortConfig.key === "vendor" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("amount")}
-                className="px-6 py-4 font-medium text-right cursor-pointer hover:text-white select-none transition-colors"
+                className="px-6 py-4 font-bold text-[var(--text-primary)] text-right cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
               >
                 <div className="flex items-center justify-end gap-1.5">
                   <span>Amount</span>
                   {sortConfig.key === "amount" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
               <th 
                 onClick={() => handleSort("status")}
-                className="px-6 py-4 font-medium text-center cursor-pointer hover:text-white select-none transition-colors"
+                className="px-6 py-4 font-bold text-[var(--text-primary)] text-center cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <span>Status</span>
                   {sortConfig.key === "status" && (
-                    <span className="text-cyan-400 font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
               </th>
-              <th className="px-6 py-4 font-medium text-right">Actions</th>
+              <th className="px-6 py-4 font-bold text-[var(--text-primary)] text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-8 text-center text-[var(--text-muted)]">
                   No purchase orders found matching your criteria.
                 </td>
               </tr>
             ) : (
               filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
+                <tr key={order.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors group">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-cyan-400">{order.po_number || "Draft"}</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="font-semibold text-[var(--text-primary)]">{order.po_number || "Draft"}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-1">
                       {order.created_at ? format(new Date(order.created_at), "dd/MM/yyyy") : "N/A"}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-white">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
+                    <div className="font-medium text-[var(--text-primary)]">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
                     {order.expected_date && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-[var(--text-muted)] mt-1">
                         Expected: {format(new Date(order.expected_date), "dd/MM/yyyy")}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="font-bold text-white tabular-nums">
+                    <div className="font-bold text-[var(--text-primary)] tabular-nums">
                       {getCurrencySymbol()}{parseFloat(order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wider ${
-                      order.status === 'received' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                      order.status === 'cancelled' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                      order.status === 'sent' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                      'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                      order.status === 'received' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' :
+                      order.status === 'cancelled' ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)]' :
+                      order.status === 'sent' ? 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]' :
+                      'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]'
                     }`}>
                       {order.status || 'draft'}
                     </span>
@@ -179,7 +179,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                       {order.status !== 'received' && (
                         <button
                           onClick={() => onConvert(order)}
-                          className="p-1.5 rounded-lg text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+                          className="p-1.5 rounded-lg bg-[var(--accent-primary)] text-[var(--text-on-accent)] transition-transform active:scale-95"
                           title="Convert to Bill"
                         >
                           <ArrowRightCircleIcon className="w-5 h-5" />
@@ -187,7 +187,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                       )}
                       <button
                         onClick={() => onEdit(order)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                         title="Edit Order"
                       >
                         <PencilIcon className="w-5 h-5" />
@@ -197,8 +197,8 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                         disabled={order.status !== 'draft' && order.status !== 'cancelled'}
                         className={`p-1.5 rounded-lg transition-colors ${
                           order.status !== 'draft' && order.status !== 'cancelled'
-                            ? 'text-gray-600 cursor-not-allowed opacity-50'
-                            : 'text-red-400 hover:bg-red-500/10'
+                            ? 'text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                            : 'text-[var(--text-primary)] border border-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
                         }`}
                         title={order.status !== 'draft' && order.status !== 'cancelled' ? "Only draft or cancelled orders can be deleted" : "Delete Order"}
                       >

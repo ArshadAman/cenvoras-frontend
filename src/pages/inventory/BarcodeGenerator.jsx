@@ -29,17 +29,17 @@ export default function BarcodeGenerator() {
 
     return (
         <>
-            <div className="p-6 md:p-10 space-y-8 animate-fade-up border-white/5">
+            <div className="p-6 md:p-10 space-y-8 animate-fade-up">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-white mb-2">Barcode Generator</h1>
-                        <p className="text-gray-400">Generate and print barcode labels for your inventory items.</p>
+                        <h1 className="text-3xl font-extrabold text-[var(--text-primary)] mb-2">Barcode Generator</h1>
+                        <p className="text-sm text-[var(--text-secondary)]">Generate and print barcode labels for your inventory items.</p>
                     </div>
                 </div>
 
-                <div className="bento-card p-6 border border-white/10 flex flex-wrap gap-4 items-end">
+                <div className="bento-card p-6 flex flex-wrap gap-4 items-end">
                     <div className="flex-1 min-w-[250px]">
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Select Product</label>
+                        <label className="block text-sm font-semibold text-[var(--text-secondary)] mb-1">Select Product</label>
                         <select
                             value={selectedProduct}
                             onChange={(e) => setSelectedProduct(e.target.value)}
@@ -73,52 +73,77 @@ export default function BarcodeGenerator() {
                 </div>
 
                 {activeProduct ? (
-                    <div className="bento-card p-6 border border-white/10 bg-white/5">
-                        <h3 className="text-lg font-medium text-white mb-4">Print Preview</h3>
+                    <div className="bento-card p-6">
+                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Print Preview</h3>
                         
                         {/* Printable Area */}
-                        <div className="bg-white rounded p-4 text-black overflow-hidden relative">
-                           <div ref={printRef} className="print-container">
+                        <div className="bg-white rounded-xl p-4 text-black overflow-hidden relative border border-[var(--border-default)]">
+                           <div ref={printRef} className="print-container bg-white">
                               <style>
                                   {`
                                     @media print {
+                                        html, body {
+                                            background-color: #ffffff !important;
+                                            background: #ffffff !important;
+                                            color: #000000 !important;
+                                            margin: 0 !important;
+                                            padding: 0 !important;
+                                            -webkit-print-color-adjust: exact !important;
+                                            print-color-adjust: exact !important;
+                                        }
                                         .print-container {
+                                            background-color: #ffffff !important;
+                                            background: #ffffff !important;
                                             display: grid !important;
                                             grid-template-columns: repeat(3, 1fr) !important;
-                                            gap: 10px !important;
-                                            padding: 10mm;
+                                            gap: 8mm !important;
+                                            padding: 10mm !important;
+                                            width: 100% !important;
+                                            box-sizing: border-box !important;
                                         }
                                         .label-card {
-                                            page-break-inside: avoid;
-                                            border: 1px dashed #ccc;
-                                            padding: 10px;
-                                            text-align: center;
-                                            height: 120px;
-                                            display: flex;
-                                            flex-direction: column;
-                                            justify-content: center;
+                                            page-break-inside: avoid !important;
+                                            break-inside: avoid !important;
+                                            background-color: #ffffff !important;
+                                            background: #ffffff !important;
+                                            border: 1px dashed #777777 !important;
+                                            box-shadow: none !important;
+                                            padding: 8px !important;
+                                            text-align: center !important;
+                                            height: 120px !important;
+                                            display: flex !important;
+                                            flex-direction: column !important;
+                                            justify-content: center !important;
+                                            align-items: center !important;
+                                            color: #000000 !important;
                                         }
-                                        @page { size: A4; margin: 0; }
+                                        .label-card * {
+                                            color: #000000 !important;
+                                        }
+                                        @page { 
+                                            size: A4 portrait; 
+                                            margin: 0; 
+                                        }
                                     }
                                   `}
                               </style>
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {Array.from({ length: quantity }).map((_, i) => (
-                                    <div key={i} className="label-card border border-gray-200 rounded p-4 flex flex-col items-center justify-center bg-white shadow-sm">
-                                        <div className="font-bold text-sm truncate w-full text-center text-gray-800 mb-1" title={activeProduct.name}>
+                                    <div key={i} className="label-card border border-gray-300 rounded-lg p-3 flex flex-col items-center justify-center bg-white shadow-sm">
+                                        <div className="font-bold text-xs truncate w-full text-center text-black mb-1" title={activeProduct.name}>
                                             {activeProduct.name}
                                         </div>
-                                        <div className="text-xs text-gray-500 mb-2">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
-                                        <div className="w-full flex justify-center scale-75 origin-top">
+                                        <div className="text-[11px] font-semibold text-gray-800 mb-1.5">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
+                                        <div className="w-full flex justify-center scale-90 origin-top">
                                             <Barcode 
                                                 value={String(activeProduct.barcode || activeProduct.meta?.barcode || activeProduct.item_code || activeProduct.id.split('-')[0].toUpperCase())}
                                                 format="CODE128" 
                                                 width={1.5} 
                                                 height={40} 
                                                 displayValue={true} 
-                                                fontSize={12}
+                                                fontSize={11}
                                                 background="transparent"
-                                                lineColor="#000"
+                                                lineColor="#000000"
                                             />
                                         </div>
                                     </div>

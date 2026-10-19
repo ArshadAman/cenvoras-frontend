@@ -44,11 +44,11 @@ const TrustMarquee = () => {
   ];
   const doubled = [...items, ...items];
   return (
-    <div className="relative z-10 overflow-hidden border-y border-hairline py-4 bg-obsidian-canvas/90 backdrop-blur-md">
+    <div className="relative z-10 overflow-hidden border-y border-[var(--border-subtle)] py-4 bg-[var(--bg-surface)]/90 backdrop-blur-md">
       <div className="flex gap-10 animate-marquee whitespace-nowrap">
         {doubled.map((item, i) => (
-          <span key={i} className="flex items-center gap-2 text-xs font-mono font-medium text-slate-400 tracking-wide">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+          <span key={i} className="flex items-center gap-2 text-xs font-mono font-medium text-[var(--text-muted)] tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shrink-0" />
             {item}
           </span>
         ))}
@@ -81,19 +81,19 @@ const ProductShowcase = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors duration-200 ${
                 isActive
-                  ? 'text-slate-950 font-bold'
-                  : 'bg-obsidian-card text-slate-400 hover:text-slate-200 hover:bg-obsidian-elevated border border-hairline'
+                  ? 'text-[var(--bg-primary)] font-bold'
+                  : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
               }`}
             >
               {isActive && (
                 <motion.div
                   layoutId="activeTabBg"
-                  className="absolute inset-0 bg-slate-100 rounded-xl shadow-lg shadow-white/5 ring-1 ring-white/20"
+                  className="absolute inset-0 bg-[var(--text-primary)] rounded-xl shadow-lg"
                   transition={{ type: 'spring', stiffness: 380, damping: 35 }}
                 />
               )}
               <span className="relative z-10 flex items-center gap-2">
-                <Icon className={`w-4 h-4 ${isActive ? 'text-slate-950' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[var(--bg-primary)]' : 'text-[var(--text-muted)]'}`} />
                 {tab.label}
               </span>
             </button>
@@ -102,20 +102,20 @@ const ProductShowcase = () => {
       </div>
 
       {/* Browser Frame */}
-      <div className="rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-xl overflow-hidden shadow-2xl shadow-sky-950/20 ring-1 ring-white/10">
-        <div className="flex items-center px-4 py-3 bg-obsidian-canvas border-b border-hairline text-xs text-slate-400">
+      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-xl overflow-hidden shadow-2xl">
+        <div className="flex items-center px-4 py-3 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
           <div className="flex items-center gap-1.5 mr-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-40" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-80" />
           </div>
-          <div className="flex items-center gap-2 bg-obsidian-elevated/80 px-3 py-1 rounded-md border border-hairline font-mono text-[11px] text-slate-400">
-            <ShieldCheckIcon className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-[11px] text-[var(--text-muted)]">
+            <ShieldCheckIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
             <span>https://app.cenvora.com</span>
           </div>
         </div>
 
-        <div className="relative min-h-[300px] sm:min-h-[500px] bg-obsidian-canvas flex items-center justify-center">
+        <div className="relative min-h-[300px] sm:min-h-[500px] bg-[var(--bg-primary)] flex items-center justify-center">
           {tabs.map((tab) => (
             <img 
               key={tab.id}
@@ -145,23 +145,23 @@ const RentVsOwnCalculator = () => {
   const formatINR = (val) => '₹' + Math.round(val).toLocaleString('en-IN');
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-obsidian-card border border-hairline rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+    <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
       <div className="max-w-2xl mb-8">
-        <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+        <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
           Why rent your business software when you can own it?
         </h3>
-        <p className="text-slate-400 text-sm sm:text-base mt-3 leading-relaxed font-body">
+        <p className="text-[var(--text-muted)] text-sm sm:text-base mt-3 leading-relaxed font-body">
           Monthly subscription ERPs charge per employee. When your team grows, your costs skyrocket. With Cenvora, you pay once and add unlimited team members at zero extra cost.
         </p>
       </div>
 
       {/* Slider */}
-      <div className="bg-obsidian-canvas border border-hairline rounded-2xl p-5 mb-8">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-5 mb-8">
         <div className="flex justify-between items-center mb-3">
-          <label className="text-sm font-medium text-slate-300 font-body">
+          <label className="text-sm font-medium text-[var(--text-primary)] font-body">
             How many people need access?
           </label>
-          <span className="text-base font-bold text-white bg-obsidian-elevated px-3.5 py-1 rounded-xl border border-hairline font-mono font-tabular">
+          <span className="text-base font-bold text-[var(--text-primary)] bg-[var(--bg-surface)] px-3.5 py-1 rounded-xl border border-[var(--border-subtle)] font-mono font-tabular">
             {users} Users
           </span>
         </div>
@@ -171,9 +171,9 @@ const RentVsOwnCalculator = () => {
           max="30" 
           value={users} 
           onChange={(e) => setUsers(Number(e.target.value))}
-          className="w-full h-2 bg-obsidian-elevated rounded-lg appearance-none cursor-pointer accent-white"
+          className="w-full h-2 bg-[var(--bg-surface)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
         />
-        <div className="flex justify-between text-xs text-slate-500 mt-2 font-mono font-medium">
+        <div className="flex justify-between text-xs text-[var(--text-muted)] mt-2 font-mono font-medium">
           <span>2 users</span>
           <span>15 users</span>
           <span>30 users</span>
@@ -182,40 +182,40 @@ const RentVsOwnCalculator = () => {
 
       {/* Comparison */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="p-6 rounded-2xl border border-hairline bg-obsidian-canvas/60">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Monthly Subscription ERP</div>
-          <div className="text-2xl sm:text-3xl font-bold text-slate-300 mt-2 font-mono font-tabular">{formatINR(saas3YearCost)}</div>
-          <p className="text-xs text-slate-400 mt-1.5">Total cost over 3 years (at ~₹1,500/user/month).</p>
-          <ul className="mt-5 space-y-2.5 text-xs text-slate-400 border-t border-hairline pt-4">
-            <li className="flex items-center gap-2"><span className="text-rose-400 font-bold">✕</span> Recurring fees that never stop</li>
-            <li className="flex items-center gap-2"><span className="text-rose-400 font-bold">✕</span> Price hikes every time you hire</li>
-            <li className="flex items-center gap-2"><span className="text-rose-400 font-bold">✕</span> Lose your database if you stop paying</li>
+        <div className="p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Subscription ERP</div>
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(saas3YearCost)}</div>
+          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (at ~₹1,500/user/month).</p>
+          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-muted)] border-t border-[var(--border-subtle)] pt-4">
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Recurring fees that never stop</li>
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Price hikes every time you hire</li>
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Lose your database if you stop paying</li>
           </ul>
         </div>
 
-        <div className="p-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-obsidian-elevated/90 to-obsidian-card/90 shadow-xl shadow-emerald-950/20">
-          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Cenvora (Buy Once, Own Forever)</div>
-          <div className="text-2xl sm:text-3xl font-bold text-white mt-2 font-mono font-tabular">{formatINR(cenvora3YearCost)}</div>
-          <p className="text-xs text-slate-400 mt-1.5">Total cost over 3 years (One-time license + ₹18k/yr hosting & AMC).</p>
-          <ul className="mt-5 space-y-2.5 text-xs text-slate-200 border-t border-hairline pt-4">
-            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> One-time license with unlimited users</li>
-            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Flat ₹12,000/year base maintenance</li>
-            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Your database is 100% yours forever</li>
+        <div className="p-6 rounded-2xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] shadow-xl">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)]">Cenvora (Buy Once, Own Forever)</div>
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(cenvora3YearCost)}</div>
+          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (One-time license + ₹18k/yr hosting & AMC).</p>
+          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-primary)] border-t border-[var(--border-subtle)] pt-4">
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> One-time license with unlimited users</li>
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Flat ₹12,000/year base maintenance</li>
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your database is 100% yours forever</li>
           </ul>
         </div>
       </div>
 
       {/* Savings */}
-      <div className="p-6 rounded-2xl bg-obsidian-canvas border border-hairline flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs text-slate-400 font-medium">Estimated 3-Year Savings</div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-0.5 font-mono font-tabular">Save {formatINR(savings)}</div>
+          <div className="text-xs text-[var(--text-muted)] font-medium">Estimated 3-Year Savings</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[var(--accent-primary)] mt-0.5 font-mono font-tabular">Save {formatINR(savings)}</div>
         </div>
         <a
           href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20checked%20the%20pricing%20calculator%20and%20want%20to%20know%20more%20about%20the%20perpetual%20license."
           target="_blank"
           rel="noreferrer"
-          className="px-6 py-3 bg-white text-slate-950 font-bold text-xs rounded-xl hover:bg-slate-200 transition-colors whitespace-nowrap shadow-md active:scale-95"
+          className="btn-primary !text-xs !py-3 !px-6 whitespace-nowrap shadow-md"
         >
           Talk to Us on WhatsApp
         </a>
@@ -251,13 +251,13 @@ const FaqAccordion = () => {
       {FAQ_ITEMS.map((item, idx) => {
         const isOpen = openIdx === idx;
         return (
-          <div key={idx} className="rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md overflow-hidden">
+          <div key={idx} className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md overflow-hidden">
             <button
               onClick={() => setOpenIdx(isOpen ? null : idx)}
               className="w-full flex items-center justify-between p-6 text-left cursor-pointer group"
             >
-              <h3 className="text-sm font-bold text-white pr-4 group-hover:text-sky-300 transition-colors">{item.q}</h3>
-              <ChevronDownIcon className={`w-5 h-5 text-slate-500 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+              <h3 className="text-sm font-bold text-[var(--text-primary)] pr-4 group-hover:text-[var(--accent-primary)] transition-colors">{item.q}</h3>
+              <ChevronDownIcon className={`w-5 h-5 text-[var(--text-muted)] shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
             <AnimatePresence initial={false}>
               {isOpen && (
@@ -268,7 +268,7 @@ const FaqAccordion = () => {
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden"
                 >
-                  <p className="px-6 pb-6 text-xs text-slate-400 leading-relaxed font-body">{item.a}</p>
+                  <p className="px-6 pb-6 text-xs text-[var(--text-muted)] leading-relaxed font-body">{item.a}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -311,7 +311,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="font-body text-white bg-obsidian-canvas min-h-screen selection:bg-sky-500/20 selection:text-sky-300">
+    <div className="font-body text-[var(--text-primary)] bg-[var(--bg-primary)] min-h-screen">
       <Seo
         title="Cenvora — GST Billing & Stock Software for India"
         description="Cenvora is a one-time GST billing and stock management software for Indian businesses. Create invoices, track inventory, and manage customer ledgers — no monthly fees."
@@ -321,9 +321,9 @@ export default function LandingPage() {
 
       {/* Ambient Lighting Mesh */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-sky-500/10 via-sky-600/5 to-transparent blur-3xl opacity-70" />
-        <div className="absolute top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-b from-emerald-500/10 to-transparent blur-3xl opacity-50" />
-        <div className="absolute top-[75%] left-[-100px] w-[500px] h-[500px] bg-gradient-to-b from-cyan-500/10 to-transparent blur-3xl opacity-40" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-[var(--accent-primary)]/10 via-[var(--accent-primary)]/5 to-transparent blur-3xl opacity-30 dark:opacity-50" />
+        <div className="absolute top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-b from-[var(--accent-primary)]/10 to-transparent blur-3xl opacity-30 dark:opacity-40" />
+        <div className="absolute top-[75%] left-[-100px] w-[500px] h-[500px] bg-gradient-to-b from-[var(--accent-primary)]/10 to-transparent blur-3xl opacity-20 dark:opacity-30" />
       </div>
 
       <PublicNavbar
@@ -345,17 +345,17 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]"
+              className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[var(--text-primary)] leading-[1.08]"
             >
               Own your billing software.{' '}
-              <span className="text-sky-400">Forever.</span>
+              <span className="text-[var(--accent-primary)]">Forever.</span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-5 text-base sm:text-lg text-slate-400 max-w-lg leading-relaxed"
+              className="mt-5 text-base sm:text-lg text-[var(--text-muted)] max-w-lg leading-relaxed"
             >
               GST invoices, live stock, customer ledgers. One price. No monthly traps.
             </motion.p>
@@ -369,7 +369,7 @@ export default function LandingPage() {
             >
               <button
                 onClick={() => setIsCalendlyOpen(true)}
-                className="px-7 py-3.5 bg-white text-slate-950 font-bold text-sm rounded-xl hover:bg-slate-200 transition-all shadow-lg shadow-white/5 active:scale-[0.97] cursor-pointer"
+                className="btn-primary !text-sm !py-3.5 !px-7 cursor-pointer"
               >
                 Book a Free Demo
               </button>
@@ -378,7 +378,7 @@ export default function LandingPage() {
                 href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
                 target="_blank"
                 rel="noreferrer"
-                className="px-6 py-3.5 bg-obsidian-card border border-hairline text-white font-medium text-sm rounded-xl hover:bg-obsidian-elevated transition-all backdrop-blur-md active:scale-[0.97] flex items-center gap-2"
+                className="btn-secondary !text-sm !py-3.5 !px-6 flex items-center gap-2 cursor-pointer"
               >
                 WhatsApp Us
                 <ArrowRightIcon className="w-4 h-4" />
@@ -390,18 +390,18 @@ export default function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 font-medium"
+              className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--text-muted)] font-medium"
             >
               <span className="flex items-center gap-1.5 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
                 50+ businesses live
               </span>
               <span className="flex items-center gap-1.5 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
                 No monthly fees
               </span>
               <span className="flex items-center gap-1.5 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
                 India-hosted data
               </span>
             </motion.div>
@@ -409,7 +409,7 @@ export default function LandingPage() {
 
           {/* Right Column — 3D Canvas */}
           <div className="flex-1 w-full lg:w-auto">
-            <Suspense fallback={<div className="h-[420px] animate-pulse bg-obsidian-card rounded-3xl" />}>
+            <Suspense fallback={<div className="h-[420px] animate-pulse bg-[var(--bg-surface)] rounded-3xl" />}>
               <HeroPrismCanvas />
             </Suspense>
           </div>
@@ -420,14 +420,14 @@ export default function LandingPage() {
       <TrustMarquee />
 
       {/* ─── 2. CORE PILLARS — Asymmetric Bento Grid ─── */}
-      <section id="features" className="relative z-10 py-24 px-6 bg-obsidian-canvas">
+      <section id="features" className="relative z-10 py-24 px-6 bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mb-14">
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Everything your business runs on
               </h2>
-              <p className="mt-3 text-slate-400 text-sm sm:text-base font-body">
+              <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
                 Made for shop owners and distributors — not accountants.
               </p>
             </div>
@@ -436,34 +436,34 @@ export default function LandingPage() {
           {/* Bento: 1 large left + 2 stacked right */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
             {/* Large cell */}
-            <Reveal className="md:col-span-3 p-8 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md hover:border-sky-500/40 transition-all duration-300 shadow-xl group">
-              <div className="w-14 h-14 rounded-xl bg-sky-950/80 border border-sky-500/30 flex items-center justify-center text-sky-400 mb-6 group-hover:scale-105 transition-transform">
+            <Reveal className="md:col-span-3 p-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
+              <div className="w-14 h-14 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-6 group-hover:scale-105 transition-transform">
                 <BoltIcon className="w-7 h-7" />
               </div>
-              <h3 className="font-display text-xl font-bold text-white mb-2">10-Second GST Invoicing</h3>
-              <p className="text-sm text-slate-400 leading-relaxed max-w-md font-body">
+              <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-2">10-Second GST Invoicing</h3>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-md font-body">
                 Create clean GST tax bills with auto-calculated CGST, SGST, and IGST. Auto-fills customer details and prints formal A4 or A5 invoices with your branding.
               </p>
             </Reveal>
 
             {/* 2 stacked right */}
             <div className="md:col-span-2 flex flex-col gap-5">
-              <Reveal delay={0.1} className="flex-1 p-7 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md hover:border-emerald-500/40 transition-all duration-300 shadow-xl group">
-                <div className="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-105 transition-transform">
+              <Reveal delay={0.1} className="flex-1 p-7 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
+                <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
                   <ArchiveBoxIcon className="w-6 h-6" />
                 </div>
-                <h3 className="font-display text-lg font-bold text-white mb-1.5">Real-Time Stock Updates</h3>
-                <p className="text-sm text-slate-400 leading-relaxed font-body">
+                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Real-Time Stock Updates</h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
                   Stock deducts as invoices are generated. Low-stock alerts keep you ahead.
                 </p>
               </Reveal>
 
-              <Reveal delay={0.2} className="flex-1 p-7 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md hover:border-cyan-500/40 transition-all duration-300 shadow-xl group">
-                <div className="w-12 h-12 rounded-xl bg-cyan-950/80 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-105 transition-transform">
+              <Reveal delay={0.2} className="flex-1 p-7 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
+                <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
                   <DocumentChartBarIcon className="w-6 h-6" />
                 </div>
-                <h3 className="font-display text-lg font-bold text-white mb-1.5">Ledgers & Tax Reports</h3>
-                <p className="text-sm text-slate-400 leading-relaxed font-body">
+                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Ledgers & Tax Reports</h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
                   Track customer balances, record settlements, and export GSTR-1 and GSTR-3B summaries.
                 </p>
               </Reveal>
@@ -473,14 +473,14 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 3. PRODUCT SHOWCASE (Tabs) ─── */}
-      <section className="relative z-10 py-24 px-6">
+      <section className="relative z-10 py-24 px-6 bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-4">
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 See the whole system
               </h2>
-              <p className="mt-3 text-slate-400 text-sm sm:text-base font-body">
+              <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
                 From billing to staff permissions — every module included in your perpetual license.
               </p>
             </div>
@@ -490,14 +490,14 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 4. DETAILED FEATURES EXPLORER ─── */}
-      <section className="relative z-10 py-24 border-t border-slate-900/80 px-6 bg-slate-950/40">
+      <section className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-surface)]/40">
         <div className="max-w-5xl mx-auto">
           <DetailedFeatures />
         </div>
       </section>
 
       {/* ─── 5. WHY OWN / RENT VS OWN CALCULATOR ─── */}
-      <section id="why-own" className="relative z-10 py-24 border-t border-slate-900/80 px-6">
+      <section id="why-own" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <RentVsOwnCalculator />
@@ -506,14 +506,14 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 6. PRICING ─── */}
-      <section id="pricing" className="relative z-10 py-24 border-t border-hairline px-6 bg-obsidian-canvas">
+      <section id="pricing" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-16">
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 One price. Yours forever.
               </h2>
-              <p className="mt-3 text-slate-400 text-sm sm:text-base font-body">
+              <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
                 Buy the software once. No recurring per-user subscription fees.
               </p>
             </div>
@@ -522,29 +522,29 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Tier 1 */}
             <Reveal delay={0}>
-              <div className="h-full p-7 rounded-3xl border border-hairline bg-obsidian-card backdrop-blur-md flex flex-col justify-between hover:border-slate-700 transition-all">
+              <div className="h-full p-7 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md flex flex-col justify-between hover:border-[var(--accent-primary)] transition-all">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Tier 1</div>
-                  <h3 className="font-display text-xl font-bold text-white mt-1">Hosted Standard</h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed font-body">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Tier 1</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Hosted Standard</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
                     Best for single-business shops and distributors wanting zero setup headaches.
                   </p>
 
-                  <div className="mt-6 pb-6 border-b border-hairline">
-                    <div className="text-3xl font-extrabold text-white font-mono font-tabular">₹1,00,000</div>
-                    <div className="text-xs text-slate-500 mt-0.5 font-medium">One-time software license</div>
-                    <div className="mt-4 p-3.5 bg-obsidian-canvas rounded-xl text-xs space-y-1.5 text-slate-400 border border-hairline font-mono font-tabular">
-                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-white font-medium">₹12,000/yr</span></div>
+                  <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹1,00,000</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">One-time software license</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-[var(--text-primary)] font-medium">₹12,000/yr</span></div>
                       <div className="flex justify-between"><span>Cloud Server Hosting:</span><span>~₹6,000/yr</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-hairline text-slate-200 font-semibold"><span>Total Ongoing:</span><span>₹18,000/yr</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold"><span>Total Ongoing:</span><span>₹18,000/yr</span></div>
                     </div>
                   </div>
 
-                  <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Unlimited staff logins and devices</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Full GST billing & stock management</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Automated daily cloud backups</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> GST statutory updates & WhatsApp support</li>
+                  <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Unlimited staff logins and devices</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Full GST billing & stock management</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Automated daily cloud backups</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> GST statutory updates & WhatsApp support</li>
                   </ul>
                 </div>
 
@@ -553,7 +553,7 @@ export default function LandingPage() {
                     href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20am%20interested%20in%20the%20Hosted%20Standard%20plan%20(Rs%201%2C00%2C000)."
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full py-3 text-center bg-obsidian-elevated hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-colors shadow-sm active:scale-[0.97] border border-hairline"
+                    className="btn-secondary !text-xs !py-3 w-full text-center block"
                   >
                     Inquire on WhatsApp
                   </a>
@@ -563,33 +563,33 @@ export default function LandingPage() {
 
             {/* Tier 2: Popular */}
             <Reveal delay={0.1}>
-              <div className="h-full p-7 rounded-3xl border-2 border-emerald-500/50 bg-gradient-to-b from-obsidian-elevated to-obsidian-card flex flex-col justify-between relative shadow-2xl shadow-emerald-950/30">
-                <div className="absolute -top-3.5 left-6 px-3 py-0.5 bg-emerald-400 text-slate-950 text-[10px] font-black uppercase rounded-full shadow-md">
+              <div className="h-full p-7 rounded-3xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] flex flex-col justify-between relative shadow-2xl">
+                <div className="absolute -top-3.5 left-6 px-3 py-0.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-[10px] font-black uppercase rounded-full shadow-md">
                   Most Popular
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400 font-mono">Tier 2</div>
-                  <h3 className="font-display text-xl font-bold text-white mt-1">White-Label Custom Domain</h3>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed font-body">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)] font-mono">Tier 2</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">White-Label Custom Domain</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
                     Your own website domain (erp.yourbrand.com) with your logo and dedicated server.
                   </p>
 
-                  <div className="mt-6 pb-6 border-b border-hairline">
-                    <div className="text-3xl font-extrabold text-white font-mono font-tabular">₹1,50,000</div>
-                    <div className="text-xs text-slate-400 mt-0.5 font-medium">One-time software license</div>
-                    <div className="mt-4 p-3.5 bg-obsidian-canvas rounded-xl text-xs space-y-1.5 text-slate-300 border border-hairline font-mono font-tabular">
-                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-white font-medium">₹12,000/yr</span></div>
+                  <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹1,50,000</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">One-time software license</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-[var(--text-primary)] font-medium">₹12,000/yr</span></div>
                       <div className="flex justify-between"><span>Dedicated Server Container:</span><span>~₹12,000/yr</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-hairline text-white font-semibold"><span>Total Ongoing:</span><span>₹24,000/yr</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold"><span>Total Ongoing:</span><span>₹24,000/yr</span></div>
                     </div>
                   </div>
 
-                  <ul className="mt-6 space-y-2.5 text-xs text-slate-200">
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Your custom domain (erp.yourcompany.com)</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Your logo on invoice PDFs & customer portal</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Dedicated, isolated server container</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Priority engineer support on WhatsApp</li>
+                  <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your custom domain (erp.yourcompany.com)</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your logo on invoice PDFs & customer portal</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Dedicated, isolated server container</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Priority engineer support on WhatsApp</li>
                   </ul>
                 </div>
 
@@ -598,7 +598,7 @@ export default function LandingPage() {
                     href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20am%20interested%20in%20the%20White-Label%20Custom%20Domain%20plan%20(Rs%201%2C50%2C000)."
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full py-3 text-center bg-white text-slate-950 hover:bg-slate-200 font-bold text-xs rounded-xl transition-all shadow-md active:scale-[0.97]"
+                    className="btn-primary !text-xs !py-3 w-full text-center block"
                   >
                     Deploy on Your Domain
                   </a>
@@ -608,35 +608,35 @@ export default function LandingPage() {
 
             {/* Tier 3 */}
             <Reveal delay={0.2}>
-              <div className="h-full p-7 rounded-3xl border border-hairline bg-obsidian-card backdrop-blur-md flex flex-col justify-between hover:border-slate-700 transition-all">
+              <div className="h-full p-7 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md flex flex-col justify-between hover:border-[var(--accent-primary)] transition-all">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Tier 3</div>
-                  <h3 className="font-display text-xl font-bold text-white mt-1">Enterprise / Self-Hosted</h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed font-body">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Tier 3</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Enterprise / Self-Hosted</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
                     For businesses that want the software on their own private cloud or local server.
                   </p>
 
-                  <div className="mt-6 pb-6 border-b border-hairline">
-                    <div className="text-3xl font-extrabold text-white font-mono font-tabular">₹2,00,000+</div>
-                    <div className="text-xs text-slate-500 mt-0.5 font-medium">One-time software license</div>
-                    <div className="mt-4 p-3.5 bg-obsidian-canvas rounded-xl text-xs space-y-1.5 text-slate-400 border border-hairline font-mono font-tabular">
-                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-white font-medium">₹12,000/yr</span></div>
-                      <div className="flex justify-between"><span>Server Hosting:</span><span className="text-emerald-400">₹0 to Cenvora</span></div>
-                      <div className="flex justify-between pt-1.5 border-t border-hairline text-slate-200 font-semibold"><span>Hosting Paid:</span><span>Direct to your cloud (AWS/DigitalOcean)</span></div>
+                  <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹2,00,000+</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">One-time software license</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-[var(--text-primary)] font-medium">₹12,000/yr</span></div>
+                      <div className="flex justify-between"><span>Server Hosting:</span><span className="text-[var(--accent-primary)]">₹0 to Cenvora</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold"><span>Hosting Paid:</span><span>Direct to your cloud (AWS/DigitalOcean)</span></div>
                     </div>
                   </div>
 
-                  <ul className="mt-6 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Installed on your own AWS or private server</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Assistance with data migration from Excel</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" /> Custom integration options available</li>
+                  <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Installed on your own AWS or private server</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Assistance with data migration from Excel</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Custom integration options available</li>
                   </ul>
                 </div>
 
                 <div className="mt-8 pt-4">
                   <button
                     onClick={() => setIsCalendlyOpen(true)}
-                    className="block w-full py-3 text-center bg-obsidian-elevated hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-colors shadow-sm cursor-pointer active:scale-[0.97] border border-hairline"
+                    className="btn-secondary !text-xs !py-3 w-full text-center block cursor-pointer"
                   >
                     Schedule Consultation
                   </button>
@@ -646,19 +646,19 @@ export default function LandingPage() {
           </div>
 
           {/* AMC Note */}
-          <Reveal className="mt-12 p-6 rounded-2xl border border-hairline bg-obsidian-card backdrop-blur-md text-xs text-slate-400 leading-relaxed max-w-3xl mx-auto font-body">
-            <strong className="text-white block mb-1 text-sm font-display">What does the ₹12,000/year maintenance fee cover?</strong>
+          <Reveal className="mt-12 p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md text-xs text-[var(--text-muted)] leading-relaxed max-w-3xl mx-auto font-body">
+            <strong className="text-[var(--text-primary)] block mb-1 text-sm font-display">What does the ₹12,000/year maintenance fee cover?</strong>
             It covers software updates, statutory GST tax calculation adjustments when government rates change, automated backups, and priority support over WhatsApp. Even if you choose not to renew the maintenance fee, your software license and your historical database remain 100% yours forever.
           </Reveal>
         </div>
       </section>
 
       {/* ─── 7. FAQ ─── */}
-      <section className="relative z-10 py-24 border-t border-hairline px-6">
+      <section className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <div className="text-center mb-14">
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Frequently Asked Questions
               </h2>
             </div>
@@ -668,20 +668,20 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 8. FINAL CTA ─── */}
-      <section className="relative z-10 py-20 border-t border-hairline px-6 text-center bg-obsidian-canvas">
+      <section className="relative z-10 py-20 border-t border-[var(--border-subtle)] px-6 text-center bg-[var(--bg-surface)]">
         <Reveal>
           <div className="max-w-2xl mx-auto">
-            <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
               See it live in 20 minutes.
             </h2>
-            <p className="mt-3 text-slate-400 text-sm font-body">
+            <p className="mt-3 text-[var(--text-muted)] text-sm font-body">
               Book a screen walkthrough or chat with our team on WhatsApp.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={() => setIsCalendlyOpen(true)}
-                className="w-full sm:w-auto px-7 py-3.5 bg-white text-slate-950 font-bold text-sm rounded-xl hover:bg-slate-200 transition-colors shadow-md cursor-pointer active:scale-[0.97]"
+                className="w-full sm:w-auto px-7 py-3.5 btn-primary !text-sm cursor-pointer"
               >
                 Book a Free Demo
               </button>
@@ -689,7 +689,7 @@ export default function LandingPage() {
                 href="https://wa.me/917205289643"
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto px-7 py-3.5 bg-obsidian-card border border-hairline text-white font-medium text-sm rounded-xl hover:bg-obsidian-elevated transition-colors backdrop-blur-md active:scale-[0.97]"
+                className="w-full sm:w-auto px-7 py-3.5 btn-secondary !text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 Chat on WhatsApp
               </a>
@@ -699,7 +699,7 @@ export default function LandingPage() {
             <div className="mt-5">
               <Link
                 to="/signup"
-                className="text-slate-500 hover:text-white text-xs font-medium transition-colors inline-flex items-center gap-1.5"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors inline-flex items-center gap-1.5"
               >
                 Or start a 14-day free trial <ArrowRightIcon className="w-3.5 h-3.5" />
               </Link>
@@ -709,43 +709,43 @@ export default function LandingPage() {
       </section>
 
       {/* ─── 9. FOOTER — 3-Column ─── */}
-      <footer className="relative z-10 py-14 border-t border-hairline px-6 text-xs text-slate-500 bg-obsidian-canvas">
+      <footer className="relative z-10 py-14 border-t border-[var(--border-subtle)] px-6 text-xs text-[var(--text-muted)] bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
           {/* Col 1: Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-3">
               <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora" className="h-6 w-auto" />
             </div>
-            <p className="text-slate-500 leading-relaxed">
+            <p className="text-[var(--text-muted)] leading-relaxed">
               Simple business software. GST billing, inventory, and customer management for Indian businesses.
             </p>
-            <p className="mt-4 text-slate-600 font-mono">&copy; {new Date().getFullYear()} Cenvora.</p>
+            <p className="mt-4 text-[var(--text-muted)] font-mono">&copy; {new Date().getFullYear()} Cenvora.</p>
           </div>
 
           {/* Col 2: Product */}
           <div>
-            <h4 className="text-white font-semibold mb-3 font-display text-sm">Product</h4>
+            <h4 className="text-[var(--text-primary)] font-semibold mb-3 font-display text-sm">Product</h4>
             <ul className="space-y-2">
-              <li><Link to="/#features" className="hover:text-slate-300 transition-colors">Features</Link></li>
-              <li><Link to="/#pricing" className="hover:text-slate-300 transition-colors">Pricing</Link></li>
-              <li><Link to="/gst-hsn-guide" className="hover:text-slate-300 transition-colors">HSN Lookup</Link></li>
-              <li><Link to="/sitemap" className="hover:text-slate-300 transition-colors">Sitemap</Link></li>
+              <li><Link to="/#features" className="hover:text-[var(--text-primary)] transition-colors">Features</Link></li>
+              <li><Link to="/#pricing" className="hover:text-[var(--text-primary)] transition-colors">Pricing</Link></li>
+              <li><Link to="/gst-hsn-guide" className="hover:text-[var(--text-primary)] transition-colors">HSN Lookup</Link></li>
+              <li><Link to="/sitemap" className="hover:text-[var(--text-primary)] transition-colors">Sitemap</Link></li>
             </ul>
           </div>
 
           {/* Col 3: Company */}
           <div>
-            <h4 className="text-white font-semibold mb-3 font-display text-sm">Company</h4>
+            <h4 className="text-[var(--text-primary)] font-semibold mb-3 font-display text-sm">Company</h4>
             <ul className="space-y-2">
-              <li><Link to="/contact" className="hover:text-slate-300 transition-colors">Contact</Link></li>
-              <li><Link to="/privacy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-slate-300 transition-colors">Terms of Service</Link></li>
+              <li><Link to="/contact" className="hover:text-[var(--text-primary)] transition-colors">Contact</Link></li>
+              <li><Link to="/privacy" className="hover:text-[var(--text-primary)] transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-[var(--text-primary)] transition-colors">Terms of Service</Link></li>
               <li>
                 <a
                   href="https://wa.me/917205289643"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-300 transition-colors inline-flex items-center gap-1.5"
+                  className="hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1.5"
                 >
                   WhatsApp (+91 7205289643)
                 </a>

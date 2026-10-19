@@ -2,9 +2,10 @@ import React from 'react';
 import clsx from 'clsx';
 
 /**
- * Tactical & Accessible Enterprise Button
+ * Standardized 8-Color Design System Button
  * Implements the 7-state interaction contract:
  * resting, hover, active press (scale-98), focus-visible, loading/in-flight, disabled.
+ * Zero rogue colors: strictly driven by Cenvora's 8-color palette tokens.
  */
 export default function Button({
   children,
@@ -41,7 +42,7 @@ export default function Button({
   };
 
   const baseStyles =
-    'relative inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07090E]';
+    'relative inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)]';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
@@ -51,15 +52,15 @@ export default function Button({
 
   const variantStyles = {
     primary:
-      'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 border border-blue-400/30 focus-visible:ring-blue-500',
+      'bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-sm hover:brightness-105 active:brightness-95 border border-transparent focus-visible:ring-[var(--border-focus)]',
     secondary:
-      'bg-obsidian-card hover:bg-obsidian-elevated text-gray-200 hover:text-white border border-white/10 hover:border-white/20 focus-visible:ring-white/40',
+      'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] focus-visible:ring-[var(--border-focus)]',
     destructive:
-      'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/25 hover:border-rose-500/40 shadow-lg shadow-rose-950/30 focus-visible:ring-rose-500',
+      'bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] font-extrabold uppercase tracking-wider hover:bg-[var(--bg-surface)] focus-visible:ring-[var(--border-focus)]',
     ghost:
-      'bg-transparent hover:bg-white/5 text-gray-400 hover:text-white border border-transparent focus-visible:ring-white/20',
+      'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-transparent focus-visible:ring-[var(--border-focus)]',
     success:
-      'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 shadow-lg shadow-emerald-950/30 focus-visible:ring-emerald-500',
+      'bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold hover:brightness-105 border border-transparent focus-visible:ring-[var(--border-focus)]',
   };
 
   const interactiveStyles = isDisabled

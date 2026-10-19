@@ -34,8 +34,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage <= 1}
         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
           currentPage <= 1
-            ? 'text-gray-600 cursor-not-allowed opacity-40'
-            : 'text-gray-300 hover:text-white hover:bg-white/10 active:scale-95'
+            ? 'text-[var(--text-muted)] cursor-not-allowed opacity-40'
+            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] active:scale-95'
         }`}
       >
         ← Prev
@@ -46,12 +46,12 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         <>
           <button
             onClick={() => onPageChange(1)}
-            className="w-9 h-9 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-150 active:scale-95"
+            className="w-9 h-9 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all duration-150 active:scale-95"
           >
             1
           </button>
           {pages[0] > 2 && (
-            <span className="text-gray-500 px-1">…</span>
+            <span className="text-[var(--text-muted)] px-1">…</span>
           )}
         </>
       )}
@@ -63,8 +63,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           onClick={() => onPageChange(page)}
           className={`w-9 h-9 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
             page === currentPage
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-900/40 border border-blue-400/40 font-bold'
-              : 'text-gray-300 hover:text-white hover:bg-white/10 active:scale-95'
+              ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-sm border border-transparent'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] active:scale-95'
           }`}
         >
           {page}
@@ -75,11 +75,11 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
       {pages[pages.length - 1] < totalPages && (
         <>
           {pages[pages.length - 1] < totalPages - 1 && (
-            <span className="text-gray-500 px-1">…</span>
+            <span className="text-[var(--text-muted)] px-1">…</span>
           )}
           <button
             onClick={() => onPageChange(totalPages)}
-            className="w-9 h-9 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-150 active:scale-95"
+            className="w-9 h-9 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all duration-150 active:scale-95"
           >
             {totalPages}
           </button>
@@ -92,8 +92,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage >= totalPages}
         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
           currentPage >= totalPages
-            ? 'text-gray-600 cursor-not-allowed opacity-40'
-            : 'text-gray-300 hover:text-white hover:bg-white/10 active:scale-95'
+            ? 'text-[var(--text-muted)] cursor-not-allowed opacity-40'
+            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] active:scale-95'
         }`}
       >
         Next →

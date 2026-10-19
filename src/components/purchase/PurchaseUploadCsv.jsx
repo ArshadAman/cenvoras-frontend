@@ -100,9 +100,9 @@ export default function PurchaseUploadCsv({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md flex flex-col items-center border border-gray-100 dark:border-gray-700">
-        <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2">Upload Purchase Bills CSV</h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6 text-center">
+      <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md flex flex-col items-center border border-[var(--border-subtle)] text-[var(--text-primary)]">
+        <h2 className="text-xl font-black text-[var(--text-primary)] mb-2">Upload Purchase Bills CSV</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-6 text-center">
           Upload bulk purchase bills formatted with vendor, bill number, products, and prices.
         </p>
 
@@ -110,18 +110,18 @@ export default function PurchaseUploadCsv({ onClose }) {
           {...getRootProps()}
           className={`border-2 border-dashed rounded-xl p-8 w-full text-center cursor-pointer transition-all ${
             isDragActive 
-              ? "border-cyan-500 bg-cyan-500/10 text-cyan-500" 
-              : "border-gray-300 dark:border-gray-600 hover:border-cyan-500/50 bg-gray-50/50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300"
+              ? "border-[var(--accent-primary)] bg-[var(--bg-primary)] text-[var(--accent-primary)]" 
+              : "border-[var(--border-subtle)] hover:border-[var(--accent-primary)] bg-[var(--bg-primary)] text-[var(--text-primary)]"
           }`}
         >
           <input {...getInputProps()} />
-          <svg className="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-10 h-10 mx-auto mb-3 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
           {isDragActive ? (
-            <p className="text-xs font-bold text-cyan-500">Drop the CSV file here ...</p>
+            <p className="text-xs font-bold text-[var(--accent-primary)]">Drop the CSV file here ...</p>
           ) : (
-            <p className="text-xs font-medium">Drag & drop CSV file here, or <span className="text-cyan-500 font-bold underline">browse</span></p>
+            <p className="text-xs font-medium">Drag & drop CSV file here, or <span className="text-[var(--accent-primary)] font-bold underline">browse</span></p>
           )}
         </div>
 
@@ -131,11 +131,11 @@ export default function PurchaseUploadCsv({ onClose }) {
           </div>
         )}
 
-        <div className="w-full mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="w-full mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={handleDownloadSampleCsv}
-            className="w-full sm:w-auto px-4 py-2 text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-500/10 rounded-xl transition-all flex items-center justify-center gap-2 border border-cyan-500/30"
+            className="btn-secondary !text-xs !py-2 !px-4 w-full sm:w-auto flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -145,7 +145,7 @@ export default function PurchaseUploadCsv({ onClose }) {
 
           <button
             type="button"
-            className="w-full sm:w-auto px-5 py-2 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+            className="btn-ghost !text-xs !py-2 !px-5 w-full sm:w-auto"
             onClick={onClose}
           >
             Cancel

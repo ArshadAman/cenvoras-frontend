@@ -45,6 +45,7 @@ import {
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
 import CommandPalette from './common/CommandPalette';
+import ThemeToggle from './common/ThemeToggle';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
@@ -390,7 +391,7 @@ export default function Layout({ children, onLogout }) {
 
 
   return (
-    <div className="flex min-h-screen bg-obsidian-canvas text-white font-sans selection:bg-blue-500/30">
+    <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/30">
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
@@ -552,13 +553,13 @@ export default function Layout({ children, onLogout }) {
                             to={item.path} 
                             className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
                               isActive
-                                ? 'bg-blue-600/20 text-blue-300 ring-1 ring-blue-500/40'
-                                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
+                                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
                             }`}
                             title={item.label}
                           >
-                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
-                            <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
+                            <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
                               <span>{item.label}</span>
                             </div>
                           </Link>
@@ -568,8 +569,8 @@ export default function Layout({ children, onLogout }) {
                       // Expanded Sidebar Item
                       const baseClass = `flex items-center gap-3 px-3.5 py-2 rounded-xl font-medium transition-all duration-200 ${
                         isActive
-                          ? 'bg-blue-600/15 text-white shadow-sm ring-1 ring-blue-500/30'
-                          : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                          ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold shadow-sm'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
                       }`;
                       
                       if (isLocked) {
@@ -592,7 +593,7 @@ export default function Layout({ children, onLogout }) {
                             })}
                             className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
                           >
-                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-sm flex-1 truncate">{item.label}</span>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shrink-0">{lockLabel}</span>
                           </button>
@@ -606,7 +607,7 @@ export default function Layout({ children, onLogout }) {
                           className={baseClass}
                           title={item.label}
                         >
-                          <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
+                          <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                           <span className="text-sm truncate flex-1">{item.label}</span>
                         </Link>
                       );
@@ -619,22 +620,27 @@ export default function Layout({ children, onLogout }) {
         </nav>
         
         {/* Bottom section — always visible, never scrolls away */}
-        <div className={`flex-shrink-0 pt-2 pb-4 border-t border-white/5 space-y-1.5 transition-all duration-300 ${
+        <div className={`flex-shrink-0 pt-2 pb-4 border-t border-[var(--border-default)] space-y-2 transition-all duration-300 ${
           isSidebarCollapsed ? 'px-2 flex flex-col items-center' : 'px-3.5'
         }`}>
+          {/* Theme Toggle */}
+          <div className="w-full flex justify-center py-1">
+            <ThemeToggle showLabel={!isSidebarCollapsed} />
+          </div>
+
           {!isSidebarCollapsed ? (
             <>
               <Link
                 to="/contact"
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/contact'
-                    ? 'bg-blue-600/15 text-white shadow-sm ring-1 ring-blue-500/30'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
                 }`}
                 title="Contact Us"
               >
                 <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
-                  location.pathname === '/contact' ? 'text-blue-400' : 'text-gray-500'
+                  location.pathname === '/contact' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'
                 }`} />
                 <span className="text-sm flex-1 truncate">Contact Us</span>
               </Link>
@@ -644,26 +650,26 @@ export default function Layout({ children, onLogout }) {
                 to="/coming-soon"
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-blue-600/15 text-white shadow-sm ring-1 ring-blue-500/30'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
                 }`}
                 title="Coming Soon"
               >
                 <BeakerIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
-                  location.pathname === '/coming-soon' ? 'text-blue-400' : 'text-gray-500'
+                  location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'
                 }`} />
                 <span className="text-sm flex-1 truncate">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase shrink-0">New</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase shrink-0">New</span>
               </Link>
 
               {/* Sign Out */}
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full px-3.5 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="btn-secondary !w-full !text-xs !py-2.5 flex items-center justify-center gap-2 cursor-pointer"
                 title="Sign Out"
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5 shrink-0" />
+                <ArrowRightOnRectangleIcon className="w-4 h-4 shrink-0" />
                 <span>Sign Out</span>
               </button>
             </>
@@ -673,13 +679,13 @@ export default function Layout({ children, onLogout }) {
                 to="/contact"
                 className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
                   location.pathname === '/contact'
-                    ? 'bg-blue-600/20 text-blue-300 ring-1 ring-blue-500/40'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
                 }`}
                 title="Contact Us"
               >
-                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/contact' ? 'text-blue-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
-                <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/contact' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
                   Contact Us
                 </div>
               </Link>
@@ -688,26 +694,26 @@ export default function Layout({ children, onLogout }) {
                 to="/coming-soon"
                 className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-blue-600/20 text-blue-300 ring-1 ring-blue-500/40'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
                 }`}
                 title="Coming Soon"
               >
-                <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-blue-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
-                <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-1.5">
+                <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-1.5">
                   <span>Coming Soon</span>
-                  <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">NEW</span>
+                  <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)]">NEW</span>
                 </div>
               </Link>
 
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="relative group/nav flex items-center justify-center w-full p-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 cursor-pointer"
+                className="relative group/nav flex items-center justify-center w-full p-2.5 btn-secondary !py-2.5 rounded-xl cursor-pointer"
                 title="Sign Out"
               >
-                <ArrowRightOnRectangleIcon className="w-5 h-5 shrink-0" />
-                <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-red-300 text-xs font-medium rounded-lg shadow-2xl border border-red-500/20 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
+                <ArrowRightOnRectangleIcon className="w-4 h-4 shrink-0" />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
                   Sign Out
                 </div>
               </button>
@@ -719,10 +725,10 @@ export default function Layout({ children, onLogout }) {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-40 bg-obsidian-canvas/90 backdrop-blur-xl border-b border-hairline flex items-center justify-between px-4 h-16">
+        <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] backdrop-blur-xl border-b border-[var(--border-default)] flex items-center justify-between px-4 h-16 text-[var(--text-primary)]">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
           >
             {isMobileMenuOpen ? (
               <XMarkIcon className="w-6 h-6" />
@@ -735,22 +741,19 @@ export default function Layout({ children, onLogout }) {
             <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
           </Link>
           
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <button
               type="button"
               onClick={() => setIsCommandPaletteOpen(true)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
               title="Search commands (⌘K)"
               aria-label="Search commands"
             >
-              <MagnifyingGlassIcon className="w-5 h-5 text-gray-300" />
+              <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-secondary)]" />
             </button>
             <span
-              className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-                isVipAccess
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                  : 'bg-white/10 text-gray-300 border-white/10'
-              }`}
+              className="px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-default)]"
               title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
             >
               {isVipAccess ? 'VIP' : displayPlanName}

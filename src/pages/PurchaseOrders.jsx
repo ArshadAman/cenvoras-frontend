@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listPurchaseOrders, deletePurchaseOrder, convertPurchaseOrder } from '../api/purchase_orders'
 import PurchaseOrderTable from '../components/purchase/PurchaseOrderTable'
 import PurchaseOrderForm from '../components/purchase/PurchaseOrderForm'
+import Button from '../components/common/Button'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -71,9 +72,9 @@ export default function PurchaseOrders() {
     return (
       <>
         <div className="p-6">
-          <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4">
-            <h3 className="text-red-400 font-semibold">Error loading purchase orders</h3>
-            <p className="text-red-300 text-sm mt-1">{error?.message || 'Unknown error'}</p>
+          <div className="rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--text-primary)] p-4">
+            <h3 className="text-[var(--text-primary)] font-semibold">Error loading purchase orders</h3>
+            <p className="text-[var(--text-muted)] text-sm mt-1">{error?.message || 'Unknown error'}</p>
           </div>
         </div>
       </>
@@ -88,16 +89,18 @@ export default function PurchaseOrders() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white mb-0.5">Purchase Orders</h1>
-            <p className="text-gray-400 text-xs">Manage vendor orders before they arrive.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] mb-0.5">Purchase Orders</h1>
+            <p className="text-[var(--text-muted)] text-xs">Manage vendor orders before they arrive.</p>
           </div>
           <div className="flex gap-2.5">
-             <button
+             <Button
+               variant="primary"
                onClick={() => setShowForm(true)}
-               className="btn-primary text-xs py-2 px-3.5 shadow-lg shadow-cyan-500/20 flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-black border-none"
+               icon={PlusIcon}
+               size="sm"
              >
-               <PlusIcon className="w-4 h-4"/> New Purchase Order
-             </button>
+               New Purchase Order
+             </Button>
           </div>
         </div>
 
