@@ -75,7 +75,7 @@ export default function Warranty() {
               onClick={() => setFilter(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 filter === tab
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-900/30'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/40 border border-blue-400/40'
                   : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
               }`}
             >

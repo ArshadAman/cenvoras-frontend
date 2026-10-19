@@ -232,14 +232,14 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         <div ref={printRef} data-print-target className="p-6 sm:p-10">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               <div className="text-gray-500 text-xs font-black uppercase tracking-widest">Loading Profile...</div>
             </div>
           ) : (
             <div className="space-y-8">
               {/* Vendor Header */}
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-black mb-2 shadow-xl shadow-indigo-500/20">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 border border-blue-400/30 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-black mb-2 shadow-xl shadow-blue-500/20">
                   {vendorDetails.name?.charAt(0).toUpperCase() || 'V'}
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -247,7 +247,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                 </h1>
                 <div className="flex flex-wrap justify-center gap-2">
                    {vendorDetails.meta?.party_category && (
-                     <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
+                     <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
                        {vendorDetails.meta.party_category}
                      </span>
                    )}

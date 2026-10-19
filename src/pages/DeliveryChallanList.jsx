@@ -244,16 +244,16 @@ export default function DeliveryChallanList() {
             <div className="text-xs text-emerald-400/60 mt-1">Billed into Sales Invoice</div>
           </div>
 
-          <div className="bento-card p-5 bg-gradient-to-br from-purple-500/10 to-purple-500/[0.02]">
+          <div className="bento-card p-5 bg-blue-500/[0.04] border-blue-500/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-purple-400">Total Goods Value</span>
-              <CurrencyRupeeIcon className="w-5 h-5 text-purple-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">Total Goods Value</span>
+              <CurrencyRupeeIcon className="w-5 h-5 text-blue-400" />
             </div>
-            <div className="text-2xl font-black text-purple-300">
+            <div className="text-2xl font-black font-mono text-blue-300">
               {getCurrencySymbol()}
               {totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
-            <div className="text-xs text-purple-400/60 mt-1">Dispatched inventory value</div>
+            <div className="text-xs text-blue-400/60 mt-1">Dispatched inventory value</div>
           </div>
         </div>
 

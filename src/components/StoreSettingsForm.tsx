@@ -136,7 +136,7 @@ export const StoreSettingsForm: React.FC = () => {
                       type="text"
                       name="trn"
                       placeholder="e.g. 100000000000003"
-                      className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                      className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
                     />
                     <ErrorMessage name="trn" component="div" className="text-red-500 text-xs mt-1" />
                   </div>
@@ -147,7 +147,7 @@ export const StoreSettingsForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg active:scale-[0.98] disabled:opacity-70"
+                  className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 border border-blue-400/30 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg active:scale-[0.98] disabled:opacity-70"
                 >
                   {isSubmitting ? 'Saving...' : 'Save Regional Settings'}
                 </button>

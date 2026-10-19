@@ -850,10 +850,10 @@ export default function HRDashboard() {
               {/* Current Payroll & Alerts Bento Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Current Payroll Card */}
-                <div className="lg:col-span-1 rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-950/40 via-black/30 to-purple-950/20 p-6 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+                <div className="lg:col-span-1 rounded-2xl border border-slate-800 bg-slate-900/80 p-6 backdrop-blur-md relative overflow-hidden flex flex-col justify-between shadow-xl">
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Current Payroll Cycle</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">Current Payroll Cycle</span>
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full uppercase ${
                         metrics?.current_payroll?.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                         metrics?.current_payroll?.status === 'paid' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :

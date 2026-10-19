@@ -552,12 +552,12 @@ export default function Layout({ children, onLogout }) {
                             to={item.path} 
                             className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
                               isActive
-                                ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 ring-1 ring-white/20'
+                                ? 'bg-blue-600/20 text-blue-300 ring-1 ring-blue-500/40'
                                 : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
                             }`}
                             title={item.label}
                           >
-                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
                             <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
                               <span>{item.label}</span>
                             </div>
@@ -568,7 +568,7 @@ export default function Layout({ children, onLogout }) {
                       // Expanded Sidebar Item
                       const baseClass = `flex items-center gap-3 px-3.5 py-2 rounded-xl font-medium transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                          ? 'bg-blue-600/15 text-white shadow-sm ring-1 ring-blue-500/30'
                           : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
                       }`;
                       
@@ -592,7 +592,7 @@ export default function Layout({ children, onLogout }) {
                             })}
                             className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
                           >
-                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
                             <span className="text-sm flex-1 truncate">{item.label}</span>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shrink-0">{lockLabel}</span>
                           </button>
@@ -628,13 +628,13 @@ export default function Layout({ children, onLogout }) {
                 to="/contact"
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/contact'
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                    ? 'bg-blue-600/15 text-white shadow-sm ring-1 ring-blue-500/30'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
                 }`}
                 title="Contact Us"
               >
                 <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
-                  location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'
+                  location.pathname === '/contact' ? 'text-blue-400' : 'text-gray-500'
                 }`} />
                 <span className="text-sm flex-1 truncate">Contact Us</span>
               </Link>
@@ -644,16 +644,16 @@ export default function Layout({ children, onLogout }) {
                 to="/coming-soon"
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
+                    ? 'bg-blue-600/15 text-white shadow-sm ring-1 ring-blue-500/30'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
                 }`}
                 title="Coming Soon"
               >
                 <BeakerIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
-                  location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'
+                  location.pathname === '/coming-soon' ? 'text-blue-400' : 'text-gray-500'
                 }`} />
                 <span className="text-sm flex-1 truncate">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase shrink-0">New</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase shrink-0">New</span>
               </Link>
 
               {/* Sign Out */}
@@ -673,12 +673,12 @@ export default function Layout({ children, onLogout }) {
                 to="/contact"
                 className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
                   location.pathname === '/contact'
-                    ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 ring-1 ring-white/20'
+                    ? 'bg-blue-600/20 text-blue-300 ring-1 ring-blue-500/40'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
                 }`}
                 title="Contact Us"
               >
-                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/contact' ? 'text-blue-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
                 <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
                   Contact Us
                 </div>
@@ -688,15 +688,15 @@ export default function Layout({ children, onLogout }) {
                 to="/coming-soon"
                 className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 ring-1 ring-white/20'
+                    ? 'bg-blue-600/20 text-blue-300 ring-1 ring-blue-500/40'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.05]'
                 }`}
                 title="Coming Soon"
               >
-                <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
+                <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-blue-400' : 'text-gray-500 group-hover/nav:text-gray-200'}`} />
                 <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-1.5">
                   <span>Coming Soon</span>
-                  <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">NEW</span>
+                  <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">NEW</span>
                 </div>
               </Link>
 
@@ -811,7 +811,7 @@ export default function Layout({ children, onLogout }) {
                       const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
                       const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                          ? 'bg-blue-600/15 text-white ring-1 ring-blue-500/30'
                           : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                       }`;
                       
@@ -835,7 +835,7 @@ export default function Layout({ children, onLogout }) {
                             })}
                             className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
                           >
-                            <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                            <Icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
                             <span className="text-sm flex-1">{item.label}</span>
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                           </button>
@@ -852,7 +852,7 @@ export default function Layout({ children, onLogout }) {
                           >
                             <Icon className="w-5 h-5 text-gray-500" />
                             <span className="text-sm flex-1">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">Soon</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase">Soon</span>
                           </Link>
                         );
                       }
@@ -864,7 +864,7 @@ export default function Layout({ children, onLogout }) {
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={baseClass}
                         >
-                          <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-gray-500'}`} />
                           <span className="text-sm">{item.label}</span>
                         </Link>
                       );
@@ -881,11 +881,11 @@ export default function Layout({ children, onLogout }) {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/contact'
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                    ? 'bg-blue-600/15 text-white ring-1 ring-blue-500/30'
                     : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                 }`}
               >
-                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-blue-400' : 'text-gray-500'}`} />
                 <span className="text-sm flex-1">Contact Us</span>
               </Link>
 
@@ -894,13 +894,13 @@ export default function Layout({ children, onLogout }) {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
+                    ? 'bg-blue-600/15 text-white ring-1 ring-blue-500/30'
                     : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                 }`}
               >
-                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-blue-400' : 'text-gray-500'}`} />
                 <span className="text-sm flex-1">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase">New</span>
               </Link>
               <button
                 onClick={() => { handleSignOut(); setIsMobileMenuOpen(false); }}

@@ -227,7 +227,7 @@ export default function TeamSettings() {
                       <p className="text-white font-medium mb-1">No team members yet</p>
                       <p className="text-sm text-gray-500 mb-4">Start creating managers to help run your business.</p>
                       {canAddMore && (
-                        <button onClick={() => setShowAddModal(true)} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+                        <button onClick={() => setShowAddModal(true)} className="text-blue-400 hover:text-blue-300 text-sm font-medium">
                           + Invite your first member
                         </button>
                       )}
@@ -237,7 +237,7 @@ export default function TeamSettings() {
                   teamMembersList.map((member) => (
                     <tr key={member.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="p-4 text-sm font-medium text-white flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center border border-white/10">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/30 text-blue-200 flex items-center justify-center border border-blue-400/30 text-xs font-bold">
                            {member.first_name?.[0] || member.email[0].toUpperCase()}
                         </div>
                         {member.first_name} {member.last_name}

@@ -252,14 +252,14 @@ export default function WarehouseManagement() {
                     setFormData({ ...formData, address: e.target.value })
                   }
                   placeholder="e.g. Plot 12, Industrial Area"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none"
                 />
               </div>
               <div className="flex items-end gap-2">
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-5 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 border border-blue-400/30 text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-blue-900/30 active:scale-[0.98]"
                 >
                   <CheckIcon className="w-4 h-4" />
                   {editingWarehouse ? "Update" : "Create"}
