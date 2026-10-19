@@ -52,7 +52,7 @@ export default function BarcodeGenerator() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Number of Labels</label>
+                        <label className="block text-sm font-semibold text-[var(--text-secondary)] mb-1">Number of Labels</label>
                         <input
                             type="number"
                             min="1"
@@ -153,8 +153,8 @@ export default function BarcodeGenerator() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bento-card p-12 text-center text-gray-500 border border-dashed border-white/10">
-                        <PrinterIcon className="w-12 h-12 mx-auto mb-4 opacity-50 text-gray-600" />
+                    <div className="bento-card p-12 text-center text-[var(--text-muted)] border border-dashed border-[var(--border-subtle)]">
+                        <PrinterIcon className="w-12 h-12 mx-auto mb-4 opacity-50 text-[var(--text-muted)]" />
                         Select a product to preview labels.
                     </div>
                 )}
