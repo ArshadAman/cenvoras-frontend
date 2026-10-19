@@ -22,6 +22,7 @@ import InsightsSection from '../components/dashboard/InsightsSection'
 import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
+import ExpiryAlertBanner from '../components/dashboard/ExpiryAlertBanner'
 import { getSubscriptionEntitlements } from '../api/subscription'
 import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
@@ -276,6 +277,9 @@ export default function Dashboard({ onLogout }) {
             </button>
           </div>
         </div>
+
+        {/* TOP-LEVEL EXPIRY ALERT (Instantly visible without scrolling when products are expiring) */}
+        <ExpiryAlertBanner />
 
         {/* 1. TODAY'S PULSE (New Smart Feature) */}
         <PulseSection 
