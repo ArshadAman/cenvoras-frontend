@@ -80,12 +80,12 @@ export default function SalaryStructures() {
                   <tr><td colSpan="3" className="px-6 py-4 text-center">No structures found</td></tr>
                 ) : (
                   structures.map(structure => (
-                    <tr key={structure.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">{structure.name}</td>
-                      <td className="px-6 py-4">{structure.components?.length || 0} Components</td>
+                    <tr key={structure.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{structure.name}</td>
+                      <td className="px-6 py-4 text-[var(--text-secondary)]">{structure.components?.length || 0} Components</td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button onClick={() => setModalState({ open: true, item: structure })} className="text-indigo-400 hover:text-indigo-300" title="Edit"><PencilIcon className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(structure.id)} className="text-red-400 hover:text-red-300" title="Delete"><TrashIcon className="w-4 h-4" /></button>
+                        <button onClick={() => setModalState({ open: true, item: structure })} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors p-1" title="Edit"><PencilIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(structure.id)} className="text-[var(--status-danger)] hover:opacity-80 transition-opacity p-1" title="Delete"><TrashIcon className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))

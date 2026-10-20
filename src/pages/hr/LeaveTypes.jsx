@@ -86,29 +86,29 @@ export default function LeaveTypes() {
                   <tr><td colSpan="5" className="px-6 py-4 text-center">No leave types found</td></tr>
                 ) : (
                   leaveTypes.map(lt => (
-                    <tr key={lt.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">{lt.name}</td>
-                      <td className="px-6 py-4">{lt.annual_entitlement} Days</td>
+                    <tr key={lt.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{lt.name}</td>
+                      <td className="px-6 py-4 text-[var(--text-secondary)]">{lt.annual_entitlement} Days</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${lt.is_paid ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${lt.is_paid ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]'}`}>
                           {lt.is_paid ? 'Paid' : 'Unpaid'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">{lt.carry_forward_max_days ?? 0} Days</td>
+                      <td className="px-6 py-4 text-[var(--text-muted)] text-xs">{lt.carry_forward_max_days ?? 0} Days</td>
                       <td className="px-6 py-4 text-right space-x-3">
                         <button
                           onClick={() => {
                             setSelectedLeaveType(lt);
                             setIsModalOpen(true);
                           }}
-                          className="p-1 text-indigo-400 hover:text-indigo-300 transition"
+                          className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition"
                           title="Edit"
                         >
                           <PencilIcon className="w-4 h-4 inline" />
                         </button>
                         <button
                           onClick={() => handleDelete(lt)}
-                          className="p-1 text-red-400 hover:text-red-300 transition"
+                          className="p-1 text-[var(--status-danger)] hover:opacity-80 transition"
                           title="Delete"
                         >
                           <TrashIcon className="w-4 h-4 inline" />

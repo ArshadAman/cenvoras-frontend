@@ -96,8 +96,8 @@ export default function Departments() {
                   <tr>
                     <td colSpan="2" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center space-y-4">
-                        <p className="text-gray-400">No departments found</p>
-                        <button onClick={handleSeedDefaults} className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20 transition">
+                        <p className="text-[var(--text-muted)] text-sm">No departments found</p>
+                        <button onClick={handleSeedDefaults} className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition">
                           <CloudArrowDownIcon className="w-5 h-5" />
                           Load Default Departments
                         </button>
@@ -106,11 +106,11 @@ export default function Departments() {
                   </tr>
                 ) : (
                   departments.map(dept => (
-                    <tr key={dept.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4">{dept.name}</td>
+                    <tr key={dept.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{dept.name}</td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button onClick={() => { setSelectedDept(dept); setIsModalOpen(true); }} className="text-indigo-400 hover:text-indigo-300"><PencilIcon className="w-4 h-4" /></button>
-                        <button onClick={async () => { if(window.confirm('Delete this department?')) { try { await hrApi.deleteDepartment(dept.id); toast.success('Deleted'); fetchDepartments(); } catch(e){ toast.error(e.response?.data?.detail || 'Failed to delete'); } } }} className="text-red-400 hover:text-red-300"><TrashIcon className="w-4 h-4" /></button>
+                        <button onClick={() => { setSelectedDept(dept); setIsModalOpen(true); }} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition p-1"><PencilIcon className="w-4 h-4" /></button>
+                        <button onClick={async () => { if(window.confirm('Delete this department?')) { try { await hrApi.deleteDepartment(dept.id); toast.success('Deleted'); fetchDepartments(); } catch(e){ toast.error(e.response?.data?.detail || 'Failed to delete'); } } }} className="text-[var(--status-danger)] hover:opacity-80 transition p-1"><TrashIcon className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))

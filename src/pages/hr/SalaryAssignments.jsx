@@ -82,14 +82,14 @@ export default function SalaryAssignments() {
                   <tr><td colSpan="5" className="px-6 py-4 text-center">No assignments found</td></tr>
                 ) : (
                   assignments.map(assign => (
-                    <tr key={assign.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">{assign.employee_name || assign.employee}</td>
-                      <td className="px-6 py-4">{assign.salary_structure_name || assign.salary_structure}</td>
-                      <td className="px-6 py-4">{assign.effective_from}</td>
-                      <td className="px-6 py-4">₹{parseFloat(assign.monthly_ctc).toFixed(2)}</td>
+                    <tr key={assign.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{assign.employee_name || assign.employee}</td>
+                      <td className="px-6 py-4 text-[var(--text-secondary)]">{assign.salary_structure_name || assign.salary_structure}</td>
+                      <td className="px-6 py-4 text-[var(--text-muted)] text-xs">{assign.effective_from}</td>
+                      <td className="px-6 py-4 font-semibold text-[var(--text-primary)] tabular-nums">₹{parseFloat(assign.monthly_ctc).toFixed(2)}</td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button onClick={() => setModalState({ open: true, item: assign })} className="text-indigo-400 hover:text-indigo-300" title="Edit"><PencilIcon className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(assign.id)} className="text-red-400 hover:text-red-300" title="Delete"><TrashIcon className="w-4 h-4" /></button>
+                        <button onClick={() => setModalState({ open: true, item: assign })} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors p-1" title="Edit"><PencilIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(assign.id)} className="text-[var(--status-danger)] hover:opacity-80 transition-opacity p-1" title="Delete"><TrashIcon className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))

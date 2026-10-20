@@ -195,8 +195,8 @@ export default function WarehouseManagement() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-              <BuildingStorefrontIcon className="w-8 h-8 text-purple-400" />
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+              <BuildingStorefrontIcon className="w-8 h-8 text-[var(--accent-primary)]" />
               Godown / Multi-Store
             </h1>
             <p className="text-[var(--text-muted)] text-sm">

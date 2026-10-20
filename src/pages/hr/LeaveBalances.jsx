@@ -164,13 +164,13 @@ export default function LeaveBalances() {
                   </tr>
                 ) : (
                   balances.map(bal => (
-                    <tr key={bal.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">{bal.employee_name || bal.employee}</td>
-                      <td className="px-6 py-4 text-indigo-300">{bal.leave_type_name || bal.leave_type}</td>
-                      <td className="px-6 py-4">{bal.year}</td>
+                    <tr key={bal.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{bal.employee_name || bal.employee}</td>
+                      <td className="px-6 py-4 text-[var(--accent-primary)] font-medium">{bal.leave_type_name || bal.leave_type}</td>
+                      <td className="px-6 py-4 text-[var(--text-secondary)]">{bal.year}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          parseFloat(bal.balance) > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                          parseFloat(bal.balance) > 0 ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]'
                         }`}>
                           {bal.balance} Days Left
                         </span>
@@ -178,7 +178,7 @@ export default function LeaveBalances() {
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setEditingBalance(bal)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--border-subtle)]/20 text-[var(--accent-primary)] hover:bg-[var(--border-subtle)]/30 text-xs font-medium transition"
                         >
                           <PencilIcon className="w-3.5 h-3.5" />
                           Set Quota
