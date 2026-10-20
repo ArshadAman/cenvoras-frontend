@@ -295,7 +295,7 @@ function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes, onLeave
                         : "Unpaid / Free Leave (no quota limit)"}
                     </span>
                     {isQuotaExhausted && (
-                      <span className="text-[var(--status-danger)] font-semibold uppercase text-[10px] tracking-wider bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 px-1.5 py-0.5 rounded">
+                      <span className="text-[var(--status-danger)] font-semibold uppercase text-xs tracking-wider bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 px-1.5 py-0.5 rounded">
                         Quota Exhausted
                       </span>
                     )}
@@ -478,7 +478,7 @@ function TaskDetailsModal({ isOpen, onClose, task, employees, onEdit = null, onD
           <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 p-4 space-y-4">
             {task.description ? (
               <div>
-                <span className="text-[11px] uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-1">Description</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-1">Description</span>
                 <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{task.description}</p>
               </div>
             ) : (
@@ -487,21 +487,21 @@ function TaskDetailsModal({ isOpen, onClose, task, employees, onEdit = null, onD
             
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-subtle)] text-sm">
               <div>
-                <span className="text-[11px] uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Assigned To</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Assigned To</span>
                 <span className="font-semibold text-[var(--text-primary)]">{emp ? `${emp.full_name} (${emp.employee_code})` : "—"}</span>
               </div>
               <div>
-                <span className="text-[11px] uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Assigned By</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Assigned By</span>
                 <span className="font-semibold text-[var(--text-primary)]">{task.assigned_by_name || "HR System"}</span>
               </div>
               <div>
-                <span className="text-[11px] uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Deadline</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Deadline</span>
                 <span className={`font-mono font-semibold ${isOverdue ? "text-[var(--status-danger)] font-bold" : "text-[var(--accent-primary)]"}`}>
                   {task.deadline || "No deadline"}
                 </span>
               </div>
               <div>
-                <span className="text-[11px] uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Created At</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Created At</span>
                 <span className="text-[var(--text-secondary)]">{new Date(task.created_at).toLocaleDateString()}</span>
               </div>
             </div>
@@ -814,7 +814,7 @@ export default function HRDashboard() {
       {/* Header */}
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-1">Human Resources</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-1">Human Resources</p>
           <h1 className="text-3xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
             <ChartBarIcon className="w-8 h-8 text-[var(--accent-primary)]" /> HR Dashboard
           </h1>
@@ -948,24 +948,24 @@ export default function HRDashboard() {
                           {/* Affected Employees quick inline pills preview */}
                           {alert.items && alert.items.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-[var(--border-subtle)]">
-                              <span className="text-[11px] text-[var(--text-muted)] font-medium">Affecting:</span>
+                              <span className="text-xs text-[var(--text-muted)] font-medium">Affecting:</span>
                               {alert.items.slice(0, 4).map((it, i) => (
                                 <button
                                   key={it.id || i}
                                   type="button"
                                   onClick={() => handleFixAlertEmployee(it.id)}
-                                  className="text-[11px] px-2 py-0.5 rounded-md bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition inline-flex items-center gap-1"
+                                  className="text-xs px-2 py-0.5 rounded-md bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition inline-flex items-center gap-1"
                                   title="Click to view/edit employee"
                                 >
                                   <span>{it.name}</span>
-                                  {it.employee_code && <span className="text-[var(--text-muted)] font-mono text-[11px]">({it.employee_code})</span>}
+                                  {it.employee_code && <span className="text-[var(--text-muted)] font-mono text-xs">({it.employee_code})</span>}
                                 </button>
                               ))}
                               {alert.items.length > 4 && (
                                 <button
                                   type="button"
                                   onClick={() => setActiveAlertDetails(alert)}
-                                  className="text-[11px] text-[var(--accent-primary)] hover:underline font-medium"
+                                  className="text-xs text-[var(--accent-primary)] hover:underline font-medium"
                                 >
                                   +{alert.items.length - 4} more
                                 </button>

@@ -44,7 +44,7 @@ export default function Vendors() {
         <section className="bento-card p-4 md:p-5">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--accent-primary)] font-semibold mb-1">Supply Network</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-[var(--accent-primary)] font-semibold mb-1">Supply Network</p>
               <h1 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-2.5">
                 <UserGroupIcon className="w-7 h-7 text-[var(--accent-primary)]" />
                 Vendor Management

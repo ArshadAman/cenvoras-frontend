@@ -59,19 +59,19 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                   <div className="p-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-                    <p className="text-[11px] text-[var(--text-muted)]">Working Days</p>
+                    <p className="text-xs text-[var(--text-muted)]">Working Days</p>
                     <p className="text-sm font-semibold text-[var(--text-primary)] mt-0.5">{attendance.working_days ?? '—'}</p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-[var(--status-success)]/10 border border-[var(--status-success)]/30">
-                    <p className="text-[11px] text-[var(--status-success)]">Present Days</p>
+                    <p className="text-xs text-[var(--status-success)]">Present Days</p>
                     <p className="text-sm font-semibold text-[var(--status-success)] mt-0.5">{attendance.present_days ?? '—'}</p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-[var(--status-info)]/10 border border-[var(--status-info)]/30">
-                    <p className="text-[11px] text-[var(--status-info)]">Paid Leaves</p>
+                    <p className="text-xs text-[var(--status-info)]">Paid Leaves</p>
                     <p className="text-sm font-semibold text-[var(--status-info)] mt-0.5">{attendance.paid_leaves ?? 0}</p>
                   </div>
                   <div className={`p-2.5 rounded-lg border ${unpaidDays > 0 ? 'bg-[var(--status-danger)]/10 border-[var(--status-danger)]/30' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)]'}`}>
-                    <p className={`text-[11px] ${unpaidDays > 0 ? 'text-[var(--status-danger)] font-semibold' : 'text-[var(--text-muted)]'}`}>Loss of Pay (LOP)</p>
+                    <p className={`text-xs ${unpaidDays > 0 ? 'text-[var(--status-danger)] font-semibold' : 'text-[var(--text-muted)]'}`}>Loss of Pay (LOP)</p>
                     <p className={`text-sm font-semibold mt-0.5 ${unpaidDays > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>{unpaidDays} days</p>
                   </div>
                 </div>
@@ -82,7 +82,7 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
                       <span>Loss of Pay (LOP) Applied: {unpaidDays} Day(s)</span>
                       {lopAmt > 0 && <span>Amount Docked: ₹{lopAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>}
                     </div>
-                    <p className="text-[11px] text-[var(--status-danger)]/80 leading-relaxed">
+                    <p className="text-xs text-[var(--status-danger)]/80 leading-relaxed">
                       Salary prorated based on attendance. Unpaid leaves or absences are docked from gross compensation.
                     </p>
                   </div>
@@ -182,7 +182,7 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
                               <span className="font-semibold text-[var(--status-danger)]">₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                             {reason && (
-                              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed italic bg-[var(--bg-primary)] p-1.5 rounded border border-[var(--border-subtle)]">
+                              <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic bg-[var(--bg-primary)] p-1.5 rounded border border-[var(--border-subtle)]">
                                 💡 {reason}
                               </p>
                             )}
@@ -318,7 +318,7 @@ export default function Payslips() {
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Payroll Operations</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Payroll Operations</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <DocumentTextIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Employee Payslips

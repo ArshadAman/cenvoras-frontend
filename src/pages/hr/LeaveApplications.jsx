@@ -118,7 +118,7 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
                       : "Unpaid / Free Leave (no quota limit)"}
                   </span>
                   {isQuotaExhausted && (
-                    <span className="text-[var(--status-danger)] font-semibold uppercase text-[10px] tracking-wider bg-[var(--status-danger)]/10 px-1.5 py-0.5 rounded border border-[var(--status-danger)]/30">
+                    <span className="text-[var(--status-danger)] font-semibold uppercase text-xs tracking-wider bg-[var(--status-danger)]/10 px-1.5 py-0.5 rounded border border-[var(--status-danger)]/30">
                       Quota Exhausted
                     </span>
                   )}
@@ -216,15 +216,15 @@ function LeaveDetailsModal({ isOpen, onClose, application, onApprove, onReject }
           {/* Duration & Impact Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
             <div className="p-3 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
-              <p className="text-[11px] text-[var(--text-muted)]">Start Date</p>
+              <p className="text-xs text-[var(--text-muted)]">Start Date</p>
               <p className="text-sm font-semibold text-[var(--text-primary)] mt-1">{application.start_date}</p>
             </div>
             <div className="p-3 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
-              <p className="text-[11px] text-[var(--text-muted)]">End Date</p>
+              <p className="text-xs text-[var(--text-muted)]">End Date</p>
               <p className="text-sm font-semibold text-[var(--text-primary)] mt-1">{application.end_date}</p>
             </div>
             <div className="p-3 rounded-xl bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 col-span-2 sm:col-span-1">
-              <p className="text-[11px] text-[var(--accent-primary)] font-semibold">Total Duration</p>
+              <p className="text-xs text-[var(--accent-primary)] font-semibold">Total Duration</p>
               <p className="text-sm font-bold text-[var(--accent-primary)] mt-1">{application.computed_days} Days</p>
             </div>
           </div>
@@ -241,7 +241,7 @@ function LeaveDetailsModal({ isOpen, onClose, application, onApprove, onReject }
           <div className="p-4 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Stated Reason</h4>
-              <span className="text-[11px] text-[var(--text-muted)]">Submitted by employee</span>
+              <span className="text-xs text-[var(--text-muted)]">Submitted by employee</span>
             </div>
             {application.reason ? (
               <p className="text-sm text-[var(--text-primary)] bg-[var(--bg-surface)] p-3 rounded-lg border border-[var(--border-subtle)] leading-relaxed whitespace-pre-wrap">
@@ -361,7 +361,7 @@ export default function LeaveApplications() {
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Leave Management</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Leave Management</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <PaperAirplaneIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Leave Applications
@@ -424,7 +424,7 @@ export default function LeaveApplications() {
                               “{app.reason}”
                             </p>
                           ) : (
-                            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">No reason stated</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">No reason stated</p>
                           )}
                         </div>
                       </td>

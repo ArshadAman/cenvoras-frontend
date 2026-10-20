@@ -330,7 +330,7 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="text-base font-bold text-[var(--text-primary)] font-mono">#{q.quotation_number || q.invoice_number}</div>
-                      <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-mono">{q.quotation_date || q.invoice_date}</div>
+                      <div className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-mono">{q.quotation_date || q.invoice_date}</div>
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold text-[var(--text-primary)] font-mono">{getCurrencySymbol()}{Number(q.total_amount || 0).toLocaleString()}</div>
@@ -339,12 +339,12 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
 
                   <div className="grid grid-cols-2 gap-4 pb-4 border-b border-[var(--border-subtle)] mb-4">
                      <div>
-                        <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Customer</div>
+                        <div className="text-xs text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Customer</div>
                         <div className="text-xs font-bold text-[var(--text-primary)] truncate">{q.customer_name}</div>
                      </div>
                      <div className="text-right">
-                        <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
+                        <div className="text-xs text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
                           q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 
                           q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' : 
                           'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'

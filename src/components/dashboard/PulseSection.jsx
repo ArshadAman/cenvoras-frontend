@@ -88,12 +88,12 @@ function UdhaarModal({ isOpen, onClose }) {
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--status-warning)] transition-colors">{customer.name}</div>
-                      <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-tight">Credit Limit: {getCurrencySymbol()}{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
+                      <div className="text-xs text-[var(--text-muted)] uppercase tracking-tight">Credit Limit: {getCurrencySymbol()}{parseFloat(customer.credit_limit || 0).toLocaleString()}</div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-bold text-[var(--status-warning)]">{getCurrencySymbol()}{parseFloat(customer.current_balance).toLocaleString()}</div>
-                    <div className="text-[10px] text-[var(--text-muted)]">Balance Due</div>
+                    <div className="text-xs text-[var(--text-muted)]">Balance Due</div>
                   </div>
                 </div>
               ))}
@@ -273,7 +273,7 @@ export default function PulseSection({ data, isLoading }) {
                 {card.label}
               </div>
               
-              <div className="text-[10px] text-[var(--text-muted)]/80 mt-1 truncate">
+              <div className="text-xs text-[var(--text-muted)]/80 mt-1 truncate">
                 {card.subtitle}
               </div>
             </div>

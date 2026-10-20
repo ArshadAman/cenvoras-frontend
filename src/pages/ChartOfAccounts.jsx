@@ -652,7 +652,7 @@ export default function ChartOfAccounts() {
                 </div>
               </div>
               <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
                   Delete Account
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">

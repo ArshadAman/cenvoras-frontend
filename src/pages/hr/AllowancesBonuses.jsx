@@ -147,7 +147,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
                   type="button"
                   key={preset}
                   onClick={() => setForm(p => ({ ...p, title: preset }))}
-                  className="px-2 py-0.5 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[11px] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] border border-[var(--border-subtle)] transition"
+                  className="px-2 py-0.5 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-xs text-[var(--text-secondary)] hover:text-[var(--accent-primary)] border border-[var(--border-subtle)] transition"
                 >
                   + {preset}
                 </button>
@@ -182,7 +182,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
                   Daily Rate (₹/day)
                 </button>
               </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
+              <p className="text-xs text-[var(--text-muted)]">
                 {form.calculation_mode === 'per_day'
                   ? '💡 Multiplied by days present in monthly payroll: ₹ Rate/day × Present Days.'
                   : '💡 Flat fixed amount added to monthly payroll payslip regardless of daily presence.'}
@@ -218,7 +218,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
               />
               <div>
                 <span className="text-sm text-[var(--text-primary)]">Monthly Recurring</span>
-                <p className="text-[11px] text-[var(--text-muted)]">Automatically adds this allowance to every monthly payroll run.</p>
+                <p className="text-xs text-[var(--text-muted)]">Automatically adds this allowance to every monthly payroll run.</p>
               </div>
             </label>
           )}
@@ -317,7 +317,7 @@ export default function AllowancesBonuses() {
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-lg">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Compensation & Rewards</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Compensation & Rewards</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <GiftIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Allowances & Bonuses
@@ -432,7 +432,7 @@ export default function AllowancesBonuses() {
                           )}
                         </div>
                         {item.calculation_mode === 'per_day' && (
-                          <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                          <span className="inline-block mt-0.5 text-xs px-1.5 py-0.5 rounded bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                             ⚡ ₹/day × Present Days
                           </span>
                         )}

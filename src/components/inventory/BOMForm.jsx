@@ -308,11 +308,11 @@ export default function BOMForm({ isOpen, onClose, editData }) {
                                     <div key={index} className="space-y-1">
                                         <div className="grid grid-cols-12 gap-3 items-end">
                                             <div className="col-span-7">
-                                                <label className="block text-[10px] text-[var(--text-muted)] mb-1">Raw Material</label>
+                                                <label className="block text-xs text-[var(--text-muted)] mb-1">Raw Material</label>
                                                 <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
                                             </div>
                                             <div className="col-span-3">
-                                                <label className="block text-[10px] text-[var(--text-muted)] mb-1">Qty Required</label>
+                                                <label className="block text-xs text-[var(--text-muted)] mb-1">Qty Required</label>
                                                 <div className="flex items-center gap-2">
                                                     <Field name={`components.${index}.quantity`} type="number" className="w-full bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]" />
                                                     <span className="text-xs text-[var(--text-muted)]">{item.unit}</span>

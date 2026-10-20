@@ -34,7 +34,7 @@ function ComingSoonPlaceholder({ title, description, icon: Icon, badge = 'Soon',
         <div className="p-5 bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-subtle)]">
           <Icon className="w-12 h-12 text-[var(--text-muted)]" />
         </div>
-        <span className={`absolute -top-2 -right-2 px-2.5 py-1 ${badgeClass} text-[10px] font-extrabold uppercase rounded-full tracking-wider shadow-md`}>
+        <span className={`absolute -top-2 -right-2 px-2.5 py-1 ${badgeClass} text-xs font-extrabold uppercase rounded-full tracking-wider shadow-md`}>
           {badge}
         </span>
       </div>
@@ -676,7 +676,7 @@ export default function IntegrationsPage() {
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-bold">System Hub</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-bold">System Hub</p>
               <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-2">Business Tools</h1>
               <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-2xl">Centralized automation for communication, backup, and platform operations.</p>
             </div>
@@ -710,11 +710,11 @@ export default function IntegrationsPage() {
                       <span className="text-sm font-medium">{tab.label}</span>
                     </span>
                     {tab.badge ? (
-                      <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${tab.badgeClass || 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'} leading-none`}>
+                      <span className={`px-2 py-0.5 text-xs font-bold uppercase rounded ${tab.badgeClass || 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'} leading-none`}>
                         {tab.badge}
                       </span>
                     ) : tab.comingSoon ? (
-                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 leading-none">
+                      <span className="px-1.5 py-0.5 text-xs font-extrabold uppercase rounded bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 leading-none">
                         Soon
                       </span>
                     ) : null}

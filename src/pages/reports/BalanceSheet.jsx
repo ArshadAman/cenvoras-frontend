@@ -91,8 +91,8 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
 
       {/* Table Header */}
       <div className="flex justify-between px-5 py-2 bg-[var(--bg-primary)]/40 border-b border-[var(--border-subtle)]/50">
-        <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Account</span>
-        <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Amount</span>
+        <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Account</span>
+        <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Amount</span>
       </div>
 
       {/* Rows */}

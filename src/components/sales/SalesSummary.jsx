@@ -166,7 +166,7 @@ export default function SalesSummary() {
           )}
 
           {analyticsFetching && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--status-info)]/15 border border-[var(--status-info)]/30 text-[var(--status-info)] text-[10px] font-bold animate-pulse">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--status-info)]/15 border border-[var(--status-info)]/30 text-[var(--status-info)] text-xs font-bold animate-pulse">
               <SparklesIcon className="w-3 h-3" />
               <span>Updating...</span>
             </div>
@@ -221,7 +221,7 @@ export default function SalesSummary() {
                   <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
                     {card.icon}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
                     {card.badgeText}
                   </span>
                 </div>
@@ -240,7 +240,7 @@ export default function SalesSummary() {
                       <div className="text-sm font-semibold text-[var(--text-secondary)] font-mono font-tabular mb-1">
                         {card.subValue}
                       </div>
-                      <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                      <div className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
                         {card.label}
                       </div>
                     </>
@@ -257,7 +257,7 @@ export default function SalesSummary() {
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)] mb-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">Top Customers</h4>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
                     By Volume
                   </span>
                 </div>
@@ -300,7 +300,7 @@ export default function SalesSummary() {
                           </div>
                           <div className="truncate">
                             <span className="text-sm font-semibold text-[var(--text-primary)] truncate block">{customer}</span>
-                            <span className="text-[10px] text-[var(--text-muted)] font-medium">Rank #{index + 1}</span>
+                            <span className="text-xs text-[var(--text-muted)] font-medium">Rank #{index + 1}</span>
                           </div>
                         </div>
                         <span className="text-sm font-bold text-[var(--text-primary)] tabular-nums shrink-0 ml-4">
@@ -323,7 +323,7 @@ export default function SalesSummary() {
                   <h4 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">Action Required</h4>
                 </div>
                 {overdueCount > 0 && (
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[var(--status-danger)] bg-[var(--status-danger)]/15 px-2 py-0.5 rounded-full border border-[var(--status-danger)]/30">
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--status-danger)] bg-[var(--status-danger)]/15 px-2 py-0.5 rounded-full border border-[var(--status-danger)]/30">
                     {overdueCount} Overdue
                   </span>
                 )}
@@ -339,11 +339,11 @@ export default function SalesSummary() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-xs font-bold text-[var(--text-primary)] truncate">#{invoice.invoice_number || 'Invoice'}</p>
-                          <span className="text-[10px] font-semibold text-[var(--status-danger)] whitespace-nowrap bg-[var(--status-danger)]/20 px-1.5 py-0.5 rounded">
+                          <span className="text-xs font-semibold text-[var(--status-danger)] whitespace-nowrap bg-[var(--status-danger)]/20 px-1.5 py-0.5 rounded">
                             {invoice.days_overdue}d overdue
                           </span>
                         </div>
-                        <div className="flex items-center justify-between mt-1 text-[11px]">
+                        <div className="flex items-center justify-between mt-1 text-xs">
                           <span className="text-[var(--text-secondary)] truncate max-w-[140px]">{invoice.customer_name || 'Customer'}</span>
                           <span className="text-[var(--status-danger)] font-bold tabular-nums">
                             {getCurrencySymbol()}{Number(invoice.outstanding_amount || 0).toLocaleString()}
@@ -353,7 +353,7 @@ export default function SalesSummary() {
                     ))}
                   </div>
                   {overdueCount > overduePreview.length && (
-                    <div className="mt-2 text-center text-[10px] text-[var(--text-muted)] font-medium">
+                    <div className="mt-2 text-center text-xs text-[var(--text-muted)] font-medium">
                       +{overdueCount - overduePreview.length} more overdue invoices
                     </div>
                   )}
@@ -364,7 +364,7 @@ export default function SalesSummary() {
                     <CurrencyRupeeIcon className="w-5 h-5 text-[var(--status-success)]" />
                   </div>
                   <p className="text-[var(--text-primary)] text-xs font-bold">Collections Healthy</p>
-                  <p className="text-[var(--text-muted)] text-[11px] mt-0.5">No overdue customer invoices</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-0.5">No overdue customer invoices</p>
                 </div>
               )}
             </div>

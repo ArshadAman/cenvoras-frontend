@@ -279,7 +279,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               <div className="text-[var(--status-danger)] text-xs mt-1">{meta.error}</div>
             )}
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[8px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
+              <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -300,7 +300,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
                   }}
                   placeholder="Enter a description / note..."
-                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic"
+                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic"
                 />
               </div>
             )}
@@ -339,11 +339,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 >
                   <div className="font-medium text-[var(--text-primary)] flex items-center justify-between">
                     <span>{product.name}</span>
-                    {product.item_code && <span className="text-[10px] text-[var(--text-muted)] font-mono">{product.item_code}</span>}
+                    {product.item_code && <span className="text-xs text-[var(--text-muted)] font-mono">{product.item_code}</span>}
                   </div>
                   <div className="mt-0.5 text-xs text-[var(--text-muted)] flex items-center gap-2 flex-wrap">
                     {product.manufacturer && <span className="text-[var(--accent-primary)] font-medium italic">Mfr: {product.manufacturer}</span>}
-                    {product.internal_reference && <span className="text-[var(--status-warning)] font-mono text-[10px]">Ref: {product.internal_reference}</span>}
+                    {product.internal_reference && <span className="text-[var(--status-warning)] font-mono text-xs">Ref: {product.internal_reference}</span>}
                     <span>Unit: {product.unit || 'pcs'}</span>
                     <span>Price: {getCurrencySymbol()}{product.sale_price ?? product.price ?? 0}</span>
                   </div>
@@ -544,7 +544,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               <div className="font-semibold text-[var(--text-primary)] flex items-center justify-between">
                 <span>{customer.name}</span>
                 {customer.gstin && (
-                  <span className="text-[10px] bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] px-2 py-0.5 rounded border border-[var(--accent-primary)]/30 font-mono">
+                  <span className="text-xs bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] px-2 py-0.5 rounded border border-[var(--accent-primary)]/30 font-mono">
                     GST: {customer.gstin}
                   </span>
                 )}
@@ -1996,7 +1996,7 @@ export default function SalesForm({
                           <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]"></div>
                           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Billing Details</h3>
                         </div>
-                        <span className="text-[10px] text-[var(--text-muted)] font-mono">CUSTOMER</span>
+                        <span className="text-xs text-[var(--text-muted)] font-mono">CUSTOMER</span>
                       </div>
 
                       {/* Customer Autocomplete */}
@@ -2019,7 +2019,7 @@ export default function SalesForm({
                                   <button
                                     type="button"
                                     onClick={() => setEditingCustomer(matchedCustomer)}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--accent-primary)] hover:opacity-80 transition-opacity"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent-primary)] hover:opacity-80 transition-opacity"
                                   >
                                     <PencilSquareIcon className="w-3.5 h-3.5" />
                                     <span>Edit Customer</span>
@@ -2040,7 +2040,7 @@ export default function SalesForm({
                             {values.customer_gstin && (
                               <div className="flex items-center gap-2">
                                 <span className="text-[var(--text-secondary)] font-medium">GSTIN:</span>
-                                <span className="font-mono bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 px-2 py-0.5 rounded text-[11px] font-semibold">{values.customer_gstin}</span>
+                                <span className="font-mono bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 px-2 py-0.5 rounded text-xs font-semibold">{values.customer_gstin}</span>
                               </div>
                             )}
                             {values.customer_address && (
@@ -2069,7 +2069,7 @@ export default function SalesForm({
                           <button
                             type="button"
                             onClick={() => setFieldValue('delivery_address', values.customer_address)}
-                            className="text-[11px] text-[var(--accent-primary)] hover:opacity-80 font-medium transition-opacity flex items-center gap-1"
+                            className="text-xs text-[var(--accent-primary)] hover:opacity-80 font-medium transition-opacity flex items-center gap-1"
                           >
                             <span>Copy from Billing</span>
                           </button>
@@ -2093,7 +2093,7 @@ export default function SalesForm({
 
                           return (
                             <div className="mb-2">
-                              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
+                              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                                 Saved Shipping Addresses ({savedList.length})
                               </label>
                               <select
@@ -2120,7 +2120,7 @@ export default function SalesForm({
                           <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                             Shipping Address
                           </label>
-                          <label className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)] cursor-pointer hover:text-[var(--text-primary)] transition-colors">
+                          <label className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] cursor-pointer hover:text-[var(--text-primary)] transition-colors">
                             <Field
                               type="checkbox"
                               name="save_shipping_address"
@@ -2144,7 +2144,7 @@ export default function SalesForm({
                             Place of Supply
                           </label>
                           {values.place_of_supply && values.customer_gstin && (
-                            <span className="text-[10px] text-[var(--status-success)] font-mono">
+                            <span className="text-xs text-[var(--status-success)] font-mono">
                               Auto-detected from GSTIN
                             </span>
                           )}
@@ -2165,7 +2165,7 @@ export default function SalesForm({
                       {isDeliveryChallan && (
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-[var(--border-subtle)]">
                           <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Vehicle #</label>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Vehicle #</label>
                             <Field
                               name="vehicle_number"
                               type="text"
@@ -2174,7 +2174,7 @@ export default function SalesForm({
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Transport</label>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">Transport</label>
                             <Field
                               name="transport_mode"
                               type="text"
@@ -2183,7 +2183,7 @@ export default function SalesForm({
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">E-Way Bill #</label>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">E-Way Bill #</label>
                             <Field
                               name="eway_bill_number"
                               type="text"
@@ -2207,7 +2207,7 @@ export default function SalesForm({
                               <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                                 Delivery Challans
                               </span>
-                              <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                              <span className="text-xs text-[var(--text-muted)] font-mono">
                                 ({values.delivery_challans?.length || 0} attached)
                               </span>
                             </div>
@@ -2225,7 +2225,7 @@ export default function SalesForm({
                             {(values.delivery_challans || []).map((ch, chIdx) => (
                               <div key={chIdx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-center bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
                                 <div>
-                                  <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
+                                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
                                     Challan Number #{chIdx + 1}
                                   </label>
                                   <Field
@@ -2236,7 +2236,7 @@ export default function SalesForm({
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
+                                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
                                     Challan Date (DD/MM/YYYY)
                                   </label>
                                   <DateInputField
@@ -2281,7 +2281,7 @@ export default function SalesForm({
 
                       {showColumnPicker && (
                         <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-2xl">
-                          <div className="mb-2 text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">Show/Hide Columns</div>
+                          <div className="mb-2 text-xs uppercase tracking-wide text-[var(--text-secondary)]">Show/Hide Columns</div>
                           {[
                             ["show_item_description", "Description"],
                             ["show_item_manufacturer", "Manufacturer"],
@@ -2454,7 +2454,7 @@ export default function SalesForm({
                                           >
                                             <Bars3Icon className="w-4 h-4" />
                                           </div>
-                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 text-[var(--status-warning)] text-[10px] font-black uppercase tracking-wider shrink-0">
+                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 text-[var(--status-warning)] text-xs font-black uppercase tracking-wider shrink-0">
                                             <DocumentTextIcon className="w-3.5 h-3.5" />
                                             <span>Note</span>
                                           </div>
@@ -2580,7 +2580,7 @@ export default function SalesForm({
                                                  />
                                                   {itemSettings.show_item_storage_condition && (
                                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                                                      <span className="text-[10px] uppercase font-semibold text-[var(--text-muted)] select-none">Storage:</span>
+                                                      <span className="text-xs uppercase font-semibold text-[var(--text-muted)] select-none">Storage:</span>
                                                       <Field
                                                         name={`items.${index}.storage_condition`}
                                                         type="text"
@@ -2606,7 +2606,7 @@ export default function SalesForm({
                                                            description: item.description || item.product_description || "",
                                                            unit: item.unit || "pcs",
                                                          })}
-                                                         className="inline-flex items-center gap-1 text-[10px] text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
+                                                         className="inline-flex items-center gap-1 text-xs text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
                                                          title="Update master catalog item with these values"
                                                        >
                                                          <ArrowPathIcon className="w-3 h-3" />
@@ -2627,7 +2627,7 @@ export default function SalesForm({
                                                            description: item.description || item.product_description || "",
                                                            unit: item.unit || "pcs",
                                                          })}
-                                                         className="inline-flex items-center gap-1 text-[10px] text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
+                                                         className="inline-flex items-center gap-1 text-xs text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
                                                          title="Save this line item as a new product in your catalog"
                                                        >
                                                          <PlusIcon className="w-3 h-3" />
@@ -2637,7 +2637,7 @@ export default function SalesForm({
                                                    </div>
                                                  )}
                                                  {matchedScheme && (
-                                                   <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
+                                                   <div className="mt-1 flex items-center gap-1 text-xs text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
                                                      <span>🎁</span>
                                                      <span>{matchedScheme.name}</span>
                                                      {matchedScheme.scheme_type === 'bogo' && (
@@ -2746,7 +2746,7 @@ export default function SalesForm({
                                                  />
                                                  {matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0 && (
                                                    <span
-                                                     className="absolute -top-1.5 -right-1 bg-[var(--status-success)]/30 text-[var(--status-success)] text-[8px] font-black px-1 rounded border border-[var(--status-success)]/40 pointer-events-none"
+                                                     className="absolute -top-1.5 -right-1 bg-[var(--status-success)]/30 text-[var(--status-success)] text-xs font-black px-1 rounded border border-[var(--status-success)]/40 pointer-events-none"
                                                      title={`${matchedScheme.name}: Buy ${matchedScheme.min_qty} Get ${matchedScheme.free_qty} Free`}
                                                    >
                                                      +{freeQtyNum}
@@ -2995,7 +2995,7 @@ export default function SalesForm({
                                       <div key={item._key ? `mobile-${item._key}` : `mobile-${index}`} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 flex flex-col gap-4">
                                       {/* Row 1: Product */}
                                       <div className="w-full">
-                                          <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Product Name</label>
+                                          <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Product Name</label>
                                           <ProductAutocomplete
                                             idx={index}
                                             values={values}
@@ -3009,7 +3009,7 @@ export default function SalesForm({
                                           />
                                                   {itemSettings.show_item_storage_condition && (
                                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                                                      <span className="text-[10px] uppercase font-semibold text-[var(--text-muted)] select-none">Storage:</span>
+                                                      <span className="text-xs uppercase font-semibold text-[var(--text-muted)] select-none">Storage:</span>
                                                       <Field
                                                         name={`items.${index}.storage_condition`}
                                                         type="text"
@@ -3067,7 +3067,7 @@ export default function SalesForm({
                                             const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                             if (!matchedScheme) return null;
                                             return (
-                                              <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
+                                              <div className="mt-1 flex items-center gap-1 text-xs text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
                                                 <span>🎁</span>
                                                 <span>{matchedScheme.name}</span>
                                                 {matchedScheme.scheme_type === 'bogo' && (
@@ -3086,13 +3086,13 @@ export default function SalesForm({
                                            <div className="grid grid-cols-2 gap-4">
                                                {itemSettings.show_item_manufacturer && (
                                                  <div>
-                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Manufacturer</label>
+                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Manufacturer</label>
                                                      <Field name={`items.${index}.manufacturer`} type="text" placeholder="Manufacturer" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" />
                                                  </div>
                                                )}
                                                {itemSettings.show_item_internal_reference && (
                                                  <div>
-                                                     <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Internal Ref</label>
+                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Internal Ref</label>
                                                      <Field name={`items.${index}.internal_reference`} type="text" placeholder="Internal Ref" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" />
                                                  </div>
                                                )}
@@ -3104,7 +3104,7 @@ export default function SalesForm({
                                           <div className="grid grid-cols-2 gap-4">
                                               {itemSettings.show_item_hsn && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">HSN/SAC Code</label>
+                                                    <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">HSN/SAC Code</label>
                                                     <Field name={`items.${index}.hsn_sac_code`}>
                                                       {({ field }) => (
                                                         <input
@@ -3126,7 +3126,7 @@ export default function SalesForm({
                                               )}
                                               {itemSettings.show_item_batch && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Batch</label>
+                                                    <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Batch</label>
                                                     <Field name={`items.${index}.batch`}>
                                                       {({ field }) => (
                                                         <select {...field} className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" disabled={!item.product_id}>
@@ -3145,7 +3145,7 @@ export default function SalesForm({
                                       {/* Row 2: Qty, Unit, Price */}
                                       <div className="grid grid-cols-3 gap-4">
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Qty</label>
+                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Qty</label>
                                               <Field
                                                 name={`items.${index}.quantity`}
                                                 type="number"
@@ -3155,7 +3155,7 @@ export default function SalesForm({
                                               />
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Unit</label>
+                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Unit</label>
                                               <select
                                                 value={item.unit || "pcs"}
                                                 onChange={(e) => {
@@ -3178,7 +3178,7 @@ export default function SalesForm({
                                               </select>
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Price</label>
+                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Price</label>
                                               <Field
                                                  name={`items.${index}.price`}
                                                  type="number"
@@ -3203,13 +3203,13 @@ export default function SalesForm({
                                             {itemSettings.show_item_free_quantity && (
                                                 <div className="relative">
                                                     <div className="flex items-center justify-between mb-2">
-                                                      <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Free</label>
+                                                      <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)]">Free</label>
                                                       {(() => {
                                                         const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                                         const freeQtyNum = Number(values.items[index]?.free_quantity) || 0;
                                                         if (matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0) {
                                                           return (
-                                                            <span className="bg-[var(--status-success)]/30 text-[var(--status-success)] text-[8px] font-black px-1.5 py-0.5 rounded border border-[var(--status-success)]/40">
+                                                            <span className="bg-[var(--status-success)]/30 text-[var(--status-success)] text-xs font-black px-1.5 py-0.5 rounded border border-[var(--status-success)]/40">
                                                               +{freeQtyNum} Free
                                                             </span>
                                                           );
@@ -3222,13 +3222,13 @@ export default function SalesForm({
                                             )}
                                             {itemSettings.show_item_discount && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Disc %</label>
+                                                    <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Disc %</label>
                                                     <Field name={`items.${index}.discount`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_tax && (
                                                 <div>
-                                                    <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Tax %</label>
+                                                    <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Tax %</label>
                                                     <Field name={`items.${index}.tax`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
                                                 </div>
                                             )}
@@ -3238,7 +3238,7 @@ export default function SalesForm({
                                       {/* Row 4: Amount & Actions */}
                                       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)]">
                                           <div>
-                                              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">Subtotal</label>
+                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">Subtotal</label>
                                               <div className="text-xl font-mono font-black text-[var(--accent-primary)]">
                                                   {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
@@ -3271,7 +3271,7 @@ export default function SalesForm({
                                               type="button"
                                               onClick={() => remove(index)}
                                               disabled={values.items.length === 1}
-                                              className="px-3 py-1.5 bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/20 rounded-xl transition-all hover:bg-[var(--status-danger)]/20 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+                                              className="px-3 py-1.5 bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/20 rounded-xl transition-all hover:bg-[var(--status-danger)]/20 disabled:opacity-30 text-xs font-black uppercase tracking-widest"
                                               tabIndex={-1}
                                             >
                                               Remove
@@ -3354,7 +3354,7 @@ export default function SalesForm({
                             <div className="mt-3 p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl">
                               <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-semibold text-[var(--text-primary)]">Document Notes & Terms</label>
-                                <span className="text-[10px] text-[var(--text-muted)]">Will appear in the printed bill footer</span>
+                                <span className="text-xs text-[var(--text-muted)]">Will appear in the printed bill footer</span>
                               </div>
                               <Field
                                 as="textarea"
@@ -3428,7 +3428,7 @@ export default function SalesForm({
                         <button
                           type="button"
                           onClick={() => setRoundOffApplied(false)}
-                          className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] underline"
+                          className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] underline"
                         >
                           Revert round off
                         </button>
@@ -3545,7 +3545,7 @@ export default function SalesForm({
                     className="w-full py-2.5 px-4 bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/25 text-[var(--text-primary)] font-semibold text-xs rounded-xl transition-colors text-left flex items-center justify-between"
                   >
                     <span>Update Catalog Item</span>
-                    <span className="text-[10px] text-[var(--accent-primary)]">Overwrites master name/price/HSN/tax</span>
+                    <span className="text-xs text-[var(--accent-primary)]">Overwrites master name/price/HSN/tax</span>
                   </button>
                 )}
                 <button
@@ -3554,7 +3554,7 @@ export default function SalesForm({
                   className="w-full py-2.5 px-4 btn-primary text-xs rounded-xl transition-colors text-left flex items-center justify-between"
                 >
                   <span>Save as New Product</span>
-                  <span className="text-[10px] opacity-80">Creates new catalog master product</span>
+                  <span className="text-xs opacity-80">Creates new catalog master product</span>
                 </button>
                 <button
                   type="button"

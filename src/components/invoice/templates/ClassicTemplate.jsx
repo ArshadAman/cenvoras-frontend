@@ -521,7 +521,7 @@ const InvoicePreview = forwardRef(({
                             <div>
                               <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
                               {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                                <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                                <div className="text-xs text-gray-500 font-medium italic mt-0.5">
                                   Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                                 </div>
                               )}
@@ -599,7 +599,7 @@ const InvoicePreview = forwardRef(({
                       alt="Scan to Pay" 
                       className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
                     />
-                    <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                    <span className="text-xs text-gray-500 block mt-0.5">Scan to Pay</span>
                   </div>
                 )}
               </div>
@@ -722,14 +722,14 @@ const InvoicePreview = forwardRef(({
             </div>
           )}
           
-          <div className="mt-3 pt-2 text-center text-[10px] text-gray-500 font-medium">
+          <div className="mt-3 pt-2 text-center text-xs text-gray-500 font-medium">
             {isDeliveryChallan
               ? 'This is a computer generated delivery challan and does not require a signature.'
               : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
           
           {showWatermarkFooter && (
-            <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
+            <div className="mt-2 text-center text-xs text-gray-400 print-watermark">
               Made with Cenvora: Built for Modern Businesses<br />
               <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
             </div>

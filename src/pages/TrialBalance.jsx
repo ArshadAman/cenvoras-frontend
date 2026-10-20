@@ -409,7 +409,7 @@ export default function TrialBalance() {
                 {!isCollapsed && (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                      <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                         <tr>
                           <th className="py-2.5 px-5 font-semibold w-24">Code</th>
                           <th className="py-2.5 px-4 font-semibold">Account Name</th>
@@ -437,7 +437,7 @@ export default function TrialBalance() {
                               <td className="py-3 px-4">
                                 <div className="font-medium text-[var(--text-primary)]">{acc.name}</div>
                                 {acc.description && (
-                                  <div className="text-[11px] text-[var(--text-muted)] line-clamp-1">{acc.description}</div>
+                                  <div className="text-xs text-[var(--text-muted)] line-clamp-1">{acc.description}</div>
                                 )}
                               </td>
                               <td className="py-3 px-4 text-right font-mono font-medium text-[var(--text-primary)]">

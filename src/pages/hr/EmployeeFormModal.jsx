@@ -522,7 +522,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className={labelCls + ' mb-0'}>Date of Birth *</label>
-                    <span className="text-[11px] text-[var(--text-muted)] font-medium">At least 13 yrs old</span>
+                    <span className="text-xs text-[var(--text-muted)] font-medium">At least 13 yrs old</span>
                   </div>
                   <input required type="date" name="date_of_birth" max={maxDobDate} value={formData.date_of_birth} onChange={handleChange} className={inputCls} />
                 </div>
@@ -734,7 +734,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       href={employee.kyc_documents.find(d => d.document_type === 'aadhaar').file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
+                      className="text-xs text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
                     </a>
@@ -747,7 +747,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   className="w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent-primary)]/20 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/30 cursor-pointer"
                 />
                 {aadhaarFile && (
-                  <p className="text-[11px] text-[var(--accent-primary)]">Selected: {aadhaarFile.name} ({(aadhaarFile.size / 1024).toFixed(1)} KB)</p>
+                  <p className="text-xs text-[var(--accent-primary)]">Selected: {aadhaarFile.name} ({(aadhaarFile.size / 1024).toFixed(1)} KB)</p>
                 )}
               </div>
 
@@ -760,7 +760,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       href={employee.kyc_documents.find(d => d.document_type === 'pan').file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
+                      className="text-xs text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
                     </a>
@@ -773,7 +773,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   className="w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent-primary)]/20 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/30 cursor-pointer"
                 />
                 {panFile && (
-                  <p className="text-[11px] text-[var(--accent-primary)]">Selected: {panFile.name} ({(panFile.size / 1024).toFixed(1)} KB)</p>
+                  <p className="text-xs text-[var(--accent-primary)]">Selected: {panFile.name} ({(panFile.size / 1024).toFixed(1)} KB)</p>
                 )}
               </div>
 
@@ -786,7 +786,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       href={employee.kyc_documents.find(d => d.document_type === 'marksheet_10th').file_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
+                      className="text-xs text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
                     </a>
@@ -799,7 +799,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   className="w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent-primary)]/20 file:text-[var(--accent-primary)] hover:file:bg-[var(--accent-primary)]/30 cursor-pointer"
                 />
                 {marksheetFile && (
-                  <p className="text-[11px] text-[var(--accent-primary)]">Selected: {marksheetFile.name} ({(marksheetFile.size / 1024).toFixed(1)} KB)</p>
+                  <p className="text-xs text-[var(--accent-primary)]">Selected: {marksheetFile.name} ({(marksheetFile.size / 1024).toFixed(1)} KB)</p>
                 )}
               </div>
             </div>

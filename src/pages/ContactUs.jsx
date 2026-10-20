@@ -128,7 +128,7 @@ export default function ContactUs() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-              <div className="text-[11px] font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Step 1</div>
+              <div className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Step 1</div>
               <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">Free 14-Day Trial</div>
               <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
                 Test the software with your own products, sales bills, and staff logins.
@@ -136,7 +136,7 @@ export default function ContactUs() {
             </div>
 
             <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-              <div className="text-[11px] font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Step 2</div>
+              <div className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Step 2</div>
               <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">Catalog Import</div>
               <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
                 We help you import your existing items and customer balances from Excel.
@@ -144,7 +144,7 @@ export default function ContactUs() {
             </div>
 
             <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-              <div className="text-[11px] font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Step 3</div>
+              <div className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Step 3</div>
               <div className="text-sm font-semibold text-[var(--text-primary)] mt-1">Live Billing</div>
               <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
                 Start raising GST invoices with confidence, backed by direct WhatsApp support.

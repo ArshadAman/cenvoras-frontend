@@ -89,7 +89,7 @@ export default function HRReports() {
       <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Analytics & Compliance</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2 font-semibold">Analytics & Compliance</p>
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
               <BookOpenIcon className="w-9 h-9 text-[var(--accent-primary)]" />
               HR & Payroll Reports
@@ -189,7 +189,7 @@ export default function HRReports() {
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-xs text-[var(--text-muted)] font-mono">{r.employee_code}</span>
                           {r.tax_regime && (
-                            <span className="text-[9px] px-1 py-0.2 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] uppercase font-mono">
+                            <span className="text-xs px-1 py-0.2 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] uppercase font-mono">
                               {r.tax_regime}
                             </span>
                           )}

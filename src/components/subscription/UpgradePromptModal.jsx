@@ -188,15 +188,15 @@ export default function UpgradePromptModal({
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#0f0f12] shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 bg-white/[0.03] p-5">
+      <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5">
           <div className="flex items-start gap-3">
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-amber-400">
+            <div className="rounded-xl border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-[var(--status-warning)]">
               <LockClosedIcon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white">{title}</h3>
-              <p className="mt-1 text-sm text-gray-400">
+              <h3 className="text-xl font-bold text-[var(--text-primary)]">{title}</h3>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {subtitle || `${featureName} is not included in your current ${currentPlanName} plan.`}
               </p>
             </div>
@@ -204,23 +204,23 @@ export default function UpgradePromptModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
         <div className="space-y-4 p-5">
-          <p className="text-sm leading-6 text-gray-300">
+          <p className="text-sm leading-6 text-[var(--text-secondary)]">
             {description || `Upgrade to ${targetPlanName} to unlock ${featureName}. This keeps the feature visible while making the restriction obvious.`}
           </p>
           <div>
-            <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-gray-500">Billing cycle</label>
+            <label className="mb-2 block text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)]">Billing cycle</label>
             <select
               value={billingCycle}
               onChange={(event) => setBillingCycle(event.target.value)}
               disabled={isPaying}
-              className="w-full rounded-xl border border-white/10 bg-[#14151a] px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-300/60 disabled:opacity-60"
+              className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-primary)] disabled:opacity-60"
             >
               {BILLING_CYCLES.map((cycle) => (
                 <option key={cycle.value} value={cycle.value}>
@@ -229,17 +229,17 @@ export default function UpgradePromptModal({
               ))}
             </select>
             {!!cyclePrice && (
-              <p className="mt-2 text-sm text-gray-300">
+              <p className="mt-2 text-sm text-[var(--text-secondary)] font-medium">
                 INR {formatAmount(cyclePrice)}
                 {hasOriginalPrice && (
-                  <span className="ml-2 text-xs text-gray-500 line-through">INR {formatAmount(originalCyclePrice)}</span>
+                  <span className="ml-2 text-xs text-[var(--text-muted)] line-through">INR {formatAmount(originalCyclePrice)}</span>
                 )}
               </p>
             )}
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="text-xs uppercase tracking-wider text-gray-500 mb-2">What happens next</div>
-            <div className="text-sm text-gray-300 space-y-1">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
+            <div className="text-xs uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-2">What happens next</div>
+            <div className="text-sm text-[var(--text-secondary)] space-y-1">
               <div>• Your current data stays intact.</div>
               <div>• You can upgrade without losing invoices, customers, or reports.</div>
               <div>• Complete one-time payment to activate {targetPlanName}.</div>
@@ -250,14 +250,14 @@ export default function UpgradePromptModal({
               type="button"
               disabled={isPaying}
               onClick={handlePayAndUpgrade}
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-primary text-sm font-semibold"
             >
               {isPaying ? 'Processing...' : (ctaLabel || `Pay & Upgrade to ${targetPlanName}`)}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-200 hover:bg-white/10 transition-colors"
+              className="btn-secondary text-sm font-medium"
             >
               Close
             </button>

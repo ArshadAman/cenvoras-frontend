@@ -76,7 +76,7 @@ export default function InsightsSection({ data, isLoading }) {
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] text-[var(--text-muted)] flex-shrink-0">
+                  <span className="text-xs text-[var(--text-muted)] flex-shrink-0">
                     {product.percent_of_total?.toFixed(0)}%
                   </span>
                 </div>
@@ -101,7 +101,7 @@ export default function InsightsSection({ data, isLoading }) {
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-[var(--status-danger)] font-bold">{formatCurrency(product.trapped_value)} stuck</div>
-                    <div className="text-[10px] text-[var(--text-muted)]">{product.stock} units, {product.sales_30d} sold</div>
+                    <div className="text-xs text-[var(--text-muted)]">{product.stock} units, {product.sales_30d} sold</div>
                   </div>
                 </div>
               ))}

@@ -155,7 +155,7 @@ export default function AIChatWidget() {
             <h3 className="text-base md:text-lg font-semibold tracking-tight text-white/90 relative z-10 flex items-center gap-2">
               <SparklesIcon className="w-5 h-5 text-cyan-200" /> Cenvora Intelligence
             </h3>
-            <p className="text-[10px] md:text-xs font-medium text-white/40 uppercase tracking-widest relative z-10">Business Copilot</p>
+            <p className="text-xs md:text-xs font-medium text-white/40 uppercase tracking-widest relative z-10">Business Copilot</p>
           </div>
 
           {/* Messages */}
@@ -285,7 +285,7 @@ export default function AIChatWidget() {
               </button>
             </div>
             <div className="mt-2 md:mt-3 text-center">
-               <p className="text-[9px] md:text-[10px] uppercase tracking-widest text-white/20 font-medium font-sans">AI can make mistakes. Verify important data.</p>
+               <p className="text-xs md:text-xs uppercase tracking-widest text-white/20 font-medium font-sans">AI can make mistakes. Verify important data.</p>
             </div>
           </div>
         </div>

@@ -475,7 +475,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                             </span>
                           )}
                           {/* Total items indicator */}
-                          <span className="text-[11px] text-[var(--text-muted)] font-medium ml-1">
+                          <span className="text-xs text-[var(--text-muted)] font-medium ml-1">
                             ({bill.items.length} items)
                           </span>
                         </div>

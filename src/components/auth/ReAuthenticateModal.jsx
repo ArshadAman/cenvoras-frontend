@@ -108,21 +108,21 @@ export default function ReAuthenticateModal() {
       <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-md bg-[#121418] border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-8 animate-fade-up">
+      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl p-6 sm:p-8 animate-fade-up">
         {/* Header Icon */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+        <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)] mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] flex items-center justify-center text-[var(--status-warning)]">
               <LockClosedIcon className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Session Paused</h2>
-              <p className="text-xs text-gray-400">Re-authenticate to protect in-flight work</p>
+              <h2 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">Session Paused</h2>
+              <p className="text-xs text-[var(--text-muted)]">Re-authenticate to protect in-flight work</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
             title="Log out instead"
           >
             <XMarkIcon className="w-5 h-5" />
@@ -130,12 +130,12 @@ export default function ReAuthenticateModal() {
         </div>
 
         {/* Message */}
-        <p className="text-sm text-gray-300 leading-relaxed mb-5">
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-5">
           Your active login session expired. Enter your password to resume seamlessly without losing uncommitted invoice drafts or calculations.
         </p>
 
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium">
+          <div className="mb-4 p-3 rounded-xl bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] text-[var(--status-danger)] text-xs font-semibold">
             {errorMessage}
           </div>
         )}
@@ -143,20 +143,20 @@ export default function ReAuthenticateModal() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {username && (
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
                 Account
               </label>
               <input
                 type="text"
                 disabled
                 value={username}
-                className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-gray-400 text-sm cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-muted)] text-sm cursor-not-allowed"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
               Password
             </label>
             <div className="relative">
@@ -166,12 +166,12 @@ export default function ReAuthenticateModal() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
                 placeholder="Enter your password"
-                className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm pr-11 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all"
+                className="w-full px-4 py-2.5 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm pr-11 focus:outline-none focus:border-[var(--accent-primary)] transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-xs"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs"
               >
                 {showPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
               </button>
@@ -182,11 +182,11 @@ export default function ReAuthenticateModal() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold text-sm shadow-lg shadow-cyan-500/20 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 cursor-pointer"
+              className="btn-primary w-full py-2.5 text-sm font-bold flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
                   <span>Unlocking...</span>
                 </>
               ) : (
@@ -197,7 +197,7 @@ export default function ReAuthenticateModal() {
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full py-2 px-4 rounded-xl text-xs font-medium text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+              className="btn-secondary w-full py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2"
             >
               <ArrowRightOnRectangleIcon className="w-4 h-4" />
               <span>Log out instead</span>

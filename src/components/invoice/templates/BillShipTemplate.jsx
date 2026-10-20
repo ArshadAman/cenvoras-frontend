@@ -219,17 +219,17 @@ const BillShipTemplate = forwardRef(({
                       <div className="py-0">
                         <div className="font-normal text-gray-900 leading-tight">{item.product_detail?.name || item.product_name || item.product}</div>
                         {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                          <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                          <div className="text-xs text-gray-500 font-medium italic mt-0.5">
                             Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                           </div>
                         )}
                         {desc && (
-                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-xs text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
                         {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
                             {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                             {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                             {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -306,7 +306,7 @@ const BillShipTemplate = forwardRef(({
                           alt="Scan & Pay" 
                           className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
                         />
-                        <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                        <span className="text-xs text-gray-500 block mt-0.5">Scan to Pay</span>
                       </div>
                     )}
                   </div>
@@ -392,14 +392,14 @@ const BillShipTemplate = forwardRef(({
           </div>
         )}
         <div className="invoice-page-footer">
-          <div className="mt-4 text-center text-[10px] text-gray-500 font-medium">
+          <div className="mt-4 text-center text-xs text-gray-500 font-medium">
             {isDeliveryChallan
               ? 'This is a computer generated delivery challan and does not require a signature.'
               : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
           
           {showWatermarkFooter && (
-            <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+            <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
               Made with Cenvora: Built for Modern Businesses<br />
               <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
             </div>

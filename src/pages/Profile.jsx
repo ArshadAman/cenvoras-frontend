@@ -955,7 +955,7 @@ const Profile = ({ onLogout }) => {
             <div className="max-w-2xl mx-auto">
               <div className="glass-card p-8 text-center">
                 <h2 className="text-2xl font-bold text-red-400 mb-4">Error Loading Profile</h2>
-                <p className="text-white/80">
+                <p className="text-[var(--text-secondary)] text-sm">
                   {error.response?.data?.detail || 'Failed to load profile data'}
                 </p>
               </div>
@@ -1081,7 +1081,7 @@ const Profile = ({ onLogout }) => {
                     )}
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] font-semibold">Profile Workspace</p>
+                    <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] font-semibold">Profile Workspace</p>
                     <h1 className="mt-1 text-3xl font-semibold text-[var(--text-primary)] md:text-4xl">{fullName}</h1>
                     <p className="mt-2 text-sm text-[var(--text-secondary)]">{roleLabel}</p>
                     {isAdmin && (
@@ -1124,20 +1124,20 @@ const Profile = ({ onLogout }) => {
                   </h3>
                   <div className="space-y-3">
                     <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Member Since</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Member Since</p>
                       <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{memberDays} days</p>
                     </div>
                     <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Trial Status</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Trial Status</p>
                       <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{trialDays} days left</p>
                     </div>
                     <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Plan Expiry</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Plan Expiry</p>
                       <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{expiryLabel}</p>
                       <p className="mt-1 text-xs text-[var(--text-muted)]">{expirySubLabel}</p>
                     </div>
                     <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Invoices Generated</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Invoices Generated</p>
                       <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{totalInvoices}</p>
                     </div>
                   </div>
@@ -1195,7 +1195,7 @@ const Profile = ({ onLogout }) => {
                             A/C: {formData.bank_account_number || ((formData.bank_accounts || [])[0]?.account_number) || '—'}
                           </p>
                           {(formData.bank_accounts?.length || 0) > 1 && (
-                            <span className="text-[10px] text-[var(--accent-primary)] font-medium">
+                            <span className="text-xs text-[var(--accent-primary)] font-medium">
                               +{formData.bank_accounts.length - 1} more account{formData.bank_accounts.length > 2 ? 's' : ''}
                             </span>
                           )}
@@ -1291,7 +1291,7 @@ const Profile = ({ onLogout }) => {
                             <SparklesIcon className="w-4 h-4 text-white" />
                             Launch Setup Wizard
                           </button>
-                          <p className="text-[11px] text-center md:text-right text-[var(--text-muted)]">
+                          <p className="text-xs text-center md:text-right text-[var(--text-muted)]">
                             Configure business details & tax settings in seconds.
                           </p>
                         </div>
@@ -1439,7 +1439,7 @@ const Profile = ({ onLogout }) => {
                           placeholder="Business name"
                         />
                         <div className="space-y-1.5">
-                          <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1">Country</label>
+                          <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1">Country</label>
                           <Select
                             options={[
                               { value: 'IN', label: 'India' },
@@ -1526,7 +1526,7 @@ const Profile = ({ onLogout }) => {
                         
                         {formData.country && (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1">State</label>
+                            <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1">State</label>
                             <Select
                               options={State.getStatesOfCountry(formData.country).map(state => ({ value: state.isoCode, label: state.name }))}
                               value={formData.state ? { value: formData.state, label: State.getStateByCodeAndCountry(formData.state, formData.country)?.name || formData.state } : null}
@@ -1544,7 +1544,7 @@ const Profile = ({ onLogout }) => {
                         )}
                         {formData.country && (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1">City</label>
+                            <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1">City</label>
                             <Select
                               options={City.getCitiesOfState(formData.country, formData.state).map(c => ({ value: c.name, label: c.name }))}
                               value={formData.city ? { value: formData.city, label: formData.city } : null}
@@ -1576,7 +1576,7 @@ const Profile = ({ onLogout }) => {
                             <BuildingLibraryIcon className="h-4 w-4" />
                             Bank & Payment Details
                           </h4>
-                          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                          <p className="text-xs text-[var(--text-muted)] mt-0.5">
                             Manage up to 3 bank accounts. Choose which account to print per bill in the preview format.
                           </p>
                         </div>
@@ -1606,7 +1606,7 @@ const Profile = ({ onLogout }) => {
                           >
                             <span>{acc.account_name || `Account ${idx + 1}`}</span>
                             {acc.is_default && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                              <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                                 Default
                               </span>
                             )}
@@ -1624,7 +1624,7 @@ const Profile = ({ onLogout }) => {
                                 <span className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Account #{activeBankIndex + 1}:</span>
                                 <span className="text-sm font-bold text-[var(--text-primary)]">{currentAcc.account_name || `Account ${activeBankIndex + 1}`}</span>
                                 {currentAcc.is_default ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
                                     ✓ Primary Default
                                   </span>
                                 ) : (
@@ -1652,7 +1652,7 @@ const Profile = ({ onLogout }) => {
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Label / Nickname</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Label / Nickname</label>
                                 <input
                                   type="text"
                                   value={currentAcc.account_name || ''}
@@ -1664,7 +1664,7 @@ const Profile = ({ onLogout }) => {
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Holder Name</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Holder Name</label>
                                 <input
                                   type="text"
                                   value={currentAcc.account_holder || ''}
@@ -1676,7 +1676,7 @@ const Profile = ({ onLogout }) => {
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Bank Name</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Bank Name</label>
                                 <input
                                   type="text"
                                   value={currentAcc.bank_name || ''}
@@ -1688,7 +1688,7 @@ const Profile = ({ onLogout }) => {
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Number</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Account Number</label>
                                 <input
                                   type="text"
                                   value={currentAcc.account_number || ''}
@@ -1700,7 +1700,7 @@ const Profile = ({ onLogout }) => {
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">IFSC Code</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">IFSC Code</label>
                                 <input
                                   type="text"
                                   value={currentAcc.ifsc_code || ''}
@@ -1713,7 +1713,7 @@ const Profile = ({ onLogout }) => {
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Branch Name</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Branch Name</label>
                                 <input
                                   type="text"
                                   value={currentAcc.branch || ''}
@@ -1725,7 +1725,7 @@ const Profile = ({ onLogout }) => {
                               </div>
 
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">UPI ID / VPA (Optional)</label>
                                 <input
                                   type="text"
                                   value={currentAcc.upi_id || ''}
@@ -1738,7 +1738,7 @@ const Profile = ({ onLogout }) => {
 
                               {/* Payment QR Code Upload */}
                               <div>
-                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Payment QR Code (Optional)</label>
+                                <label className="text-xs uppercase tracking-wider text-[var(--text-muted)] ml-1 mb-1 block">Payment QR Code (Optional)</label>
                                 <div className="flex items-center gap-3">
                                   {currentAcc.qr_code ? (
                                     <div className="relative group flex-shrink-0">

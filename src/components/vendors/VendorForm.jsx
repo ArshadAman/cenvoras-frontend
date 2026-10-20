@@ -246,7 +246,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
                       />
                     )}
                   </Field>
-                  <p className="mt-1 text-[11px] text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500">
                     4th letter P/H → 194C @ 1%; C/F/others → 2%. Blank → 20% (no PAN).
                   </p>
                   <ErrorMessage name="pan" component="div" className="mt-1 text-xs text-red-400" />

@@ -73,7 +73,7 @@ function AdjustBalanceModal({ isOpen, onClose, onSuccess, balanceRecord }) {
               className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               placeholder="e.g. 12"
             />
-            <p className="text-[11px] text-[var(--text-muted)] mt-1">
+            <p className="text-xs text-[var(--text-muted)] mt-1">
               The employee can take paid leave up to this balance. Once exhausted, they cannot take additional paid leave.
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function LeaveBalances() {
         <section className="bento-card p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] font-semibold mb-2">Leave Management</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] font-semibold mb-2">Leave Management</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <ScaleIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Leave Balances & Quotas

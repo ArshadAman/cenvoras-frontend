@@ -95,7 +95,7 @@ export default function GSTDashboard() {
                 }`}
               >
                 {isComingSoon && (
-                  <div className="absolute top-0 right-0 px-8 py-1 bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 text-[9px] font-bold uppercase tracking-widest text-[var(--status-warning)] shadow-lg translate-x-[30%] translate-y-[50%] rotate-45 transition-colors">
+                  <div className="absolute top-0 right-0 px-8 py-1 bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 text-xs font-bold uppercase tracking-widest text-[var(--status-warning)] shadow-lg translate-x-[30%] translate-y-[50%] rotate-45 transition-colors">
                     Coming Soon
                   </div>
                 )}

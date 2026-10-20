@@ -200,7 +200,7 @@ export default function GSTShieldPage() {
         <div className="bento-card !p-5 border border-[var(--status-success)]/30 bg-[var(--status-success)]/5">
           <div className="flex items-center justify-between text-xs text-[var(--status-success)] font-semibold mb-2">
             <span className="flex items-center gap-1.5"><CheckCircleIcon className="w-4 h-4" /> Matched ITC (2B)</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+            <span className={`text-xs px-2 py-0.5 rounded-full border ${
               isFullyReconciled
                 ? 'bg-[var(--status-success)]/10 border-[var(--status-success)]/20 text-[var(--status-success)]'
                 : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
@@ -209,7 +209,7 @@ export default function GSTShieldPage() {
             </span>
           </div>
           <div className="text-2xl font-black text-[var(--text-primary)]">{formatCurrency(summary.safe_itc)}</div>
-          <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             {summary.counts.matched} matched · {summary.counts.probable || 0} probable · {summary.counts.unmatched} at-risk
             {summary.ledger_net_itc != null && (
               <> · Ledger Input GST {formatCurrency(summary.ledger_net_itc)}</>
@@ -221,30 +221,30 @@ export default function GSTShieldPage() {
         <div className="bento-card !p-5 border border-[var(--status-danger)]/30 bg-[var(--status-danger)]/5">
           <div className="flex items-center justify-between text-xs text-[var(--status-danger)] font-semibold mb-2">
             <span className="flex items-center gap-1.5"><ExclamationTriangleIcon className="w-4 h-4" /> At-Risk ITC</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/20 text-[var(--status-danger)]">Unfiled</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/20 text-[var(--status-danger)]">Unfiled</span>
           </div>
           <div className="text-2xl font-black text-[var(--status-danger)]">{formatCurrency(summary.at_risk_itc)}</div>
-          <p className="text-[11px] text-[var(--text-secondary)] mt-1">{summary.counts.unmatched} bills not found in 2B</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">{summary.counts.unmatched} bills not found in 2B</p>
         </div>
 
         {/* Withheld Pool */}
         <div className="bento-card !p-5 border border-[var(--status-warning)]/30 bg-[var(--status-warning)]/5">
           <div className="flex items-center justify-between text-xs text-[var(--status-warning)] font-semibold mb-2">
             <span className="flex items-center gap-1.5"><LockClosedIcon className="w-4 h-4" /> Protected in Bank</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 text-[var(--status-warning)]">Withheld</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 text-[var(--status-warning)]">Withheld</span>
           </div>
           <div className="text-2xl font-black text-[var(--status-warning)]">{formatCurrency(summary.withheld_pool)}</div>
-          <p className="text-[11px] text-[var(--text-secondary)] mt-1">Payment held until vendor files</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">Payment held until vendor files</p>
         </div>
 
         {/* Defaulter Count */}
         <div className="bento-card !p-5 border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
           <div className="flex items-center justify-between text-xs text-[var(--accent-primary)] font-semibold mb-2">
             <span className="flex items-center gap-1.5"><ShieldCheckIcon className="w-4 h-4" /> Defaulter Vendors</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 text-[var(--accent-primary)]">Action Needed</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 text-[var(--accent-primary)]">Action Needed</span>
           </div>
           <div className="text-2xl font-black text-[var(--text-primary)]">{summary.defaulters.length}</div>
-          <p className="text-[11px] text-[var(--text-secondary)] mt-1">Suppliers causing credit blocks</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">Suppliers causing credit blocks</p>
         </div>
       </div>
 
@@ -385,11 +385,11 @@ export default function GSTShieldPage() {
                     <td className="py-3 px-4 text-right font-bold text-[var(--status-danger)]">{formatCurrency(bill.tax_amount)}</td>
                     <td className="py-3 px-4 text-center">
                       {bill.is_gst_withheld ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
                           <LockClosedIcon className="w-3 h-3" /> Withheld ({formatCurrency(bill.gst_withheld_amount)})
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
                           <LockOpenIcon className="w-3 h-3" /> Unlocked
                         </span>
                       )}
@@ -398,14 +398,14 @@ export default function GSTShieldPage() {
                       {bill.vendor_id && (
                         <button
                           onClick={() => handleGenerateNotice(bill.vendor_id)}
-                          className="px-2.5 py-1 bg-[var(--status-danger)]/15 hover:bg-[var(--status-danger)]/25 text-[var(--status-danger)] border border-[var(--status-danger)]/30 rounded-lg text-[11px] font-bold transition-colors"
+                          className="px-2.5 py-1 bg-[var(--status-danger)]/15 hover:bg-[var(--status-danger)]/25 text-[var(--status-danger)] border border-[var(--status-danger)]/30 rounded-lg text-xs font-bold transition-colors"
                         >
                           Send Notice
                         </button>
                       )}
                       <button
                         onClick={() => handleToggleWithholding(bill.id, bill.is_gst_withheld)}
-                        className="px-2.5 py-1 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-lg text-[11px] font-medium transition-colors"
+                        className="px-2.5 py-1 bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs font-medium transition-colors"
                       >
                         {bill.is_gst_withheld ? 'Release' : 'Withhold'}
                       </button>
@@ -435,7 +435,7 @@ export default function GSTShieldPage() {
               <CheckCircleIcon className="w-5 h-5 text-[var(--status-success)]" />
               Matched in GSTR-2B (ITC available after 2B match)
             </h3>
-            <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
               2B match status is not the same as GSTR-3B table 4(C) net ITC from the ledger.
             </p>
           </div>
@@ -462,7 +462,7 @@ export default function GSTShieldPage() {
                     <td className="py-3 px-4 text-right text-[var(--text-secondary)]">{formatCurrency(bill.taxable_value)}</td>
                     <td className="py-3 px-4 text-right font-bold text-[var(--status-success)]">{formatCurrency(bill.tax_amount)}</td>
                     <td className="py-3 px-4 text-center">
-                      <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
+                      <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                         Matched
                       </span>
                     </td>
@@ -525,7 +525,7 @@ export default function GSTShieldPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                         v.risk_tier === 'safe'
                           ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30'
                           : v.risk_tier === 'moderate_risk'

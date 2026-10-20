@@ -374,14 +374,14 @@ export default function HeroPrismCanvas() {
       <div className="relative w-full h-[460px] flex items-center justify-center p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg w-full">
           <div className="bg-slate-900/80 border border-sky-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-md transform hover:-translate-y-1 transition-all">
-            <span className="text-[11px] font-semibold text-sky-400 bg-sky-950/80 px-2.5 py-1 rounded-full uppercase tracking-wider">Tax Ready</span>
+            <span className="text-xs font-semibold text-sky-400 bg-sky-950/80 px-2.5 py-1 rounded-full uppercase tracking-wider">Tax Ready</span>
             <h4 className="text-white font-bold text-lg mt-3">GST Tax Invoice</h4>
             <p className="text-slate-400 text-xs mt-1">Auto-calculated CGST, SGST & IGST</p>
             <p className="text-white font-bold text-2xl mt-4 font-mono">₹ 48,250.00</p>
             <p className="text-emerald-400 text-xs mt-2 font-medium">● Instant PDF & Print Ready</p>
           </div>
           <div className="bg-slate-900/80 border border-emerald-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-md transform hover:-translate-y-1 transition-all">
-            <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full uppercase tracking-wider">100% Accurate</span>
+            <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full uppercase tracking-wider">100% Accurate</span>
             <h4 className="text-white font-bold text-lg mt-3">Auto-Reconciliation</h4>
             <p className="text-slate-400 text-xs mt-1">GSTR-1 & Customer Ledgers</p>
             <p className="text-white font-bold text-2xl mt-4 font-mono">GSTR-1 Ready</p>

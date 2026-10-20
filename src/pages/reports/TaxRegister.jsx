@@ -332,27 +332,27 @@ export default function TaxRegister() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
                       <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
-                        <div className="text-[11px] text-[var(--text-secondary)]">Taxable</div>
+                        <div className="text-xs text-[var(--text-secondary)]">Taxable</div>
                         <div className="text-sm text-[var(--text-primary)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.taxable)}</div>
                       </div>
                       <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
-                        <div className="text-[11px] text-[var(--text-secondary)]">CGST</div>
+                        <div className="text-xs text-[var(--text-secondary)]">CGST</div>
                         <div className="text-sm text-[var(--status-info)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.cgst)}</div>
                       </div>
                       <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
-                        <div className="text-[11px] text-[var(--text-secondary)]">SGST</div>
+                        <div className="text-xs text-[var(--text-secondary)]">SGST</div>
                         <div className="text-sm text-[var(--status-success)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.sgst)}</div>
                       </div>
                       <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
-                        <div className="text-[11px] text-[var(--text-secondary)]">IGST</div>
+                        <div className="text-xs text-[var(--text-secondary)]">IGST</div>
                         <div className="text-sm text-[var(--accent-primary)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.igst)}</div>
                       </div>
                       <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
-                        <div className="text-[11px] text-[var(--text-secondary)]">Tax</div>
+                        <div className="text-xs text-[var(--text-secondary)]">Tax</div>
                         <div className="text-sm text-[var(--status-warning)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.tax)}</div>
                       </div>
                       <div className="rounded-lg border border-[var(--border-subtle)] p-2.5">
-                        <div className="text-[11px] text-[var(--text-secondary)]">Total</div>
+                        <div className="text-xs text-[var(--text-secondary)]">Total</div>
                         <div className="text-sm text-[var(--text-primary)] font-semibold mt-1">{getCurrencySymbol()}{fmt(invoiceDetail.totals?.total_amount)}</div>
                       </div>
                     </div>

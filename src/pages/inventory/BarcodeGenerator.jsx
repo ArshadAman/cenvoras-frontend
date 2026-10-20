@@ -133,7 +133,7 @@ export default function BarcodeGenerator() {
                                         <div className="font-bold text-xs truncate w-full text-center text-black mb-1" title={activeProduct.name}>
                                             {activeProduct.name}
                                         </div>
-                                        <div className="text-[11px] font-semibold text-gray-800 mb-1.5">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
+                                        <div className="text-xs font-semibold text-gray-800 mb-1.5">MRP: {getCurrencySymbol()}{activeProduct.sale_price}</div>
                                         <div className="w-full flex justify-center scale-90 origin-top">
                                             <Barcode 
                                                 value={String(activeProduct.barcode || activeProduct.meta?.barcode || activeProduct.item_code || activeProduct.id.split('-')[0].toUpperCase())}

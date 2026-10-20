@@ -282,7 +282,7 @@ export default function OnboardingWizard({ profile, onClose }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">First Name *</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">First Name *</label>
                   <input
                     type="text"
                     name="first_name"
@@ -294,7 +294,7 @@ export default function OnboardingWizard({ profile, onClose }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Last Name</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Last Name</label>
                   <input
                     type="text"
                     name="last_name"
@@ -307,7 +307,7 @@ export default function OnboardingWizard({ profile, onClose }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
                   <PhoneIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                   Phone Number *
                 </label>
@@ -336,7 +336,7 @@ export default function OnboardingWizard({ profile, onClose }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Business / Shop Name *</label>
+                <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Business / Shop Name *</label>
                 <input
                   type="text"
                   name="business_name"
@@ -349,7 +349,7 @@ export default function OnboardingWizard({ profile, onClose }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Complete Business Address</label>
+                <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Complete Business Address</label>
                 <textarea
                   name="business_address"
                   value={formData.business_address}
@@ -375,7 +375,7 @@ export default function OnboardingWizard({ profile, onClose }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Country *</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Country *</label>
                   <Select
                     options={[
                       { value: 'IN', label: 'India' },
@@ -393,7 +393,7 @@ export default function OnboardingWizard({ profile, onClose }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">State / Region *</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">State / Region *</label>
                   <Select
                     options={State.getStatesOfCountry(formData.country).map(state => ({ value: state.isoCode, label: state.name }))}
                     className="react-select-container"
@@ -411,7 +411,7 @@ export default function OnboardingWizard({ profile, onClose }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">City</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">City</label>
                   <Select
                     options={City.getCitiesOfState(formData.country, formData.state).map(city => ({ value: city.name, label: city.name }))}
                     className="react-select-container"
@@ -426,7 +426,7 @@ export default function OnboardingWizard({ profile, onClose }) {
 
                 {formData.country === 'IN' && (
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">GSTIN (Optional)</label>
+                    <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">GSTIN (Optional)</label>
                     <input
                       type="text"
                       name="gstin"
@@ -440,7 +440,7 @@ export default function OnboardingWizard({ profile, onClose }) {
 
                 {formData.country === 'AE' && (
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">TRN (Optional, 15-digit)</label>
+                    <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">TRN (Optional, 15-digit)</label>
                     <input
                       type="text"
                       name="trn"

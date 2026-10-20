@@ -69,11 +69,11 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
       
       <div className="flex flex-wrap items-center gap-2 mb-2">
         {payment.invoice_number ? (
-          <span className="text-[11px] font-medium text-[var(--status-info)] bg-[var(--status-info)]/10 border border-[var(--status-info)]/20 px-2 py-0.5 rounded-md">
+          <span className="text-xs font-medium text-[var(--status-info)] bg-[var(--status-info)]/10 border border-[var(--status-info)]/20 px-2 py-0.5 rounded-md">
             Invoice #{payment.invoice_number}
           </span>
         ) : (
-          <span className="text-[11px] font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
+          <span className="text-xs font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
             Customer Advance
           </span>
         )}
@@ -457,11 +457,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           {selectedInvoice && (
             <div className="grid grid-cols-2 gap-4 p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] animate-fade-in">
               <div>
-                <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Total Due</div>
+                <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Total Due</div>
                 <div className="text-base font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Remaining</div>
+                <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Remaining</div>
                 <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                   {getCurrencySymbol()}{formatAmount(calculateRemainingDue())}
                 </div>
@@ -645,7 +645,7 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
               })}
             </select>
           )}
-          <p className="text-[11px] text-[var(--text-muted)]">
+          <p className="text-xs text-[var(--text-muted)]">
             {selectedInvoice
               ? 'This unlinked payment will pay down the selected invoice.'
               : 'Auto-apply will automatically knock off the oldest unpaid invoices for this customer.'}
@@ -1108,7 +1108,7 @@ export default function Payments() {
                               setIsDueModalOpen(false);
                               setSearchQuery(c.name);
                             }}
-                            className="text-[10px] text-[var(--accent-primary)] uppercase tracking-wider font-bold hover:underline"
+                            className="text-xs text-[var(--accent-primary)] uppercase tracking-wider font-bold hover:underline"
                           >
                             View History
                           </button>

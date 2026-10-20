@@ -86,7 +86,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           </div>
           <button
             onClick={() => navigate('/reports/gst-shield')}
-            className="text-[11px] font-semibold text-[var(--status-success)] hover:opacity-90 flex items-center gap-1 transition-colors px-2 py-1 rounded-md bg-[var(--status-success)]/10 hover:bg-[var(--status-success)]/20 border border-[var(--status-success)]/20"
+            className="text-xs font-semibold text-[var(--status-success)] hover:opacity-90 flex items-center gap-1 transition-colors px-2 py-1 rounded-md bg-[var(--status-success)]/10 hover:bg-[var(--status-success)]/20 border border-[var(--status-success)]/20"
           >
             <ArrowPathIcon className="w-3.5 h-3.5" /> Reconcile 2B
           </button>
@@ -111,11 +111,11 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           </div>
           
           <div className="flex justify-between items-center mt-1">
-            <span className={`text-[11px] ${isApproachingLimit ? 'text-[var(--status-warning)] font-medium' : 'text-[var(--text-muted)]'}`}>
+            <span className={`text-xs ${isApproachingLimit ? 'text-[var(--status-warning)] font-medium' : 'text-[var(--text-muted)]'}`}>
               {turnoverPercent.toFixed(1)}% of {getCurrencySymbol()}40L limit
             </span>
             {isApproachingLimit && (
-              <span className="flex items-center gap-1 text-[11px] text-[var(--status-warning)] font-medium">
+              <span className="flex items-center gap-1 text-xs text-[var(--status-warning)] font-medium">
                 <ExclamationTriangleIcon className="w-3 h-3" />
                 Approaching limit
               </span>
@@ -126,19 +126,19 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
         {/* Monthly GST Core Breakdown (Collected / Paid / Payable) */}
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-            <div className="text-[11px] text-[var(--text-muted)] mb-0.5">Collected</div>
+            <div className="text-xs text-[var(--text-muted)] mb-0.5">Collected</div>
             <div className="text-sm font-bold text-[var(--status-success)] truncate font-mono">
               {formatCurrency(gst.gst_collected)}
             </div>
           </div>
           <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-            <div className="text-[11px] text-[var(--text-muted)] mb-0.5">Paid (ITC)</div>
+            <div className="text-xs text-[var(--text-muted)] mb-0.5">Paid (ITC)</div>
             <div className="text-sm font-bold text-[var(--accent-primary)] truncate font-mono">
               {formatCurrency(gst.gst_paid)}
             </div>
           </div>
           <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-            <div className="text-[11px] text-[var(--text-muted)] mb-0.5">Payable</div>
+            <div className="text-xs text-[var(--text-muted)] mb-0.5">Payable</div>
             <div className={`text-sm font-bold truncate font-mono ${gst.gst_payable >= 0 ? 'text-[var(--status-warning)]' : 'text-[var(--status-success)]'}`}>
               {gst.gst_payable >= 0 ? formatCurrency(gst.gst_payable) : `${formatCurrency(gst.gst_payable)} (Credit)`}
             </div>
@@ -147,18 +147,18 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
 
         {/* Smart ITC Protection Strip */}
         <div className="p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] space-y-2">
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-[var(--text-muted)] font-medium">GSTR-2B Verified ITC</span>
             <span className="text-[var(--status-success)] font-bold font-mono">{formatCurrency(safeItc)}</span>
           </div>
 
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-[var(--text-muted)] font-medium">At-Risk (Unfiled by Vendors)</span>
             <span className="text-[var(--status-danger)] font-bold font-mono">{formatCurrency(atRiskItc)}</span>
           </div>
 
           {withheldPool > 0 && (
-            <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-[var(--border-subtle)]">
               <span className="text-[var(--status-warning)] font-medium flex items-center gap-1">
                 <LockClosedIcon className="w-3 h-3" /> Protected in Bank
               </span>
@@ -174,11 +174,11 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           >
             <div className="flex items-center gap-2">
               <ExclamationTriangleIcon className="w-4 h-4 text-[var(--status-danger)] shrink-0" />
-              <span className="text-[11px] font-medium text-[var(--status-danger)]">
+              <span className="text-xs font-medium text-[var(--status-danger)]">
                 {defaultersCount} vendor{defaultersCount > 1 ? 's' : ''} have unfiled bills
               </span>
             </div>
-            <span className="text-[10px] text-[var(--status-danger)] underline font-semibold">View</span>
+            <span className="text-xs text-[var(--status-danger)] underline font-semibold">View</span>
           </div>
         )}
       </div>
@@ -214,7 +214,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                   <h3 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">
                     Download CA Audit Pack
                   </h3>
-                  <p className="text-[11px] text-[var(--text-muted)]">
+                  <p className="text-xs text-[var(--text-muted)]">
                     Statutory reconciliation registers for your tax consultant
                   </p>
                 </div>
@@ -233,14 +233,14 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
             <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2">
                 <CalendarDaysIcon className="w-4 h-4 text-[var(--status-success)] shrink-0" />
-                <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Period:</span>
+                <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Period:</span>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
                   className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md px-2 py-0.5 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
-                <span className="text-[var(--text-muted)] text-[11px]">to</span>
+                <span className="text-[var(--text-muted)] text-xs">to</span>
                 <input
                   type="date"
                   value={toDate}
@@ -249,7 +249,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 text-[11px]">
+              <div className="flex items-center gap-1.5 text-xs">
                 <button
                   type="button"
                   onClick={() => {
@@ -355,10 +355,10 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                         {opt.title}
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0 ${opt.badgeClass}`}>
+                        <span className={`text-xs font-mono font-bold px-1.5 py-0.2 rounded border shrink-0 ${opt.badgeClass}`}>
                           {opt.badge}
                         </span>
-                        <span className="text-[10px] text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors truncate">
+                        <span className="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors truncate">
                           {opt.tagline}
                         </span>
                       </div>
@@ -401,14 +401,14 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                   };
                   const active = descMap[hoveredFormat];
                   return (
-                    <div className="flex items-start gap-1.5 text-[11px] leading-tight text-[var(--text-secondary)]">
+                    <div className="flex items-start gap-1.5 text-xs leading-tight text-[var(--text-secondary)]">
                       <span className="font-semibold text-[var(--text-primary)] shrink-0">{active.title}:</span>
                       <span>{active.text}</span>
                     </div>
                   );
                 })()
               ) : (
-                <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+                <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                   <span className="text-[var(--status-success)] font-semibold shrink-0">💡 CA Tip:</span>
                   <span>Hover over any format to preview its contents, or click to generate the audit report.</span>
                 </div>

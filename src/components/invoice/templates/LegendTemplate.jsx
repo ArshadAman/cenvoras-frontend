@@ -128,7 +128,7 @@ const LegendTemplate = forwardRef(({
         {/* Info Blocks Grid */}
         <div className="flex border-b" style={{ borderColor }}>
           <div className="w-1/2 p-3 border-r" style={{ borderColor }}>
-             <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Customer Details:</p>
+             <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Customer Details:</p>
              <p className="font-semibold text-gray-900">{customerName}</p>
              {invoice.customer_gstin && <p className="font-medium text-xs mt-0.5">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
              <p className="whitespace-pre-line mt-0.5 text-xs text-gray-600 leading-snug">{billingAddress}</p>
@@ -136,11 +136,11 @@ const LegendTemplate = forwardRef(({
           <div className="w-1/2 flex flex-col justify-between">
              <div className="flex border-b flex-1" style={{ borderColor }}>
                 <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
-                   <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan #' : 'Invoice #'}</p>
+                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan #' : 'Invoice #'}</p>
                    <p className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}</p>
                 </div>
                 <div className="w-1/2 p-2.5 flex flex-col justify-center">
-                   <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
+                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
                    <p className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</p>
                 </div>
              </div>
@@ -148,37 +148,37 @@ const LegendTemplate = forwardRef(({
                 {isDeliveryChallan ? (
                   <>
                     <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
-                       <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Ref Order</p>
+                       <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Ref Order</p>
                        <p className="font-semibold text-gray-900">{invoice.sales_order_number || invoice.po_number || '—'}</p>
                     </div>
                     <div className="w-1/2 p-2.5 flex flex-col justify-center">
-                       <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Vehicle No.</p>
+                       <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Vehicle No.</p>
                        <p className="font-mono font-semibold text-gray-900">{invoice.vehicle_number || '—'}</p>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
-                       <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
+                       <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
                        <p className="font-semibold text-gray-900">{invoice.place_of_supply || 'Same State'}</p>
                        {(invoice.challan_number || invoice.delivery_challan_number) && (
-                         <p className="text-[10px] text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{invoice.challan_number || invoice.delivery_challan_number}</span></p>
+                         <p className="text-xs text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{invoice.challan_number || invoice.delivery_challan_number}</span></p>
                        )}
                     </div>
                     <div className="w-1/2 p-2.5 flex flex-col justify-center">
                        {invoice.po_number || invoice.sales_order_number ? (
                          <>
-                           <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">PO / Order #</p>
+                           <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">PO / Order #</p>
                            <p className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
                          </>
                        ) : invoice.due_date ? (
                          <>
-                           <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Due Date</p>
+                           <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Due Date</p>
                            <p className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>
                          </>
                        ) : (
                          <>
-                           <p className="font-bold text-[11px] uppercase tracking-wider text-gray-500 mb-0.5">Payment Terms</p>
+                           <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Payment Terms</p>
                            <p className="font-semibold text-gray-900">Due on Receipt</p>
                          </>
                        )}
@@ -202,7 +202,7 @@ const LegendTemplate = forwardRef(({
                   return (
                     <th 
                       key={col.id} 
-                      className={`py-2 text-[11px] font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
+                      className={`py-2 text-xs font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
                       style={{ width: colWidth, whiteSpace: 'nowrap' }}
                     >
                       {col.id === 'serial' ? 'Sl.' : col.label}
@@ -237,17 +237,17 @@ const LegendTemplate = forwardRef(({
                       <div className="leading-tight py-0">
                         <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
                         {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                          <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                          <div className="text-xs text-gray-500 font-medium italic mt-0.5">
                             Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                           </div>
                         )}
                         {desc && (
-                          <div className="text-[10px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-xs text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
                         {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
                             {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                             {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                             {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -340,7 +340,7 @@ const LegendTemplate = forwardRef(({
                            alt="Scan & Pay" 
                            className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
                          />
-                         <span className="text-[9px] text-gray-500 block mt-0.5">Scan to Pay</span>
+                         <span className="text-xs text-gray-500 block mt-0.5">Scan to Pay</span>
                        </div>
                      )}
                    </div>
@@ -427,14 +427,14 @@ const LegendTemplate = forwardRef(({
 
       {/* Bottom Anchored Footer */}
       <div className="mt-auto invoice-page-footer">
-        <div className="mt-4 text-center text-[10px] text-gray-500 font-medium w-full">
+        <div className="mt-4 text-center text-xs text-gray-500 font-medium w-full">
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'
             : 'This is a computer generated digital invoice and does not require a signature.'}
         </div>
         
         {showWatermarkFooter && (
-          <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+          <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
             Made with Cenvora: Built for Modern Businesses<br />
             <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
           </div>

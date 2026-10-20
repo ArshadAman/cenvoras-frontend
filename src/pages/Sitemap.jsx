@@ -97,7 +97,7 @@ export default function Sitemap() {
                       </div>
                       <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{link.desc}</p>
                     </div>
-                    <div className="mt-3 text-[11px] font-mono text-zinc-500">
+                    <div className="mt-3 text-xs font-mono text-zinc-500">
                       {link.path}
                     </div>
                   </Link>
