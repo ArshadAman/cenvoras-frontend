@@ -579,6 +579,180 @@
     border-color: var(--border-focus) !important;
   }
 
+  /* ==========================================================================
+     BILL TEMPLATE & INVOICE DOCUMENT THEME ISOLATION
+     Ensures invoice sheets, thermal bills, and bill templates maintain their
+     fixed document styling and user-configured template colors, completely
+     immune to application dark/light theme switching or brown text bleed.
+     ========================================================================== */
+  .invoice-sheet,
+  [data-bill-template],
+  .bill-template {
+    color-scheme: light !important;
+    /* Reset semantic CSS variables to standard document palette so any internal CSS var references don't inherit dark mode */
+    --bg-primary: #ffffff !important;
+    --bg-surface: #ffffff !important;
+    --text-primary: #111827 !important;
+    --text-secondary: #4b5563 !important;
+    --text-muted: #6b7280 !important;
+    --border-subtle: #e5e7eb !important;
+    --border-default: #d1d5db !important;
+    --border-focus: #2563eb !important;
+    --input-bg: #ffffff !important;
+    --input-border: #d1d5db !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Maintain light color scheme and document text color inside dark mode */
+  .dark .invoice-sheet,
+  .dark [data-bill-template],
+  .dark .bill-template {
+    color-scheme: light !important;
+    color: #111827 !important;
+  }
+
+  /* Explicit text overrides with higher specificity to defeat .dark .text-black / .text-gray-900 */
+  .dark .invoice-sheet .text-black, .dark [data-bill-template] .text-black, .dark .bill-template .text-black { color: #000000 !important; }
+  .dark .invoice-sheet .text-gray-900, .dark [data-bill-template] .text-gray-900, .dark .bill-template .text-gray-900 { color: #111827 !important; }
+  .dark .invoice-sheet .text-gray-800, .dark [data-bill-template] .text-gray-800, .dark .bill-template .text-gray-800 { color: #1f2937 !important; }
+  .dark .invoice-sheet .text-gray-700, .dark [data-bill-template] .text-gray-700, .dark .bill-template .text-gray-700 { color: #374151 !important; }
+  .dark .invoice-sheet .text-gray-600, .dark [data-bill-template] .text-gray-600, .dark .bill-template .text-gray-600 { color: #4b5563 !important; }
+  .dark .invoice-sheet .text-gray-500, .dark [data-bill-template] .text-gray-500, .dark .bill-template .text-gray-500 { color: #6b7280 !important; }
+  .dark .invoice-sheet .text-gray-400, .dark [data-bill-template] .text-gray-400, .dark .bill-template .text-gray-400 { color: #9ca3af !important; }
+  .dark .invoice-sheet .text-red-600, .dark [data-bill-template] .text-red-600, .dark .bill-template .text-red-600 { color: #dc2626 !important; }
+  :root:not(.dark) .invoice-sheet .text-white, :root:not(.dark) [data-bill-template] .text-white, :root:not(.dark) .bill-template .text-white { color: #ffffff !important; }
+
+  /* Ensure elements inside bill templates inherit template text color instead of global dark brown */
+  .dark .invoice-sheet p, .dark [data-bill-template] p,
+  .dark .invoice-sheet span, .dark [data-bill-template] span,
+  .dark .invoice-sheet div, .dark [data-bill-template] div,
+  .dark .invoice-sheet h1, .dark [data-bill-template] h1,
+  .dark .invoice-sheet h2, .dark [data-bill-template] h2,
+  .dark .invoice-sheet h3, .dark [data-bill-template] h3 {
+    color: inherit;
+  }
+
+  /* Explicit table overrides to defeat the universal table baseline in index.css */
+  .invoice-sheet table, [data-bill-template] table, .bill-template table {
+    border-collapse: collapse !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .invoice-sheet thead, [data-bill-template] thead, .bill-template thead {
+    background-color: transparent !important;
+    border-bottom: initial !important;
+  }
+
+  .invoice-sheet th, [data-bill-template] th, .bill-template th {
+    color: inherit !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .invoice-sheet td, [data-bill-template] td, .bill-template td {
+    color: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .invoice-sheet tbody tr:hover, [data-bill-template] tbody tr:hover, .bill-template tbody tr:hover {
+    background-color: transparent !important;
+  }
+
+  /* Explicit border overrides to defeat .dark [class*="border-*"] */
+  .dark .invoice-sheet .border-gray-200, .dark [data-bill-template] .border-gray-200, .dark .bill-template .border-gray-200 { border-color: #e5e7eb !important; }
+  .dark .invoice-sheet .border-gray-300, .dark [data-bill-template] .border-gray-300, .dark .bill-template .border-gray-300 { border-color: #d1d5db !important; }
+  .dark .invoice-sheet .border-gray-400, .dark [data-bill-template] .border-gray-400, .dark .bill-template .border-gray-400 { border-color: #9ca3af !important; }
+  .dark .invoice-sheet .border-slate-200, .dark [data-bill-template] .border-slate-200, .dark .bill-template .border-slate-200 { border-color: #e2e8f0 !important; }
+  .dark .invoice-sheet .border-slate-300, .dark [data-bill-template] .border-slate-300, .dark .bill-template .border-slate-300 { border-color: #cbd5e1 !important; }
+  .dark .invoice-sheet .border-slate-400, .dark [data-bill-template] .border-slate-400, .dark .bill-template .border-slate-400 { border-color: #94a3b8 !important; }
+
+  /* ==========================================================================
+     BILL TEMPLATE & INVOICE DOCUMENT THEME ISOLATION
+     Ensures invoice sheets, thermal bills, and bill templates maintain their
+     fixed document styling and user-configured template colors, completely
+     immune to application dark/light theme switching or brown text bleed.
+     ========================================================================== */
+  .invoice-sheet,
+  [data-bill-template],
+  .bill-template {
+    color-scheme: light !important;
+    /* Reset semantic CSS variables to standard document palette so any internal CSS var references don't inherit dark mode */
+    --bg-primary: #ffffff;
+    --bg-surface: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --border-subtle: #e5e7eb;
+    --border-default: #d1d5db;
+    --border-focus: #2563eb;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    color: #111827;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Maintain light color scheme and document text color inside dark mode */
+  .dark .invoice-sheet,
+  .dark [data-bill-template],
+  .dark .bill-template {
+    color-scheme: light !important;
+    color: #111827;
+  }
+
+  /* Ensure bill template tables maintain independent borders, sizes, and backgrounds */
+  .invoice-sheet table,
+  [data-bill-template] table,
+  .bill-template table {
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .invoice-sheet thead,
+  [data-bill-template] thead,
+  .bill-template thead {
+    background-color: transparent;
+    border-bottom: initial;
+  }
+
+  .invoice-sheet th,
+  [data-bill-template] th,
+  .bill-template th {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  .invoice-sheet tbody tr:hover,
+  [data-bill-template] tbody tr:hover,
+  .bill-template tbody tr:hover {
+    background-color: transparent !important;
+  }
+
+  /* Preserve intended Tailwind text colors within bill templates */
+  .invoice-sheet .text-black, [data-bill-template] .text-black, .bill-template .text-black { color: #000000 !important; }
+  .invoice-sheet .text-gray-900, [data-bill-template] .text-gray-900, .bill-template .text-gray-900 { color: #111827 !important; }
+  .invoice-sheet .text-gray-800, [data-bill-template] .text-gray-800, .bill-template .text-gray-800 { color: #1f2937 !important; }
+  .invoice-sheet .text-gray-700, [data-bill-template] .text-gray-700, .bill-template .text-gray-700 { color: #374151 !important; }
+  .invoice-sheet .text-gray-600, [data-bill-template] .text-gray-600, .bill-template .text-gray-600 { color: #4b5563 !important; }
+  .invoice-sheet .text-gray-500, [data-bill-template] .text-gray-500, .bill-template .text-gray-500 { color: #6b7280 !important; }
+  .invoice-sheet .text-gray-400, [data-bill-template] .text-gray-400, .bill-template .text-gray-400 { color: #9ca3af !important; }
+  .invoice-sheet .text-red-600, [data-bill-template] .text-red-600, .bill-template .text-red-600 { color: #dc2626 !important; }
+
+  /* Preserve intended borders inside bill templates */
+  .invoice-sheet .border-gray-200, [data-bill-template] .border-gray-200, .bill-template .border-gray-200 { border-color: #e5e7eb !important; }
+  .invoice-sheet .border-gray-300, [data-bill-template] .border-gray-300, .bill-template .border-gray-300 { border-color: #d1d5db !important; }
+  .invoice-sheet .border-gray-400, [data-bill-template] .border-gray-400, .bill-template .border-gray-400 { border-color: #9ca3af !important; }
+  .invoice-sheet .border-slate-200, [data-bill-template] .border-slate-200, .bill-template .border-slate-200 { border-color: #e2e8f0 !important; }
+  .invoice-sheet .border-slate-300, [data-bill-template] .border-slate-300, .bill-template .border-slate-300 { border-color: #cbd5e1 !important; }
+  .invoice-sheet .border-slate-400, [data-bill-template] .border-slate-400, .bill-template .border-slate-400 { border-color: #94a3b8 !important; }
+
   /* Universal Status Background Interpolation Fix */
   [class*="bg-[var(--status-danger)"] {
     background-color: var(--status-danger-bg) !important;
