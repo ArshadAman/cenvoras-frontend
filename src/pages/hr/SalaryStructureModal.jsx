@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { hrApi } from '../../api/hr';
 import { toast } from 'react-toastify';
 import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initialData }) {
+  useEscKey(onClose, isOpen, 15);
   const [form, setForm] = useState({ name: '', description: '', components: [] });
   const [saving, setSaving] = useState(false);
 

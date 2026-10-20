@@ -5,8 +5,10 @@ import { deleteSalesInvoice } from "../../api/sales";
 import { toast } from "react-toastify";
 import { XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import useEscKey from "../../hooks/useEscStack";
 
 export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
+  useEscKey(onClose, isOpen, 20);
   const queryClient = useQueryClient();
   
   const mutation = useMutation({

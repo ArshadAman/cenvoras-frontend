@@ -629,17 +629,17 @@ export default function SalaryBreakdownCalculator({
                           value={ca.name}
                           onChange={(e) => updateCustomAllowance(ca.id, 'name', e.target.value)}
                           placeholder="Allowance Name (e.g. Internet Allowance)"
-                          className="flex-1 rounded-xl bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                          className="flex-1 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)]"
                         />
                         <div className="relative w-36">
-                          <span className="absolute left-2.5 top-1.5 text-gray-500 text-xs">₹</span>
+                          <span className="absolute left-2.5 top-1.5 text-[var(--text-muted)] text-xs">₹</span>
                           <input
                             type="number"
                             min="0"
                             step="100"
                             value={ca.amount || ''}
                             onChange={(e) => updateCustomAllowance(ca.id, 'amount', parseFloat(e.target.value) || 0)}
-                            className="w-full rounded-xl bg-white/5 border border-white/10 pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            className="w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] pl-6 pr-2 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-focus)] font-mono"
                             placeholder="Amount"
                           />
                         </div>
@@ -695,17 +695,17 @@ export default function SalaryBreakdownCalculator({
                       value={ah.name}
                       onChange={(e) => updateAdHocAddition(ah.id, 'name', e.target.value)}
                       placeholder="e.g. Spot Bonus, Retention Bonus"
-                      className="flex-1 rounded-xl bg-black/40 border border-emerald-500/30 px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
+                      className="flex-1 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)]"
                     />
                     <div className="relative w-36">
-                      <span className="absolute left-2.5 top-1.5 text-gray-500 text-xs">₹</span>
+                      <span className="absolute left-2.5 top-1.5 text-[var(--text-muted)] text-xs">₹</span>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={ah.amount || ''}
                         onChange={(e) => updateAdHocAddition(ah.id, 'amount', parseFloat(e.target.value) || 0)}
-                        className="w-full rounded-xl bg-black/40 border border-emerald-500/30 pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-400"
+                        className="w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] pl-6 pr-2 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-focus)] font-mono"
                         placeholder="Amount"
                       />
                     </div>
@@ -759,11 +759,11 @@ export default function SalaryBreakdownCalculator({
                       value={sec80c}
                       onChange={(e) => setSec80c(e.target.value)}
                       placeholder="e.g. 150000"
-                      className="w-full text-xs rounded-lg bg-black/40 border border-white/10 py-1.5 px-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full text-xs rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] py-1.5 px-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)] font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-amber-200/90 mb-1">
+                    <label className="block text-xs font-medium text-[var(--status-warning-text)] mb-1">
                       Section 80D (Health Ins.)
                     </label>
                     <input
@@ -772,11 +772,11 @@ export default function SalaryBreakdownCalculator({
                       value={sec80d}
                       onChange={(e) => setSec80d(e.target.value)}
                       placeholder="e.g. 25000"
-                      className="w-full text-xs rounded-lg bg-black/40 border border-white/10 py-1.5 px-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full text-xs rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] py-1.5 px-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)] font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-amber-200/90 mb-1">
+                    <label className="block text-xs font-medium text-[var(--status-warning-text)] mb-1">
                       Sec 24(b) Home Loan Interest
                     </label>
                     <input
@@ -785,7 +785,7 @@ export default function SalaryBreakdownCalculator({
                       value={sec24b}
                       onChange={(e) => setSec24b(e.target.value)}
                       placeholder="e.g. 200000"
-                      className="w-full text-xs rounded-lg bg-black/40 border border-white/10 py-1.5 px-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full text-xs rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] py-1.5 px-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)] font-mono"
                     />
                   </div>
                 </div>

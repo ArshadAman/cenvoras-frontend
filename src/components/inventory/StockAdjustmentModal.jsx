@@ -92,11 +92,11 @@ export default function StockAdjustmentModal({ product, onClose }) {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bento-card !p-0 border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xl animate-fade-up overflow-hidden">
+      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xl animate-fade-up overflow-hidden my-auto">
         
         {/* Header */}
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-display">
             Stock Adjustment
           </h2>
           <button

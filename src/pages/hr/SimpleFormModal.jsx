@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function SimpleFormModal({ isOpen, onClose, title, label, initialValue = '', onSubmit, loading }) {
+  useEscKey(onClose, isOpen, 20);
   const [value, setValue] = useState('');
 
   useEffect(() => {
@@ -19,10 +21,10 @@ export default function SimpleFormModal({ isOpen, onClose, title, label, initial
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl my-8">
-        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)]">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">{title}</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl my-auto animate-fade-up text-[var(--text-primary)]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <h2 className="text-lg font-bold text-[var(--text-primary)] font-display">{title}</h2>
           <button type="button" onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
             <XMarkIcon className="w-6 h-6" />
           </button>

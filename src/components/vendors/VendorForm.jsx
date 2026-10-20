@@ -103,30 +103,27 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
 
   if (!isOpen) return null;
 
-  const inputClass = "w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all";
-  const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wider";
+  const inputClass = "form-input";
+  const labelClass = "form-label uppercase tracking-wider";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
-
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)]">
+      <div 
+        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] overflow-hidden my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] sticky top-0 z-20">
+          <h2 className="text-lg font-bold text-[var(--text-primary)] font-display">
             {isEdit ? "Edit Vendor" : "New Vendor"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
-            <XMarkIcon className="w-6 h-6" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -314,11 +311,11 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
                 >
                   {isSubmitting || createMutation.isPending || updateMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      {isEdit ? "Updating..." : "Creating..."}
+                      <span>{isEdit ? "Updating..." : "Creating..."}</span>
                     </span>
                   ) : (
                     isEdit ? "Update Vendor" : "Create Vendor"

@@ -2,8 +2,10 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { format } from "date-fns";
+import useEscKey from "../../hooks/useEscStack";
 
 export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
+  useEscKey(onClose, isOpen, 15);
   if (!isOpen || !journal) return null;
 
   return createPortal(

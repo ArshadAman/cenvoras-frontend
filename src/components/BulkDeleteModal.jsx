@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import useEscKey from '../hooks/useEscStack';
 
 const BulkDeleteModal = ({
   isOpen,
@@ -15,6 +16,7 @@ const BulkDeleteModal = ({
   title = 'Delete Selected Items',
   description = 'Are you sure you want to delete the selected items? This action cannot be undone.'
 }) => {
+  useEscKey(onClose, isOpen, 20);
   const [isDeleting, setIsDeleting] = useState(false);
   const [progress, setProgress] = useState({ completed: 0, total: 0, failed: [] });
   const queryClient = useQueryClient();
@@ -84,16 +86,16 @@ const BulkDeleteModal = ({
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-2xl animate-fade-up">
+      <div className="relative w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up">
         <div className="p-8">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-rose-500/10 border border-rose-500/20">
-              <svg className="h-6 w-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)]">
+              <svg className="h-6 w-6 text-[var(--status-danger)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] font-display">
                 {title}
               </h3>
               <p className="text-sm text-[var(--text-secondary)] mt-1">

@@ -62,11 +62,11 @@ const STEP_LABELS = ['Account', 'Business', 'Finish'];
 function InputField({ label, required, error, children }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1.5">
+      <label className="form-label">
         {label}{required && <span className="text-[var(--text-muted)] ml-0.5">*</span>}
       </label>
       {children}
-      {error && <p className="text-[var(--status-danger)] text-xs mt-1">{error}</p>}
+      {error && <p className="form-error">{error}</p>}
     </div>
   );
 }
@@ -224,11 +224,11 @@ export default function Signup() {
     setLoading(false);
   };
 
-  const fieldClass = "w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm transition-all";
-  const fieldErr = (name) => formErrors[name] ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)]' : '';
+  const fieldClass = "form-input";
+  const fieldErr = (name) => formErrors[name] ? '!border-[var(--status-danger)] focus:!border-[var(--status-danger)]' : '';
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans flex flex-col justify-between">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-body flex flex-col justify-between">
       <Seo
         title="Start 14-Day Free Trial | Cenvora"
         description="Try Cenvora free for 14 days. Create GST invoices, manage stock, and track customer payments with zero obligation."
@@ -252,7 +252,7 @@ export default function Signup() {
                 <CheckCircleIcon className="w-4 h-4 text-[var(--status-success)]" />
                 No Credit Card Required
               </span>
-              <h2 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug font-display">
                 Experience effortless billing and real-time inventory management.
               </h2>
             </div>
@@ -282,13 +282,13 @@ export default function Signup() {
               <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
                 <BrandLogo className="h-10 sm:h-11 w-auto mx-auto" />
               </Link>
-              <h2 className="text-xl font-bold text-[var(--text-primary)]">Start 14-day free trial</h2>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] font-display">Start 14-day free trial</h2>
               <p className="text-xs text-[var(--text-muted)] mt-1">No credit card required</p>
             </div>
 
-            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight">Create your account</h1>
+                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight font-display">Create your account</h1>
                 <p className="text-xs text-[var(--text-muted)] mt-1.5">Start your 14-day full free trial in less than a minute</p>
               </div>
 

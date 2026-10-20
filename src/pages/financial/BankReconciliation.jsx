@@ -94,23 +94,23 @@ export function BankReconciliationMVP() {
         </div>
 
         {!statementId ? (
-          <div className="bento-card p-12 text-center text-slate-400 border-dashed border-2 border-hairline bg-transparent">
-            <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-            <h3 className="text-lg font-medium text-white mb-2">No Statement Selected</h3>
+          <div className="p-12 text-center text-[var(--text-muted)] border-dashed border-2 border-[var(--border-subtle)] rounded-2xl bg-transparent">
+            <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No Statement Selected</h3>
             <p>Upload a CSV file to start reconciliation.</p>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white/5 p-4 rounded-lg border border-white/10">
+            <div className="flex justify-between items-center bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border-subtle)]">
               <div>
-                <h3 className="text-white font-medium">{statusData?.statement?.name}</h3>
-                <p className="text-sm text-gray-400">Uploaded: {new Date(statusData?.statement?.date).toLocaleDateString()}</p>
+                <h3 className="text-[var(--text-primary)] font-medium">{statusData?.statement?.name}</h3>
+                <p className="text-sm text-[var(--text-muted)]">Uploaded: {new Date(statusData?.statement?.date).toLocaleDateString()}</p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-[var(--text-primary)]">
                     {statusData?.lines?.filter(l => !l.is_reconciled).length}
                 </div>
-                <div className="text-xs text-gray-400 uppercase tracking-wider">Unreconciled Lines</div>
+                <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Unreconciled Lines</div>
               </div>
             </div>
 

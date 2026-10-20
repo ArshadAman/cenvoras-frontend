@@ -402,7 +402,7 @@ export default function Layout({ children, onLogout }) {
       }`}>
         
         {/* Logo & Collapse Header Area */}
-        <div className={`h-20 flex items-center border-b border-hairline transition-all duration-300 shrink-0 ${
+        <div className={`h-20 flex items-center border-b border-[var(--border-subtle)] transition-all duration-300 shrink-0 ${
           isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-5'
         }`}>
           {!isSidebarCollapsed ? (

@@ -5,8 +5,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLedgerEntry } from '../../api/ledger';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
+  useEscKey(onClose, isOpen, 20);
   const queryClient = useQueryClient();
   const isDebitEntry = Number(entry?.debit || 0) > 0;
 
@@ -58,8 +60,8 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
         <div className="p-6">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30">

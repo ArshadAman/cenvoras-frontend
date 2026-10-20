@@ -97,11 +97,11 @@ export default function DetailedFeatures() {
               onClick={() => setActiveCategory(cat.id)}
               className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                 isActive 
-                  ? 'bg-obsidian-elevated border-hairline text-[var(--text-primary)] shadow-md' 
-                  : 'bg-obsidian-card/60 border-hairline text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
+                  ? 'bg-[var(--bg-surface)] border-[var(--border-default)] text-[var(--text-primary)] shadow-md' 
+                  : 'bg-[var(--bg-primary)]/60 border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
               }`}
             >
-              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-obsidian-card text-[var(--text-primary)] border border-hairline' : 'bg-obsidian-elevated text-[var(--text-muted)]'}`}>
+              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)]' : 'bg-[var(--bg-primary)] text-[var(--text-muted)]'}`}>
                 <cat.icon className="w-5 h-5" />
               </div>
               <div>
@@ -119,15 +119,15 @@ export default function DetailedFeatures() {
 
       {/* Feature Details Panel */}
       <div className="w-full lg:w-2/3">
-        <div className="bg-obsidian-card border border-hairline rounded-2xl p-6 sm:p-8 h-full">
-          <div className="mb-6 pb-5 border-b border-hairline">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl p-6 sm:p-8 h-full">
+          <div className="mb-6 pb-5 border-b border-[var(--border-subtle)]">
             <h3 className="text-xl font-bold text-[var(--text-primary)] font-display">{activeData?.title}</h3>
             <p className="text-[var(--text-muted)] text-sm mt-1">{activeData?.description}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeData?.features.map((feature, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-hairline bg-obsidian-canvas/60">
+              <div key={idx} className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/60">
                 <div className="flex items-start gap-2.5">
                   <CheckIcon className="w-4 h-4 text-[var(--accent-primary)] mt-1 shrink-0" />
                   <div>

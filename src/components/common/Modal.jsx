@@ -52,7 +52,7 @@ export default function Modal({
       aria-labelledby={title ? "cenvora-modal-title" : undefined}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-200" />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200" />
 
       {/* Modal Surface */}
       <div
@@ -73,7 +73,7 @@ export default function Modal({
               )}
               <div>
                 {title && (
-                  <h3 id="cenvora-modal-title" className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight">
+                  <h3 id="cenvora-modal-title" className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight font-display">
                     {title}
                   </h3>
                 )}
