@@ -24,6 +24,7 @@
   --input-border: rgba(194, 166, 140, 0.60);
   --card-bg: #E6D8C3;
   --card-border: rgba(194, 166, 140, 0.40);
+  --bg-surface-hover: #F5F5F0;
 
   /* LIGHT MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #E6D8C3) */
   --status-success: #2B6B48;
@@ -67,6 +68,7 @@
   --input-border: rgba(223, 208, 184, 0.22);
   --card-bg: #393E46;
   --card-border: rgba(223, 208, 184, 0.14);
+  --bg-surface-hover: #222831;
 
   /* DARK MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #393E46) */
   --status-success: #78B896;
@@ -441,11 +443,16 @@
     color: var(--text-muted);
   }
 
-  /* Universal Table Baseline */
+  /* Universal Table Baseline (Consistent with Vendor Table High-Fidelity Standards) */
   table {
     border-collapse: collapse;
     width: 100%;
     font-variant-numeric: tabular-nums;
+  }
+
+  thead:not(.bg-transparent) {
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   th {
@@ -462,6 +469,14 @@
     font-size: 0.875rem !important;
     line-height: 1.45 !important;
     border-color: var(--border-subtle) !important;
+  }
+
+  tbody tr:not(.no-hover) {
+    transition: background-color 0.15s ease-in-out;
+  }
+
+  tbody tr:not(.no-hover):hover {
+    background-color: var(--bg-primary);
   }
 
   /* High-Contrast Light Mode Guardrails against legacy dark classes */

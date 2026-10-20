@@ -769,7 +769,7 @@ export default function SalesTable({
       {/* Table for desktop, Cards for mobile */}
       <div ref={tableTopRef} className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-sm border-separate border-spacing-y-2">
+          <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
             <colgroup>
               <col style={{ width: `${colWidths.checkbox}px` }} />
               <col style={{ width: `${colWidths.invoice_number}px` }} />
@@ -782,8 +782,8 @@ export default function SalesTable({
               {visibleColumns.items && <col style={{ width: `${colWidths.items}px` }} />}
               <col style={{ width: `${colWidths.actions}px` }} />
             </colgroup>
-            <thead>
-              <tr className="bg-[var(--bg-primary)]/60 border-b border-[var(--border-subtle)]">
+            <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+              <tr className="border-b border-[var(--border-subtle)]">
                 <th className="relative px-3 py-3 text-left rounded-l-lg select-none">
                   <input
                     type="checkbox"
@@ -919,10 +919,9 @@ export default function SalesTable({
               </tr>
             ) : (
               paginatedInvoices.map((invoice) => {
-                const compactRowStyle = { paddingTop: '1.0px', paddingBottom: '1.0px', margin: 0, lineHeight: 1.25 };
                 return (
-              <tr key={invoice.id} style={compactRowStyle} className="bg-transparent border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition-colors">
-                <td style={compactRowStyle} className="px-3 whitespace-nowrap">
+              <tr key={invoice.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
+                <td className="px-3 py-3.5 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
@@ -930,32 +929,32 @@ export default function SalesTable({
                     className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] accent-[var(--accent-primary)] cursor-pointer"
                   />
                 </td>
-                <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
+                <td className="px-3.5 py-3.5 whitespace-nowrap">
                   <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight truncate" title={`#${invoice.invoice_number}`}>
                     #{invoice.invoice_number}
                   </div>
                 </td>
-                <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
+                <td className="px-3.5 py-3.5 whitespace-nowrap">
                   <div className="text-xs font-mono text-[var(--text-muted)] truncate">
                     {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </td>
                 {visibleColumns.customer && (
-                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
-                    <div className="text-sm text-[var(--text-primary)] truncate" title={invoice.customer_name}>
+                  <td className="px-3.5 py-3.5 whitespace-nowrap">
+                    <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={invoice.customer_name}>
                       {invoice.customer_name}
                     </div>
                   </td>
                 )}
                 {visibleColumns.po_number && (
-                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
+                  <td className="px-3.5 py-3.5 whitespace-nowrap">
                     <div className="text-xs font-mono text-[var(--text-secondary)] truncate" title={invoice.po_number || '-'}>
                       {invoice.po_number || '-'}
                     </div>
                   </td>
                 )}
                 {visibleColumns.untaxed_amount && (
-                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
+                  <td className="px-3.5 py-3.5 whitespace-nowrap">
                     <div className="text-xs font-mono font-medium text-[var(--text-primary)] font-tabular truncate">
                       {getCurrencySymbol()}{(() => {
                         // Calculate untaxed amount from items factoring in discounts
@@ -975,7 +974,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.total_amount && (
-                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
+                  <td className="px-3.5 py-3.5 whitespace-nowrap">
                     {(() => {
                       const roundOff = parseFloat(invoice.round_off || 0) || 0;
                       const calculations = invoice.items?.reduce((acc, item) => {
@@ -1016,7 +1015,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.status && (
-                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap">
+                  <td className="px-3.5 py-3.5 whitespace-nowrap">
                     {(() => {
                       const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
                       if (isDraft) {
@@ -1038,17 +1037,17 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.items && (
-                  <td style={compactRowStyle} className="px-3.5 whitespace-nowrap text-sm text-[var(--text-muted)] truncate">
+                  <td className="px-3.5 py-3.5 whitespace-nowrap text-sm text-[var(--text-muted)] truncate">
                     {invoice.items?.length || 0} items
                   </td>
                 )}
-                <td style={compactRowStyle} className="px-3.5 whitespace-nowrap text-sm font-medium text-right">
-                  <div className="flex items-center justify-end gap-1">
+                <td className="px-3.5 py-3.5 whitespace-nowrap text-sm font-medium text-right">
+                  <div className="flex items-center justify-end gap-1.5">
                     <button
                       type="button"
                       onClick={() => onView(invoice)}
                       title={`View ${docLabel}`}
-                      className="p-1 bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded-md hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors"
+                      className="p-1.5 bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-default)] rounded-lg hover:text-[var(--text-primary)] transition-all cursor-pointer"
                     >
                       <EyeIcon className="w-3.5 h-3.5" />
                     </button>
@@ -1062,9 +1061,9 @@ export default function SalesTable({
                       disabled={!canEditInvoice(invoice)}
                       title={editInvoiceTooltip(invoice)}
                       aria-disabled={!canEditInvoice(invoice)}
-                      className={`p-1 border rounded-md transition-colors ${
+                      className={`p-1.5 border rounded-lg transition-all ${
                         canEditInvoice(invoice)
-                          ? 'bg-[var(--bg-primary)] text-[var(--accent-primary)] border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)]'
+                          ? 'bg-[var(--bg-primary)] text-[var(--accent-primary)] border-[var(--border-default)] hover:text-[var(--text-primary)] cursor-pointer'
                           : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
                       }`}
                     >
@@ -1079,9 +1078,9 @@ export default function SalesTable({
                           ? 'Record payment for this invoice'
                           : 'Available only for final invoices with pending or partial payment status.'}
                         aria-disabled={!canRecordPayment(invoice)}
-                        className={`p-1 border rounded-md transition-colors ${
+                        className={`p-1.5 border rounded-lg transition-all ${
                           canRecordPayment(invoice)
-                            ? 'bg-[var(--bg-primary)] text-[var(--status-success)] border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)]'
+                            ? 'bg-[var(--bg-primary)] text-[var(--status-success)] border-[var(--border-default)] hover:text-[var(--text-primary)] cursor-pointer'
                             : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
                         }`}
                       >
@@ -1098,9 +1097,9 @@ export default function SalesTable({
                       disabled={!canDeleteInvoice(invoice)}
                       title={getDeleteTooltip(invoice)}
                       aria-disabled={!canDeleteInvoice(invoice)}
-                      className={`p-1 border rounded-md transition-colors ${
+                      className={`p-1.5 border rounded-lg transition-all ${
                         canDeleteInvoice(invoice)
-                          ? 'bg-[var(--bg-primary)] text-[var(--status-danger)] border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)]'
+                          ? 'bg-[var(--bg-primary)] text-[var(--status-danger)] border-[var(--border-default)] hover:text-[var(--status-danger-text)] cursor-pointer'
                           : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
                       }`}
                     >

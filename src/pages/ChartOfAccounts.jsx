@@ -391,9 +391,9 @@ export default function ChartOfAccounts() {
         {/* Accounts Table */}
         <div className="bento-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-white/5">
-              <thead className="bg-[var(--bg-primary)]/50">
-                <tr>
+            <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)]">
                   <th scope="col" className="relative px-6 py-4">
                     <input
                       type="checkbox"
@@ -448,7 +448,7 @@ export default function ChartOfAccounts() {
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {accounts.map((account) => (
-                  <tr key={account.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                  <tr key={account.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                     <td className="relative px-6 py-4 whitespace-nowrap text-sm">
                       <input
                         type="checkbox"

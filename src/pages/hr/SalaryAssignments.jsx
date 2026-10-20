@@ -65,8 +65,8 @@ export default function SalaryAssignments() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Employee Assignments</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/50 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Structure</th>
@@ -82,7 +82,7 @@ export default function SalaryAssignments() {
                   <tr><td colSpan="5" className="px-6 py-4 text-center">No assignments found</td></tr>
                 ) : (
                   assignments.map(assign => (
-                    <tr key={assign.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <tr key={assign.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{assign.employee_name || assign.employee}</td>
                       <td className="px-6 py-4 text-[var(--text-secondary)]">{assign.salary_structure_name || assign.salary_structure}</td>
                       <td className="px-6 py-4 text-[var(--text-muted)] text-xs">{assign.effective_from}</td>

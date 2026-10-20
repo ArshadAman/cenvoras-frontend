@@ -47,9 +47,9 @@ export default function BOMList() {
 
         <div className="bento-card p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-[var(--border-default)] text-[var(--text-muted)] text-xs uppercase bg-[var(--bg-primary)]/70">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs uppercase">
                   <th className="p-4 font-bold text-[var(--text-primary)]">BOM Name</th>
                   <th className="p-4 font-bold text-[var(--text-primary)]">Finished Good</th>
                   <th className="p-4 font-bold text-[var(--text-primary)]">Components</th>
@@ -64,7 +64,7 @@ export default function BOMList() {
                     <tr><td colSpan="5" className="p-8 text-center text-[var(--text-muted)]">No BOMs found. Create one to get started.</td></tr>
                 ) : (
                     boms.map((bom) => (
-                    <tr key={bom.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors group">
+                    <tr key={bom.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
                         <td className="p-4 text-[var(--text-primary)] font-semibold">{bom.name}</td>
                         <td className="p-4 text-[var(--text-secondary)]">{bom.finished_good_display || bom.finished_good_name}</td>
                         <td className="p-4 text-[var(--text-muted)] text-sm">

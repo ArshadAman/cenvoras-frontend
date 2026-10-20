@@ -82,8 +82,8 @@ export default function Designations() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Designation Directory</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/50 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4 text-right">Actions</th>
@@ -106,7 +106,7 @@ export default function Designations() {
                   </tr>
                 ) : (
                   designations.map(desig => (
-                    <tr key={desig.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <tr key={desig.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{desig.name}</td>
                       <td className="px-6 py-4 text-right space-x-3">
                         <button onClick={() => { setSelectedDesig(desig); setIsModalOpen(true); }} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition p-1"><PencilIcon className="w-4 h-4" /></button>

@@ -381,9 +381,9 @@ export default function WarehouseManagement() {
               </span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/50">
+              <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left">
+                <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                  <tr className="border-b border-[var(--border-subtle)]">
                     <th className="p-4 text-xs font-bold text-[var(--text-muted)] uppercase">
                       Product
                     </th>
@@ -412,7 +412,7 @@ export default function WarehouseManagement() {
                     stockList.map((sp, idx) => (
                       <tr
                         key={idx}
-                        className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer"
+                        className="hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
                         onClick={() => setViewBatch(sp)}
                       >
                         <td className="p-4">

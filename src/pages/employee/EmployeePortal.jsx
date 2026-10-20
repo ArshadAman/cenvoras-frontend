@@ -301,13 +301,13 @@ export default function EmployeePortal() {
                 {leaves.length === 0 ? (
                   <div className="p-8 text-center text-[var(--text-muted)] text-sm">No leave applications found.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                  <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
                     <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Type</th><th className="px-5 py-3">Duration</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
                       {leaves.map(l => (
-                        <tr key={l.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                        <tr key={l.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                           <td className="px-5 py-3">
                             <div className="font-semibold text-[var(--text-primary)]">{l.leave_type_name || l.leave_type}</div>
                             {l.reason && <div className="text-xs text-[var(--text-muted)] mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
@@ -339,7 +339,7 @@ export default function EmployeePortal() {
                 {tasks.length === 0 ? (
                   <div className="p-8 text-center text-[var(--text-muted)] text-sm">No tasks assigned to you.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                  <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
                     <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Title</th><th className="px-5 py-3">Description</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr>
                     </thead>
@@ -347,7 +347,7 @@ export default function EmployeePortal() {
                       {tasks.map(t => {
                         const isOverdue = t.status !== 'completed' && t.deadline && new Date(t.deadline) < new Date(new Date().setHours(0,0,0,0));
                         return (
-                          <tr key={t.id} onClick={() => setSelectedTask(t)} className={`hover:bg-[var(--bg-primary)]/50 cursor-pointer transition-colors ${isOverdue ? 'bg-[var(--status-danger-bg)]/30' : ''}`}>
+                          <tr key={t.id} onClick={() => setSelectedTask(t)} className={`hover:bg-[var(--bg-primary)] cursor-pointer transition-colors ${isOverdue ? 'bg-[var(--status-danger-bg)]/30' : ''}`}>
                             <td className="px-5 py-3 font-semibold text-[var(--text-primary)]">{t.title}</td>
                             <td className="px-5 py-3 max-w-xs truncate text-[var(--text-muted)]">{t.description || <span className="italic">No description</span>}</td>
                             <td className="px-5 py-3 font-mono text-xs">
@@ -402,13 +402,13 @@ export default function EmployeePortal() {
                 {queries.length === 0 ? (
                   <div className="p-8 text-center text-[var(--text-muted)] text-sm">You have not raised any queries yet.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                  <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
                     <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Subject</th><th className="px-5 py-3">Message</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
                       {queries.map(q => (
-                        <tr key={q.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                        <tr key={q.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                           <td className="px-5 py-3 font-semibold text-[var(--text-primary)]">{q.subject}</td>
                           <td className="px-5 py-3 max-w-sm truncate text-[var(--text-secondary)]">{q.message}</td>
                           <td className="px-5 py-3 capitalize">
@@ -437,13 +437,13 @@ export default function EmployeePortal() {
                 {attendance.length === 0 ? (
                   <div className="p-8 text-center text-[var(--text-muted)] text-sm">No attendance records found.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                  <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
                     <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
                       {attendance.map(a => (
-                        <tr key={a.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                        <tr key={a.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                           <td className="px-5 py-3 text-[var(--text-primary)] font-medium">{a.date}</td>
                           <td className="px-5 py-3 capitalize">
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${a.status === 'present' ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]'}`}>

@@ -85,9 +85,9 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
 
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[var(--bg-primary)]/70 border-b border-[var(--border-default)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
-            <tr>
+        <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left text-sm whitespace-nowrap">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
+            <tr className="border-b border-[var(--border-subtle)]">
               <th 
                 onClick={() => handleSort("po_number")}
                 className="px-6 py-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
@@ -144,7 +144,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
               </tr>
             ) : (
               filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors group">
+                <tr key={order.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
                   <td className="px-6 py-4">
                     <div className="font-semibold text-[var(--text-primary)]">{order.po_number || "Draft"}</div>
                     <div className="text-xs text-[var(--text-muted)] mt-1">

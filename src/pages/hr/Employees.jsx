@@ -566,8 +566,8 @@ export default function Employees() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Employee Directory</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/60 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Code</th>
                   <th className="px-6 py-4">Name</th>
@@ -588,7 +588,7 @@ export default function Employees() {
                     <tr
                       key={emp.id}
                       onClick={() => setBreakdownEmp(emp)}
-                      className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors group"
+                      className="hover:bg-[var(--bg-primary)] cursor-pointer transition-colors group"
                     >
                       <td className="px-6 py-4 font-medium text-[var(--accent-primary)] font-mono text-xs">{emp.employee_code}</td>
                       <td className="px-6 py-4">

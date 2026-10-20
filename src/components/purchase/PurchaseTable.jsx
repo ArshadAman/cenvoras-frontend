@@ -360,9 +360,9 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-[var(--bg-primary)]/70 border-b border-[var(--border-default)]">
+          <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+            <tr className="border-b border-[var(--border-subtle)]">
               <th className="text-left py-3.5 px-4 rounded-l-lg">
                 <input
                   type="checkbox"
@@ -419,12 +419,12 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               <th className="text-center py-3.5 px-4 rounded-r-lg font-bold text-[var(--text-primary)] text-xs uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {isLoading
               ? Array(5)
                   .fill(0)
                   .map((_, i) => (
-                    <tr key={i}>
+                    <tr key={i} className="no-hover">
                       <td
                         colSpan={7}
                         className="py-6 animate-pulse bg-[var(--bg-surface)] rounded-lg"
@@ -434,7 +434,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               : filteredBills.map((bill) => (
                   <tr
                     key={bill.id}
-                    className="bg-[var(--bg-surface)] shadow-sm rounded-lg border border-[var(--border-default)] hover:border-[var(--accent-primary)]/50 transition-all duration-150"
+                    className="hover:bg-[var(--bg-primary)] transition-colors"
                   >
                     <td className="py-3 px-4">
                       <input

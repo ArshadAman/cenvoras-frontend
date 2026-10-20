@@ -176,9 +176,9 @@ export default function AuditLogList() {
 
         <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)]">
                   <th className="p-4 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Time</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Done By</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider text-center">Action</th>
@@ -199,7 +199,7 @@ export default function AuditLogList() {
                   <tr><td colSpan="6" className="p-20 text-center text-[var(--text-muted)] italic">No activity recorded yet.</td></tr>
                 ) : (
                   logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors group">
+                    <tr key={log.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
                       <td className="p-4 text-xs text-[var(--text-muted)] whitespace-nowrap tabular-nums">
                         {formatTimestamp(log.timestamp)}
                       </td>

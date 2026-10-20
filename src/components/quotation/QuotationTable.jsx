@@ -139,9 +139,9 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
         <>
           {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="min-w-full text-sm border-separate border-spacing-y-2">
-              <thead>
-                <tr className="border-b border-[var(--border-subtle)] text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--bg-primary)]/40">
+            <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)] text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
                   <th
                     className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
                     onClick={() => handleSort('number')}
@@ -210,9 +210,9 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                   <th className="px-4 py-3 text-left text-[var(--text-secondary)]">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {sortedRows.map((q) => (
-                  <tr key={q.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/30 transition-colors">
+                  <tr key={q.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
                     <td className="px-4 py-3 text-[var(--text-primary)] font-mono font-medium">{q.quotation_number || q.invoice_number}</td>
                     <td className="px-4 py-3 text-[var(--text-secondary)]">{q.quotation_date || q.invoice_date}</td>
                     <td className="px-4 py-3 text-[var(--text-primary)]">{q.customer_name}</td>
