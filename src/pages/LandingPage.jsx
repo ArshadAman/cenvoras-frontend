@@ -216,7 +216,7 @@ const RentVsOwnCalculator = () => {
           href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20checked%20the%20pricing%20calculator%20and%20want%20to%20know%20more%20about%20the%20perpetual%20license."
           target="_blank"
           rel="noreferrer"
-          className="btn-primary !text-xs !py-3 !px-6 whitespace-nowrap shadow-md"
+          className="btn-primary !text-sm !py-3 !px-6 whitespace-nowrap shadow-md"
         >
           Talk to Us on WhatsApp
         </a>

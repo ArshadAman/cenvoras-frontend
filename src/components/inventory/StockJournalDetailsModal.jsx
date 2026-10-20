@@ -9,16 +9,16 @@ export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
   if (!isOpen || !journal) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden bento-card !p-0 shadow-2xl animate-fade-up border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-2xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-2xl my-auto">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
+        <div className="flex justify-between items-center px-5 py-4 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-3">
+            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight flex items-center gap-3">
               Stock Journal Details
-              <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-lg border
+              <span className={`px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded-lg border
                 ${['excess', 'internal_return'].includes(journal.adjustment_type) 
                   ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]' 
                   : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border-[var(--status-danger-border)]'}
@@ -26,12 +26,12 @@ export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
                 {journal.adjustment_type.replace('_', ' ')}
               </span>
             </h2>
-            <p className="text-[var(--text-secondary)] text-sm mt-1">
-              Transaction ID: {journal.id}
+            <p className="text-[var(--text-secondary)] text-xs mt-0.5">
+              Transaction ID: <span className="font-mono">{journal.id}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors bg-[var(--bg-primary)] hover:bg-[var(--border-subtle)]/30 rounded-xl">
-            <XMarkIcon className="w-6 h-6" />
+          <button onClick={onClose} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-primary)] rounded-xl cursor-pointer">
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 

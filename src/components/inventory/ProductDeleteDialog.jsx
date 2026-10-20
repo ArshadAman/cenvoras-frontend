@@ -49,18 +49,18 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
       <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xl animate-fade-up overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+        <div className="flex items-center justify-between px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
            <div className="flex items-center gap-3">
              <div className="bg-[var(--status-danger-bg)] p-2 rounded-xl border border-[var(--status-danger-border)]">
-               <svg className="w-6 h-6 text-[var(--status-danger-text)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <svg className="w-5 h-5 text-[var(--status-danger-text)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                </svg>
              </div>
-             <h3 className="text-xl font-bold text-[var(--text-primary)]">Delete Product</h3>
+             <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight">Delete Product</h3>
            </div>
            <button
              onClick={onClose}
-             className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+             className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
            >
              <XMarkIcon className="w-5 h-5" />
            </button>
@@ -115,7 +115,7 @@ export default function ProductDeleteDialog({ product, onClose, onSuccess }) {
         </div>
 
         {/* Actions */}
-        <div className="p-6 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] flex gap-3 justify-end">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] flex gap-3 justify-end">
            <button
             onClick={onClose}
             className="btn-secondary text-sm"

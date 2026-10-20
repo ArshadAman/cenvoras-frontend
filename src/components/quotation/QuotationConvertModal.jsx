@@ -141,28 +141,28 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
         onClick={onClose} 
       />
       
-      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-6">
         {/* Modal Container */}
-        <div className="relative w-full max-w-3xl flex flex-col h-[85vh] min-h-[550px] max-h-[900px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+        <div className="relative w-full max-w-3xl flex flex-col max-h-[90vh] bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up my-auto">
         
           {/* Header */}
-          <div className="flex-shrink-0 px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/50">
+          <div className="flex-shrink-0 px-5 py-4 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-surface)]">
             <div>
-              <h3 className="text-[var(--text-primary)] text-lg font-bold tracking-tight">Convert to Sales Order</h3>
+              <h3 className="text-[var(--text-primary)] text-base sm:text-lg font-bold font-display tracking-tight">Convert to Sales Order</h3>
               <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                 Quotation Ref: <span className="text-[var(--accent-primary)] font-mono font-medium">{quotation.quotation_number}</span>
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded-xl transition-all"
+              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] rounded-xl transition-all cursor-pointer"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
 
           {/* Customer PO Details Section */}
-          <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 px-6 py-3 bg-[var(--bg-primary)]/30 border-b border-[var(--border-subtle)]">
+          <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 px-5 sm:px-6 py-3.5 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Customer PO Number
@@ -354,7 +354,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
           </div>
 
           {/* Footer */}
-          <div className="flex-shrink-0 bg-[var(--bg-primary)]/50 px-6 py-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="flex-shrink-0 bg-[var(--bg-surface)] px-5 py-3.5 sm:px-6 sm:py-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 text-xs">
               <div className="flex flex-col">
                 <span className="text-[var(--text-secondary)] uppercase font-bold text-xs tracking-wider">Selected</span>

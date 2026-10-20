@@ -9,7 +9,7 @@ export default function TermsOfService() {
   }, []);
 
   return (
-    <div className="min-h-screen font-sans text-[var(--text-primary)] bg-[var(--bg-primary)]">
+    <div className="min-h-screen font-body text-[var(--text-primary)] bg-[var(--bg-primary)]">
       <Seo
         title="Terms of Service & License Terms | Cenvora"
         description="Review the perpetual software license terms, AMC maintenance scope, and user responsibilities for Cenvora software."
@@ -28,7 +28,7 @@ export default function TermsOfService() {
 
       <main className="mx-auto max-w-3xl px-6 pb-20 pt-32 sm:pt-40">
         <div className="border-b border-[var(--border-subtle)] pb-6 mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
             Terms of Service & License Agreement
           </h1>
           <p className="mt-2 text-xs text-[var(--text-muted)] font-mono">

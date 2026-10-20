@@ -134,7 +134,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
           enableReinitialize
         >
           {({ isSubmitting }) => (
-            <Form className="p-6 md:p-8 space-y-6">
+            <Form className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Vendor Name */}

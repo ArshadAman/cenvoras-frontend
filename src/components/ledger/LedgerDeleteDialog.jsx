@@ -59,12 +59,12 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
   if (!isOpen || !entry) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
-        <div className="p-6">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden my-auto">
+        <div className="p-5 sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30">
+            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)]">
               <svg 
                 className="h-6 w-6 text-[var(--status-danger)]" 
                 fill="none" 
@@ -80,7 +80,7 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">
+              <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight">
                 Delete Ledger Entry
               </h3>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -145,7 +145,7 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
         </div>
 
         {/* Actions */}
-        <div className="p-6 bg-[var(--bg-primary)] flex justify-end gap-3 border-t border-[var(--border-subtle)]">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 bg-[var(--bg-surface)] flex justify-end gap-3 border-t border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={onClose}

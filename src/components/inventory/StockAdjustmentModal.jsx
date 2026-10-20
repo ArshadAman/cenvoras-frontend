@@ -84,31 +84,31 @@ export default function StockAdjustmentModal({ product, onClose }) {
   const labelClass = "block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-20 sm:pt-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       ></div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xl animate-fade-up overflow-hidden my-auto">
+      <div className="relative w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xl animate-fade-up overflow-hidden my-auto">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-display">
+        <div className="flex justify-between items-center px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
+          <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight">
             Stock Adjustment
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
-            <XMarkIcon className="w-6 h-6" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
         {/* Product Info */}
-        <div className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] p-4">
+        <div className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] px-5 py-3.5 shrink-0">
           <div className="flex justify-between items-center gap-2">
             <div>
               <h3 className="font-bold text-[var(--text-primary)] text-sm sm:text-base break-words">{product.name}</h3>
@@ -121,13 +121,14 @@ export default function StockAdjustmentModal({ product, onClose }) {
           </div>
         </div>
 
-        <Formik
-          initialValues={initialValues}
-          validationSchema={stockAdjustmentSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ isSubmitting, values }) => (
-            <Form className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <div className="overflow-y-auto flex-1 p-5 sm:p-6">
+          <Formik
+            initialValues={initialValues}
+            validationSchema={stockAdjustmentSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ isSubmitting, values }) => (
+              <Form className="space-y-4">
               
               {/* Adjustment Type */}
               <div>
@@ -225,6 +226,7 @@ export default function StockAdjustmentModal({ product, onClose }) {
             </Form>
           )}
         </Formik>
+        </div>
       </div>
     </div>
   );

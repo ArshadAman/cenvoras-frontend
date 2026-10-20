@@ -34,9 +34,9 @@ export default function ForgotPassword() {
         noindex
       />
       {loading && <Loader />}
-      <div className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-8 shadow-2xl">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Forgot Password</h1>
-        <p className="text-[var(--text-secondary)] mt-2 text-sm">
+      <div className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <h1 className="text-2xl font-extrabold text-[var(--text-primary)] font-display tracking-tight">Forgot Password</h1>
+        <p className="text-[var(--text-secondary)] mt-1.5 text-sm">
           {otpSent
             ? 'Enter the OTP sent to your email and set a new password.'
             : 'Enter your email to receive a password reset OTP.'}
@@ -65,20 +65,20 @@ export default function ForgotPassword() {
             {({ isSubmitting }) => (
               <Form className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Email</label>
+                  <label className="form-label">Email</label>
                   <Field
                     name="email"
                     type="email"
-                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
+                    className="form-input"
                     placeholder="name@company.com"
                   />
-                  <ErrorMessage name="email" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
+                  <ErrorMessage name="email" component="div" className="form-error" />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary w-full py-3.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-2.5 text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? 'Sending OTP...' : 'Send OTP'}
                   {!isSubmitting && <ArrowRightIcon className="w-4 h-4" />}
@@ -112,51 +112,51 @@ export default function ForgotPassword() {
             {({ isSubmitting }) => (
               <Form className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Email</label>
+                  <label className="form-label">Email</label>
                   <Field
                     name="email"
                     type="email"
-                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
+                    className="form-input"
                   />
-                  <ErrorMessage name="email" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
+                  <ErrorMessage name="email" component="div" className="form-error" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-[var(--text-secondary)] mb-1">OTP</label>
+                  <label className="form-label">OTP</label>
                   <Field
                     name="otp"
                     type="text"
-                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm font-mono tracking-widest text-center"
+                    className="form-input font-mono tracking-widest text-center"
                     placeholder="6-digit OTP"
                   />
-                  <ErrorMessage name="otp" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
+                  <ErrorMessage name="otp" component="div" className="form-error" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-[var(--text-secondary)] mb-1">New Password</label>
+                  <label className="form-label">New Password</label>
                   <Field
                     name="password"
                     type="password"
-                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
+                    className="form-input"
                     placeholder="Minimum 8 characters"
                   />
-                  <ErrorMessage name="password" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
+                  <ErrorMessage name="password" component="div" className="form-error" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-[var(--text-secondary)] mb-1">Confirm Password</label>
+                  <label className="form-label">Confirm Password</label>
                   <Field
                     name="confirmPassword"
                     type="password"
-                    className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm"
+                    className="form-input"
                   />
-                  <ErrorMessage name="confirmPassword" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
+                  <ErrorMessage name="confirmPassword" component="div" className="form-error" />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary w-full py-3.5 text-xs font-bold rounded-xl"
+                  className="btn-primary w-full py-2.5 text-sm font-semibold rounded-xl"
                 >
                   {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
                 </button>

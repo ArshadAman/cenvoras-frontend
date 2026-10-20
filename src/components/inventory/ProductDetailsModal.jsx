@@ -44,12 +44,11 @@ export default function ProductDetailsModal({ productId, onClose }) {
   const totalValue = parseFloat(product.stock ?? product.current_stock ?? 0) * costPrice;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] pt-20 sm:pt-0 p-4">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-0 shadow-2xl animate-fade-up">
-        {/* Action Buttons */}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 sm:p-6 overflow-y-auto">
+      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-2xl animate-fade-up overflow-hidden my-auto">
         {/* Header Top */}
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+        <div className="flex justify-between items-center px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 font-display">
             <svg className="w-5 h-5 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -57,16 +56,16 @@ export default function ProductDetailsModal({ productId, onClose }) {
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Product Details */}
-        <div className="p-6 md:p-8 bg-[var(--bg-surface)] text-[var(--text-primary)]">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 bg-[var(--bg-surface)] text-[var(--text-primary)]">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>

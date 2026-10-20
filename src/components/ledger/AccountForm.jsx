@@ -99,31 +99,31 @@ export default function AccountForm({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl animate-fade-up bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl animate-fade-up bg-[var(--bg-surface)] border border-[var(--border-default)] overflow-hidden my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+        <div className="flex items-center justify-between px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-[var(--text-primary)]">
+            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight">
               {editData ? 'Edit Account' : 'Create New Account'}
             </h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {editData ? 'Update account information' : 'Add a new account to your chart of accounts'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2 hover:bg-[var(--bg-surface)] rounded-lg"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1.5 hover:bg-[var(--bg-primary)] rounded-lg cursor-pointer"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Form */}
-        <div className="p-6">
+        <div className="overflow-y-auto flex-1 p-5 sm:p-6">
           <Formik
             initialValues={initialValues}
             validationSchema={AccountSchema}
@@ -142,7 +142,7 @@ export default function AccountForm({
             }}
           >
             {({ isSubmitting, values }) => (
-              <Form className="space-y-6">
+              <Form className="space-y-5">
                 {/* Account Code and Name Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>

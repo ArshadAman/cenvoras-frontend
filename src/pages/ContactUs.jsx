@@ -18,7 +18,7 @@ export default function ContactUs() {
   }, []);
 
   return (
-    <div className="min-h-screen font-sans text-[var(--text-primary)] bg-[var(--bg-primary)]">
+    <div className="min-h-screen font-body text-[var(--text-primary)] bg-[var(--bg-primary)]">
       <Seo
         title="Contact Cenvora | Software Inquiries & Support"
         description="Get in touch with Cenvora for software demos, pricing questions, custom domain setups, or general support."
@@ -39,7 +39,7 @@ export default function ContactUs() {
       <main className="mx-auto max-w-4xl px-6 pb-20 pt-32 sm:pt-40">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
             Get in touch with our team
           </h1>
           <p className="mt-3 text-sm sm:text-base text-[var(--text-secondary)]">
