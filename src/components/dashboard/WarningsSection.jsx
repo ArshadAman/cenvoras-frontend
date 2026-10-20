@@ -52,21 +52,21 @@ export default function WarningsSection({ data, healthStatus, isLoading }) {
 
   const severityStyles = {
     red: {
-      bg: 'bg-[var(--status-danger)]/10',
-      border: 'border-[var(--status-danger)]/30',
-      text: 'text-[var(--status-danger)]',
+      bg: 'bg-[var(--status-danger-bg)]',
+      border: 'border-[var(--status-danger-border)]',
+      text: 'text-[var(--status-danger-text)]',
       dot: 'bg-[var(--status-danger)]',
     },
     yellow: {
-      bg: 'bg-[var(--status-warning)]/10',
-      border: 'border-[var(--status-warning)]/30',
-      text: 'text-[var(--status-warning)]',
+      bg: 'bg-[var(--status-warning-bg)]',
+      border: 'border-[var(--status-warning-border)]',
+      text: 'text-[var(--status-warning-text)]',
       dot: 'bg-[var(--status-warning)]',
     },
     green: {
-      bg: 'bg-[var(--status-success)]/10',
-      border: 'border-[var(--status-success)]/30',
-      text: 'text-[var(--status-success)]',
+      bg: 'bg-[var(--status-success-bg)]',
+      border: 'border-[var(--status-success-border)]',
+      text: 'text-[var(--status-success-text)]',
       dot: 'bg-[var(--status-success)]',
     },
   };

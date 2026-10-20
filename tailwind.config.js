@@ -120,6 +120,7 @@ export default {
         },
       },
       borderColor: {
+        DEFAULT: 'var(--border-subtle)',
         hairline: 'var(--border-subtle)',
         'hairline-subtle': 'var(--border-subtle)',
         'hairline-hover': 'var(--accent-primary)',

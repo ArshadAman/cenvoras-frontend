@@ -61,7 +61,7 @@ export default function ExpiryCard() {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/25">
+                <div className="p-2.5 rounded-xl bg-[var(--status-warning-bg)] text-[var(--status-warning-text)] border border-[var(--status-warning-border)]">
                   <ClockIcon className="w-6 h-6" />
                 </div>
                 <div>
@@ -93,7 +93,7 @@ export default function ExpiryCard() {
                   onClick={() => setDays(d)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                     days === d
-                      ? 'bg-[var(--status-warning)]/20 text-[var(--status-warning)] border border-[var(--status-warning)]/40'
+                      ? 'bg-[var(--status-warning-bg)] text-[var(--status-warning-text)] border border-[var(--status-warning-border)]'
                       : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                   }`}
                 >

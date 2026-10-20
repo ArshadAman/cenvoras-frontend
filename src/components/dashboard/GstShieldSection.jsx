@@ -86,7 +86,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           </div>
           <button
             onClick={() => navigate('/reports/gst-shield')}
-            className="text-xs font-semibold text-[var(--status-success)] hover:opacity-90 flex items-center gap-1 transition-colors px-2 py-1 rounded-md bg-[var(--status-success)]/10 hover:bg-[var(--status-success)]/20 border border-[var(--status-success)]/20"
+            className="text-xs font-semibold text-[var(--status-success)] hover:opacity-90 flex items-center gap-1 transition-colors px-2 py-1 rounded-md bg-[var(--status-success-bg)] hover:bg-[var(--status-success)]/20 border border-[var(--status-success-border)]"
           >
             <ArrowPathIcon className="w-3.5 h-3.5" /> Reconcile 2B
           </button>
