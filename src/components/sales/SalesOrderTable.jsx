@@ -90,9 +90,9 @@ export default function SalesOrderTable({
       <>
         {/* Desktop Table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="min-w-full text-sm border-separate border-spacing-y-2">
-              <thead>
-                <tr className="bg-[var(--bg-primary)]/40 border-b border-[var(--border-subtle)]">
+          <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)]">
                   <th 
                     onClick={() => handleSort("order_number")}
                     className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
@@ -151,7 +151,7 @@ export default function SalesOrderTable({
                   <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                   {filteredOrders.map(order => {
                     const isHighlighted = highlightedOrderId && (String(order.id) === String(highlightedOrderId));
                     return (
@@ -160,7 +160,7 @@ export default function SalesOrderTable({
                         className={`border-b transition-colors ${
                           isHighlighted 
                             ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 ring-1 ring-[var(--accent-primary)]/40' 
-                            : 'bg-transparent border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/30'
+                            : 'border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]'
                         }`}
                       >
                           <td className="px-6 py-4 whitespace-nowrap">

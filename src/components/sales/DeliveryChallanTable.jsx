@@ -426,9 +426,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
 
       {/* Desktop Table View */}
       <div className="hidden lg:block overflow-x-auto">
-        <table className="min-w-full text-sm border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-[var(--bg-primary)]/40 border-b border-[var(--border-subtle)] text-left">
+        <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+            <tr className="border-b border-[var(--border-subtle)] text-left">
               <th className="px-4 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider rounded-l-lg w-10 text-center">
                 <input
                   type="checkbox"
@@ -544,7 +544,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 return (
                   <tr
                     key={challan.id}
-                    className={`bg-transparent border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/30 transition-colors ${
+                    className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors ${
                       isSelected ? "bg-[var(--accent-primary)]/10" : ""
                     }`}
                   >

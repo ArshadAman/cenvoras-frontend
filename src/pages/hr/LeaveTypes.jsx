@@ -69,8 +69,8 @@ export default function LeaveTypes() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Leave Types</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/50 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Annual Entitlement</th>
@@ -86,7 +86,7 @@ export default function LeaveTypes() {
                   <tr><td colSpan="5" className="px-6 py-4 text-center">No leave types found</td></tr>
                 ) : (
                   leaveTypes.map(lt => (
-                    <tr key={lt.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <tr key={lt.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{lt.name}</td>
                       <td className="px-6 py-4 text-[var(--text-secondary)]">{lt.annual_entitlement} Days</td>
                       <td className="px-6 py-4">

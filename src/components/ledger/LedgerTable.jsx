@@ -515,9 +515,9 @@ const LedgerTable = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-transparent divide-y divide-[var(--border-subtle)]">
+                <tbody className="bg-[var(--bg-surface)] divide-y divide-[var(--border-subtle)]">
                   {ledgerEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <tr key={entry.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       {onBulkSelect && (
                         <td className="relative px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                           <input

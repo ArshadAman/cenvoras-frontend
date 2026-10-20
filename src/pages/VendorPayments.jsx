@@ -163,8 +163,8 @@ export default function VendorPayments() {
           <p className="text-[var(--text-muted)] text-sm">Loading…</p>
         ) : (
           <div className="overflow-x-auto border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)] shadow-sm">
-            <table className="min-w-full text-sm">
-              <thead className="bg-[var(--bg-primary)] text-[var(--text-secondary)] text-left">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-left">
                 <tr>
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Bill</th>
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Vendor</th>
@@ -173,9 +173,9 @@ export default function VendorPayments() {
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider"></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {bills.map((b) => (
-                  <tr key={b.id} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                  <tr key={b.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                     <td className="px-4 py-3 font-medium text-[var(--text-primary)]">
                       {b.bill_number}
                       <div className="text-xs text-[var(--text-muted)]">{b.bill_date}</div>
@@ -207,8 +207,8 @@ export default function VendorPayments() {
           </button>
         </div>
         <div className="overflow-x-auto border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)] shadow-sm">
-          <table className="min-w-full text-sm">
-            <thead className="bg-[var(--bg-primary)] text-[var(--text-secondary)] text-left">
+          <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+            <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-left">
               <tr>
                 <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Bill</th>
                 <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Vendor</th>
@@ -216,9 +216,9 @@ export default function VendorPayments() {
                 <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-[var(--border-subtle)]">
               {rule37.map((r) => (
-                <tr key={r.id} className="border-t border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                <tr key={r.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                   <td className="px-4 py-3 text-[var(--text-primary)]">{r.bill_number}</td>
                   <td className="px-4 py-3 text-[var(--text-primary)]">{r.vendor_name}</td>
                   <td className="px-4 py-3 font-mono text-[var(--status-warning)] font-semibold">{getCurrencySymbol()}{parseFloat(r.itc_at_risk).toLocaleString("en-IN")}</td>

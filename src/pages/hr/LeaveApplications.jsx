@@ -385,8 +385,8 @@ export default function LeaveApplications() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Leave Requests</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/60 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Type</th>
@@ -405,7 +405,7 @@ export default function LeaveApplications() {
                     <tr
                       key={app.id}
                       onClick={() => setSelectedLeave(app)}
-                      className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] cursor-pointer transition-colors"
+                      className="hover:bg-[var(--bg-primary)] cursor-pointer transition-colors"
                       title="Click to view full application details and stated reason"
                     >
                       <td className="px-6 py-4 font-medium text-[var(--text-primary)]">

@@ -521,8 +521,8 @@ export default function Attendance() {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/60 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Date</th>
@@ -539,7 +539,7 @@ export default function Attendance() {
                   records.map((record) => (
                     <tr
                       key={record.id}
-                      className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] cursor-pointer transition"
+                      className="hover:bg-[var(--bg-primary)] cursor-pointer transition-colors"
                       onClick={() => setSelectedEmpSummary({
                         id: typeof record.employee === 'object' ? record.employee?.id : record.employee,
                         name: record.employee_name || 'Employee',

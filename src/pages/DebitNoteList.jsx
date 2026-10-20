@@ -65,9 +65,9 @@ export default function DebitNoteList() {
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
           {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                   <th className="px-6 py-4 font-semibold">DN Number</th>
                   <th className="px-6 py-4 font-semibold">Date</th>
                   <th className="px-6 py-4 font-semibold">Vendor</th>
@@ -90,7 +90,7 @@ export default function DebitNoteList() {
                   </tr>
                 ) : (
                   notes.map((dn) => (
-                    <tr key={dn.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <tr key={dn.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4">
                         <div className="text-[var(--text-primary)] font-semibold text-sm">
                           {dn.debit_note_number?.startsWith('DN-') ? dn.debit_note_number : `DN-${dn.debit_note_number}`}

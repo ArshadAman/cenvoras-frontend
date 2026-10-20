@@ -99,9 +99,9 @@ export default function Warranty() {
               {/* Desktop View */}
               <div className="hidden lg:block bento-card !p-0 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="bg-[var(--bg-primary)]/50 border-b border-[var(--border-subtle)]">
+                  <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+                    <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                      <tr className="border-b border-[var(--border-subtle)]">
                         <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Product</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Customer</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Invoice</th>
@@ -112,12 +112,12 @@ export default function Warranty() {
                         <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[var(--border-subtle)]">
                       {filteredItems.map((item, idx) => {
                         const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.active;
                         const Icon = cfg.icon;
                         return (
-                          <tr key={idx} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/40 transition-colors">
+                          <tr key={idx} className="hover:bg-[var(--bg-primary)] transition-colors">
                             <td className="px-6 py-4 text-[var(--text-primary)] font-medium">{item.product_name}</td>
                             <td className="px-6 py-4 text-[var(--text-secondary)]">{item.customer_name}</td>
                             <td className="px-6 py-4 text-[var(--text-muted)] font-mono text-xs">{item.invoice_number}</td>

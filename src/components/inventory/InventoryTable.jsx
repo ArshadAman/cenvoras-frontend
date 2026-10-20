@@ -757,9 +757,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-sm border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-[var(--bg-primary)]/70 border-b border-[var(--border-default)]">
+          <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+            <tr className="border-b border-[var(--border-subtle)]">
               {visibleColumns.checkbox && (
                 <th className="w-12 text-left py-3 px-4 rounded-l-lg">
                   <input
@@ -841,12 +841,12 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
               )}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {loadingPolicy.visible
               ? Array(5)
                   .fill(0)
                   .map((_, i) => (
-                    <tr key={i}>
+                    <tr key={i} className="no-hover">
                       <td
                         colSpan={10}
                         className="py-6 animate-pulse bg-[var(--bg-surface)] rounded-lg"
@@ -862,7 +862,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                   return (
                     <tr
                       key={product.id}
-                      className="bg-[var(--bg-surface)] shadow-sm rounded-lg border border-[var(--border-default)] hover:border-[var(--accent-primary)]/50 transition-all duration-150"
+                      className="hover:bg-[var(--bg-primary)] transition-colors"
                     >
                       {visibleColumns.checkbox && (
                         <td className="py-3 px-4">

@@ -143,8 +143,8 @@ export default function LeaveBalances() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Employee Quotas</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
-              <thead className="text-xs uppercase bg-[var(--bg-primary)]/50 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Employee</th>
                   <th className="px-6 py-4">Leave Type</th>
@@ -164,7 +164,7 @@ export default function LeaveBalances() {
                   </tr>
                 ) : (
                   balances.map(bal => (
-                    <tr key={bal.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]/50 transition-colors">
+                    <tr key={bal.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{bal.employee_name || bal.employee}</td>
                       <td className="px-6 py-4 text-[var(--accent-primary)] font-medium">{bal.leave_type_name || bal.leave_type}</td>
                       <td className="px-6 py-4 text-[var(--text-secondary)]">{bal.year}</td>

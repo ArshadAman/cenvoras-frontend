@@ -408,7 +408,7 @@ export default function TrialBalance() {
                 {/* Section Table */}
                 {!isCollapsed && (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                    <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left text-xs">
                       <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                         <tr>
                           <th className="py-2.5 px-5 font-semibold w-24">Code</th>
@@ -430,7 +430,7 @@ export default function TrialBalance() {
                           const netLabel = netDrCr >= 0 ? 'Dr' : 'Cr';
 
                           return (
-                            <tr key={acc.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors group">
+                            <tr key={acc.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
                               <td className="py-3 px-5 font-mono text-[var(--accent-primary)] font-semibold">
                                 {acc.code || '—'}
                               </td>

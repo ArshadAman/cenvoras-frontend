@@ -299,7 +299,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
               </tr>
             ) : (
               customers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                <tr key={customer.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"

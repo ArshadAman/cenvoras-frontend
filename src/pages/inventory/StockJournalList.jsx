@@ -95,9 +95,9 @@ export default function StockJournalList() {
 
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left cursor-pointer">
-              <thead>
-                <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left cursor-pointer">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                   <th className="px-6 py-4">Date / Voucher</th>
                   <th className="px-6 py-4">Type</th>
                   <th className="px-6 py-4">Warehouse</th>
@@ -112,7 +112,7 @@ export default function StockJournalList() {
                     <tr><td colSpan="5" className="px-6 py-12 text-center text-[var(--text-muted)] text-sm">No journals found matching filters.</td></tr>
                 ) : (
                     journals.map((j) => (
-                    <tr key={j.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors" onClick={() => setViewDetailsJournal(j)}>
+                    <tr key={j.id} className="hover:bg-[var(--bg-primary)] transition-colors" onClick={() => setViewDetailsJournal(j)}>
                         <td className="px-6 py-4">
                             <div className="text-[var(--text-primary)] font-semibold text-sm">{j.date}</div>
                             <div className="text-xs text-[var(--text-muted)]">{j.voucher_no || j.id.slice(0,8)}</div>

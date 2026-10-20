@@ -64,9 +64,9 @@ export default function BatchListPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
+              <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+                <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                     <th className="px-5 py-3.5 text-left">Product</th>
                     <th className="px-5 py-3.5 text-left">Batch #</th>
                     <th className="px-5 py-3.5 text-left">MFG Date</th>
@@ -82,7 +82,7 @@ export default function BatchListPage() {
                   {batches.map((batch) => {
                     const expiryStatus = getExpiryStatus(batch.expiry_date);
                     return (
-                      <tr key={batch.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                      <tr key={batch.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                         <td className="px-5 py-3.5 text-[var(--text-primary)] font-medium">{batch.product_name || '—'}</td>
                         <td className="px-5 py-3.5 text-[var(--text-secondary)] font-mono text-xs">{batch.batch_number}</td>
                         <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs">{batch.manufacturing_date || '—'}</td>
