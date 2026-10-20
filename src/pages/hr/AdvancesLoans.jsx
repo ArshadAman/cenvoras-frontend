@@ -168,7 +168,7 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                 {loanType === 'advance' ? 'Salary Advance' : 'Personal Loan'}
               </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider border ${STATUS_STYLES[loan.status] || 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'}`}>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wider border ${STATUS_STYLES[loan.status] || 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'}`}>
                 {loan.status}
               </span>
             </div>
@@ -177,15 +177,15 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
           {/* Financial Breakdown */}
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="p-3 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
-              <p className="text-[11px] text-[var(--text-muted)]">Principal</p>
+              <p className="text-xs text-[var(--text-muted)]">Principal</p>
               <p className="text-base font-bold text-[var(--text-primary)] mt-1">₹{principal.toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 rounded-xl bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20">
-              <p className="text-[11px] text-[var(--accent-primary)]">Monthly Deduction</p>
+              <p className="text-xs text-[var(--accent-primary)]">Monthly Deduction</p>
               <p className="text-base font-bold text-[var(--accent-primary)] mt-1">₹{installment.toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 rounded-xl bg-[var(--status-success)]/10 border border-[var(--status-success)]/20">
-              <p className="text-[11px] text-[var(--status-success)]">Balance</p>
+              <p className="text-xs text-[var(--status-success)]">Balance</p>
               <p className="text-base font-bold text-[var(--status-success)] mt-1">₹{balance.toLocaleString('en-IN')}</p>
             </div>
           </div>
@@ -205,7 +205,7 @@ function LoanDetailsModal({ isOpen, onClose, loan, onApprove, onCloseLoan }) {
           <div className="p-4 rounded-xl bg-[var(--bg-primary)]/30 border border-[var(--border-subtle)] space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Stated Purpose / Reason</h4>
-              <span className="text-[11px] text-[var(--text-muted)]">Recorded on application</span>
+              <span className="text-xs text-[var(--text-muted)]">Recorded on application</span>
             </div>
             {loan.reason ? (
               <p className="text-sm text-[var(--text-secondary)] bg-[var(--bg-primary)]/60 p-3 rounded-lg border border-[var(--border-subtle)] leading-relaxed whitespace-pre-wrap">
@@ -317,7 +317,7 @@ export default function AdvancesLoans() {
         <section className="relative rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">Employee Financials</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">Employee Financials</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <BanknotesIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Advances & Loans
@@ -415,7 +415,7 @@ export default function AdvancesLoans() {
                             <div className="w-24 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full h-1.5 mt-1 overflow-hidden">
                               <div className="bg-[var(--status-success)] h-1.5 rounded-full" style={{ width: `${progress}%` }} />
                             </div>
-                            <span className="text-[10px] text-[var(--text-muted)]">{progress}% recovered</span>
+                            <span className="text-xs text-[var(--text-muted)]">{progress}% recovered</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">

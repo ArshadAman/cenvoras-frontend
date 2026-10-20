@@ -110,7 +110,7 @@ const ProductShowcase = () => {
             <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-60" />
             <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-80" />
           </div>
-          <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-[11px] text-[var(--text-muted)]">
+          <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-xs text-[var(--text-muted)]">
             <ShieldCheckIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
             <span>https://app.cenvora.com</span>
           </div>
@@ -565,7 +565,7 @@ export default function LandingPage() {
             {/* Tier 2: Popular */}
             <Reveal delay={0.1}>
               <div className="h-full p-7 rounded-3xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] flex flex-col justify-between relative shadow-2xl">
-                <div className="absolute -top-3.5 left-6 px-3 py-0.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-[10px] font-black uppercase rounded-full shadow-md">
+                <div className="absolute -top-3.5 left-6 px-3 py-0.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-xs font-black uppercase rounded-full shadow-md">
                   Most Popular
                 </div>
 

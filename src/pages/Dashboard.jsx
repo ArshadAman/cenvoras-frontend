@@ -298,7 +298,7 @@ export default function Dashboard({ onLogout }) {
                     </div>
                     <div>
                       <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular">{card.value}</div>
-                      <div className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wider">{card.label}</div>
+                      <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">{card.label}</div>
                     </div>
                   </div>
               ))

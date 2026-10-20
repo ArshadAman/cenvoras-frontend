@@ -155,7 +155,7 @@ export default function Warranty() {
                           <div className="text-[var(--text-primary)] font-bold text-lg mb-1">{item.product_name}</div>
                           <div className="text-[var(--text-muted)] text-sm">{item.customer_name}</div>
                         </div>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.color}`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest border ${cfg.bg} ${cfg.color}`}>
                           <Icon className="w-3 h-3" />
                           {cfg.label}
                         </span>
@@ -163,25 +163,25 @@ export default function Warranty() {
 
                       <div className="grid grid-cols-2 gap-4 py-4 border-y border-[var(--border-subtle)]">
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Invoice</div>
+                          <div className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Invoice</div>
                           <div className="text-[var(--text-primary)] font-mono text-xs">{item.invoice_number}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Period</div>
+                          <div className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Period</div>
                           <div className="text-[var(--text-primary)] text-xs">{item.warranty_months} Months</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Starts</div>
+                          <div className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Starts</div>
                           <div className="text-[var(--text-secondary)] text-xs">{item.warranty_start}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Ends</div>
+                          <div className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Ends</div>
                           <div className="text-[var(--text-secondary)] text-xs">{item.warranty_end}</div>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Remaining Time</div>
+                        <div className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">Remaining Time</div>
                         <div className={`text-sm font-black ${cfg.color} tracking-tighter`}>{item.countdown}</div>
                       </div>
                     </div>

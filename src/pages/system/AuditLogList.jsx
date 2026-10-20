@@ -149,14 +149,14 @@ export default function AuditLogList() {
     // For CREATE/DELETE
     const keys = Object.keys(log.changes).filter(k => !k.startsWith('_')).slice(0, 4);
     return (
-      <div className="text-[11px] text-[var(--text-secondary)] grid grid-cols-2 gap-x-4 gap-y-1">
+      <div className="text-xs text-[var(--text-secondary)] grid grid-cols-2 gap-x-4 gap-y-1">
         {keys.map(k => (
           <div key={k} className="truncate">
             <span className="text-[var(--text-muted)]">{FIELD_LABELS[k] || k}:</span> {formatValue(k, log.changes[k])}
           </div>
         ))}
         {Object.keys(log.changes).length > 4 && (
-          <div className="col-span-2 text-[10px] italic text-[var(--text-muted)] mt-1">
+          <div className="col-span-2 text-xs italic text-[var(--text-muted)] mt-1">
             + {Object.keys(log.changes).length - 4} more details
           </div>
         )}
@@ -210,12 +210,12 @@ export default function AuditLogList() {
                           </div>
                           <div className="max-w-[150px]">
                             <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{log.user_email?.split('@')[0] || 'System'}</p>
-                            <p className="text-[10px] text-[var(--text-muted)]">{log.ip_address || 'Cloud'}</p>
+                            <p className="text-xs text-[var(--text-muted)]">{log.ip_address || 'Cloud'}</p>
                           </div>
                         </div>
                       </td>
                       <td className="p-4 text-center">
-                        <span className={`inline-block px-3 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${
+                        <span className={`inline-block px-3 py-1 rounded-md text-xs font-bold tracking-wider uppercase ${
                             log.action === 'CREATE' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
                             log.action === 'UPDATE' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :
                             log.action === 'DELETE' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
@@ -225,7 +225,7 @@ export default function AuditLogList() {
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="text-[11px] font-semibold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-2 py-1 rounded-md border border-[var(--accent-primary)]/20 shadow-sm whitespace-nowrap">
+                        <span className="text-xs font-semibold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-2 py-1 rounded-md border border-[var(--accent-primary)]/20 shadow-sm whitespace-nowrap">
                           {MODEL_LABELS[log.model_name] || log.model_name}
                         </span>
                       </td>
@@ -234,7 +234,7 @@ export default function AuditLogList() {
                            <p className="text-[var(--text-primary)] font-semibold truncate text-xs" title={log.object_repr}>
                              {log.object_repr || `ID: ${log.object_id?.substring(0, 8)}`}
                            </p>
-                           <p className="text-[9px] text-[var(--text-muted)] font-mono tracking-tighter">REF: {log.object_id?.substring(0, 18)}...</p>
+                           <p className="text-xs text-[var(--text-muted)] font-mono tracking-tighter">REF: {log.object_id?.substring(0, 18)}...</p>
                          </div>
                       </td>
                       <td className="p-4">

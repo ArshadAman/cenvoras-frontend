@@ -50,21 +50,21 @@ export default function CustomerSummary() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Customers */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-[var(--status-info-bg)] text-[var(--status-info)] border border-[var(--status-info-border)] rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-4 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                <dt className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider truncate">
                   Total Customers
                 </dt>
-                <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                <dd className="text-2xl font-bold text-[var(--text-primary)] tabular-nums mt-0.5">
                   {totalCount.toLocaleString()}
                 </dd>
               </dl>
@@ -73,21 +73,21 @@ export default function CustomerSummary() {
         </div>
 
         {/* Email Completion */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)] rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-4 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                <dt className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider truncate">
                   With Email
                 </dt>
-                <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                <dd className="text-2xl font-bold text-[var(--text-primary)] tabular-nums mt-0.5">
                   {customersWithEmail} ({emailCompletionRate}%)
                 </dd>
               </dl>
@@ -96,21 +96,21 @@ export default function CustomerSummary() {
         </div>
 
         {/* Phone Completion */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-4 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                <dt className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider truncate">
                   With Phone
                 </dt>
-                <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                <dd className="text-2xl font-bold text-[var(--text-primary)] tabular-nums mt-0.5">
                   {customersWithPhone} ({phoneCompletionRate}%)
                 </dd>
               </dl>
@@ -119,21 +119,21 @@ export default function CustomerSummary() {
         </div>
 
         {/* GSTIN Completion */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
             </div>
-            <div className="ml-5 w-0 flex-1">
+            <div className="ml-4 w-0 flex-1">
               <dl>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                <dt className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider truncate">
                   With GSTIN
                 </dt>
-                <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                <dd className="text-2xl font-bold text-[var(--text-primary)] tabular-nums mt-0.5">
                   {customersWithGSTIN} ({gstinCompletionRate}%)
                 </dd>
               </dl>
@@ -143,26 +143,26 @@ export default function CustomerSummary() {
       </div>
 
       {/* Recent Customers */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Customers</h3>
+      <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+          <h3 className="text-base font-bold text-[var(--text-primary)]">Recent Customers</h3>
         </div>
-        <div className="px-6 py-4">
+        <div className="p-6">
           {recentCustomers.length > 0 ? (
             <div className="space-y-4">
               {recentCustomers.map((customer) => (
                 <div key={customer.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    <div className="flex-shrink-0 w-10 h-10 bg-[var(--border-subtle)]/20 text-[var(--accent-primary)] border border-[var(--border-subtle)] rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-[var(--text-primary)]">
                         {customer.name?.charAt(0)?.toUpperCase() || '?'}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
                         {customer.name}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-xs text-[var(--text-muted)] truncate">
                         {customer.email || 'No email'}
                       </p>
                     </div>

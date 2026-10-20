@@ -83,7 +83,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
             <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               Sales Forecast
             </h2>
-            <span className="text-[10px] px-2 py-0.5 bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] font-semibold rounded-full">
+            <span className="text-xs px-2 py-0.5 bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] font-semibold rounded-full">
               ML Powered
             </span>
           </div>
@@ -255,7 +255,7 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                       <div className={`text-sm font-bold ${colors.text}`}>
                         {item.days_to_reorder <= 0 ? 'NOW!' : `${item.days_to_reorder}d`}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">to reorder</div>
+                      <div className="text-xs text-[var(--text-muted)]">to reorder</div>
                     </div>
                   </div>
                   

@@ -406,31 +406,31 @@ const LedgerTable = ({
         {/* Sub-Ledger KPI Balance Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Opening Balance</div>
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Opening Balance</div>
             <div className="text-base sm:text-lg font-bold font-mono text-[var(--text-primary)] mt-1 flex items-center gap-1.5">
               <span>{formatCurrency(ledgerData?.opening_balance || 0)}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.opening_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${ledgerData?.opening_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
                 {ledgerData?.opening_balance_type || 'Dr'}
               </span>
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Debits (Dr)</div>
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Debits (Dr)</div>
             <div className="text-base sm:text-lg font-bold font-mono text-[var(--status-danger)] mt-1">
               {formatCurrency(ledgerData?.period_debit_total || 0)}
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Credits (Cr)</div>
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Credits (Cr)</div>
             <div className="text-base sm:text-lg font-bold font-mono text-[var(--status-success)] mt-1">
               {formatCurrency(ledgerData?.period_credit_total || 0)}
             </div>
           </div>
           <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-            <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Closing Balance</div>
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Closing Balance</div>
             <div className="text-base sm:text-lg font-bold font-mono text-[var(--text-primary)] mt-1 flex items-center gap-1.5">
               <span>{formatCurrency(ledgerData?.closing_balance || 0)}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${ledgerData?.closing_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${ledgerData?.closing_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
                 {ledgerData?.closing_balance_type || 'Dr'}
               </span>
             </div>
@@ -589,7 +589,7 @@ const LedgerTable = ({
                       <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
                         <div className="font-mono font-bold font-tabular text-[var(--text-primary)] text-sm flex items-center justify-end gap-1.5">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
                             {entry.running_balance_type || 'Dr'}
                           </span>
                         </div>
@@ -697,7 +697,7 @@ const LedgerTable = ({
                         <span className="text-[var(--text-muted)]">Running Balance:</span>
                         <span className="font-mono font-bold text-[var(--text-primary)] text-sm flex items-center gap-1">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
-                          <span className={`text-[10px] px-1 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'}`}>
+                          <span className={`text-xs px-1 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'}`}>
                             {entry.running_balance_type || 'Dr'}
                           </span>
                         </span>

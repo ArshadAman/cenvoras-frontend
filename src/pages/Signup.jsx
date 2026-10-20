@@ -301,7 +301,7 @@ export default function Signup() {
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-[var(--border-subtle)]" />
                     </div>
-                    <div className="relative flex justify-center text-[11px] text-[var(--text-muted)] font-medium">
+                    <div className="relative flex justify-center text-xs text-[var(--text-muted)] font-medium">
                       <span className="bg-[var(--bg-surface)] px-3">or sign up with email</span>
                     </div>
                   </div>
@@ -333,7 +333,7 @@ export default function Signup() {
                       placeholder="123456"
                     />
                   </InputField>
-                  <p className="text-[11px] text-[var(--text-muted)]">Sent to {pendingEmail}</p>
+                  <p className="text-xs text-[var(--text-muted)]">Sent to {pendingEmail}</p>
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
@@ -362,7 +362,7 @@ export default function Signup() {
                             }`}>
                               {isDone ? '✓' : s}
                             </div>
-                            <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-[var(--text-primary)]' : isDone ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
+                            <span className={`text-xs font-semibold transition-colors ${isActive ? 'text-[var(--text-primary)]' : isDone ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
                               {label}
                             </span>
                           </div>
@@ -522,7 +522,7 @@ export default function Signup() {
                         />
                       </InputField>
 
-                      <p className="text-[11px] text-[var(--text-muted)]">You can add this later from your profile settings.</p>
+                      <p className="text-xs text-[var(--text-muted)]">You can add this later from your profile settings.</p>
 
                       <div className="pt-1">
                         <label className="flex items-start gap-3 cursor-pointer group">

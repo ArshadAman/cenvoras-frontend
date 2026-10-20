@@ -242,32 +242,32 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
               {/* Stats KPI Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <div className="p-3 rounded-xl bg-[var(--bg-primary)]/60 border border-[var(--border-subtle)] text-center">
-                  <p className="text-[11px] text-[var(--text-muted)]">Total Days</p>
+                  <p className="text-xs text-[var(--text-muted)]">Total Days</p>
                   <p className="text-lg font-bold text-[var(--text-primary)] mt-0.5">{summary.total_calendar_days ?? summary.total_days_in_month}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--status-success)]/10 border border-[var(--status-success)]/30 text-center">
-                  <p className="text-[11px] text-[var(--status-success)] font-semibold">Present Days</p>
+                  <p className="text-xs text-[var(--status-success)] font-semibold">Present Days</p>
                   <p className="text-lg font-bold text-[var(--status-success)] mt-0.5">{summary.present_days}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/30 text-center">
-                  <p className="text-[11px] text-[var(--status-warning)] font-semibold">Half Days</p>
+                  <p className="text-xs text-[var(--status-warning)] font-semibold">Half Days</p>
                   <p className="text-lg font-bold text-[var(--status-warning)] mt-0.5">{summary.half_days}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 text-center">
-                  <p className="text-[11px] text-[var(--status-danger)] font-semibold">Absent Days</p>
+                  <p className="text-xs text-[var(--status-danger)] font-semibold">Absent Days</p>
                   <p className="text-lg font-bold text-[var(--status-danger)] mt-0.5">{summary.absent_days}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--status-info)]/10 border border-[var(--status-info)]/30 text-center">
-                  <p className="text-[11px] text-[var(--status-info)] font-semibold">Leave Days</p>
+                  <p className="text-xs text-[var(--status-info)] font-semibold">Leave Days</p>
                   <p className="text-lg font-bold text-[var(--status-info)] mt-0.5">{summary.leave_days}</p>
                   {(summary.paid_leave_days != null || summary.unpaid_leave_days != null) && (
-                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
                       Paid {summary.paid_leave_days ?? 0} · Unpaid {summary.unpaid_leave_days ?? 0}
                     </p>
                   )}
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-center">
-                  <p className="text-[11px] text-[var(--accent-primary)] font-semibold">Attendance Rate</p>
+                  <p className="text-xs text-[var(--accent-primary)] font-semibold">Attendance Rate</p>
                   <p className="text-lg font-bold text-[var(--accent-primary)] mt-0.5">
                     {String(summary.attendance_rate || '').includes('%')
                       ? summary.attendance_rate
@@ -292,7 +292,7 @@ function EmployeeMonthlyAttendanceModal({ isOpen, onClose, employee }) {
                         'bg-[var(--bg-primary)]/40 border-[var(--border-subtle)] text-[var(--text-muted)]'
                       }`}
                     >
-                      <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] mb-1">
+                      <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-1">
                         <span>{d.day_name || d.day}</span>
                         <span className="font-semibold text-[var(--text-primary)]">{d.day_number ?? d.day}</span>
                       </div>
@@ -407,7 +407,7 @@ export default function Attendance() {
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">HR Management</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">HR Management</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <CalendarDaysIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Attendance Tracking

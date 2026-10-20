@@ -126,13 +126,13 @@ const ServiceTemplate = forwardRef(({
              <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 50 }} className="mb-4" />
           )}
           <h1 className="font-bold text-2xl mb-1 uppercase tracking-tight" style={{ color: primaryColor }}>{companyName}</h1>
-          {sections.showGST && businessInfo.gstin && <p className="font-bold text-[10px] text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
-          {businessInfo.pan_number && <p className="font-bold text-[10px] text-gray-700">PAN: {businessInfo.pan_number}</p>}
-          {businessInfo.gem_id && <p className="font-bold text-[10px] text-gray-700">GeM ID: {businessInfo.gem_id}</p>}
-          {businessInfo.drug_license_number && <p className="font-bold text-[10px] text-gray-700">DL No: {businessInfo.drug_license_number}</p>}
-          <p className="whitespace-pre-line text-gray-600 text-[11px] mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
+          {sections.showGST && businessInfo.gstin && <p className="font-bold text-xs text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+          {businessInfo.pan_number && <p className="font-bold text-xs text-gray-700">PAN: {businessInfo.pan_number}</p>}
+          {businessInfo.gem_id && <p className="font-bold text-xs text-gray-700">GeM ID: {businessInfo.gem_id}</p>}
+          {businessInfo.drug_license_number && <p className="font-bold text-xs text-gray-700">DL No: {businessInfo.drug_license_number}</p>}
+          <p className="whitespace-pre-line text-gray-600 text-xs mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
           {(businessInfo.phone || businessInfo.email) && (
-            <p className="text-gray-600 text-[11px] mt-1 font-medium">
+            <p className="text-gray-600 text-xs mt-1 font-medium">
               {businessInfo.phone ? `Mobile: +91 ${businessInfo.phone}` : ''}
               {businessInfo.email ? ` | Email: ${businessInfo.email}` : ''}
             </p>
@@ -150,14 +150,14 @@ const ServiceTemplate = forwardRef(({
 
       <div className="flex mb-8 border-y-2 py-6" style={{ borderColor: '#f3f4f6' }}>
         <div className="w-1/2">
-          <h3 className="font-bold text-gray-700 text-[10px] uppercase tracking-widest mb-2">Bill To:</h3>
+          <h3 className="font-bold text-gray-700 text-xs uppercase tracking-widest mb-2">Bill To:</h3>
           <p className="font-bold text-lg text-gray-900 leading-none mb-1">{customerName}</p>
           <p className="whitespace-pre-line text-gray-600 text-sm leading-relaxed">{billingAddress}</p>
           {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
         </div>
         <div className="w-1/2 space-y-2 text-sm pl-12 border-l border-gray-100">
           <div className="flex justify-between">
-            <span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">
+            <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">
               {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'}
             </span>{' '}
             <span className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</span>
@@ -166,28 +166,28 @@ const ServiceTemplate = forwardRef(({
             <>
               {(invoice.sales_order_number || invoice.po_number) && (
                 <div className="flex justify-between">
-                  <span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">Ref Order:</span>{' '}
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Ref Order:</span>{' '}
                   <span className="font-semibold text-gray-900">{invoice.sales_order_number || invoice.po_number}</span>
                 </div>
               )}
               {invoice.vehicle_number && (
                 <div className="flex justify-between">
-                  <span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">Vehicle No:</span>{' '}
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Vehicle No:</span>{' '}
                   <span className="font-mono font-bold text-gray-900">{invoice.vehicle_number}</span>
                 </div>
               )}
               {invoice.transport_mode && (
                 <div className="flex justify-between">
-                  <span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">Mode:</span>{' '}
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Mode:</span>{' '}
                   <span className="font-semibold text-gray-900">{invoice.transport_mode}</span>
                 </div>
               )}
             </>
           ) : (
             <>
-              {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
-              {(invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
-              {(invoice.delivery_challan_number || invoice.challan_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-[10px] tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</span></div>}
+              {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
+              {(invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
+              {(invoice.delivery_challan_number || invoice.challan_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</span></div>}
             </>
           )}
         </div>
@@ -200,7 +200,7 @@ const ServiceTemplate = forwardRef(({
               {visibleColumns.map(col => (
                 <th 
                   key={col.id} 
-                  className={`py-3 px-2 text-[11px] font-black text-gray-900 uppercase tracking-widest ${
+                  className={`py-3 px-2 text-xs font-black text-gray-900 uppercase tracking-widest ${
                     ['quantity', 'price', 'amount', 'tax', 'discount'].includes(col.id) ? 'text-right' : ''
                   }`}
                   style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap' }}
@@ -233,17 +233,17 @@ const ServiceTemplate = forwardRef(({
                       <div className="py-0">
                         <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
                         {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                          <div className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                          <div className="text-xs text-gray-500 font-medium italic mt-0.5">
                             Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                           </div>
                         )}
                         {desc && (
-                          <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                          <div className="text-xs text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                             {desc}
                           </div>
                         )}
                         {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <div className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
                             {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                             {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                             {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -318,7 +318,7 @@ const ServiceTemplate = forwardRef(({
                 {bankQr && (
                   <div className="flex flex-col items-center">
                     <img src={bankQr} alt="Payment QR" className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5" />
-                    <span className="text-[9px] text-gray-500 mt-0.5 font-medium">Scan & Pay</span>
+                    <span className="text-xs text-gray-500 mt-0.5 font-medium">Scan & Pay</span>
                   </div>
                 )}
               </div>
@@ -386,14 +386,14 @@ const ServiceTemplate = forwardRef(({
            </div>
         )}
         <div className="invoice-page-footer">
-          <div className="w-full text-center mt-6 text-[10px] text-gray-700 font-medium">
+          <div className="w-full text-center mt-6 text-xs text-gray-700 font-medium">
             {isDeliveryChallan
               ? 'This is a computer generated delivery challan and does not require a signature.'
               : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
           
           {showWatermarkFooter && (
-            <div className="mt-2 text-center text-[10px] text-gray-600 print-watermark w-full">
+            <div className="mt-2 text-center text-xs text-gray-600 print-watermark w-full">
               Made with Cenvora: Built for Modern Businesses<br />
               <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
             </div>

@@ -115,7 +115,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                     {payrollRun.status}
                   </span>
                   {payrollRun.is_reopened && (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 flex items-center gap-1">
                       <ExclamationTriangleIcon className="w-3 h-3" /> Reopened
                     </span>
                   )}
@@ -185,7 +185,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                   <p className="text-[var(--text-secondary)]">
                     <span className="font-semibold text-[var(--text-primary)]">Latest Reopen Reason:</span> "{payrollRun.reopen_reason || 'Administrative adjustment'}"
                   </p>
-                  <p className="text-[var(--text-muted)] text-[11px]">
+                  <p className="text-[var(--text-muted)] text-xs">
                     Reopened by <span className="text-[var(--status-warning)] font-medium">{payrollRun.reopened_by_name || 'Admin'}</span>
                     {payrollRun.reopened_at && ` on ${new Intl.DateTimeFormat('en-GB', {
                       timeZone: 'Asia/Kolkata',
@@ -198,12 +198,12 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                 {/* Chronological Reopen History List */}
                 {payrollRun.reopen_history && payrollRun.reopen_history.length > 0 && (
                   <div className="pl-7 pt-2.5 border-t border-[var(--status-warning)]/20 space-y-1.5">
-                    <p className="text-[11px] font-semibold text-[var(--status-warning)] uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-[var(--status-warning)] uppercase tracking-wider">
                       Reopen Audit Trail ({payrollRun.reopen_history.length})
                     </p>
                     <div className="space-y-1.5 max-h-36 overflow-y-auto">
                       {payrollRun.reopen_history.map((rh, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-primary)] text-[11px] space-y-0.5 border border-[var(--border-subtle)]">
+                        <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-primary)] text-xs space-y-0.5 border border-[var(--border-subtle)]">
                           <div className="flex justify-between items-center text-[var(--text-muted)]">
                             <span className="font-medium text-[var(--text-primary)]">{rh.reopened_by_name || rh.reopened_by}</span>
                             <span>{rh.reopened_at ? `${new Intl.DateTimeFormat('en-GB', {
@@ -227,42 +227,42 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* 1. Created */}
                 <div className="p-3 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
-                  <p className="text-[11px] text-[var(--text-muted)] uppercase tracking-wider">Created</p>
+                  <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Created</p>
                   <p className="text-sm font-semibold text-[var(--text-primary)]">{payrollRun.created_by_name || 'System Administrator'}</p>
-                  <p className="text-[11px] text-[var(--text-secondary)] font-medium">
+                  <p className="text-xs text-[var(--text-secondary)] font-medium">
                     {payrollRun.created_at ? new Date(payrollRun.created_at).toLocaleDateString('en-IN') : '—'}
                   </p>
                 </div>
 
                 {/* 2. Approved */}
                 <div className={`p-3 rounded-lg border space-y-1 ${payrollRun.approved_at ? 'bg-[var(--status-success)]/10 border-[var(--status-success)]/30' : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] opacity-60'}`}>
-                  <p className={`text-[11px] uppercase tracking-wider ${payrollRun.approved_at ? 'text-[var(--status-success)] font-semibold' : 'text-[var(--text-muted)]'}`}>Approved</p>
+                  <p className={`text-xs uppercase tracking-wider ${payrollRun.approved_at ? 'text-[var(--status-success)] font-semibold' : 'text-[var(--text-muted)]'}`}>Approved</p>
                   <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {payrollRun.approved_by_name || (payrollRun.approved_at ? 'Approved' : 'Pending')}
                   </p>
-                  <p className="text-[11px] text-[var(--text-secondary)] font-medium">
+                  <p className="text-xs text-[var(--text-secondary)] font-medium">
                     {payrollRun.approved_at ? new Date(payrollRun.approved_at).toLocaleDateString('en-IN') : 'Not approved yet'}
                   </p>
                 </div>
 
                 {/* 3. Disbursed / Paid */}
                 <div className={`p-3 rounded-lg border space-y-1 ${payrollRun.paid_at ? 'bg-[var(--status-info)]/10 border-[var(--status-info)]/30' : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] opacity-60'}`}>
-                  <p className={`text-[11px] uppercase tracking-wider ${payrollRun.paid_at ? 'text-[var(--status-info)] font-semibold' : 'text-[var(--text-muted)]'}`}>Disbursed</p>
+                  <p className={`text-xs uppercase tracking-wider ${payrollRun.paid_at ? 'text-[var(--status-info)] font-semibold' : 'text-[var(--text-muted)]'}`}>Disbursed</p>
                   <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {payrollRun.payment_account_name || (payrollRun.paid_at ? 'Disbursed' : 'Unpaid')}
                   </p>
-                  <p className="text-[11px] text-[var(--text-secondary)] font-medium">
+                  <p className="text-xs text-[var(--text-secondary)] font-medium">
                     {payrollRun.paid_at ? `Paid on ${new Date(payrollRun.paid_at).toLocaleDateString('en-IN')}` : 'Awaiting payment'}
                   </p>
                 </div>
 
                 {/* 4. Locked */}
                 <div className={`p-3 rounded-lg border space-y-1 ${payrollRun.locked_at ? 'bg-[var(--status-info)]/10 border-[var(--status-info)]/30' : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] opacity-60'}`}>
-                  <p className={`text-[11px] uppercase tracking-wider ${payrollRun.locked_at ? 'text-[var(--status-info)] font-semibold' : 'text-[var(--text-muted)]'}`}>Locked</p>
+                  <p className={`text-xs uppercase tracking-wider ${payrollRun.locked_at ? 'text-[var(--status-info)] font-semibold' : 'text-[var(--text-muted)]'}`}>Locked</p>
                   <p className="text-sm font-semibold text-[var(--text-primary)]">
                     {payrollRun.locked_by_name || (payrollRun.locked_at ? 'Locked' : 'Unlocked')}
                   </p>
-                  <p className="text-[11px] text-[var(--text-secondary)] font-medium">
+                  <p className="text-xs text-[var(--text-secondary)] font-medium">
                     {payrollRun.locked_at ? new Date(payrollRun.locked_at).toLocaleDateString('en-IN') : 'Unlocked'}
                   </p>
                 </div>
@@ -333,7 +333,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xs font-semibold text-[var(--status-success)]">₹{parseFloat(ps.net_salary || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                          <p className="text-[11px] text-[var(--text-secondary)] font-medium">Gross ₹{parseFloat(ps.gross_salary || 0).toLocaleString('en-IN')}</p>
+                          <p className="text-xs text-[var(--text-secondary)] font-medium">Gross ₹{parseFloat(ps.gross_salary || 0).toLocaleString('en-IN')}</p>
                         </div>
                       </div>
                     );
@@ -401,19 +401,19 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                           <div className="p-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-                            <p className="text-[11px] text-[var(--text-muted)]">Working Days</p>
+                            <p className="text-xs text-[var(--text-muted)]">Working Days</p>
                             <p className="text-base font-semibold text-[var(--text-primary)] mt-0.5">{attendance.working_days ?? '—'}</p>
                           </div>
                           <div className="p-2.5 rounded-lg bg-[var(--status-success)]/10 border border-[var(--status-success)]/30">
-                            <p className="text-[11px] text-[var(--status-success)]">Present Days</p>
+                            <p className="text-xs text-[var(--status-success)]">Present Days</p>
                             <p className="text-base font-semibold text-[var(--status-success)] mt-0.5">{attendance.present_days ?? '—'}</p>
                           </div>
                           <div className="p-2.5 rounded-lg bg-[var(--status-info)]/10 border border-[var(--status-info)]/30">
-                            <p className="text-[11px] text-[var(--status-info)]">Paid Leaves</p>
+                            <p className="text-xs text-[var(--status-info)]">Paid Leaves</p>
                             <p className="text-base font-semibold text-[var(--status-info)] mt-0.5">{attendance.paid_leaves ?? 0}</p>
                           </div>
                           <div className={`p-2.5 rounded-lg border ${unpaidDays > 0 ? 'bg-[var(--status-danger)]/10 border-[var(--status-danger)]/30' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)]'}`}>
-                            <p className={`text-[11px] ${unpaidDays > 0 ? 'text-[var(--status-danger)] font-semibold' : 'text-[var(--text-muted)]'}`}>Loss of Pay (LOP)</p>
+                            <p className={`text-xs ${unpaidDays > 0 ? 'text-[var(--status-danger)] font-semibold' : 'text-[var(--text-muted)]'}`}>Loss of Pay (LOP)</p>
                             <p className={`text-base font-semibold mt-0.5 ${unpaidDays > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>{unpaidDays} days</p>
                           </div>
                         </div>
@@ -430,7 +430,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                                 <span className="text-[var(--status-danger)] font-medium">Amount Docked: ₹{lopAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                               )}
                             </div>
-                            <p className="text-[11px] text-[var(--status-danger)]/80 leading-relaxed">
+                            <p className="text-xs text-[var(--status-danger)]/80 leading-relaxed">
                               Salary is prorated to {attendance.present_days} effective days out of {attendance.working_days} working days. Any unexcused absence, unpaid holidays, or leave exceeding quota are deducted as Loss of Pay.
                             </p>
                           </div>
@@ -530,7 +530,7 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                                       <span className="font-semibold text-[var(--status-danger)]">₹{amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                     {reason && (
-                                      <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed italic bg-[var(--bg-primary)] p-1.5 rounded border border-[var(--border-subtle)]">
+                                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic bg-[var(--bg-primary)] p-1.5 rounded border border-[var(--border-subtle)]">
                                         💡 {reason}
                                       </p>
                                     )}
@@ -607,14 +607,14 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                 }`}>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                      <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
                         {exc.severity}
                       </span>
                       <span className="text-sm font-semibold text-[var(--text-primary)]">{exc.employee_name || 'System Exception'}</span>
                     </div>
                     <p className="text-xs text-[var(--text-secondary)] mt-1">{exc.message}</p>
                     {exc.resolution_note && (
-                      <p className="text-[11px] text-[var(--text-muted)] mt-1 italic">Resolution: {exc.resolution_note}</p>
+                      <p className="text-xs text-[var(--text-muted)] mt-1 italic">Resolution: {exc.resolution_note}</p>
                     )}
                   </div>
                   {!exc.is_resolved ? (
@@ -1081,7 +1081,7 @@ export default function PayrollRuns() {
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Core HRMS</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-semibold">Core HRMS</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <CalculatorIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Monthly Payroll Workflow

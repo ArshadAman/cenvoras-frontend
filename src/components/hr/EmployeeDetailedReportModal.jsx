@@ -77,7 +77,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                 <h2 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
                   Employee Payroll & Compliance Audit Report
                 </h2>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase border ${
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase border ${
                   record.status === 'locked' || record.status === 'paid'
                     ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border-[var(--status-success)]/30'
                     : 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
@@ -148,7 +148,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
 
               {/* Status & Tax Scheme */}
               <div className="space-y-1 text-xs">
-                <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] block font-semibold">Tax Regime</span>
+                <span className="text-[var(--text-muted)] uppercase tracking-wider text-xs block font-semibold">Tax Regime</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded font-semibold border ${
                   record.tax_regime === 'old'
                     ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border-[var(--status-warning)]/30'
@@ -156,11 +156,11 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                 }`}>
                   {record.tax_regime === 'old' ? 'Old Tax Regime' : 'New Regime (Sec 115BAC)'}
                 </span>
-                <div className="text-[11px] text-[var(--text-muted)] pt-1">
+                <div className="text-xs text-[var(--text-muted)] pt-1">
                   Type: <span className="capitalize text-[var(--text-primary)]">{record.employment_type?.replace('_', ' ') || 'Full Time'}</span>
                 </div>
                 {record.date_of_joining && (
-                  <div className="text-[11px] text-[var(--text-muted)]">
+                  <div className="text-xs text-[var(--text-muted)]">
                     Joined: <span className="text-[var(--text-primary)]">{record.date_of_joining}</span>
                   </div>
                 )}
@@ -168,7 +168,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
 
               {/* Contact Info */}
               <div className="space-y-1 text-xs">
-                <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] block font-semibold">Direct Contact</span>
+                <span className="text-[var(--text-muted)] uppercase tracking-wider text-xs block font-semibold">Direct Contact</span>
                 <div className="text-[var(--text-primary)] truncate" title={record.personal_email}>
                   {record.personal_email || '—'}
                 </div>
@@ -182,35 +182,35 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
           {/* High Level Financial KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Gross Earnings</span>
+              <span className="text-xs uppercase font-bold tracking-wider text-[var(--text-muted)] block">Gross Earnings</span>
               <span className="text-xl font-bold text-[var(--text-primary)] mt-1 block">
                 ₹{grossSalary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-[10px] text-[var(--text-muted)]">Prorated monthly total</span>
+              <span className="text-xs text-[var(--text-muted)]">Prorated monthly total</span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Total Deductions</span>
+              <span className="text-xs uppercase font-bold tracking-wider text-[var(--text-muted)] block">Total Deductions</span>
               <span className="text-xl font-bold text-[var(--status-danger)] mt-1 block">
                 -₹{totalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-[10px] text-[var(--text-muted)]">Statutory + recoveries</span>
+              <span className="text-xs text-[var(--text-muted)]">Statutory + recoveries</span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-[var(--status-success)]/10 border border-[var(--status-success)]/30">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--status-success)] block">Net Take-Home Pay</span>
+              <span className="text-xs uppercase font-bold tracking-wider text-[var(--status-success)] block">Net Take-Home Pay</span>
               <span className="text-xl font-bold text-[var(--status-success)] mt-1 block">
                 ₹{netSalary.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-[10px] text-[var(--status-success)] opacity-80">Disbursed to bank</span>
+              <span className="text-xs text-[var(--status-success)] opacity-80">Disbursed to bank</span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)]">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Total Employer Cost</span>
+              <span className="text-xs uppercase font-bold tracking-wider text-[var(--text-muted)] block">Total Employer Cost</span>
               <span className="text-xl font-bold text-[var(--accent-primary)] mt-1 block">
                 ₹{totalCtc.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-[10px] text-[var(--text-muted)]">Gross + Employer PF/ESI</span>
+              <span className="text-xs text-[var(--text-muted)]">Gross + Employer PF/ESI</span>
             </div>
           </div>
 
@@ -230,27 +230,27 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
 
             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center text-xs">
               <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)] text-[10px] block">Working Days</span>
+                <span className="text-[var(--text-muted)] text-xs block">Working Days</span>
                 <span className="text-sm font-bold text-[var(--text-primary)] mt-0.5 block">{record.working_days}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--status-success)]/10 border border-[var(--status-success)]/30">
-                <span className="text-[var(--status-success)] text-[10px] block">Present Days</span>
+                <span className="text-[var(--status-success)] text-xs block">Present Days</span>
                 <span className="text-sm font-bold text-[var(--status-success)] mt-0.5 block">{record.present_days || record.working_days}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--status-info)]/10 border border-[var(--status-info)]/30">
-                <span className="text-[var(--status-info)] text-[10px] block">Paid Leaves</span>
+                <span className="text-[var(--status-info)] text-xs block">Paid Leaves</span>
                 <span className="text-sm font-bold text-[var(--status-info)] mt-0.5 block">{record.paid_leave_days || '0.0'}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/30">
-                <span className="text-[var(--status-warning)] text-[10px] block">Unpaid / LOP</span>
+                <span className="text-[var(--status-warning)] text-xs block">Unpaid / LOP</span>
                 <span className="text-sm font-bold text-[var(--status-warning)] mt-0.5 block">{record.lop_days || '0.0'}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30">
-                <span className="text-[var(--status-danger)] text-[10px] block">Absent Days</span>
+                <span className="text-[var(--status-danger)] text-xs block">Absent Days</span>
                 <span className="text-sm font-bold text-[var(--status-danger)] mt-0.5 block">{record.absent_days || '0.0'}</span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30">
-                <span className="text-[var(--accent-primary)] text-[10px] block">Overtime Hours</span>
+                <span className="text-[var(--accent-primary)] text-xs block">Overtime Hours</span>
                 <span className="text-sm font-bold text-[var(--accent-primary)] mt-0.5 block">
                   {Number(record.overtime_hours || 0) > 0 ? `${record.overtime_hours} hrs` : '0'}
                 </span>
@@ -313,7 +313,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                     </span>
                   </div>
                   {deductionReasons['PF'] && (
-                    <span className="text-[10px] text-[var(--text-muted)] block">{typeof deductionReasons['PF'] === 'object' ? deductionReasons['PF'].reason : deductionReasons['PF']}</span>
+                    <span className="text-xs text-[var(--text-muted)] block">{typeof deductionReasons['PF'] === 'object' ? deductionReasons['PF'].reason : deductionReasons['PF']}</span>
                   )}
                 </div>
 
@@ -326,7 +326,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                     </span>
                   </div>
                   {deductionReasons['ESI'] && (
-                    <span className="text-[10px] text-[var(--text-muted)] block">{typeof deductionReasons['ESI'] === 'object' ? deductionReasons['ESI'].reason : deductionReasons['ESI']}</span>
+                    <span className="text-xs text-[var(--text-muted)] block">{typeof deductionReasons['ESI'] === 'object' ? deductionReasons['ESI'].reason : deductionReasons['ESI']}</span>
                   )}
                 </div>
 
@@ -339,7 +339,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                     </span>
                   </div>
                   {deductionReasons['PT'] && (
-                    <span className="text-[10px] text-[var(--text-muted)] block">{typeof deductionReasons['PT'] === 'object' ? deductionReasons['PT'].reason : deductionReasons['PT']}</span>
+                    <span className="text-xs text-[var(--text-muted)] block">{typeof deductionReasons['PT'] === 'object' ? deductionReasons['PT'].reason : deductionReasons['PT']}</span>
                   )}
                 </div>
 
@@ -349,7 +349,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                     <div>
                       <span className="text-[var(--text-secondary)]">Income Tax (TDS Sec 192)</span>
                       {Number(record.tds || 0) === 0 && (
-                        <span className="ml-2 text-[10px] px-1 py-0.2 rounded bg-[var(--status-success)]/15 text-[var(--status-success)] font-semibold">
+                        <span className="ml-2 text-xs px-1 py-0.2 rounded bg-[var(--status-success)]/15 text-[var(--status-success)] font-semibold">
                           Rebate Applied
                         </span>
                       )}
@@ -359,7 +359,7 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
                     </span>
                   </div>
                   {deductionReasons['TDS'] && (
-                    <span className="text-[10px] text-[var(--text-muted)] block pt-0.5">
+                    <span className="text-xs text-[var(--text-muted)] block pt-0.5">
                       {typeof deductionReasons['TDS'] === 'object' ? deductionReasons['TDS'].reason : deductionReasons['TDS']}
                     </span>
                   )}
@@ -415,35 +415,35 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">PAN Card</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">PAN Card</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.pan || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">UAN (EPFO)</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">UAN (EPFO)</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.uan || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">Aadhaar</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">Aadhaar</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.aadhaar || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">ESIC IP Number</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">ESIC IP Number</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.esi_ip_number || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">Bank Name</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">Bank Name</span>
                 <span className="text-[var(--text-primary)] font-medium">{record.bank_name || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">Bank Account</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">Bank Account</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.bank_account || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">IFSC Code</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">IFSC Code</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.ifsc || '—'}</span>
               </div>
               <div>
-                <span className="text-[var(--text-muted)] uppercase text-[10px] block font-semibold">UPI ID / VPA</span>
+                <span className="text-[var(--text-muted)] uppercase text-xs block font-semibold">UPI ID / VPA</span>
                 <span className="font-mono text-[var(--text-primary)] font-medium">{record.upi_id || '—'}</span>
               </div>
             </div>
@@ -465,25 +465,25 @@ export default function EmployeeDetailedReportModal({ isOpen, onClose, record, m
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)] text-[10px] block">Employer EPF (3.67%)</span>
+                <span className="text-[var(--text-muted)] text-xs block">Employer EPF (3.67%)</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)] mt-0.5 block">
                   ₹{Number(record.employer_epf || (record.employer_pf ? Number(record.employer_pf) * 0.3058 : 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)] text-[10px] block">Employer EPS Pension (8.33%)</span>
+                <span className="text-[var(--text-muted)] text-xs block">Employer EPS Pension (8.33%)</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)] mt-0.5 block">
                   ₹{Number(record.employer_eps || (record.employer_pf ? Number(record.employer_pf) * 0.6942 : 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)] text-[10px] block">Employer ESI (3.25%)</span>
+                <span className="text-[var(--text-muted)] text-xs block">Employer ESI (3.25%)</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)] mt-0.5 block">
                   ₹{Number(record.employer_esi || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30">
-                <span className="text-[var(--accent-primary)] text-[10px] block">Total Statutory Liability</span>
+                <span className="text-[var(--accent-primary)] text-xs block">Total Statutory Liability</span>
                 <span className="text-sm font-bold text-[var(--accent-primary)] mt-0.5 block">
                   ₹{employerContr.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>

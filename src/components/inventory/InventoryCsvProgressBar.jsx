@@ -61,7 +61,7 @@ export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }
                 {isFailure && 'CSV Import Encountered an Error'}
               </h4>
               <span
-                className={`text-[11px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                className={`text-xs font-medium px-2 py-0.5 rounded-full uppercase tracking-wider ${
                   isProcessing
                     ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30'
                     : isSuccess
@@ -167,7 +167,7 @@ export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }
           )}
 
           {isProcessing && (
-            <span className="text-[11px] text-[var(--text-secondary)] italic">
+            <span className="text-xs text-[var(--text-secondary)] italic">
               Non-blocking &bull; You can freely browse and edit products
             </span>
           )}
@@ -177,7 +177,7 @@ export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }
       {/* Expandable Error Details */}
       {showErrorDetails && errors && errors.length > 0 && (
         <div className="mt-3 p-2.5 rounded-xl bg-[var(--bg-primary)] border border-rose-500/20 max-h-36 overflow-y-auto space-y-1">
-          <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-1">
             Row Processing Issues:
           </p>
           {errors.slice(0, 10).map((err, idx) => (
@@ -187,7 +187,7 @@ export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }
             </div>
           ))}
           {errors.length > 10 && (
-            <p className="text-[11px] text-[var(--text-secondary)] italic pt-1">
+            <p className="text-xs text-[var(--text-secondary)] italic pt-1">
               ...and {errors.length - 10} more row error(s).
             </p>
           )}

@@ -198,7 +198,7 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
                   />
                 </label>
               </div>
-              <p className="text-[11px] text-[var(--text-muted)]">
+              <p className="text-xs text-[var(--text-muted)]">
                 Only CSV files are supported
               </p>
             </div>

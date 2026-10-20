@@ -159,7 +159,7 @@ export default function ReportsDashboard() {
                 <div className="relative z-10 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">{report.title}</h3>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 uppercase tracking-wider font-semibold">Locked</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30 uppercase tracking-wider font-semibold">Locked</span>
                   </div>
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{report.description}</p>
                   <p className="mt-3 text-xs text-[var(--accent-primary)] font-semibold">Click to unlock on Business</p>

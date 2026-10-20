@@ -188,7 +188,7 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
                 Unpaid / Free Leave
               </button>
             </div>
-            <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
+            <p className="text-xs text-[var(--text-muted)] mt-1.5">
               {form.is_paid
                 ? "Paid leaves are capped at the annual entitlement quota. Once an employee exhausts their quota, additional paid leave cannot be taken."
                 : "Unpaid / Free leaves are unpaid (Leave Without Pay) and can be used once paid leave is exhausted."}

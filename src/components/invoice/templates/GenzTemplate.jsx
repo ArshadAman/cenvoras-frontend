@@ -230,18 +230,18 @@ const GenzTemplate = forwardRef(({
                           <div className="py-0">
                             <p className="font-normal text-gray-900 text-sm leading-tight">{item.product_name || item.product}</p>
                             {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                              <p className="text-[10px] text-gray-500 font-medium italic mt-0.5">
+                              <p className="text-xs text-gray-500 font-medium italic mt-0.5">
                                 Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                               </p>
                             )}
-                            {item.hsn_sac_code && <p className="text-[11px] text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
+                            {item.hsn_sac_code && <p className="text-xs text-gray-400 mt-0.5">{getCountryCode() === 'IN' ? 'HSN:' : 'Tax Code:'} {item.hsn_sac_code}</p>}
                             {desc && (
-                              <p className="text-[11px] text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                              <p className="text-xs text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
                                 {desc}
                               </p>
                             )}
                             {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                              <p className="text-[10px] text-gray-500 mt-0.5 font-medium">
+                              <p className="text-xs text-gray-500 mt-0.5 font-medium">
                                 {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                                 {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                                 {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -314,7 +314,7 @@ const GenzTemplate = forwardRef(({
                   {bankQr && (
                     <div className="flex flex-col items-center">
                       <img src={bankQr} alt="Payment QR" className="w-16 h-16 object-contain rounded-lg border border-gray-200 p-0.5 bg-white shadow-sm" />
-                      <span className="text-[9px] text-gray-500 mt-1 font-semibold">Scan to Pay</span>
+                      <span className="text-xs text-gray-500 mt-1 font-semibold">Scan to Pay</span>
                     </div>
                   )}
                 </div>
@@ -388,14 +388,14 @@ const GenzTemplate = forwardRef(({
             </div>
           )}
           <div className="invoice-page-footer">
-            <div className="mt-6 pt-4 border-t border-gray-100 text-center text-[10px] text-gray-400 font-medium tracking-wide w-full">
+            <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-400 font-medium tracking-wide w-full">
               {isDeliveryChallan
                 ? 'This is a computer generated delivery challan and does not require a signature.'
                 : 'This is a computer generated digital invoice and does not require a signature.'}
             </div>
             
             {showWatermarkFooter && (
-              <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
+              <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
                 Made with Cenvora: Built for Modern Businesses<br />
                 <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
               </div>

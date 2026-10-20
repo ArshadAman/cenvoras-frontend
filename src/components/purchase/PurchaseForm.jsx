@@ -169,7 +169,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
               }}
             />
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[8px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
+              <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -188,7 +188,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
                 e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
               }}
               placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)] rounded px-1.5 py-0.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)] rounded px-1.5 py-0.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
@@ -208,7 +208,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
             </div>
           ))}
           {filteredProducts.length > 50 && (
-             <div className="px-3 py-2 text-[10px] text-[var(--text-muted)] text-center italic border-t border-[var(--border-subtle)]">
+             <div className="px-3 py-2 text-xs text-[var(--text-muted)] text-center italic border-t border-[var(--border-subtle)]">
                 Showing top 50 results...
              </div>
           )}
@@ -309,7 +309,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
               <div className="font-semibold text-[var(--text-primary)] flex items-center justify-between">
                 <span>{vendor.name}</span>
                 {vendor.gstin && (
-                  <span className="text-[10px] bg-[var(--bg-primary)] text-[var(--text-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)] font-mono">
+                  <span className="text-xs bg-[var(--bg-primary)] text-[var(--text-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)] font-mono">
                     GST: {vendor.gstin}
                   </span>
                 )}
@@ -693,7 +693,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                   {/* Bill Details Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="relative group">
-                      <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                      <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                         Bill Number <span className="text-[var(--status-danger)]">*</span>
                       </label>
                       <Field
@@ -705,11 +705,11 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                         data-1p-ignore="true"
                         className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none transition-all hover:border-[var(--border-subtle)] text-xs font-bold"
                       />
-                      <ErrorMessage name="bill_number" component="div" className="text-[var(--status-danger)] text-[10px] mt-1.5 ml-1 font-medium" />
+                      <ErrorMessage name="bill_number" component="div" className="text-[var(--status-danger)] text-xs mt-1.5 ml-1 font-medium" />
                     </div>
                     
                     <div className="relative group">
-                      <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                      <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                         Bill Date <span className="text-[var(--status-danger)]">*</span>
                       </label>
                       <DateInputField
@@ -722,7 +722,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     </div>
 
                     <div className="relative group">
-                      <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                      <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                         Warehouse
                       </label>
                       <div className="relative">
@@ -745,7 +745,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     </div>
 
                     <div className="relative group">
-                      <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                      <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                         Due Date
                       </label>
                       <DateInputField
@@ -762,16 +762,16 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-8 border-t border-[var(--border-subtle)]">
                     <div className="md:col-span-4 space-y-6">
                       <div className="relative group">
-                        <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                        <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                           Vendor Name <span className="text-[var(--status-danger)]">*</span>
                         </label>
                         <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
-                        <ErrorMessage name="vendor_name" component="div" className="text-[var(--status-danger)] text-[10px] mt-1.5 ml-1 font-medium" />
+                        <ErrorMessage name="vendor_name" component="div" className="text-[var(--status-danger)] text-xs mt-1.5 ml-1 font-medium" />
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div className="relative group">
-                          <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                          <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                             GSTIN
                           </label>
                           <Field
@@ -781,7 +781,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                           />
                         </div>
                         <div className="relative group">
-                          <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
+                          <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                             Journal
                           </label>
                           <Field
@@ -793,7 +793,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     </div>
 
                     <div className="md:col-span-8 flex flex-col">
-                      <label className="block text-[10px] font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest">
+                      <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest">
                         Vendor Address & Treatment
                       </label>
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -805,7 +805,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                         />
                         <div className="space-y-4">
                            <div className="relative group">
-                              <label className="block text-[8px] font-black text-[var(--text-muted)] mb-1 uppercase">GST Treatment</label>
+                              <label className="block text-xs font-black text-[var(--text-muted)] mb-1 uppercase">GST Treatment</label>
                               <Field
                                 name="gst_treatment"
                                 as="select"
@@ -821,7 +821,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                              <Field type="checkbox" name="is_reverse_charge" className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)]" />
                              Reverse charge (RCM)
                            </label>
-                           <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                           <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs text-[var(--text-muted)] leading-relaxed italic">
                              Address and GSTIN will be used to automatically calculate Intra-state (CGST/SGST) or Inter-state (IGST) taxes.
                            </div>
                         </div>
@@ -848,7 +848,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
 
                       {showColumnPicker && (
                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-2xl">
-                          <div className="mb-2 text-[11px] uppercase tracking-wide text-[var(--text-muted)]">Show/Hide Columns</div>
+                          <div className="mb-2 text-xs uppercase tracking-wide text-[var(--text-muted)]">Show/Hide Columns</div>
                           <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-primary)] cursor-pointer">
                             <input
                               type="checkbox"
@@ -861,7 +861,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                         </div>
                       )}
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest hidden sm:block">
+                    <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest hidden sm:block">
                       {values.items.length} {values.items.length === 1 ? 'Item' : 'Items'} Listed
                     </div>
                   </div>
@@ -872,7 +872,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     <div className="space-y-4">
                       
                         {/* Table Header */}
-                        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-[9px] text-[var(--text-muted)] uppercase tracking-widest mb-3">
+                        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-xs text-[var(--text-muted)] uppercase tracking-widest mb-3">
                             <div className="col-span-3">Product / HSN</div>
                             <div className="col-span-2">Batch Details</div>
                             <div className="col-span-1 text-center">Quantity</div>
@@ -945,7 +945,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                            <div className="mt-4 p-4 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl">
                              <div className="flex items-center justify-between mb-2">
                                <label className="text-xs font-semibold text-[var(--text-primary)]">Bill Notes & Remarks</label>
-                               <span className="text-[10px] text-[var(--text-muted)]">Internal notes & vendor terms</span>
+                               <span className="text-xs text-[var(--text-muted)]">Internal notes & vendor terms</span>
                              </div>
                              <Field
                                as="textarea"
@@ -988,8 +988,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                       <div className="h-px bg-[var(--border-subtle)]"></div>
                       <div className="flex justify-between items-center">
                         <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest">Payable Amount</span>
-                          <span className="text-[8px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">Net Total (Inclusive of all taxes)</span>
+                          <span className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-widest">Payable Amount</span>
+                          <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-tighter">Net Total (Inclusive of all taxes)</span>
                         </div>
                         <span className="text-3xl font-black text-[var(--text-primary)] tabular-nums drop-shadow-md">{getCurrencySymbol()}{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
@@ -1001,7 +1001,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
 
               {/* Actions Footer */}
               <div className="flex-none p-6 sm:p-8 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-4 rounded-b-[24px] items-center z-40 relative">
-                <div className="flex-1 text-[var(--text-muted)] text-[10px] font-medium uppercase tracking-[0.1em] hidden sm:block">
+                <div className="flex-1 text-[var(--text-muted)] text-xs font-medium uppercase tracking-[0.1em] hidden sm:block">
                   All changes are saved locally until finalized.
                 </div>
                 <Button
@@ -1047,7 +1047,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
       {/* Product & HSN (3 cols) */}
       <div className="md:col-span-3 space-y-2.5">
          <div className="relative">
-            <label className="block text-[9px] font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Product</label>
+            <label className="block text-xs font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Product</label>
             <ProductAutocomplete idx={idx} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
          </div>
          <div className="flex items-center gap-2">
@@ -1056,7 +1056,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                     <input 
                         {...field} 
                         placeholder="HSN/SAC Code" 
-                        className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-[var(--text-primary)] text-[9px] font-bold focus:border-[var(--accent-primary)] outline-none uppercase tracking-wider"
+                        className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-[var(--text-primary)] text-xs font-bold focus:border-[var(--accent-primary)] outline-none uppercase tracking-wider"
                         onBlur={async (e) => {
                           field.onBlur(e);
                           await autofillTaxFromLearnedHsn(
@@ -1068,7 +1068,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                     />
                 )}
             </Field>
-            <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-tighter border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)]`}>
+            <div className={`px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)]`}>
                {item.isExistingProduct ? "Master" : "New"}
             </div>
          </div>
@@ -1077,18 +1077,18 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
       {/* Batch & Expiry (2 cols) */}
       <div className="md:col-span-2 flex flex-col gap-2">
           <div className="relative">
-            <label className="block text-[9px] font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Batch Number</label>
+            <label className="block text-xs font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Batch Number</label>
             <Field name={`items.${idx}.batch_number`}>
               {({ field }) => (
-                <input {...field} placeholder="BATCH NO" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-[10px] font-bold focus:border-[var(--accent-primary)] outline-none placeholder:text-[var(--text-muted)]" />
+                <input {...field} placeholder="BATCH NO" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs font-bold focus:border-[var(--accent-primary)] outline-none placeholder:text-[var(--text-muted)]" />
               )}
             </Field>
           </div>
           <div className="relative">
-             <label className="block text-[9px] font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Expiry Date</label>
+             <label className="block text-xs font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Expiry Date</label>
              <Field name={`items.${idx}.expiry_date`}>
                {({ field }) => (
-                 <input {...field} type="date" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 text-[var(--text-primary)] text-[10px] font-bold focus:border-[var(--accent-primary)] outline-none" />
+                 <input {...field} type="date" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 text-[var(--text-primary)] text-xs font-bold focus:border-[var(--accent-primary)] outline-none" />
                )}
              </Field>
           </div>
@@ -1097,7 +1097,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
       {/* Qty, Free, Unit (3 cols) */}
       <div className="md:col-span-3 grid grid-cols-3 gap-2">
           <div className="space-y-1.5">
-             <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Qty</label>
+             <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Qty</label>
              <Field
                  name={`items.${idx}.quantity`}
                  type="number"
@@ -1106,7 +1106,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
              />
           </div>
           <div className="space-y-1.5">
-              <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Free</label>
+              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Free</label>
               <Field
                   name={`items.${idx}.free_quantity`}
                   type="number"
@@ -1116,7 +1116,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
               />
           </div>
           <div className="space-y-1.5">
-              <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Unit</label>
+              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Unit</label>
               <select
                 value={item.unit || "pcs"}
                 onChange={(e) => {
@@ -1132,7 +1132,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                     setFieldValue(`items.${idx}.unit`, val);
                   }
                 }}
-                className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-[10px] uppercase text-center"
+                className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs uppercase text-center"
               >
                 {units.map(u => <option key={u} value={u}>{u}</option>)}
                 <option value="__custom__" className="text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
@@ -1143,7 +1143,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
       {/* Price, Disc, Tax (3 cols) */}
       <div className="md:col-span-3 grid grid-cols-12 gap-2">
           <div className="col-span-6 space-y-1.5">
-              <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Unit Price</label>
+              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Unit Price</label>
               <Field
                   name={`items.${idx}.purchase_price`}
                   type="number"
@@ -1153,16 +1153,16 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
               />
           </div>
           <div className="col-span-3 space-y-1.5">
-              <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Disc%</label>
-              <Field name={`items.${idx}.discount`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 py-3 text-center text-[var(--text-primary)] text-[10px] font-bold focus:border-[var(--accent-primary)] outline-none" placeholder="0" />
+              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Disc%</label>
+              <Field name={`items.${idx}.discount`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 py-3 text-center text-[var(--text-primary)] text-xs font-bold focus:border-[var(--accent-primary)] outline-none" placeholder="0" />
           </div>
           <div className="col-span-3 space-y-1.5">
-              <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Tax%</label>
+              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Tax%</label>
               <Field
                 name={`items.${idx}.tax`}
                 type="number"
                 step="1"
-                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 py-3 text-center text-[var(--text-primary)] text-[10px] font-bold focus:border-[var(--accent-primary)] outline-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 py-3 text-center text-[var(--text-primary)] text-xs font-bold focus:border-[var(--accent-primary)] outline-none"
                 placeholder="0"
                 onKeyDown={(e) => {
                   if (e.key === "Tab" && !e.shiftKey && isLastRow && typeof push === "function") {
@@ -1201,7 +1201,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
       {/* Amount & Actions (1 col) */}
       <div className="md:col-span-1 flex flex-col items-end gap-2">
           <div className="text-right">
-              <label className="block text-[9px] font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest mb-1">Subtotal</label>
+              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest mb-1">Subtotal</label>
               <div className="font-black text-[var(--text-primary)] text-sm tabular-nums tracking-tighter">
                   {getCurrencySymbol()}{calculatedAmount.toFixed(2)}
               </div>

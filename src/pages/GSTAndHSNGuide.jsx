@@ -167,7 +167,7 @@ export default function GSTAndHSNGuide() {
                     GST {item.gst_rate}%
                   </span>
                   {item.usage_count > 1 ? (
-                    <span className="text-[11px] text-[var(--text-muted)]">used {item.usage_count}×</span>
+                    <span className="text-xs text-[var(--text-muted)]">used {item.usage_count}×</span>
                   ) : null}
                 </div>
                 <Button
@@ -262,7 +262,7 @@ export default function GSTAndHSNGuide() {
             >
               <div className="text-2xl font-black text-[var(--text-primary)]">{card.rate}</div>
               <div className="text-xs font-bold text-[var(--text-primary)] mt-1">{card.title}</div>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-relaxed">
+              <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
                 {card.description}
               </p>
             </div>

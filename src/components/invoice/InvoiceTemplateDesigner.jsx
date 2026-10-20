@@ -877,7 +877,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-gray-500 mt-1.5">
+                <p className="text-xs text-gray-500 mt-1.5">
                   Choose which profile account to print. To add or edit accounts, visit Profile → Bank & Payment Details.
                 </p>
 

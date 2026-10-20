@@ -308,7 +308,7 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
 
               {/* Preview Table */}
               <div className="border border-[var(--border-default)] rounded-xl overflow-hidden bg-[var(--bg-primary)]/30">
-                <div className="px-4 py-2 bg-[var(--bg-primary)]/60 border-b border-[var(--border-subtle)] text-[11px] font-medium text-[var(--text-secondary)] flex justify-between">
+                <div className="px-4 py-2 bg-[var(--bg-primary)]/60 border-b border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] flex justify-between">
                   <span>File Preview (First 5 Rows):</span>
                   <span className="text-[var(--accent-primary)] font-semibold">Row {headerRowIndex + 1} selected as Headers</span>
                 </div>
@@ -324,7 +324,7 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                               isHeader ? 'bg-[var(--accent-primary)]/15 text-[var(--text-primary)] font-bold' : 'hover:bg-[var(--bg-surface)]/60 text-[var(--text-secondary)]'
                             }`}
                           >
-                            <td className="p-2 px-3 text-[var(--text-muted)] text-[10px] w-12 border-r border-[var(--border-subtle)]">
+                            <td className="p-2 px-3 text-[var(--text-muted)] text-xs w-12 border-r border-[var(--border-subtle)]">
                               #{rIdx + 1}
                             </td>
                             {row.map((cell, cIdx) => (
@@ -374,13 +374,13 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
                           {field.required && <span className="text-rose-400">*</span>}
                         </label>
                         {isMapped ? (
-                          <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1">
+                          <span className="text-xs font-medium text-emerald-400 flex items-center gap-1">
                             <CheckCircleIcon className="w-3.5 h-3.5" /> Mapped
                           </span>
                         ) : field.required ? (
-                          <span className="text-[10px] font-medium text-rose-400">Required</span>
+                          <span className="text-xs font-medium text-rose-400">Required</span>
                         ) : (
-                          <span className="text-[10px] text-[var(--text-muted)]">Optional</span>
+                          <span className="text-xs text-[var(--text-muted)]">Optional</span>
                         )}
                       </div>
 

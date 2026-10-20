@@ -78,7 +78,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               }}
             />
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
-              <div className="text-[8px] text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
+              <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
@@ -97,7 +97,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
               }}
               placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)]/40 rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-[11px] leading-relaxed resize-none italic mt-1"
+              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)]/40 rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
             />
           </div>
         )}
@@ -259,7 +259,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
 
                        {showColumnPicker && (
                          <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-2xl">
-                           <div className="mb-2 text-[11px] uppercase tracking-wide text-[var(--text-secondary)]">Show/Hide Columns</div>
+                           <div className="mb-2 text-xs uppercase tracking-wide text-[var(--text-secondary)]">Show/Hide Columns</div>
                            <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-secondary)] cursor-pointer">
                              <input
                                type="checkbox"

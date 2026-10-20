@@ -69,7 +69,7 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
           
           {/* Financial Year */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">FY:</span>
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">FY:</span>
             <select
               value={filters.financialYear || ""}
               onChange={(e) => handleFinancialYearChange(e.target.value)}
@@ -87,7 +87,7 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
 
           {/* Date Range with dd/mm/yyyy */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Date:</span>
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Date:</span>
             <div className="w-32 sm:w-36">
               <DateInputField
                 value={filters.dateRange.start}
@@ -109,7 +109,7 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
 
           {/* Amount Range */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Amount:</span>
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Amount:</span>
             <div className="relative w-28 sm:w-32">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">₹</span>
               <input
@@ -137,7 +137,7 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
 
           {/* Customer Search Filter */}
           <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-            <span className="text-[11px] sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider shrink-0">Customer:</span>
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider shrink-0">Customer:</span>
             <input
               type="text"
               placeholder="Search by customer name..."

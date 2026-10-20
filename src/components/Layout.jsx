@@ -414,7 +414,7 @@ export default function Layout({ children, onLogout }) {
               </Link>
               <div className="flex items-center gap-1.5 shrink-0">
                 <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border truncate max-w-[85px] ${
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold tracking-wider uppercase border truncate max-w-[85px] ${
                     isVipAccess
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
                       : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-default)]'
@@ -470,7 +470,7 @@ export default function Layout({ children, onLogout }) {
               {!isSidebarCollapsed && <span>Quick Search...</span>}
             </div>
             {!isSidebarCollapsed && (
-              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-default)]">⌘K</kbd>
+              <kbd className="text-xs font-mono px-1.5 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-default)]">⌘K</kbd>
             )}
           </button>
         </div>
@@ -490,7 +490,7 @@ export default function Layout({ children, onLogout }) {
                   <button
                     type="button"
                     onClick={() => toggleSection(group.title)}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
                     title={isCollapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
                   >
                     <span className="truncate">{group.title}</span>
@@ -539,7 +539,7 @@ export default function Layout({ children, onLogout }) {
                               <Icon className="w-5 h-5 shrink-0 text-gray-500" />
                               <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
                                 <span>{item.label}</span>
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                               </div>
                             </button>
                           );
@@ -593,7 +593,7 @@ export default function Layout({ children, onLogout }) {
                           >
                             <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-sm flex-1 truncate">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shrink-0">{lockLabel}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shrink-0">{lockLabel}</span>
                           </button>
                         );
                       }
@@ -657,7 +657,7 @@ export default function Layout({ children, onLogout }) {
                   location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'
                 }`} />
                 <span className="text-sm flex-1 truncate">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase shrink-0">New</span>
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase shrink-0">New</span>
               </Link>
 
               {/* Sign Out */}
@@ -700,7 +700,7 @@ export default function Layout({ children, onLogout }) {
                 <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
                 <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-1.5">
                   <span>Coming Soon</span>
-                  <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)]">NEW</span>
+                  <span className="px-1 py-0.5 rounded text-xs font-bold bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)]">NEW</span>
                 </div>
               </Link>
 
@@ -751,7 +751,7 @@ export default function Layout({ children, onLogout }) {
               <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-secondary)]" />
             </button>
             <span
-              className="px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-default)]"
+              className="px-2 py-1 rounded-md text-xs font-bold tracking-wider uppercase border bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-default)]"
               title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
             >
               {isVipAccess ? 'VIP' : displayPlanName}
@@ -797,7 +797,7 @@ export default function Layout({ children, onLogout }) {
                     <button
                       type="button"
                       onClick={() => toggleSection(group.title)}
-                      className="w-full flex items-center justify-between px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
+                      className="w-full flex items-center justify-between px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
                     >
                       <span>{group.title}</span>
                       <ChevronDownIcon
@@ -838,7 +838,7 @@ export default function Layout({ children, onLogout }) {
                           >
                             <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-sm flex-1">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
                           </button>
                         );
                       }
@@ -853,7 +853,7 @@ export default function Layout({ children, onLogout }) {
                           >
                             <Icon className="w-5 h-5 text-[var(--text-muted)]" />
                             <span className="text-sm flex-1">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">Soon</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">Soon</span>
                           </Link>
                         );
                       }
@@ -901,7 +901,7 @@ export default function Layout({ children, onLogout }) {
               >
                 <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                 <span className="text-sm flex-1">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">New</span>
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">New</span>
               </Link>
               <button
                 onClick={() => { handleSignOut(); setIsMobileMenuOpen(false); }}

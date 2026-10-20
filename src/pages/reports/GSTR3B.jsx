@@ -133,12 +133,12 @@ export default function GSTR3B() {
         <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div>
-              <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">GSTIN</span>
+              <span className="text-xs uppercase font-bold text-[var(--text-muted)] tracking-wider">GSTIN</span>
               <div className="text-[var(--text-primary)] font-mono font-bold">{data.gstin || 'NOT REGISTERED'}</div>
             </div>
             <div className="h-8 w-px bg-[var(--border-subtle)] hidden sm:block" />
             <div>
-              <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Legal Name</span>
+              <span className="text-xs uppercase font-bold text-[var(--text-muted)] tracking-wider">Legal Name</span>
               <div className="text-[var(--text-primary)] font-medium">{data.legal_name || 'Business'}</div>
             </div>
           </div>
@@ -258,7 +258,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Nature of Supplies</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Taxable Value</th>
@@ -366,7 +366,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Nature of Supplies</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Taxable Value</th>
@@ -434,7 +434,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Place of Supply (State)</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Taxable Value</th>
@@ -478,7 +478,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Details</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Integrated Tax (IGST)</th>
@@ -604,7 +604,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Nature of Supplies</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Inter-State Supplies</th>
@@ -651,7 +651,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Description</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Integrated Tax (IGST)</th>
@@ -704,7 +704,7 @@ export default function GSTR3B() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-[10px]">
+                  <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] uppercase tracking-wider text-xs">
                     <tr>
                       <th className="py-2.5 px-4 font-semibold">Description</th>
                       <th className="py-2.5 px-4 font-semibold text-right">Tax Payable</th>

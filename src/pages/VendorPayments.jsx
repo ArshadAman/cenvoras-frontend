@@ -276,7 +276,7 @@ export default function VendorPayments() {
                   <span className="font-mono text-[var(--status-success)] font-semibold">{formatCurrency(tdsPreview.net)}</span>
                 </div>
                 {tdsPreview.note ? (
-                  <p className="text-[var(--status-warning)] pt-1 text-[11px]">{tdsPreview.note}</p>
+                  <p className="text-[var(--status-warning)] pt-1 text-xs">{tdsPreview.note}</p>
                 ) : null}
               </div>
             )}

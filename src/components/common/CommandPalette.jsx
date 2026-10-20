@@ -372,7 +372,7 @@ export default function CommandPalette({ isOpen, onClose }) {
             placeholder="Type a command, page, or search keywords..."
             className="w-full bg-transparent text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono text-slate-400 bg-slate-800/80 rounded border border-slate-700">
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono text-slate-400 bg-slate-800/80 rounded border border-slate-700">
             ESC
           </kbd>
         </div>
@@ -419,7 +419,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                     </div>
                   </div>
                   <span
-                    className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border shrink-0 ml-2 ${
+                    className={`text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border shrink-0 ml-2 ${
                       isSelected
                         ? 'bg-blue-500/30 text-blue-200 border-blue-400/40'
                         : 'bg-slate-800/70 text-slate-400 border-slate-700'
@@ -434,7 +434,7 @@ export default function CommandPalette({ isOpen, onClose }) {
         </div>
 
         {/* Footer shortcuts hint */}
-        <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center gap-3">
             <span>
               <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">↑</kbd>{' '}

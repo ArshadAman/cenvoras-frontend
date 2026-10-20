@@ -398,7 +398,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                   onClick={() => setShowColumnDropdown(false)}
                 />
                 <div className="absolute right-0 mt-2 w-56 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-2 z-30">
-                  <div className="px-2 py-1.5 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border-subtle)] mb-1">
+                  <div className="px-2 py-1.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border-subtle)] mb-1">
                     Toggle Columns
                   </div>
                   <div className="space-y-1">
@@ -573,7 +573,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                                 navigate(`/sales?invoice=${challan.converted_invoice}`);
                               }
                             }}
-                            className="text-[11px] font-mono font-semibold text-[var(--status-success)] hover:underline flex items-center gap-1 transition-colors cursor-pointer"
+                            className="text-xs font-mono font-semibold text-[var(--status-success)] hover:underline flex items-center gap-1 transition-colors cursor-pointer"
                             title="Click to view converted invoice"
                           >
                             <span>Inv #{challan.converted_invoice_number || challan.converted_invoice}</span>
@@ -591,7 +591,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <div className="font-medium text-[var(--text-primary)]">{challan.customer_name}</div>
                         {challan.customer_gstin && (
-                          <div className="text-[11px] text-[var(--text-muted)] font-mono">
+                          <div className="text-xs text-[var(--text-muted)] font-mono">
                             {challan.customer_gstin}
                           </div>
                         )}
@@ -628,7 +628,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                           <span className="text-[var(--text-muted)] text-xs italic">Not specified</span>
                         )}
                         {challan.transport_mode && (
-                          <div className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">
+                          <div className="text-xs uppercase text-[var(--text-muted)] tracking-wider">
                             Mode: {challan.transport_mode}
                           </div>
                         )}
@@ -651,16 +651,16 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                     {visibleColumns.status && (
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         {isInvoiced ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                             <DocumentCheckIcon className="w-3.5 h-3.5" />
                             Invoiced
                           </span>
                         ) : isDraft ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] uppercase font-bold tracking-wider bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
                             Draft
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] uppercase font-bold tracking-wider bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30">
                             Open / Dispatched
                           </span>
                         )}
@@ -757,7 +757,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                         <TruckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                         #{challan.challan_number}
                       </div>
-                      <div className="text-[11px] text-[var(--text-muted)]">
+                      <div className="text-xs text-[var(--text-muted)]">
                         {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </div>
                       {challan.converted_invoice && (
@@ -771,7 +771,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                               navigate(`/sales?invoice=${challan.converted_invoice}`);
                             }
                           }}
-                          className="mt-1 text-[11px] font-mono font-semibold text-[var(--status-success)] hover:underline flex items-center gap-1 transition-colors"
+                          className="mt-1 text-xs font-mono font-semibold text-[var(--status-success)] hover:underline flex items-center gap-1 transition-colors"
                           title="Click to view converted invoice"
                         >
                           <span>Inv #{challan.converted_invoice_number || challan.converted_invoice}</span>
@@ -790,15 +790,15 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                     </div>
                     <div className="mt-1">
                       {isInvoiced ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                           Invoiced
                         </span>
                       ) : isDraft ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30">
                           Draft
                         </span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30">
                           Open
                         </span>
                       )}
@@ -810,24 +810,24 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 <div className="grid grid-cols-2 gap-3 py-3 border-y border-[var(--border-subtle)] text-xs">
                   {visibleColumns.customer && (
                     <div>
-                      <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Customer</span>
+                      <span className="text-[var(--text-muted)] block text-xs uppercase font-bold">Customer</span>
                       <span className="text-[var(--text-primary)] font-medium truncate block">{challan.customer_name}</span>
                     </div>
                   )}
                   {visibleColumns.transport && (
                     <div>
-                      <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Vehicle</span>
+                      <span className="text-[var(--text-muted)] block text-xs uppercase font-bold">Vehicle</span>
                       <span className="text-[var(--text-primary)] font-mono">{challan.vehicle_number || "—"}</span>
                     </div>
                   )}
                   {visibleColumns.items && (
                     <div>
-                      <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Items</span>
+                      <span className="text-[var(--text-muted)] block text-xs uppercase font-bold">Items</span>
                       <span className="text-[var(--text-primary)]">{challan.items?.length || 0} items</span>
                     </div>
                   )}
                   <div>
-                    <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">E-Way Bill</span>
+                    <span className="text-[var(--text-muted)] block text-xs uppercase font-bold">E-Way Bill</span>
                     <span className="text-[var(--text-primary)] font-mono">{challan.eway_bill_number || "—"}</span>
                   </div>
                 </div>
@@ -835,7 +835,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 {/* Ref Sales Order (Mobile) */}
                 {visibleColumns.sales_order && (challan.sales_order || challan.sales_order_number) && (
                   <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30">
-                    <span className="text-[10px] text-[var(--accent-primary)] font-bold uppercase tracking-wider flex items-center gap-1">
+                    <span className="text-xs text-[var(--accent-primary)] font-bold uppercase tracking-wider flex items-center gap-1">
                       <ClipboardDocumentListIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       Ref Sales Order
                     </span>

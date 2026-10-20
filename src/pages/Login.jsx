@@ -119,15 +119,15 @@ export default function Login({ onLogin }) {
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
                 <div className="text-lg font-bold text-[var(--text-primary)] font-mono">₹1.2M+</div>
-                <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Daily Invoiced</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">Daily Invoiced</div>
               </div>
               <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
                 <div className="text-lg font-bold text-[var(--status-success)] font-mono">99.98%</div>
-                <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Uptime SLA</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">Uptime SLA</div>
               </div>
               <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
                 <div className="text-lg font-bold text-[var(--accent-primary)] font-mono">100%</div>
-                <div className="text-[11px] text-[var(--text-muted)] mt-0.5">GST Compliant</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">GST Compliant</div>
               </div>
             </div>
           </div>
@@ -251,7 +251,7 @@ export default function Login({ onLogin }) {
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-[var(--border-subtle)]"></div>
                       </div>
-                      <div className="relative flex justify-center text-[11px] text-[var(--text-muted)] font-medium">
+                      <div className="relative flex justify-center text-xs text-[var(--text-muted)] font-medium">
                         <span className="bg-[var(--bg-surface)] px-3">or continue with</span>
                       </div>
                     </div>

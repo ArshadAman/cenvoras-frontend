@@ -734,7 +734,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)] tracking-tight">
                   {isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}
                 </h2>
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                <span className="px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                   {enrichedInvoice.invoice_number || 'Draft'}
                 </span>
               </div>
@@ -798,7 +798,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 >
                   <PaintBrushIcon className="w-4 h-4" />
                 </button>
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Customize Template
                 </div>
               </div>
@@ -814,7 +814,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 >
                   <PrinterIcon className="w-4 h-4" />
                 </button>
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Print Document
                 </div>
               </div>
@@ -849,7 +849,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 </div>
 
                 {!pdfMenuOpen && (
-                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover/pdf:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover/pdf:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                     Download PDF
                   </div>
                 )}
@@ -866,7 +866,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                       </div>
                       <div className="flex flex-col">
                         <span className="font-semibold text-[var(--text-primary)]">Download Vector PDF</span>
-                        <span className="text-[11px] text-[var(--text-muted)]">~20KB, crystal-clear direct vector file</span>
+                        <span className="text-xs text-[var(--text-muted)]">~20KB, crystal-clear direct vector file</span>
                       </div>
                     </button>
 
@@ -880,7 +880,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                       </div>
                       <div className="flex flex-col">
                         <span className="font-semibold text-[var(--text-primary)]">Direct Canvas Download</span>
-                        <span className="text-[11px] text-[var(--text-muted)]">~45KB, high-res client fallback</span>
+                        <span className="text-xs text-[var(--text-muted)]">~45KB, high-res client fallback</span>
                       </div>
                     </button>
 
@@ -894,7 +894,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                       </div>
                       <div className="flex flex-col">
                         <span className="font-semibold text-[var(--text-primary)]">System Print Dialog</span>
-                        <span className="text-[11px] text-[var(--text-muted)]">Print or choose destination printer</span>
+                        <span className="text-xs text-[var(--text-muted)]">Print or choose destination printer</span>
                       </div>
                     </button>
                   </div>
@@ -917,7 +917,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                     <EnvelopeIcon className="w-4 h-4" />
                   )}
                 </button>
-                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Send via Email
                 </div>
               </div>
@@ -934,7 +934,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   <WhatsAppIcon className="w-4 h-4" />
                   <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
                 </button>
-                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   WhatsApp (On Demand)
                 </div>
               </div>
@@ -953,7 +953,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
-                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-[11px] font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
                   Close (Esc)
                 </div>
               </div>

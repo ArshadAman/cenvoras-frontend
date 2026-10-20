@@ -260,11 +260,11 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-[var(--text-primary)] flex items-center justify-between">
                     <span>Delivery Challan</span>
-                    <span className="text-[10px] text-[var(--accent-primary)] font-medium">
+                    <span className="text-xs text-[var(--accent-primary)] font-medium">
                       {allDispatched ? 'Fully Dispatched' : 'Dispatch'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-tight">
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 leading-tight">
                     {allDispatched 
                       ? 'All items of this order were already dispatched via Challan.' 
                       : 'Dispatches goods & reduces inventory stock. No ledger/receivable entry created.'}
@@ -287,11 +287,11 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-[var(--text-primary)] flex items-center justify-between">
                     <span>Sales Invoice</span>
-                    <span className="text-[10px] text-[var(--accent-primary)] font-medium">
+                    <span className="text-xs text-[var(--accent-primary)] font-medium">
                       {isPostDeliveryInvoicing ? 'Invoice Delivered Goods' : 'Direct Billing'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-tight">
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 leading-tight">
                     {isPostDeliveryInvoicing
                       ? 'Converts delivered order items into Sales Invoice referencing Delivery Challan without double-deducting stock.'
                       : 'Converts selected items directly into a final GST tax invoice with ledger accounting.'}
@@ -305,7 +305,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
               <div className="flex items-center justify-between">
                 <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-2">
                   <span>Select Items to {conversionType === 'challan' ? 'Dispatch' : 'Invoice'}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 font-mono">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 font-mono">
                     {selectedItemIds.size} of {orderItems.length} selected
                   </span>
                 </div>
@@ -358,7 +358,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                             <p className={`text-xs font-semibold truncate ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
                               {item.product_name}
                             </p>
-                            <p className="text-[11px] text-[var(--text-secondary)]">
+                            <p className="text-xs text-[var(--text-secondary)]">
                               {isPostDeliveryInvoicing ? 'Delivered Qty: ' : 'Pending Qty: '}
                               <strong className="text-[var(--text-primary)]">{maxQty} {item.unit || 'pcs'}</strong>
                               {item.dispatched_quantity > 0 && !isPostDeliveryInvoicing && (
@@ -372,7 +372,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                         {/* Item Right: Quantity Input & Line Amount */}
                         <div className="flex items-center justify-between sm:justify-end gap-3 pl-8 sm:pl-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] text-[var(--text-secondary)] font-medium">
+                            <span className="text-xs text-[var(--text-secondary)] font-medium">
                               {conversionType === 'challan' ? 'Dispatch Qty:' : 'Invoice Qty:'}
                             </span>
                             <input
@@ -384,7 +384,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                               onChange={(e) => handleQuantityChange(item.id, maxQty, e.target.value)}
                               className="w-20 px-2.5 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] text-xs text-center font-bold font-mono focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-40"
                             />
-                            <span className="text-[11px] text-[var(--text-secondary)]">{item.unit || 'pcs'}</span>
+                            <span className="text-xs text-[var(--text-secondary)]">{item.unit || 'pcs'}</span>
                           </div>
 
                           <div className="text-right min-w-[70px]">
@@ -428,7 +428,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                   {showTransportFields && (
                     <div className="p-4 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--bg-surface)]">
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-[var(--text-secondary)] mb-1">Vehicle No.</label>
+                        <label className="block text-xs uppercase font-bold text-[var(--text-secondary)] mb-1">Vehicle No.</label>
                         <input
                           type="text"
                           placeholder="e.g. MH12AB1234"
@@ -438,7 +438,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-[var(--text-secondary)] mb-1">Transport Mode</label>
+                        <label className="block text-xs uppercase font-bold text-[var(--text-secondary)] mb-1">Transport Mode</label>
                         <input
                           type="text"
                           placeholder="Road, Air, Courier..."
@@ -448,7 +448,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-[var(--text-secondary)] mb-1">E-Way Bill No.</label>
+                        <label className="block text-xs uppercase font-bold text-[var(--text-secondary)] mb-1">E-Way Bill No.</label>
                         <input
                           type="text"
                           placeholder="12-digit number"
@@ -468,7 +468,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
           {/* Footer */}
           <div className="px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
             <div className="text-xs">
-              <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">
+              <span className="text-[var(--text-muted)] block text-xs uppercase font-bold">
                 {conversionType === 'challan' ? 'Challan Dispatch Value' : 'Invoice Value'}
               </span>
               <span className="text-[var(--text-primary)] font-bold text-base font-mono">

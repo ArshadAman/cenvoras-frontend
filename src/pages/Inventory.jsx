@@ -93,7 +93,7 @@ export default function Inventory() {
         <section className="relative rounded-3xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-2xl backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--accent-primary)] font-bold mb-2">Inventory Control</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] font-bold mb-2">Inventory Control</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] mb-2 flex items-center gap-3">
                 <CubeIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Product Inventory

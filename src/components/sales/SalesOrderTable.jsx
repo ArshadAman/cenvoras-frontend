@@ -167,13 +167,13 @@ export default function SalesOrderTable({
                             <div className="text-[var(--text-primary)] font-medium flex items-center gap-2">
                               <span>{order.order_number}</span>
                               {isHighlighted && (
-                                <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full">
+                                <span className="px-2 py-0.5 text-xs font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full">
                                   Referenced
                                 </span>
                               )}
                             </div>
                             {order.po_number && (
-                              <div className="text-[11px] text-[var(--text-secondary)] font-mono mt-0.5 flex items-center gap-1.5">
+                              <div className="text-xs text-[var(--text-secondary)] font-mono mt-0.5 flex items-center gap-1.5">
                                 <span className="font-semibold">PO: {order.po_number}</span>
                                 {order.po_date && (
                                   <span className="text-[var(--text-muted)] font-normal">
@@ -281,13 +281,13 @@ export default function SalesOrderTable({
                     <div className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
                       <span>{order.order_number}</span>
                       {isHighlighted && (
-                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full">
+                        <span className="px-2 py-0.5 text-xs font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full">
                           Referenced
                         </span>
                       )}
                     </div>
                     {order.po_number && (
-                      <div className="text-[10px] text-[var(--text-secondary)] font-mono mt-0.5 flex items-center gap-1">
+                      <div className="text-xs text-[var(--text-secondary)] font-mono mt-0.5 flex items-center gap-1">
                         <span className="font-semibold">PO: {order.po_number}</span>
                         {order.po_date && (
                           <span className="text-[var(--text-muted)] font-normal">
@@ -296,7 +296,7 @@ export default function SalesOrderTable({
                         )}
                       </div>
                     )}
-                    <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-bold mt-0.5">
+                    <div className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-bold mt-0.5">
                       {order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}
                     </div>
                   </div>
@@ -307,12 +307,12 @@ export default function SalesOrderTable({
 
                 <div className="grid grid-cols-2 gap-4 pb-4 border-b border-[var(--border-subtle)] mb-4">
                    <div>
-                      <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Customer</div>
+                      <div className="text-xs text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Customer</div>
                       <div className="text-xs font-bold text-[var(--text-primary)] truncate">{order.customer_display_name || order.customer_name}</div>
                    </div>
                     <div className="text-right">
-                       <div className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
-                       <div className={`inline-block px-2 py-0.5 rounded-full text-[9px] uppercase font-bold border ${
+                       <div className="text-xs text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
+                       <div className={`inline-block px-2 py-0.5 rounded-full text-xs uppercase font-bold border ${
                            order.stage === 'completed' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border-[var(--status-success)]/30' : 
                            order.stage === 'shipped' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border-[var(--status-info)]/30' : 
                            order.stage === 'cancelled' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30' : 

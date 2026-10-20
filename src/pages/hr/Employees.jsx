@@ -106,14 +106,14 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
           {/* Current vs Proposed Salary Card */}
           <div className="p-3.5 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] flex items-center justify-between">
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] block">Current Monthly CTC</span>
+              <span className="text-xs uppercase tracking-wider text-[var(--text-muted)] block">Current Monthly CTC</span>
               <span className="text-base font-bold text-[var(--text-primary)]">
                 {currentSalary > 0 ? `₹${currentSalary.toLocaleString('en-IN')}` : 'Not Assigned (₹0.00)'}
               </span>
             </div>
             {diffPct !== null && diff !== 0 && (
               <div className="text-right">
-                <span className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] block">Proposed Change</span>
+                <span className="text-xs uppercase tracking-wider text-[var(--text-muted)] block">Proposed Change</span>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
                   diff > 0 ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
                 }`}>
@@ -286,7 +286,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Salary Breakdown & Tax Projection</h2>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full uppercase border ${
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase border ${
                 employee.tax_regime === 'old'
                   ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border-[var(--status-warning)]/30'
                   : 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
@@ -315,21 +315,21 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
               {/* Summary KPIs */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 rounded-xl bg-[var(--status-success)]/10 border border-[var(--status-success)]/25 text-[var(--text-primary)]">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--status-success)] block">Monthly Take-Home</span>
+                  <span className="text-xs uppercase font-bold tracking-wider text-[var(--status-success)] block">Monthly Take-Home</span>
                   <span className="text-xl font-bold text-[var(--status-success)]">
                     ₹{formatInr(monthlyNet)}
                   </span>
-                  <span className="block text-[11px] text-[var(--text-muted)] mt-0.5">
+                  <span className="block text-xs text-[var(--text-muted)] mt-0.5">
                     Annual: ₹{formatInr(annualNet, 0)}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] text-[var(--text-primary)]">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Monthly CTC / Gross</span>
+                  <span className="text-xs uppercase font-bold tracking-wider text-[var(--text-muted)] block">Monthly CTC / Gross</span>
                   <span className="text-xl font-bold text-[var(--text-primary)]">
                     ₹{formatInr(monthlyGross)}
                   </span>
-                  <span className="block text-[11px] text-[var(--text-muted)] mt-0.5">
+                  <span className="block text-xs text-[var(--text-muted)] mt-0.5">
                     Annual CTC: ₹{formatInr(annualGross, 0)}
                     {projectedAnnualGross > 0 && projectedAnnualGross !== annualGross && (
                       <> · FY projected: ₹{formatInr(projectedAnnualGross, 0)}</>
@@ -339,18 +339,18 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
 
                 <div className="p-3.5 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] text-[var(--text-primary)]">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted)] block">Monthly Deductions</span>
+                    <span className="text-xs uppercase font-bold tracking-wider text-[var(--text-muted)] block">Monthly Deductions</span>
                     {nilTax87a && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--status-success)]/20 text-[var(--status-success)] font-medium">87A Nil Tax</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--status-success)]/20 text-[var(--status-success)] font-medium">87A Nil Tax</span>
                     )}
                     {marginalRelief && !nilTax87a && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--status-warning)]/20 text-[var(--status-warning)] font-medium">87A Marginal Relief</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--status-warning)]/20 text-[var(--status-warning)] font-medium">87A Marginal Relief</span>
                     )}
                   </div>
                   <span className="text-xl font-bold text-[var(--status-danger)]">
                     -₹{formatInr(totalDeductions)}
                   </span>
-                  <span className="block text-[11px] text-[var(--text-muted)] mt-0.5">
+                  <span className="block text-xs text-[var(--text-muted)] mt-0.5">
                     TDS: ₹{formatInr(monthlyTds, 0)}
                   </span>
                 </div>
@@ -363,7 +363,7 @@ function SalaryBreakdownModal({ isOpen, onClose, employee }) {
                   Statutory TDS Withholding Rationale (Sec 192)
                 </div>
                 <div className="text-[var(--text-secondary)]">{tdsReason || 'Calculated based on projected annual gross liability.'}</div>
-                <div className="text-[11px] text-[var(--text-muted)] pt-1">
+                <div className="text-xs text-[var(--text-muted)] pt-1">
                   Projected Annual Tax: ₹{formatInr(annualNetTax, 0)} | Tax Regime: {employee.tax_regime === 'old' ? 'OLD REGIME' : 'NEW REGIME'}
                 </div>
               </div>
@@ -546,7 +546,7 @@ export default function Employees() {
         <section className="relative rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">HR Management</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-muted)] mb-2">HR Management</p>
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
                 <UserGroupIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Employees
@@ -626,18 +626,18 @@ export default function Employees() {
                           </button>
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
-                          <span className="text-[10px] text-[var(--text-muted)]">
+                          <span className="text-xs text-[var(--text-muted)]">
                             {emp.tax_regime === 'old' ? 'Old Regime' : 'New Regime'}
                           </span>
                           {emp.salary_details?.tds_details?.nil_tax_87a === true && (
-                            <span className="text-[9px] px-1.5 py-0.5 bg-[var(--status-success)]/15 text-[var(--status-success)] rounded font-medium">
+                            <span className="text-xs px-1.5 py-0.5 bg-[var(--status-success)]/15 text-[var(--status-success)] rounded font-medium">
                               87A Nil Tax
                             </span>
                           )}
                           {emp.salary_details?.tds_details?.marginal_relief
                             && !emp.salary_details?.tds_details?.nil_tax_87a
                             && Number(emp.salary_details?.tds_details?.monthly_tds || 0) > 0 && (
-                            <span className="text-[9px] px-1.5 py-0.5 bg-[var(--status-warning)]/15 text-[var(--status-warning)] rounded font-medium">
+                            <span className="text-xs px-1.5 py-0.5 bg-[var(--status-warning)]/15 text-[var(--status-warning)] rounded font-medium">
                               87A Marginal Relief
                             </span>
                           )}

@@ -271,18 +271,34 @@
     color: var(--text-primary);
   }
 
-  /* Universal Input & Control Defaults */
+  /* ========================================================
+     APPLICATION-WIDE TYPOGRAPHY & CONTRAST ENFORCEMENT
+     Master Prompt Standards applied across 100% of codebase
+     ======================================================== */
+
+  /* Hard Clamp on micro-text: Enforce minimum 12px (0.75rem) globally */
+  [class*="text-[8px]"],
+  [class*="text-[9px]"],
+  [class*="text-[10px]"],
+  [class*="text-[11px]"] {
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Universal Form Controls Baseline */
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
   select,
   textarea {
-    color: var(--text-primary);
-    background-color: var(--input-bg);
+    color: var(--text-primary) !important;
+    background-color: var(--input-bg) !important;
     border-color: var(--input-border);
+    font-size: 0.875rem !important;
+    line-height: 1.45 !important;
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
   }
 
   /* Universal Table Baseline */
@@ -293,12 +309,19 @@
   }
 
   th {
-    color: var(--text-muted);
-    font-weight: 600;
+    color: var(--text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    border-color: var(--border-subtle) !important;
   }
 
   td {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.45 !important;
+    border-color: var(--border-subtle) !important;
   }
 
   /* High-Contrast Light Mode Guardrails against legacy dark classes */
@@ -306,20 +329,39 @@
   :root:not(.dark) h2.text-white,
   :root:not(.dark) h3.text-white,
   :root:not(.dark) h4.text-white,
-  :root:not(.dark) p.text-white {
-    color: var(--text-primary);
+  :root:not(.dark) h5.text-white,
+  :root:not(.dark) h6.text-white,
+  :root:not(.dark) p.text-white,
+  :root:not(.dark) span.text-white:not([class*="bg-"]):not(.btn-primary),
+  :root:not(.dark) div.text-white:not([class*="bg-"]):not(.btn-primary),
+  :root:not(.dark) td.text-white {
+    color: var(--text-primary) !important;
   }
 
-  :root:not(.dark) .text-gray-400:not([class*="bg-"]):not(button):not(a) {
-    color: var(--text-muted);
+  :root:not(.dark) .text-white:not([class*="bg-"]):not(.btn-primary):not([class*="bg-[var(--status"]):not([class*="bg-[var(--accent"]) {
+    color: var(--text-primary) !important;
   }
 
-  :root:not(.dark) .text-gray-300:not([class*="bg-"]):not(button):not(a) {
-    color: var(--text-secondary);
+  :root:not(.dark) .text-gray-400:not([class*="bg-"]):not(button):not(a),
+  :root:not(.dark) .text-slate-400:not([class*="bg-"]):not(button):not(a) {
+    color: var(--text-muted) !important;
   }
 
-  :root:not(.dark) .text-gray-500:not([class*="bg-"]):not(button):not(a) {
-    color: var(--text-muted);
+  :root:not(.dark) .text-gray-300:not([class*="bg-"]):not(button):not(a),
+  :root:not(.dark) .text-slate-300:not([class*="bg-"]):not(button):not(a) {
+    color: var(--text-secondary) !important;
+  }
+
+  :root:not(.dark) .text-gray-500:not([class*="bg-"]):not(button):not(a),
+  :root:not(.dark) .text-slate-500:not([class*="bg-"]):not(button):not(a) {
+    color: var(--text-muted) !important;
+  }
+
+  /* High-Contrast Dark Mode Guardrails against stark black/dark-gray text */
+  .dark .text-black:not([class*="bg-"]):not(.btn-primary),
+  .dark .text-gray-900:not([class*="bg-"]):not(.btn-primary),
+  .dark .text-slate-900:not([class*="bg-"]):not(.btn-primary) {
+    color: var(--text-primary) !important;
   }
 
   .Toastify__toast-container,

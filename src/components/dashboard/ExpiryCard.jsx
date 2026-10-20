@@ -33,7 +33,7 @@ export default function ExpiryCard() {
             <ClockIcon className="w-6 h-6" />
           </div>
           {count > 0 && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--status-warning)]/20 text-[var(--status-warning)] font-bold border border-[var(--status-warning)]/40 animate-pulse">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-warning)]/20 text-[var(--status-warning)] font-bold border border-[var(--status-warning)]/40 animate-pulse">
               ⚠ ACTION
             </span>
           )}
@@ -42,7 +42,7 @@ export default function ExpiryCard() {
           <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular">
             {isLoading ? '—' : count}
           </div>
-          <div className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wider">
+          <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">
             Expiring in {days} days
           </div>
           {count > 0 && (

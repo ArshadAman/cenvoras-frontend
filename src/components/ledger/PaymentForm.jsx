@@ -251,16 +251,16 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
               <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Selected Invoice</div>
+                    <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Selected Invoice</div>
                     <div className="text-[var(--text-primary)] font-semibold">#{initialInvoice.invoice_number}</div>
                     <div className="text-xs text-[var(--text-secondary)] mt-1">{customerName || 'Customer'}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Outstanding</div>
+                    <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Outstanding</div>
                     <div className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
                   </div>
                 </div>
-                <div className="text-[11px] text-[var(--text-secondary)]">
+                <div className="text-xs text-[var(--text-secondary)]">
                   This payment will be linked directly to the selected invoice.
                 </div>
               </div>
@@ -304,7 +304,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                     );
                   })}
                 </select>
-                <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
                   {values.invoice
                     ? 'Payment will be applied directly to the selected invoice.'
                     : 'If no invoice is selected, payment automatically knocks off oldest unpaid invoices first (FIFO).'}
@@ -351,11 +351,11 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
             {activeInvoice && (
               <div className="grid grid-cols-2 gap-4 p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] animate-fade-in">
                 <div>
-                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Total Due</div>
+                  <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Total Due</div>
                   <div className="text-base font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{formatAmount(activeOutstanding)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Remaining</div>
+                  <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Remaining</div>
                   <div className={`text-base font-bold ${Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                     {getCurrencySymbol()}{formatAmount(Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0))}
                   </div>

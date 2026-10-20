@@ -341,24 +341,24 @@ export default function SalaryBreakdownCalculator({
   const tdsReason = breakdown?.tds_details?.reason || '';
   const adHocTotal = Number(breakdown?.ad_hoc_monthly_total || 0);
 
-  const inputCls = "w-full rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors";
-  const labelCls = "block text-xs font-semibold text-gray-300 mb-1.5";
+  const inputCls = "w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3.5 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors";
+  const labelCls = "block text-xs font-semibold text-[var(--text-muted)] mb-1.5 uppercase tracking-wider";
 
   return (
     <div className="space-y-6">
       {/* Controls Card */}
       {!readOnly && (
-        <div className="bg-white/[0.03] rounded-2xl p-5 border border-white/10 shadow-xl backdrop-blur-xl space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
             <div className="flex items-center gap-2">
-              <CalculatorIcon className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+              <CalculatorIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+              <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                 Compensation & Tax Configuration
               </h3>
             </div>
             {/* Quick Presets */}
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-gray-400 mr-1">Presets:</span>
+              <span className="text-[var(--text-muted)] mr-1">Presets:</span>
               {[3, 6, 9, 12, 18, 25].map((lpa) => (
                 <button
                   key={lpa}
@@ -366,8 +366,8 @@ export default function SalaryBreakdownCalculator({
                   onClick={() => applyPreset(lpa)}
                   className={`px-2.5 py-1 rounded-lg border font-medium text-xs transition-all ${
                     annualCtc === lpa * 100000
-                      ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300 shadow-sm'
-                      : 'border-white/10 text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)]/30 text-[var(--accent-primary)] font-semibold shadow-sm'
+                      : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
                   }`}
                 >
                   ₹{lpa}L
@@ -469,7 +469,7 @@ export default function SalaryBreakdownCalculator({
                 onChange={(e) => setBasicPct(Number(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
-              <div className="flex items-center justify-between text-[11px] mt-1">
+              <div className="flex items-center justify-between text-xs mt-1">
                 <span className="text-gray-400">
                   ₹{Math.round((monthlyCtc * basicPct) / 100).toLocaleString('en-IN')}/mo
                 </span>
@@ -480,7 +480,7 @@ export default function SalaryBreakdownCalculator({
                 )}
               </div>
               {/* Quick Basic Presets */}
-              <div className="flex items-center gap-1 mt-1.5 text-[10px]">
+              <div className="flex items-center gap-1 mt-1.5 text-xs">
                 <span className="text-gray-500">Quick:</span>
                 {[50, 60, 70, 80].map(pct => (
                   <button
@@ -516,14 +516,14 @@ export default function SalaryBreakdownCalculator({
                 onChange={(e) => setHraPctOfBasic(Number(e.target.value))}
                 className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
-                <span className="font-medium text-white">₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+                <span className="font-semibold text-[var(--text-primary)]">₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo</span>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setHraPctOfBasic(0)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
-                      hraPctOfBasic === 0 ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                      hraPctOfBasic === 0 ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
                     }`}
                   >
                     0% (No HRA)
@@ -531,8 +531,8 @@ export default function SalaryBreakdownCalculator({
                   <button
                     type="button"
                     onClick={() => setHraPctOfBasic(40)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
-                      hraPctOfBasic === 40 ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                      hraPctOfBasic === 40 ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
                     }`}
                   >
                     40% (Non-Metro)
@@ -540,15 +540,15 @@ export default function SalaryBreakdownCalculator({
                   <button
                     type="button"
                     onClick={() => setHraPctOfBasic(50)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
-                      hraPctOfBasic === 50 ? 'bg-indigo-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                      hraPctOfBasic === 50 ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
                     }`}
                   >
                     50% (Metro)
                   </button>
                 </div>
               </div>
-              <p className="text-[10px] text-gray-400 leading-relaxed pt-1 border-t border-white/5">
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed pt-1 border-t border-[var(--border-subtle)]">
                 💡 While HRA is not part of your basic salary, it directly depends on it. Section 10(13A) tax exemptions calculate allowable tax-free HRA strictly based on Basic Salary (not gross pay or overall CTC). If your company does not provide HRA, set it to 0% and the remaining amount automatically balances into Special Allowance.
               </p>
             </div>
@@ -561,10 +561,10 @@ export default function SalaryBreakdownCalculator({
               <select
                 value={workState}
                 onChange={(e) => setWorkState(e.target.value)}
-                className="w-full rounded-xl bg-slate-900 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               >
                 {INDIAN_STATES.map((st) => (
-                  <option key={st} value={st} className="bg-slate-900 text-white">
+                  <option key={st} value={st} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     {st}
                   </option>
                 ))}
@@ -583,7 +583,7 @@ export default function SalaryBreakdownCalculator({
                 <PlusIcon className={`w-3.5 h-3.5 transition-transform ${showAllowancesSection ? 'rotate-45' : ''}`} />
                 {showAllowancesSection ? 'Hide Fixed Allowances Configuration' : 'Configure Additional Fixed Allowances (Conveyance, Medical, Custom)'}
               </button>
-              <span className="text-[11px] text-gray-400">
+              <span className="text-xs text-gray-400">
                 Special Allowance absorbs remainder to 100% CTC
               </span>
             </div>
@@ -677,7 +677,7 @@ export default function SalaryBreakdownCalculator({
                 <SparklesIcon className="w-3.5 h-3.5" />
                 {showAdHocSection ? 'Hide Ad-hoc / Variable Additions' : 'Add Ad-hoc / Variable Payout (Spot Bonus, Retention Bonus, Overtime)'}
               </button>
-              <span className="text-[11px] text-gray-400">
+              <span className="text-xs text-gray-400">
                 Injected into monthly gross without modifying contractual base CTC
               </span>
             </div>
@@ -750,7 +750,7 @@ export default function SalaryBreakdownCalculator({
               {showOldRegimeFields && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="block text-[11px] font-medium text-amber-200/90 mb-1">
+                    <label className="block text-xs font-medium text-amber-200/90 mb-1">
                       Section 80C (Max ₹1.5L)
                     </label>
                     <input
@@ -763,7 +763,7 @@ export default function SalaryBreakdownCalculator({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-amber-200/90 mb-1">
+                    <label className="block text-xs font-medium text-amber-200/90 mb-1">
                       Section 80D (Health Ins.)
                     </label>
                     <input
@@ -776,7 +776,7 @@ export default function SalaryBreakdownCalculator({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-amber-200/90 mb-1">
+                    <label className="block text-xs font-medium text-amber-200/90 mb-1">
                       Sec 24(b) Home Loan Interest
                     </label>
                     <input
@@ -814,41 +814,41 @@ export default function SalaryBreakdownCalculator({
             </div>
 
             {/* Monthly Gross */}
-            <div className="bg-white/[0.04] rounded-2xl p-4 border border-white/10 shadow-lg backdrop-blur-xl">
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-semibold tracking-wider text-gray-400">
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)]">
                   Monthly Gross Pay
                 </span>
                 {adHocTotal > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)] font-semibold">
                     +₹{formatInr(adHocTotal, 0)} Ad-hoc
                   </span>
                 )}
               </div>
-              <div className="text-2xl font-bold mt-1 text-white tracking-tight">
+              <div className="text-2xl font-bold mt-1 text-[var(--text-primary)] tabular-nums tracking-tight">
                 ₹{formatInr(monthlyGross)}
               </div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-xs text-[var(--text-muted)] mt-1">
                 Annual Gross: ₹{formatInr(annualGross, 0)}
               </div>
             </div>
 
             {/* Total Monthly Deductions */}
-            <div className="bg-white/[0.04] rounded-2xl p-4 border border-white/10 shadow-lg backdrop-blur-xl">
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-semibold tracking-wider text-gray-400">
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)]">
                   Monthly Deductions
                 </span>
                 {rebateApplied && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
                     87A Nil Tax
                   </span>
                 )}
               </div>
-              <div className="text-2xl font-bold mt-1 text-rose-400 tracking-tight">
+              <div className="text-2xl font-bold mt-1 text-[var(--status-danger)] tabular-nums tracking-tight">
                 -₹{formatInr(totalDeductions)}
               </div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-xs text-[var(--text-muted)] mt-1">
                 TDS: ₹{formatInr(monthlyTds, 0)} | PF: ₹{formatInr(employeePf, 0)}
               </div>
             </div>
@@ -887,7 +887,7 @@ export default function SalaryBreakdownCalculator({
                 TDS Projection (Section 192): {taxRegime === 'new' ? 'New Tax Regime (Sec 115BAC)' : 'Old Tax Regime'}
               </div>
               <div className="text-gray-300">{tdsReason}</div>
-              <div className="text-[11px] text-gray-400 pt-0.5">
+              <div className="text-xs text-gray-400 pt-0.5">
                 Standard Deduction: ₹{formatInr(stdDeduction, 0)} | Taxable Income: ₹{formatInr(taxableIncome, 0)} | Net Annual Tax: ₹{formatInr(annualNetTax, 0)} (incl. 4% Cess)
               </div>
             </div>
@@ -896,12 +896,12 @@ export default function SalaryBreakdownCalculator({
           {/* Detailed Itemized Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Earnings Breakdown */}
-            <div className="bg-white/[0.03] rounded-2xl border border-white/10 p-4 shadow-lg backdrop-blur-xl">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-300">
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                   Earnings Breakdown
                 </span>
-                <span className="text-xs font-medium text-gray-400">Monthly (₹)</span>
+                <span className="text-xs font-medium text-[var(--text-muted)]">Monthly (₹)</span>
               </div>
               <div className="space-y-2 text-xs">
                 {(() => {
@@ -921,19 +921,19 @@ export default function SalaryBreakdownCalculator({
                     entries.push({ key: displayName, val });
                   }
                   return entries.map(({ key, val }) => (
-                    <div key={key} className="flex justify-between py-1 border-b border-white/5">
-                      <span className={key.startsWith('[Ad-hoc]') ? 'text-emerald-300 font-medium' : 'text-gray-400'}>
+                    <div key={key} className="flex justify-between py-1 border-b border-[var(--border-subtle)]">
+                      <span className={key.startsWith('[Ad-hoc]') ? 'text-[var(--status-success)] font-medium' : 'text-[var(--text-secondary)]'}>
                         {key}
                       </span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-[var(--text-primary)] tabular-nums">
                         ₹{formatInr(val)}
                       </span>
                     </div>
                   ));
                 })()}
-                <div className="flex justify-between pt-2 font-bold text-white text-sm">
+                <div className="flex justify-between pt-2 font-bold text-[var(--text-primary)] text-sm">
                   <span>Gross Salary</span>
-                  <span className="text-indigo-400">
+                  <span className="text-[var(--accent-primary)] tabular-nums">
                     ₹{formatInr(monthlyGross)}
                   </span>
                 </div>
@@ -941,55 +941,55 @@ export default function SalaryBreakdownCalculator({
             </div>
 
             {/* Deductions Breakdown */}
-            <div className="bg-white/[0.03] rounded-2xl border border-white/10 p-4 shadow-lg backdrop-blur-xl">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-300">
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                   Statutory Deductions (Employee)
                 </span>
-                <span className="text-xs font-medium text-gray-400">Monthly (₹)</span>
+                <span className="text-xs font-medium text-[var(--text-muted)]">Monthly (₹)</span>
               </div>
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-white/5">
+                <div className="flex justify-between py-1 border-b border-[var(--border-subtle)]">
                   <div>
-                    <span className="text-gray-400">Employee PF (12%)</span>
-                    <span className="block text-[10px] text-gray-500">On Basic Salary</span>
+                    <span className="text-[var(--text-secondary)]">Employee PF (12%)</span>
+                    <span className="block text-xs text-[var(--text-muted)]">On Basic Salary</span>
                   </div>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-[var(--text-primary)] tabular-nums">
                     ₹{formatInr(employeePf)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-white/5">
+                <div className="flex justify-between py-1 border-b border-[var(--border-subtle)]">
                   <div>
-                    <span className="text-gray-400">Employee ESI (0.75%)</span>
-                    <span className="block text-[10px] text-gray-500">If gross ≤ ₹21,000</span>
+                    <span className="text-[var(--text-secondary)]">Employee ESI (0.75%)</span>
+                    <span className="block text-xs text-[var(--text-muted)]">If gross ≤ ₹21,000</span>
                   </div>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-[var(--text-primary)] tabular-nums">
                     ₹{formatInr(employeeEsi)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-white/5">
+                <div className="flex justify-between py-1 border-b border-[var(--border-subtle)]">
                   <div>
-                    <span className="text-gray-400">Professional Tax (PT)</span>
-                    <span className="block text-[10px] text-gray-500">{workState} Slab</span>
+                    <span className="text-[var(--text-secondary)]">Professional Tax (PT)</span>
+                    <span className="block text-xs text-[var(--text-muted)]">{workState} Slab</span>
                   </div>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-[var(--text-primary)] tabular-nums">
                     ₹{formatInr(pt)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-white/5">
+                <div className="flex justify-between py-1 border-b border-[var(--border-subtle)]">
                   <div>
-                    <span className="text-gray-400">Income Tax (TDS - Sec 192)</span>
-                    <span className="block text-[10px] text-gray-500">
+                    <span className="text-[var(--text-secondary)]">Income Tax (TDS - Sec 192)</span>
+                    <span className="block text-xs text-[var(--text-muted)]">
                       {rebateApplied ? 'Nil (Sec 87A Rebate)' : 'Projected Tax'}
                     </span>
                   </div>
-                  <span className={`font-semibold ${monthlyTds > 0 ? 'text-rose-400' : 'text-white'}`}>
+                  <span className={`font-semibold tabular-nums ${monthlyTds > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-primary)]'}`}>
                     ₹{formatInr(monthlyTds)}
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 font-bold text-white text-sm">
+                <div className="flex justify-between pt-2 font-bold text-[var(--text-primary)] text-sm">
                   <span>Total Deductions</span>
-                  <span className="text-rose-400">
+                  <span className="text-[var(--status-danger)] tabular-nums">
                     ₹{formatInr(totalDeductions)}
                   </span>
                 </div>

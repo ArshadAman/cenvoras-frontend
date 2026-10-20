@@ -162,7 +162,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
           {/* Customer PO Details Section */}
           <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 px-6 py-3 bg-[var(--bg-primary)]/30 border-b border-[var(--border-subtle)]">
             <div>
-              <label className="block text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Customer PO Number
               </label>
               <input
@@ -174,7 +174,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Customer PO Date
               </label>
               <input
@@ -355,14 +355,14 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
           <div className="flex-shrink-0 bg-[var(--bg-primary)]/50 px-6 py-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 text-xs">
               <div className="flex flex-col">
-                <span className="text-[var(--text-secondary)] uppercase font-bold text-[10px] tracking-wider">Selected</span>
+                <span className="text-[var(--text-secondary)] uppercase font-bold text-xs tracking-wider">Selected</span>
                 <span className="text-[var(--text-primary)] font-bold text-sm">
                   {selectedIds.length} <span className="text-xs font-normal text-[var(--text-muted)]">of {approvedItems.length} items</span>
                 </span>
               </div>
               <div className="w-px h-7 bg-[var(--border-subtle)]"></div>
               <div className="flex flex-col">
-                <span className="text-[var(--text-secondary)] uppercase font-bold text-[10px] tracking-wider">Order Value</span>
+                <span className="text-[var(--text-secondary)] uppercase font-bold text-xs tracking-wider">Order Value</span>
                 <span className="text-[var(--accent-primary)] font-bold text-sm font-mono">
                   {getCurrencySymbol()}{selectedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
