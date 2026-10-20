@@ -269,7 +269,7 @@ export default function AIChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask intelligence..."
-                className="flex-1 bg-transparent text-sm md:text-[15px] font-light text-white placeholder-white/30 outline-none py-1.5 md:py-2 min-w-0"
+                className="flex-1 bg-transparent text-sm md:text-[15px] font-light text-white placeholder-white/30 outline-none border-none focus:outline-none focus:ring-0 shadow-none py-1.5 md:py-2 min-w-0"
                 disabled={loading}
               />
               <button
