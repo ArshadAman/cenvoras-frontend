@@ -5,11 +5,20 @@ import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { createPortal } from "react-dom";
-import { XMarkIcon, PrinterIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import {
+  XMarkIcon,
+  PrinterIcon,
+  ArrowDownTrayIcon,
+  DocumentTextIcon,
+  BuildingOfficeIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
+import { getCurrencySymbol, formatCurrency } from "../../utils/currency";
+import useEscKey from "../../hooks/useEscStack";
 
 export default function PurchaseDetailsModal({ billId, onClose }) {
-  const printRef = useRef();
+  const printRef = useRef(null);
+  useEscKey(onClose, Boolean(billId), 15);
 
   const { data, isLoading } = useQuery({
     queryKey: ["purchase-bill", billId],
@@ -26,18 +35,18 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
     pageStyle: `
       @page {
         size: A4;
-        margin: 20mm;
+        margin: 15mm;
       }
       @media print {
         body {
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
-          background: white !important;
-          color: black !important;
+          background: #ffffff !important;
+          color: #000000 !important;
         }
         .print-content {
-          background: white !important;
-          color: black !important;
+          background: #ffffff !important;
+          color: #000000 !important;
           padding: 0 !important;
         }
         .print-hidden {
@@ -53,248 +62,367 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
     try {
       const element = printRef.current;
-      
-      // Scroll to top for clean capture
       window.scrollTo(0, 0);
-      
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff', // Ensure white background for PDF
+        backgroundColor: "#ffffff",
         logging: false,
         onclone: (clonedDoc) => {
-             // Force white background and black text on cloned element for capture
-             const clonedElement = clonedDoc.querySelector('[data-print-target]');
-             if(clonedElement) {
-                clonedElement.style.backgroundColor = 'white';
-                clonedElement.style.color = 'black';
-                clonedElement.style.height = 'auto';
-                clonedElement.style.overflow = 'visible';
-                
-                 clonedElement.querySelectorAll('*').forEach(el => {
-                     el.style.color = 'inherit';
-                 });
-             }
-        }
+          const clonedElement = clonedDoc.querySelector("[data-print-target]");
+          if (clonedElement) {
+            clonedElement.style.backgroundColor = "white";
+            clonedElement.style.color = "black";
+            clonedElement.style.height = "auto";
+            clonedElement.style.overflow = "visible";
+            clonedElement.querySelectorAll("*").forEach((el) => {
+              el.style.color = "inherit";
+            });
+          }
+        },
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const imgWidth = 210;
+      const pageHeight = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
 
-      // First page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      // Subsequent pages
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
       pdf.save(`purchase-bill-${bill.bill_number || billId}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
     }
   };
 
   if (!billId) return null;
 
+  const totalAmount = Number(bill.total_amount || 0);
+  const amountPaid = Number(bill.amount_paid || 0);
+  const balanceDue =
+    bill.balance_due !== undefined
+      ? Number(bill.balance_due)
+      : Math.max(0, totalAmount - amountPaid);
+
+  const paymentStatus = String(bill.payment_status || "pending").toLowerCase();
+  const statusBadgeClass =
+    paymentStatus === "paid"
+      ? "bg-[var(--status-success-bg)] text-[var(--status-success-text)] border-[var(--status-success-border)]"
+      : paymentStatus === "partial"
+      ? "bg-[var(--status-warning-bg)] text-[var(--status-warning-text)] border-[var(--status-warning-border)]"
+      : "bg-[var(--status-warning-bg)] text-[var(--status-warning-text)] border-[var(--status-warning-border)]";
+
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center sm:p-6 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
-      
-      <div className="relative w-full sm:max-w-4xl bg-[var(--bg-surface)] border-x sm:border border-[var(--border-subtle)] shadow-2xl animate-fade-up min-h-screen sm:min-h-0 sm:rounded-[32px] overflow-hidden flex flex-col text-[var(--text-primary)]">
-        
-        {/* Header */}
-        <div className="sticky top-0 z-50 flex items-center justify-between p-6 sm:p-8 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]">
-           <div>
-             <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-1">Transaction Details</h3>
-             <div className="flex items-center gap-3">
-                <span className="text-xl font-black text-[var(--text-primary)] tracking-tighter">Purchase Invoice</span>
-                <span className="px-2 py-0.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-black rounded uppercase tracking-widest">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden text-[var(--text-primary)] my-auto animate-fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex items-center justify-center">
+              <DocumentTextIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
+                  Purchase Invoice
+                </h2>
+                <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)]">
                   #{bill.bill_number || "Draft"}
                 </span>
-             </div>
-           </div>
-           <div className="flex items-center gap-2">
-             <button
-               onClick={handlePrint}
-               className="p-3 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-all"
-               title="Print"
-             >
-               <PrinterIcon className="w-5 h-5" />
-             </button>
-             <button
-               onClick={handleDownloadPDF}
-               className="p-3 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-all"
-                title="Download PDF"
-             >
-               <ArrowDownTrayIcon className="w-5 h-5" />
-             </button>
-             <button
-               onClick={onClose}
-               className="p-3 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-all"
-             >
-               <XMarkIcon className="w-6 h-6" />
-             </button>
-           </div>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border ${statusBadgeClass}`}
+                >
+                  {bill.payment_status || "Pending"}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                {bill.bill_date
+                  ? `Recorded on ${new Date(bill.bill_date).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}`
+                  : "Transaction Details"}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] transition-colors flex items-center gap-1.5 text-xs font-medium"
+              title="Print Bill"
+            >
+              <PrinterIcon className="w-4 h-4 text-[var(--text-muted)]" />
+              <span className="hidden sm:inline">Print</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-[var(--accent-primary)] hover:opacity-90 text-[var(--text-on-accent)] transition-all flex items-center gap-1.5 text-xs font-medium shadow-sm"
+              title="Download PDF"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+              aria-label="Close"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 p-6 sm:p-10">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="w-12 h-12 border-4 border-[var(--border-subtle)] border-t-[var(--accent-primary)] rounded-full animate-spin"></div>
-              <span className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Securing Data...</span>
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="w-10 h-10 border-3 border-[var(--border-subtle)] border-t-[var(--accent-primary)] rounded-full animate-spin"></div>
+              <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
+                Loading Bill Details...
+              </span>
             </div>
           ) : (
-            <div ref={printRef} data-print-target className="space-y-10">
-              
-              {/* Top Section Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Vendor Info */}
-                <div className="space-y-4">
-                  <div className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-[0.2em]">Supplier Profile</div>
-                  <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-6 rounded-3xl space-y-4">
-                    <div>
-                      <div className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-1">{bill.vendor_name}</div>
-                      {bill.vendor_address && (
-                        <div className="text-sm text-[var(--text-muted)] leading-relaxed max-w-sm">
-                          {bill.vendor_address}
-                        </div>
-                      )}
+            <div ref={printRef} data-print-target className="space-y-6">
+              {/* Supplier & Invoice Context Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Supplier Profile Card */}
+                <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 sm:p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                      <BuildingOfficeIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                      <span>Supplier Details</span>
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-[var(--border-subtle)]">
-                      {bill.vendor_gstin && (
-                        <div>
-                          <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">GSTIN</div>
-                          <div className="text-xs font-bold text-[var(--text-primary)]">{bill.vendor_gstin}</div>
-                        </div>
-                      )}
-                      {bill.vendor_phone && (
-                        <div>
-                          <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Contact</div>
-                          <div className="text-xs font-bold text-[var(--text-primary)]">{bill.vendor_phone}</div>
-                        </div>
-                      )}
+                    <div className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
+                      {bill.vendor_name || "N/A"}
+                    </div>
+                    {bill.vendor_address && (
+                      <div className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
+                        {bill.vendor_address}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-3 mt-3 border-t border-[var(--border-subtle)] text-xs">
+                    <div>
+                      <span className="text-[var(--text-muted)] block font-medium">GSTIN</span>
+                      <span className="font-mono font-semibold text-[var(--text-primary)]">
+                        {bill.vendor_gstin || "Unregistered"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--text-muted)] block font-medium">Contact</span>
+                      <span className="font-medium text-[var(--text-primary)]">
+                        {bill.vendor_phone || "—"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Bill Metadata */}
-                <div className="space-y-4">
-                  <div className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-[0.2em]">Invoice Context</div>
-                  <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-6 rounded-3xl grid grid-cols-2 gap-6">
+                {/* Invoice Context Card */}
+                <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 sm:p-5">
+                  <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    <CalendarIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                    <span>Invoice Details</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Issue Date</div>
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{bill.bill_date}</div>
+                      <span className="text-[var(--text-muted)] block font-medium">Issue Date</span>
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {bill.bill_date || "—"}
+                      </span>
                     </div>
                     <div>
-                      <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Account Journal</div>
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{bill.journal}</div>
+                      <span className="text-[var(--text-muted)] block font-medium">Due Date</span>
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {bill.due_date || "Immediate"}
+                      </span>
                     </div>
                     <div>
-                      <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">GST Treatment</div>
-                      <div className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest bg-[var(--bg-surface)] px-2 py-0.5 rounded border border-[var(--border-subtle)] inline-block">
-                        {bill.gst_treatment || "N/A"}
+                      <span className="text-[var(--text-muted)] block font-medium">Account Journal</span>
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {bill.journal || "Purchase"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--text-muted)] block font-medium">GST Treatment</span>
+                      <span className="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)]">
+                        {bill.gst_treatment || "Registered"}
+                      </span>
+                    </div>
+                    {bill.order_number && (
+                      <div className="col-span-2 pt-2 border-t border-[var(--border-subtle)]">
+                        <span className="text-[var(--text-muted)] block font-medium">Reference PO #</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">
+                          {bill.order_number}
+                        </span>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Status</div>
-                      <div className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded border inline-block ${
-                        bill.payment_status === 'paid' 
-                        ? "bg-[var(--bg-surface)] text-[var(--accent-primary)] border-[var(--accent-primary)]"
-                        : "bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-subtle)]"
-                      }`}>
-                        {bill.payment_status || "Pending"}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Items Section */}
-              <div className="space-y-4">
-                <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Line Items</div>
-                
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-hidden border border-[var(--border-subtle)] rounded-3xl bg-[var(--bg-primary)]">
+              {/* Line Items Table */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    Line Items ({bill.items?.length || 0})
+                  </h3>
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden sm:block border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-surface)]">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-[var(--bg-surface)] text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.15em] border-b border-[var(--border-subtle)]">
-                        <th className="px-6 py-4 text-left">Description</th>
-                        <th className="px-6 py-4 text-center">Qty / Unit</th>
-                        <th className="px-6 py-4 text-right">Unit Price</th>
-                        <th className="px-6 py-4 text-right">Disc.</th>
-                        <th className="px-6 py-4 text-right">Tax</th>
-                        <th className="px-6 py-4 text-right">Total</th>
+                      <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs text-[var(--text-muted)] font-semibold uppercase">
+                        <th className="px-4 py-3 text-left w-12">#</th>
+                        <th className="px-4 py-3 text-left">Description</th>
+                        <th className="px-4 py-3 text-center w-24">Qty / Unit</th>
+                        <th className="px-4 py-3 text-right w-28">Unit Price</th>
+                        <th className="px-4 py-3 text-right w-20">Disc.</th>
+                        <th className="px-4 py-3 text-right w-24">Tax</th>
+                        <th className="px-4 py-3 text-right w-32">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
-                      {bill.items?.map((item, index) => (
-                        <tr key={index} className="hover:bg-[var(--bg-surface)]/50 transition-colors">
-                          <td className="px-6 py-5 align-top">
-                            <div className="text-sm font-bold text-[var(--text-primary)]">{item.product_detail?.name || item.product}</div>
-                            {(item.description || item.product_description) && (
-                              <div className="text-xs text-[var(--text-muted)] mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
-                                {item.description || item.product_description}
+                      {bill.items && bill.items.length > 0 ? (
+                        bill.items.map((item, index) => (
+                          <tr
+                            key={index}
+                            className="hover:bg-[var(--bg-primary)]/40 transition-colors"
+                          >
+                            <td className="px-4 py-3 text-xs text-[var(--text-muted)] font-mono">
+                              {index + 1}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm font-semibold text-[var(--text-primary)]">
+                                {item.product_detail?.name || item.product || "Item"}
                               </div>
-                            )}
-                            {item.hsn_sac_code && (
-                              <div className="text-xs font-black text-[var(--text-muted)] mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>
-                            )}
+                              {(item.description || item.product_description) && (
+                                <div
+                                  className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed font-normal"
+                                  style={{ wordBreak: "break-word" }}
+                                >
+                                  {item.description || item.product_description}
+                                </div>
+                              )}
+                              {item.hsn_sac_code && (
+                                <div className="text-xs text-[var(--text-secondary)] font-mono mt-0.5">
+                                  HSN: {item.hsn_sac_code}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center font-medium">
+                              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                                {item.quantity}
+                              </span>{" "}
+                              <span className="text-xs text-[var(--text-muted)] uppercase">
+                                {item.unit || "PCS"}
+                              </span>
+                              {Number(item.free_quantity) > 0 && (
+                                <div className="text-xs font-semibold text-[var(--status-success-text)] mt-0.5">
+                                  +{item.free_quantity} Free
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-sm text-[var(--text-primary)]">
+                              {getCurrencySymbol()}
+                              {parseFloat(item.price || 0).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text-secondary)]">
+                              {parseFloat(item.discount || 0).toFixed(1)}%
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text-secondary)]">
+                              {item.tax_display ||
+                                `${parseFloat((item.tax_rate ?? item.tax) || 0)}%`}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-sm font-bold text-[var(--text-primary)]">
+                              {getCurrencySymbol()}
+                              {parseFloat(item.amount || 0).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={7}
+                            className="px-4 py-8 text-center text-xs text-[var(--text-muted)]"
+                          >
+                            No line items recorded for this bill.
                           </td>
-                          <td className="px-6 py-5 text-center align-top">
-                            <div className="text-sm font-bold text-[var(--text-primary)]">{item.quantity}</div>
-                            <div className="text-xs text-[var(--text-muted)] uppercase">{item.unit}</div>
-                            {item.free_quantity > 0 && <span className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-tighter mt-1 block">+{item.free_quantity} Free</span>}
-                          </td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-[var(--text-primary)] align-top">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-[var(--text-muted)] align-top">{parseFloat(item.discount || 0).toFixed(1)}%</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm text-[var(--text-muted)] align-top">{item.tax_display || `${parseFloat((item.tax_rate ?? item.tax) || 0)}%`}</td>
-                          <td className="px-6 py-5 text-right font-mono text-sm font-black text-[var(--text-primary)] align-top">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-4">
+                {/* Mobile View */}
+                <div className="sm:hidden space-y-3">
                   {bill.items?.map((item, index) => (
-                    <div key={index} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-5 space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="max-w-[70%]">
-                          <div className="text-sm font-black text-[var(--text-primary)] leading-tight">{item.product_detail?.name || item.product}</div>
-                          {(item.description || item.product_description) && (
-                            <div className="text-xs text-[var(--text-muted)] mt-1 whitespace-pre-line leading-relaxed font-normal" style={{ wordBreak: 'break-word' }}>
-                              {item.description || item.product_description}
+                    <div
+                      key={index}
+                      className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 space-y-3"
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <div className="text-sm font-bold text-[var(--text-primary)]">
+                            {item.product_detail?.name || item.product || "Item"}
+                          </div>
+                          {item.hsn_sac_code && (
+                            <div className="text-xs text-[var(--text-secondary)] font-mono">
+                              HSN: {item.hsn_sac_code}
                             </div>
                           )}
-                          {item.hsn_sac_code && <div className="text-xs font-black text-[var(--text-muted)] mt-1 uppercase tracking-widest">HSN: {item.hsn_sac_code}</div>}
                         </div>
-                        <div className="text-right">
-                          <div className="text-xs font-black text-[var(--text-primary)] font-mono">{getCurrencySymbol()}{parseFloat(item.amount || 0).toFixed(2)}</div>
+                        <div className="text-right font-mono font-bold text-sm text-[var(--text-primary)]">
+                          {getCurrencySymbol()}
+                          {parseFloat(item.amount || 0).toFixed(2)}
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[var(--border-subtle)]">
-                        <div className="space-y-1">
-                          <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Quantity</div>
-                          <div className="text-xs font-bold text-[var(--text-primary)]">{item.quantity} {item.unit} {item.free_quantity > 0 && <span className="text-[var(--accent-primary)]">+{item.free_quantity}</span>}</div>
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--border-subtle)] text-xs">
+                        <div>
+                          <span className="text-[var(--text-muted)] block">Qty</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {item.quantity} {item.unit || "PCS"}
+                          </span>
                         </div>
-                        <div className="space-y-1 text-right">
-                          <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Unit Rate</div>
-                          <div className="text-xs font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{parseFloat(item.price || 0).toFixed(2)}</div>
+                        <div>
+                          <span className="text-[var(--text-muted)] block">Rate</span>
+                          <span className="font-mono text-[var(--text-primary)]">
+                            {getCurrencySymbol()}
+                            {parseFloat(item.price || 0).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[var(--text-muted)] block">Tax</span>
+                          <span className="font-mono text-[var(--text-secondary)]">
+                            {item.tax_display || `${parseFloat((item.tax_rate ?? item.tax) || 0)}%`}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -302,55 +430,107 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                 </div>
               </div>
 
-              {/* Footer Summary */}
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 pt-6">
-                <div className="flex-1 space-y-6">
-                  {bill.notes && (
-                    <div className="space-y-2">
-                      <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Remarks & Notes</div>
-                      <div className="text-xs text-[var(--text-muted)] leading-relaxed italic bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-subtle)]">
+              {/* Bottom Summary & Financial Totals */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start pt-2">
+                {/* Notes & Remarks */}
+                <div className="space-y-3">
+                  {bill.notes ? (
+                    <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 space-y-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] block">
+                        Remarks & Notes
+                      </span>
+                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic">
                         {bill.notes}
-                      </div>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-[var(--bg-primary)]/50 border border-dashed border-[var(--border-subtle)] rounded-xl p-4 text-xs text-[var(--text-muted)]">
+                      No remarks recorded.
                     </div>
                   )}
-                  <div className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">
-                    Generated by Cenvora Engine • {new Date().toLocaleDateString()}
-                  </div>
                 </div>
 
-                <div className="w-full sm:w-80 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-[32px] p-8 space-y-4 shadow-xl">
-                  <div className="flex justify-between items-center text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
-                    <span>Subtotal (ex-GST)</span>
-                    <span className="font-mono text-xs text-[var(--text-primary)]">{getCurrencySymbol()}{parseFloat(bill.taxable_amount || bill.subtotal || 0).toFixed(2)}</span>
+                {/* Totals Breakdown Card */}
+                <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-5 space-y-3 shadow-sm">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)] font-medium">Subtotal (Excl. Tax)</span>
+                    <span className="font-mono font-semibold text-[var(--text-primary)]">
+                      {getCurrencySymbol()}
+                      {parseFloat(bill.taxable_amount || bill.subtotal || 0).toFixed(2)}
+                    </span>
                   </div>
+
                   {parseFloat(bill.igst || 0) > 0 ? (
-                    <div className="flex justify-between items-center text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
-                      <span>IGST</span>
-                      <span className="font-mono text-xs text-[var(--text-primary)]">{getCurrencySymbol()}{parseFloat(bill.igst || 0).toFixed(2)}</span>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[var(--text-muted)] font-medium">IGST</span>
+                      <span className="font-mono font-semibold text-[var(--text-primary)]">
+                        {getCurrencySymbol()}
+                        {parseFloat(bill.igst || 0).toFixed(2)}
+                      </span>
                     </div>
                   ) : (
                     <>
-                      <div className="flex justify-between items-center text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
-                        <span>CGST</span>
-                        <span className="font-mono text-xs text-[var(--text-primary)]">{getCurrencySymbol()}{parseFloat(bill.cgst || 0).toFixed(2)}</span>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)] font-medium">CGST</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">
+                          {getCurrencySymbol()}
+                          {parseFloat(bill.cgst || 0).toFixed(2)}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
-                        <span>SGST</span>
-                        <span className="font-mono text-xs text-[var(--text-primary)]">{getCurrencySymbol()}{parseFloat(bill.sgst || 0).toFixed(2)}</span>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)] font-medium">SGST</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">
+                          {getCurrencySymbol()}
+                          {parseFloat(bill.sgst || 0).toFixed(2)}
+                        </span>
                       </div>
                     </>
                   )}
-                  <div className="flex justify-between items-center text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">
-                    <span>Amount Paid</span>
-                    <span className="font-mono text-xs text-[var(--text-primary)]">{getCurrencySymbol()}{parseFloat(bill.amount_paid || 0).toFixed(2)}</span>
+
+                  {parseFloat(bill.round_off || 0) !== 0 && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[var(--text-muted)] font-medium">Round Off</span>
+                      <span className="font-mono text-[var(--text-primary)]">
+                        {getCurrencySymbol()}
+                        {parseFloat(bill.round_off || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-[var(--border-subtle)] flex justify-between items-baseline">
+                    <div>
+                      <span className="text-sm font-bold text-[var(--text-primary)] block">
+                        Net Total
+                      </span>
+                      <span className="text-xs text-[var(--text-muted)]">Tax Inclusive</span>
+                    </div>
+                    <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">
+                      {getCurrencySymbol()}
+                      {parseFloat(bill.total_amount || 0).toFixed(2)}
+                    </span>
                   </div>
-                  <div className="pt-4 border-t border-[var(--border-subtle)]">
-                    <div className="flex justify-between items-baseline">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-widest">Net Total</span>
-                        <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-tighter">Tax Inclusive</span>
-                      </div>
-                      <span className="text-3xl font-black text-[var(--text-primary)] tracking-tighter font-mono">{getCurrencySymbol()}{parseFloat(bill.total_amount || 0).toFixed(2)}</span>
+
+                  {/* Payment Progress */}
+                  <div className="pt-3 border-t border-[var(--border-subtle)] space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">Amount Paid</span>
+                      <span className="font-mono font-medium text-[var(--text-primary)]">
+                        {getCurrencySymbol()}
+                        {parseFloat(bill.amount_paid || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center font-medium">
+                      <span className="text-[var(--text-muted)]">Balance Due</span>
+                      <span
+                        className={`font-mono font-bold ${
+                          balanceDue > 0
+                            ? "text-[var(--status-danger-text)]"
+                            : "text-[var(--status-success-text)]"
+                        }`}
+                      >
+                        {getCurrencySymbol()}
+                        {balanceDue.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -359,14 +539,28 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
           )}
         </div>
 
-        {/* Modal Footer Actions */}
-        <div className="sticky bottom-0 p-6 sm:p-8 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] flex justify-center print:hidden">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-10 py-4 btn-secondary rounded-2xl transition-all font-black text-xs uppercase tracking-[0.2em] shadow-xl"
-          >
-            Close Insight
-          </button>
+        {/* Sticky Bottom Actions */}
+        <div className="sticky bottom-0 px-5 py-3.5 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] flex items-center justify-between print:hidden">
+          <div className="text-xs text-[var(--text-muted)]">
+            Press <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)] font-mono text-[11px]">Esc</kbd> to close
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-3.5 py-2 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] transition-colors text-xs font-semibold flex items-center gap-1.5"
+            >
+              <PrinterIcon className="w-4 h-4 text-[var(--text-muted)]" />
+              <span>Print Bill</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2 btn-secondary rounded-lg transition-all font-semibold text-xs"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>,
