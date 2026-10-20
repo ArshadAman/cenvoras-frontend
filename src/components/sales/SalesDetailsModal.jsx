@@ -492,7 +492,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         .invoice-sheet {
           box-shadow: none !important;
           transform: none !important;
-          background: #ffffff !important;
           width: 100% !important;
           max-width: 100% !important;
           min-height: 100% !important;
@@ -981,6 +980,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                   <div 
                     ref={printRef}
                     data-print-target
+                    data-bill-template="true"
                     className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0 print:w-full print:max-w-none print:shadow-none print:m-0"
                   >
                     <style type="text/css" media="print">{`

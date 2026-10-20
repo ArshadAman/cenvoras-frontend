@@ -181,6 +181,7 @@ const InvoicePreview = forwardRef(({
   return (
     <div 
       ref={ref}
+      data-bill-template="true"
       className="bg-white invoice-sheet"
       style={{
         ...paperStyle,

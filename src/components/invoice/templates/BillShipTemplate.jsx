@@ -78,6 +78,7 @@ const BillShipTemplate = forwardRef(({
   return (
     <div 
       ref={ref}
+      data-bill-template="true"
       className="bg-white invoice-sheet"
       style={{
         width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '8mm', boxSizing: 'border-box',

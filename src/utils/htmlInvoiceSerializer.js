@@ -97,7 +97,6 @@ export function serializeInvoiceHtml(element) {
     .invoice-sheet {
       box-shadow: none !important;
       transform: none !important;
-      background-color: #ffffff !important;
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;

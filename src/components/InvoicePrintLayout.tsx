@@ -34,7 +34,7 @@ export const InvoicePrintLayout: React.FC = () => {
   const grandTotal = subtotal + taxAmount;
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-white text-black p-4 font-mono text-sm border border-slate-200 shadow-2xl rounded-lg print:shadow-none print:border-none print:w-full print:p-0">
+    <div data-bill-template="true" className="invoice-sheet w-full max-w-sm mx-auto bg-white text-black p-4 font-mono text-sm border border-slate-200 shadow-2xl rounded-lg print:shadow-none print:border-none print:w-full print:p-0">
       
       {/* Header */}
       <div className="text-center mb-6">

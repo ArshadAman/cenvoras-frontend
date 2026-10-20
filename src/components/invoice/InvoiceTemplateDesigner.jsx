@@ -1025,7 +1025,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               marginBottom: previewScale < 1 ? `calc(297mm * (${previewScale} - 1))` : 0,
             }}
           >
-            <div className="shadow-2xl bg-white">
+            <div className="shadow-2xl bg-white" data-bill-template="true">
               <InvoicePreview
                 ref={previewRef}
                 invoice={previewInvoice}
