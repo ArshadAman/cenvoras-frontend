@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { LockClosedIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { createPlanPaymentOrder, confirmPlanPayment, getPlanCatalog } from '../../api/subscription';
+import useEscKey from '../../hooks/useEscStack';
 
 const BILLING_CYCLES = [
   { value: 'monthly', label: 'Monthly' },
@@ -93,6 +94,7 @@ export default function UpgradePromptModal({
   ctaLabel = '',
   subtitle = '',
 }) {
+  useEscKey(onClose, isOpen, 20);
   const [isPaying, setIsPaying] = React.useState(false);
   const [billingCycle, setBillingCycle] = React.useState('monthly');
   const resolvedTargetPlanCode = React.useMemo(
@@ -187,7 +189,7 @@ export default function UpgradePromptModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-2xl overflow-hidden">
         <div className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5">
           <div className="flex items-start gap-3">
@@ -195,7 +197,7 @@ export default function UpgradePromptModal({
               <LockClosedIcon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-[var(--text-primary)]">{title}</h3>
+              <h3 className="text-xl font-bold text-[var(--text-primary)] font-display">{title}</h3>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {subtitle || `${featureName} is not included in your current ${currentPlanName} plan.`}
               </p>

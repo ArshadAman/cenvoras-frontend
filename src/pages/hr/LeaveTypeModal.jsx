@@ -3,8 +3,10 @@ import { createPortal } from "react-dom";
 import { hrApi } from "../../api/hr";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
+import useEscKey from "../../hooks/useEscStack";
 
 export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData = null }) {
+  useEscKey(onClose, isOpen, 20);
   const isEdit = Boolean(initialData?.id);
   const [form, setForm] = useState({
     name: "",
@@ -103,10 +105,10 @@ export default function LeaveTypeModal({ isOpen, onClose, onSuccess, initialData
   const labelCls = "block text-sm font-medium text-[var(--text-secondary)] mb-1";
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/30">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl w-full max-w-md shadow-2xl text-[var(--text-primary)] my-auto overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <h2 className="text-lg font-bold text-[var(--text-primary)] font-display">
             {isEdit ? "Edit Leave Type" : "Add Leave Type"}
           </h2>
           <button

@@ -78,7 +78,7 @@ const ToggleSwitch = ({ label, checked, onChange, description }) => (
 // Number Input Component
 const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-sm text-gray-300">{label}</span>
+    <span className="text-sm text-[var(--text-secondary)]">{label}</span>
     <div className="flex items-center gap-1">
       <input
         type="number"
@@ -86,9 +86,9 @@ const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) 
         onChange={(e) => onChange(Number(e.target.value))}
         min={min}
         max={max}
-        className="w-16 px-2 py-1 bg-white/5 border border-white/10 rounded text-sm text-white text-center"
+        className="w-16 px-2 py-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-sm text-[var(--text-primary)] text-center font-mono"
       />
-      {unit && <span className="text-xs text-gray-500">{unit}</span>}
+      {unit && <span className="text-xs text-[var(--text-muted)]">{unit}</span>}
     </div>
   </div>
 );
@@ -96,13 +96,13 @@ const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) 
 // Text Input Component
 const TextInput = ({ label, value, onChange, placeholder = '' }) => (
   <div className="space-y-1">
-    <label className="text-sm text-gray-300">{label}</label>
+    <label className="form-label !mb-1">{label}</label>
     <input
       type="text"
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500"
+      className="form-input text-sm"
     />
   </div>
 );
@@ -110,13 +110,13 @@ const TextInput = ({ label, value, onChange, placeholder = '' }) => (
 // Textarea Component
 const TextArea = ({ label, value, onChange, rows = 3, placeholder = '' }) => (
   <div className="space-y-1">
-    <label className="text-sm text-gray-300">{label}</label>
+    <label className="form-label !mb-1">{label}</label>
     <textarea
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       rows={rows}
       placeholder={placeholder}
-      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 resize-none"
+      className="form-input text-sm resize-none"
     />
   </div>
 );
@@ -124,14 +124,14 @@ const TextArea = ({ label, value, onChange, rows = 3, placeholder = '' }) => (
 // Select Component
 const Select = ({ label, value, onChange, options }) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-sm text-gray-300">{label}</span>
+    <span className="text-sm text-[var(--text-secondary)]">{label}</span>
     <select
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white"
+      className="px-3 py-1.5 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-sm text-[var(--text-primary)]"
     >
       {options.map(opt => (
-        <option key={opt.value} value={opt.value} className="bg-gray-900">
+        <option key={opt.value} value={opt.value} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
           {opt.label}
         </option>
       ))}

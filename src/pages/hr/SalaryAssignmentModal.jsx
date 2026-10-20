@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { hrApi } from '../../api/hr';
 import { toast } from 'react-toastify';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, initialData }) {
+  useEscKey(onClose, isOpen, 20);
   const [form, setForm] = useState({ employee: '', salary_structure: '', effective_from: '', monthly_ctc: '' });
   const [saving, setSaving] = useState(false);
   const [employees, setEmployees] = useState([]);

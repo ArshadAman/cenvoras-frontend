@@ -4,12 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { getGeneralLedger } from '../../api/ledger';
 import { format } from 'date-fns';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function GeneralLedgerModal({ 
   isOpen, 
   onClose, 
   account 
 }) {
+  useEscKey(onClose, isOpen, 15);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,9 +102,9 @@ export default function GeneralLedgerModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative w-full max-w-6xl rounded-2xl shadow-2xl animate-fade-up bg-[var(--bg-surface)] border border-[var(--border-subtle)] max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-5xl rounded-2xl shadow-2xl animate-fade-up bg-[var(--bg-surface)] border border-[var(--border-default)] max-h-[90vh] flex flex-col overflow-hidden text-[var(--text-primary)]">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
           <div>

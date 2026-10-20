@@ -2,8 +2,10 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckIcon, XMarkIcon, TagIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function QuotationConvertModal({ isOpen, quotation, onClose, onConfirm, isSubmitting }) {
+  useEscKey(onClose, isOpen, 15);
   const [selected, setSelected] = useState(new Set());
   const [poNumber, setPoNumber] = useState('');
   const [poDate, setPoDate] = useState('');
@@ -135,7 +137,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
     <div className="fixed inset-0 z-[9999] overflow-y-auto antialiased">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose} 
       />
       

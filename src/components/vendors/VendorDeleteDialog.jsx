@@ -4,8 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteVendor } from "../../api/vendors";
 import { toast } from "react-toastify";
 import { XMarkIcon, TrashIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import useEscKey from "../../hooks/useEscStack";
 
 export default function VendorDeleteDialog({ isOpen, onClose, vendor }) {
+  useEscKey(onClose, isOpen, 20);
   const queryClient = useQueryClient();
   
   const mutation = useMutation({

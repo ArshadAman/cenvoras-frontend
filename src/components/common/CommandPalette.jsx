@@ -354,25 +354,25 @@ export default function CommandPalette({ isOpen, onClose }) {
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity duration-200"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Palette Container */}
-      <div className="relative w-full max-w-xl bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden z-10 flex flex-col max-h-[75vh] animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] animate-in fade-in zoom-in-95 duration-150 text-[var(--text-primary)]">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800 bg-slate-950/40">
-          <MagnifyingGlassIcon className="w-5 h-5 text-slate-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
+          <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-muted)] shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command, page, or search keywords..."
-            className="w-full bg-transparent text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none"
+            className="w-full bg-transparent text-sm sm:text-base text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono text-slate-400 bg-slate-800/80 rounded border border-slate-700">
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono text-[var(--text-muted)] bg-[var(--bg-primary)] rounded border border-[var(--border-subtle)]">
             ESC
           </kbd>
         </div>
@@ -380,10 +380,10 @@ export default function CommandPalette({ isOpen, onClose }) {
         {/* Results List */}
         <div ref={listRef} className="overflow-y-auto p-2 space-y-1 custom-scrollbar">
           {filteredItems.length === 0 ? (
-            <div className="py-12 text-center text-slate-400">
-              <CommandLineIcon className="w-8 h-8 mx-auto text-slate-600 mb-2" />
-              <p className="text-sm font-medium text-slate-300">No matching commands or pages</p>
-              <p className="text-xs text-slate-500 mt-1">Try searching "invoice", "quotation", "ledger", or "vendor".</p>
+            <div className="py-12 text-center text-[var(--text-muted)]">
+              <CommandLineIcon className="w-8 h-8 mx-auto text-[var(--text-muted)] opacity-60 mb-2" />
+              <p className="text-sm font-medium text-[var(--text-primary)]">No matching commands or pages</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Try searching "invoice", "quotation", "ledger", or "vendor".</p>
             </div>
           ) : (
             filteredItems.map((item, index) => {
@@ -401,28 +401,28 @@ export default function CommandPalette({ isOpen, onClose }) {
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm transition-all duration-100 ${
                     isSelected
-                      ? 'bg-blue-600/20 text-white border border-blue-500/40'
-                      : 'text-slate-300 hover:bg-slate-800/50 border border-transparent'
+                      ? 'bg-[var(--accent-primary)]/15 text-[var(--text-primary)] border border-[var(--accent-primary)]/30 shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`p-1.5 rounded-lg shrink-0 ${
-                        isSelected ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'
+                        isSelected ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="truncate">
-                      <span className="font-medium text-slate-100">{item.title}</span>
-                      <span className="text-xs text-slate-500 ml-2 hidden sm:inline">{item.path}</span>
+                      <span className="font-medium text-[var(--text-primary)]">{item.title}</span>
+                      <span className="text-xs text-[var(--text-muted)] ml-2 hidden sm:inline">{item.path}</span>
                     </div>
                   </div>
                   <span
                     className={`text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border shrink-0 ml-2 ${
                       isSelected
-                        ? 'bg-blue-500/30 text-blue-200 border-blue-400/40'
-                        : 'bg-slate-800/70 text-slate-400 border-slate-700'
+                        ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
+                        : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'
                     }`}
                   >
                     {item.badge}
@@ -434,19 +434,19 @@ export default function CommandPalette({ isOpen, onClose }) {
         </div>
 
         {/* Footer shortcuts hint */}
-        <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+        <div className="px-4 py-2.5 bg-[var(--bg-primary)]/60 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-muted)]">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">↑</kbd>{' '}
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">↓</kbd>{' '}
+              <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono text-[11px]">↑</kbd>{' '}
+              <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono text-[11px]">↓</kbd>{' '}
               Navigate
             </span>
             <span>
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono">↵</kbd>{' '}
+              <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono text-[11px]">↵</kbd>{' '}
               Open
             </span>
           </div>
-          <span>Cenvora Quick Action</span>
+          <span className="text-[11px] font-medium">Cenvora Quick Action</span>
         </div>
       </div>
     </div>

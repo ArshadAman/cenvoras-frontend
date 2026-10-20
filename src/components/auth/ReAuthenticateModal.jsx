@@ -104,8 +104,8 @@ export default function ReAuthenticateModal() {
 
   return createPortal(
     <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
-      {/* Backdrop with heavy blur */}
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+      {/* Backdrop with standard blur */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Modal Dialog */}
       <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl p-6 sm:p-8 animate-fade-up">

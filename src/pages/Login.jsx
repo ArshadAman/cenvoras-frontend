@@ -77,7 +77,7 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans flex flex-col justify-between">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-body flex flex-col justify-between">
       <Seo
         title="Sign In | Cenvora"
         description="Sign in to your Cenvora account to manage invoices, stock, and customer ledgers."
@@ -103,7 +103,7 @@ export default function Login({ onLogin }) {
                 <ShieldCheckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                 GST-Ready Business Cloud
               </span>
-              <h2 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug font-display">
                 Accelerate your daily billing, stock, and customer accounts.
               </h2>
             </div>
@@ -141,13 +141,13 @@ export default function Login({ onLogin }) {
               <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
                 <BrandLogo className="h-10 sm:h-11 w-auto mx-auto" />
               </Link>
-              <h2 className="text-xl font-bold text-[var(--text-primary)]">Sign in to Cenvora</h2>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] font-display">Sign in to Cenvora</h2>
             </div>
 
             {/* Auth Glass Card */}
-            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight">Welcome back</h1>
+                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight font-display">Welcome back</h1>
                 <p className="text-xs text-[var(--text-muted)] mt-1.5">Sign in to your account to access your workspace</p>
               </div>
 
@@ -188,24 +188,24 @@ export default function Login({ onLogin }) {
                 {({ isSubmitting }) => (
                   <Form className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1.5">
+                      <label className="form-label">
                         Email Address
                       </label>
                       <Field
                         type="email"
                         name="username"
-                        className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm transition-all"
+                        className="form-input"
                         placeholder="name@company.com"
                       />
-                      <ErrorMessage name="username" component="div" className="text-[var(--status-danger)] text-xs mt-1.5" />
+                      <ErrorMessage name="username" component="div" className="form-error" />
                     </div>
 
                     <div>
                       <div className="flex justify-between items-center mb-1.5">
-                        <label className="block text-xs font-semibold text-[var(--text-primary)]">
+                        <label className="form-label !mb-0">
                           Password
                         </label>
-                        <Link to="/forgot-password" className="text-xs text-[var(--accent-primary)] hover:underline transition-colors">
+                        <Link to="/forgot-password" className="text-xs text-[var(--accent-primary)] hover:underline transition-colors font-medium">
                           Forgot password?
                         </Link>
                       </div>
@@ -213,22 +213,22 @@ export default function Login({ onLogin }) {
                         <Field
                           type={showPassword ? "text" : "password"}
                           name="password"
-                          className="w-full px-4 py-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm pr-16 transition-all"
+                          className="form-input pr-16"
                           placeholder="••••••••"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1"
                         >
                           {showPassword ? 'Hide' : 'Show'}
                         </button>
                       </div>
-                      <ErrorMessage name="password" component="div" className="text-[var(--status-danger)] text-xs mt-1.5" />
+                      <ErrorMessage name="password" component="div" className="form-error" />
                     </div>
 
                     <div className="flex items-center text-xs text-[var(--text-muted)] pt-1">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
                         <Field 
                           type="checkbox" 
                           name="rememberMe" 
@@ -241,10 +241,22 @@ export default function Login({ onLogin }) {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full mt-2 py-3.5 btn-primary font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                      className="w-full mt-2 py-3 btn-primary font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
                     >
-                      {isSubmitting ? 'Signing in...' : 'Sign In'}
-                      {!isSubmitting && <ArrowRightIcon className="w-3.5 h-3.5" />}
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <span>Signing in...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Sign In</span>
+                          <ArrowRightIcon className="w-3.5 h-3.5" />
+                        </>
+                      )}
                     </button>
 
                     <div className="relative my-5">

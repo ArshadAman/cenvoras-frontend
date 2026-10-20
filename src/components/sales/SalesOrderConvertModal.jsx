@@ -14,8 +14,10 @@ import { convertToInvoice } from '../../api/sales_order';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { getCurrencySymbol } from '../../utils/currency';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
+  useEscKey(onClose, isOpen, 15);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [conversionType, setConversionType] = useState('challan'); // 'challan' or 'invoice'
@@ -209,7 +211,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
     <div className="fixed inset-0 z-[9999] overflow-y-auto antialiased">
       {/* Blurred Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-xl transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose} 
       />
 

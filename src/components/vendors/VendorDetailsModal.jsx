@@ -10,8 +10,10 @@ import html2canvas from "html2canvas";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { EyeIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import PurchaseDetailsModal from "../purchase/PurchaseDetailsModal";
+import useEscKey from "../../hooks/useEscStack";
 
 export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
+  useEscKey(onClose, isOpen, 15);
   const printRef = useRef();
   const [activeTab, setActiveTab] = useState("bills");
   const [previewBillId, setPreviewBillId] = useState(null);
