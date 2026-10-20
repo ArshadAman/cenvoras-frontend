@@ -271,6 +271,57 @@
     color: var(--text-primary);
   }
 
+  /* Universal Input & Control Defaults */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea {
+    color: var(--text-primary);
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Universal Table Baseline */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  td {
+    color: var(--text-primary);
+  }
+
+  /* High-Contrast Light Mode Guardrails against legacy dark classes */
+  :root:not(.dark) h1.text-white,
+  :root:not(.dark) h2.text-white,
+  :root:not(.dark) h3.text-white,
+  :root:not(.dark) h4.text-white,
+  :root:not(.dark) p.text-white {
+    color: var(--text-primary);
+  }
+
+  :root:not(.dark) .text-gray-400:not([class*="bg-"]):not(button):not(a) {
+    color: var(--text-muted);
+  }
+
+  :root:not(.dark) .text-gray-300:not([class*="bg-"]):not(button):not(a) {
+    color: var(--text-secondary);
+  }
+
+  :root:not(.dark) .text-gray-500:not([class*="bg-"]):not(button):not(a) {
+    color: var(--text-muted);
+  }
+
   .Toastify__toast-container,
   .Toastify__toast-container--top-right,
   .Toastify__toast-container--top-left,

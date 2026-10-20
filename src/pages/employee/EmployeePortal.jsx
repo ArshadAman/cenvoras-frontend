@@ -9,14 +9,14 @@ import {
 
 function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md flex items-start gap-4 hover:bg-white/[0.08] transition">
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 flex items-start gap-4 hover:border-[var(--accent-primary)] transition shadow-sm">
       <div className={`p-3 rounded-xl shrink-0 ${iconBg}`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-400 mb-1">{label}</p>
-        <p className="text-2xl font-bold text-white">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+        <p className="text-xs text-[var(--text-muted)] font-medium mb-1">{label}</p>
+        <p className="text-2xl font-bold text-[var(--text-primary)] tabular-nums">{value}</p>
+        {sub && <p className="text-xs text-[var(--text-muted)] mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -57,30 +57,30 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
             </div>
           </div>
           
-          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)]/40 p-4 space-y-4">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 p-4 space-y-4">
             {task.description ? (
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-1">Description</span>
-                <p className="text-sm text-gray-300 whitespace-pre-wrap">{task.description}</p>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-1">Description</span>
+                <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{task.description}</p>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 italic">No description provided for this task.</p>
+              <p className="text-sm text-[var(--text-muted)] italic">No description provided for this task.</p>
             )}
             
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 text-sm">
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-subtle)] text-sm">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Assigned By</span>
-                <span className="font-semibold text-white">{task.assigned_by_name || "HR System"}</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Assigned By</span>
+                <span className="font-semibold text-[var(--text-primary)]">{task.assigned_by_name || "HR System"}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Deadline</span>
-                <span className={`font-mono font-semibold ${isOverdue ? "text-rose-400 font-bold" : "text-indigo-300"}`}>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Deadline</span>
+                <span className={`font-mono font-semibold ${isOverdue ? "text-[var(--status-danger)] font-bold" : "text-[var(--accent-primary)]"}`}>
                   {task.deadline || "No deadline"}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block mb-0.5">Created At</span>
-                <span className="text-gray-300">{new Date(task.created_at).toLocaleDateString()}</span>
+                <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)] block mb-0.5">Created At</span>
+                <span className="text-[var(--text-secondary)]">{new Date(task.created_at).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
@@ -249,29 +249,29 @@ export default function EmployeePortal() {
       {/* Header */}
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-1">Welcome Back</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white flex items-center gap-3">
+          <p className="text-xs uppercase tracking-wider text-[var(--accent-primary)] font-semibold mb-1">Welcome Back</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
             {profile?.full_name || "Employee"} Portal
           </h1>
         </div>
-        <button onClick={fetchAll} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
+        <button onClick={fetchAll} className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
           <ArrowPathIcon className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
         </button>
       </div>
 
       {/* Tabs */}
       <div className="overflow-x-auto pb-1">
-        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit min-w-full md:min-w-0 whitespace-nowrap">
+        <div className="flex gap-1 p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-fit min-w-full md:min-w-0 whitespace-nowrap shadow-sm">
           <button onClick={() => setTab("dashboard")}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition ${tab === "dashboard" ? "bg-indigo-500 text-white shadow-lg" : "text-gray-400 hover:text-white"}`}>
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition ${tab === "dashboard" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
             My Dashboard
           </button>
           <button onClick={() => setTab("announcements")}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition relative flex items-center gap-2 ${tab === "announcements" ? "bg-indigo-500 text-white shadow-lg" : "text-gray-400 hover:text-white"}`}>
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition relative flex items-center gap-2 ${tab === "announcements" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
             <BellIcon className="w-4 h-4" />
             <span>Announcements & Broadcasts</span>
             {notifications.length > 0 && (
-              <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span className="flex h-2 w-2 rounded-full bg-[var(--status-danger)] animate-pulse"></span>
             )}
           </button>
         </div>
@@ -281,43 +281,43 @@ export default function EmployeePortal() {
         <>
           {/* Stats Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={BriefcaseIcon} iconBg="bg-indigo-500/20" iconColor="text-indigo-400" label="Total Tasks" value={tasks.length} />
-            <StatCard icon={CheckCircleIcon} iconBg="bg-green-500/20" iconColor="text-green-400" label="Completed Tasks" value={tasks.filter(t => t.status === 'completed').length} />
-            <StatCard icon={CalendarDaysIcon} iconBg="bg-purple-500/20" iconColor="text-purple-400" label="Total Leaves" value={leaves.length} />
-            <StatCard icon={ClockIcon} iconBg="bg-amber-500/20" iconColor="text-amber-400" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
+            <StatCard icon={BriefcaseIcon} iconBg="bg-[var(--status-info-bg)]" iconColor="text-[var(--status-info-text)]" label="Total Tasks" value={tasks.length} />
+            <StatCard icon={CheckCircleIcon} iconBg="bg-[var(--status-success-bg)]" iconColor="text-[var(--status-success-text)]" label="Completed Tasks" value={tasks.filter(t => t.status === 'completed').length} />
+            <StatCard icon={CalendarDaysIcon} iconBg="bg-[var(--border-subtle)]/20" iconColor="text-[var(--accent-primary)]" label="Total Leaves" value={leaves.length} />
+            <StatCard icon={ClockIcon} iconBg="bg-[var(--status-warning-bg)]" iconColor="text-[var(--status-warning-text)]" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* LEAVES */}
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-medium text-white">Leave Applications</h2>
-                <button onClick={() => setShowLeaveModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition">
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">Leave Applications</h2>
+                <button onClick={() => setShowLeaveModal(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
                   <PlusIcon className="w-4 h-4" /> Apply Leave
                 </button>
               </div>
               
-              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+              <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
                 {leaves.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">No leave applications found.</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] text-sm">No leave applications found.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-gray-300">
-                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                    <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Type</th><th className="px-5 py-3">Duration</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[var(--border-subtle)]">
                       {leaves.map(l => (
-                        <tr key={l.id} className="border-b border-white/5 hover:bg-white/5">
+                        <tr key={l.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
                           <td className="px-5 py-3">
-                            <div className="font-medium text-white">{l.leave_type_name || l.leave_type}</div>
-                            {l.reason && <div className="text-xs text-gray-500 mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
+                            <div className="font-semibold text-[var(--text-primary)]">{l.leave_type_name || l.leave_type}</div>
+                            {l.reason && <div className="text-xs text-[var(--text-muted)] mt-1 max-w-xs break-words" title={l.reason}>{l.reason}</div>}
                           </td>
-                          <td className="px-5 py-3">{l.start_date} to {l.end_date}</td>
+                          <td className="px-5 py-3 text-[var(--text-secondary)]">{l.start_date} to {l.end_date}</td>
                           <td className="px-5 py-3 capitalize">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              l.status === 'approved' ? 'bg-green-500/10 text-green-400' : 
-                              l.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 
-                              'bg-yellow-500/10 text-yellow-400'
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              l.status === 'approved' ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 
+                              l.status === 'rejected' ? 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]' : 
+                              'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]'
                             }`}>
                               {l.status}
                             </span>
@@ -333,30 +333,30 @@ export default function EmployeePortal() {
             {/* TASKS */}
             <div className="space-y-6">
               <div className="flex justify-between items-center h-[38px]">
-                <h2 className="text-lg font-medium text-white">My Assigned Tasks</h2>
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">My Assigned Tasks</h2>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+              <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
                 {tasks.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">No tasks assigned to you.</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] text-sm">No tasks assigned to you.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-gray-300">
-                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                    <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Title</th><th className="px-5 py-3">Description</th><th className="px-5 py-3">Deadline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[var(--border-subtle)]">
                       {tasks.map(t => {
                         const isOverdue = t.status !== 'completed' && t.deadline && new Date(t.deadline) < new Date(new Date().setHours(0,0,0,0));
                         return (
-                          <tr key={t.id} onClick={() => setSelectedTask(t)} className={`border-b border-white/5 hover:bg-white/10 cursor-pointer transition ${isOverdue ? 'bg-red-500/5 hover:bg-red-500/10' : ''}`}>
-                            <td className="px-5 py-3 font-medium text-white">{t.title}</td>
-                            <td className="px-5 py-3 max-w-xs truncate text-gray-400">{t.description || <span className="italic text-gray-600">No description</span>}</td>
+                          <tr key={t.id} onClick={() => setSelectedTask(t)} className={`hover:bg-[var(--bg-primary)]/50 cursor-pointer transition-colors ${isOverdue ? 'bg-[var(--status-danger-bg)]/30' : ''}`}>
+                            <td className="px-5 py-3 font-semibold text-[var(--text-primary)]">{t.title}</td>
+                            <td className="px-5 py-3 max-w-xs truncate text-[var(--text-muted)]">{t.description || <span className="italic">No description</span>}</td>
                             <td className="px-5 py-3 font-mono text-xs">
                               {t.deadline ? (
-                                <span className={`px-2 py-0.5 rounded ${isOverdue ? 'bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30' : 'text-indigo-300 bg-indigo-500/10 border border-indigo-500/20'}`}>
+                                <span className={`px-2 py-0.5 rounded-full font-semibold ${isOverdue ? 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]' : 'text-[var(--accent-primary)] bg-[var(--border-subtle)]/20 border border-[var(--border-subtle)]'}`}>
                                   {t.deadline} {isOverdue && "(OVERDUE)"}
                                 </span>
                               ) : (
-                                <span className="text-gray-500 font-normal">No deadline</span>
+                                <span className="text-[var(--text-muted)] font-normal">No deadline</span>
                               )}
                             </td>
                             <td className="px-5 py-3 capitalize">
@@ -392,30 +392,30 @@ export default function EmployeePortal() {
             {/* QUERIES */}
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-medium text-white">HR Queries</h2>
-                <button onClick={() => setShowQueryModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 transition">
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">HR Queries</h2>
+                <button onClick={() => setShowQueryModal(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
                   <PlusIcon className="w-4 h-4" /> Raise Query
                 </button>
               </div>
               
-              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+              <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
                 {queries.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">You have not raised any queries yet.</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] text-sm">You have not raised any queries yet.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-gray-300">
-                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                    <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Subject</th><th className="px-5 py-3">Message</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[var(--border-subtle)]">
                       {queries.map(q => (
-                        <tr key={q.id} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="px-5 py-3 font-medium text-white">{q.subject}</td>
-                          <td className="px-5 py-3 max-w-sm truncate">{q.message}</td>
+                        <tr key={q.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                          <td className="px-5 py-3 font-semibold text-[var(--text-primary)]">{q.subject}</td>
+                          <td className="px-5 py-3 max-w-sm truncate text-[var(--text-secondary)]">{q.message}</td>
                           <td className="px-5 py-3 capitalize">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              q.status === 'resolved' ? 'bg-green-500/10 text-green-400' : 
-                              q.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 
-                              'bg-yellow-500/10 text-yellow-400'
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              q.status === 'resolved' ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 
+                              q.status === 'rejected' ? 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]' : 
+                              'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]'
                             }`}>
                               {q.status}
                             </span>
@@ -431,22 +431,22 @@ export default function EmployeePortal() {
             {/* ATTENDANCE */}
             <div className="space-y-6">
               <div className="flex justify-between items-center h-9">
-                <h2 className="text-lg font-medium text-white">Attendance History</h2>
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">Attendance History</h2>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+              <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
                 {attendance.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">No attendance records found.</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] text-sm">No attendance records found.</div>
                 ) : (
-                  <table className="w-full text-sm text-left text-gray-300">
-                    <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+                  <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+                    <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
                       <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-[var(--border-subtle)]">
                       {attendance.map(a => (
-                        <tr key={a.id} className="border-b border-white/5 hover:bg-white/5">
-                          <td className="px-5 py-3">{a.date}</td>
+                        <tr key={a.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                          <td className="px-5 py-3 text-[var(--text-primary)] font-medium">{a.date}</td>
                           <td className="px-5 py-3 capitalize">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${a.status === 'present' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${a.status === 'present' ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]'}`}>
                               {a.status.replace('_', ' ')}
                             </span>
                           </td>
@@ -465,37 +465,36 @@ export default function EmployeePortal() {
         <div className="space-y-6 animate-fade-up">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <BellIcon className="w-6 h-6 text-indigo-400 animate-pulse" /> HR Announcements & Broadcasts
+              <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                <BellIcon className="w-6 h-6 text-[var(--accent-primary)] animate-pulse" /> HR Announcements & Broadcasts
               </h2>
-              <p className="text-sm text-gray-400 mt-1">Stay updated with the latest news, updates, and instructions from the HR department.</p>
+              <p className="text-sm text-[var(--text-muted)] mt-1">Stay updated with the latest news, updates, and instructions from the HR department.</p>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-[var(--text-muted)]">
               Showing {notifications.length} message{notifications.length !== 1 ? 's' : ''}
             </div>
           </div>
 
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 rounded-2xl border border-white/10 bg-black/25">
-              <div className="p-4 bg-indigo-500/10 rounded-full text-indigo-400">
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-8">
+              <div className="p-4 bg-[var(--border-subtle)]/20 rounded-full text-[var(--accent-primary)]">
                 <BellIcon className="w-12 h-12" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">All Caught Up</h3>
-                <p className="text-sm text-gray-400 mt-1 max-w-sm">There are no announcements or broadcasts from the HR department at this time.</p>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">All Caught Up</h3>
+                <p className="text-sm text-[var(--text-muted)] mt-1 max-w-sm">There are no announcements or broadcasts from the HR department at this time.</p>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {notifications.map((n) => (
-                <div key={n.id} className="relative group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-white/[0.01] hover:from-white/[0.05] hover:to-white/[0.02] p-6 hover:border-white/20 transition-all duration-300 shadow-xl flex flex-col justify-between">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-300" />
+                <div key={n.id} className="relative group overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 hover:border-[var(--accent-primary)] transition-all duration-300 shadow-sm flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start gap-4 mb-4">
-                      <span className="px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                      <span className="px-3 py-1 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--border-subtle)]/20 text-[var(--accent-primary)] border border-[var(--border-subtle)]">
                         Broadcast
                       </span>
-                      <span className="text-xs font-mono text-gray-500">
+                      <span className="text-xs font-mono text-[var(--text-muted)]">
                         {new Date(n.created_at).toLocaleDateString(undefined, {
                           year: 'numeric',
                           month: 'short',
@@ -503,11 +502,11 @@ export default function EmployeePortal() {
                         })}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white group-hover:text-blue-200 transition-colors mb-3 leading-snug">{n.title}</h3>
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{n.message}</p>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors mb-3 leading-snug">{n.title}</h3>
+                    <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{n.message}</p>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
-                    <span>Sender: <strong className="text-gray-400 font-medium">HR Team</strong></span>
+                  <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-muted)]">
+                    <span>Sender: <strong className="text-[var(--text-primary)] font-semibold">HR Team</strong></span>
                     <span>Received: {new Date(n.created_at).toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
                 </div>

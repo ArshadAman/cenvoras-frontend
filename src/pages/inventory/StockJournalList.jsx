@@ -41,14 +41,14 @@ export default function StockJournalList() {
   return (
     <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Stock Journals</h1>
-            <p className="text-gray-400 text-sm">Inventory adjustments, write-offs, and transfers.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1">Stock Journals</h1>
+            <p className="text-[var(--text-muted)] text-sm">Inventory adjustments, write-offs, and transfers.</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary flex items-center justify-center gap-2 self-start sm:self-auto"
           >
             <PlusIcon className="w-4 h-4" /> New Adjustment
           </button>
@@ -93,45 +93,45 @@ export default function StockJournalList() {
             </div>
         </div>
 
-        <div className="bento-card p-0 overflow-hidden">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left cursor-pointer">
               <thead>
-                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs uppercase bg-[var(--bg-primary)]/50">
-                  <th className="p-4 font-medium">Date / Voucher</th>
-                  <th className="p-4 font-medium">Type</th>
-                  <th className="p-4 font-medium">Warehouse</th>
-                  <th className="p-4 font-medium">Items</th>
-                  <th className="p-4 font-medium">Notes</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
+                  <th className="px-6 py-4">Date / Voucher</th>
+                  <th className="px-6 py-4">Type</th>
+                  <th className="px-6 py-4">Warehouse</th>
+                  <th className="px-6 py-4">Items</th>
+                  <th className="px-6 py-4">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {isLoading ? (
-                    <tr><td colSpan="5" className="p-8 text-center text-[var(--text-muted)]">Loading...</td></tr>
+                    <tr><td colSpan="5" className="px-6 py-12 text-center text-[var(--text-muted)] text-sm">Loading stock journals...</td></tr>
                 ) : journals.length === 0 ? (
-                    <tr><td colSpan="5" className="p-8 text-center text-[var(--text-muted)]">No journals found matching filters.</td></tr>
+                    <tr><td colSpan="5" className="px-6 py-12 text-center text-[var(--text-muted)] text-sm">No journals found matching filters.</td></tr>
                 ) : (
                     journals.map((j) => (
-                    <tr key={j.id} className="hover:bg-[var(--bg-primary)]/40 transition-colors" onClick={() => setViewDetailsJournal(j)}>
-                        <td className="p-4">
-                            <div className="text-[var(--text-primary)] font-medium">{j.date}</div>
+                    <tr key={j.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors" onClick={() => setViewDetailsJournal(j)}>
+                        <td className="px-6 py-4">
+                            <div className="text-[var(--text-primary)] font-semibold text-sm">{j.date}</div>
                             <div className="text-xs text-[var(--text-muted)]">{j.voucher_no || j.id.slice(0,8)}</div>
                         </td>
-                        <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium uppercase
-                                ${['excess', 'internal_return'].includes(j.adjustment_type) ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}
+                        <td className="px-6 py-4">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase
+                                ${['excess', 'internal_return'].includes(j.adjustment_type) ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]'}
                             `}>
                                 {j.adjustment_type.replace('_', ' ')}
                             </span>
                         </td>
-                        <td className="p-4 text-[var(--text-secondary)]">{j.warehouse_name}</td>
-                        <td className="p-4 text-[var(--text-secondary)] text-sm">
+                        <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{j.warehouse_name}</td>
+                        <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">
                             {j.items?.length || 0} items
                             <div className="text-xs text-[var(--text-muted)] mt-0.5">
                                 {j.items?.[0]?.product_name} {j.items?.length > 1 ? `+${j.items.length - 1} more` : ''}
                             </div>
                         </td>
-                        <td className="p-4 text-[var(--text-muted)] text-sm max-w-xs truncate">{j.notes}</td>
+                        <td className="px-6 py-4 text-[var(--text-muted)] text-sm max-w-xs truncate">{j.notes}</td>
                     </tr>
                     ))
                 )}

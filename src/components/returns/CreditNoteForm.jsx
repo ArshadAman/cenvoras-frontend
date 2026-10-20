@@ -222,23 +222,23 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               {selectedInvoice && (
                 <div className="space-y-4">
                   {/* Desktop Table */}
-                  <div className="hidden lg:block border border-[var(--border-subtle)] rounded-lg overflow-hidden">
+                  <div className="hidden lg:block border border-[var(--border-subtle)] rounded-xl overflow-hidden">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)]">
+                      <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                         <tr>
-                          <th className="p-3">Product</th>
-                          <th className="p-3 text-right">Sold Qty</th>
-                          <th className="p-3 text-right">Price</th>
-                          <th className="p-3 text-right w-32">Return Qty</th>
+                          <th className="px-4 py-3">Product</th>
+                          <th className="px-4 py-3 text-right">Sold Qty</th>
+                          <th className="px-4 py-3 text-right">Price</th>
+                          <th className="px-4 py-3 text-right w-36">Return Qty</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)]">
                         {returnItems.map((item, idx) => (
-                          <tr key={idx}>
-                            <td className="p-3 text-[var(--text-primary)]">{item.product_detail?.name || 'N/A'}</td>
-                            <td className="p-3 text-right text-[var(--text-muted)]">{item.original_qty} {item.unit}</td>
-                            <td className="p-3 text-right text-[var(--text-muted)]">{getCurrencySymbol()}{item.price}</td>
-                            <td className="p-3">
+                          <tr key={idx} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                            <td className="px-4 py-3 text-[var(--text-primary)] font-medium">{item.product_detail?.name || 'N/A'}</td>
+                            <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{item.original_qty} {item.unit}</td>
+                            <td className="px-4 py-3 text-right text-[var(--text-secondary)] tabular-nums">{getCurrencySymbol()}{item.price}</td>
+                            <td className="px-4 py-3">
                               <input 
                                 type="number"
                                 min="0"
@@ -250,7 +250,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                                   newItems[idx].return_qty = newQty;
                                   setReturnItems(newItems);
                                 }}
-                                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1 text-right text-[var(--text-primary)] focus:border-[var(--accent-primary)]"
+                                className="w-full bg-[var(--bg-primary)] border border-[var(--input-border)] rounded-xl px-3 py-1.5 text-right text-sm text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none"
                               />
                             </td>
                           </tr>
@@ -263,21 +263,21 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                   <div className="lg:hidden space-y-4">
                     {returnItems.map((item, idx) => (
                       <div key={idx} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 space-y-4">
-                        <div className="text-[var(--text-primary)] font-bold">{item.product_detail?.name || 'N/A'}</div>
+                        <div className="text-[var(--text-primary)] font-semibold text-base">{item.product_detail?.name || 'N/A'}</div>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Sold Qty</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Sold Qty</label>
                             <div className="text-[var(--text-primary)] text-sm font-medium">{item.original_qty} {item.unit}</div>
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Price</label>
-                            <div className="text-[var(--text-primary)] text-sm font-medium">{getCurrencySymbol()}{item.price}</div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Price</label>
+                            <div className="text-[var(--text-primary)] text-sm font-medium tabular-nums">{getCurrencySymbol()}{item.price}</div>
                           </div>
                         </div>
 
                         <div className="pt-3 border-t border-[var(--border-subtle)]">
-                           <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Quantity to Return</label>
+                           <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">Quantity to Return</label>
                            <div className="relative">
                               <input 
                                 type="number" 
@@ -290,9 +290,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                                   newItems[idx].return_qty = newQty;
                                   setReturnItems(newItems);
                                 }}
-                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none transition-all text-center font-bold text-lg"
+                                className="w-full bg-[var(--bg-surface)] border border-[var(--input-border)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none transition-all text-center font-bold text-lg"
                               />
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs uppercase font-black pointer-events-none">
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs uppercase font-semibold pointer-events-none">
                                 max: {item.original_qty}
                               </div>
                            </div>

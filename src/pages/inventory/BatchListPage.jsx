@@ -23,9 +23,9 @@ export default function BatchListPage() {
     const today = new Date();
     const expiry = new Date(expiryDate);
     const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-    if (daysLeft < 0) return { label: 'Expired', color: 'text-red-400 bg-red-500/10 border-red-500/20' };
-    if (daysLeft <= 7) return { label: `${daysLeft}d`, color: 'text-red-400 bg-red-500/10 border-red-500/20' };
-    if (daysLeft <= 30) return { label: `${daysLeft}d`, color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' };
+    if (daysLeft < 0) return { label: 'Expired', color: 'text-[var(--status-danger)] bg-[var(--status-danger-bg)] border-[var(--status-danger-border)]' };
+    if (daysLeft <= 7) return { label: `${daysLeft}d`, color: 'text-[var(--status-danger)] bg-[var(--status-danger-bg)] border-[var(--status-danger-border)]' };
+    if (daysLeft <= 30) return { label: `${daysLeft}d`, color: 'text-[var(--status-warning)] bg-[var(--status-warning-bg)] border-[var(--status-warning-border)]' };
     return null;
   };
 
@@ -34,77 +34,77 @@ export default function BatchListPage() {
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-            <CubeIcon className="w-8 h-8 text-cyan-400" />
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+            <CubeIcon className="w-8 h-8 text-[var(--accent-primary)]" />
             All Batches
           </h1>
-          <p className="text-gray-400 text-sm">View all product batches with pricing, expiry, and stock information</p>
+          <p className="text-[var(--text-muted)] text-sm">View all product batches with pricing, expiry, and stock information</p>
         </div>
 
         {/* Search */}
         <div className="relative max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by product name..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:border-purple-500/50 outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
           />
         </div>
 
         {/* Table */}
-        <div className="bento-card !p-0 overflow-hidden">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
           {isLoading ? (
-            <div className="p-12 text-center text-gray-500">Loading batches...</div>
+            <div className="p-12 text-center text-[var(--text-muted)] text-sm">Loading batches...</div>
           ) : batches.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              <CubeIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <div className="p-12 text-center text-[var(--text-muted)] text-sm">
+              <CubeIcon className="w-12 h-12 mx-auto mb-3 opacity-40 text-[var(--text-muted)]" />
               <p>No batches found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-white/[0.03] border-b border-white/10">
-                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Product</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Batch #</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">MFG Date</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Expiry Date</th>
-                    <th className="px-5 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">MRP</th>
-                    <th className="px-5 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Cost</th>
-                    <th className="px-5 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Sale Price</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Notes</th>
+                  <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left">Product</th>
+                    <th className="px-5 py-3.5 text-left">Batch #</th>
+                    <th className="px-5 py-3.5 text-left">MFG Date</th>
+                    <th className="px-5 py-3.5 text-left">Expiry Date</th>
+                    <th className="px-5 py-3.5 text-right">MRP</th>
+                    <th className="px-5 py-3.5 text-right">Cost</th>
+                    <th className="px-5 py-3.5 text-right">Sale Price</th>
+                    <th className="px-5 py-3.5 text-left">Status</th>
+                    <th className="px-5 py-3.5 text-left">Notes</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {batches.map((batch) => {
                     const expiryStatus = getExpiryStatus(batch.expiry_date);
                     return (
-                      <tr key={batch.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                        <td className="px-5 py-3 text-white font-medium">{batch.product_name || '—'}</td>
-                        <td className="px-5 py-3 text-gray-300 font-mono text-xs">{batch.batch_number}</td>
-                        <td className="px-5 py-3 text-gray-400">{batch.manufacturing_date || '—'}</td>
-                        <td className="px-5 py-3">
-                          <span className="text-gray-300">{batch.expiry_date || '—'}</span>
+                      <tr key={batch.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                        <td className="px-5 py-3.5 text-[var(--text-primary)] font-medium">{batch.product_name || '—'}</td>
+                        <td className="px-5 py-3.5 text-[var(--text-secondary)] font-mono text-xs">{batch.batch_number}</td>
+                        <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs">{batch.manufacturing_date || '—'}</td>
+                        <td className="px-5 py-3.5">
+                          <span className="text-[var(--text-secondary)] text-xs">{batch.expiry_date || '—'}</span>
                           {expiryStatus && (
-                            <span className={`ml-2 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border ${expiryStatus.color}`}>
+                            <span className={`ml-2 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border ${expiryStatus.color}`}>
                               {expiryStatus.label}
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-right text-gray-300">{getCurrencySymbol()}{Number(batch.mrp || 0).toLocaleString('en-IN')}</td>
-                        <td className="px-5 py-3 text-right text-gray-400">{getCurrencySymbol()}{Number(batch.cost_price || 0).toLocaleString('en-IN')}</td>
-                        <td className="px-5 py-3 text-right text-cyan-400 font-medium">{getCurrencySymbol()}{Number(batch.sale_price || 0).toLocaleString('en-IN')}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3.5 text-right text-[var(--text-secondary)] tabular-nums">{getCurrencySymbol()}{Number(batch.mrp || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-5 py-3.5 text-right text-[var(--text-muted)] tabular-nums">{getCurrencySymbol()}{Number(batch.cost_price || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-5 py-3.5 text-right text-[var(--accent-primary)] font-semibold tabular-nums">{getCurrencySymbol()}{Number(batch.sale_price || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-5 py-3.5">
                           {batch.is_active ? (
-                            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20">Active</span>
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--status-success)] bg-[var(--status-success-bg)] border border-[var(--status-success-border)]">Active</span>
                           ) : (
-                            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold text-gray-400 bg-gray-500/10 border border-gray-500/20">Inactive</span>
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold text-[var(--text-muted)] bg-[var(--border-subtle)]/20 border border-[var(--border-subtle)]">Inactive</span>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-gray-500 text-xs max-w-[150px] truncate" title={batch.notes}>{batch.notes || '—'}</td>
+                        <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs max-w-[150px] truncate" title={batch.notes}>{batch.notes || '—'}</td>
                       </tr>
                     );
                   })}

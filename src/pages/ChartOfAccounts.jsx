@@ -219,10 +219,10 @@ export default function ChartOfAccounts() {
         <div className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-3xl font-bold text-[var(--text-primary)]">
                 Chart of Accounts
               </h1>
-              <p className="text-[#b6e0f7] mt-2">
+              <p className="text-[var(--text-muted)] text-sm mt-1">
                 Manage your accounting structure and financial categories
               </p>
             </div>
@@ -266,10 +266,10 @@ export default function ChartOfAccounts() {
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-                      <p className="text-2xl font-bold text-white mt-1">{count}</p>
+                      <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">{label}</p>
+                      <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{count}</p>
                     </div>
-                    <div className={`p-2 rounded-lg bg-white/5 border border-white/10`}>
+                    <div className="p-2 rounded-lg bg-[var(--border-subtle)]/20 border border-[var(--border-subtle)]">
                       <div className={`w-2 h-2 rounded-full ${ACCOUNT_TYPE_COLORS[type].split(' ')[0].replace('bg-', 'bg-')}`} />
                     </div>
                   </div>
@@ -463,35 +463,35 @@ export default function ChartOfAccounts() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">
                         {account.name}
                       </div>
                       {account.description && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-[var(--text-muted)] mt-1">
                           {account.description}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${ACCOUNT_TYPE_COLORS[account.account_type]}`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${ACCOUNT_TYPE_COLORS[account.account_type]}`}>
                         {ACCOUNT_TYPE_LABELS[account.account_type]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-[var(--text-secondary)]">
                         {account.parent_account_name || '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="inline-flex items-center">
-                        <div className={`w-2 h-2 rounded-full mr-2 ${account.is_active ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                        <span className="text-sm text-white">
+                        <div className={`w-2 h-2 rounded-full mr-2 ${account.is_active ? 'bg-[var(--status-success)]' : 'bg-[var(--text-muted)]'}`}></div>
+                        <span className="text-sm text-[var(--text-secondary)]">
                           {account.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">
                         {account.balance !== undefined ? `${getCurrencySymbol()}${Number(account.balance).toLocaleString('en-IN')}` : '-'}
                       </div>
                     </td>
@@ -499,7 +499,7 @@ export default function ChartOfAccounts() {
                       <div className="flex items-center justify-end space-x-3">
                         <button
                           onClick={() => handleViewLedger(account)}
-                          className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 hover:bg-cyan-500/10 rounded-lg"
+                          className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors p-1 rounded-lg"
                           title="View General Ledger"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,7 +508,7 @@ export default function ChartOfAccounts() {
                         </button>
                         <button
                           onClick={() => handleEdit(account)}
-                          className="text-blue-400 hover:text-blue-300 transition-colors p-1 hover:bg-blue-500/10 rounded-lg"
+                          className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors p-1 rounded-lg"
                           title="Edit Account"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,7 +517,7 @@ export default function ChartOfAccounts() {
                         </button>
                         <button
                           onClick={() => handleDelete(account)}
-                          className="text-red-400 hover:text-red-300 transition-colors p-1 hover:bg-red-500/10 rounded-lg"
+                          className="text-[var(--status-danger)] hover:opacity-80 transition-colors p-1 rounded-lg"
                           title="Delete Account"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -535,13 +535,13 @@ export default function ChartOfAccounts() {
           {/* No results */}
           {accounts.length === 0 && (
             <div className="text-center py-20">
-              <div className="w-24 h-24 mx-auto mb-6 bg-white/5 rounded-full flex items-center justify-center">
-                <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 mx-auto mb-6 bg-[var(--border-subtle)]/20 rounded-full flex items-center justify-center">
+                <svg className="h-12 w-12 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">No accounts found</h3>
-              <p className="text-gray-400 max-w-sm mx-auto mb-8">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No accounts found</h3>
+              <p className="text-[var(--text-muted)] max-w-sm mx-auto mb-8">
                 Get started by setting up default accounts or creating your first account manually.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -573,26 +573,26 @@ export default function ChartOfAccounts() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-white/5 px-6 py-4 border-t border-white/5">
+            <div className="bg-[var(--bg-primary)] px-6 py-4 border-t border-[var(--border-subtle)]">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-400">
-                  Showing <span className="text-white font-medium">{((currentPage - 1) * pageSize) + 1}</span> to <span className="text-white font-medium">{Math.min(currentPage * pageSize, totalAccounts)}</span> of <span className="text-white font-medium">{totalAccounts}</span> accounts
+                <div className="text-sm text-[var(--text-muted)]">
+                  Showing <span className="text-[var(--text-primary)] font-semibold">{((currentPage - 1) * pageSize) + 1}</span> to <span className="text-[var(--text-primary)] font-semibold">{Math.min(currentPage * pageSize, totalAccounts)}</span> of <span className="text-[var(--text-primary)] font-semibold">{totalAccounts}</span> accounts
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setCurrentPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 text-sm font-semibold text-[var(--text-primary)] btn-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Previous
                   </button>
-                  <span className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg">
+                  <span className="px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 text-sm font-semibold text-[var(--text-primary)] btn-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Next
                   </button>
