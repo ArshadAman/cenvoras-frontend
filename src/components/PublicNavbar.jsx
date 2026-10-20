@@ -47,10 +47,10 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-2 pb-6 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-transparent ${className}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-2.5 sm:px-4 pt-2 pb-4 sm:pb-6 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-transparent ${className}`}>
         <div className="w-full max-w-7xl">
           <div 
-            className="flex items-center justify-between rounded-2xl px-6 py-2.5 backdrop-blur-md shadow-lg transition-all duration-300"
+            className="flex items-center justify-between rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 backdrop-blur-md shadow-lg transition-all duration-300"
             style={{
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-default)',
@@ -58,8 +58,8 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
             }}
           >
             {/* Logo */}
-            <Link to="/" className="flex items-center transition-all duration-300 hover:opacity-90 active:scale-95">
-              <BrandLogo className="h-10 sm:h-11 w-auto" />
+            <Link to="/" className="flex items-center transition-all duration-300 hover:opacity-90 active:scale-95 shrink-0">
+              <BrandLogo className="h-7 sm:h-8 md:h-10 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -72,19 +72,19 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
             </div>
 
             {/* Desktop Actions & Theme Toggle */}
-            <div className="hidden items-center gap-3 md:flex">
+            <div className="hidden items-center gap-3 md:flex shrink-0">
               <ThemeToggle />
               {authLinks ? (
                 <>
                   <Link 
                     to="/login" 
-                    className="btn-ghost !text-xs !py-1.5 !px-3 font-semibold"
+                    className="btn-ghost !text-xs !py-1.5 !px-3 font-semibold whitespace-nowrap"
                   >
                     Log In
                   </Link>
                   <Link 
                     to="/signup" 
-                    className="btn-primary !text-xs !py-2 !px-4"
+                    className="btn-primary !text-xs !py-2 !px-4 whitespace-nowrap"
                   >
                     Get Started
                   </Link>
@@ -92,24 +92,27 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
               ) : null}
             </div>
 
-            {/* Mobile Actions: Theme Toggle & Menu Button */}
-            <div className="flex items-center gap-2 md:hidden">
-              <ThemeToggle />
+            {/* Mobile Actions: Theme Toggle, Sign Up & Menu Button */}
+            <div className="flex items-center gap-1.5 sm:gap-2 md:hidden shrink-0">
+              <ThemeToggle className="scale-90 sm:scale-100 origin-center shrink-0" />
               {authLinks ? (
-                <Link to="/signup" className="btn-primary !text-xs !py-1.5 !px-3">
+                <Link 
+                  to="/signup" 
+                  className="btn-primary whitespace-nowrap shrink-0 !text-xs !py-1.5 !px-2.5 sm:!px-3 font-semibold leading-none"
+                >
                   Sign Up
                 </Link>
               ) : null}
               <button
                 type="button"
                 onClick={() => setMenuOpen((open) => !open)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] transition-all duration-300 active:scale-95"
+                className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] transition-all duration-300 active:scale-95 shrink-0"
                 aria-label="Toggle navigation menu"
                 aria-expanded={menuOpen}
               >
-                <div className="relative h-5 w-5 flex items-center justify-center">
-                  <Bars3Icon className={`absolute h-5 w-5 transition-all duration-300 ${menuOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`} />
-                  <XMarkIcon className={`absolute h-5 w-5 transition-all duration-300 ${menuOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`} />
+                <div className="relative h-4.5 w-4.5 sm:h-5 sm:w-5 flex items-center justify-center">
+                  <Bars3Icon className={`absolute h-4.5 w-4.5 sm:h-5 sm:w-5 transition-all duration-300 ${menuOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`} />
+                  <XMarkIcon className={`absolute h-4.5 w-4.5 sm:h-5 sm:w-5 transition-all duration-300 ${menuOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`} />
                 </div>
               </button>
             </div>
@@ -117,7 +120,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
           {/* Mobile Menu */}
           <div
-            className={`absolute left-4 right-4 top-20 origin-top rounded-2xl backdrop-blur-lg border shadow-2xl transition-all duration-300 md:hidden ${
+            className={`absolute left-2.5 right-2.5 sm:left-4 sm:right-4 top-[4.25rem] sm:top-20 origin-top rounded-2xl backdrop-blur-lg border shadow-2xl transition-all duration-300 md:hidden ${
               menuOpen ? 'scale-y-100 opacity-100 visible' : 'scale-y-95 opacity-0 invisible'
             }`}
             style={{
@@ -149,7 +152,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
                   </Link>
                   <Link
                     to="/signup"
-                    className="btn-primary w-full text-center"
+                    className="btn-primary w-full text-center py-2.5 text-sm font-semibold"
                     onClick={() => setMenuOpen(false)}
                   >
                     Get Started
@@ -164,7 +167,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
       {/* Mobile Menu Overlay */}
       {menuOpen && (
         <div
-          className="fixed inset-0 top-20 z-40 bg-black/20 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 top-[4.25rem] sm:top-20 z-40 bg-black/20 backdrop-blur-sm md:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}
