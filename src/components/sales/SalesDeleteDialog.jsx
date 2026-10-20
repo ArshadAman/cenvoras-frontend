@@ -90,7 +90,7 @@ export default function SalesDeleteDialog({ isOpen, onClose, invoice }) {
         </div>
 
         {/* Actions */}
-        <div className="p-5 pt-0 flex justify-end gap-3">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] flex justify-end gap-3">
           <button 
             className="btn-secondary px-4 py-2 text-sm" 
             onClick={onClose}

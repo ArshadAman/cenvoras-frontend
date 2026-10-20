@@ -471,7 +471,7 @@ export default function ProductForm({ product, onClose }) {
           enableReinitialize
         >
           {({ isSubmitting, values, setFieldValue }) => (
-            <Form className="p-4 sm:p-5 space-y-3">
+            <Form className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
               {/* Row 1: Code, Name, HSN */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
@@ -712,7 +712,7 @@ export default function ProductForm({ product, onClose }) {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] sticky bottom-0 bg-[var(--bg-surface)] z-10 px-6 py-4 -mx-6 -mb-6">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] sticky bottom-0 bg-[var(--bg-surface)] z-10 px-5 py-3.5 sm:px-6 sm:py-4 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6">
                 <button
                   type="button"
                   onClick={onClose}

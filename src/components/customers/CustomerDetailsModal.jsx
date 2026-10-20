@@ -169,12 +169,12 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   if (!isOpen || !customer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl w-full max-w-5xl my-8 transform animate-fade-up">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-6 overflow-y-auto">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform animate-fade-up overflow-hidden my-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between sticky top-0 bg-[var(--bg-surface)]/90 backdrop-blur-md z-10 print-hidden">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0 bg-[var(--bg-surface)] z-10 print-hidden">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-[var(--text-primary)] uppercase tracking-tight">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] uppercase tracking-tight">
               Customer <span className="text-[var(--accent-primary)]">Profile & Ledger</span>
             </h2>
             <div className="flex bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-0.5 text-xs font-semibold">
@@ -257,7 +257,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
         </div>
 
         {/* Content */}
-        <div ref={printRef} data-print-target className="p-6 sm:p-10">
+        <div ref={printRef} data-print-target className="flex-1 overflow-y-auto p-5 sm:p-8">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-primary)]"></div>

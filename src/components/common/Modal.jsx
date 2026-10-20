@@ -16,8 +16,11 @@ export default function Modal({
   subtitle,
   icon: Icon,
   children,
+  footer,
   maxWidth = 'max-w-xl',
   className = '',
+  bodyClassName = '',
+  noPadding = false,
   hideCloseButton = false,
   preventBackdropClose = false,
 }) {
@@ -45,7 +48,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -57,34 +60,34 @@ export default function Modal({
       {/* Modal Surface */}
       <div
         className={clsx(
-          'relative w-full rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden animate-fade-up z-10 my-auto text-[var(--text-primary)]',
+          'relative w-full rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden animate-fade-up z-10 my-auto text-[var(--text-primary)] max-h-[90vh] flex flex-col',
           maxWidth,
           className
         )}
       >
         {/* Header */}
         {(title || !hideCloseButton) && (
-          <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <div className="flex items-center justify-between px-5 py-4 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
             <div className="flex items-center gap-3">
               {Icon && (
-                <div className="p-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--accent-primary)]">
+                <div className="p-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--accent-primary)] shrink-0">
                   <Icon className="w-5 h-5" />
                 </div>
               )}
               <div>
                 {title && (
-                  <h3 id="cenvora-modal-title" className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight font-display">
+                  <h3 id="cenvora-modal-title" className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight font-display">
                     {title}
                   </h3>
                 )}
-                {subtitle && <p className="text-sm text-[var(--text-secondary)] mt-0.5">{subtitle}</p>}
+                {subtitle && <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5">{subtitle}</p>}
               </div>
             </div>
             {!hideCloseButton && (
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer shrink-0"
                 title="Close (Esc)"
                 aria-label="Close dialog"
               >
@@ -95,7 +98,16 @@ export default function Modal({
         )}
 
         {/* Content Body */}
-        <div className="p-5 sm:p-6">{children}</div>
+        <div className={clsx('overflow-y-auto flex-1', noPadding ? '' : 'p-5 sm:p-6', bodyClassName)}>
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="flex items-center justify-end gap-3 px-5 py-4 sm:px-6 sm:py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body

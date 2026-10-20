@@ -65,7 +65,7 @@ export default function VendorDeleteDialog({ isOpen, onClose, vendor }) {
         </div>
 
         {/* Actions */}
-        <div className="p-5 pt-0 flex justify-end gap-3">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] flex justify-end gap-3">
           <button 
             className="btn-secondary text-sm" 
             onClick={onClose}

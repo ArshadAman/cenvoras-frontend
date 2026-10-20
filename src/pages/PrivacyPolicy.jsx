@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
   }, []);
 
   return (
-    <div className="min-h-screen font-sans text-[var(--text-primary)] bg-[var(--bg-primary)]">
+    <div className="min-h-screen font-body text-[var(--text-primary)] bg-[var(--bg-primary)]">
       <Seo
         title="Privacy Policy | Cenvora"
         description="Learn how Cenvora protects your business data, complies with DPDP Act 2023, and guarantees 100% data ownership."
@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
 
       <main className="mx-auto max-w-3xl px-6 pb-20 pt-32 sm:pt-40">
         <div className="border-b border-[var(--border-subtle)] pb-6 mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
             Privacy Policy
           </h1>
           <p className="mt-2 text-xs text-[var(--text-muted)] font-mono">

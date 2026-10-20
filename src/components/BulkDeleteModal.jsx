@@ -84,18 +84,18 @@ const BulkDeleteModal = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up">
-        <div className="p-8">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden my-auto">
+        <div className="p-5 sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)]">
+            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)]">
               <svg className="h-6 w-6 text-[var(--status-danger)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[var(--text-primary)] font-display">
+              <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight">
                 {title}
               </h3>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -149,7 +149,7 @@ const BulkDeleteModal = ({
         </div>
         
         {/* Action buttons */}
-        <div className="p-6 bg-[var(--bg-primary)]/40 flex justify-end gap-3 rounded-b-xl border-t border-[var(--border-default)]">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 bg-[var(--bg-surface)] flex justify-end gap-3 border-t border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={onClose}
@@ -162,7 +162,7 @@ const BulkDeleteModal = ({
             type="button"
             onClick={handleConfirmDelete}
             disabled={isDeleting}
-            className="px-4 py-2 bg-rose-500/15 text-rose-500 border border-rose-500/30 hover:bg-rose-500/25 rounded-lg text-sm font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)] hover:bg-[var(--status-danger-bg)]/80 rounded-xl text-sm font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isDeleting ? (
               <>

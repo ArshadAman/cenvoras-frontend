@@ -337,10 +337,10 @@ export default function Signup() {
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="btn-primary w-full py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
+                    className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md flex items-center justify-center gap-2"
                   >
                     {loading ? 'Verifying...' : 'Verify & Create Account'}
-                    {!loading && <ArrowRightIcon className="w-3.5 h-3.5" />}
+                    {!loading && <ArrowRightIcon className="w-4 h-4" />}
                   </button>
                 </div>
               )}
@@ -493,15 +493,15 @@ export default function Signup() {
                       <div className="flex gap-3 pt-1">
                         <button
                           onClick={handleBack}
-                          className="btn-secondary flex-1 py-3.5 text-xs flex items-center justify-center gap-1.5"
+                          className="btn-secondary flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5"
                         >
-                          <ArrowLeftIcon className="w-3.5 h-3.5" /> Back
+                          <ArrowLeftIcon className="w-4 h-4" /> Back
                         </button>
                         <button
                           onClick={handleNext}
-                          className="btn-primary flex-[2] py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
+                          className="btn-primary flex-[2] py-2.5 text-sm font-semibold shadow-md flex items-center justify-center gap-2"
                         >
-                          Continue <ArrowRightIcon className="w-3.5 h-3.5" />
+                          Continue <ArrowRightIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -556,17 +556,17 @@ export default function Signup() {
                       <div className="flex gap-3 pt-1">
                         <button
                           onClick={handleBack}
-                          className="btn-secondary flex-1 py-3.5 text-xs flex items-center justify-center gap-1.5"
+                          className="btn-secondary flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5"
                         >
-                          <ArrowLeftIcon className="w-3.5 h-3.5" /> Back
+                          <ArrowLeftIcon className="w-4 h-4" /> Back
                         </button>
                         <button
                           onClick={handleSubmit}
                           disabled={loading}
-                          className="btn-primary flex-[2] py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
+                          className="btn-primary flex-[2] py-2.5 text-sm font-semibold shadow-md flex items-center justify-center gap-2"
                         >
                           {loading ? 'Creating account...' : 'Create Free Account'}
-                          {!loading && <ArrowRightIcon className="w-3.5 h-3.5" />}
+                          {!loading && <ArrowRightIcon className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>

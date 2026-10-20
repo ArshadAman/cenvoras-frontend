@@ -219,16 +219,16 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
         <div className="relative w-full max-w-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-up">
           
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/40 flex-shrink-0">
+          <div className="px-5 py-4 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-surface)] flex-shrink-0">
             <div>
-              <h3 className="text-[var(--text-primary)] text-lg font-bold tracking-tight">Convert Sales Order</h3>
+              <h3 className="text-[var(--text-primary)] text-base sm:text-lg font-bold font-display tracking-tight">Convert Sales Order</h3>
               <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                 Order: <span className="text-[var(--accent-primary)] font-mono font-medium">{order.order_number}</span> &bull; {customerName}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/50 rounded-xl transition-all"
+              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] rounded-xl transition-all cursor-pointer"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -468,7 +468,7 @@ export default function SalesOrderConvertModal({ isOpen, onClose, order }) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
+          <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
             <div className="text-xs">
               <span className="text-[var(--text-muted)] block text-xs uppercase font-bold">
                 {conversionType === 'challan' ? 'Challan Dispatch Value' : 'Invoice Value'}
