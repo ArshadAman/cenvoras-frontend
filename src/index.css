@@ -407,20 +407,38 @@
     line-height: 1.4 !important;
   }
 
-  /* Universal Form Controls Baseline */
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
-  select,
-  textarea {
-    color: var(--text-primary) !important;
-    background-color: var(--input-bg) !important;
+  /* Universal Form Controls Baseline (Standard fallback for unstyled inputs) */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not(.bg-transparent):not([class*="bg-transparent"]),
+  select:not(.bg-transparent):not([class*="bg-transparent"]),
+  textarea:not(.bg-transparent):not([class*="bg-transparent"]) {
+    color: var(--text-primary);
+    background-color: var(--input-bg);
     border-color: var(--input-border);
-    font-size: 0.875rem !important;
-    line-height: 1.45 !important;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  /* Explicit Transparent, Pill & Embedded Search Input Support */
+  input.bg-transparent,
+  input[class*="bg-transparent"],
+  textarea.bg-transparent,
+  textarea[class*="bg-transparent"],
+  select.bg-transparent,
+  select[class*="bg-transparent"] {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+
+  input.border-none,
+  input.border-0,
+  textarea.border-none,
+  textarea.border-0 {
+    border-color: transparent !important;
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--text-muted) !important;
+    color: var(--text-muted);
   }
 
   /* Universal Table Baseline */

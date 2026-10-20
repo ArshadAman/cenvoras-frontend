@@ -370,7 +370,7 @@ export default function CommandPalette({ isOpen, onClose }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command, page, or search keywords..."
-            className="w-full bg-transparent text-sm sm:text-base text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none"
+            className="w-full bg-transparent text-sm sm:text-base text-[var(--text-primary)] placeholder-[var(--text-muted)] border-none focus:outline-none focus:ring-0 shadow-none"
           />
           <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono text-[var(--text-muted)] bg-[var(--bg-primary)] rounded border border-[var(--border-subtle)]">
             ESC
