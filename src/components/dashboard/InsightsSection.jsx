@@ -94,7 +94,7 @@ export default function InsightsSection({ data, isLoading }) {
             </h3>
             <div className="space-y-2">
               {slowMovers.slice(0, 3).map((product, i) => (
-                <div key={i} className="flex items-center justify-between p-2.5 bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/20 rounded-xl">
+                <div key={i} className="flex items-center justify-between p-2.5 bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] rounded-xl">
                   <div className="flex items-center gap-2">
                     <ArrowTrendingDownIcon className="w-4 h-4 text-[var(--status-danger)]" />
                     <span className="text-sm font-medium text-[var(--text-primary)] truncate">{product.name}</span>

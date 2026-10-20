@@ -117,30 +117,30 @@ export function BankReconciliationMVP() {
             <div className="space-y-4">
               {statusData?.lines?.map((line) => (
                 <div key={line.id} className={`bento-card p-4 border transition-all ${
-                  line.is_reconciled ? 'border-green-500/20 bg-green-500/5' : 'border-white/10'
+                  line.is_reconciled ? 'border-[var(--status-success-border)] bg-[var(--status-success-bg)]' : 'border-[var(--border-subtle)]'
                 }`}>
                   <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                     <div className="flex-1 w-full">
                       <div className="flex justify-between mb-1">
-                        <span className="text-gray-400 text-xs font-mono">{line.date}</span>
-                        <span className={`font-mono font-medium ${line.debit > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        <span className="text-[var(--text-muted)] text-xs font-mono">{line.date}</span>
+                        <span className={`font-mono font-medium ${line.debit > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--status-success)]'}`}>
                           {line.debit > 0 ? `- ${getCurrencySymbol()}${fmt(line.debit)}` : `+ ${getCurrencySymbol()}${fmt(line.credit)}`}
                         </span>
                       </div>
-                      <div className="text-white text-sm truncate" title={line.description}>
+                      <div className="text-[var(--text-primary)] text-sm truncate" title={line.description}>
                         {line.description}
                       </div>
                     </div>
 
-                    <div className="hidden md:block text-slate-400">
+                    <div className="hidden md:block text-[var(--text-muted)]">
                       {line.is_reconciled ? (
-                        <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                        <CheckCircleIcon className="w-6 h-6 text-[var(--status-success)]" />
                       ) : (
                         <ArrowPathIcon className="w-6 h-6" />
                       )}
                     </div>
 
-                    <div className="flex-1 w-full border-l border-white/10 md:pl-4">
+                    <div className="flex-1 w-full border-l border-[var(--border-subtle)] md:pl-4">
                       {line.is_reconciled ? (
                         <div className="flex items-center gap-2">
                            <div className="bg-green-500/20 p-1.5 rounded-full">

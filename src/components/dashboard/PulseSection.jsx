@@ -224,11 +224,11 @@ export default function PulseSection({ data, isLoading }) {
   ];
 
   const colorClasses = {
-    cyan: { bg: 'bg-[var(--status-info)]/10', text: 'text-[var(--status-info)]', border: 'border-[var(--status-info)]/20' },
-    green: { bg: 'bg-[var(--status-success)]/10', text: 'text-[var(--status-success)]', border: 'border-[var(--status-success)]/20' },
-    emerald: { bg: 'bg-[var(--status-success)]/10', text: 'text-[var(--status-success)]', border: 'border-[var(--status-success)]/20' },
-    red: { bg: 'bg-[var(--status-danger)]/10', text: 'text-[var(--status-danger)]', border: 'border-[var(--status-danger)]/20' },
-    orange: { bg: 'bg-[var(--status-warning)]/10', text: 'text-[var(--status-warning)]', border: 'border-[var(--status-warning)]/20' },
+    cyan: { bg: 'bg-[var(--status-info-bg)]', text: 'text-[var(--status-info-text)]', border: 'border-[var(--status-info-border)]' },
+    green: { bg: 'bg-[var(--status-success-bg)]', text: 'text-[var(--status-success-text)]', border: 'border-[var(--status-success-border)]' },
+    emerald: { bg: 'bg-[var(--status-success-bg)]', text: 'text-[var(--status-success-text)]', border: 'border-[var(--status-success-border)]' },
+    red: { bg: 'bg-[var(--status-danger-bg)]', text: 'text-[var(--status-danger-text)]', border: 'border-[var(--status-danger-border)]' },
+    orange: { bg: 'bg-[var(--status-warning-bg)]', text: 'text-[var(--status-warning-text)]', border: 'border-[var(--status-warning-border)]' },
   };
 
   return (

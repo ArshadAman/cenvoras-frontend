@@ -528,6 +528,74 @@
     color: var(--text-primary) !important;
   }
 
+  /* Universal Default Border Fallback (Replaces Tailwind #e5e7eb) */
+  *, ::before, ::after {
+    border-color: var(--border-subtle);
+  }
+
+  /* Strict Dark Mode 4-Color Constraint: White borders are forbidden in dark mode */
+  .dark :where(*, ::before, ::after) {
+    border-color: var(--border-subtle);
+  }
+
+  .dark [class*="border-white"],
+  .dark [class*="border-gray-200"],
+  .dark [class*="border-slate-200"],
+  .dark [class*="border-zinc-200"],
+  .dark [class*="divide-white"],
+  .dark [class*="divide-gray-200"],
+  .dark [class*="divide-slate-200"] {
+    border-color: var(--border-subtle) !important;
+  }
+
+  /* Universal Status & Accent Border Interpolation Fix */
+  [class*="border-[var(--status-danger)"],
+  [class*="border-red-"],
+  [class*="border-rose-"] {
+    border-color: var(--status-danger-border) !important;
+  }
+
+  [class*="border-[var(--status-warning)"],
+  [class*="border-amber-"],
+  [class*="border-yellow-"],
+  [class*="border-orange-"] {
+    border-color: var(--status-warning-border) !important;
+  }
+
+  [class*="border-[var(--status-success)"],
+  [class*="border-green-"],
+  [class*="border-emerald-"] {
+    border-color: var(--status-success-border) !important;
+  }
+
+  [class*="border-[var(--status-info)"],
+  [class*="border-blue-"],
+  [class*="border-cyan-"],
+  [class*="border-sky-"] {
+    border-color: var(--status-info-border) !important;
+  }
+
+  [class*="border-[var(--accent-primary)"] {
+    border-color: var(--border-focus) !important;
+  }
+
+  /* Universal Status Background Interpolation Fix */
+  [class*="bg-[var(--status-danger)"] {
+    background-color: var(--status-danger-bg) !important;
+  }
+
+  [class*="bg-[var(--status-warning)"] {
+    background-color: var(--status-warning-bg) !important;
+  }
+
+  [class*="bg-[var(--status-success)"] {
+    background-color: var(--status-success-bg) !important;
+  }
+
+  [class*="bg-[var(--status-info)"] {
+    background-color: var(--status-info-bg) !important;
+  }
+
   .Toastify__toast-container,
   .Toastify__toast-container--top-right,
   .Toastify__toast-container--top-left,

@@ -30,7 +30,7 @@ import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 // Skeleton for loading
 function SkeletonCard() {
   return (
-    <div className="bento-card !p-6 flex flex-col justify-between h-40 animate-pulse bg-white/5 border-white/5">
+    <div className="bento-card !p-6 flex flex-col justify-between h-40 animate-pulse bg-[var(--bg-surface)] border-[var(--border-subtle)]">
       <div className="flex justify-between items-start">
         <div className="h-10 w-10 bg-white/10 rounded-xl"></div>
       </div>

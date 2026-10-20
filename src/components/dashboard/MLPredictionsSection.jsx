@@ -67,10 +67,10 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
   };
 
   const urgencyColors = {
-    critical: { bg: 'bg-[var(--status-danger)]/10', border: 'border-[var(--status-danger)]/30', text: 'text-[var(--status-danger)]' },
-    high: { bg: 'bg-[var(--status-warning)]/10', border: 'border-[var(--status-warning)]/30', text: 'text-[var(--status-warning)]' },
-    medium: { bg: 'bg-[var(--status-warning)]/10', border: 'border-[var(--status-warning)]/30', text: 'text-[var(--status-warning)]' },
-    low: { bg: 'bg-[var(--status-success)]/10', border: 'border-[var(--status-success)]/30', text: 'text-[var(--status-success)]' },
+    critical: { bg: 'bg-[var(--status-danger-bg)]', border: 'border-[var(--status-danger-border)]', text: 'text-[var(--status-danger-text)]' },
+    high: { bg: 'bg-[var(--status-warning-bg)]', border: 'border-[var(--status-warning-border)]', text: 'text-[var(--status-warning-text)]' },
+    medium: { bg: 'bg-[var(--status-warning-bg)]', border: 'border-[var(--status-warning-border)]', text: 'text-[var(--status-warning-text)]' },
+    low: { bg: 'bg-[var(--status-success-bg)]', border: 'border-[var(--status-success-border)]', text: 'text-[var(--status-success-text)]' },
   };
 
   return (

@@ -86,7 +86,7 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
           </div>
           
           {/* Action buttons */}
-          <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
+          <div className="pt-4 border-t border-[var(--border-subtle)] flex justify-end gap-3">
             {onStatusChange && task.status !== "completed" && (
               <>
                 {task.status === "pending" && (
@@ -99,7 +99,7 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
                 </button>
               </>
             )}
-            <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition">Close</button>
+            <button type="button" onClick={onClose} className="btn-secondary !text-xs !py-2">Close</button>
           </div>
         </div>
       </div>
