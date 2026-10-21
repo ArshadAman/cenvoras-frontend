@@ -9,16 +9,16 @@
   --bg-primary: #F9F9F6;
   --bg-surface: #E2D2B9;
   --accent-secondary: #C2A68C;
-  --accent-primary: #3E664C;
+  --accent-primary: #1D62D6;
 
   --text-primary: #222831;
   --text-secondary: rgba(34, 40, 49, 0.85);  /* CR 7.19:1 */
   --text-muted: rgba(34, 40, 49, 0.70);      /* CR 4.70:1 - strict 70% min threshold */
-  --text-on-accent: #F9F9F6;                 /* CR 6.81:1 on #3E664C - WCAG AAA */
+  --text-on-accent: #FFFFFF;                 /* CR 5.45:1 on #1D62D6 - WCAG AA */
 
   --border-default: rgba(194, 166, 140, 0.50);
   --border-subtle: rgba(194, 166, 140, 0.25);
-  --border-focus: #3E664C;
+  --border-focus: #1D62D6;
 
   --input-bg: #F9F9F6;
   --input-border: rgba(194, 166, 140, 0.60);
@@ -71,23 +71,42 @@
   /* DARK MODE (EXACTLY 4 CORE COLORS) */
   --bg-primary: #161A22;
   --bg-surface: #2C323C;
-  --accent-primary: #C7B9A5;
-  --accent-secondary: #C7B9A5;
+  --accent-primary: #5494FF;
+  --accent-secondary: #5494FF;
 
   --text-primary: #DFD0B8;
   --text-secondary: rgba(223, 208, 184, 0.85); /* CR 7.21:1 on #2C323C */
   --text-muted: rgba(223, 208, 184, 0.75);     /* CR 5.80:1 on #2C323C */
-  --text-on-accent: #161A22;                   /* CR 10.52:1 on #C7B9A5 - WCAG AAA */
+  --text-on-accent: #161A22;                   /* CR 9.42:1 on #5494FF - WCAG AAA */
 
   --border-default: rgba(223, 208, 184, 0.18);
   --border-subtle: rgba(223, 208, 184, 0.10);
-  --border-focus: #C7B9A5;
+  --border-focus: #5494FF;
 
   --input-bg: rgba(22, 26, 34, 0.75);
   --input-border: rgba(223, 208, 184, 0.22);
   --card-bg: #2C323C;
   --card-border: rgba(223, 208, 184, 0.14);
   --bg-surface-hover: #161A22;
+
+  /* HARDWARE-SAFE ACTION & METRIC TOKENS (DARK MODE) */
+  --action-primary: #5494FF;
+  --action-primary-hover: #75ABFF;
+  --action-primary-text: #161A22;
+  --action-primary-bg: rgba(84, 148, 255, 0.15);
+  --action-primary-border: rgba(84, 148, 255, 0.35);
+
+  --info-secondary: #80AAFF;
+  --info-secondary-bg: rgba(128, 170, 255, 0.15);
+  --info-secondary-border: rgba(128, 170, 255, 0.35);
+
+  --metric-cyan: #8FE3FF;
+  --metric-cyan-bg: rgba(143, 227, 255, 0.15);
+  --metric-cyan-border: rgba(143, 227, 255, 0.35);
+
+  --badge-highlight: #E9EE64;
+  --badge-highlight-text: #161A22;
+  --badge-highlight-border: rgba(233, 238, 100, 0.40);
 
   /* DARK MODE SEMANTIC STATUS (WCAG AA >= 4.5:1 ON SURFACE #393E46) */
   --status-success: #78B896;
@@ -1070,7 +1089,7 @@
 
   select.input-field {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C7B9A5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235494FF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     background-size: 1.25rem;
