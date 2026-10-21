@@ -162,7 +162,7 @@ const BulkDeleteModal = ({
             type="button"
             onClick={handleConfirmDelete}
             disabled={isDeleting}
-            className="px-4 py-2 bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)] hover:bg-[var(--status-danger-bg)]/80 rounded-xl text-sm font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="btn-destructive !text-sm !py-2 !px-4 !normal-case !tracking-normal !font-bold flex items-center gap-2"
           >
             {isDeleting ? (
               <>

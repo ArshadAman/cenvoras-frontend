@@ -904,7 +904,7 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
 
           <div className="pt-3 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl hover:text-[var(--text-primary)] transition">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold text-white bg-[var(--status-warning)] rounded-xl hover:opacity-90 disabled:opacity-50 transition shadow-sm">
+            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold text-[var(--status-warning-on-fill)] bg-[var(--status-warning-fill)] rounded-xl hover:opacity-90 disabled:opacity-50 transition shadow-sm">
               {saving ? 'Reopening...' : 'Confirm Reopen'}
             </button>
           </div>

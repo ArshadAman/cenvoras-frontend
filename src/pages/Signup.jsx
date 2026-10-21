@@ -363,7 +363,7 @@ export default function Signup() {
                         <React.Fragment key={label}>
                           <div className="flex flex-col items-center gap-1">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                              isDone ? 'bg-[var(--status-success)] text-white' : isActive ? 'bg-[var(--accent-primary)] text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-muted)]'
+                              isDone ? 'bg-[var(--status-success-fill)] text-[var(--status-success-on-fill)]' : isActive ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-muted)]'
                             }`}>
                               {isDone ? '✓' : s}
                             </div>

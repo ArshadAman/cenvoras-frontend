@@ -639,7 +639,7 @@ export default function GSTShieldPage() {
                   href={activeNotice.whatsapp_link}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-[var(--status-success)] hover:opacity-90 text-white font-bold rounded-xl text-xs transition-opacity shadow-lg"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--status-success-fill)] hover:opacity-90 text-[var(--status-success-on-fill)] font-bold rounded-xl text-xs transition-opacity shadow-lg"
                 >
                   <ShareIcon className="w-4 h-4" /> Send on WhatsApp
                 </a>

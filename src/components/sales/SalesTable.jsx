@@ -726,7 +726,7 @@ export default function SalesTable({
               </button>
               <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-[var(--status-danger)] hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
+                className="btn-destructive !text-sm !py-1.5 !px-3 !normal-case !tracking-normal !font-semibold"
               >
                 Delete Selected
               </button>

@@ -355,7 +355,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                 type="button"
                 onClick={handleBulkDelete}
                 disabled={bulkDeleteMutation.isPending || bulkConvertMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/25 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+                className="btn-destructive !text-xs !py-1.5 !px-3 !normal-case !tracking-normal !font-semibold gap-1.5 disabled:opacity-50"
                 title="Bulk delete selected delivery challans and restore inventory"
               >
                 <TrashIcon className="w-4 h-4" />
