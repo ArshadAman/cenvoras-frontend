@@ -292,9 +292,9 @@ const BillShipTemplate = forwardRef(({
           </tbody>
         </table>
 
-      {/* Totals & Notes Section (Hidden for Delivery Challans) */}
+      {/* Totals & Notes Section (Hidden for Delivery Challans). Keep-together: never split across pages. */}
       {!isDeliveryChallan && (
-        <div className="flex justify-between border-t border-gray-400 pt-6">
+        <div className="invoice-totals-block flex justify-between border-t border-gray-400 pt-6">
           <div className="w-1/2 pr-6 border-r border-gray-200">
              {sections.showBankDetails && hasBankDetails && (
                <div className="mb-6">

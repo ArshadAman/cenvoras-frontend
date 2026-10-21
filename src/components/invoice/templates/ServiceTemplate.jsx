@@ -311,9 +311,9 @@ const ServiceTemplate = forwardRef(({
           </tbody>
         </table>
 
-      {/* Totals & Notes Section (Hidden for Delivery Challans) */}
+      {/* Totals & Notes Section (Hidden for Delivery Challans). Keep-together: never split across pages. */}
       {!isDeliveryChallan ? (
-        <div className="flex justify-between mt-auto pt-6">
+        <div className="invoice-totals-block flex justify-between mt-auto pt-6">
           <div className="w-1/2 pr-8">
             {sections.showBankDetails && hasBankDetails && (
               <div className="mb-4 flex items-start gap-4">

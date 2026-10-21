@@ -559,9 +559,9 @@ const InvoicePreview = forwardRef(({
           </table>
       </div>
       
-      {/* Bottom Section - Bank Details & Totals (Hidden for Delivery Challans) */}
+      {/* Bottom Section - Bank Details & Totals (Hidden for Delivery Challans). Keep-together: never split across pages. */}
       {!isDeliveryChallan && (
-        <div className="flex justify-between gap-6 mb-2">
+        <div className="invoice-totals-block flex justify-between gap-6 mb-2">
           {/* Bank Details - Left */}
           {sections.showBankDetails && hasBankDetails && (
             <div className="flex-1 mr-8">
