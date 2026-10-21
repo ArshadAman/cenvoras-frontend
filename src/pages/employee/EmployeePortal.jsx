@@ -43,8 +43,8 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
                 task.status === "completed" 
                   ? "bg-green-500/10 text-green-400 border border-green-500/20" 
                   : task.status === "in_progress"
-                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                  : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                  ? "bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]"
+                  : "bg-[var(--bg-surface)] text-[var(--text-muted)] border border-[var(--border-subtle)]"
               }`}>
                 {task.status.replace("_", " ")}
               </span>
@@ -90,7 +90,7 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
             {onStatusChange && task.status !== "completed" && (
               <>
                 {task.status === "pending" && (
-                  <button onClick={() => onStatusChange(task.id, "in_progress")} className="px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition">
+                  <button onClick={() => onStatusChange(task.id, "in_progress")} className="btn-warning text-xs px-4 py-2 rounded-xl">
                     Start Task
                   </button>
                 )}
@@ -362,7 +362,7 @@ export default function EmployeePortal() {
                             <td className="px-5 py-3 capitalize">
                               <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                                 t.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
-                                t.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
+                                t.status === 'in_progress' ? 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]' : 
                                 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
                               }`}>
                                 {t.status.replace('_', ' ')}
@@ -370,7 +370,7 @@ export default function EmployeePortal() {
                             </td>
                             <td className="px-5 py-3 text-right">
                               {t.status === 'pending' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'in_progress'); }} className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg hover:bg-amber-500/30 transition font-medium">
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'in_progress'); }} className="btn-warning text-xs px-3 py-1.5 rounded-lg">
                                   Start Task
                                 </button>
                               )}

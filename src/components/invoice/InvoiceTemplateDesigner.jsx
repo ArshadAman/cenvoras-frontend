@@ -58,12 +58,12 @@ const ToggleSwitch = ({ label, checked, onChange, description }) => (
   <div className="flex items-center justify-between py-2">
     <div>
       <span className="text-sm text-white">{label}</span>
-      {description && <p className="text-xs text-gray-500">{description}</p>}
+      {description && <p className="text-xs text-[var(--text-muted)]">{description}</p>}
     </div>
     <button
       onClick={() => onChange(!checked)}
       className={`relative w-11 h-6 rounded-full transition-colors ${
-        checked ? 'bg-cyan-500' : 'bg-white/10'
+        checked ? 'bg-[var(--accent-primary)]' : 'bg-[var(--border-subtle)]'
       }`}
     >
       <span
@@ -387,13 +387,13 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
       <div className="lg:hidden flex border-b border-white/10 bg-[#111]">
         <button 
           onClick={() => setViewMode('design')}
-          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'design' ? 'text-cyan-400 bg-cyan-400/5 border-b-2 border-cyan-400' : 'text-gray-500'}`}
+          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'design' ? 'text-[var(--accent-primary)] bg-[var(--action-primary-bg)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}
         >
           Design
         </button>
         <button 
           onClick={() => setViewMode('preview')}
-          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'text-cyan-400 bg-cyan-400/5 border-b-2 border-cyan-400' : 'text-gray-500'}`}
+          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'text-[var(--accent-primary)] bg-[var(--action-primary-bg)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}
         >
           Preview
         </button>
@@ -407,7 +407,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
             <h2 className="text-lg font-bold text-white">
               {isDeliveryChallan ? 'Challan Designer' : 'Invoice Designer'}
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--text-muted)]">
               {isDeliveryChallan ? 'Customize your delivery challan template' : 'Customize your invoice template'}
             </p>
           </div>
@@ -437,7 +437,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
           >
             <span className="text-white font-medium truncate">{currentTemplate.name}</span>
             {activeTemplateId === currentTemplate.id && (
-              <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">Active</span>
+              <span className="text-xs bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] px-2 py-0.5 rounded">Active</span>
             )}
           </button>
           
@@ -515,7 +515,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   { value: 'billship', label: 'Bill To - Ship To' },
                 ]}
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-[var(--text-muted)] mt-2">
                 This changes the overall structural arrangement of your invoice. Specific options like colors and custom fields will adapt to the chosen layout.
               </p>
             </div>
@@ -567,7 +567,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                       onChange={handleLogoUpload}
                       className="w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:cursor-pointer hover:file:bg-white/20"
                     />
-                    <p className="text-xs text-gray-500">Max 500KB, JPG/PNG</p>
+                    <p className="text-xs text-[var(--text-muted)]">Max 500KB, JPG/PNG</p>
                   </div>
                   
                   {currentTemplate.branding?.logo && (
@@ -870,14 +870,14 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   }}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-purple-500 focus:outline-none cursor-pointer"
                 >
-                  <option value="none" className="bg-gray-900 text-gray-400">Do not print bank details (None)</option>
+                  <option value="none" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">Do not print bank details (None)</option>
                   {allBankAccounts.map((acc, idx) => (
-                    <option key={acc.id || idx} value={acc.id} className="bg-gray-900 text-white">
+                    <option key={acc.id || idx} value={acc.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                       {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `• ${acc.bank_name}` : ''} {acc.account_number ? `(••••${acc.account_number.slice(-4)})` : ''}{acc.is_default ? ' [Default]' : ''}
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1.5">
+                <p className="text-xs text-[var(--text-muted)] mt-1.5">
                   Choose which profile account to print. To add or edit accounts, visit Profile → Bank & Payment Details.
                 </p>
 
@@ -933,7 +933,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
           {activeTab === 'columns' && (
             <div className="space-y-2">
               <SectionHeader>Table Columns</SectionHeader>
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-[var(--text-muted)] mb-4">
                 Toggle which columns appear in your invoice items table.
               </p>
               
@@ -947,7 +947,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                       onClick={() => toggleColumn(col.id)}
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                         col.show
-                          ? 'bg-cyan-500 border-cyan-500'
+                          ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)]'
                           : 'border-gray-500 hover:border-gray-400'
                       }`}
                     >
@@ -955,7 +955,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                     </button>
                     <span className="text-white">{col.label}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{col.width}</span>
+                  <span className="text-xs text-[var(--text-muted)]">{col.width}</span>
                 </div>
               ))}
             </div>
@@ -970,8 +970,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               disabled={!hasChanges}
               className={`flex-1 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-all ${
                 hasChanges
-                  ? 'bg-cyan-500 text-white hover:bg-cyan-400'
-                  : 'bg-white/5 text-gray-500 cursor-not-allowed'
+                  ? 'btn-primary'
+                  : 'bg-white/5 text-[var(--text-muted)] cursor-not-allowed'
               }`}
             >
               <ArrowDownTrayIcon className="w-4 h-4" />
@@ -1016,7 +1016,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-auto p-8 flex justify-center bg-gray-950/70">
+        <div className="flex-1 overflow-auto p-8 flex justify-center bg-[var(--bg-primary)]">
           <div 
             style={{ 
               transform: `scale(${previewScale})`, 

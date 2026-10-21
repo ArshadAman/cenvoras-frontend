@@ -18,11 +18,11 @@ const ACCOUNT_TYPE_LABELS = {
 };
 
 const ACCOUNT_TYPE_COLORS = {
-  asset: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  liability: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  equity: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  revenue: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  expense: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+  asset: 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]',
+  liability: 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]',
+  equity: 'bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)]',
+  revenue: 'bg-[var(--signal-primary-bg)] text-[var(--accent-secondary)] border border-[var(--signal-primary-border)]',
+  expense: 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]'
 };
 
 export default function ChartOfAccounts() {
@@ -173,11 +173,11 @@ export default function ChartOfAccounts() {
       );
     }
     return sortOrder === 'asc' ? (
-      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
       </svg>
     ) : (
-      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );

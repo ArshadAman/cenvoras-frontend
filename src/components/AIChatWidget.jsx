@@ -204,10 +204,10 @@ export default function AIChatWidget() {
                     {msg.action && msg.action.intent === 'create_invoice' && (
                       <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 animate-fade-up">
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                            <SparklesIcon className="w-4 h-4 text-cyan-300" />
+                          <div className="w-8 h-8 rounded-full bg-[var(--action-primary-bg)] flex items-center justify-center">
+                            <SparklesIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                           </div>
-                          <p className="text-xs font-semibold text-cyan-100/80 uppercase tracking-wider">
+                          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                             {msg.action.status === 'success' ? 'Action Completed' : 'AI Draft Prepared'}
                           </p>
                         </div>
@@ -233,7 +233,7 @@ export default function AIChatWidget() {
                               setIsOpen(false);
                               navigate('/sales', { state: { aiDraft: msg.action.entities } });
                             }}
-                            className="w-full py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-950/20 active:scale-95"
+                            className="w-full py-2.5 rounded-xl btn-primary text-sm font-medium active:scale-95"
                           >
                             Review & Create Invoice
                           </button>
@@ -248,9 +248,9 @@ export default function AIChatWidget() {
             {loading && (
               <div className="flex justify-start">
                 <div className="flex gap-1.5 items-center h-6 px-2 opacity-60">
-                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '200ms' }} />
-                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '400ms' }} />
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-pulse" style={{ animationDelay: '200ms' }} />
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-pulse" style={{ animationDelay: '400ms' }} />
                 </div>
               </div>
             )}
