@@ -44,8 +44,8 @@ export default function ThemeToggle({ className = '', showLabel = false }) {
             isDark ? 'translate-x-7' : 'translate-x-0'
           }`}
           style={{
-            backgroundColor: isDark ? '#948979' : '#5D866C',
-            color: isDark ? '#222831' : '#F5F5F0',
+            backgroundColor: 'var(--accent-primary)',
+            color: 'var(--text-on-accent)',
           }}
         >
           {isDark ? (
