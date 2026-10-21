@@ -93,10 +93,8 @@ const InvoicePreview = forwardRef(({
     ? parseFloat(invoice.total_amount)
     : Number((grandTotal + roundOff).toFixed(2));
   
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
-    ? Boolean(businessInfo.show_cenvora_footer)
-    : planCode !== 'business';
+  // Forced footer chrome — always shown regardless of template/settings/plan
+  const showWatermarkFooter = true;
   
   const isDeliveryChallan = 
     invoice.document_type === 'delivery_challan' || 
@@ -457,7 +455,8 @@ const InvoicePreview = forwardRef(({
                 const price = parseFloat(item.price || 0);
                 const tax = parseFloat(item.tax || 0);
                 const discount = parseFloat(item.discount || 0);
-                const amount = qty * price;
+                const lineBase = qty * price;
+                const amount = lineBase - (lineBase * discount) / 100;
                 
                 return (
                   <tr 
@@ -695,21 +694,22 @@ const InvoicePreview = forwardRef(({
             </div>
           )}
           
-          {/* Signature */}
-          {sections.showSignature && (
-            <div className="w-48 text-center ml-auto">
-              <div 
-                className="border-b-2 mb-2 h-16"
-                style={{ borderColor: colors.text }}
-              />
-              <p className="text-xs font-medium" style={{ color: colors.secondary }}>
-                {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
-              </p>
-            </div>
-          )}
+          {/* Signature — always shown */}
+          <div className="w-48 text-center ml-auto">
+            <p className="text-xs font-medium mb-2" style={{ color: colors.secondary }}>
+              For {companyName}
+            </p>
+            <div 
+              className="border-b-2 mb-2 h-16"
+              style={{ borderColor: colors.text }}
+            />
+            <p className="text-xs font-medium" style={{ color: colors.secondary }}>
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+            </p>
+          </div>
         </div>
         
-        {/* Branding footer — print pins to bottom of last page */}
+        {/* Branding footer — print pins to bottom of last page (forced) */}
         <div className="invoice-page-footer">
           {content.footerNote && (
             <div 

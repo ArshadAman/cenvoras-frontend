@@ -21,12 +21,13 @@ import {
 import InvoicePreview from '../invoice/InvoicePreview';
 import {
   getInvoiceTemplates,
-  getActiveTemplate,
-  setActiveTemplate,
+  getActiveTemplateForSection,
+  setActiveTemplateForSection,
   saveInvoiceTemplate,
   deleteInvoiceTemplate,
   createTemplateFromPreset,
   duplicateTemplate,
+  documentTypeToSectionKey,
   templatePresets,
   defaultInvoiceTemplate,
 } from '../../utils/invoiceSettings';
@@ -158,6 +159,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [viewMode, setViewMode] = useState('design'); // 'design' or 'preview'
   const previewRef = useRef(null);
 
+  const sectionKey = documentTypeToSectionKey(documentType);
+
   const isDeliveryChallan = Boolean(
     documentType === 'delivery_challan' ||
     invoice?.document_type === 'delivery_challan' ||
@@ -240,18 +243,18 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     ? sampleDeliveryChallan
     : sampleInvoice;
 
-  // Load templates on mount
+  // Load templates for this section only
   useEffect(() => {
     if (isOpen) {
-      const loadedTemplates = getInvoiceTemplates();
+      const loadedTemplates = getInvoiceTemplates(sectionKey);
       setTemplates(loadedTemplates);
       
-      const active = getActiveTemplate();
+      const active = getActiveTemplateForSection({ sectionKey });
       setActiveTemplateId(active.id);
       setCurrentTemplate(active);
       setHasChanges(false);
     }
-  }, [isOpen]);
+  }, [isOpen, sectionKey]);
 
   // Update template field
   const updateTemplate = (path, value) => {
@@ -272,11 +275,11 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     setHasChanges(true);
   };
 
-  // Save current template
+  // Save current template (section-scoped — does not sync to other sections)
   const handleSave = () => {
-    const saved = saveInvoiceTemplate(currentTemplate);
+    const saved = saveInvoiceTemplate(currentTemplate, sectionKey);
     if (saved) {
-      setTemplates(getInvoiceTemplates());
+      setTemplates(getInvoiceTemplates(sectionKey));
       setHasChanges(false);
       toast.success('Template saved successfully!');
     } else {
@@ -284,23 +287,23 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     }
   };
 
-  // Set as active template
+  // Set as active template for this section only
   const handleSetActive = () => {
-    setActiveTemplate(currentTemplate.id);
+    setActiveTemplateForSection(sectionKey, currentTemplate.id);
     setActiveTemplateId(currentTemplate.id);
-    toast.success('Template set as default!');
+    toast.success('Template set as default for this section!');
   };
 
   // Create new template
   const handleCreateNew = () => {
     const newName = prompt('Enter template name:', 'My Custom Template');
     if (newName) {
-      const newTemplate = createTemplateFromPreset('classic', newName);
+      const newTemplate = createTemplateFromPreset('classic', newName, sectionKey);
       if (newTemplate) {
-        setTemplates(getInvoiceTemplates());
+        setTemplates(getInvoiceTemplates(sectionKey));
         setCurrentTemplate(newTemplate);
         setActiveTemplateId(newTemplate.id);
-        setActiveTemplate(newTemplate.id);
+        setActiveTemplateForSection(sectionKey, newTemplate.id);
         toast.success('New template created!');
       }
     }
@@ -308,9 +311,9 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
 
   // Duplicate template
   const handleDuplicate = () => {
-    const duplicated = duplicateTemplate(currentTemplate.id);
+    const duplicated = duplicateTemplate(currentTemplate.id, sectionKey);
     if (duplicated) {
-      setTemplates(getInvoiceTemplates());
+      setTemplates(getInvoiceTemplates(sectionKey));
       setCurrentTemplate(duplicated);
       toast.success('Template duplicated!');
     }
@@ -324,8 +327,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     }
     
     if (confirm('Are you sure you want to delete this template?')) {
-      deleteInvoiceTemplate(currentTemplate.id);
-      const remaining = getInvoiceTemplates();
+      deleteInvoiceTemplate(currentTemplate.id, sectionKey);
+      const remaining = getInvoiceTemplates(sectionKey);
       setTemplates(remaining);
       setCurrentTemplate(remaining[0] || defaultInvoiceTemplate);
       toast.success('Template deleted!');

@@ -24,6 +24,8 @@ import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES } from "../../utils/gstRates";
+import { calculateLineAmount, calculateLineGross } from "../../utils/lineAmount";
+import { yupGstinOptional, isValidGstin, normalizeGstin, GSTIN_INVALID_MSG } from "../../utils/gstin";
 
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
@@ -156,9 +158,9 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.price`, initialPrice);
     const purPrice = Number(product.cost_price ?? product.purchase_price ?? product.price ?? 0) || 0;
     setFieldValue(`items.${idx}.purchase_price`, purPrice);
-    // Calculate amount automatically
+    // Calculate amount automatically: (Unit Price × Qty) − Disc%
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * initialPrice;
+    const amount = calculateLineAmount(quantity, initialPrice, 0);
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || "");
     setFieldValue(`items.${idx}.description`, product.description || "");
@@ -673,7 +675,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   const email = document.getElementById('new-customer-email')?.value?.trim();
                   const phone = document.getElementById('new-customer-phone')?.value?.trim();
                   const address = document.getElementById('new-customer-address')?.value?.trim();
-                  const gstin = document.getElementById('new-customer-gstin')?.value?.trim();
+                  const gstinRaw = document.getElementById('new-customer-gstin')?.value?.trim();
+                  const gstin = gstinRaw ? normalizeGstin(gstinRaw) : '';
+                  if (gstin && !isValidGstin(gstin)) {
+                    toast.error(GSTIN_INVALID_MSG);
+                    return;
+                  }
 
                   setIsCreatingCustomer(true);
                   try {
@@ -711,6 +718,32 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
 
 const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.trim());
 
+/** Fisher–Yates shuffle of product rows; note rows stay glued after their preceding product. */
+function shuffleItemsKeepingNotes(items) {
+  const groups = [];
+  const orphanNotes = [];
+  let current = null;
+  for (const item of items) {
+    if (item.row_type === 'note') {
+      if (current) current.notes.push(item);
+      else orphanNotes.push(item);
+    } else {
+      current = { product: item, notes: [] };
+      groups.push(current);
+    }
+  }
+  for (let i = groups.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [groups[i], groups[j]] = [groups[j], groups[i]];
+  }
+  const result = [];
+  for (const g of groups) {
+    result.push(g.product, ...g.notes);
+  }
+  result.push(...orphanNotes);
+  return result;
+}
+
 const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
@@ -723,7 +756,7 @@ const SalesSchema = Yup.object().shape({
   customer_email: Yup.string().email("Invalid email format").nullable(),
   customer_phone: Yup.string().nullable(),
   customer_address: Yup.string().nullable(),
-  customer_gstin: Yup.string().nullable(),
+  customer_gstin: yupGstinOptional(Yup),
   delivery_address: Yup.string().nullable(),
   due_date: Yup.string().nullable().test(
     'not-past-date',
@@ -1040,7 +1073,7 @@ export default function SalesForm({
     setFieldValue(`items.${index}.quantity`, qtyValue);
     const price = Number(currentValues.items[index]?.price) || 0;
     const numQty = parseFloat(qtyValue) || 0;
-    setFieldValue(`items.${index}.amount`, price * numQty);
+    let discount = Number(currentValues.items[index]?.discount) || 0;
 
     const prodId = currentValues.items[index]?.product_id;
     if (prodId) {
@@ -1055,12 +1088,14 @@ export default function SalesForm({
       } else if (scheme && scheme.scheme_type === 'percentage_discount') {
         const currDisc = Number(currentValues.items[index]?.discount) || 0;
         if (currDisc === 0 && Number(scheme.discount_percent) > 0) {
-          setFieldValue(`items.${index}.discount`, Number(scheme.discount_percent));
+          discount = Number(scheme.discount_percent);
+          setFieldValue(`items.${index}.discount`, discount);
         }
       } else if (currentValues.items[index]?.free_quantity > 0) {
         setFieldValue(`items.${index}.free_quantity`, 0);
       }
     }
+    setFieldValue(`items.${index}.amount`, calculateLineAmount(numQty, price, discount));
   };
 
   const handleProductSelected = (idx, prod, setFieldValue, currentValues) => {
@@ -1249,7 +1284,7 @@ export default function SalesForm({
         formikRef.current.setFieldValue(`${itemPath}.internal_reference`, createdProduct.internal_reference || productCreationState.internal_reference || "");
         formikRef.current.setFieldValue(`${itemPath}.unit`, createdProduct.unit || productCreationState.unit || 'pcs');
         formikRef.current.setFieldValue(`${itemPath}.price`, normalizedPrice);
-        formikRef.current.setFieldValue(`${itemPath}.amount`, quantity * normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.amount`, calculateLineAmount(quantity, normalizedPrice, 0));
         formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, createdProduct.hsn_sac_code || productCreationState.hsn_sac_code || "");
         formikRef.current.setFieldValue(`${itemPath}.product_description`, createdProduct.description || productCreationState.description || "");
         formikRef.current.setFieldValue(`${itemPath}.discount`, 0);
@@ -1654,8 +1689,19 @@ export default function SalesForm({
             }
             
             try {
+              // Auto-shuffle item order on create (Bill / Quotation / Challan only)
+              let itemsForSave = cleanedItems;
+              if (
+                !isEdit &&
+                (documentType === 'invoice' ||
+                  documentType === 'quotation' ||
+                  documentType === 'delivery_challan')
+              ) {
+                itemsForSave = shuffleItemsKeepingNotes(cleanedItems);
+              }
+
               // Bare product names (no UUID) require explicit catalog-create confirm
-              const bareNameItems = cleanedItems.filter((item) => {
+              const bareNameItems = itemsForSave.filter((item) => {
                 if (item.row_type === 'note') return false;
                 const pid = item.product_id;
                 const pname = (typeof item.product === 'string' ? item.product : '').trim();
@@ -1674,7 +1720,7 @@ export default function SalesForm({
                 );
               }
 
-              const processedItems = cleanedItems.map(item => {
+              const processedItems = itemsForSave.map(item => {
                 if (item.row_type === 'note') {
                   return {
                     row_type: 'note',
@@ -1696,11 +1742,8 @@ export default function SalesForm({
                 const price = Number(item.price) || 0;
                 const discount = Number(item.discount) || 0;
                 const tax = Number(item.tax) || 0;
-                const baseAmount = quantity * price;
-                const discountAmount = (baseAmount * discount) / 100;
-                const taxableAmount = baseAmount - discountAmount;
-                const taxAmount = (taxableAmount * tax) / 100;
-                const amount = Number((taxableAmount + taxAmount).toFixed(2));
+                // Amount = (Unit Price × Qty) − Disc% (tax excluded from line amount)
+                const amount = calculateLineAmount(quantity, price, discount);
                 const productRef = item.product_id || item.product;
                 const isBareName = !(item.product_id && isUUID(String(item.product_id)))
                   && !(typeof productRef === 'string' && isUUID(productRef));
@@ -1729,7 +1772,10 @@ export default function SalesForm({
                 };
               });
 
-              const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
+              const totalAmount = processedItems.reduce((sum, item) => {
+                if (item.row_type === 'note') return sum;
+                return sum + calculateLineGross(item.quantity, item.price, item.discount, item.tax);
+              }, 0);
               const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
               const roundOffValue = roundOffApplied
                 ? Number((finalTotal - totalAmount).toFixed(2))
@@ -2811,7 +2857,8 @@ export default function SalesForm({
                                                      setFieldValue(`items.${index}.price`, price);
                                                      const qty = parseFloat(values.items[index]?.quantity) || 0;
                                                      const actualPrice = Number(price) || 0;
-                                                     setFieldValue(`items.${index}.amount`, actualPrice * qty);
+                                                     const discount = Number(values.items[index]?.discount) || 0;
+                                                     setFieldValue(`items.${index}.amount`, calculateLineAmount(qty, actualPrice, discount));
                                                      if (price && Number(price) > 0) handleAutoAddRow(index);
                                                    }}
                                                  />
@@ -2822,7 +2869,18 @@ export default function SalesForm({
                                           if (col.key === "discount") {
                                             return (
                                               <div key={col.key}>
-                                                <Field name={`items.${index}.discount`} type="number" className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none" />
+                                                <Field
+                                                  name={`items.${index}.discount`}
+                                                  type="number"
+                                                  className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                  onChange={(e) => {
+                                                    const discount = e.target.value;
+                                                    setFieldValue(`items.${index}.discount`, discount);
+                                                    const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                    const price = Number(values.items[index]?.price) || 0;
+                                                    setFieldValue(`items.${index}.amount`, calculateLineAmount(qty, price, discount));
+                                                  }}
+                                                />
                                               </div>
                                             );
                                           }
@@ -3190,7 +3248,8 @@ export default function SalesForm({
                                                    setFieldValue(`items.${index}.price`, price);
                                                    const qty = parseFloat(values.items[index]?.quantity) || 0;
                                                    const actualPrice = Number(price) || 0;
-                                                   setFieldValue(`items.${index}.amount`, actualPrice * qty);
+                                                   const discount = Number(values.items[index]?.discount) || 0;
+                                                   setFieldValue(`items.${index}.amount`, calculateLineAmount(qty, actualPrice, discount));
                                                    if (price && Number(price) > 0) handleAutoAddRow(index);
                                                  }}
                                                />
@@ -3223,7 +3282,18 @@ export default function SalesForm({
                                             {itemSettings.show_item_discount && (
                                                 <div>
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Disc %</label>
-                                                    <Field name={`items.${index}.discount`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
+                                                    <Field
+                                                      name={`items.${index}.discount`}
+                                                      type="number"
+                                                      className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none"
+                                                      onChange={(e) => {
+                                                        const discount = e.target.value;
+                                                        setFieldValue(`items.${index}.discount`, discount);
+                                                        const qty = parseFloat(values.items[index]?.quantity) || 0;
+                                                        const price = Number(values.items[index]?.price) || 0;
+                                                        setFieldValue(`items.${index}.amount`, calculateLineAmount(qty, price, discount));
+                                                      }}
+                                                    />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_tax && (

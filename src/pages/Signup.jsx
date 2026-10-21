@@ -9,6 +9,7 @@ import { State, City } from 'country-state-city';
 import Seo from '../components/Seo';
 import AuthPrismCanvas from '../components/3d/AuthPrismCanvas';
 import BrandLogo from '../components/common/BrandLogo';
+import { yupGstinOptional } from '../utils/gstin';
 
 const selectStyles = {
   control: (provided, state) => ({
@@ -52,7 +53,11 @@ const stepSchemas = [
     city: Yup.string().nullable(),
   }),
   Yup.object().shape({
-    gstin: Yup.string().length(15, 'GSTIN must be 15 characters').nullable(),
+    gstin: yupGstinOptional(Yup).test(
+      'gstin-length-when-set',
+      'GSTIN must be 15 characters',
+      (value) => !value || String(value).length === 15
+    ),
     termsAccepted: Yup.boolean().oneOf([true], 'You must accept the terms').required('Required'),
   }),
 ];

@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../../hooks/useEscStack";
+import { yupGstinOptional } from "../../utils/gstin";
 
 const customerSchema = Yup.object().shape({
   name: Yup.string()
@@ -18,9 +19,7 @@ const customerSchema = Yup.object().shape({
     .max(255, "Email must be less than 255 characters"),
   phone: Yup.string()
     .max(20, "Phone number must be less than 20 characters"),
-  gstin: Yup.string()
-    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format")
-    .max(15, "GSTIN must be less than 15 characters"),
+  gstin: yupGstinOptional(Yup).max(15, "GSTIN must be less than 15 characters"),
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
   meta: Yup.object().shape({

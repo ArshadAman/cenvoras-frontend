@@ -214,55 +214,76 @@ export const templatePresets = [
   },
 ];
 
-// Storage keys
-const STORAGE_KEY = 'cenvora_invoice_templates';
-const ACTIVE_TEMPLATE_KEY = 'cenvora_active_template';
+// Storage keys — templates are isolated per document section
+const LEGACY_STORAGE_KEY = 'cenvora_invoice_templates';
 
-// Get all saved templates
-export const getInvoiceTemplates = () => {
+export const documentTypeToSectionKey = (documentType) => {
+  switch (documentType) {
+    case 'quotation':
+      return 'quotation';
+    case 'delivery_challan':
+      return 'delivery_challan';
+    case 'sales_order':
+      return 'sales_order';
+    case 'invoice':
+    case 'sales_invoice':
+    default:
+      return 'sales_invoice';
+  }
+};
+
+const sectionTemplatesKey = (sectionKey) => `cenvora_invoice_templates_${sectionKey || 'sales_invoice'}`;
+
+const deepClonePresets = () => JSON.parse(JSON.stringify(templatePresets));
+
+const mergeMissingPresets = (parsed) => {
+  const existingIds = new Set(parsed.map((t) => t.id));
+  const missingPresets = templatePresets
+    .filter((p) => !existingIds.has(p.id))
+    .map((p) => JSON.parse(JSON.stringify(p)));
+  if (missingPresets.length === 0) return parsed;
+  return [...parsed, ...missingPresets];
+};
+
+/**
+ * Load templates for a single section. Never shares writes across sections.
+ * On first access: clone from legacy shared pool (if any), else deep-clone presets.
+ */
+export const getInvoiceTemplates = (sectionKey = 'sales_invoice') => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const key = sectionTemplatesKey(sectionKey);
+    const stored = localStorage.getItem(key);
     if (stored) {
-      const parsed = JSON.parse(stored);
-      // Auto-inject missing templates from presets (to handle app updates)
-      const existingIds = new Set(parsed.map(t => t.id));
-      const missingPresets = templatePresets.filter(p => !existingIds.has(p.id));
-      
-      if (missingPresets.length > 0) {
-        const merged = [...parsed, ...missingPresets];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        return merged;
+      const parsed = mergeMissingPresets(JSON.parse(stored));
+      if (parsed.length !== JSON.parse(stored).length) {
+        localStorage.setItem(key, JSON.stringify(parsed));
       }
       return parsed;
     }
-    // Return default presets if nothing stored
-    return templatePresets;
+
+    // One-time seed from legacy shared pool so existing customizations aren't lost
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const cloned = mergeMissingPresets(JSON.parse(JSON.stringify(JSON.parse(legacy))));
+      localStorage.setItem(key, JSON.stringify(cloned));
+      return cloned;
+    }
+
+    const presets = deepClonePresets();
+    localStorage.setItem(key, JSON.stringify(presets));
+    return presets;
   } catch (error) {
     console.error('Error loading invoice templates:', error);
-    return templatePresets;
+    return deepClonePresets();
   }
 };
 
-// Get active template
-export const getActiveTemplate = () => {
-  try {
-    const activeId = localStorage.getItem(ACTIVE_TEMPLATE_KEY);
-    const templates = getInvoiceTemplates();
-    
-    if (activeId) {
-      const template = templates.find(t => t.id === activeId);
-      if (template) return template;
-    }
-    
-    // Return first template or default
-    return templates[0] || defaultInvoiceTemplate;
-  } catch (error) {
-    console.error('Error loading active template:', error);
-    return defaultInvoiceTemplate;
-  }
+/** @deprecated Prefer getActiveTemplateForSection — kept for callers without a section */
+export const getActiveTemplate = (sectionKey = 'sales_invoice') => {
+  return getActiveTemplateForSection({ sectionKey });
 };
 
-// Scoped template resolution per section and per customer/account (no cross-syncing)
+// Scoped template resolution per section (no cross-section / global fallback)
 export const getActiveTemplateForSection = ({
   sectionKey = 'sales_invoice',
   documentTemplateId = null,
@@ -270,38 +291,31 @@ export const getActiveTemplateForSection = ({
   userDefaultTemplates = null,
 } = {}) => {
   try {
-    const templates = getInvoiceTemplates();
+    const templates = getInvoiceTemplates(sectionKey);
 
     // 1. Per-document explicit override
     if (documentTemplateId) {
-      const match = templates.find(t => t.id === documentTemplateId);
+      const match = templates.find((t) => t.id === documentTemplateId);
       if (match) return match;
     }
 
     // 2. Customer's preferred template for this section
     if (customerTemplates && customerTemplates[sectionKey]) {
-      const match = templates.find(t => t.id === customerTemplates[sectionKey]);
+      const match = templates.find((t) => t.id === customerTemplates[sectionKey]);
       if (match) return match;
     }
 
     // 3. User's section default
     if (userDefaultTemplates && userDefaultTemplates[sectionKey]) {
-      const match = templates.find(t => t.id === userDefaultTemplates[sectionKey]);
+      const match = templates.find((t) => t.id === userDefaultTemplates[sectionKey]);
       if (match) return match;
     }
 
-    // 4. Scoped localStorage fallback for this specific section
+    // 4. Scoped localStorage active for this section only
     const scopedKey = `cenvora_active_template_${sectionKey}`;
     const scopedId = localStorage.getItem(scopedKey);
     if (scopedId) {
-      const match = templates.find(t => t.id === scopedId);
-      if (match) return match;
-    }
-
-    // 5. Global active template fallback or first preset
-    const globalId = localStorage.getItem(ACTIVE_TEMPLATE_KEY);
-    if (globalId) {
-      const match = templates.find(t => t.id === globalId);
+      const match = templates.find((t) => t.id === scopedId);
       if (match) return match;
     }
 
@@ -325,36 +339,30 @@ export const setActiveTemplateForSection = (sectionKey, templateId) => {
   }
 };
 
-// Set active template (global fallback)
-export const setActiveTemplate = (templateId) => {
-  try {
-    localStorage.setItem(ACTIVE_TEMPLATE_KEY, templateId);
-    return true;
-  } catch (error) {
-    console.error('Error setting active template:', error);
-    return false;
-  }
+/** @deprecated Use setActiveTemplateForSection — writes sales_invoice section only */
+export const setActiveTemplate = (templateId, sectionKey = 'sales_invoice') => {
+  return setActiveTemplateForSection(sectionKey, templateId);
 };
 
-// Save template
-export const saveInvoiceTemplate = (template) => {
+// Save template within a section store only
+export const saveInvoiceTemplate = (template, sectionKey = 'sales_invoice') => {
   try {
-    const templates = getInvoiceTemplates();
-    const existingIndex = templates.findIndex(t => t.id === template.id);
-    
+    const templates = getInvoiceTemplates(sectionKey);
+    const existingIndex = templates.findIndex((t) => t.id === template.id);
+
     const updatedTemplate = {
       ...template,
       updatedAt: new Date().toISOString(),
     };
-    
+
     if (existingIndex >= 0) {
       templates[existingIndex] = updatedTemplate;
     } else {
       updatedTemplate.createdAt = new Date().toISOString();
       templates.push(updatedTemplate);
     }
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(templates));
     return updatedTemplate;
   } catch (error) {
     console.error('Error saving invoice template:', error);
@@ -362,19 +370,19 @@ export const saveInvoiceTemplate = (template) => {
   }
 };
 
-// Delete template
-export const deleteInvoiceTemplate = (templateId) => {
+// Delete template within a section
+export const deleteInvoiceTemplate = (templateId, sectionKey = 'sales_invoice') => {
   try {
-    const templates = getInvoiceTemplates();
-    const filtered = templates.filter(t => t.id !== templateId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-    
-    // If deleted was active, set first as active
-    const activeId = localStorage.getItem(ACTIVE_TEMPLATE_KEY);
+    const templates = getInvoiceTemplates(sectionKey);
+    const filtered = templates.filter((t) => t.id !== templateId);
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(filtered));
+
+    const scopedKey = `cenvora_active_template_${sectionKey}`;
+    const activeId = localStorage.getItem(scopedKey);
     if (activeId === templateId && filtered.length > 0) {
-      setActiveTemplate(filtered[0].id);
+      setActiveTemplateForSection(sectionKey, filtered[0].id);
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting invoice template:', error);
@@ -382,44 +390,44 @@ export const deleteInvoiceTemplate = (templateId) => {
   }
 };
 
-// Create new template from preset
-export const createTemplateFromPreset = (presetId, name) => {
-  const preset = templatePresets.find(p => p.id === presetId) || defaultInvoiceTemplate;
+// Create new template from preset (section-scoped)
+export const createTemplateFromPreset = (presetId, name, sectionKey = 'sales_invoice') => {
+  const preset = templatePresets.find((p) => p.id === presetId) || defaultInvoiceTemplate;
   const newTemplate = {
-    ...preset,
+    ...JSON.parse(JSON.stringify(preset)),
     id: `custom_${Date.now()}`,
     name: name || `Custom Template ${Date.now()}`,
     isDefault: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  return saveInvoiceTemplate(newTemplate);
+  return saveInvoiceTemplate(newTemplate, sectionKey);
 };
 
-// Duplicate template
-export const duplicateTemplate = (templateId) => {
-  const templates = getInvoiceTemplates();
-  const source = templates.find(t => t.id === templateId);
-  
+// Duplicate template within a section
+export const duplicateTemplate = (templateId, sectionKey = 'sales_invoice') => {
+  const templates = getInvoiceTemplates(sectionKey);
+  const source = templates.find((t) => t.id === templateId);
+
   if (!source) return null;
-  
+
   const duplicate = {
-    ...source,
+    ...JSON.parse(JSON.stringify(source)),
     id: `custom_${Date.now()}`,
     name: `${source.name} (Copy)`,
     isDefault: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  
-  return saveInvoiceTemplate(duplicate);
+
+  return saveInvoiceTemplate(duplicate, sectionKey);
 };
 
-// Reset to defaults
-export const resetToDefaults = () => {
+// Reset one section to default presets
+export const resetToDefaults = (sectionKey = 'sales_invoice') => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templatePresets));
-    setActiveTemplate('classic');
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(deepClonePresets()));
+    setActiveTemplateForSection(sectionKey, 'classic');
     return true;
   } catch (error) {
     console.error('Error resetting templates:', error);
@@ -507,9 +515,12 @@ export const amountInWords = (amount) => {
 export default {
   defaultInvoiceTemplate,
   templatePresets,
+  documentTypeToSectionKey,
   getInvoiceTemplates,
   getActiveTemplate,
+  getActiveTemplateForSection,
   setActiveTemplate,
+  setActiveTemplateForSection,
   saveInvoiceTemplate,
   deleteInvoiceTemplate,
   createTemplateFromPreset,
