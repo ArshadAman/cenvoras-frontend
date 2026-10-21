@@ -4,6 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import { State, City } from 'country-state-city';
+import { GSTIN_REGEX, GSTIN_INVALID_MSG } from '../utils/gstin';
 
 const StoreSettingsSchema = Yup.object().shape({
   country: Yup.string().required('Country is required'),
@@ -11,7 +12,11 @@ const StoreSettingsSchema = Yup.object().shape({
   city: Yup.string().required('City is required'),
   gstin: Yup.string().when('country', {
     is: 'IN',
-    then: (schema) => schema.required('GSTIN is required for India').length(15, 'GSTIN must be 15 characters'),
+    then: (schema) =>
+      schema
+        .required('GSTIN is required for India')
+        .length(15, 'GSTIN must be 15 characters')
+        .matches(GSTIN_REGEX, GSTIN_INVALID_MSG),
     otherwise: (schema) => schema.notRequired(),
   }),
   trn: Yup.string().when('country', {

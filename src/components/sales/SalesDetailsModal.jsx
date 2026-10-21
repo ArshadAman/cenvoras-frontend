@@ -366,12 +366,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     staleTime: 5 * 60 * 1000,
   });
 
-  if (invoiceSettings && typeof invoiceSettings.show_cenvora_footer === 'boolean') {
-    effectiveBusinessInfo.show_cenvora_footer = invoiceSettings.show_cenvora_footer;
-  } else if (effectiveBusinessInfo.show_cenvora_footer === undefined) {
-    const plan = String(effectiveBusinessInfo.plan_code || 'free').toLowerCase();
-    effectiveBusinessInfo.show_cenvora_footer = plan !== 'business';
-  }
+  // Forced document footer: always show Made with Cenvora branding regardless of plan/settings
+  effectiveBusinessInfo.show_cenvora_footer = true;
 
   const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : (template?.content?.invoiceTitle || "TAX INVOICE");
   const previewTemplate = {
@@ -752,7 +748,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                     className="bg-transparent text-[var(--text-primary)] text-xs font-medium outline-none cursor-pointer pr-1"
                     title="Switch template"
                   >
-                    {getInvoiceTemplates().map((t) => (
+                    {getInvoiceTemplates(sectionKey).map((t) => (
                       <option key={t.id} value={t.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                         {t.name}
                       </option>

@@ -56,10 +56,7 @@ const GenzTemplate = forwardRef(({
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
 
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
-    ? Boolean(businessInfo.show_cenvora_footer)
-    : planCode !== 'business';
+  const showWatermarkFooter = true;
 
   const isDeliveryChallan = 
     invoice.document_type === 'delivery_challan' || 
@@ -269,7 +266,13 @@ const GenzTemplate = forwardRef(({
                         val = discNum > 0 ? `${discNum}%` : '-';
                       }
                       else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
-                      else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
+                      else if(col.id==='amount') {
+                        const qty = parseFloat(item.quantity||0);
+                        const price = parseFloat(item.price||0);
+                        const disc = parseFloat(item.discount||0);
+                        const lineBase = qty * price;
+                        val = `${getCurrencySymbol()}${(lineBase - (lineBase * disc) / 100).toFixed(2)}`;
+                      }
                       else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                       return (
                         <td 
@@ -379,15 +382,14 @@ const GenzTemplate = forwardRef(({
         
         {/* Bottom Anchored Footer */}
         <div className="mt-auto">
-          {isDeliveryChallan && sections.showSignature && (
-            <div className="flex justify-end pb-8">
-              <div className="text-right">
-                <div className="border-t border-gray-400 inline-block pt-1 text-xs px-6">
-                  {content.signatureLabel || 'Received By / Signatory'}
-                </div>
+          <div className="flex justify-end pb-8">
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-600 mb-8">For {businessInfo.business_name || businessInfo.company_name || 'Company'}</p>
+              <div className="border-t border-gray-400 inline-block pt-1 text-xs px-6">
+                {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
               </div>
             </div>
-          )}
+          </div>
           <div className="invoice-page-footer">
             <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-400 font-medium tracking-wide w-full">
               {isDeliveryChallan

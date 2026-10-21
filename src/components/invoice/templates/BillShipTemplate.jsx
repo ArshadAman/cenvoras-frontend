@@ -55,10 +55,7 @@ const BillShipTemplate = forwardRef(({
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
 
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
-    ? Boolean(businessInfo.show_cenvora_footer)
-    : planCode !== 'business';
+  const showWatermarkFooter = true;
 
   const isDeliveryChallan = 
     invoice.document_type === 'delivery_challan' || 
@@ -257,7 +254,13 @@ const BillShipTemplate = forwardRef(({
                     val = discNum > 0 ? `${discNum}%` : '-';
                   }
                   else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
-                  else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  else if(col.id==='amount') {
+                    const qty = parseFloat(item.quantity||0);
+                    const price = parseFloat(item.price||0);
+                    const disc = parseFloat(item.discount||0);
+                    const lineBase = qty * price;
+                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  }
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                 return (
                   <td 
@@ -368,21 +371,19 @@ const BillShipTemplate = forwardRef(({
                </div>
              </div>
 
-             {sections.showSignature && (
-               <div className="text-right mt-16">
-                  <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
-                  <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
-                    {content.signatureLabel || 'Authorized Signatory'}
-                  </div>
-               </div>
-             )}
+             <div className="text-right mt-16">
+                <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
+                <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
+                  {content.signatureLabel || 'Authorized Signatory'}
+                </div>
+             </div>
           </div>
         </div>
       )}
 
       {/* Bottom Anchored Footer */}
       <div className="mt-auto">
-        {isDeliveryChallan && sections.showSignature && (
+        {isDeliveryChallan && (
           <div className="flex justify-end pt-8 mb-4">
             <div className="text-right">
               <p className="text-xs font-bold text-gray-600 mb-8">For {companyName}</p>

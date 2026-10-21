@@ -63,10 +63,7 @@ const LegendTemplate = forwardRef(({
     .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = businessInfo.show_cenvora_footer !== undefined
-    ? Boolean(businessInfo.show_cenvora_footer)
-    : planCode !== 'business';
+  const showWatermarkFooter = true;
   const borderColor = colors.tableBorder || '#e2e8f0';
 
   const isDeliveryChallan = 
@@ -275,7 +272,13 @@ const LegendTemplate = forwardRef(({
                     val = discNum > 0 ? `${discNum}%` : '-';
                   }
                   else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
-                  else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  else if(col.id==='amount') {
+                    const qty = parseFloat(item.quantity||0);
+                    const price = parseFloat(item.price||0);
+                    const disc = parseFloat(item.discount||0);
+                    const lineBase = qty * price;
+                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  }
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                   return (
                     <td 
@@ -396,12 +399,10 @@ const LegendTemplate = forwardRef(({
                  </div>
                </div>
                
-               {sections.showSignature && (
-                 <div className="p-3 text-right text-xs">
-                    <p className="font-bold mb-10">For {companyName}</p>
-                    <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Authorized Signatory'}</p>
-                 </div>
-               )}
+               <div className="p-3 text-right text-xs">
+                  <p className="font-bold mb-10">For {companyName}</p>
+                  <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Authorized Signatory'}</p>
+               </div>
             </div>
           </div>
         ) : (
@@ -416,12 +417,10 @@ const LegendTemplate = forwardRef(({
                 </div>
               )}
             </div>
-            {sections.showSignature && (
-              <div className="w-1/2 flex flex-col justify-end text-right text-xs p-3">
-                <p className="font-bold mb-10">For {companyName}</p>
-                <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Received By / Signatory'}</p>
-              </div>
-            )}
+            <div className="w-1/2 flex flex-col justify-end text-right text-xs p-3">
+              <p className="font-bold mb-10">For {companyName}</p>
+              <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Received By / Signatory'}</p>
+            </div>
           </div>
         )}
       </div>
