@@ -199,6 +199,7 @@ const InvoicePreview = forwardRef(({
       )}
 
       <InvoicePrintShell
+        theme="classic"
         headerProps={{
           companyName,
           companyAddress,
@@ -670,16 +671,14 @@ const InvoicePreview = forwardRef(({
         </div>
       )}
       
-      {/* Bottom Anchored Footer Section */}
-      <div className="mt-auto">
-        {/* Terms & Signature Row */}
+      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
+      <div className="mt-auto invoice-page-footer">
         <div className="flex justify-between gap-6 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
-          {/* Terms */}
           {sections.showTerms && content.termsAndConditions?.length > 0 && (
             <div className="flex-1">
-              <h4 
+              <h4
                 className="font-bold mb-2"
-                style={{ 
+                style={{
                   color: colors.secondary,
                   fontSize: `${typography.sectionTitleSize || 12}px`,
                 }}
@@ -693,13 +692,12 @@ const InvoicePreview = forwardRef(({
               </ul>
             </div>
           )}
-          
-          {/* Signature — always shown */}
+
           <div className="w-48 text-center ml-auto">
             <p className="text-xs font-medium mb-2" style={{ color: colors.secondary }}>
               For {companyName}
             </p>
-            <div 
+            <div
               className="border-b-2 mb-2 h-16"
               style={{ borderColor: colors.text }}
             />
@@ -708,34 +706,31 @@ const InvoicePreview = forwardRef(({
             </p>
           </div>
         </div>
-        
-        {/* Branding footer — print pins to bottom of last page (forced) */}
-        <div className="invoice-page-footer">
-          {content.footerNote && (
-            <div 
-              className="text-center mt-6 pt-3 text-xs"
-              style={{ 
-                color: colors.lightText,
-                borderTop: `1px dashed ${colors.tableBorder}`,
-              }}
-            >
-              {content.footerNote}
-            </div>
-          )}
-          
-          <div className="mt-3 pt-2 text-center text-xs text-gray-500 font-medium">
-            {isDeliveryChallan
-              ? 'This is a computer generated delivery challan and does not require a signature.'
-              : 'This is a computer generated digital invoice and does not require a signature.'}
+
+        {content.footerNote && (
+          <div
+            className="text-center mt-6 pt-3 text-xs"
+            style={{
+              color: colors.lightText,
+              borderTop: `1px dashed ${colors.tableBorder}`,
+            }}
+          >
+            {content.footerNote}
           </div>
-          
-          {showWatermarkFooter && (
-            <div className="mt-2 text-center text-xs text-gray-400 print-watermark">
-              Made with Cenvora: Built for Modern Businesses<br />
-              <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
-            </div>
-          )}
+        )}
+
+        <div className="mt-3 pt-2 text-center text-xs text-gray-500 font-medium">
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
         </div>
+
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-xs text-gray-400 print-watermark">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+          </div>
+        )}
       </div>
       </InvoicePrintShell>
     </div>
