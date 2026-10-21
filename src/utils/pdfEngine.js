@@ -33,45 +33,52 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   }
 
   // Temporarily apply print chrome so letterhead is measurable and captured:
-  // show continuation letterhead, hide duplicate first-page seller chrome.
+  // show continuation letterhead, hide duplicate first-page seller chrome,
+  // reserve footer space so absolute footer cannot cover bank/totals.
   const firstPageHeaders = Array.from(element.querySelectorAll('.invoice-first-page-header'));
   const continuationHeaders = Array.from(element.querySelectorAll('.invoice-continuation-header'));
+  const sheets = Array.from(element.querySelectorAll('.invoice-sheet'));
+  const footers = Array.from(element.querySelectorAll('.invoice-page-footer'));
   const firstPagePrev = firstPageHeaders.map((el) => el.style.display);
   const continuationPrev = continuationHeaders.map((el) => el.style.display);
+  const sheetPrev = sheets.map((el) => ({
+    position: el.style.position,
+    paddingBottom: el.style.paddingBottom,
+    paddingTop: el.style.paddingTop,
+  }));
+  const footerPrev = footers.map((el) => ({
+    position: el.style.position,
+    bottom: el.style.bottom,
+    left: el.style.left,
+    right: el.style.right,
+    marginTop: el.style.marginTop,
+  }));
   firstPageHeaders.forEach((el) => {
     el.style.display = 'none';
   });
   continuationHeaders.forEach((el) => {
     el.style.display = 'table-row';
   });
+  sheets.forEach((el) => {
+    el.style.position = 'relative';
+    el.style.paddingTop = '4mm';
+    el.style.paddingBottom = '88mm';
+  });
+  footers.forEach((el) => {
+    el.style.position = 'absolute';
+    el.style.bottom = '4mm';
+    el.style.left = '0';
+    el.style.right = '0';
+    el.style.marginTop = '0';
+  });
+
+  // Force layout after temporary print chrome
+  void element.offsetHeight;
 
   // Ensure element styles are ready for capture
   const containerRect = element.getBoundingClientRect();
   const unscaledWidth = element.offsetWidth || containerRect.width;
   const unscaledHeight = element.scrollHeight || containerRect.height;
-
-  // Find item-table rows only (exclude InvoicePrintShell wrapper row)
-  const rowElements = Array.from(
-    element.querySelectorAll('table:not(.invoice-print-shell) tbody tr, .invoice-print-shell-row table tbody tr')
-  );
-  const rowBoundaries = rowElements.map((row) => {
-    const rect = row.getBoundingClientRect();
-    const topRel = containerRect.height > 0 ? (rect.top - containerRect.top) / containerRect.height : 0;
-    const botRel = containerRect.height > 0 ? (rect.bottom - containerRect.top) / containerRect.height : 0;
-    return {
-      top: topRel * unscaledHeight,
-      bottom: botRel * unscaledHeight,
-      height: (botRel - topRel) * unscaledHeight,
-    };
-  });
-
-  // Seller letterhead + items column thead for page 2+ stamps (now visible)
-  const letterheadEl = element.querySelector('[data-print-continuation-header]');
-  const letterheadRect = letterheadEl ? letterheadEl.getBoundingClientRect() : null;
-  const columnThead =
-    element.querySelector('.invoice-print-shell-row table thead') ||
-    element.querySelector('table:not(.invoice-print-shell) thead');
-  const columnTheadRect = columnThead ? columnThead.getBoundingClientRect() : null;
 
   const toDomY = (rect) => {
     if (!rect || containerRect.height <= 0) return 0;
@@ -82,6 +89,33 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     if (containerRect.height <= 0) return rect.height || 0;
     return (rect.height / containerRect.height) * unscaledHeight;
   };
+
+  // Item-table rows only — exclude InvoicePrintShell wrapper and totals-block nested tables
+  const rowElements = Array.from(
+    element.querySelectorAll('table:not(.invoice-print-shell) tbody tr, .invoice-print-shell-row table tbody tr')
+  ).filter((row) => !row.closest('.invoice-totals-block') && !row.closest('.invoice-page-footer'));
+  const rowBoundaries = rowElements.map((row) => {
+    const rect = row.getBoundingClientRect();
+    const top = toDomY(rect);
+    const height = toDomH(rect);
+    return { top, bottom: top + height, height };
+  });
+
+  // Bank + totals keep-together block — never slice through it
+  const totalsBlockEl = element.querySelector('.invoice-totals-block');
+  const totalsBlockRect = totalsBlockEl ? totalsBlockEl.getBoundingClientRect() : null;
+  const totalsBlockTop = totalsBlockRect ? toDomY(totalsBlockRect) : null;
+  const totalsBlockHeight = totalsBlockRect ? toDomH(totalsBlockRect) : 0;
+  const totalsBlockBottom =
+    totalsBlockTop != null ? totalsBlockTop + totalsBlockHeight : null;
+
+  // Seller letterhead + items column thead for page 2+ stamps (now visible)
+  const letterheadEl = element.querySelector('[data-print-continuation-header]');
+  const letterheadRect = letterheadEl ? letterheadEl.getBoundingClientRect() : null;
+  const columnThead =
+    element.querySelector('.invoice-print-shell-row table thead') ||
+    element.querySelector('table:not(.invoice-print-shell) thead');
+  const columnTheadRect = columnThead ? columnThead.getBoundingClientRect() : null;
 
   const letterheadDomTop = toDomY(letterheadRect);
   const letterheadDomHeight = Math.max(toDomH(letterheadRect), 1);
@@ -124,6 +158,8 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             sheet.style.margin = '0 auto';
             sheet.style.boxShadow = 'none';
             sheet.style.position = 'relative';
+            sheet.style.paddingTop = '4mm';
+            sheet.style.paddingBottom = '88mm';
           });
         }
 
@@ -132,6 +168,17 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         });
         clonedDoc.querySelectorAll('.invoice-continuation-header').forEach((el) => {
           el.style.display = 'table-row';
+        });
+        clonedDoc.querySelectorAll('.invoice-page-footer').forEach((el) => {
+          el.style.position = 'absolute';
+          el.style.bottom = '4mm';
+          el.style.left = '0';
+          el.style.right = '0';
+          el.style.marginTop = '0';
+        });
+        clonedDoc.querySelectorAll('.invoice-totals-block').forEach((el) => {
+          el.style.breakInside = 'avoid';
+          el.style.pageBreakInside = 'avoid';
         });
 
         const hiddenElements = clonedDoc.querySelectorAll('.print-hidden, button');
@@ -147,6 +194,18 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     });
     continuationHeaders.forEach((el, i) => {
       el.style.display = continuationPrev[i] || '';
+    });
+    sheets.forEach((el, i) => {
+      el.style.position = sheetPrev[i]?.position || '';
+      el.style.paddingBottom = sheetPrev[i]?.paddingBottom || '';
+      el.style.paddingTop = sheetPrev[i]?.paddingTop || '';
+    });
+    footers.forEach((el, i) => {
+      el.style.position = footerPrev[i]?.position || '';
+      el.style.bottom = footerPrev[i]?.bottom || '';
+      el.style.left = footerPrev[i]?.left || '';
+      el.style.right = footerPrev[i]?.right || '';
+      el.style.marginTop = footerPrev[i]?.marginTop || '';
     });
   }
 
@@ -195,10 +254,14 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     // -------------------------------------------------------------
     const scaleFactor = canvas.width / (unscaledWidth || 1);
 
-    // Page 2+ content height accounts for stamped letterhead + column header
+    // Safe insets (mm → DOM px via canvas width / A4 width)
+    const topInsetDom = 8 * (unscaledWidth / pdfWidthMm);
+    const bottomInsetDom = 10 * (unscaledWidth / pdfWidthMm);
+
+    // Page 2+ content height accounts for stamped letterhead + column header + top inset
     const stampedHeaderDomHeight =
-      letterheadDomHeight + (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) + 4;
-    const page1ContentDomHeight = pageCanvasHeight / scaleFactor;
+      topInsetDom + letterheadDomHeight + (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) + 4;
+    const page1ContentDomHeight = pageCanvasHeight / scaleFactor - bottomInsetDom;
     const continuationContentDomHeight = Math.max(
       80,
       page1ContentDomHeight - stampedHeaderDomHeight
@@ -208,7 +271,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       rowBoundaries,
       unscaledHeight,
       page1ContentDomHeight,
-      continuationContentDomHeight
+      continuationContentDomHeight,
+      totalsBlockTop,
+      totalsBlockBottom
     );
 
     let currentY = 0;
@@ -232,6 +297,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       let drawOffsetY = 0;
 
       if (pageIndex > 0) {
+        // Top inset so continuation letterhead is not flush to the paper edge
+        drawOffsetY = Math.round(topInsetDom * scaleFactor);
+
         // Stamp seller letterhead from the top of the captured canvas (onclone made it visible)
         const lhCanvasH = Math.round(letterheadDomHeight * scaleFactor);
         if (lhCanvasH > 0) {
@@ -249,8 +317,10 @@ export async function generatePixelPerfectPDF(element, options = {}) {
           drawOffsetY += lhCanvasH;
         }
 
-        // Stamp column header under letterhead
-        if (columnTheadDomHeight > 0) {
+        // Stamp column header under letterhead only when this slice still contains item rows
+        const sliceHasItems =
+          rowBoundaries.some((r) => r.top >= currentY - 1 && r.bottom <= splitY + 1);
+        if (sliceHasItems && columnTheadDomHeight > 0) {
           const thCanvasH = Math.round(columnTheadDomHeight * scaleFactor);
           ctx.drawImage(
             canvas,
@@ -267,6 +337,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         }
 
         drawOffsetY += Math.round(2 * scaleFactor);
+      } else {
+        // Page 1 top inset
+        drawOffsetY = Math.round(Math.min(topInsetDom, 4) * scaleFactor);
       }
 
       ctx.drawImage(
@@ -305,8 +378,18 @@ export async function generatePixelPerfectPDF(element, options = {}) {
  * no row is ever sliced horizontally in half.
  * Page 1 uses page1Height; subsequent pages use continuationHeight
  * (smaller — room reserved for stamped letterhead + column thead).
+ *
+ * If a bank+totals keep-together block would be cut by the break, move the
+ * split to just before the block (after the last full item row above it).
  */
-function calculateSmartSplitPointsMulti(rowBoundaries, totalHeight, page1Height, continuationHeight) {
+function calculateSmartSplitPointsMulti(
+  rowBoundaries,
+  totalHeight,
+  page1Height,
+  continuationHeight,
+  totalsBlockTop = null,
+  totalsBlockBottom = null
+) {
   if (!rowBoundaries || rowBoundaries.length === 0) {
     const splits = [];
     let y = page1Height;
@@ -320,14 +403,14 @@ function calculateSmartSplitPointsMulti(rowBoundaries, totalHeight, page1Height,
 
   const splits = [];
   let currentStart = 0;
-  const bottomMargin = 40;
+  const bottomMargin = 48;
   let isFirstPage = true;
 
   while (true) {
     const pageHeight = isFirstPage ? page1Height : continuationHeight;
     if (currentStart + pageHeight >= totalHeight) break;
 
-    const targetBreak = currentStart + pageHeight - bottomMargin;
+    let targetBreak = currentStart + pageHeight - bottomMargin;
     let bestSplitY = null;
 
     for (let i = 0; i < rowBoundaries.length; i++) {
@@ -341,6 +424,31 @@ function calculateSmartSplitPointsMulti(rowBoundaries, totalHeight, page1Height,
 
     if (!bestSplitY || bestSplitY <= currentStart) {
       bestSplitY = targetBreak;
+    }
+
+    // Keep bank+totals (+ amount in words) intact: never split through the block.
+    // If this page would start the block but not finish it, end the page before it.
+    if (totalsBlockTop != null && totalsBlockBottom != null && currentStart < totalsBlockBottom) {
+      const blockStartsOnPage = totalsBlockTop >= currentStart && totalsBlockTop < targetBreak;
+      const blockCutByBreak =
+        bestSplitY > totalsBlockTop && bestSplitY < totalsBlockBottom;
+      const blockWontFit =
+        blockStartsOnPage && totalsBlockBottom > targetBreak;
+
+      if (blockCutByBreak || blockWontFit) {
+        let beforeBlock = null;
+        for (let i = 0; i < rowBoundaries.length; i++) {
+          const row = rowBoundaries[i];
+          if (row.bottom <= totalsBlockTop && row.bottom > currentStart) {
+            beforeBlock = row.bottom + 4;
+          }
+        }
+        if (beforeBlock != null && beforeBlock > currentStart) {
+          bestSplitY = beforeBlock;
+        } else if (totalsBlockTop > currentStart) {
+          bestSplitY = Math.max(currentStart + 1, totalsBlockTop - 2);
+        }
+      }
     }
 
     splits.push(bestSplitY);

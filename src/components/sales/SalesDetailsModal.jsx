@@ -502,13 +502,17 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         }
         .invoice-sheet {
           position: relative !important;
+          display: flex !important;
+          flex-direction: column !important;
           box-shadow: none !important;
           transform: none !important;
           width: 100% !important;
           max-width: 100% !important;
           min-height: 100% !important;
           margin: 0 !important;
-          padding-bottom: 42mm !important;
+          /* Reserve room for pinned footer so it never covers bank/totals */
+          padding-bottom: 88mm !important;
+          padding-top: 4mm !important;
           box-sizing: border-box !important;
           background: #ffffff !important;
         }
@@ -525,11 +529,19 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         }
         .invoice-continuation-header > td > div {
           margin-top: 0 !important;
-          padding-top: 0 !important;
+          padding-top: 4mm !important;
         }
+        /* Bank + totals (+ amount in words): never split across pages */
+        .invoice-totals-block {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          break-before: auto !important;
+          page-break-before: auto !important;
+        }
+        /* Terms / signatory / Made with Cenvora — pin to bottom of last page without overlapping totals */
         .invoice-page-footer {
           position: absolute !important;
-          bottom: 3mm !important;
+          bottom: 4mm !important;
           left: 0 !important;
           right: 0 !important;
           margin-top: 0 !important;

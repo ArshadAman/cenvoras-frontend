@@ -96,12 +96,16 @@ export function serializeInvoiceHtml(element) {
     /* A4 sheet; seller letterhead in thead repeats every page; pin footer chrome */
     .invoice-sheet {
       position: relative !important;
+      display: flex !important;
+      flex-direction: column !important;
       box-shadow: none !important;
       transform: none !important;
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
-      padding-bottom: 42mm !important;
+      padding-top: 4mm !important;
+      /* Reserve room for pinned footer so it never covers bank/totals */
+      padding-bottom: 88mm !important;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
     }
@@ -128,11 +132,18 @@ export function serializeInvoiceHtml(element) {
     }
     .invoice-continuation-header > td > div {
       margin-top: 0 !important;
-      padding-top: 0 !important;
+      padding-top: 4mm !important;
+    }
+    /* Bank + totals (+ amount in words): never split across pages */
+    .invoice-totals-block {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      break-before: auto !important;
+      page-break-before: auto !important;
     }
     .invoice-page-footer {
       position: absolute !important;
-      bottom: 3mm !important;
+      bottom: 4mm !important;
       left: 0 !important;
       right: 0 !important;
       margin-top: 0 !important;

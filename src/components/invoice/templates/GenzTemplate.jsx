@@ -310,9 +310,9 @@ const GenzTemplate = forwardRef(({
             </table>
         </div>
 
-        {/* Totals Section (Hidden for Delivery Challans) */}
+        {/* Totals Section (Hidden for Delivery Challans). Keep-together: never split across pages. */}
         {!isDeliveryChallan && (
-          <div className="flex justify-between pb-10 gap-8">
+          <div className="invoice-totals-block flex justify-between pb-10 gap-8">
             <div className="w-1/2 space-y-4">
               {sections.showBankDetails && hasBankDetails && (
                 <div className="rounded-2xl bg-gray-50 p-5 border border-gray-100 flex items-start gap-4">

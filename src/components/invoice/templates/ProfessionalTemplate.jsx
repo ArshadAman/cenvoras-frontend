@@ -352,9 +352,9 @@ const ProfessionalTemplate = forwardRef(({
           </tbody>
         </table>
 
-      {/* Totals & Details (Hidden for Delivery Challans) */}
+      {/* Totals & Details (Hidden for Delivery Challans). Keep-together: never split across pages. */}
       {!isDeliveryChallan && (
-        <div className="flex justify-between">
+        <div className="invoice-totals-block flex justify-between">
           <div className="w-1/2 pr-8">
             {sections.showBankDetails && hasBankDetails && (
                <div className="mb-6">

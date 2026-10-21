@@ -321,9 +321,9 @@ const LegendTemplate = forwardRef(({
             </tbody>
           </table>
 
-        {/* Footer Details (Hidden for Delivery Challans) */}
+        {/* Bank + totals (Hidden for Delivery Challans). Keep-together: never split across pages. */}
         {!isDeliveryChallan ? (
-          <div className="flex flex-1">
+          <div className="invoice-totals-block flex flex-1">
             <div className="w-3/5 p-3 border-r flex flex-col justify-between" style={{ borderColor }}>
                <div>
                  <p className="italic mb-2 text-sm font-medium text-gray-800">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
