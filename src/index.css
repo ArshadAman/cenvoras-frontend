@@ -5,11 +5,14 @@
 :root {
   --toastify-z-index: 2147483647;
 
-  /* LIGHT MODE (EXACTLY 4 CORE COLORS) */
-  --bg-primary: #F9F9F6;
-  --bg-surface: #E2D2B9;
-  --accent-secondary: #C2A68C;
-  --accent-primary: #1D62D6;
+  /* LIGHT MODE (EXACTLY 4 CORE COLORS: 60 - 30 - 7 - 3) */
+  --bg-primary: #F9F9F6;       /* 60% Canvas */
+  --bg-surface: #E2D2B9;       /* 30% Surface */
+  --accent-primary: #1D62D6;   /* 7% Action */
+  --accent-secondary: #D25B27; /* 3% Signal */
+  --signal-primary: #D25B27;
+  --signal-primary-bg: rgba(210, 91, 39, 0.12);
+  --signal-primary-border: rgba(210, 91, 39, 0.32);
 
   --text-primary: #222831;
   --text-secondary: rgba(34, 40, 49, 0.85);  /* CR 7.19:1 */
@@ -68,11 +71,14 @@
 }
 
 .dark {
-  /* DARK MODE (EXACTLY 4 CORE COLORS) */
-  --bg-primary: #161A22;
-  --bg-surface: #2C323C;
-  --accent-primary: #5494FF;
-  --accent-secondary: #5494FF;
+  /* DARK MODE (EXACTLY 4 CORE COLORS: 60 - 30 - 7 - 3) */
+  --bg-primary: #161A22;       /* 60% Canvas */
+  --bg-surface: #2C323C;       /* 30% Surface */
+  --accent-primary: #5494FF;   /* 7% Action */
+  --accent-secondary: #F49B6A; /* 3% Signal */
+  --signal-primary: #F49B6A;
+  --signal-primary-bg: rgba(244, 155, 106, 0.15);
+  --signal-primary-border: rgba(244, 155, 106, 0.35);
 
   --text-primary: #DFD0B8;
   --text-secondary: rgba(223, 208, 184, 0.85); /* CR 7.21:1 on #2C323C */
