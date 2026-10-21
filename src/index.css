@@ -44,6 +44,14 @@
   --status-danger-text: #B42332;
   --status-danger-bg: rgba(180, 35, 50, 0.12);
   --status-danger-border: rgba(180, 35, 50, 0.32);
+  /* Solid fills for destructive CTAs (white/on-fill text) — never use --status-danger as a filled button bg */
+  --status-danger-fill: #B42332;
+  --status-danger-on-fill: #FFFFFF;
+
+  --status-success-fill: #176B45;
+  --status-success-on-fill: #FFFFFF;
+  --status-warning-fill: #825500;
+  --status-warning-on-fill: #FFFFFF;
 
   --status-info: #0D47A1;
   --status-info-text: #0D47A1;
@@ -129,6 +137,14 @@
   --status-danger-text: #FF858B;
   --status-danger-bg: rgba(255, 133, 139, 0.14);
   --status-danger-border: rgba(255, 133, 139, 0.28);
+  /* Darker solid fills so on-fill (#FFF) stays WCAG AA on dark UI chrome */
+  --status-danger-fill: #E03545;
+  --status-danger-on-fill: #FFFFFF;
+
+  --status-success-fill: #1F8A56;
+  --status-success-on-fill: #FFFFFF;
+  --status-warning-fill: #C99200;
+  --status-warning-on-fill: #171C26;
 
   --status-info: #90CAF9;
   --status-info-text: #90CAF9;
@@ -540,13 +556,13 @@
   :root:not(.dark) h5.text-white,
   :root:not(.dark) h6.text-white,
   :root:not(.dark) p.text-white,
-  :root:not(.dark) span.text-white:not([class*="bg-"]):not(.btn-primary),
-  :root:not(.dark) div.text-white:not([class*="bg-"]):not(.btn-primary),
+  :root:not(.dark) span.text-white:not([class*="bg-"]):not(.btn-primary):not(.btn-destructive),
+  :root:not(.dark) div.text-white:not([class*="bg-"]):not(.btn-primary):not(.btn-destructive),
   :root:not(.dark) td.text-white {
     color: var(--text-primary) !important;
   }
 
-  :root:not(.dark) .text-white:not([class*="bg-"]):not(.btn-primary):not([class*="bg-[var(--status"]):not([class*="bg-[var(--accent"]) {
+  :root:not(.dark) .text-white:not([class*="bg-"]):not(.btn-primary):not(.btn-destructive):not([class*="bg-[var(--status"]):not([class*="bg-[var(--accent"]) {
     color: var(--text-primary) !important;
   }
 
@@ -566,9 +582,9 @@
   }
 
   /* High-Contrast Dark Mode Guardrails against stark black/dark-gray text */
-  .dark .text-black:not([class*="bg-"]):not(.btn-primary),
-  .dark .text-gray-900:not([class*="bg-"]):not(.btn-primary),
-  .dark .text-slate-900:not([class*="bg-"]):not(.btn-primary) {
+  .dark .text-black:not([class*="bg-"]):not(.btn-primary):not(.btn-destructive),
+  .dark .text-gray-900:not([class*="bg-"]):not(.btn-primary):not(.btn-destructive),
+  .dark .text-slate-900:not([class*="bg-"]):not(.btn-primary):not(.btn-destructive) {
     color: var(--text-primary) !important;
   }
 
@@ -797,22 +813,12 @@
   .invoice-sheet .border-slate-300, [data-bill-template] .border-slate-300, .bill-template .border-slate-300 { border-color: #cbd5e1 !important; }
   .invoice-sheet .border-slate-400, [data-bill-template] .border-slate-400, .bill-template .border-slate-400 { border-color: #94a3b8 !important; }
 
-  /* Universal Status Background Interpolation Fix */
-  [class*="bg-[var(--status-danger)"] {
-    background-color: var(--status-danger-bg) !important;
-  }
-
-  [class*="bg-[var(--status-warning)"] {
-    background-color: var(--status-warning-bg) !important;
-  }
-
-  [class*="bg-[var(--status-success)"] {
-    background-color: var(--status-success-bg) !important;
-  }
-
-  [class*="bg-[var(--status-info)"] {
-    background-color: var(--status-info-bg) !important;
-  }
+  /*
+   * DO NOT remap bg-[var(--status-*)] → translucent *-bg.
+   * That forced white text on muddy washes (e.g. Delete Selected) and broke contrast repeatedly.
+   * Soft tints must use --status-*-bg or explicit /opacity utilities.
+   * Solid CTAs must use --status-*-fill + --status-*-on-fill (see .btn-destructive).
+   */
 
   .Toastify__toast-container,
   .Toastify__toast-container--top-right,
@@ -965,17 +971,16 @@
   }
 
   .btn-destructive {
-    background-color: var(--bg-primary);
-    border: 2px solid var(--text-primary);
-    color: var(--text-primary);
+    background-color: var(--status-danger-fill);
+    border: 1px solid var(--status-danger-fill);
+    color: var(--status-danger-on-fill);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     padding: 10px 20px;
     border-radius: 12px;
     transition: all 0.15s ease;
@@ -984,11 +989,17 @@
   }
 
   .btn-destructive:hover {
-    background-color: var(--bg-surface);
+    filter: brightness(1.08);
   }
 
   .btn-destructive:active {
     transform: scale(0.98);
+  }
+
+  .btn-destructive:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: none;
   }
 
   /* Status-Semantic Button Variants — Tokenized */

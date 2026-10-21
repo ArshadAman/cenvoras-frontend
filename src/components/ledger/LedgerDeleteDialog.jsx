@@ -158,7 +158,7 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
             type="button"
             onClick={handleDelete}
             disabled={deleteEntryMutation.isPending || isDebitEntry}
-            className="px-4 py-2 bg-[var(--status-danger)] text-white hover:opacity-90 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="btn-destructive !text-sm !py-2 !px-4 !normal-case !tracking-normal !font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {deleteEntryMutation.isPending ? (
               <span className="flex items-center gap-2">

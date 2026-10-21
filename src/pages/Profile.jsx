@@ -1751,7 +1751,7 @@ const Profile = ({ onLogout }) => {
                                         <button
                                           type="button"
                                           onClick={handleRemoveQrForAccount}
-                                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-1 hover:bg-red-500 shadow-md transition-colors"
+                                          className="absolute -top-1.5 -right-1.5 bg-[var(--status-danger-fill)] text-[var(--status-danger-on-fill)] rounded-full p-1 hover:brightness-110 shadow-md transition-colors"
                                           title="Remove QR Code"
                                         >
                                           <XMarkIcon className="w-3.5 h-3.5" />

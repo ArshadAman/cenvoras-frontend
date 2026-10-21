@@ -527,7 +527,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="btn-destructive ml-4 text-xs py-1 px-3"
+          className="btn-destructive ml-4 !text-xs !py-1 !px-3 !normal-case !tracking-normal !font-semibold"
         >
           Clear Auth & Re-login
         </button>
@@ -705,7 +705,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <div className="flex gap-2">
               <button
                 onClick={handleBulkDelete}
-                className="btn-destructive text-xs py-1 px-3"
+                className="btn-destructive !text-xs !py-1 !px-3 !normal-case !tracking-normal !font-semibold"
               >
                 Delete Selected
               </button>

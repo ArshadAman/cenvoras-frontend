@@ -55,7 +55,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="ml-4 px-2 py-1 bg-[var(--status-danger)] text-white rounded text-xs"
+          className="btn-destructive ml-4 !text-xs !py-1 !px-2 !normal-case !tracking-normal !font-semibold"
         >
           Clear Auth & Re-login
         </button>
@@ -328,7 +328,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               </span>
               <button
                 onClick={handleBulkDelete}
-                className="btn-destructive text-xs py-1 px-3"
+                className="btn-destructive !text-xs !py-1 !px-3 !normal-case !tracking-normal !font-semibold"
               >
                 Delete
               </button>
