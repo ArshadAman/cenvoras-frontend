@@ -30,11 +30,11 @@ export function ThemeProvider({ children }) {
     if (newTheme === 'dark') {
       root.classList.add('dark');
       root.style.colorScheme = 'dark';
-      root.style.backgroundColor = '#161A22';
+      root.style.backgroundColor = '#171C26';
     } else {
       root.classList.remove('dark');
       root.style.colorScheme = 'light';
-      root.style.backgroundColor = '#F9F9F6';
+      root.style.backgroundColor = '#F2F5F9';
     }
 
     if (animate) {
