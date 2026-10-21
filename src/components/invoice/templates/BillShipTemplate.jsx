@@ -89,6 +89,7 @@ const BillShipTemplate = forwardRef(({
       }}
     >
       <InvoicePrintShell
+        theme="billship"
         headerProps={{
           companyName,
           companyAddress,
@@ -99,6 +100,9 @@ const BillShipTemplate = forwardRef(({
           companyGEM: businessInfo.gem_id || '',
           companyDL: businessInfo.dl_number || '',
           companyNameColor: colors.accent || colors.primary || '#d11f1f',
+          primaryColor: colors.accent || colors.primary || '#d11f1f',
+          companyLogo: template.branding?.logo || '',
+          showLogo: Boolean(sections.showLogo && template.branding?.logo),
         }}
       >
       {/* Header Strip */}
@@ -320,17 +324,6 @@ const BillShipTemplate = forwardRef(({
                 <p className="font-medium text-gray-600 mb-1">Total items / qty : {items.length} / {items.reduce((acc, curr) => acc + (parseFloat(curr.quantity)||0), 0)}</p>
                 <p className="text-sm font-medium text-gray-800">Total amount (in words): <em>INR {amountInWords(finalTotal)}</em></p>
              </div>
-
-             {sections.showTerms && (
-               <div className="mt-6">
-                  <p className="font-bold text-xs text-gray-900 tracking-wider">Notes:</p>
-                  <p className="text-xs text-gray-700 mb-4">{content.footerNote}</p>
-                  <p className="font-bold text-xs text-gray-900 tracking-wider">Terms and Conditions:</p>
-                  <ol className="text-xs text-gray-600 list-decimal pl-4 space-y-1 mt-1">
-                    {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                  </ol>
-               </div>
-             )}
           </div>
 
           <div className="w-1/2 pl-6 flex flex-col justify-between">
@@ -371,42 +364,46 @@ const BillShipTemplate = forwardRef(({
                </div>
              </div>
 
-             <div className="text-right mt-16">
-                <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
-                <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
-                  {content.signatureLabel || 'Authorized Signatory'}
-                </div>
-             </div>
           </div>
         </div>
       )}
 
-      {/* Bottom Anchored Footer */}
-      <div className="mt-auto">
-        {isDeliveryChallan && (
-          <div className="flex justify-end pt-8 mb-4">
-            <div className="text-right">
-              <p className="text-xs font-bold text-gray-600 mb-8">For {companyName}</p>
-              <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
-                {content.signatureLabel || 'Received By / Signatory'}
-              </div>
-            </div>
-          </div>
-        )}
-        <div className="invoice-page-footer">
-          <div className="mt-4 text-center text-xs text-gray-500 font-medium">
-            {isDeliveryChallan
-              ? 'This is a computer generated delivery challan and does not require a signature.'
-              : 'This is a computer generated digital invoice and does not require a signature.'}
-          </div>
-          
-          {showWatermarkFooter && (
-            <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
-              Made with Cenvora: Built for Modern Businesses<br />
-              <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
+      <div className="mt-auto invoice-page-footer">
+        <div className="flex justify-between gap-6 pt-6 border-t border-gray-200">
+          {sections.showTerms && (
+            <div className="flex-1 pr-4">
+              {content.footerNote && (
+                <>
+                  <p className="font-bold text-xs text-gray-900 tracking-wider">Notes:</p>
+                  <p className="text-xs text-gray-700 mb-4">{content.footerNote}</p>
+                </>
+              )}
+              <p className="font-bold text-xs text-gray-900 tracking-wider">Terms and Conditions:</p>
+              <ol className="text-xs text-gray-600 list-decimal pl-4 space-y-1 mt-1">
+                {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
+              </ol>
             </div>
           )}
+          <div className="text-right ml-auto">
+            <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
+            <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+            </div>
+          </div>
         </div>
+        <div className="mt-4 text-center text-xs text-gray-500 font-medium">
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
+        </div>
+        
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+          </div>
+        )}
       </div>
       </InvoicePrintShell>
     </div>

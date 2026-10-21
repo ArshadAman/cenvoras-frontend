@@ -478,29 +478,63 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         thead {
           display: table-header-group !important;
         }
-        tr {
+        thead tr {
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+        }
+        tr:not(.invoice-print-shell-row) {
           break-inside: avoid !important;
           page-break-inside: avoid !important;
+        }
+        .invoice-print-shell,
+        .invoice-print-shell > tbody,
+        .invoice-print-shell-row,
+        .invoice-print-shell-row > td {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
         .print-hidden, [data-no-print], button {
           display: none !important;
         }
         .invoice-sheet {
+          position: relative !important;
           box-shadow: none !important;
           transform: none !important;
           width: 100% !important;
           max-width: 100% !important;
           min-height: 100% !important;
           margin: 0 !important;
+          padding-bottom: 42mm !important;
           box-sizing: border-box !important;
+          background: #ffffff !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
           flex: 0 0 auto !important;
           flex-grow: 0 !important;
         }
-        .invoice-continuation-header {
+        .invoice-first-page-header {
           display: none !important;
+        }
+        .invoice-continuation-header {
+          display: table-row !important;
+        }
+        .invoice-continuation-header > td > div {
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+        }
+        .invoice-page-footer {
+          position: absolute !important;
+          bottom: 3mm !important;
+          left: 0 !important;
+          right: 0 !important;
+          margin-top: 0 !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
         }
         [data-print-target] {
           width: 100% !important;

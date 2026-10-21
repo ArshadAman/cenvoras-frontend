@@ -93,22 +93,51 @@ export function serializeInvoiceHtml(element) {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* Keep each template's own preview layout. Only stop preview scale and dark empty fill. */
+    /* A4 sheet; seller letterhead in thead repeats every page; pin footer chrome */
     .invoice-sheet {
+      position: relative !important;
       box-shadow: none !important;
       transform: none !important;
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
+      padding-bottom: 42mm !important;
       box-sizing: border-box !important;
+      background-color: #ffffff !important;
     }
     .invoice-sheet-body,
     .invoice-sheet .flex-1 {
       flex: 0 0 auto !important;
       flex-grow: 0 !important;
     }
-    .invoice-continuation-header {
+    thead {
+      display: table-header-group !important;
+    }
+    .invoice-print-shell,
+    .invoice-print-shell > tbody,
+    .invoice-print-shell-row,
+    .invoice-print-shell-row > td {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+    .invoice-first-page-header {
       display: none !important;
+    }
+    .invoice-continuation-header {
+      display: table-row !important;
+    }
+    .invoice-continuation-header > td > div {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+    .invoice-page-footer {
+      position: absolute !important;
+      bottom: 3mm !important;
+      left: 0 !important;
+      right: 0 !important;
+      margin-top: 0 !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
     }
     .font-mono, [class*="font-mono"], code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;

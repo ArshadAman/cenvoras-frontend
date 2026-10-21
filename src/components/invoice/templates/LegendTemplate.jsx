@@ -88,6 +88,7 @@ const LegendTemplate = forwardRef(({
       }}
     >
       <InvoicePrintShell
+        theme="legend"
         headerProps={{
           companyName,
           companyAddress,
@@ -98,6 +99,9 @@ const LegendTemplate = forwardRef(({
           companyGEM: businessInfo.gem_id || '',
           companyDL: businessInfo.dl_number || '',
           companyNameColor: colors.primary || '#d11f1f',
+          primaryColor: colors.primary || '#d11f1f',
+          companyLogo: template.branding?.logo || '',
+          showLogo: Boolean(sections.showLogo && template.branding?.logo),
         }}
       >
       <div style={{ border: `1px solid ${borderColor}` }} className="invoice-sheet-body flex flex-col">
@@ -351,20 +355,10 @@ const LegendTemplate = forwardRef(({
                  )}
                </div>
                
-               {sections.showTerms && (
-                 <div className="mt-4">
-                   <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Notes:</p>
-                   <p className="mb-2 text-xs">{content.footerNote}</p>
-                   <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Terms & Conditions:</p>
-                   <ul className="list-decimal pl-4 space-y-0.5 text-xs">
-                     {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                   </ul>
-                 </div>
-               )}
             </div>
             
-            {/* Totals Block */}
-            <div className="w-2/5 flex flex-col justify-between">
+            {/* Totals Block — stays under table */}
+            <div className="w-2/5 flex flex-col">
                <div className="p-3 text-xs space-y-1">
                  <div className="flex justify-between items-center py-0.5">
                    <span className="font-semibold text-gray-700 whitespace-nowrap">Taxable Amount</span>
@@ -398,36 +392,36 @@ const LegendTemplate = forwardRef(({
                    <span className="text-sm font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                  </div>
                </div>
-               
-               <div className="p-3 text-right text-xs">
-                  <p className="font-bold mb-10">For {companyName}</p>
-                  <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Authorized Signatory'}</p>
-               </div>
             </div>
           </div>
-        ) : (
-          <div className="flex flex-1 justify-between p-4">
-            <div className="w-1/2">
-              {sections.showTerms && (
-                <div>
-                  <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Terms & Conditions:</p>
-                  <ul className="list-decimal pl-4 space-y-0.5 text-xs text-gray-600">
-                    {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-            <div className="w-1/2 flex flex-col justify-end text-right text-xs p-3">
-              <p className="font-bold mb-10">For {companyName}</p>
-              <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Received By / Signatory'}</p>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Bottom Anchored Footer */}
+      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
       <div className="mt-auto invoice-page-footer">
-        <div className="mt-4 text-center text-xs text-gray-500 font-medium w-full">
+        <div className="flex justify-between gap-6 p-4">
+          {sections.showTerms && (
+            <div className="flex-1">
+              {content.footerNote && (
+                <>
+                  <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Notes:</p>
+                  <p className="mb-2 text-xs">{content.footerNote}</p>
+                </>
+              )}
+              <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Terms & Conditions:</p>
+              <ul className="list-decimal pl-4 space-y-0.5 text-xs text-gray-600">
+                {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
+              </ul>
+            </div>
+          )}
+          <div className="text-right text-xs p-3 ml-auto">
+            <p className="font-bold mb-10">For {companyName}</p>
+            <p className="border-t border-gray-400 inline-block pt-1">
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+            </p>
+          </div>
+        </div>
+        <div className="mt-2 text-center text-xs text-gray-500 font-medium w-full">
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'
             : 'This is a computer generated digital invoice and does not require a signature.'}

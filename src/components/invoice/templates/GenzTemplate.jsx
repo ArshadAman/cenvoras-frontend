@@ -92,6 +92,7 @@ const GenzTemplate = forwardRef(({
       }}
     >
       <InvoicePrintShell
+        theme="genz"
         headerProps={{
           companyName,
           companyAddress,
@@ -102,10 +103,13 @@ const GenzTemplate = forwardRef(({
           companyGEM: businessInfo.gem_id || '',
           companyDL: businessInfo.dl_number || businessInfo.drug_license_number || '',
           companyNameColor: primaryColor || '#d11f1f',
+          primaryColor: primaryColor || '#d11f1f',
+          companyLogo: template.branding?.logo || '',
+          showLogo: Boolean(sections.showLogo && template.branding?.logo),
         }}
       >
-      {/* Massive Header Strip — screen/preview; print uses InvoicePrintShell thead */}
-      <div style={{ backgroundColor: primaryColor }} className="px-8 py-6 flex justify-between items-center text-white invoice-first-page-header">
+      {/* Seller chrome — screen/preview; print swaps to InvoicePrintShell thead letterhead */}
+      <div style={{ backgroundColor: primaryColor }} className="px-8 py-6 text-white invoice-first-page-header">
         <div className="flex items-center gap-4">
           {sections.showLogo && template.branding?.logo && (
              <img src={template.branding.logo} alt="Logo" className="h-12 bg-white p-1 rounded-xl" />
@@ -121,7 +125,12 @@ const GenzTemplate = forwardRef(({
             {companyAddress && <p className="text-xs text-white/80 mt-1 whitespace-pre-line leading-relaxed">{companyAddress}</p>}
           </div>
         </div>
-        <h2 className="text-3xl font-bold opacity-90">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
+      </div>
+      {/* Doc title stays on page 1 when seller chrome is swapped for print letterhead */}
+      <div className="px-8 pt-4 pb-0 flex justify-end">
+        <h2 className="text-3xl font-bold" style={{ color: primaryColor }}>
+          {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}
+        </h2>
       </div>
 
       <div className="px-8 py-4 invoice-sheet-body flex flex-col">
@@ -323,14 +332,6 @@ const GenzTemplate = forwardRef(({
                   )}
                 </div>
               )}
-              {sections.showTerms && content.termsAndConditions?.length > 0 && (
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-2">Terms & Conditions</h3>
-                  <ul className="text-gray-500 text-xs space-y-1 list-disc pl-4">
-                    {content.termsAndConditions.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                </div>
-              )}
             </div>
             
             <div className="w-1/2">
@@ -380,30 +381,36 @@ const GenzTemplate = forwardRef(({
           </div>
         )}
         
-        {/* Bottom Anchored Footer */}
-        <div className="mt-auto">
-          <div className="flex justify-end pb-8">
-            <div className="text-right">
-              <p className="text-xs font-bold text-gray-600 mb-8">For {businessInfo.business_name || businessInfo.company_name || 'Company'}</p>
+        {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
+        <div className="mt-auto invoice-page-footer">
+          <div className="flex justify-between gap-8 pb-4">
+            {sections.showTerms && content.termsAndConditions?.length > 0 && (
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-2">Terms & Conditions</h3>
+                <ul className="text-gray-500 text-xs space-y-1 list-disc pl-4">
+                  {content.termsAndConditions.map((t, i) => <li key={i}>{t}</li>)}
+                </ul>
+              </div>
+            )}
+            <div className="text-right ml-auto">
+              <p className="text-xs font-bold text-gray-600 mb-8">For {companyName}</p>
               <div className="border-t border-gray-400 inline-block pt-1 text-xs px-6">
                 {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
               </div>
             </div>
           </div>
-          <div className="invoice-page-footer">
-            <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-400 font-medium tracking-wide w-full">
-              {isDeliveryChallan
-                ? 'This is a computer generated delivery challan and does not require a signature.'
-                : 'This is a computer generated digital invoice and does not require a signature.'}
-            </div>
-            
-            {showWatermarkFooter && (
-              <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
-                Made with Cenvora: Built for Modern Businesses<br />
-                <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
-              </div>
-            )}
+          <div className="mt-4 pt-4 border-t border-gray-100 text-center text-xs text-gray-400 font-medium tracking-wide w-full">
+            {isDeliveryChallan
+              ? 'This is a computer generated delivery challan and does not require a signature.'
+              : 'This is a computer generated digital invoice and does not require a signature.'}
           </div>
+          
+          {showWatermarkFooter && (
+            <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
+              Made with Cenvora: Built for Modern Businesses<br />
+              <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+            </div>
+          )}
         </div>
       </div>
       </InvoicePrintShell>
