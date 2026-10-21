@@ -991,6 +991,57 @@
     transform: scale(0.98);
   }
 
+  /* Status-Semantic Button Variants — Tokenized */
+  .btn-warning {
+    background-color: var(--status-warning-bg);
+    border: 1px solid var(--status-warning-border);
+    color: var(--status-warning);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 12px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .btn-warning:hover {
+    filter: brightness(1.08);
+  }
+
+  .btn-warning:active {
+    transform: scale(0.98);
+  }
+
+  .btn-info {
+    background-color: var(--action-primary-bg);
+    border: 1px solid var(--action-primary-border);
+    color: var(--accent-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 12px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .btn-info:hover {
+    filter: brightness(1.06);
+  }
+
+  .btn-info:active {
+    transform: scale(0.98);
+  }
+
   /* Semantic Status Badge Components — Strictly Mode-Specific */
   .badge-success {
     background-color: var(--status-success-bg);

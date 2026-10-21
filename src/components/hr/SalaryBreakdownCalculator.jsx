@@ -384,7 +384,7 @@ export default function SalaryBreakdownCalculator({
               </label>
               <div className="relative rounded-xl shadow-sm">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                  <span className="text-gray-400 sm:text-sm">₹</span>
+                  <span className="text-[var(--text-muted)] sm:text-sm">₹</span>
                 </div>
                 <input
                   type="number"
@@ -404,7 +404,7 @@ export default function SalaryBreakdownCalculator({
               </label>
               <div className="relative rounded-xl shadow-sm">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                  <span className="text-gray-400 sm:text-sm">₹</span>
+                  <span className="text-[var(--text-muted)] sm:text-sm">₹</span>
                 </div>
                 <input
                   type="number"
@@ -428,8 +428,8 @@ export default function SalaryBreakdownCalculator({
                   onClick={() => setTaxRegime('new')}
                   className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     taxRegime === 'new'
-                      ? 'bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 shadow-sm'
-                      : 'text-gray-400 hover:text-white'
+                      ? 'bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] shadow-sm'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   New (Default)
@@ -442,8 +442,8 @@ export default function SalaryBreakdownCalculator({
                   }}
                   className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     taxRegime === 'old'
-                      ? 'bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 shadow-sm'
-                      : 'text-gray-400 hover:text-white'
+                      ? 'bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] shadow-sm'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   Old Regime
@@ -457,8 +457,8 @@ export default function SalaryBreakdownCalculator({
             {/* Basic Salary Slider & Compliance */}
             <div>
               <div className="flex justify-between items-center text-xs mb-1.5">
-                <span className="font-medium text-gray-300">Basic Salary</span>
-                <span className="font-semibold text-indigo-400">{basicPct}% of CTC</span>
+                <span className="font-medium text-[var(--text-secondary)]">Basic Salary</span>
+                <span className="font-semibold text-[var(--accent-primary)]">{basicPct}% of CTC</span>
               </div>
               <input
                 type="range"
@@ -467,21 +467,21 @@ export default function SalaryBreakdownCalculator({
                 step="5"
                 value={basicPct}
                 onChange={(e) => setBasicPct(Number(e.target.value))}
-                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
               />
               <div className="flex items-center justify-between text-xs mt-1">
                 <span className="text-gray-400">
                   ₹{Math.round((monthlyCtc * basicPct) / 100).toLocaleString('en-IN')}/mo
                 </span>
                 {basicPct >= 50 ? (
-                  <span className="text-emerald-400 font-medium">✓ Wage Code Compliant (≥50%)</span>
+                  <span className="text-[var(--status-success)] font-medium">✓ Wage Code Compliant (≥50%)</span>
                 ) : (
-                  <span className="text-amber-400 font-medium">⚠ Below 50% Wage Code Floor</span>
+                  <span className="text-[var(--status-warning)] font-medium">⚠ Below 50% Wage Code Floor</span>
                 )}
               </div>
               {/* Quick Basic Presets */}
               <div className="flex items-center gap-1 mt-1.5 text-xs">
-                <span className="text-gray-500">Quick:</span>
+                <span className="text-[var(--text-muted)]">Quick:</span>
                 {[50, 60, 70, 80].map(pct => (
                   <button
                     key={pct}
@@ -489,8 +489,8 @@ export default function SalaryBreakdownCalculator({
                     onClick={() => setBasicPct(pct)}
                     className={`px-1.5 py-0.5 rounded border transition-colors ${
                       basicPct === pct
-                        ? 'border-indigo-500/40 bg-indigo-500/20 text-indigo-300'
-                        : 'border-white/10 text-gray-400 hover:text-white'
+                        ? 'border-[var(--action-primary-border)] bg-[var(--action-primary-bg)] text-[var(--accent-primary)]'
+                        : 'border-white/10 text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {pct}%
@@ -502,8 +502,8 @@ export default function SalaryBreakdownCalculator({
             {/* HRA (% of Basic) */}
             <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-medium text-gray-300">HRA (% of Basic)</span>
-                <span className="font-semibold text-indigo-400">
+                <span className="font-medium text-[var(--text-secondary)]">HRA (% of Basic)</span>
+                <span className="font-semibold text-[var(--accent-primary)]">
                   {hraPctOfBasic}% {hraPctOfBasic === 0 ? '(No HRA)' : hraPctOfBasic === 50 ? '(Metro)' : '(Non-Metro)'}
                 </span>
               </div>
@@ -514,9 +514,9 @@ export default function SalaryBreakdownCalculator({
                 step="5"
                 value={hraPctOfBasic}
                 onChange={(e) => setHraPctOfBasic(Number(e.target.value))}
-                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
               />
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-muted)]">
                 <span className="font-semibold text-[var(--text-primary)]">₹{Math.round(((monthlyCtc * basicPct) / 100) * (hraPctOfBasic / 100)).toLocaleString('en-IN')}/mo</span>
                 <div className="flex items-center gap-1.5">
                   <button
@@ -578,12 +578,12 @@ export default function SalaryBreakdownCalculator({
               <button
                 type="button"
                 onClick={() => setShowAllowancesSection(!showAllowancesSection)}
-                className="flex items-center gap-2 text-xs font-semibold text-indigo-300 hover:text-indigo-200 transition"
+                className="flex items-center gap-2 text-xs font-semibold text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] transition"
               >
                 <PlusIcon className={`w-3.5 h-3.5 transition-transform ${showAllowancesSection ? 'rotate-45' : ''}`} />
                 {showAllowancesSection ? 'Hide Fixed Allowances Configuration' : 'Configure Additional Fixed Allowances (Conveyance, Medical, Custom)'}
               </button>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[var(--text-muted)]">
                 Special Allowance absorbs remainder to 100% CTC
               </span>
             </div>
@@ -621,7 +621,7 @@ export default function SalaryBreakdownCalculator({
                 {/* Custom Allowances List */}
                 {customAllowances.length > 0 && (
                   <div className="space-y-2 pt-2">
-                    <span className="text-xs font-semibold text-gray-300 block">Custom Recurring Allowances:</span>
+                    <span className="text-xs font-semibold text-[var(--text-secondary)] block">Custom Recurring Allowances:</span>
                     {customAllowances.map((ca) => (
                       <div key={ca.id} className="flex items-center gap-3">
                         <input
@@ -658,7 +658,7 @@ export default function SalaryBreakdownCalculator({
                 <button
                   type="button"
                   onClick={addCustomAllowance}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 text-xs font-medium transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--action-primary-bg)] border border-[var(--action-primary-border)] text-[var(--accent-primary)] hover:brightness-110 text-xs font-medium transition"
                 >
                   <PlusIcon className="w-3.5 h-3.5" /> Add Custom Allowance
                 </button>
@@ -672,12 +672,12 @@ export default function SalaryBreakdownCalculator({
               <button
                 type="button"
                 onClick={() => setShowAdHocSection(!showAdHocSection)}
-                className="flex items-center gap-2 text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition"
+                className="flex items-center gap-2 text-xs font-semibold text-[var(--status-success)] hover:brightness-110 transition"
               >
                 <SparklesIcon className="w-3.5 h-3.5" />
                 {showAdHocSection ? 'Hide Ad-hoc / Variable Additions' : 'Add Ad-hoc / Variable Payout (Spot Bonus, Retention Bonus, Overtime)'}
               </button>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[var(--text-muted)]">
                 Injected into monthly gross without modifying contractual base CTC
               </span>
             </div>
@@ -732,16 +732,16 @@ export default function SalaryBreakdownCalculator({
 
           {/* Optional Old Regime Deductions Section */}
           {taxRegime === 'old' && (
-            <div className="mt-3 p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-3">
+            <div className="mt-3 p-3.5 bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-xl space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300">
-                  <ShieldCheckIcon className="w-4 h-4 text-amber-400" />
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--status-warning)]">
+                  <ShieldCheckIcon className="w-4 h-4 text-[var(--status-warning)]" />
                   Old Regime Deductions & Exemptions (Annual ₹)
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowOldRegimeFields(!showOldRegimeFields)}
-                  className="text-xs text-amber-400 underline hover:text-amber-300"
+                  className="text-xs text-[var(--status-warning)] underline hover:opacity-80"
                 >
                   {showOldRegimeFields ? 'Hide' : 'Configure'}
                 </button>
@@ -750,7 +750,7 @@ export default function SalaryBreakdownCalculator({
               {showOldRegimeFields && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="block text-xs font-medium text-amber-200/90 mb-1">
+                    <label className="block text-xs font-medium text-[var(--status-warning)] mb-1 opacity-80">
                       Section 80C (Max ₹1.5L)
                     </label>
                     <input
@@ -801,14 +801,14 @@ export default function SalaryBreakdownCalculator({
           {/* Top Level Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Take-Home Net Pay */}
-            <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white rounded-2xl p-4 shadow-xl border border-emerald-400/20 relative overflow-hidden">
-              <div className="text-xs uppercase font-semibold tracking-wider text-emerald-100">
+            <div className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-2xl p-4 shadow-xl relative overflow-hidden">
+              <div className="text-xs uppercase font-semibold tracking-wider text-[var(--status-success)] opacity-80">
                 Monthly Net Take-Home
               </div>
-              <div className="text-2xl font-bold mt-1 tracking-tight text-white">
+              <div className="text-2xl font-bold mt-1 tracking-tight text-[var(--status-success)]">
                 ₹{formatInr(monthlyNet)}
               </div>
-              <div className="text-xs text-emerald-100/90 mt-1 font-medium">
+              <div className="text-xs text-[var(--status-success)] mt-1 font-medium opacity-80">
                 Annual: ₹{formatInr(annualNet, 0)}
               </div>
             </div>
@@ -858,17 +858,17 @@ export default function SalaryBreakdownCalculator({
           {adHocTotal > 0 && (
             <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <SparklesIcon className="w-4 h-4 text-emerald-400" />
-                <span className="text-gray-300">
-                  Contracted Fixed CTC: <strong className="text-white">₹{formatInr(breakdown.contracted_monthly_ctc || monthlyCtc)}/mo</strong>
+                <SparklesIcon className="w-4 h-4 text-[var(--status-success)]" />
+                <span className="text-[var(--text-secondary)]">
+                  Contracted Fixed CTC: <strong className="text-[var(--text-primary)]">₹{formatInr(breakdown.contracted_monthly_ctc || monthlyCtc)}/mo</strong>
                 </span>
-                <span className="text-gray-500">•</span>
-                <span className="text-emerald-300">
-                  Ad-hoc Variable Additions: <strong className="text-emerald-400">+₹{formatInr(adHocTotal)}</strong>
+                <span className="text-[var(--text-muted)]">•</span>
+                <span className="text-[var(--status-success)]">
+                  Ad-hoc Variable Additions: <strong className="text-[var(--status-success)]">+₹{formatInr(adHocTotal)}</strong>
                 </span>
               </div>
-              <div className="text-gray-400">
-                Actual Payout Cost: <strong className="text-white">₹{formatInr(Number(breakdown.contracted_monthly_ctc || monthlyCtc) + adHocTotal)}</strong>
+              <div className="text-[var(--text-muted)]">
+                Actual Payout Cost: <strong className="text-[var(--text-primary)]">₹{formatInr(Number(breakdown.contracted_monthly_ctc || monthlyCtc) + adHocTotal)}</strong>
               </div>
             </div>
           )}
@@ -876,18 +876,18 @@ export default function SalaryBreakdownCalculator({
           {/* Dynamic TDS Banner Explanation */}
           <div className={`p-4 rounded-2xl border backdrop-blur-xl flex items-start gap-3 ${
             rebateApplied
-              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+              ? 'bg-[var(--status-success-bg)] border-[var(--status-success-border)] text-[var(--status-success)]'
               : monthlyTds > 0
-              ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-              : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
+              ? 'bg-[var(--status-warning-bg)] border-[var(--status-warning-border)] text-[var(--status-warning)]'
+              : 'bg-[var(--action-primary-bg)] border-[var(--action-primary-border)] text-[var(--accent-primary)]'
           }`}>
             <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
-              <div className="font-semibold text-sm text-white">
+              <div className="font-semibold text-sm text-[var(--text-primary)]">
                 TDS Projection (Section 192): {taxRegime === 'new' ? 'New Tax Regime (Sec 115BAC)' : 'Old Tax Regime'}
               </div>
-              <div className="text-gray-300">{tdsReason}</div>
-              <div className="text-xs text-gray-400 pt-0.5">
+              <div className="text-[var(--text-secondary)]">{tdsReason}</div>
+              <div className="text-xs text-[var(--text-muted)] pt-0.5">
                 Standard Deduction: ₹{formatInr(stdDeduction, 0)} | Taxable Income: ₹{formatInr(taxableIncome, 0)} | Net Annual Tax: ₹{formatInr(annualNetTax, 0)} (incl. 4% Cess)
               </div>
             </div>

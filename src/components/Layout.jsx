@@ -539,7 +539,7 @@ export default function Layout({ children, onLogout }) {
                               <Icon className="w-5 h-5 shrink-0 text-gray-500" />
                               <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
                                 <span>{item.label}</span>
-                                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] uppercase">{lockLabel}</span>
                               </div>
                             </button>
                           );
@@ -593,7 +593,7 @@ export default function Layout({ children, onLogout }) {
                           >
                             <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-sm flex-1 truncate">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase shrink-0">{lockLabel}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] uppercase shrink-0">{lockLabel}</span>
                           </button>
                         );
                       }
@@ -838,7 +838,7 @@ export default function Layout({ children, onLogout }) {
                           >
                             <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-sm flex-1">{item.label}</span>
-                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] uppercase">{lockLabel}</span>
                           </button>
                         );
                       }
@@ -972,7 +972,7 @@ export default function Layout({ children, onLogout }) {
 
           {showFreeLock && !isAllowedFreeRoute(location.pathname) ? (
             <div className="p-6 md:p-10">
-              <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+              <div className="max-w-2xl rounded-2xl border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-6">
                 <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">This section is locked on Free</h2>
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
                   Your Free plan can access only Sales Invoices, Customers, and Profile. Upgrade to unlock dashboard, inventory, reports, integrations, and advanced features.
