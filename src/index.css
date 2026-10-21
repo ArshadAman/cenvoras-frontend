@@ -46,6 +46,25 @@
   --status-info-text: #275A75;
   --status-info-bg: rgba(39, 90, 117, 0.12);
   --status-info-border: rgba(39, 90, 117, 0.32);
+
+  /* HARDWARE-SAFE ACTION & METRIC TOKENS (LIGHT MODE) */
+  --action-primary: #1D62D6;
+  --action-primary-hover: #174EB0;
+  --action-primary-text: #FFFFFF;
+  --action-primary-bg: rgba(29, 98, 214, 0.12);
+  --action-primary-border: rgba(29, 98, 214, 0.30);
+
+  --info-secondary: #4A7DE6;
+  --info-secondary-bg: rgba(74, 125, 230, 0.12);
+  --info-secondary-border: rgba(74, 125, 230, 0.30);
+
+  --metric-cyan: #47C2EC;
+  --metric-cyan-bg: rgba(71, 194, 236, 0.14);
+  --metric-cyan-border: rgba(71, 194, 236, 0.35);
+
+  --badge-highlight: #E4EB78;
+  --badge-highlight-text: #222831;
+  --badge-highlight-border: rgba(140, 150, 40, 0.40);
 }
 
 .dark {

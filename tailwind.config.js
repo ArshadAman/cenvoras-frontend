@@ -33,6 +33,20 @@ export default {
           'text-muted': 'var(--text-muted)',
           border: 'var(--border-default)',
         },
+        action: {
+          primary: 'var(--action-primary)',
+          'primary-hover': 'var(--action-primary-hover)',
+          'primary-text': 'var(--action-primary-text)',
+        },
+        info: {
+          secondary: 'var(--info-secondary)',
+        },
+        metric: {
+          cyan: 'var(--metric-cyan)',
+        },
+        badge: {
+          highlight: 'var(--badge-highlight)',
+        },
         // Universal Token Aliases - Guarantees Zero Rogue Rainbow Colors and Fixes Invisible White Text
         emerald: {
           DEFAULT: 'var(--status-success)',
