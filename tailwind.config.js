@@ -47,6 +47,12 @@ export default {
         badge: {
           highlight: 'var(--badge-highlight)',
         },
+        signal: {
+          DEFAULT: 'var(--signal-primary)',
+          primary: 'var(--signal-primary)',
+          bg: 'var(--signal-primary-bg)',
+          border: 'var(--signal-primary-border)',
+        },
         // Universal Token Aliases - Guarantees Zero Rogue Rainbow Colors and Fixes Invisible White Text
         emerald: {
           DEFAULT: 'var(--status-success)',
