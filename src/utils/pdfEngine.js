@@ -12,6 +12,11 @@ import { jsPDF } from 'jspdf';
  * 5. Interactive text selection overlay for copying and searching text
  */
 
+/** White-space (CSS px) between stamped continuation letterhead and page body on page 2+. */
+const CONTINUATION_CONTENT_GAP_PX = 12;
+/** Extra gap when a page opens on bank/totals (no item rows) so text clears the curved header. */
+const CONTINUATION_TOTALS_GAP_PX = 18;
+
 export async function generatePixelPerfectPDF(element, options = {}) {
   if (!element) {
     throw new Error('Target element for PDF generation was not provided.');
@@ -90,7 +95,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     el.style.overflow = 'visible';
   });
   element.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
-    el.style.padding = '0';
+    el.style.padding = '0 0 3mm 0';
     el.style.border = 'none';
   });
   footers.forEach((el) => {
@@ -138,8 +143,13 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   const totalsBlockBottom =
     totalsBlockTop != null ? totalsBlockTop + totalsBlockHeight : null;
 
-  // Seller letterhead + items column thead for page 2+ stamps (now visible)
-  const letterheadEl = element.querySelector('[data-print-continuation-header]');
+  // Seller letterhead + items column thead for page 2+ stamps (now visible).
+  // Prefer the letterhead chrome itself (exclude td padding below it — that gap is applied via drawOffsetY).
+  const letterheadRow = element.querySelector('[data-print-continuation-header]');
+  const letterheadEl =
+    element.querySelector('.invoice-continuation-letterhead-classic') ||
+    letterheadRow?.querySelector('td > div') ||
+    letterheadRow;
   const letterheadRect = letterheadEl ? letterheadEl.getBoundingClientRect() : null;
   const columnThead =
     element.querySelector('.invoice-print-shell-row table thead') ||
@@ -207,7 +217,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             el.style.overflow = 'visible';
           });
           clonedDoc.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
-            el.style.padding = '0';
+            el.style.padding = '0 0 3mm 0';
             el.style.border = 'none';
           });
         }
@@ -313,9 +323,11 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     // Bottom inset only — letterhead is flush to the page top (seamless)
     const bottomInsetDom = 10 * (unscaledWidth / pdfWidthMm);
 
-    // Page 2+ content height accounts for stamped letterhead + column header
+    // Page 2+ content height accounts for stamped letterhead + column header + content gap
     const stampedHeaderDomHeight =
-      letterheadDomHeight + (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) + 4;
+      letterheadDomHeight +
+      (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) +
+      CONTINUATION_TOTALS_GAP_PX;
     const page1ContentDomHeight = pageCanvasHeight / scaleFactor - bottomInsetDom;
     const continuationContentDomHeight = Math.max(
       80,
@@ -394,7 +406,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
           drawOffsetY += thCanvasH;
         }
 
-        drawOffsetY += Math.round(2 * scaleFactor);
+        // Slight margin under letterhead; a bit more when bank/totals open the page
+        const gapPx = sliceHasItems ? CONTINUATION_CONTENT_GAP_PX : CONTINUATION_TOTALS_GAP_PX;
+        drawOffsetY += Math.round(gapPx * scaleFactor);
       }
 
       ctx.drawImage(

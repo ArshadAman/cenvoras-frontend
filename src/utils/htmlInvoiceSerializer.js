@@ -83,7 +83,7 @@ export function serializeInvoiceHtml(element) {
     el.style.display = 'table-row';
   });
   cloned.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
-    el.style.padding = '0';
+    el.style.padding = '0 0 3mm 0';
     el.style.border = 'none';
   });
   cloned.querySelectorAll('.invoice-page-footer').forEach((el) => {
@@ -163,7 +163,8 @@ export function serializeInvoiceHtml(element) {
       display: table-row !important;
     }
     .invoice-continuation-header > td {
-      padding: 0 !important;
+      /* Slight white gap under letterhead before body (items or bank/totals on page break) */
+      padding: 0 0 3mm 0 !important;
       border: none !important;
       overflow: visible !important;
     }
