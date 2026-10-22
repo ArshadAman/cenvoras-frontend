@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
 import { downloadCAAuditPack } from '../../api/gst';
+import InfoTip from '../common/InfoTip';
 import { gstShieldView } from '../../utils/gstShieldView';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/api';
@@ -143,22 +144,24 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
         ) : (
           <div className="space-y-2" data-testid="gst-registered">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-[var(--text-muted)] font-medium">{view.priorLabel} turnover</span>
+              <InfoTip content={view.tips.turnover} className="text-[var(--text-muted)] font-medium">{view.priorLabel} turnover</InfoTip>
               <span className="font-semibold font-mono text-[var(--text-primary)]">{formatCurrency(view.priorTurnover)}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {view.checks.map((c) => (
-                <span
+                <InfoTip
                   key={c.key}
+                  content={view.tips[c.key]}
                   className={`text-[11px] px-2 py-0.5 rounded-md border ${c.ok ? 'bg-[var(--status-success-bg)] border-[var(--status-success-border)] text-[var(--status-success)]' : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'}`}
-                  title={`${c.label} limit ${formatCurrency(c.limit)} (prior-FY turnover)`}
                 >
-                  {c.label} ≤{formatCurrency(c.limit)} {c.ok ? '✓' : '✗'}
-                </span>
+                  <span>{c.label} ≤{formatCurrency(c.limit)}</span>
+                  <span aria-hidden="true">{c.ok ? '✓' : '✗'}</span>
+                  <span className="sr-only sm:not-sr-only">{c.ok ? 'Eligible' : 'Not eligible'}</span>
+                </InfoTip>
               ))}
-              <span className="text-[11px] px-2 py-0.5 rounded-md border bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)]">
+              <InfoTip content={view.tips.hsn} className="text-[11px] px-2 py-0.5 rounded-md border bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)]">
                 HSN {view.hsnDigits}-digit
-              </span>
+              </InfoTip>
             </div>
             {view.eInvoiceWarning && (
               <p className="text-xs font-medium flex items-start gap-1 text-[var(--status-warning)]">
@@ -171,9 +174,9 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
         {view.showTaxFigures && (
           <>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[var(--text-muted)] font-medium">
+              <InfoTip content={view.tips.period} className="text-xs text-[var(--text-muted)] font-medium">
                 {period === 'month' ? 'This return period' : 'FY to date'}
-              </span>
+              </InfoTip>
               <div className="inline-flex rounded-lg border border-[var(--border-subtle)] overflow-hidden text-[11px]" role="group" aria-label="GST period">
                 {[['month', 'Month'], ['fy', 'FY']].map(([k, label]) => (
                   <button
@@ -190,15 +193,15 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-                <div className="text-xs text-[var(--text-muted)] mb-0.5">Collected</div>
+                <InfoTip content={view.tips.collected} className="text-xs text-[var(--text-muted)] mb-0.5">Collected</InfoTip>
                 <div className="text-sm font-bold text-[var(--status-success)] truncate font-mono">{formatSigned(view.outputTax)}</div>
               </div>
               <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-                <div className="text-xs text-[var(--text-muted)] mb-0.5">ITC</div>
+                <InfoTip content={view.tips.itc} className="text-xs text-[var(--text-muted)] mb-0.5">ITC</InfoTip>
                 <div className="text-sm font-bold text-[var(--accent-primary)] truncate font-mono">{formatSigned(view.itc)}</div>
               </div>
               <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-                <div className="text-xs text-[var(--text-muted)] mb-0.5">{view.netLabel}</div>
+                <InfoTip content={view.tips.net} className="text-xs text-[var(--text-muted)] mb-0.5">{view.netLabel}</InfoTip>
                 <div className={`text-sm font-bold truncate font-mono ${view.net >= 0 ? 'text-[var(--status-warning)]' : 'text-[var(--status-success)]'}`}>
                   {formatCurrency(view.net)}
                 </div>
