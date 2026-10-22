@@ -65,14 +65,14 @@ export function serializeInvoiceHtml(element) {
   hiddenElements.forEach((el) => el.remove());
 
   // Apply print chrome on the clone itself (inline) so backend Chromium cannot
-  // miss stylesheet overrides against React's padding: 10mm on .invoice-sheet.
+  // miss stylesheet overrides against React's padding: 7mm sides on .invoice-sheet.
   cloned.querySelectorAll('.invoice-sheet').forEach((sheet) => {
     sheet.style.padding = '0 0 88mm 0';
     sheet.style.overflow = 'visible';
     sheet.style.boxSizing = 'border-box';
   });
   cloned.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
-    el.style.padding = '0 10mm';
+    el.style.padding = '0 7mm';
     el.style.border = 'none';
     el.style.overflow = 'visible';
   });
@@ -89,8 +89,8 @@ export function serializeInvoiceHtml(element) {
   cloned.querySelectorAll('.invoice-page-footer').forEach((el) => {
     el.style.position = 'absolute';
     el.style.bottom = '4mm';
-    el.style.left = '10mm';
-    el.style.right = '10mm';
+    el.style.left = '7mm';
+    el.style.right = '7mm';
     el.style.marginTop = '0';
   });
 
@@ -180,9 +180,9 @@ export function serializeInvoiceHtml(element) {
       width: 100% !important;
       box-sizing: border-box !important;
     }
-    /* Restore Classic 10mm body inset (sheet padding removed for full-bleed header) */
+    /* Restore Classic 7mm body inset (sheet padding removed for full-bleed header) */
     .invoice-print-shell-row > td {
-      padding: 0 10mm !important;
+      padding: 0 7mm !important;
       border: none !important;
       overflow: visible !important;
     }
@@ -196,8 +196,8 @@ export function serializeInvoiceHtml(element) {
     .invoice-page-footer {
       position: absolute !important;
       bottom: 4mm !important;
-      left: 10mm !important;
-      right: 10mm !important;
+      left: 7mm !important;
+      right: 7mm !important;
       margin-top: 0 !important;
       break-inside: avoid !important;
       page-break-inside: avoid !important;

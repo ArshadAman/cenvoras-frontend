@@ -74,7 +74,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   });
   sheets.forEach((el) => {
     el.style.position = 'relative';
-    // Full shorthand — must clear React's inline padding: 10mm on all sides
+    // Full shorthand — must clear React's inline padding: 7mm sides on Classic
     el.style.padding = '0 0 88mm 0';
     el.style.paddingTop = '0';
     el.style.paddingRight = '0';
@@ -90,7 +90,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     el.style.margin = '0';
   });
   element.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
-    el.style.padding = '0 10mm';
+    el.style.padding = '0 7mm';
     el.style.border = 'none';
     el.style.overflow = 'visible';
   });
@@ -101,8 +101,8 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   footers.forEach((el) => {
     el.style.position = 'absolute';
     el.style.bottom = '4mm';
-    el.style.left = '10mm';
-    el.style.right = '10mm';
+    el.style.left = '7mm';
+    el.style.right = '7mm';
     el.style.marginTop = '0';
   });
 
@@ -212,7 +212,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             el.style.margin = '0';
           });
           clonedDoc.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
-            el.style.padding = '0 10mm';
+            el.style.padding = '0 7mm';
             el.style.border = 'none';
             el.style.overflow = 'visible';
           });
@@ -231,8 +231,8 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         clonedDoc.querySelectorAll('.invoice-page-footer').forEach((el) => {
           el.style.position = 'absolute';
           el.style.bottom = '4mm';
-          el.style.left = '10mm';
-          el.style.right = '10mm';
+          el.style.left = '7mm';
+          el.style.right = '7mm';
           el.style.marginTop = '0';
         });
         clonedDoc.querySelectorAll('.invoice-totals-block').forEach((el) => {
