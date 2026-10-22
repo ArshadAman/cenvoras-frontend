@@ -146,19 +146,19 @@ const InvoicePreview = forwardRef(({
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   const preferredWidths = {
-    serial: 6,
+    serial: 4,
     description: 0,
     batch: 10,
-    hsn: 12,
-    quantity: 7,
-    free_qty: 7,
-    unit: 8,
+    hsn: 10,
+    quantity: 6,
+    free_qty: 5,
+    unit: 6,
     make: 12,
     pack_size: 12,
-    price: 14,
-    discount: 9,
-    tax: 9,
-    amount: 18,
+    price: 10,
+    discount: 8,
+    tax: 7,
+    amount: 12,
   };
 
   const nonDescriptionWidth = visibleColumns
