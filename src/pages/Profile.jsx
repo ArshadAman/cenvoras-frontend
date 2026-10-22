@@ -370,6 +370,7 @@ const Profile = ({ onLogout }) => {
     business_name: '',
     business_address: '',
     gstin: '',
+    business_type: '',
     pan_number: '',
     trn: '',
     country: 'IN',
@@ -450,6 +451,7 @@ const Profile = ({ onLogout }) => {
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
         gstin: profile.gstin || '',
+        business_type: profile.business_type || '',
         pan_number: profile.pan_number || '',
         trn: profile.trn || '',
         country: profile.country || 'IN',
@@ -769,6 +771,7 @@ const Profile = ({ onLogout }) => {
       business_address: formData.business_address,
       country: formData.country,
       gstin: formData.gstin,
+      business_type: formData.business_type || null,
       pan_number: formData.pan_number,
       trn: formData.trn,
       gem_id: formData.gem_id,
@@ -1490,6 +1493,21 @@ const Profile = ({ onLogout }) => {
                               placeholder="Business PAN (e.g. ABCDE1234F)"
                               maxLength={10}
                             />
+                            <label className="block">
+                              <span className="block text-xs text-[var(--text-muted)] mb-1">Business type (sets the GST registration threshold)</span>
+                              <select
+                                name="business_type"
+                                value={formData.business_type || ''}
+                                onChange={handleInputChange}
+                                disabled={!isEditing || updateProfileMutation.isPending}
+                                className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
+                              >
+                                <option value="">Not set (conservative ₹20L threshold)</option>
+                                <option value="goods_only">Goods only</option>
+                                <option value="services">Services</option>
+                                <option value="mixed">Goods and services</option>
+                              </select>
+                            </label>
                           </>
                         )}
                         {formData.country === 'AE' && (
