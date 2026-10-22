@@ -1,0 +1,20 @@
+# Netlify response headers (Cloudflare sits in front). SPA rewrites live in _redirects.
+# Service worker scripts must never be cached, or clients keep the old SW after a deploy.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/registerSW.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache
+
+/
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+# Vite emits content-hashed filenames, so these are safe to cache forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
