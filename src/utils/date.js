@@ -68,3 +68,16 @@ export function formatDateKolkata(date, format = 'DD-MM-YYYY') {
   }
   return `${day}/${month}/${year}`;
 }
+
+/**
+ * Parse a date-only API value ("YYYY-MM-DD") as a LOCAL calendar date.
+ * `new Date("2026-10-22")` is UTC midnight, which renders as 21/10 in any browser
+ * west of UTC (QA: R13-P0-IGST / DN-0003). Datetimes and Date objects pass through.
+ */
+export function parseDateOnly(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value).trim());
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(value);
+}

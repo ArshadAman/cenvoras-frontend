@@ -6,6 +6,7 @@ import {
   TrashIcon, CheckCircleIcon, SparklesIcon, CurrencyRupeeIcon
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import { getTodayKolkata } from '../../utils/date';
 
 function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({
@@ -15,7 +16,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
     title: '',
     amount: '',
     is_recurring: false,
-    effective_date: new Date().toISOString().split('T')[0],
+    effective_date: getTodayKolkata(),
     reason: ''
   });
   const [saving, setSaving] = useState(false);
@@ -29,7 +30,7 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
         title: '',
         amount: '',
         is_recurring: false,
-        effective_date: new Date().toISOString().split('T')[0],
+        effective_date: getTodayKolkata(),
         reason: ''
       });
     }

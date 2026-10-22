@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import AdvancedPurchaseFilters from "./AdvancedPurchaseFilters";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { parseDateOnly } from '../../utils/date';
 
 export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
@@ -448,7 +449,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                       {bill.bill_number}
                     </td>
                     <td className="py-3 px-4 text-[var(--text-secondary)]">
-                      {bill.bill_date ? format(new Date(bill.bill_date), 'dd/MM/yyyy') : '-'}
+                      {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
                     </td>
                     <td className="py-3 px-4 text-[var(--text-primary)] font-medium">{bill.vendor_name}</td>
                     <td className="py-3 px-4">
@@ -580,7 +581,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                       {bill.bill_number}
                     </div>
                     <div className="text-xs text-[var(--text-muted)]">
-                      {bill.bill_date ? format(new Date(bill.bill_date), 'dd/MM/yyyy') : '-'}
+                      {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
                     </div>
                   </div>
                 </div>
