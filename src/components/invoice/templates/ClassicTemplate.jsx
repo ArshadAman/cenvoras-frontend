@@ -146,19 +146,19 @@ const InvoicePreview = forwardRef(({
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   const preferredWidths = {
-    serial: 4,
+    serial: 3,
     description: 0,
     batch: 10,
-    hsn: 10,
-    quantity: 6,
+    hsn: 9,
+    quantity: 5,
     free_qty: 5,
-    unit: 6,
+    unit: 5,
     make: 12,
     pack_size: 12,
-    price: 10,
-    discount: 8,
-    tax: 7,
-    amount: 12,
+    price: 9,
+    discount: 6,
+    tax: 6,
+    amount: 10,
   };
 
   const nonDescriptionWidth = visibleColumns
@@ -423,7 +423,9 @@ const InvoicePreview = forwardRef(({
             </colgroup>
             <thead style={{ display: 'table-header-group' }}>
               <tr style={tableHeaderStyle}>
-                {visibleColumns.map(col => (
+                {visibleColumns.map(col => {
+                  const isDesc = col.id === 'description';
+                  return (
                   <th 
                     key={col.id}
                     className="px-3 py-2 font-bold border"
@@ -432,12 +434,14 @@ const InvoicePreview = forwardRef(({
                       textAlign: col.align || 'left',
                       borderColor: colors.tableBorder,
                       fontSize: `${typography.smallSize || 10}px`,
-                      whiteSpace: 'nowrap',
+                      whiteSpace: isDesc ? 'normal' : 'nowrap',
+                      overflow: isDesc ? 'visible' : 'hidden',
                     }}
                   >
                     {getColumnLabel(col)}
                   </th>
-                ))}
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -518,6 +522,7 @@ const InvoicePreview = forwardRef(({
                             borderColor: colors.tableBorder,
                             wordBreak: isDesc ? 'break-word' : 'normal',
                             whiteSpace: isDesc ? 'normal' : 'nowrap',
+                            overflow: isDesc ? 'visible' : 'hidden',
                             verticalAlign: 'middle',
                           }}
                         >

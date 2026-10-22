@@ -1,7 +1,6 @@
 import React, { forwardRef } from 'react';
 import ClassicTemplate from './templates/ClassicTemplate';
 import ProfessionalTemplate from './templates/ProfessionalTemplate';
-import GenzTemplate from './templates/GenzTemplate';
 import ServiceTemplate from './templates/ServiceTemplate';
 import LegendTemplate from './templates/LegendTemplate';
 import BillShipTemplate from './templates/BillShipTemplate';
@@ -16,8 +15,6 @@ const InvoicePreview = forwardRef((props, ref) => {
   switch (layoutType) {
     case 'professional':
       return <ProfessionalTemplate ref={ref} {...props} />;
-    case 'genz':
-      return <GenzTemplate ref={ref} {...props} />;
     case 'service':
       return <ServiceTemplate ref={ref} {...props} />;
     case 'legend':

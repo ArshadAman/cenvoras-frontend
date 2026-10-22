@@ -5,7 +5,7 @@ import { numberToWords } from './invoiceSettings';
  * 
  * Generates email-client compatible, responsive HTML invoices formatted
  * in the user's selected invoice theme (Classic, Professional Marico,
- * GenZ Google, Service LTIMindtree, Legend ITC, or BillShip Flipkart).
+ * Service LTIMindtree, Legend ITC, or BillShip Flipkart).
  * 
  * Uses bulletproof inline CSS ensuring 100% visual fidelity in Gmail,
  * Outlook, Apple Mail, and mobile email clients.
@@ -26,7 +26,6 @@ export function buildThemedInvoiceEmailHtml({
   // Theme Palette
   const primaryColor = colors.primary || (
     layoutType === 'professional' ? '#0a235c' :
-    layoutType === 'genz' ? '#4285F4' :
     layoutType === 'service' ? '#174A82' :
     layoutType === 'legend' ? '#111827' :
     layoutType === 'billship' ? '#1f2937' :
@@ -35,12 +34,10 @@ export function buildThemedInvoiceEmailHtml({
   const accentColor = colors.accent || (
     layoutType === 'billship' ? '#f59e0b' :
     layoutType === 'legend' ? '#2563eb' :
-    layoutType === 'genz' ? '#34A853' :
     '#3b82f6'
   );
   const tableHeaderBg = colors.tableHeader || (
     layoutType === 'professional' ? '#f0f4fc' :
-    layoutType === 'genz' ? '#f8fafc' :
     layoutType === 'legend' ? '#f3f4f6' :
     '#f9fafb'
   );
@@ -79,7 +76,6 @@ export function buildThemedInvoiceEmailHtml({
   // Header Badge by Layout
   const themeBadge = 
     layoutType === 'professional' ? `<span style="display:inline-block;padding:4px 10px;background:#e0e7ff;color:#1e1b4b;font-size:11px;font-weight:700;border-radius:4px;letter-spacing:1px;text-transform:uppercase;">Corporate Verified</span>` :
-    layoutType === 'genz' ? `<span style="display:inline-block;padding:4px 12px;background:#e8f0fe;color:#1a73e8;font-size:11px;font-weight:700;border-radius:20px;letter-spacing:0.5px;">E-Invoice</span>` :
     layoutType === 'billship' ? `<span style="display:inline-block;padding:4px 10px;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;border-radius:4px;">GST Compliant</span>` :
     layoutType === 'legend' ? `<span style="display:inline-block;padding:4px 10px;background:#1e293b;color:#f8fafc;font-size:11px;font-weight:700;border-radius:4px;letter-spacing:1px;">Official Document</span>` :
     '';

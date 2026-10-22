@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf';
  * High-Fidelity Pixel-Perfect PDF Generator for Cenvora Invoices
  *
  * Guarantees:
- * 1. 100% exact replica of the on-screen preview (every theme: Flipkart BillShip, ITC Legend, GenZ, etc.)
+ * 1. 100% exact replica of the on-screen preview (every theme: Flipkart BillShip, ITC Legend, etc.)
  * 2. Complete Unicode and Indian Rupee symbol (₹) support with zero missing glyphs
  * 3. File size strictly under ~100KB per page via 2x Retina JPEG compression (0.85 quality)
  * 4. Smart row-boundary pagination that NEVER cuts a table row horizontally across page breaks

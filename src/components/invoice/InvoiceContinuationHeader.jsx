@@ -48,45 +48,7 @@ export default function InvoiceContinuationHeader({
 
   let inner = null;
 
-  if (theme === 'genz') {
-    inner = (
-      <div
-        style={{
-          backgroundColor: accent,
-          color: '#ffffff',
-          padding: '4mm 6mm',
-          margin: 0,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {showLogo && companyLogo ? (
-            <img
-              src={companyLogo}
-              alt=""
-              style={{
-                height: 36,
-                background: '#fff',
-                padding: 2,
-                borderRadius: 8,
-                objectFit: 'contain',
-              }}
-            />
-          ) : null}
-          <div>
-            <div style={{ fontWeight: 800, fontSize: `${Math.max(companyNameSize, 16)}px`, lineHeight: 1.2 }}>
-              {companyName}
-            </div>
-            <div style={{ fontSize: '9px', opacity: 0.9, marginTop: 2, lineHeight: 1.35 }}>
-              {companyAddress ? (
-                <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
-              ) : null}
-              {taxLines}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  } else if (theme === 'legend') {
+  if (theme === 'legend') {
     inner = (
       <div
         style={{
