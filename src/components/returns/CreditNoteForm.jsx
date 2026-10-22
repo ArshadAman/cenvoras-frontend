@@ -56,8 +56,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
 
   const createMutation = useMutation({
     mutationFn: createCreditNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["credit-notes"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
+      await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
       toast.success("Credit Note Created");
       handleClose();
     },

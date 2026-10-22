@@ -98,8 +98,9 @@ export default function DebitNoteForm({ isOpen, onClose }) {
 
   const createMutation = useMutation({
     mutationFn: createDebitNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["debit-notes"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["debit-notes"] });
+      await queryClient.refetchQueries({ queryKey: ["debit-notes"] });
       toast.success("Debit Note Created");
       handleClose();
     },

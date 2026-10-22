@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCreditNotes, deleteCreditNote } from "../api/gst";
-import { ArrowUturnLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { ToastContainer, toast } from "react-toastify";
+import { ArrowUturnLeftIcon, TrashIcon, PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-import CreditNoteForm from "../components/returns/CreditNoteForm"; // Add Import
-import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import CreditNoteForm from "../components/returns/CreditNoteForm";
+import CreditNoteDetailsModal from "../components/returns/CreditNoteDetailsModal";
+import { getCurrencySymbol } from '../utils/currency';
 import { formatDateKolkata } from '../utils/date';
 
 const MMM = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -25,7 +26,8 @@ function formatCnDate(dateStr) {
 }
 
 export default function CreditNoteList() {
-  const [showForm, setShowForm] = useState(false); // Add State
+  const [showForm, setShowForm] = useState(false);
+  const [viewId, setViewId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: notesResult, isLoading } = useQuery({
@@ -37,8 +39,9 @@ export default function CreditNoteList() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteCreditNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["credit-notes"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
+      await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
       toast.success("Credit note deleted");
     },
     onError: () => toast.error("Failed to delete"),
@@ -60,6 +63,9 @@ export default function CreditNoteList() {
     other: "bg-[var(--border-subtle)]/20 text-[var(--text-secondary)] border border-[var(--border-subtle)]",
   };
 
+  const cnLabel = (cn) =>
+    cn.credit_note_number?.startsWith('CN-') ? cn.credit_note_number : `CN-${cn.credit_note_number}`;
+
   return (
     <>
       <div className="p-6 md:p-10 space-y-8 animate-fade-up">
@@ -77,7 +83,6 @@ export default function CreditNoteList() {
         </div>
 
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
-          {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left">
               <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
@@ -105,9 +110,13 @@ export default function CreditNoteList() {
                   notes.map((cn) => (
                     <tr key={cn.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4">
-                        <div className="text-[var(--text-primary)] font-semibold text-sm">
-                          {cn.credit_note_number?.startsWith('CN-') ? cn.credit_note_number : `CN-${cn.credit_note_number}`}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setViewId(cn.id)}
+                          className="text-[var(--accent-primary)] font-semibold text-sm hover:underline text-left"
+                        >
+                          {cnLabel(cn)}
+                        </button>
                       </td>
                       <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{formatCnDate(cn.date)}</td>
                       <td className="px-6 py-4 text-[var(--text-primary)] font-medium text-sm">{cn.customer_name}</td>
@@ -121,14 +130,26 @@ export default function CreditNoteList() {
                         {getCurrencySymbol()}{fmt(cn.total_amount)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => { if (confirm('Delete this credit note?')) deleteMutation.mutate(cn.id); }}
-                          className="p-1.5 text-[var(--status-danger)] hover:bg-[var(--status-danger-bg)] rounded-lg transition-colors"
-                          title="Delete Credit Note"
-                          aria-label="Delete Credit Note"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setViewId(cn.id)}
+                            className="p-1.5 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 rounded-lg transition-colors"
+                            title="View Credit Note"
+                            aria-label="View Credit Note"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { if (confirm('Delete this credit note?')) deleteMutation.mutate(cn.id); }}
+                            className="p-1.5 text-[var(--status-danger)] hover:bg-[var(--status-danger-bg)] rounded-lg transition-colors"
+                            title="Delete Credit Note"
+                            aria-label="Delete Credit Note"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -137,7 +158,6 @@ export default function CreditNoteList() {
             </table>
           </div>
 
-          {/* Mobile Card Layout */}
           <div className="lg:hidden p-4 space-y-4">
             {isLoading ? (
               <div className="text-center py-12 text-[var(--text-muted)] text-sm">Loading credit notes...</div>
@@ -154,9 +174,13 @@ export default function CreditNoteList() {
                   <div key={cn.id} className="bg-[var(--bg-primary)]/60 border border-[var(--border-subtle)] rounded-xl p-4 space-y-3">
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <div className="text-[var(--accent-primary)] font-bold text-xs tracking-wider uppercase mb-1">
-                          {cn.credit_note_number?.startsWith('CN-') ? cn.credit_note_number : `CN-${cn.credit_note_number}`}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setViewId(cn.id)}
+                          className="text-[var(--accent-primary)] font-bold text-xs tracking-wider uppercase mb-1 hover:underline"
+                        >
+                          {cnLabel(cn)}
+                        </button>
                         <div className="text-[var(--text-primary)] font-semibold text-base">{cn.customer_name}</div>
                         <div className="text-[var(--text-muted)] text-xs mt-0.5">{formattedDate}</div>
                       </div>
@@ -170,14 +194,26 @@ export default function CreditNoteList() {
                         <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-0.5 font-medium">Amount</div>
                         <div className="text-lg font-bold text-[var(--text-primary)] tabular-nums">{getCurrencySymbol()}{fmt(cn.total_amount)}</div>
                       </div>
-                      <button
-                        onClick={() => { if (confirm('Delete this credit note?')) deleteMutation.mutate(cn.id); }}
-                        className="p-2 bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)] rounded-lg hover:opacity-80 transition-opacity"
-                        title="Delete Credit Note"
-                        aria-label="Delete Credit Note"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setViewId(cn.id)}
+                          className="p-2 bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 rounded-lg hover:opacity-80 transition-opacity"
+                          title="View Credit Note"
+                          aria-label="View Credit Note"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { if (confirm('Delete this credit note?')) deleteMutation.mutate(cn.id); }}
+                          className="p-2 bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)] rounded-lg hover:opacity-80 transition-opacity"
+                          title="Delete Credit Note"
+                          aria-label="Delete Credit Note"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -186,13 +222,16 @@ export default function CreditNoteList() {
           </div>
         </div>
       </div>
-      
+
       {showForm && (
         <CreditNoteForm isOpen={showForm} onClose={() => setShowForm(false)} />
       )}
 
-      
+      <CreditNoteDetailsModal
+        isOpen={!!viewId}
+        creditNoteId={viewId}
+        onClose={() => setViewId(null)}
+      />
     </>
   );
 }
-
