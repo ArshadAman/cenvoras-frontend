@@ -136,6 +136,7 @@ export function serializeInvoiceHtml(element) {
       /* Zero outer padding so letterhead is edge-to-edge (preview-seamless).
          Body inset is applied on the print-shell content cell instead. */
       padding: 0 0 88mm 0 !important;
+      padding-top: 0 !important;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
       overflow: visible !important;

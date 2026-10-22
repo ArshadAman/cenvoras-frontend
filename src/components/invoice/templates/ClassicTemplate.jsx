@@ -185,10 +185,12 @@ const InvoicePreview = forwardRef(({
         ...paperStyle,
         width: '210mm',
         minHeight: '297mm',
-        padding: '10mm',
+        /* No top padding — page starts at the gray letterhead (table cells clip negative top margin). */
+        padding: '0 10mm 10mm 10mm',
         boxSizing: 'border-box',
         margin: '0 auto',
         position: 'relative',
+        overflow: 'visible',
       }}
     >
       {/* Watermark */}
@@ -219,7 +221,8 @@ const InvoicePreview = forwardRef(({
         className="mb-4 invoice-first-page-header"
         style={{
           backgroundColor: '#ececec',
-          margin: '-10mm -10mm 0 -10mm',
+          /* Horizontal bleed only — top is already flush (sheet has no top padding). */
+          margin: '0 -10mm 0 -10mm',
           padding: '8mm 10mm 5mm 10mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
