@@ -331,11 +331,17 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       totalsBlockBottom
     );
 
-    let currentY = 0;
+    // If any residual gap sits above the letterhead in the capture, skip it so
+    // page 1 starts on the gray band (matches preview / seamless top).
+    let currentY = letterheadDomTop > 0.5 ? letterheadDomTop : 0;
 
     for (let pageIndex = 0; pageIndex < splitPoints.length; pageIndex++) {
       const splitY = splitPoints[pageIndex];
       const sliceHeight = splitY - currentY;
+      if (sliceHeight <= 0) {
+        currentY = splitY;
+        continue;
+      }
 
       if (pageIndex > 0) {
         pdf.addPage();
