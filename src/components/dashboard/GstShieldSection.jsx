@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
@@ -258,14 +259,17 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
         </button>
       </div>
 
-      {/* COMPACT ENTERPRISE CA AUDIT PACK MODAL */}
-      {modalOpen && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      {/* Portal to body — escape bento-card overflow / scroll ancestors so fixed is viewport-centered */}
+      {modalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           onClick={() => setModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ca-audit-pack-title"
         >
-          <div 
-            className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-3.5 animate-scale-up"
+          <div
+            className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -275,7 +279,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                   <ShieldCheckIcon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">
+                  <h3 id="ca-audit-pack-title" className="text-sm font-bold text-[var(--text-primary)] tracking-tight">
                     Download CA Audit Pack
                   </h3>
                   <p className="text-xs text-[var(--text-muted)]">
@@ -479,7 +483,8 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
