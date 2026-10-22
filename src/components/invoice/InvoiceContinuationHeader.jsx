@@ -233,7 +233,8 @@ export default function InvoiceContinuationHeader({
       <td
         colSpan={colSpan}
         style={{
-          padding: 0,
+          // Slight white gap under letterhead; print/PDF CSS reinforces this on page breaks
+          padding: '0 0 3mm 0',
           border: 'none',
           backgroundColor: '#ffffff',
         }}

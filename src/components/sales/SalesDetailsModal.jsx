@@ -529,7 +529,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           display: table-row !important;
         }
         .invoice-continuation-header > td {
-          padding: 0 !important;
+          /* Slight white gap under letterhead before body (items or bank/totals on page break) */
+          padding: 0 0 3mm 0 !important;
           border: none !important;
           overflow: visible !important;
         }
