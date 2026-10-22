@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol, formatCurrency } from "../../utils/currency";
 import useEscKey from "../../hooks/useEscStack";
+import { parseDateOnly } from '../../utils/date';
 
 export default function PurchaseDetailsModal({ billId, onClose }) {
   const printRef = useRef(null);
@@ -157,7 +158,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
                 {bill.bill_date
-                  ? `Recorded on ${new Date(bill.bill_date).toLocaleDateString("en-IN", {
+                  ? `Recorded on ${parseDateOnly(bill.bill_date).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",

@@ -5,6 +5,7 @@ import {
   ArrowPathIcon, CurrencyRupeeIcon, CheckCircleIcon, EyeIcon
 } from '@heroicons/react/24/outline';
 import { showErrorToast, showSuccessToast } from "../../utils/toastUtils";
+import { getTodayKolkata } from '../../utils/date';
 
 function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({
@@ -13,7 +14,7 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
     principal_amount: '',
     monthly_installment: '',
     reason: '',
-    disbursement_date: new Date().toISOString().split('T')[0]
+    disbursement_date: getTodayKolkata()
   });
   const [saving, setSaving] = useState(false);
 
@@ -25,7 +26,7 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
         principal_amount: '',
         monthly_installment: '',
         reason: '',
-        disbursement_date: new Date().toISOString().split('T')[0]
+        disbursement_date: getTodayKolkata()
       });
     }
   }, [isOpen]);

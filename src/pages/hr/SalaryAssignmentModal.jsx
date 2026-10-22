@@ -3,6 +3,7 @@ import { hrApi } from '../../api/hr';
 import { toast } from 'react-toastify';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from '../../hooks/useEscStack';
+import { getTodayKolkata } from '../../utils/date';
 
 export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, initialData }) {
   useEscKey(onClose, isOpen, 20);
@@ -32,7 +33,7 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
         setForm({
           employee: '',
           salary_structure: '',
-          effective_from: new Date().toISOString().split('T')[0],
+          effective_from: getTodayKolkata(),
           monthly_ctc: ''
         });
       }

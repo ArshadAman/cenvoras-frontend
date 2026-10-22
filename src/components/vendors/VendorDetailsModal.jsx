@@ -11,6 +11,7 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { EyeIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import PurchaseDetailsModal from "../purchase/PurchaseDetailsModal";
 import useEscKey from "../../hooks/useEscStack";
+import { parseDateOnly } from '../../utils/date';
 
 export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   useEscKey(onClose, isOpen, 15);
@@ -409,7 +410,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                   </button>
                                 </td>
                                 <td className="py-3 px-4 text-[var(--text-secondary)]">
-                                  {bill.bill_date ? format(new Date(bill.bill_date), 'dd MMM yyyy') : '-'}
+                                  {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd MMM yyyy') : '-'}
                                 </td>
                                 <td className="py-3 px-4 text-[var(--text-muted)]">
                                   {bill.due_date ? format(new Date(bill.due_date), 'dd MMM yyyy') : '-'}

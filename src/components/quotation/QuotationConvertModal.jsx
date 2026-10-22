@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { CheckIcon, XMarkIcon, TagIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
 import useEscKey from '../../hooks/useEscStack';
+import { getTodayKolkata } from '../../utils/date';
 
 export default function QuotationConvertModal({ isOpen, quotation, onClose, onConfirm, isSubmitting }) {
   useEscKey(onClose, isOpen, 15);
@@ -23,7 +24,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
     setSelected(new Set(approvedItems.map((item) => item.id)));
     // Initialize PO details from quotation if available
     setPoNumber(quotation?.po_number || '');
-    setPoDate(quotation?.po_date || new Date().toISOString().split('T')[0]);
+    setPoDate(quotation?.po_date || getTodayKolkata());
     setBulkDiscount('');
 
     // Initialize item quantities and discounts

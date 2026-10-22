@@ -9,6 +9,7 @@ const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionD
 
 import DebitNoteForm from "../components/returns/DebitNoteForm"; // Add Import
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { parseDateOnly } from '../utils/date';
 
 export default function DebitNoteList() {
   const [showForm, setShowForm] = useState(false); // Add State
@@ -139,7 +140,7 @@ export default function DebitNoteList() {
                 let formattedDate = dn.date;
                 try {
                   if (dn.date) {
-                    const d = new Date(dn.date);
+                    const d = parseDateOnly(dn.date);
                     formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
                   }
                 } catch (e) { formattedDate = dn.date; }

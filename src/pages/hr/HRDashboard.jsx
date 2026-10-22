@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
 import SimpleFormModal from "./SimpleFormModal";
 import LeaveTypeModal from "./LeaveTypeModal";
+import { getTodayKolkata } from '../../utils/date';
 
 // ─── Alert Details Modal ───────────────────────────────────────────────────────
 function AlertDetailsModal({ isOpen, onClose, alert, onSelectEmployee }) {
@@ -127,7 +128,7 @@ const LEAVE_COLORS = {
 function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({ employee: "", date: "", status: "present" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (isOpen) setForm({ employee: "", date: new Date().toISOString().split("T")[0], status: "present" }); }, [isOpen]);
+  useEffect(() => { if (isOpen) setForm({ employee: "", date: getTodayKolkata(), status: "present" }); }, [isOpen]);
   const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const selectedEmp = employees.find((e) => String(e.id) === String(form.employee));
   const handleSubmit = async (e) => {
@@ -604,7 +605,7 @@ function NotificationModal({ isOpen, onClose, onSuccess, employees }) {
 function SalaryIncrementModal({ isOpen, onClose, onSuccess, employee }) {
   const [form, setForm] = useState({ increment_percentage: "", effective_from: "" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => { if (isOpen) setForm({ increment_percentage: "", effective_from: new Date().toISOString().split("T")[0] }); }, [isOpen, employee]);
+  useEffect(() => { if (isOpen) setForm({ increment_percentage: "", effective_from: getTodayKolkata() }); }, [isOpen, employee]);
   const hc = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const handleSubmit = async (e) => {
     e.preventDefault(); setSaving(true);
