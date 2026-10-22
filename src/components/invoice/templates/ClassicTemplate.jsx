@@ -223,7 +223,7 @@ const InvoicePreview = forwardRef(({
           backgroundColor: '#ececec',
           /* Horizontal bleed only — top is already flush (sheet has no top padding). */
           margin: '0 -10mm 0 -10mm',
-          padding: '8mm 10mm 5mm 10mm',
+          padding: '5mm 8mm 5mm 8mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
         }}
