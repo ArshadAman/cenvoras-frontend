@@ -64,6 +64,36 @@ export function serializeInvoiceHtml(element) {
   const hiddenElements = cloned.querySelectorAll('.print-hidden, button, [data-no-print]');
   hiddenElements.forEach((el) => el.remove());
 
+  // Apply print chrome on the clone itself (inline) so backend Chromium cannot
+  // miss stylesheet overrides against React's padding: 10mm on .invoice-sheet.
+  cloned.querySelectorAll('.invoice-sheet').forEach((sheet) => {
+    sheet.style.padding = '0 0 88mm 0';
+    sheet.style.overflow = 'visible';
+    sheet.style.boxSizing = 'border-box';
+  });
+  cloned.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
+    el.style.padding = '0 10mm';
+    el.style.border = 'none';
+    el.style.overflow = 'visible';
+  });
+  cloned.querySelectorAll('.invoice-first-page-header').forEach((el) => {
+    el.style.display = 'none';
+  });
+  cloned.querySelectorAll('.invoice-continuation-header').forEach((el) => {
+    el.style.display = 'table-row';
+  });
+  cloned.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
+    el.style.padding = '0';
+    el.style.border = 'none';
+  });
+  cloned.querySelectorAll('.invoice-page-footer').forEach((el) => {
+    el.style.position = 'absolute';
+    el.style.bottom = '4mm';
+    el.style.left = '10mm';
+    el.style.right = '10mm';
+    el.style.marginTop = '0';
+  });
+
   // 3. Assemble complete standalone HTML with compile-time embedded Tailwind CSS
   return `<!DOCTYPE html>
 <html lang="en">
@@ -103,11 +133,12 @@ export function serializeInvoiceHtml(element) {
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
-      /* Flush letterhead to top; reserve room for pinned footer */
-      padding-top: 0 !important;
-      padding-bottom: 88mm !important;
+      /* Zero outer padding so letterhead is edge-to-edge (preview-seamless).
+         Body inset is applied on the print-shell content cell instead. */
+      padding: 0 0 88mm 0 !important;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
+      overflow: visible !important;
     }
     .invoice-sheet-body,
     .invoice-sheet .flex-1 {
@@ -133,15 +164,25 @@ export function serializeInvoiceHtml(element) {
     .invoice-continuation-header > td {
       padding: 0 !important;
       border: none !important;
+      overflow: visible !important;
     }
-    /* Classic letterhead full-bleed (cancels sheet 10mm horizontal padding) */
-    .invoice-continuation-header > td > div,
+    .invoice-print-shell {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
     .invoice-continuation-letterhead-classic {
-      margin-top: 0 !important;
-      margin-left: -10mm !important;
-      margin-right: -10mm !important;
-      padding-left: 10mm !important;
-      padding-right: 10mm !important;
+      display: block !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    /* Restore Classic 10mm body inset (sheet padding removed for full-bleed header) */
+    .invoice-print-shell-row > td {
+      padding: 0 10mm !important;
+      border: none !important;
+      overflow: visible !important;
     }
     /* Bank + totals (+ amount in words): never split across pages */
     .invoice-totals-block {
