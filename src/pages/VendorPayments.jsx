@@ -3,6 +3,7 @@ import { getUnpaidPurchaseBills, createVendorPayment, getRule37Itc, applyRule37I
 import { getAccounts } from "../api/ledger";
 import { showErrorToast, showSuccessToast } from "../utils/toastUtils";
 import { getCurrencySymbol, formatCurrency } from "../utils/currency";
+import { cash40A3Warning } from "../utils/s40a3";
 
 const TDS_FIXED_RATES = {
   "194J": 10,
@@ -104,6 +105,7 @@ export default function VendorPayments() {
   const bal = parseFloat(selectedAcc?.current_balance || 0);
   const requiredNet = tdsSection ? tdsPreview.net : parseFloat(amount || 0);
   const insufficient = selectedAcc && (bal < 0 || bal < requiredNet);
+  const s40a3Warning = cash40A3Warning(selectedAcc, requiredNet);
 
   const submitPay = async (e) => {
     e.preventDefault();
@@ -279,6 +281,9 @@ export default function VendorPayments() {
                   <p className="text-[var(--status-warning)] pt-1 text-xs">{tdsPreview.note}</p>
                 ) : null}
               </div>
+            )}
+            {s40a3Warning && (
+              <p className="text-xs text-[var(--status-warning)]">{s40a3Warning}</p>
             )}
             {insufficient && (
               <p className="text-xs text-[var(--status-danger)]">
