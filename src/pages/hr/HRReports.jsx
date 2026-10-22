@@ -69,6 +69,16 @@ export default function HRReports() {
         r.employer_contribution
       ]);
       csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    } else if (reportType === 'pt_register' && reportData.lines) {
+      const headers = ["Code", "Employee", "Work State", "Gross Salary", "Professional Tax"];
+      const rows = reportData.lines.map(r => [
+        r.employee_code,
+        `"${r.employee_name}"`,
+        `"${r.work_state}"`,
+        r.gross_salary,
+        r.professional_tax
+      ]);
+      csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     }
 
     if (csvContent) {
@@ -115,6 +125,7 @@ export default function HRReports() {
             { id: 'payroll_register', label: 'Payroll Register' },
             { id: 'department_expenses', label: 'Department Expenses' },
             { id: 'statutory_summary', label: 'Statutory Summary (PF/ESI/PT)' },
+            { id: 'pt_register', label: 'PT Return / Payment Register' },
           ].map(t => (
             <button
               key={t.id}
@@ -253,6 +264,48 @@ export default function HRReports() {
                       <td className="px-6 py-4 text-[var(--status-danger)]">₹{parseFloat(d.deductions).toLocaleString('en-IN')}</td>
                       <td className="px-6 py-4 font-bold text-[var(--status-success)]">₹{parseFloat(d.net).toLocaleString('en-IN')}</td>
                       <td className="px-6 py-4 text-[var(--accent-primary)]">₹{parseFloat(d.employer_contribution).toLocaleString('en-IN')}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : reportType === 'pt_register' ? (
+          <div className="overflow-x-auto">
+            <div className="px-5 py-3 bg-[var(--accent-primary)]/10 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-primary)]">
+              <span>
+                Total PT payable this cycle:{' '}
+                <strong>₹{parseFloat(reportData.total_pt_payable || 0).toLocaleString('en-IN')}</strong>
+              </span>
+              {reportData.by_state && Object.keys(reportData.by_state).length > 0 && (
+                <span className="text-[var(--text-muted)]">
+                  By state:{' '}
+                  {Object.entries(reportData.by_state).map(([st, amt]) => `${st}: ₹${parseFloat(amt).toLocaleString('en-IN')}`).join(' · ')}
+                </span>
+              )}
+            </div>
+            <table className="w-full text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)]/70 text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
+                <tr>
+                  <th className="px-5 py-4">Employee</th>
+                  <th className="px-5 py-4">Work State</th>
+                  <th className="px-5 py-4">Gross Salary</th>
+                  <th className="px-5 py-4">Professional Tax</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(!reportData.lines || reportData.lines.length === 0) ? (
+                  <tr><td colSpan="4" className="px-5 py-10 text-center text-[var(--text-muted)]">No PT deductions for this cycle.</td></tr>
+                ) : (
+                  reportData.lines.map((r, i) => (
+                    <tr key={i} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition-colors">
+                      <td className="px-5 py-4 font-medium text-[var(--text-primary)]">
+                        <p className="font-semibold">{r.employee_name}</p>
+                        <span className="text-xs text-[var(--text-muted)] font-mono">{r.employee_code}</span>
+                      </td>
+                      <td className="px-5 py-4 text-[var(--text-primary)]">{r.work_state}</td>
+                      <td className="px-5 py-4 text-[var(--text-primary)]">₹{parseFloat(r.gross_salary || 0).toLocaleString('en-IN')}</td>
+                      <td className="px-5 py-4 font-bold text-[var(--text-primary)]">₹{parseFloat(r.professional_tax || 0).toLocaleString('en-IN')}</td>
                     </tr>
                   ))
                 )}
