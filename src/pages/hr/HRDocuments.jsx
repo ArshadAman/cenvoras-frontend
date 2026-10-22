@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import useEscKey from "../../hooks/useEscStack";
+import { openHrDocument } from "../../utils/hrDocuments";
 
 function DocumentUploadModal({ isOpen, onClose, onSuccess, employees }) {
   useEscKey(onClose, isOpen, 10);
@@ -256,16 +257,15 @@ export default function HRDocuments() {
                         }
                       })()}</td>
                       <td className="px-6 py-4 text-right space-x-2">
-                        {(doc.file_url || doc.file) && (
-                          <a
-                            href={doc.file_url || doc.file}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        {(doc.file_url || doc.file || doc.id) && (
+                          <button
+                            type="button"
+                            onClick={() => openHrDocument(doc).catch(() => toast.error('Could not open document'))}
                             className="p-1.5 rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 transition inline-flex items-center"
                             title="Download / View"
                           >
                             <DocumentArrowDownIcon className="w-4 h-4" />
-                          </a>
+                          </button>
                         )}
                         <button
                           onClick={() => handleDelete(doc.id)}

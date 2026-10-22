@@ -156,6 +156,7 @@ export const hrApi = {
     const isForm = typeof FormData !== 'undefined' && data instanceof FormData;
     return api.post('/hr/documents/', data, isForm ? { headers: { 'Content-Type': undefined } } : undefined);
   },
+  downloadDocument: (id) => api.get(`/hr/documents/${id}/download/`, { responseType: 'blob' }),
   deleteDocument: (id) => api.delete(`/hr/documents/${id}/`),
 
   // HRMS Settings
