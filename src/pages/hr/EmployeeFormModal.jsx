@@ -10,6 +10,7 @@ import SalaryBreakdownCalculator from '../../components/hr/SalaryBreakdownCalcul
 import { indianStates, getGSTStateCode } from '../../utils/indiaData';
 import useEscKey from '../../hooks/useEscStack';
 import { resolveCompanyWorkStateFromProfile } from '../../utils/companyState';
+import { openHrDocument } from '../../utils/hrDocuments';
 
 function resolveCompanyWorkState(profileData) {
   return resolveCompanyWorkStateFromProfile(profileData, indianStates, getGSTStateCode);
@@ -740,14 +741,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <div className="flex justify-between items-center">
                   <label className={labelCls + ' mb-0'}>Aadhaar Card (PDF / Image)</label>
                   {employee?.kyc_documents?.find(d => d.document_type === 'aadhaar') && (
-                    <a
-                      href={employee.kyc_documents.find(d => d.document_type === 'aadhaar').file_url}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => openHrDocument(employee.kyc_documents.find(d => d.document_type === 'aadhaar')).catch(() => toast.error('Could not open document'))}
                       className="text-xs text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
-                    </a>
+                    </button>
                   )}
                 </div>
                 <input
@@ -766,14 +766,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <div className="flex justify-between items-center">
                   <label className={labelCls + ' mb-0'}>PAN Card (PDF / Image)</label>
                   {employee?.kyc_documents?.find(d => d.document_type === 'pan') && (
-                    <a
-                      href={employee.kyc_documents.find(d => d.document_type === 'pan').file_url}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => openHrDocument(employee.kyc_documents.find(d => d.document_type === 'pan')).catch(() => toast.error('Could not open document'))}
                       className="text-xs text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
-                    </a>
+                    </button>
                   )}
                 </div>
                 <input
@@ -792,14 +791,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 <div className="flex justify-between items-center">
                   <label className={labelCls + ' mb-0'}>10th Marksheet / Education Certificate (PDF / Image)</label>
                   {employee?.kyc_documents?.find(d => d.document_type === 'marksheet_10th') && (
-                    <a
-                      href={employee.kyc_documents.find(d => d.document_type === 'marksheet_10th').file_url}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => openHrDocument(employee.kyc_documents.find(d => d.document_type === 'marksheet_10th')).catch(() => toast.error('Could not open document'))}
                       className="text-xs text-[var(--status-success)] bg-[var(--status-success)]/15 border border-[var(--status-success)]/30 px-2 py-0.5 rounded hover:underline"
                     >
                       ✓ Previously Uploaded (View)
-                    </a>
+                    </button>
                   )}
                 </div>
                 <input
