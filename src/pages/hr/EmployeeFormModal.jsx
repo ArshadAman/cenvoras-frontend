@@ -9,20 +9,10 @@ import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import SalaryBreakdownCalculator from '../../components/hr/SalaryBreakdownCalculator';
 import { indianStates, getGSTStateCode } from '../../utils/indiaData';
 import useEscKey from '../../hooks/useEscStack';
+import { resolveCompanyWorkStateFromProfile } from '../../utils/companyState';
 
-function resolveCompanyWorkState(profileState) {
-  if (!profileState) return 'Karnataka';
-  const raw = String(profileState).trim();
-  if (!raw) return 'Karnataka';
-  // Already a full state name used by PT slabs
-  const byLabel = indianStates.find((s) => s.label.toLowerCase() === raw.toLowerCase());
-  if (byLabel) return byLabel.label;
-  const code = getGSTStateCode(raw);
-  if (code) {
-    const byCode = indianStates.find((s) => getGSTStateCode(s.value) === code || getGSTStateCode(s.label) === code);
-    if (byCode) return byCode.label;
-  }
-  return raw;
+function resolveCompanyWorkState(profileData) {
+  return resolveCompanyWorkStateFromProfile(profileData, indianStates, getGSTStateCode);
 }
 
 const EMPTY_FORM = {
@@ -39,6 +29,8 @@ const EMPTY_FORM = {
   employment_type: 'full_time',
   contract_fee: '',
   work_state: '',
+  pt_exempt_disability: false,
+  pt_exempt_armed_forces: false,
   status: 'active',
   department_id: '',
   designation_id: '',
@@ -79,7 +71,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     staleTime: 60_000,
   });
   const companyWorkState = useMemo(
-    () => resolveCompanyWorkState(profileData?.profile?.state || profileData?.billing_profile?.state),
+    () => resolveCompanyWorkState(profileData),
     [profileData]
   );
 
@@ -139,6 +131,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         employment_type: employee.employment_type || 'full_time',
         contract_fee: employee.contract_fee || '',
         work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
+        pt_exempt_disability: !!employee.pt_exempt_disability,
+        pt_exempt_armed_forces: !!employee.pt_exempt_armed_forces,
         status: employee.status || 'active',
         department_id: employee.department || '',
         designation_id: employee.designation || '',
@@ -162,6 +156,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           monthly_ctc: currentCtc > 0 ? currentCtc : Number(employee.salary_details?.monthly_ctc || 50000),
           tax_regime: employee.tax_regime || 'new',
           work_state: employee.work_state || employee.work_state_resolved || employee.salary_details?.work_state_resolved || companyWorkState,
+        pt_exempt_disability: !!employee.pt_exempt_disability,
+        pt_exempt_armed_forces: !!employee.pt_exempt_armed_forces,
           components: existingComponents,
           basic_pct: employee.salary_details?.basic_pct != null
             ? Number(employee.salary_details.basic_pct)
@@ -324,6 +320,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         employment_type: formData.employment_type,
         contract_fee: isContract && formData.contract_fee ? parseFloat(formData.contract_fee) : null,
         work_state: formData.work_state,
+        pt_exempt_disability: !!formData.pt_exempt_disability,
+        pt_exempt_armed_forces: !!formData.pt_exempt_armed_forces,
         status: formData.status,
         department: formData.department_id || null,
         designation: formData.designation_id || null,
@@ -659,6 +657,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           {/* TAB 3: STATUTORY */}
           {activeTab === 'statutory' && (
             <div className="space-y-4">
+              <div className="flex flex-wrap gap-6 text-sm text-[var(--text-secondary)]">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={!!formData.pt_exempt_disability}
+                    onChange={(e) => setFormData((p) => ({ ...p, pt_exempt_disability: e.target.checked }))} />
+                  PT exempt: 40%+ disability
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={!!formData.pt_exempt_armed_forces}
+                    onChange={(e) => setFormData((p) => ({ ...p, pt_exempt_armed_forces: e.target.checked }))} />
+                  PT exempt: armed forces
+                </label>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>PAN Number</label>

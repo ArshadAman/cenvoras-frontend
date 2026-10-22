@@ -75,6 +75,11 @@ export default function SalaryBreakdownCalculator({
   const [annualCtc, setAnnualCtc] = useState(Math.round(startCtc * 12 * 100) / 100);
   const [taxRegime, setTaxRegime] = useState(initialTaxRegime || 'new');
   const [workState, setWorkState] = useState(initialWorkState || 'Karnataka');
+  const workStateTouched = useRef(false);
+  // Company state can arrive after mount (profile query); follow it until the user picks a state.
+  useEffect(() => {
+    if (!workStateTouched.current && initialWorkState) setWorkState(initialWorkState);
+  }, [initialWorkState]);
   
   // Basic pay configuration (Wage Code: typically ≥50%; UI allows 40–85)
   const [basicPct, setBasicPct] = useState(startPcts.basicPct);
@@ -560,7 +565,7 @@ export default function SalaryBreakdownCalculator({
               </label>
               <select
                 value={workState}
-                onChange={(e) => setWorkState(e.target.value)}
+                onChange={(e) => { workStateTouched.current = true; setWorkState(e.target.value); }}
                 className="w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               >
                 {INDIAN_STATES.map((st) => (
