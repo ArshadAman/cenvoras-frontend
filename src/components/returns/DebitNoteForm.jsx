@@ -8,6 +8,7 @@ import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getTodayKolkata } from '../../utils/date';
 
 export default function DebitNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -146,7 +147,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
     }
 
     const payload = {
-      date: new Date().toLocaleDateString('sv-SE'),
+      date: getTodayKolkata(),
       original_bill: originalBillId,
       vendor_name: vendorName,
       vendor_gstin: vendorGstin,

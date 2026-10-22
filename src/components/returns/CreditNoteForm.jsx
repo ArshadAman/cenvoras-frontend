@@ -7,6 +7,7 @@ import { createCreditNote } from "../../api/gst";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getTodayKolkata } from '../../utils/date';
 
 export default function CreditNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -100,7 +101,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     const totalAmt = Math.round(itemsToReturn.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
 
     const payload = {
-      date: new Date().toLocaleDateString('sv-SE'),
+      date: getTodayKolkata(),
       customer: selectedCustomer,
       original_invoice: selectedInvoiceId,
       reason,
