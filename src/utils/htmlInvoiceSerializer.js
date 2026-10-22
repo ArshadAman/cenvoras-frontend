@@ -103,8 +103,8 @@ export function serializeInvoiceHtml(element) {
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
-      padding-top: 4mm !important;
-      /* Reserve room for pinned footer so it never covers bank/totals */
+      /* Flush letterhead to top; reserve room for pinned footer */
+      padding-top: 0 !important;
       padding-bottom: 88mm !important;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
@@ -130,9 +130,18 @@ export function serializeInvoiceHtml(element) {
     .invoice-continuation-header {
       display: table-row !important;
     }
-    .invoice-continuation-header > td > div {
+    .invoice-continuation-header > td {
+      padding: 0 !important;
+      border: none !important;
+    }
+    /* Classic letterhead full-bleed (cancels sheet 10mm horizontal padding) */
+    .invoice-continuation-header > td > div,
+    .invoice-continuation-letterhead-classic {
       margin-top: 0 !important;
-      padding-top: 4mm !important;
+      margin-left: -10mm !important;
+      margin-right: -10mm !important;
+      padding-left: 10mm !important;
+      padding-right: 10mm !important;
     }
     /* Bank + totals (+ amount in words): never split across pages */
     .invoice-totals-block {
@@ -144,8 +153,8 @@ export function serializeInvoiceHtml(element) {
     .invoice-page-footer {
       position: absolute !important;
       bottom: 4mm !important;
-      left: 0 !important;
-      right: 0 !important;
+      left: 10mm !important;
+      right: 10mm !important;
       margin-top: 0 !important;
       break-inside: avoid !important;
       page-break-inside: avoid !important;
