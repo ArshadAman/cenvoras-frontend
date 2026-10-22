@@ -61,14 +61,14 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   });
   sheets.forEach((el) => {
     el.style.position = 'relative';
-    el.style.paddingTop = '4mm';
+    el.style.paddingTop = '0';
     el.style.paddingBottom = '88mm';
   });
   footers.forEach((el) => {
     el.style.position = 'absolute';
     el.style.bottom = '4mm';
-    el.style.left = '0';
-    el.style.right = '0';
+    el.style.left = '10mm';
+    el.style.right = '10mm';
     el.style.marginTop = '0';
   });
 
@@ -158,7 +158,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             sheet.style.margin = '0 auto';
             sheet.style.boxShadow = 'none';
             sheet.style.position = 'relative';
-            sheet.style.paddingTop = '4mm';
+            sheet.style.paddingTop = '0';
             sheet.style.paddingBottom = '88mm';
           });
         }
@@ -172,8 +172,8 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         clonedDoc.querySelectorAll('.invoice-page-footer').forEach((el) => {
           el.style.position = 'absolute';
           el.style.bottom = '4mm';
-          el.style.left = '0';
-          el.style.right = '0';
+          el.style.left = '10mm';
+          el.style.right = '10mm';
           el.style.marginTop = '0';
         });
         clonedDoc.querySelectorAll('.invoice-totals-block').forEach((el) => {
@@ -254,13 +254,12 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     // -------------------------------------------------------------
     const scaleFactor = canvas.width / (unscaledWidth || 1);
 
-    // Safe insets (mm → DOM px via canvas width / A4 width)
-    const topInsetDom = 8 * (unscaledWidth / pdfWidthMm);
+    // Bottom inset only — letterhead is flush to the page top (seamless)
     const bottomInsetDom = 10 * (unscaledWidth / pdfWidthMm);
 
-    // Page 2+ content height accounts for stamped letterhead + column header + top inset
+    // Page 2+ content height accounts for stamped letterhead + column header
     const stampedHeaderDomHeight =
-      topInsetDom + letterheadDomHeight + (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) + 4;
+      letterheadDomHeight + (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) + 4;
     const page1ContentDomHeight = pageCanvasHeight / scaleFactor - bottomInsetDom;
     const continuationContentDomHeight = Math.max(
       80,
@@ -297,10 +296,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       let drawOffsetY = 0;
 
       if (pageIndex > 0) {
-        // Top inset so continuation letterhead is not flush to the paper edge
-        drawOffsetY = Math.round(topInsetDom * scaleFactor);
-
-        // Stamp seller letterhead from the top of the captured canvas (onclone made it visible)
+        // Stamp seller letterhead flush to the page top (seamless)
         const lhCanvasH = Math.round(letterheadDomHeight * scaleFactor);
         if (lhCanvasH > 0) {
           ctx.drawImage(
@@ -337,9 +333,6 @@ export async function generatePixelPerfectPDF(element, options = {}) {
         }
 
         drawOffsetY += Math.round(2 * scaleFactor);
-      } else {
-        // Page 1 top inset
-        drawOffsetY = Math.round(Math.min(topInsetDom, 4) * scaleFactor);
       }
 
       ctx.drawImage(

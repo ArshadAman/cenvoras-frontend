@@ -182,13 +182,14 @@ export default function InvoiceContinuationHeader({
       </div>
     );
   } else {
-    // classic (default)
+    // classic (default) — full-bleed gray band (cancels sheet 10mm padding), text re-inset
     inner = (
       <div
+        className="invoice-continuation-letterhead-classic"
         style={{
           backgroundColor: '#ececec',
-          padding: '0 0 2mm 0',
-          margin: 0,
+          margin: '0 -10mm 0 -10mm',
+          padding: '6mm 10mm 3mm 10mm',
           borderBottomLeftRadius: '120% 16px',
           borderBottomRightRadius: '120% 16px',
         }}

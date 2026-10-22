@@ -510,9 +510,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           max-width: 100% !important;
           min-height: 100% !important;
           margin: 0 !important;
-          /* Reserve room for pinned footer so it never covers bank/totals */
+          /* Flush letterhead to top; reserve room for pinned footer */
+          padding-top: 0 !important;
           padding-bottom: 88mm !important;
-          padding-top: 4mm !important;
           box-sizing: border-box !important;
           background: #ffffff !important;
         }
@@ -527,9 +527,18 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         .invoice-continuation-header {
           display: table-row !important;
         }
-        .invoice-continuation-header > td > div {
+        .invoice-continuation-header > td {
+          padding: 0 !important;
+          border: none !important;
+        }
+        /* Classic letterhead full-bleed (cancels sheet 10mm horizontal padding) */
+        .invoice-continuation-header > td > div,
+        .invoice-continuation-letterhead-classic {
           margin-top: 0 !important;
-          padding-top: 4mm !important;
+          margin-left: -10mm !important;
+          margin-right: -10mm !important;
+          padding-left: 10mm !important;
+          padding-right: 10mm !important;
         }
         /* Bank + totals (+ amount in words): never split across pages */
         .invoice-totals-block {
@@ -538,12 +547,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           break-before: auto !important;
           page-break-before: auto !important;
         }
-        /* Terms / signatory / Made with Cenvora — pin to bottom of last page without overlapping totals */
+        /* Terms / signatory / Made with Cenvora — pin to bottom; match Classic 10mm body inset */
         .invoice-page-footer {
           position: absolute !important;
           bottom: 4mm !important;
-          left: 0 !important;
-          right: 0 !important;
+          left: 10mm !important;
+          right: 10mm !important;
           margin-top: 0 !important;
           break-inside: avoid !important;
           page-break-inside: avoid !important;
