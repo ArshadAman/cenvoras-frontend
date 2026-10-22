@@ -59,11 +59,45 @@ const InvoicePreview = forwardRef(({
   const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
   const challanNumber = invoice.challan_number || invoice.delivery_challan_number || '';
   const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
+  const formatMetaDate = (value) => {
+    if (!value) return '';
+    try {
+      return new Date(value).toLocaleDateString('en-IN');
+    } catch {
+      return String(value);
+    }
+  };
+  const challanEntries = (() => {
+    const raw = invoice.challans || invoice.delivery_challans;
+    if (Array.isArray(raw) && raw.length > 0) {
+      return raw
+        .map((c) => {
+          const num = c?.number || c?.challan_number || c?.delivery_challan_number || '';
+          const date = formatMetaDate(c?.date || c?.challan_date);
+          if (!num && !date) return null;
+          return date ? `${num} - ${date}` : String(num);
+        })
+        .filter(Boolean);
+    }
+    if (challanNumber) {
+      return [challanDate ? `${challanNumber} - ${challanDate}` : challanNumber];
+    }
+    return [];
+  })();
+  const challanListText = challanEntries.join(' ; ');
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const customerAddress = billingAddress;
   const hasSeparateShipping = Boolean(
     shippingAddress && shippingAddress.trim() !== billingAddress.trim()
   );
+  const shippingLines = hasSeparateShipping
+    ? shippingAddress.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+    : [];
+  const headerIdFontSize = (typography.smallSize || 9) + 1;
+  const sectionHeadingSize = (typography.sectionTitleSize || 12) + 2;
+  const addressBodySize = (typography.bodySize || 11) + 1;
+  const customerNameSize = (typography.bodySize || 11) + 1;
+  const docTitleSize = (typography.invoiceTitleSize || 20) + 2;
   
   // Tax type determination
   const taxType = getTaxType(invoice, businessInfo);
@@ -218,12 +252,12 @@ const InvoicePreview = forwardRef(({
       
       {/* Header Section — screen/preview; print uses InvoicePrintShell thead instead */}
       <div
-        className="mb-4 invoice-first-page-header"
+        className="mb-2 invoice-first-page-header"
         style={{
           backgroundColor: '#ececec',
           /* Horizontal bleed only — top is already flush (sheet has no top padding). */
           margin: '0 -10mm 0 -10mm',
-          padding: '5mm 8mm 5mm 8mm',
+          padding: '2mm 8mm 5mm 8mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
         }}
@@ -234,43 +268,68 @@ const InvoicePreview = forwardRef(({
               {companyName}
             </h1>
             <div className="space-y-0.5" style={{ color: '#1f2937', fontSize: `${typography.smallSize || 9}px` }}>
-              {companyAddress && <p className="whitespace-pre-line">{companyAddress}</p>}
+              {companyAddress && <p className="whitespace-pre-line font-normal">{companyAddress}</p>}
               {(companyPhone || companyEmail) && (
-                <p>
+                <p className="font-normal">
                   {companyPhone ? `Ph- ${companyPhone}` : ''}
                   {companyPhone && companyEmail ? ', ' : ''}
                   {companyEmail ? `email-${companyEmail}` : ''}
                 </p>
               )}
-              {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}</p>}
-              {companyPAN && <p className="font-medium">PAN: {companyPAN}</p>}
-              {sections.showGEMID && companyGEM && <p className="font-medium">GEM ID- {companyGEM}</p>}
-              {companyDL && <p className="font-medium">DL No- {companyDL}</p>}
+              {sections.showGST && companyGST && (
+                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>
+                  {getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}
+                </p>
+              )}
+              {companyPAN && (
+                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>PAN: {companyPAN}</p>
+              )}
+              {sections.showGEMID && companyGEM && (
+                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>GEM ID- {companyGEM}</p>
+              )}
+              {companyDL && (
+                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>DL No- {companyDL}</p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Address Section */}
-      <div className="flex justify-between items-start mb-5 gap-8">
+      <div className="flex justify-between items-start mb-3 gap-8">
         <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
-          <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+          <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
             Billing Address
           </div>
-          <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
-            <div className="font-medium">{customerName}</div>
-            {billingAddress && <p className="whitespace-pre-line">{billingAddress}</p>}
-            {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
+          <div className="space-y-0.5" style={{ color: colors.text }}>
+            <div className="font-bold" style={{ fontSize: `${customerNameSize}px` }}>{customerName}</div>
+            {billingAddress && (
+              <p className="whitespace-pre-line font-normal" style={{ fontSize: `${addressBodySize}px` }}>{billingAddress}</p>
+            )}
+            {customerGST && (
+              <p className="font-normal" style={{ fontSize: `${addressBodySize}px` }}>
+                {getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}
+              </p>
+            )}
           </div>
         </div>
 
         {hasSeparateShipping ? (
           <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
-            <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+            <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
               Shipping Address
             </div>
-            <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
-              <div className="whitespace-pre-line">{shippingAddress}</div>
+            <div className="space-y-0.5" style={{ color: colors.text }}>
+              {shippingLines.length > 0 ? (
+                <>
+                  <div className="font-bold" style={{ fontSize: `${customerNameSize}px` }}>{shippingLines[0]}</div>
+                  {shippingLines.slice(1).map((line, i) => (
+                    <p key={i} className="font-normal" style={{ fontSize: `${addressBodySize}px` }}>{line}</p>
+                  ))}
+                </>
+              ) : (
+                <div className="whitespace-pre-line font-normal" style={{ fontSize: `${addressBodySize}px` }}>{shippingAddress}</div>
+              )}
             </div>
           </div>
         ) : null}
@@ -335,7 +394,7 @@ const InvoicePreview = forwardRef(({
         <h2 
           className="font-bold tracking-wide"
           style={{ 
-            fontSize: `${typography.invoiceTitleSize || 20}px`,
+            fontSize: `${docTitleSize}px`,
             color: '#111827',
             letterSpacing: '1px',
           }}
@@ -350,59 +409,84 @@ const InvoicePreview = forwardRef(({
       </div>
       
       {/* Invoice / Challan Details Row */}
-      <div className="flex justify-between mb-4 text-sm">
-        <div className="space-y-1">
-          <div>
-            <span className="font-medium">{isDeliveryChallan ? 'Challan #:' : 'Invoice #:'}</span>{' '}
-            <span className="font-bold" style={{ color: colors.primary }}>
-              {isDeliveryChallan ? (challanNumber || invoiceNumber) : invoiceNumber}
-            </span>
-          </div>
-          <div>
-            <span className="font-medium">{isDeliveryChallan ? 'Challan Date:' : 'Date:'}</span>{' '}
-            {isDeliveryChallan ? (challanDate || invoiceDate) : invoiceDate}
-          </div>
-          {isDeliveryChallan ? (
-            (invoice.sales_order_number || poNumber) && (
+      {isDeliveryChallan ? (
+        <div className="flex justify-between mb-4 text-sm">
+          <div className="space-y-1">
+            <div>
+              <span className="font-medium">Challan #:</span>{' '}
+              <span className="font-bold" style={{ color: colors.primary }}>
+                {challanNumber || invoiceNumber}
+              </span>
+            </div>
+            <div>
+              <span className="font-medium">Challan Date:</span>{' '}
+              {challanDate || invoiceDate}
+            </div>
+            {(invoice.sales_order_number || poNumber) && (
               <div>
                 <span className="font-medium">Ref Order:</span>{' '}
                 {invoice.sales_order_number || poNumber}
               </div>
-            )
-          ) : (
-            <>
-              {poNumber && <div><span className="font-medium">PO:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
-              {challanNumber && <div><span className="font-medium">Challan:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
-            </>
-          )}
+            )}
+          </div>
+          <div className="text-right space-y-1">
+            {invoice.vehicle_number && (
+              <div>
+                <span className="font-medium">Vehicle No:</span>{' '}
+                <span className="font-mono font-bold text-gray-800">{invoice.vehicle_number}</span>
+              </div>
+            )}
+            {invoice.transport_mode && (
+              <div>
+                <span className="font-medium">Transport Mode:</span> {invoice.transport_mode}
+              </div>
+            )}
+            {invoice.transporter_name && (
+              <div>
+                <span className="font-medium">Transporter:</span> {invoice.transporter_name}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="text-right space-y-1">
-          {isDeliveryChallan ? (
-            <>
-              {invoice.vehicle_number && (
-                <div>
-                  <span className="font-medium">Vehicle No:</span>{' '}
-                  <span className="font-mono font-bold text-gray-800">{invoice.vehicle_number}</span>
-                </div>
-              )}
-              {invoice.transport_mode && (
-                <div>
-                  <span className="font-medium">Transport Mode:</span> {invoice.transport_mode}
-                </div>
-              )}
-              {invoice.transporter_name && (
-                <div>
-                  <span className="font-medium">Transporter:</span> {invoice.transporter_name}
-                </div>
-              )}
-            </>
-          ) : (
-            sections.showDueDate && dueDate && (
-              <div><span className="font-medium">Due Date:</span> {dueDate}</div>
-            )
-          )}
+      ) : (
+        <div className="mb-4 text-sm space-y-1">
+          <div className="flex justify-between gap-4 items-baseline">
+            <div>
+              <span className="font-medium">Invoice No. :</span>{' '}
+              <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span>
+            </div>
+            <div className="text-right whitespace-nowrap">
+              <span className="font-medium">Date:</span> {invoiceDate}
+            </div>
+          </div>
+          {poNumber ? (
+            <div className="flex justify-between gap-4 items-baseline">
+              <div>
+                <span className="font-medium">PO No. :</span>{' '}
+                <span className="font-bold" style={{ color: colors.primary }}>{poNumber}</span>
+              </div>
+              <div className="text-right whitespace-nowrap">
+                <span className="font-medium">Date:</span> {poDate || '—'}
+              </div>
+            </div>
+          ) : null}
+          {challanListText ? (
+            <div className="flex justify-between gap-4 items-baseline">
+              <div className="min-w-0 flex-1">
+                <span className="font-medium">Challan No. :</span>{' '}
+                <span>{challanListText}</span>
+              </div>
+            </div>
+          ) : null}
+          {sections.showDueDate && dueDate ? (
+            <div className="flex justify-end">
+              <div className="text-right whitespace-nowrap">
+                <span className="font-medium">Due Date:</span> {dueDate}
+              </div>
+            </div>
+          ) : null}
         </div>
-      </div>
+      )}
 
       <div className="mb-4" style={{ height: '7px', backgroundColor: '#ece8e8', borderRadius: '999px' }} />
       
@@ -431,7 +515,7 @@ const InvoicePreview = forwardRef(({
                     className="px-3 py-2 font-bold border"
                     style={{ 
                       width: getColumnWidth(col.id),
-                      textAlign: col.align || 'left',
+                      textAlign: 'center',
                       borderColor: colors.tableBorder,
                       fontSize: `${typography.smallSize || 10}px`,
                       whiteSpace: isDesc ? 'normal' : 'nowrap',
@@ -574,7 +658,7 @@ const InvoicePreview = forwardRef(({
           {sections.showBankDetails && hasBankDetails && (
             <div className="flex-1 mr-8">
               <h4 
-                className="font-bold mb-2 pb-1"
+                className="font-bold mb-1 pb-0.5"
                 style={{ 
                   color: colors.secondary,
                   fontSize: `${typography.sectionTitleSize || 12}px`,
@@ -620,45 +704,45 @@ const InvoicePreview = forwardRef(({
             <table className="w-full border-collapse text-sm">
               <tbody>
                 <tr>
-                  <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                  <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
                     Untaxed Amount
                   </td>
-                  <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>
+                  <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
                     {getCurrencySymbol()}{subtotal.toFixed(2)}
                   </td>
                 </tr>
                 {isIGST ? (
                   <tr>
-                    <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
-                    <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
+                    <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
+                    <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
                   </tr>
                 ) : (
                   <>
                     <tr>
-                      <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
-                      <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                      <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
+                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
-                      <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                      <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
+                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
                     </tr>
                   </>
                 )}
                 {roundOff !== 0 && (
                   <tr>
-                    <td className="px-3 py-1.5 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                    <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
                       Round Off
                     </td>
-                    <td className="px-3 py-1.5 border text-right" style={{ borderColor: colors.tableBorder }}>
+                    <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
                       {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
                     </td>
                   </tr>
                 )}
                 <tr style={totalRowStyle}>
-                  <td className="px-3 py-2 border font-bold">
+                  <td className="px-3 py-1.5 border font-bold">
                     Grand Total
                   </td>
-                  <td className="px-3 py-2 border text-right font-bold text-lg">
+                  <td className="px-3 py-1.5 border text-right font-bold text-lg">
                     {getCurrencySymbol()}{finalTotal.toFixed(2)}
                   </td>
                 </tr>
@@ -667,7 +751,7 @@ const InvoicePreview = forwardRef(({
             
             {/* Amount in Words */}
             {sections.showAmountInWords && (
-              <div className="mt-2 text-sm text-right" style={{ color: colors.lightText }}>
+              <div className="mt-1 text-sm text-right" style={{ color: colors.lightText }}>
                 <span className="font-medium">Total amount in words:</span>
                 <br />
                 <span className="font-medium italic" style={{ color: colors.text }}>
@@ -681,11 +765,11 @@ const InvoicePreview = forwardRef(({
       
       {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
       <div className="mt-auto invoice-page-footer">
-        <div className="flex justify-between gap-6 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
+        <div className="flex justify-between gap-4 mt-2 pt-2" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
           {sections.showTerms && content.termsAndConditions?.length > 0 && (
             <div className="flex-1">
               <h4
-                className="font-bold mb-2"
+                className="font-bold mb-1"
                 style={{
                   color: colors.secondary,
                   fontSize: `${typography.sectionTitleSize || 12}px`,
@@ -702,11 +786,8 @@ const InvoicePreview = forwardRef(({
           )}
 
           <div className="w-48 text-center ml-auto">
-            <p className="text-xs font-medium mb-2" style={{ color: colors.secondary }}>
-              For {companyName}
-            </p>
             <div
-              className="border-b-2 mb-2 h-16"
+              className="border-b-2 mb-1 h-10"
               style={{ borderColor: colors.text }}
             />
             <p className="text-xs font-medium" style={{ color: colors.secondary }}>
@@ -717,7 +798,7 @@ const InvoicePreview = forwardRef(({
 
         {content.footerNote && (
           <div
-            className="text-center mt-6 pt-3 text-xs"
+            className="text-center mt-3 pt-2 text-xs"
             style={{
               color: colors.lightText,
               borderTop: `1px dashed ${colors.tableBorder}`,
@@ -734,7 +815,7 @@ const InvoicePreview = forwardRef(({
         </div>
 
         {showWatermarkFooter && (
-          <div className="mt-2 text-center text-xs text-gray-400 print-watermark">
+          <div className="mt-1 text-center text-xs text-gray-400 print-watermark">
             Made with Cenvora: Built for Modern Businesses<br />
             <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
           </div>

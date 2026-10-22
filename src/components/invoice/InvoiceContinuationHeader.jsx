@@ -33,16 +33,17 @@ export default function InvoiceContinuationHeader({
     .filter(Boolean)
     .join(', ');
 
+  const idLineStyle = { fontWeight: 700, fontSize: '10px' };
   const taxLines = (
     <>
       {companyGST ? (
-        <div style={{ fontWeight: 500 }}>
+        <div style={idLineStyle}>
           {gstLabel}: {companyGST}
         </div>
       ) : null}
-      {companyPAN ? <div style={{ fontWeight: 500 }}>PAN: {companyPAN}</div> : null}
-      {companyGEM ? <div style={{ fontWeight: 500 }}>GEM ID- {companyGEM}</div> : null}
-      {companyDL ? <div style={{ fontWeight: 500 }}>DL No- {companyDL}</div> : null}
+      {companyPAN ? <div style={idLineStyle}>PAN: {companyPAN}</div> : null}
+      {companyGEM ? <div style={idLineStyle}>GEM ID- {companyGEM}</div> : null}
+      {companyDL ? <div style={idLineStyle}>DL No- {companyDL}</div> : null}
     </>
   );
 
@@ -155,7 +156,7 @@ export default function InvoiceContinuationHeader({
           boxSizing: 'border-box',
           backgroundColor: '#ececec',
           margin: 0,
-          padding: '8mm 10mm 5mm 10mm',
+          padding: '2mm 8mm 5mm 8mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
         }}
@@ -173,7 +174,7 @@ export default function InvoiceContinuationHeader({
             >
               {companyName}
             </div>
-            <div style={{ color: '#1f2937', fontSize: '9px', lineHeight: 1.35 }}>
+            <div style={{ color: '#1f2937', fontSize: '9px', lineHeight: 1.35, fontWeight: 400 }}>
               {companyAddress ? (
                 <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
               ) : null}
