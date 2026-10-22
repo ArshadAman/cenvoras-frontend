@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
 import { downloadCAAuditPack } from '../../api/gst';
-import { turnoverGauge } from '../../utils/turnoverGauge';
+import { gstShieldView } from '../../utils/gstShieldView';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../api/api';
 import {
   ShieldCheckIcon,
   DocumentArrowDownIcon,
@@ -27,6 +29,13 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
   const [modalOpen, setModalOpen] = useState(false);
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [hoveredFormat, setHoveredFormat] = useState(null);
+  const [period, setPeriod] = useState('month');
+  const { data: fyData } = useQuery({
+    queryKey: ['gst-shield', 'fy'],
+    queryFn: () => api.get('/analytics/gst-shield/?period=fy').then((r) => r.data),
+    enabled: period === 'fy',
+    staleTime: 60_000,
+  });
 
   // Date filters for CA Pack (IST — avoid UTC “yesterday”)
   const todayStr = getTodayKolkata();
@@ -44,7 +53,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
     );
   }
 
-  const gst = data || {};
+  const gst = (period === 'fy' && fyData) ? fyData : (data || {});
   
   const formatCurrency = (value) => {
     if (!value || isNaN(value)) return `${getCurrencySymbol()}0`;
@@ -55,19 +64,11 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
     return `${getCurrencySymbol()}${num.toLocaleString('en-IN')}`;
   };
 
-  const turnoverLimit = Number(gst.turnover_limit) > 0 ? Number(gst.turnover_limit) : 4000000;
-  // Compute from raw figures: the API's turnover_percent is rounded to 1 dp and can be negative.
-  const gauge = turnoverGauge(gst.total_turnover, turnoverLimit);
-  const isApproachingLimit = gauge.level !== 'success';
-  const gaugeColor = {
-    success: 'var(--status-success)',
-    warning: 'var(--status-warning)',
-    danger: 'var(--status-danger)',
-  }[gauge.level];
-  const signedTurnover = gauge.isNegative ? `−${formatCurrency(gst.total_turnover)}` : formatCurrency(gst.total_turnover);
+  const view = gstShieldView(gst);
+  const gaugeColor = !view.registered
+    ? { success: 'var(--status-success)', warning: 'var(--status-warning)', danger: 'var(--status-danger)' }[view.gauge.level]
+    : undefined;
 
-  const safeItc = Number(gst.safe_itc || 0);
-  const atRiskItc = Number(gst.at_risk_itc || 0);
   const withheldPool = Number(gst.withheld_pool || 0);
   const defaultersCount = Number(gst.defaulters_count || 0);
 
@@ -101,88 +102,125 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           </button>
         </div>
 
-        {/* Turnover Progress */}
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-xs text-[var(--text-muted)] font-medium">Turnover (This FY)</span>
-            <span className="text-xs font-semibold text-[var(--text-primary)]">
-              {signedTurnover} / {formatCurrency(turnoverLimit)}
-            </span>
-          </div>
-          
-          <div
-            className="relative w-full h-2.5 bg-[var(--border-subtle)] rounded-full overflow-hidden"
-            role="progressbar"
-            aria-label="Turnover against GST registration limit"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(gauge.width)}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${gauge.width}%`, backgroundColor: gaugeColor }}
-            />
-          </div>
-          
-          <div className="flex justify-between items-center mt-1">
-            <span
-              className={`text-xs ${isApproachingLimit ? 'font-medium' : 'text-[var(--text-muted)]'}`}
-              style={isApproachingLimit ? { color: gaugeColor } : undefined}
-            >
-              {gauge.label} of {formatCurrency(turnoverLimit)} limit
-            </span>
-            {isApproachingLimit && (
-              <span className="flex items-center gap-1 text-xs font-medium" style={{ color: gaugeColor }}>
-                <ExclamationTriangleIcon className="w-3 h-3" />
-                {gauge.level === 'danger' ? 'Limit reached' : 'Approaching limit'}
+        {!view.registered ? (
+          <div data-testid="gst-threshold">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-xs text-[var(--text-muted)] font-medium">Turnover (This FY)</span>
+              <span className="text-xs font-semibold text-[var(--text-primary)]">
+                {formatCurrency(view.turnover)} / {formatCurrency(view.threshold)}
               </span>
+            </div>
+            <div
+              className="relative w-full h-2.5 bg-[var(--border-subtle)] rounded-full overflow-hidden"
+              role="progressbar"
+              aria-label="Turnover against GST registration limit"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(view.gauge.width)}
+            >
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${view.gauge.width}%`, backgroundColor: gaugeColor }} />
+            </div>
+            <div className="flex justify-between items-center mt-1 gap-2">
+              <span className="text-xs text-[var(--text-muted)] truncate" title={view.basis}>
+                {view.gauge.label} of {formatCurrency(view.threshold)} registration limit
+              </span>
+              {view.liable && <span className="text-xs font-semibold shrink-0" style={{ color: 'var(--status-danger)' }}>Liable to register</span>}
+            </div>
+            {view.alertText && (
+              <p className="mt-1.5 text-xs font-medium flex items-start gap-1" style={{ color: gaugeColor }}>
+                <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {view.alertText}
+              </p>
+            )}
+            {view.interstateWarning && (
+              <p className="mt-1.5 text-xs font-medium flex items-start gap-1 text-[var(--status-danger)]">
+                <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {view.interstateWarning}
+              </p>
             )}
           </div>
-        </div>
-
-        {/* Monthly GST Core Breakdown (Collected / Paid / Payable) */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-            <div className="text-xs text-[var(--text-muted)] mb-0.5">Collected</div>
-            <div className="text-sm font-bold text-[var(--status-success)] truncate font-mono">
-              {formatCurrency(gst.gst_collected)}
+        ) : (
+          <div className="space-y-2" data-testid="gst-registered">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[var(--text-muted)] font-medium">{view.priorLabel} turnover</span>
+              <span className="font-semibold font-mono text-[var(--text-primary)]">{formatCurrency(view.priorTurnover)}</span>
             </div>
-          </div>
-          <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-            <div className="text-xs text-[var(--text-muted)] mb-0.5">Paid (ITC)</div>
-            <div className="text-sm font-bold text-[var(--accent-primary)] truncate font-mono">
-              {formatCurrency(gst.gst_paid)}
-            </div>
-          </div>
-          <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
-            <div className="text-xs text-[var(--text-muted)] mb-0.5">Payable</div>
-            <div className={`text-sm font-bold truncate font-mono ${gst.gst_payable >= 0 ? 'text-[var(--status-warning)]' : 'text-[var(--status-success)]'}`}>
-              {gst.gst_payable >= 0 ? formatCurrency(gst.gst_payable) : `${formatCurrency(gst.gst_payable)} (Credit)`}
-            </div>
-          </div>
-        </div>
-
-        {/* Smart ITC Protection Strip */}
-        <div className="p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-[var(--text-muted)] font-medium">GSTR-2B Verified ITC</span>
-            <span className="text-[var(--status-success)] font-bold font-mono">{formatCurrency(safeItc)}</span>
-          </div>
-
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-[var(--text-muted)] font-medium">At-Risk (Unfiled by Vendors)</span>
-            <span className="text-[var(--status-danger)] font-bold font-mono">{formatCurrency(atRiskItc)}</span>
-          </div>
-
-          {withheldPool > 0 && (
-            <div className="flex items-center justify-between text-xs pt-1 border-t border-[var(--border-subtle)]">
-              <span className="text-[var(--status-warning)] font-medium flex items-center gap-1">
-                <LockClosedIcon className="w-3 h-3" /> Protected in Bank
+            <div className="flex flex-wrap gap-1.5">
+              {view.checks.map((c) => (
+                <span
+                  key={c.key}
+                  className={`text-[11px] px-2 py-0.5 rounded-md border ${c.ok ? 'bg-[var(--status-success-bg)] border-[var(--status-success-border)] text-[var(--status-success)]' : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'}`}
+                  title={`${c.label} limit ${formatCurrency(c.limit)} (prior-FY turnover)`}
+                >
+                  {c.label} ≤{formatCurrency(c.limit)} {c.ok ? '✓' : '✗'}
+                </span>
+              ))}
+              <span className="text-[11px] px-2 py-0.5 rounded-md border bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                HSN {view.hsnDigits}-digit
               </span>
-              <span className="text-[var(--status-warning)] font-bold font-mono">{formatCurrency(withheldPool)}</span>
             </div>
-          )}
-        </div>
+            {view.eInvoiceWarning && (
+              <p className="text-xs font-medium flex items-start gap-1 text-[var(--status-warning)]">
+                <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {view.eInvoiceWarning}
+              </p>
+            )}
+          </div>
+        )}
+
+        {view.showTaxFigures && (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[var(--text-muted)] font-medium">
+                {period === 'month' ? 'This return period' : 'FY to date'}
+              </span>
+              <div className="inline-flex rounded-lg border border-[var(--border-subtle)] overflow-hidden text-[11px]" role="group" aria-label="GST period">
+                {[['month', 'Month'], ['fy', 'FY']].map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={period === k}
+                    onClick={() => setPeriod(k)}
+                    className={`px-2 py-0.5 ${period === k ? 'bg-[var(--accent-primary)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
+                <div className="text-xs text-[var(--text-muted)] mb-0.5">Collected</div>
+                <div className="text-sm font-bold text-[var(--status-success)] truncate font-mono">{formatCurrency(view.outputTax)}</div>
+              </div>
+              <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
+                <div className="text-xs text-[var(--text-muted)] mb-0.5">ITC</div>
+                <div className="text-sm font-bold text-[var(--accent-primary)] truncate font-mono">{formatCurrency(view.itc)}</div>
+              </div>
+              <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
+                <div className="text-xs text-[var(--text-muted)] mb-0.5">{view.netLabel}</div>
+                <div className={`text-sm font-bold truncate font-mono ${view.net >= 0 ? 'text-[var(--status-warning)]' : 'text-[var(--status-success)]'}`}>
+                  {formatCurrency(view.net)}
+                </div>
+              </div>
+            </div>
+            <div className="p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[var(--text-muted)] font-medium">GSTR-2B Verified ITC</span>
+                <span className="text-[var(--status-success)] font-bold font-mono">{formatCurrency(view.safeItc)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[var(--text-muted)] font-medium">At-Risk (Unfiled by Vendors)</span>
+                <span className="text-[var(--status-danger)] font-bold font-mono">{formatCurrency(view.atRiskItc)}</span>
+              </div>
+              {withheldPool > 0 && (
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-[var(--border-subtle)]">
+                  <span className="text-[var(--status-warning)] font-medium flex items-center gap-1">
+                    <LockClosedIcon className="w-3 h-3" /> Protected in Bank
+                  </span>
+                  <span className="text-[var(--status-warning)] font-bold font-mono">{formatCurrency(withheldPool)}</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {defaultersCount > 0 && (
           <div 
