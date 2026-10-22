@@ -92,6 +92,9 @@ export const downloadCAAuditPack = async (from, to, exportFormat = 'xlsx', repor
 export const getCreditNotes = () =>
   api.get('/billing/credit-notes/').then(res => res.data);
 
+export const getCreditNote = (id) =>
+  api.get(`/billing/credit-notes/${id}/`).then(res => res.data);
+
 export const createCreditNote = (data) =>
   api.post('/billing/credit-notes/', data).then(res => res.data);
 
@@ -100,6 +103,9 @@ export const deleteCreditNote = (id) =>
 
 export const getDebitNotes = () =>
   api.get('/billing/debit-notes/').then(res => res.data);
+
+export const getDebitNote = (id) =>
+  api.get(`/billing/debit-notes/${id}/`).then(res => res.data);
 
 export const createDebitNote = (data) =>
   api.post('/billing/debit-notes/', data).then(res => res.data);
