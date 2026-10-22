@@ -41,10 +41,18 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   const footers = Array.from(element.querySelectorAll('.invoice-page-footer'));
   const firstPagePrev = firstPageHeaders.map((el) => el.style.display);
   const continuationPrev = continuationHeaders.map((el) => el.style.display);
+  const shellContentCells = Array.from(element.querySelectorAll('.invoice-print-shell-row > td'));
   const sheetPrev = sheets.map((el) => ({
     position: el.style.position,
+    padding: el.style.padding,
     paddingBottom: el.style.paddingBottom,
     paddingTop: el.style.paddingTop,
+    overflow: el.style.overflow,
+  }));
+  const shellCellPrev = shellContentCells.map((el) => ({
+    padding: el.style.padding,
+    border: el.style.border,
+    overflow: el.style.overflow,
   }));
   const footerPrev = footers.map((el) => ({
     position: el.style.position,
@@ -61,8 +69,29 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   });
   sheets.forEach((el) => {
     el.style.position = 'relative';
+    // Full shorthand — must clear React's inline padding: 10mm on all sides
+    el.style.padding = '0 0 88mm 0';
     el.style.paddingTop = '0';
+    el.style.paddingRight = '0';
     el.style.paddingBottom = '88mm';
+    el.style.paddingLeft = '0';
+    el.style.overflow = 'visible';
+    el.style.boxSizing = 'border-box';
+  });
+  element.querySelectorAll('.invoice-print-shell').forEach((el) => {
+    el.style.borderCollapse = 'collapse';
+    el.style.borderSpacing = '0';
+    el.style.width = '100%';
+    el.style.margin = '0';
+  });
+  element.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
+    el.style.padding = '0 10mm';
+    el.style.border = 'none';
+    el.style.overflow = 'visible';
+  });
+  element.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
+    el.style.padding = '0';
+    el.style.border = 'none';
   });
   footers.forEach((el) => {
     el.style.position = 'absolute';
@@ -155,11 +184,31 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             sheet.style.webkitTransform = 'none';
             sheet.style.width = '210mm';
             sheet.style.maxWidth = '210mm';
-            sheet.style.margin = '0 auto';
+            sheet.style.margin = '0';
             sheet.style.boxShadow = 'none';
             sheet.style.position = 'relative';
+            sheet.style.padding = '0 0 88mm 0';
             sheet.style.paddingTop = '0';
+            sheet.style.paddingRight = '0';
             sheet.style.paddingBottom = '88mm';
+            sheet.style.paddingLeft = '0';
+            sheet.style.overflow = 'visible';
+            sheet.style.boxSizing = 'border-box';
+          });
+          clonedDoc.querySelectorAll('.invoice-print-shell').forEach((el) => {
+            el.style.borderCollapse = 'collapse';
+            el.style.borderSpacing = '0';
+            el.style.width = '100%';
+            el.style.margin = '0';
+          });
+          clonedDoc.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
+            el.style.padding = '0 10mm';
+            el.style.border = 'none';
+            el.style.overflow = 'visible';
+          });
+          clonedDoc.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
+            el.style.padding = '0';
+            el.style.border = 'none';
           });
         }
 
@@ -197,8 +246,15 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     });
     sheets.forEach((el, i) => {
       el.style.position = sheetPrev[i]?.position || '';
+      el.style.padding = sheetPrev[i]?.padding || '';
       el.style.paddingBottom = sheetPrev[i]?.paddingBottom || '';
       el.style.paddingTop = sheetPrev[i]?.paddingTop || '';
+      el.style.overflow = sheetPrev[i]?.overflow || '';
+    });
+    shellContentCells.forEach((el, i) => {
+      el.style.padding = shellCellPrev[i]?.padding || '';
+      el.style.border = shellCellPrev[i]?.border || '';
+      el.style.overflow = shellCellPrev[i]?.overflow || '';
     });
     footers.forEach((el, i) => {
       el.style.position = footerPrev[i]?.position || '';

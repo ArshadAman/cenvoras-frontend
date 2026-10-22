@@ -182,16 +182,20 @@ export default function InvoiceContinuationHeader({
       </div>
     );
   } else {
-    // classic (default) — full-bleed gray band (cancels sheet 10mm padding), text re-inset
+    // classic (default) — same chrome as .invoice-first-page-header (preview).
+    // Print/PDF zeros .invoice-sheet padding so this band is edge-to-edge (no negative margins).
     inner = (
       <div
         className="invoice-continuation-letterhead-classic"
         style={{
+          display: 'block',
+          width: '100%',
+          boxSizing: 'border-box',
           backgroundColor: '#ececec',
-          margin: '0 -10mm 0 -10mm',
-          padding: '6mm 10mm 3mm 10mm',
-          borderBottomLeftRadius: '120% 16px',
-          borderBottomRightRadius: '120% 16px',
+          margin: 0,
+          padding: '8mm 10mm 5mm 10mm',
+          borderBottomLeftRadius: '120% 28px',
+          borderBottomRightRadius: '120% 28px',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

@@ -488,8 +488,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         }
         .invoice-print-shell,
         .invoice-print-shell > tbody,
-        .invoice-print-shell-row,
-        .invoice-print-shell-row > td {
+        .invoice-print-shell-row {
           break-inside: auto !important;
           page-break-inside: auto !important;
           page-break-before: avoid !important;
@@ -510,11 +509,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           max-width: 100% !important;
           min-height: 100% !important;
           margin: 0 !important;
-          /* Flush letterhead to top; reserve room for pinned footer */
-          padding-top: 0 !important;
-          padding-bottom: 88mm !important;
+          /* Zero outer padding so letterhead is edge-to-edge (preview-seamless).
+             Body inset is applied on the print-shell content cell instead. */
+          padding: 0 0 88mm 0 !important;
           box-sizing: border-box !important;
           background: #ffffff !important;
+          overflow: visible !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
@@ -530,15 +530,25 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         .invoice-continuation-header > td {
           padding: 0 !important;
           border: none !important;
+          overflow: visible !important;
         }
-        /* Classic letterhead full-bleed (cancels sheet 10mm horizontal padding) */
-        .invoice-continuation-header > td > div,
+        .invoice-print-shell {
+          border-collapse: collapse !important;
+          border-spacing: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+        }
         .invoice-continuation-letterhead-classic {
-          margin-top: 0 !important;
-          margin-left: -10mm !important;
-          margin-right: -10mm !important;
-          padding-left: 10mm !important;
-          padding-right: 10mm !important;
+          display: block !important;
+          margin: 0 !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        /* Restore Classic 10mm body inset (sheet padding removed for full-bleed header) */
+        .invoice-print-shell-row > td {
+          padding: 0 10mm !important;
+          border: none !important;
+          overflow: visible !important;
         }
         /* Bank + totals (+ amount in words): never split across pages */
         .invoice-totals-block {
@@ -547,7 +557,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           break-before: auto !important;
           page-break-before: auto !important;
         }
-        /* Terms / signatory / Made with Cenvora — pin to bottom; match Classic 10mm body inset */
+        /* Terms / signatory / Made with Cenvora — pin to bottom; match 10mm body inset */
         .invoice-page-footer {
           position: absolute !important;
           bottom: 4mm !important;
