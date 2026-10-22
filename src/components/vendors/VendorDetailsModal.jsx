@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getVendor } from "../../api/vendors";
 import { getPurchaseBills } from "../../api/purchase";
 import { listPurchaseOrders } from "../../api/purchase_orders";
+import { getDebitNotes } from "../../api/gst";
 import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
@@ -37,6 +38,12 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
     enabled: !!vendor?.id,
   });
 
+  const { data: debitNotesData } = useQuery({
+    queryKey: ["debit-notes"],
+    queryFn: getDebitNotes,
+    enabled: !!vendor?.id,
+  });
+
   const vendorDetails = data?.data || data || vendor || {};
 
   const rawBills = Array.isArray(billsData) ? billsData : billsData?.data || billsData?.results || [];
@@ -53,9 +60,29 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
     (vendor?.name && po.vendor_name?.toLowerCase() === vendor?.name?.toLowerCase())
   );
 
+  const rawDebitNotes = Array.isArray(debitNotesData)
+    ? debitNotesData
+    : debitNotesData?.data || debitNotesData?.results || [];
+
+  /** Map original_bill id → sum of DN totals (same netting as vendor unpaid-bills API). */
+  const dnCreditByBillId = rawDebitNotes.reduce((acc, dn) => {
+    const billId = dn.original_bill?.id ?? dn.original_bill;
+    if (!billId) return acc;
+    const key = String(billId);
+    acc[key] = (acc[key] || 0) + (Number(dn.total_amount) || 0);
+    return acc;
+  }, {});
+
+  const billBalanceDue = (bill) => {
+    const tot = Number(bill.total_amount) || 0;
+    const paid = Number(bill.amount_paid) || 0;
+    const dnCredit = dnCreditByBillId[String(bill.id)] || 0;
+    return Math.max(0, tot - paid - dnCredit);
+  };
+
   const totalBilled = vendorBills.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
   const totalPaid = vendorBills.reduce((sum, b) => sum + (Number(b.amount_paid) || 0), 0);
-  const outstandingBalance = totalBilled - totalPaid;
+  const outstandingBalance = vendorBills.reduce((sum, b) => sum + billBalanceDue(b), 0);
 
   const getReferenceForBill = (bill) => {
     const ref = bill.meta?.po_number || bill.order_number || bill.purchase_order_number || bill.challan_number || bill.meta?.challan_number || bill.meta?.reference_number;
@@ -392,7 +419,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                           {vendorBills.map((bill) => {
                             const tot = Number(bill.total_amount) || 0;
                             const paid = Number(bill.amount_paid) || 0;
-                            const bal = tot - paid;
+                            const bal = billBalanceDue(bill);
                             const status = bill.payment_status || (bal <= 0 ? 'paid' : paid > 0 ? 'partial' : 'pending');
                             const ref = getReferenceForBill(bill);
 

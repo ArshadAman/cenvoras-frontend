@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { hrApi } from "../../api/hr";
 import {
   BookOpenIcon, ArrowDownTrayIcon, ArrowPathIcon, EyeIcon, InformationCircleIcon
@@ -19,21 +19,44 @@ export default function HRReports() {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState(null);
-
-  const fetchReport = async () => {
-    try {
-      setLoading(true);
-      const res = await hrApi.getHRReports({ type: reportType, year, month });
-      setReportData(res.data);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || err.response?.data?.error || "Failed to generate HR report");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchSeqRef = useRef(0);
 
   useEffect(() => {
+    const seq = ++fetchSeqRef.current;
+    let cancelled = false;
+
+    const fetchReport = async () => {
+      setLoading(true);
+      setReportData(null);
+      try {
+        const res = await hrApi.getHRReports({ type: reportType, year, month });
+        if (cancelled || seq !== fetchSeqRef.current) return;
+        const data = res.data;
+        // Ignore out-of-order responses that don't match current controls
+        if (
+          data &&
+          data.year != null &&
+          data.month != null &&
+          (Number(data.year) !== Number(year) || Number(data.month) !== Number(month))
+        ) {
+          return;
+        }
+        setReportData(data);
+      } catch (err) {
+        if (cancelled || seq !== fetchSeqRef.current) return;
+        setReportData(null);
+        toast.error(err.response?.data?.detail || err.response?.data?.error || "Failed to generate HR report");
+      } finally {
+        if (!cancelled && seq === fetchSeqRef.current) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchReport();
+    return () => {
+      cancelled = true;
+    };
   }, [reportType, year, month]);
 
   const exportCSV = () => {
@@ -274,6 +297,11 @@ export default function HRReports() {
           <div className="overflow-x-auto">
             <div className="px-5 py-3 bg-[var(--accent-primary)]/10 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-primary)]">
               <span>
+                Cycle:{' '}
+                <strong>
+                  {MONTHS[(Number(reportData.month ?? month) || 1) - 1]} {reportData.year ?? year}
+                </strong>
+                {' · '}
                 Total PT payable this cycle:{' '}
                 <strong>₹{parseFloat(reportData.total_pt_payable || 0).toLocaleString('en-IN')}</strong>
               </span>

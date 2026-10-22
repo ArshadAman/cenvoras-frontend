@@ -9,6 +9,20 @@ const fmt = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionD
 
 import CreditNoteForm from "../components/returns/CreditNoteForm"; // Add Import
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { formatDateKolkata } from '../utils/date';
+
+const MMM = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Format YYYY-MM-DD without `new Date('YYYY-MM-DD')` UTC parse (avoids off-by-one). */
+function formatCnDate(dateStr) {
+  if (!dateStr) return '';
+  const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const monthIdx = parseInt(m[2], 10) - 1;
+    return `${m[3]}-${MMM[monthIdx] || m[2]}-${m[1]}`;
+  }
+  return formatDateKolkata(dateStr, 'DD-MMM-YYYY');
+}
 
 export default function CreditNoteList() {
   const [showForm, setShowForm] = useState(false); // Add State
@@ -95,7 +109,7 @@ export default function CreditNoteList() {
                           {cn.credit_note_number?.startsWith('CN-') ? cn.credit_note_number : `CN-${cn.credit_note_number}`}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{cn.date}</td>
+                      <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{formatCnDate(cn.date)}</td>
                       <td className="px-6 py-4 text-[var(--text-primary)] font-medium text-sm">{cn.customer_name}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${reasonColors[cn.reason] || reasonColors.other}`}>
@@ -134,13 +148,7 @@ export default function CreditNoteList() {
               </div>
             ) : (
               notes.map((cn) => {
-                let formattedDate = cn.date;
-                try {
-                  if (cn.date) {
-                    const d = new Date(cn.date);
-                    formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                  }
-                } catch (e) { formattedDate = cn.date; }
+                const formattedDate = formatCnDate(cn.date);
 
                 return (
                   <div key={cn.id} className="bg-[var(--bg-primary)]/60 border border-[var(--border-subtle)] rounded-xl p-4 space-y-3">
