@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
 import { downloadCAAuditPack } from '../../api/gst';
+import { turnoverGauge } from '../../utils/turnoverGauge';
 import {
   ShieldCheckIcon,
   DocumentArrowDownIcon,
@@ -54,8 +55,16 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
     return `${getCurrencySymbol()}${num.toLocaleString('en-IN')}`;
   };
 
-  const turnoverPercent = gst.turnover_percent || 0;
-  const isApproachingLimit = turnoverPercent >= 80;
+  const turnoverLimit = Number(gst.turnover_limit) > 0 ? Number(gst.turnover_limit) : 4000000;
+  // Compute from raw figures: the API's turnover_percent is rounded to 1 dp and can be negative.
+  const gauge = turnoverGauge(gst.total_turnover, turnoverLimit);
+  const isApproachingLimit = gauge.level !== 'success';
+  const gaugeColor = {
+    success: 'var(--status-success)',
+    warning: 'var(--status-warning)',
+    danger: 'var(--status-danger)',
+  }[gauge.level];
+  const signedTurnover = gauge.isNegative ? `−${formatCurrency(gst.total_turnover)}` : formatCurrency(gst.total_turnover);
 
   const safeItc = Number(gst.safe_itc || 0);
   const atRiskItc = Number(gst.at_risk_itc || 0);
@@ -97,27 +106,35 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
           <div className="flex justify-between items-center mb-1.5">
             <span className="text-xs text-[var(--text-muted)] font-medium">Turnover (This FY)</span>
             <span className="text-xs font-semibold text-[var(--text-primary)]">
-              {formatCurrency(gst.total_turnover)} / {formatCurrency(gst.turnover_limit || 4000000)}
+              {signedTurnover} / {formatCurrency(turnoverLimit)}
             </span>
           </div>
           
-          <div className="relative w-full h-2.5 bg-[var(--border-subtle)] rounded-full overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${
-                isApproachingLimit ? 'bg-[var(--status-warning)]' : 'bg-[var(--status-success)]'
-              }`}
-              style={{ width: `${Math.min(100, turnoverPercent)}%` }}
+          <div
+            className="relative w-full h-2.5 bg-[var(--border-subtle)] rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label="Turnover against GST registration limit"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(gauge.width)}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${gauge.width}%`, backgroundColor: gaugeColor }}
             />
           </div>
           
           <div className="flex justify-between items-center mt-1">
-            <span className={`text-xs ${isApproachingLimit ? 'text-[var(--status-warning)] font-medium' : 'text-[var(--text-muted)]'}`}>
-              {turnoverPercent.toFixed(1)}% of {getCurrencySymbol()}40L limit
+            <span
+              className={`text-xs ${isApproachingLimit ? 'font-medium' : 'text-[var(--text-muted)]'}`}
+              style={isApproachingLimit ? { color: gaugeColor } : undefined}
+            >
+              {gauge.label} of {formatCurrency(turnoverLimit)} limit
             </span>
             {isApproachingLimit && (
-              <span className="flex items-center gap-1 text-xs text-[var(--status-warning)] font-medium">
+              <span className="flex items-center gap-1 text-xs font-medium" style={{ color: gaugeColor }}>
                 <ExclamationTriangleIcon className="w-3 h-3" />
-                Approaching limit
+                {gauge.level === 'danger' ? 'Limit reached' : 'Approaching limit'}
               </span>
             )}
           </div>
