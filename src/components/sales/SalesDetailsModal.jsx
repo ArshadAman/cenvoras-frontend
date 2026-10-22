@@ -546,9 +546,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           width: 100% !important;
           box-sizing: border-box !important;
         }
-        /* Restore Classic 10mm body inset (sheet padding removed for full-bleed header) */
+        /* Restore Classic 7mm body inset (sheet padding removed for full-bleed header) */
         .invoice-print-shell-row > td {
-          padding: 0 10mm !important;
+          padding: 0 7mm !important;
           border: none !important;
           overflow: visible !important;
         }
@@ -559,12 +559,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           break-before: auto !important;
           page-break-before: auto !important;
         }
-        /* Terms / signatory / Made with Cenvora — pin to bottom; match 10mm body inset */
+        /* Terms / signatory / Made with Cenvora — pin to bottom; match 7mm body inset */
         .invoice-page-footer {
           position: absolute !important;
           bottom: 4mm !important;
-          left: 10mm !important;
-          right: 10mm !important;
+          left: 7mm !important;
+          right: 7mm !important;
           margin-top: 0 !important;
           break-inside: avoid !important;
           page-break-inside: avoid !important;

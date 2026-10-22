@@ -42,7 +42,7 @@ export default function InvoiceContinuationHeader({
         </div>
       ) : null}
       {companyPAN ? <div style={idLineStyle}>PAN: {companyPAN}</div> : null}
-      {companyGEM ? <div style={idLineStyle}>GEM ID- {companyGEM}</div> : null}
+      {companyGEM ? <div style={idLineStyle}>GEM ID: {companyGEM}</div> : null}
       {companyDL ? <div style={idLineStyle}>DL No- {companyDL}</div> : null}
     </>
   );
@@ -156,7 +156,7 @@ export default function InvoiceContinuationHeader({
           boxSizing: 'border-box',
           backgroundColor: '#ececec',
           margin: 0,
-          padding: '2mm 8mm 5mm 8mm',
+          padding: '2mm 6mm 5mm 6mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
         }}
@@ -165,7 +165,7 @@ export default function InvoiceContinuationHeader({
           <div style={{ textAlign: 'right', maxWidth: '62%' }}>
             <div
               style={{
-                fontWeight: 600,
+                fontWeight: 400,
                 fontSize: `${companyNameSize}px`,
                 color: companyNameColor,
                 lineHeight: 1.25,
