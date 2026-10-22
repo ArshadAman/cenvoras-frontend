@@ -509,9 +509,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           max-width: 100% !important;
           min-height: 100% !important;
           margin: 0 !important;
-          /* Zero outer padding so letterhead is edge-to-edge (preview-seamless).
+          /* Zero side padding so letterhead is edge-to-edge; light bottom pad only.
              Body inset is applied on the print-shell content cell instead. */
-          padding: 0 0 88mm 0 !important;
+          padding: 0 0 10mm 0 !important;
           padding-top: 0 !important;
           box-sizing: border-box !important;
           background: #ffffff !important;
@@ -559,13 +559,12 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           break-before: auto !important;
           page-break-before: auto !important;
         }
-        /* Terms / signatory / Made with Cenvora — pin to bottom; match 7mm body inset */
+        /* Terms / signatory / Made with Cenvora — flow under totals */
         .invoice-page-footer {
-          position: absolute !important;
-          bottom: 4mm !important;
-          left: 7mm !important;
-          right: 7mm !important;
-          margin-top: 0 !important;
+          position: static !important;
+          bottom: auto !important;
+          left: auto !important;
+          right: auto !important;
           break-inside: avoid !important;
           page-break-inside: avoid !important;
         }

@@ -428,7 +428,7 @@ const ProfessionalTemplate = forwardRef(({
       )}
       
       {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
-      <div className="mt-auto invoice-page-footer">
+      <div className="mt-2 invoice-page-footer">
         <div className="flex justify-between gap-6 pt-4 border-t border-gray-200">
           {sections.showTerms && content.termsAndConditions?.length > 0 && (
             <div className="flex-1 pr-4">

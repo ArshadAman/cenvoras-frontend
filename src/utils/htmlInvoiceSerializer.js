@@ -67,7 +67,7 @@ export function serializeInvoiceHtml(element) {
   // Apply print chrome on the clone itself (inline) so backend Chromium cannot
   // miss stylesheet overrides against React's padding: 7mm sides on .invoice-sheet.
   cloned.querySelectorAll('.invoice-sheet').forEach((sheet) => {
-    sheet.style.padding = '0 0 88mm 0';
+    sheet.style.padding = '0 0 10mm 0';
     sheet.style.overflow = 'visible';
     sheet.style.boxSizing = 'border-box';
   });
@@ -87,11 +87,11 @@ export function serializeInvoiceHtml(element) {
     el.style.border = 'none';
   });
   cloned.querySelectorAll('.invoice-page-footer').forEach((el) => {
-    el.style.position = 'absolute';
-    el.style.bottom = '4mm';
-    el.style.left = '7mm';
-    el.style.right = '7mm';
-    el.style.marginTop = '0';
+    el.style.position = 'static';
+    el.style.bottom = '';
+    el.style.left = '';
+    el.style.right = '';
+    el.style.marginTop = '';
   });
 
   // 3. Assemble complete standalone HTML with compile-time embedded Tailwind CSS
@@ -123,7 +123,7 @@ export function serializeInvoiceHtml(element) {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* A4 sheet; seller letterhead in thead repeats every page; pin footer chrome */
+    /* A4 sheet; seller letterhead in thead repeats every page; footer flows under totals */
     .invoice-sheet {
       position: relative !important;
       display: flex !important;
@@ -133,9 +133,9 @@ export function serializeInvoiceHtml(element) {
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
-      /* Zero outer padding so letterhead is edge-to-edge (preview-seamless).
+      /* Zero side padding so letterhead is edge-to-edge; light bottom pad only.
          Body inset is applied on the print-shell content cell instead. */
-      padding: 0 0 88mm 0 !important;
+      padding: 0 0 10mm 0 !important;
       padding-top: 0 !important;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
@@ -194,11 +194,10 @@ export function serializeInvoiceHtml(element) {
       page-break-before: auto !important;
     }
     .invoice-page-footer {
-      position: absolute !important;
-      bottom: 4mm !important;
-      left: 7mm !important;
-      right: 7mm !important;
-      margin-top: 0 !important;
+      position: static !important;
+      bottom: auto !important;
+      left: auto !important;
+      right: auto !important;
       break-inside: avoid !important;
       page-break-inside: avoid !important;
     }
