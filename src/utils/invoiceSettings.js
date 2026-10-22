@@ -181,27 +181,10 @@ export const templatePresets = [
       primary: '#facc15',
     },
   },
-  {
-    ...defaultInvoiceTemplate,
-    id: 'modern',
-    name: 'Modern Minimal',
-    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'classic' },
-    colors: {
-      ...defaultInvoiceTemplate.colors,
-      primary: '#000000',
-      secondary: '#333333',
-      accent: '#6366f1',
-      tableHeader: '#f1f5f9',
-      totalRow: '#6366f1',
-    },
-    styles: {
-      ...defaultInvoiceTemplate.styles,
-      borderRadius: 8,
-      headerStyle: 'minimal',
-      tableStyle: 'minimal',
-    },
-  },
 ];
+
+/** Presets removed from the product; strip from localStorage on load. */
+const DEPRECATED_TEMPLATE_IDS = new Set(['modern', 'genz']);
 
 // Storage keys — templates are isolated per document section
 const LEGACY_STORAGE_KEY = 'cenvora_invoice_templates';
@@ -225,13 +208,19 @@ const sectionTemplatesKey = (sectionKey) => `cenvora_invoice_templates_${section
 
 const deepClonePresets = () => JSON.parse(JSON.stringify(templatePresets));
 
+const pruneDeprecatedTemplates = (parsed) => {
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter((t) => t && !DEPRECATED_TEMPLATE_IDS.has(t.id));
+};
+
 const mergeMissingPresets = (parsed) => {
-  const existingIds = new Set(parsed.map((t) => t.id));
+  const pruned = pruneDeprecatedTemplates(parsed);
+  const existingIds = new Set(pruned.map((t) => t.id));
   const missingPresets = templatePresets
     .filter((p) => !existingIds.has(p.id))
     .map((p) => JSON.parse(JSON.stringify(p)));
-  if (missingPresets.length === 0) return parsed;
-  return [...parsed, ...missingPresets];
+  if (missingPresets.length === 0) return pruned;
+  return [...pruned, ...missingPresets];
 };
 
 /**
