@@ -253,12 +253,12 @@ const InvoicePreview = forwardRef(({
       
       {/* Header Section — screen/preview; print uses InvoicePrintShell thead instead */}
       <div
-        className="mb-2 invoice-first-page-header"
+        className="mb-1 invoice-first-page-header"
         style={{
           backgroundColor: '#ececec',
           /* Horizontal bleed only — top is already flush (sheet has no top padding). */
           margin: '0 -7mm 0 -7mm',
-          padding: '2mm 6mm 5mm 6mm',
+          padding: '2mm 6mm 3mm 6mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
         }}
@@ -297,8 +297,8 @@ const InvoicePreview = forwardRef(({
       </div>
 
       {/* Address Section */}
-      <div className="flex justify-between items-start mb-2 gap-8">
-        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
+      <div className="flex justify-between items-start mb-1 gap-8">
+        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
           <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
             Billing Address
           </div>
@@ -316,7 +316,7 @@ const InvoicePreview = forwardRef(({
         </div>
 
         {hasSeparateShipping ? (
-          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
+          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
             <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
               Shipping Address
             </div>

@@ -156,7 +156,7 @@ export default function InvoiceContinuationHeader({
           boxSizing: 'border-box',
           backgroundColor: '#ececec',
           margin: 0,
-          padding: '2mm 6mm 5mm 6mm',
+          padding: '2mm 6mm 3mm 6mm',
           borderBottomLeftRadius: '120% 28px',
           borderBottomRightRadius: '120% 28px',
         }}
