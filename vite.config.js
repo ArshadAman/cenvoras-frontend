@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: [
         'favicon.png',
         'favicon-32x32.png',
@@ -65,6 +65,9 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 50000000, // 50MB
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        // skipWaiting is NOT automatic: the update banner calls updateSW(true).
       }
     })
   ],
