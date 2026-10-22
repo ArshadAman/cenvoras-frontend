@@ -512,7 +512,6 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                 options={[
                   { value: 'classic', label: 'Classic Professional' },
                   { value: 'professional', label: 'Professional (Clean)' },
-                  { value: 'genz', label: 'GenZ Modern (Bold)' },
                   { value: 'service', label: 'Service Template' },
                   { value: 'legend', label: 'Legend Corporate' },
                   { value: 'billship', label: 'Bill To - Ship To' },

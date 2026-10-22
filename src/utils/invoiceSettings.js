@@ -152,17 +152,6 @@ export const templatePresets = [
   },
   {
     ...defaultInvoiceTemplate,
-    id: 'genz',
-    name: 'GenZ Modern (Google Style)',
-    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'genz' },
-    colors: {
-      ...defaultInvoiceTemplate.colors,
-      primary: '#4285F4',
-      secondary: '#4285F4',
-    },
-  },
-  {
-    ...defaultInvoiceTemplate,
     id: 'service',
     name: 'Service Template (LTIMindtree)',
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'service' },
