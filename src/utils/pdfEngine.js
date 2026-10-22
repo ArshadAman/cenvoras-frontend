@@ -38,8 +38,8 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   }
 
   // Temporarily apply print chrome so letterhead is measurable and captured:
-  // show continuation letterhead, hide duplicate first-page seller chrome,
-  // reserve footer space so absolute footer cannot cover bank/totals.
+  // show continuation letterhead, hide duplicate first-page seller chrome.
+  // Footer flows under totals (not absolutely pinned to page bottom).
   const firstPageHeaders = Array.from(element.querySelectorAll('.invoice-first-page-header'));
   const continuationHeaders = Array.from(element.querySelectorAll('.invoice-continuation-header'));
   const sheets = Array.from(element.querySelectorAll('.invoice-sheet'));
@@ -74,11 +74,11 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   });
   sheets.forEach((el) => {
     el.style.position = 'relative';
-    // Full shorthand — must clear React's inline padding: 7mm sides on Classic
-    el.style.padding = '0 0 88mm 0';
+    // Full shorthand — clear React inline padding; small bottom pad only (footer flows in-document)
+    el.style.padding = '0 0 10mm 0';
     el.style.paddingTop = '0';
     el.style.paddingRight = '0';
-    el.style.paddingBottom = '88mm';
+    el.style.paddingBottom = '10mm';
     el.style.paddingLeft = '0';
     el.style.overflow = 'visible';
     el.style.boxSizing = 'border-box';
@@ -99,11 +99,11 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     el.style.border = 'none';
   });
   footers.forEach((el) => {
-    el.style.position = 'absolute';
-    el.style.bottom = '4mm';
-    el.style.left = '7mm';
-    el.style.right = '7mm';
-    el.style.marginTop = '0';
+    el.style.position = 'static';
+    el.style.bottom = '';
+    el.style.left = '';
+    el.style.right = '';
+    el.style.marginTop = '';
   });
 
   // Force layout after temporary print chrome
@@ -197,10 +197,10 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             sheet.style.margin = '0';
             sheet.style.boxShadow = 'none';
             sheet.style.position = 'relative';
-            sheet.style.padding = '0 0 88mm 0';
+            sheet.style.padding = '0 0 10mm 0';
             sheet.style.paddingTop = '0';
             sheet.style.paddingRight = '0';
-            sheet.style.paddingBottom = '88mm';
+            sheet.style.paddingBottom = '10mm';
             sheet.style.paddingLeft = '0';
             sheet.style.overflow = 'visible';
             sheet.style.boxSizing = 'border-box';
@@ -229,11 +229,11 @@ export async function generatePixelPerfectPDF(element, options = {}) {
           el.style.display = 'table-row';
         });
         clonedDoc.querySelectorAll('.invoice-page-footer').forEach((el) => {
-          el.style.position = 'absolute';
-          el.style.bottom = '4mm';
-          el.style.left = '7mm';
-          el.style.right = '7mm';
-          el.style.marginTop = '0';
+          el.style.position = 'static';
+          el.style.bottom = '';
+          el.style.left = '';
+          el.style.right = '';
+          el.style.marginTop = '';
         });
         clonedDoc.querySelectorAll('.invoice-totals-block').forEach((el) => {
           el.style.breakInside = 'avoid';

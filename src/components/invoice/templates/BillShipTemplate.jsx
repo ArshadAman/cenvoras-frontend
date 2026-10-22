@@ -369,7 +369,7 @@ const BillShipTemplate = forwardRef(({
       )}
 
       {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
-      <div className="mt-auto invoice-page-footer">
+      <div className="mt-2 invoice-page-footer">
         <div className="flex justify-between gap-6 pt-6 border-t border-gray-200">
           {sections.showTerms && (
             <div className="flex-1 pr-4">

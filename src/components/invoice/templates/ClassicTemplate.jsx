@@ -766,9 +766,9 @@ const InvoicePreview = forwardRef(({
         </div>
       )}
       
-      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
-      <div className="mt-auto invoice-page-footer">
-        <div className="flex justify-between gap-4 mt-2 pt-2" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
+      {/* Footer sits under totals (not pinned to page bottom) */}
+      <div className="mt-2 invoice-page-footer">
+        <div className="flex justify-between gap-4 pt-2" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
           {sections.showTerms && content.termsAndConditions?.length > 0 && (
             <div className="flex-1">
               <h4

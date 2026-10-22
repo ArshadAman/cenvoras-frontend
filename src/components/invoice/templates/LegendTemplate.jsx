@@ -398,7 +398,7 @@ const LegendTemplate = forwardRef(({
       </div>
 
       {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
-      <div className="mt-auto invoice-page-footer">
+      <div className="mt-2 invoice-page-footer">
         <div className="flex justify-between gap-6 p-4">
           {sections.showTerms && (
             <div className="flex-1">
