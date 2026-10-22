@@ -220,6 +220,25 @@ export default function HRMSSettings() {
           </div>
         </div>
 
+        <div className="p-4 rounded-2xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Allow Cash Salary Disbursement (admin)</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xl">
+              Off by default: salaries are paid from a Bank account. When on, Cash appears in the disburse dialog; payment is blocked if cash is insufficient and a Section 40A(3) warning is shown for any employee paid over ₹10,000 in cash in a day.
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              name="allow_cash_salary_disbursement"
+              checked={!!settings.allow_cash_salary_disbursement}
+              onChange={handleChange}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-[var(--border-subtle)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-primary)]"></div>
+          </label>
+        </div>
+
         {/* Submit */}
         <div className="flex justify-end gap-3">
           <button type="submit" disabled={saving} className="btn-primary text-sm disabled:opacity-50">

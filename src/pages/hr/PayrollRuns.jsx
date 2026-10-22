@@ -737,18 +737,25 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
   useEffect(() => {
     if (isOpen) {
       setCashWarning('');
-      getAccounts({ account_type: 'asset' })
-        .then(res => {
+      Promise.all([
+        getAccounts({ account_type: 'asset' }),
+        hrApi.getHRMSSettings().then((r) => r?.data ?? r).catch(() => ({})),
+      ])
+        .then(([res, hrms]) => {
+          // Salaries are paid Dr Salaries Payable / Cr Bank. Cash only if an admin enabled it.
+          const allowCash = !!hrms?.allow_cash_salary_disbursement;
           const list = (res.results || res || []).filter((a) => {
             const code = String(a.code || '');
             const name = String(a.name || '').toLowerCase();
-            return code === '1001' || code === '1002' || name.includes('bank') || name === 'cash' || name.startsWith('cash ');
+            const isCash = code === '1001' || name === 'cash' || name.startsWith('cash ');
+            const isBank = code === '1002' || name.includes('bank');
+            return isBank || (allowCash && isCash);
           });
           setAccounts(list);
           const bank = list.find((a) => String(a.code) === '1002');
           setSelectedAccount(bank ? bank.id : (list[0]?.id || ''));
         })
-        .catch((err) => showErrorToast(err, 'Failed to load bank/cash accounts'));
+        .catch((err) => showErrorToast(err, 'Failed to load bank accounts'));
     }
   }, [isOpen]);
 
@@ -818,7 +825,7 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1">Disbursement Bank / Cash Account *</label>
+            <label className="block text-sm text-[var(--text-secondary)] mb-1">Disbursement Bank Account *</label>
             <select required value={selectedAccount} onChange={e => setSelectedAccount(e.target.value)} className={ic}>
               <option value="">Select Account</option>
               {accounts.map(acc => (
