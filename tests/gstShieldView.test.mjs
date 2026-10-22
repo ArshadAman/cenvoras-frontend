@@ -27,3 +27,12 @@ test('registered: prior FY checks, HSN, e-invoice warning, net credit', () => {
   assert.equal(r.netLabel, 'Net credit');
   assert.equal(r.showPaid, false);
 });
+const reg = (o, i) => v({ registered: true, output_tax: o, itc: i, net_payable: 'ignored' });
+test('net payable', () => { const r = reg('5200', '1200'); assert.equal(r.net, 4000); assert.equal(r.netLabel, 'Net payable'); });
+test('net credit = collected − ITC (live bug: 5.2K vs 16.2K → −11.0K)', () => {
+  const r = reg('5200', '16200'); assert.equal(r.net, -11000); assert.equal(r.netLabel, 'Net credit'); assert.equal(r.collectedNote, null);
+});
+test('net zero', () => { const r = reg('1000.00', '1000.00'); assert.equal(r.net, 0); assert.equal(r.netLabel, 'Net'); });
+test('negative collected keeps sign and explains', () => {
+  const r = reg('-5200', '16200'); assert.equal(r.outputTax, -5200); assert.equal(r.net, -21400); assert.match(r.collectedNote, /credit notes/);
+});

@@ -64,6 +64,9 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
     return `${getCurrencySymbol()}${num.toLocaleString('en-IN')}`;
   };
 
+  // Signed variant: Collected/ITC can be negative (e.g. credit notes this month exceed sales).
+  const formatSigned = (value) => (Number(value) < 0 ? `−${formatCurrency(value)}` : formatCurrency(value));
+
   const view = gstShieldView(gst);
   const gaugeColor = !view.registered
     ? { success: 'var(--status-success)', warning: 'var(--status-warning)', danger: 'var(--status-danger)' }[view.gauge.level]
@@ -188,11 +191,11 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
                 <div className="text-xs text-[var(--text-muted)] mb-0.5">Collected</div>
-                <div className="text-sm font-bold text-[var(--status-success)] truncate font-mono">{formatCurrency(view.outputTax)}</div>
+                <div className="text-sm font-bold text-[var(--status-success)] truncate font-mono">{formatSigned(view.outputTax)}</div>
               </div>
               <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
                 <div className="text-xs text-[var(--text-muted)] mb-0.5">ITC</div>
-                <div className="text-sm font-bold text-[var(--accent-primary)] truncate font-mono">{formatCurrency(view.itc)}</div>
+                <div className="text-sm font-bold text-[var(--accent-primary)] truncate font-mono">{formatSigned(view.itc)}</div>
               </div>
               <div className="text-center p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
                 <div className="text-xs text-[var(--text-muted)] mb-0.5">{view.netLabel}</div>
@@ -201,6 +204,9 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
                 </div>
               </div>
             </div>
+            {view.collectedNote && (
+              <p className="text-[11px] text-[var(--text-muted)]" data-testid="collected-note">{view.collectedNote}</p>
+            )}
             <div className="p-2.5 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[var(--text-muted)] font-medium">GSTR-2B Verified ITC</span>

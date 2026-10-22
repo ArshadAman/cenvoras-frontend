@@ -25,7 +25,10 @@ export function gstShieldView(gst = {}) {
       showTaxFigures: false,
     };
   }
-  const net = n(gst.net_payable);
+  const outputTax = n(gst.output_tax);
+  const itc = n(gst.itc);
+  // Net is always Collected − ITC; derive it here so the card can never disagree with its own figures.
+  const net = Math.round((outputTax - itc) * 100) / 100;
   return {
     registered,
     priorTurnover: n(gst.prior_fy_turnover),
@@ -38,10 +41,13 @@ export function gstShieldView(gst = {}) {
     hsnDigits: gst.hsn_digits || 4,
     eInvoiceWarning: gst.e_invoice_warning || null,
     showTaxFigures: true,
-    outputTax: n(gst.output_tax),
-    itc: n(gst.itc),
+    outputTax,
+    itc,
     net,
-    netLabel: net >= 0 ? 'Net payable' : 'Net credit',
+    netLabel: net > 0 ? 'Net payable' : net < 0 ? 'Net credit' : 'Net',
+    collectedNote: outputTax < 0
+      ? 'Collected is negative: credit notes issued in this period exceed the GST on invoices in this period.'
+      : null,
     showPaid: !!gst.paid_available,
     safeItc: n(gst.safe_itc),
     atRiskItc: n(gst.at_risk_itc),
