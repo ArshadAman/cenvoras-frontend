@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -6,6 +6,8 @@ import { getCreditNote } from "../../api/gst";
 import { getCurrencySymbol } from "../../utils/currency";
 import { formatDateKolkata } from "../../utils/date";
 import useEscKey from "../../hooks/useEscStack";
+import SalesDetailsModal from "../sales/SalesDetailsModal";
+import { creditNoteTaxView, originalInvoiceLabel } from "../../utils/creditNoteTax";
 
 const fmt = (v) =>
   parseFloat(v || 0).toLocaleString("en-IN", {
@@ -34,7 +36,8 @@ function formatCnDate(dateStr) {
 }
 
 export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }) {
-  useEscKey(onClose, isOpen, 15);
+  const [showInvoice, setShowInvoice] = useState(false);
+  useEscKey(onClose, isOpen && !showInvoice, 15);
 
   const { data: note, isLoading, isError } = useQuery({
     queryKey: ["credit-note", creditNoteId],
@@ -43,6 +46,7 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
   });
 
   if (!isOpen) return null;
+  const taxView = creditNoteTaxView(note);
 
   const cnNumber = note?.credit_note_number
     ? note.credit_note_number.startsWith("CN-")
@@ -97,7 +101,18 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
                 <div className="bg-[var(--bg-primary)] p-4 rounded-xl border border-[var(--border-subtle)]">
                   <div className="text-xs text-[var(--text-secondary)] mb-1">Original Invoice</div>
                   <div className="font-medium text-[var(--text-primary)] text-sm font-mono break-all">
-                    {note.original_invoice || "—"}
+                    {note.original_invoice && note.original_invoice_number ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowInvoice(true)}
+                        className="text-[var(--accent-primary)] hover:underline cursor-pointer"
+                        title="Open invoice"
+                      >
+                        {note.original_invoice_number}
+                      </button>
+                    ) : (
+                      originalInvoiceLabel(note)
+                    )}
                   </div>
                 </div>
                 <div className="bg-[var(--bg-primary)] p-4 rounded-xl border border-[var(--border-subtle)]">
@@ -135,7 +150,8 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
                         <th className="p-3 font-medium text-right">Qty</th>
                         <th className="p-3 font-medium text-right">Price</th>
                         <th className="p-3 font-medium text-center">Disc.</th>
-                        <th className="p-3 font-medium text-center">Tax</th>
+                        <th className="p-3 font-medium text-right">Taxable</th>
+                        <th className="p-3 font-medium text-right">Tax</th>
                         <th className="p-3 font-medium text-right">Amount</th>
                       </tr>
                     </thead>
@@ -157,7 +173,19 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
                             <td className="p-3 text-center">
                               {parseFloat(item.discount || 0) > 0 ? `${item.discount}%` : "—"}
                             </td>
-                            <td className="p-3 text-center">{Math.round(parseFloat(item.tax || 0))}%</td>
+                            <td className="p-3 text-right tabular-nums">
+                              {taxView?.lineTax(item.id) ? `${getCurrencySymbol()}${fmt(taxView.lineTax(item.id).taxable)}` : "—"}
+                            </td>
+                            <td className="p-3 text-right tabular-nums text-xs">
+                              {taxView?.lineTax(item.id)
+                                ? taxView.lineTax(item.id).parts.map((p) => (
+                                    <div key={p.label}>
+                                      {p.label} {getCurrencySymbol()}
+                                      {fmt(p.amount)}
+                                    </div>
+                                  ))
+                                : `${Math.round(parseFloat(item.tax || 0))}%`}
+                            </td>
                             <td className="p-3 text-right font-medium tabular-nums">
                               {getCurrencySymbol()}
                               {fmt(item.amount)}
@@ -166,7 +194,7 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="7" className="p-4 text-center text-[var(--text-secondary)]">
+                          <td colSpan="8" className="p-4 text-center text-[var(--text-secondary)]">
                             No items on this credit note.
                           </td>
                         </tr>
@@ -175,10 +203,37 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
                   </table>
                 </div>
               </div>
+
+              {taxView && (
+                <div className="flex justify-end">
+                  <div className="w-full sm:w-80 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-5 space-y-3 shadow-sm" data-testid="cn-tax-totals">
+                    {taxView.totals.map(([label, amount]) => (
+                      <div
+                        key={label}
+                        className={`flex justify-between items-center ${label === "Total" ? "text-sm pt-3 border-t border-[var(--border-subtle)]" : "text-xs"}`}
+                      >
+                        <span className="text-[var(--text-muted)] font-medium">{label}</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">
+                          {getCurrencySymbol()}
+                          {fmt(amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
+      {showInvoice && note?.original_invoice && (
+        <SalesDetailsModal
+          isOpen={showInvoice}
+          onClose={() => setShowInvoice(false)}
+          invoice={{ id: note.original_invoice, invoice_number: note.original_invoice_number }}
+          documentType="invoice"
+        />
+      )}
     </div>,
     document.body
   );
