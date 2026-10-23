@@ -6,6 +6,16 @@ import StockJournalForm from "../../components/inventory/StockJournalForm";
 import StockJournalDetailsModal from "../../components/inventory/StockJournalDetailsModal";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH } from "../../components/common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  voucher: 180,
+  type: 140,
+  warehouse: 160,
+  items: 90,
+  notes: 220,
+};
 
 export default function StockJournalList() {
   const [showForm, setShowForm] = useState(false);
@@ -16,6 +26,10 @@ export default function StockJournalList() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_stock_journal_list_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   // Debounce search
   React.useEffect(() => {
@@ -95,14 +109,36 @@ export default function StockJournalList() {
 
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left cursor-pointer">
-              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
-                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
-                  <th className="px-6 py-4">Date / Voucher</th>
-                  <th className="px-6 py-4">Type</th>
-                  <th className="px-6 py-4">Warehouse</th>
-                  <th className="px-6 py-4">Items</th>
-                  <th className="px-6 py-4">Notes</th>
+            <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] cursor-pointer">
+              <colgroup>
+                <col style={{ width: `${colWidths.voucher}px` }} />
+                <col style={{ width: `${colWidths.type}px` }} />
+                <col style={{ width: `${colWidths.warehouse}px` }} />
+                <col style={{ width: `${colWidths.items}px` }} />
+                <col style={{ width: `${colWidths.notes}px` }} />
+              </colgroup>
+              <thead className={LIST_THEAD}>
+                <tr className="border-b border-[var(--border-subtle)]">
+                  <th className={LIST_TH}>
+                    Date / Voucher
+                    {renderResizeHandle("voucher")}
+                  </th>
+                  <th className={LIST_TH}>
+                    Type
+                    {renderResizeHandle("type")}
+                  </th>
+                  <th className={LIST_TH}>
+                    Warehouse
+                    {renderResizeHandle("warehouse")}
+                  </th>
+                  <th className={LIST_TH}>
+                    Items
+                    {renderResizeHandle("items")}
+                  </th>
+                  <th className={LIST_TH}>
+                    Notes
+                    {renderResizeHandle("notes")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">

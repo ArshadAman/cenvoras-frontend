@@ -5,6 +5,16 @@ import { getGeneralLedger } from '../../api/ledger';
 import { format } from 'date-fns';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from '../../hooks/useEscStack';
+import useResizableColumns from '../../hooks/useResizableColumns';
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
+
+const DEFAULT_COLUMN_WIDTHS = {
+  date: 130,
+  description: 260,
+  debit: 120,
+  credit: 120,
+  balance: 130,
+};
 
 export default function GeneralLedgerModal({ 
   isOpen, 
@@ -18,6 +28,10 @@ export default function GeneralLedgerModal({
   const [pageSize, setPageSize] = useState(20);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    'cenvoras_general_ledger_modal_col_widths',
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   // Fetch general ledger entries
   const { 
@@ -68,21 +82,9 @@ export default function GeneralLedgerModal({
   };
 
   const getSortIcon = (field) => {
-    if (sortBy !== field) {
-      return (
-        <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      );
-    }
-    return sortOrder === 'asc' ? (
-      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-      </svg>
-    ) : (
-      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
+    if (sortBy !== field) return null;
+    return (
+      <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
     );
   };
 
@@ -206,41 +208,53 @@ export default function GeneralLedgerModal({
             <>
               {/* Table */}
               <div className="flex-1 overflow-auto">
-                <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
-                  <thead className="bg-[var(--bg-primary)] sticky top-0 z-10">
+                <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] text-sm">
+                  <colgroup>
+                    <col style={{ width: `${colWidths.date}px` }} />
+                    <col style={{ width: `${colWidths.description}px` }} />
+                    <col style={{ width: `${colWidths.debit}px` }} />
+                    <col style={{ width: `${colWidths.credit}px` }} />
+                    <col style={{ width: `${colWidths.balance}px` }} />
+                  </colgroup>
+                  <thead className={`${LIST_THEAD} sticky top-0 z-10`}>
                     <tr>
-                      <th 
-                        className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                      <th
+                        className={LIST_TH_SORTABLE}
                         onClick={() => handleSort('created_at')}
                       >
-                        <div className="flex items-center space-x-1">
+                        <div className={LIST_TH_LABEL}>
                           <span>Date</span>
                           {getSortIcon('created_at')}
                         </div>
+                        {renderResizeHandle('date')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                      <th className={LIST_TH}>
                         Description
+                        {renderResizeHandle('description')}
                       </th>
-                      <th 
-                        className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                      <th
+                        className={LIST_TH_SORTABLE}
                         onClick={() => handleSort('debit')}
                       >
-                        <div className="flex items-center justify-end space-x-1">
+                        <div className={LIST_TH_LABEL}>
                           <span>Debit</span>
                           {getSortIcon('debit')}
                         </div>
+                        {renderResizeHandle('debit')}
                       </th>
-                      <th 
-                        className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
+                      <th
+                        className={LIST_TH_SORTABLE}
                         onClick={() => handleSort('credit')}
                       >
-                        <div className="flex items-center justify-end space-x-1">
+                        <div className={LIST_TH_LABEL}>
                           <span>Credit</span>
                           {getSortIcon('credit')}
                         </div>
+                        {renderResizeHandle('credit')}
                       </th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                      <th className={LIST_TH}>
                         Balance
+                        {renderResizeHandle('balance')}
                       </th>
                     </tr>
                   </thead>

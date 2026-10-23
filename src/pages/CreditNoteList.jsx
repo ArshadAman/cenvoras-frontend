@@ -256,13 +256,13 @@ export default function CreditNoteList() {
           <div className="lg:hidden p-4 space-y-4">
             {isLoading ? (
               <div className="text-center py-12 text-[var(--text-muted)] text-sm">Loading credit notes...</div>
-            ) : notes.length === 0 ? (
+            ) : sortedNotes.length === 0 ? (
               <div className="text-center py-12 text-[var(--text-muted)] text-sm bg-[var(--bg-primary)]/40 rounded-xl border border-[var(--border-subtle)] p-6">
                 <ArrowUturnLeftIcon className="w-8 h-8 mx-auto mb-2 opacity-40 text-[var(--text-muted)]" />
                 No credit notes found.
               </div>
             ) : (
-              notes.map((cn) => {
+              sortedNotes.map((cn) => {
                 const formattedDate = formatCnDate(cn.date);
 
                 return (
