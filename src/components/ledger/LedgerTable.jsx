@@ -5,13 +5,14 @@ import Loader from '../Loader';
 import { format } from 'date-fns';
 import { createPortal } from 'react-dom';
 import { 
+  ChevronUpIcon, 
+  ChevronDownIcon, 
+  ArrowsUpDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
-import useResizableColumns from '../../hooks/useResizableColumns';
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
 import { getAccounts } from '../../api/ledger';
 import { subDays } from 'date-fns';
 import { useLoadingPolicy } from '../../hooks/useLoadingPolicy';
@@ -21,19 +22,6 @@ import { Link } from 'react-router-dom';
 import { downloadPartnerStatementPdf } from '../../api/ledger';
 import { toast } from 'react-toastify';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
-
-const DEFAULT_COLUMN_WIDTHS = {
-  checkbox: 44,
-  date: 110,
-  account: 180,
-  reference: 130,
-  description: 180,
-  debit: 120,
-  credit: 120,
-  balance: 140,
-  source: 110,
-  actions: 70,
-};
 
 const LedgerTable = ({ 
   onEdit, 
@@ -48,10 +36,6 @@ const LedgerTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
-  const { colWidths, renderResizeHandle } = useResizableColumns(
-    'cenvoras_ledger_table_col_widths',
-    DEFAULT_COLUMN_WIDTHS
-  );
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
@@ -215,10 +199,12 @@ const LedgerTable = ({
   const isSomeCurrentPageSelected = ledgerEntries.some(entry => selectedEntries.includes(entry.id));
 
   const getSortIcon = (field) => {
-    if (sortBy !== field) return null;
-    return (
-      <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-    );
+    if (sortBy !== field) {
+      return <ArrowsUpDownIcon className="w-4 h-4 text-[var(--text-muted)] ml-1 inline" />;
+    }
+    return sortOrder === 'asc' ? 
+      <ChevronUpIcon className="w-4 h-4 text-[var(--accent-primary)] ml-1 inline" /> : 
+      <ChevronDownIcon className="w-4 h-4 text-[var(--accent-primary)] ml-1 inline" />;
   };
 
   const formatCurrency = (amount) => {
@@ -468,98 +454,64 @@ const LedgerTable = ({
             {/* Table for desktop, Cards for mobile */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-xl">
-                <colgroup>
-                  {onBulkSelect && <col style={{ width: `${colWidths.checkbox}px` }} />}
-                  <col style={{ width: `${colWidths.date}px` }} />
-                  <col style={{ width: `${colWidths.account}px` }} />
-                  <col style={{ width: `${colWidths.reference}px` }} />
-                  <col style={{ width: `${colWidths.description}px` }} />
-                  <col style={{ width: `${colWidths.debit}px` }} />
-                  <col style={{ width: `${colWidths.credit}px` }} />
-                  <col style={{ width: `${colWidths.balance}px` }} />
-                  <col style={{ width: `${colWidths.source}px` }} />
-                  <col style={{ width: `${colWidths.actions}px` }} />
-                </colgroup>
-                <thead className={LIST_THEAD}>
+                <table className="min-w-full divide-y divide-[var(--border-subtle)] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-xl">
+                <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
                   <tr>
                     {onBulkSelect && (
-                      <th scope="col" className={LIST_TH}>
+                      <th scope="col" className="relative px-6 py-4">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] cursor-pointer"
+                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] cursor-pointer"
                           checked={isAllCurrentPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
                           }}
                           onChange={handleSelectAll}
                         />
-                        {renderResizeHandle('checkbox')}
                       </th>
                     )}
                     <th
                       scope="col"
-                      className={LIST_TH_SORTABLE}
+                      className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('date')}
                     >
-                      <div className={LIST_TH_LABEL}>
-                        <span>Date</span>
-                        {getSortIcon('date')}
-                      </div>
-                      {renderResizeHandle('date')}
+                      Date {getSortIcon('date')}
                     </th>
                     <th
                       scope="col"
-                      className={LIST_TH_SORTABLE}
+                      className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('account_name')}
                     >
-                      <div className={LIST_TH_LABEL}>
-                        <span>Account / Entity</span>
-                        {getSortIcon('account_name')}
-                      </div>
-                      {renderResizeHandle('account')}
+                      Account / Entity {getSortIcon('account_name')}
                     </th>
-                    <th scope="col" className={LIST_TH}>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Reference
-                      {renderResizeHandle('reference')}
                     </th>
-                    <th scope="col" className={LIST_TH}>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Description
-                      {renderResizeHandle('description')}
                     </th>
                     <th
                       scope="col"
-                      className={LIST_TH_SORTABLE}
+                      className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('debit')}
                     >
-                      <div className={LIST_TH_LABEL}>
-                        <span>Debit (Dr)</span>
-                        {getSortIcon('debit')}
-                      </div>
-                      {renderResizeHandle('debit')}
+                      Debit (Dr) {getSortIcon('debit')}
                     </th>
                     <th
                       scope="col"
-                      className={LIST_TH_SORTABLE}
+                      className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors"
                       onClick={() => handleSort('credit')}
                     >
-                      <div className={LIST_TH_LABEL}>
-                        <span>Credit (Cr)</span>
-                        {getSortIcon('credit')}
-                      </div>
-                      {renderResizeHandle('credit')}
+                      Credit (Cr) {getSortIcon('credit')}
                     </th>
-                    <th scope="col" className={LIST_TH}>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Running Balance
-                      {renderResizeHandle('balance')}
                     </th>
-                    <th scope="col" className={LIST_TH}>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                       Source
-                      {renderResizeHandle('source')}
                     </th>
-                    <th scope="col" className={LIST_TH}>
+                    <th scope="col" className="relative px-6 py-4">
                       <span className="sr-only">Actions</span>
-                      {renderResizeHandle('actions')}
                     </th>
                   </tr>
                 </thead>

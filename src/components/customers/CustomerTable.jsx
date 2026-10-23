@@ -6,19 +6,6 @@ import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { EyeIcon, PencilSquareIcon, TrashIcon, ArrowTopRightOnSquareIcon, UsersIcon } from "@heroicons/react/24/outline";
 import EmptyState from "../common/EmptyState";
-import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
-
-const DEFAULT_COLUMN_WIDTHS = {
-  checkbox: 44,
-  name: 180,
-  contact: 180,
-  gstin: 140,
-  category: 110,
-  credit_limit: 130,
-  created: 110,
-  actions: 145,
-};
 
 export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustomer }) {
   const queryClient = useQueryClient();
@@ -28,10 +15,6 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
   const [page, setPage] = useState(1);
   const [selectedCustomers, setSelectedCustomers] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const { colWidths, renderResizeHandle } = useResizableColumns(
-    "cenvoras_customer_table_col_widths",
-    DEFAULT_COLUMN_WIDTHS
-  );
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -228,20 +211,10 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed divide-y divide-[var(--border-subtle)]">
-          <colgroup>
-            <col style={{ width: `${colWidths.checkbox}px` }} />
-            <col style={{ width: `${colWidths.name}px` }} />
-            <col style={{ width: `${colWidths.contact}px` }} />
-            <col style={{ width: `${colWidths.gstin}px` }} />
-            <col style={{ width: `${colWidths.category}px` }} />
-            <col style={{ width: `${colWidths.credit_limit}px` }} />
-            <col style={{ width: `${colWidths.created}px` }} />
-            <col style={{ width: `${colWidths.actions}px` }} />
-          </colgroup>
-          <thead className={LIST_THEAD}>
+          <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
             <tr>
-              <th className={LIST_TH}>
+              <th className="px-6 py-3.5 text-left">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -251,67 +224,59 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                   onChange={(e) => handleSelectAll(e.target.checked)}
                   className="rounded border-[var(--border-default)] text-[var(--accent-primary)] focus:ring-[var(--border-focus)] bg-transparent"
                 />
-                {renderResizeHandle("checkbox")}
               </th>
-              <th
+              <th 
                 onClick={() => handleSort("name")}
-                className={LIST_TH_SORTABLE}
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
-                <div className={LIST_TH_LABEL}>
+                <div className="flex items-center gap-1.5">
                   <span>Name</span>
                   {(ordering === "name" || ordering === "-name") && (
                     <span className="text-[var(--accent-primary)] font-bold">{ordering === "name" ? "↑" : "↓"}</span>
                   )}
                 </div>
-                {renderResizeHandle("name")}
               </th>
-              <th
+              <th 
                 onClick={() => handleSort("email")}
-                className={LIST_TH_SORTABLE}
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
-                <div className={LIST_TH_LABEL}>
+                <div className="flex items-center gap-1.5">
                   <span>Contact</span>
                   {(ordering === "email" || ordering === "-email") && (
                     <span className="text-[var(--accent-primary)] font-bold">{ordering === "email" ? "↑" : "↓"}</span>
                   )}
                 </div>
-                {renderResizeHandle("contact")}
               </th>
-              <th
+              <th 
                 onClick={() => handleSort("gstin")}
-                className={LIST_TH_SORTABLE}
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
-                <div className={LIST_TH_LABEL}>
+                <div className="flex items-center gap-1.5">
                   <span>GSTIN</span>
                   {(ordering === "gstin" || ordering === "-gstin") && (
                     <span className="text-[var(--accent-primary)] font-bold">{ordering === "gstin" ? "↑" : "↓"}</span>
                   )}
                 </div>
-                {renderResizeHandle("gstin")}
               </th>
-              <th className={LIST_TH}>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Category
-                {renderResizeHandle("category")}
               </th>
-              <th className={LIST_TH}>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Credit Limit
-                {renderResizeHandle("credit_limit")}
               </th>
-              <th
+              <th 
                 onClick={() => handleSort("created_at")}
-                className={LIST_TH_SORTABLE}
+                className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
               >
-                <div className={LIST_TH_LABEL}>
+                <div className="flex items-center gap-1.5">
                   <span>Created</span>
                   {(ordering === "created_at" || ordering === "-created_at") && (
                     <span className="text-[var(--accent-primary)] font-bold">{ordering === "created_at" ? "↑" : "↓"}</span>
                   )}
                 </div>
-                {renderResizeHandle("created")}
               </th>
-              <th className={LIST_TH}>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Actions
-                {renderResizeHandle("actions")}
               </th>
             </tr>
           </thead>

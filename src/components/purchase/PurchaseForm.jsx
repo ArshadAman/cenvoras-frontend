@@ -334,7 +334,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 }
 
 const PurchaseSchema = Yup.object().shape({
-  bill_number: Yup.string().max(100),
+  bill_number: Yup.string().required().min(1).max(100),
   bill_date: Yup.string().required("Bill date is required"),
   warehouse: Yup.string().nullable(),
   due_date: Yup.string().nullable(),
@@ -346,10 +346,10 @@ const PurchaseSchema = Yup.object().shape({
   total_amount: Yup.number().required(),
   items: Yup.array().of(
     Yup.object().shape({
-      product_name: Yup.string(),
-      quantity: Yup.number().min(0),
+      product_name: Yup.string().required().min(1),
+      quantity: Yup.number().required().min(1),
       free_quantity: Yup.number().min(0),
-      unit: Yup.string(),
+      unit: Yup.string().required(),
     })
   ).min(1),
 });
@@ -403,10 +403,6 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
 
   const handleBeforeClose = async () => {
     if (formikRef.current) {
-      if (!formikRef.current.dirty) {
-        onClose();
-        return;
-      }
       const values = formikRef.current.values || {};
       const validItems = (values.items || []).filter(item => 
         item.product_name && item.product_name.trim() !== ''
@@ -426,9 +422,12 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
       const hasVendor = !!vendorNameTrimmed;
       const hasItems = validItems.length > 0;
 
-      // Auto-save on exit if the form was edited; backend allocates a number if blank
+      // Auto-save on exit if user entered bill details and vendor is in DB
       if (hasVendor && hasItems) {
         try {
+          if (!values.bill_number) {
+            formikRef.current.setFieldValue('bill_number', `PB-DRAFT-${Date.now().toString().slice(-4)}`);
+          }
           await formikRef.current.submitForm();
           return;
         } catch {
@@ -550,6 +549,16 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
           validationSchema={PurchaseSchema}
           enableReinitialize={true}
           onSubmit={async (values, { setSubmitting, setFieldError }) => {
+             for (let i = 0; i < values.items.length; i++) {
+               const item = values.items[i];
+               if (!item.product_name || item.product_name.trim() === '') {
+                 setFieldError(`items.${i}.product_name`, 'Product name is required');
+                 toast.error(`Product name is required for item ${i + 1}`);
+                 setSubmitting(false);
+                 return;
+               }
+             }
+
              const validItems = values.items.filter(item => 
                item.product_name && item.product_name.trim() !== ''
              );
@@ -858,26 +867,18 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
 
                 <FieldArray name="items">
                   {({ push, remove }) => (
-                    <div
-                      className="space-y-4"
-                      onFocusCapture={(event) => {
-                        const focused = event.target;
-                        if (focused && typeof focused.scrollIntoView === 'function') {
-                          focused.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                        }
-                      }}
-                    >
+                    <div className="space-y-4">
                       
                         {/* Table Header */}
-                        <div className="hidden md:grid grid-cols-12 gap-1.5 px-6 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-base text-center text-[var(--text-muted)] uppercase tracking-widest mb-3">
-                            <div className="col-span-3 text-center">Product / HSN</div>
-                            <div className="col-span-2 text-center">Batch Details</div>
+                        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-xs text-[var(--text-muted)] uppercase tracking-widest mb-3">
+                            <div className="col-span-3">Product / HSN</div>
+                            <div className="col-span-2">Batch Details</div>
                             <div className="col-span-1 text-center">Quantity</div>
-                            <div className="col-span-1 text-center">Free</div>
-                            <div className="col-span-1 text-center">Unit</div>
-                            <div className="col-span-1 text-center">Unit Price</div>
+                            <div className="col-span-1 text-center text-[var(--text-muted)]">Free</div>
+                            <div className="col-span-1">Unit</div>
+                            <div className="col-span-1 text-right">Unit Price</div>
                             <div className="col-span-1 text-center">Disc / Tax</div>
-                            <div className="col-span-2 text-center">Net Amount</div>
+                            <div className="col-span-2 text-right">Net Amount</div>
                         </div>
 
                         {values.items.map((item, idx) => (
@@ -999,7 +1000,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
               {/* Actions Footer */}
               <div className="flex-none p-6 sm:p-8 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-4 rounded-b-[24px] items-center z-40 relative">
                 <div className="flex-1 text-[var(--text-muted)] text-xs font-medium uppercase tracking-[0.1em] hidden sm:block">
-                  Close without changes to leave this bill as-is. Unsaved edits are saved.
+                  All changes are saved locally until finalized.
                 </div>
                 <Button
                   type="button"
@@ -1039,7 +1040,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
   const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
 
   return (
-     <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-[20px] px-4 py-1 scroll-mt-12 transition-all hover:border-[var(--accent-primary)] group mb-3 shadow-sm">
+     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-[20px] p-5 transition-all hover:border-[var(--accent-primary)] group mb-3 shadow-sm">
       
       {/* Product & HSN (3 cols) */}
       <div className="md:col-span-3 space-y-2.5">
@@ -1199,7 +1200,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
       <div className="md:col-span-1 flex flex-col items-end gap-2">
           <div className="text-right">
               <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest mb-1">Subtotal</label>
-              <div className="font-black text-[var(--text-primary)] text-base tabular-nums tracking-tighter">
+              <div className="font-black text-[var(--text-primary)] text-sm tabular-nums tracking-tighter">
                   {getCurrencySymbol()}{calculatedAmount.toFixed(2)}
               </div>
           </div>
