@@ -224,7 +224,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 
 const PurchaseOrderSchema = Yup.object().shape({
   vendor_name: Yup.string().required("Vendor name is required"),
-  po_number: Yup.string(),
+  po_number: Yup.string().required("PO number is required"),
   expected_date: Yup.string().required("Expected date is required"),
   items: Yup.array().of(
     Yup.object().shape({
@@ -312,7 +312,7 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
           initialValues={{
             vendor_id: editData?.vendor?.id || editData?.vendor || null,
             vendor_name: editData?.vendor_display_name || editData?.vendor_name || "",
-            po_number: editData?.po_number || "",
+            po_number: editData?.po_number || `PO-${Date.now()}`,
             expected_date: editData?.expected_date || new Date().toLocaleDateString('sv-SE'),
             notes: editData?.notes || "",
             

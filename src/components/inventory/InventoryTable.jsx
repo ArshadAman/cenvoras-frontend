@@ -10,8 +10,6 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import InventoryCsvMappingModal from "./InventoryCsvMappingModal";
 import InventoryCsvProgressBar from "./InventoryCsvProgressBar";
 import useEscKey from "../../hooks/useEscStack";
-import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
 import {
   AdjustmentsHorizontalIcon,
   AdjustmentsVerticalIcon,
@@ -98,19 +96,6 @@ const DEFAULT_COLUMNS = {
   actions: true,
 };
 
-const DEFAULT_COLUMN_WIDTHS = {
-  checkbox: 44,
-  product: 220,
-  quantity: 100,
-  unit: 80,
-  cost_price: 120,
-  sale_price: 120,
-  total_value: 130,
-  status: 110,
-  warranty: 100,
-  actions: 145,
-};
-
 export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjustment }) {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -128,10 +113,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [showMappingModal, setShowMappingModal] = useState(false);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [showItemDetails, setShowItemDetails] = useState(true);
-  const { colWidths, renderResizeHandle } = useResizableColumns(
-    "cenvoras_inventory_table_col_widths",
-    DEFAULT_COLUMN_WIDTHS
-  );
 
   const [visibleColumns, setVisibleColumns] = useState(() => {
     try {
@@ -293,9 +274,9 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   };
 
   const renderSortIndicator = (field) => {
-    if (ordering === field) return <span className="text-[var(--accent-primary)] font-bold">↑</span>;
-    if (ordering === `-${field}`) return <span className="text-[var(--accent-primary)] font-bold">↓</span>;
-    return null;
+    if (ordering === field) return <span className="ml-1 text-[var(--accent-primary)] font-bold">▲</span>;
+    if (ordering === `-${field}`) return <span className="ml-1 text-[var(--accent-primary)] font-bold">▼</span>;
+    return <span className="ml-1 text-[var(--text-muted)] text-xs">↕</span>;
   };
 
   // Backend handles search across all products; frontend applies additional filters only.
@@ -777,107 +758,85 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
-          <colgroup>
-            {visibleColumns.checkbox && <col style={{ width: `${colWidths.checkbox}px` }} />}
-            {visibleColumns.product && <col style={{ width: `${colWidths.product}px` }} />}
-            {visibleColumns.quantity && <col style={{ width: `${colWidths.quantity}px` }} />}
-            {visibleColumns.unit && <col style={{ width: `${colWidths.unit}px` }} />}
-            {visibleColumns.cost_price && <col style={{ width: `${colWidths.cost_price}px` }} />}
-            {visibleColumns.sale_price && <col style={{ width: `${colWidths.sale_price}px` }} />}
-            {visibleColumns.total_value && <col style={{ width: `${colWidths.total_value}px` }} />}
-            {visibleColumns.status && <col style={{ width: `${colWidths.status}px` }} />}
-            {visibleColumns.warranty && <col style={{ width: `${colWidths.warranty}px` }} />}
-            {visibleColumns.actions && <col style={{ width: `${colWidths.actions}px` }} />}
-          </colgroup>
-          <thead className={LIST_THEAD}>
+          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
             <tr className="border-b border-[var(--border-subtle)]">
               {visibleColumns.checkbox && (
-                <th className={`${LIST_TH} rounded-l-lg`}>
+                <th className="w-12 text-left py-3 px-4 rounded-l-lg">
                   <input
                     type="checkbox"
                     checked={filteredProducts.length > 0 && selectedProducts.size === filteredProducts.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                   />
-                  {renderResizeHandle("checkbox")}
                 </th>
               )}
               {visibleColumns.product && (
                 <th
                   onClick={() => handleSort('name')}
-                  className={LIST_TH_SORTABLE}
+                  className="w-[28%] min-w-[200px] text-left py-3 px-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className="flex items-center gap-1">
                     <span>Product</span>
                     {renderSortIndicator('name')}
                   </div>
-                  {renderResizeHandle("product")}
                 </th>
               )}
               {visibleColumns.quantity && (
                 <th
                   onClick={() => handleSort('current_stock')}
-                  className={LIST_TH_SORTABLE}
+                  className="w-24 text-center py-3 px-3 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className="flex items-center justify-center gap-1">
                     <span>Quantity</span>
                     {renderSortIndicator('current_stock')}
                   </div>
-                  {renderResizeHandle("quantity")}
                 </th>
               )}
               {visibleColumns.unit && (
-                <th className={LIST_TH}>
+                <th className="w-20 text-center py-3 px-2 font-bold text-[var(--text-primary)]">
                   Unit
-                  {renderResizeHandle("unit")}
                 </th>
               )}
               {visibleColumns.cost_price && (
                 <th
                   onClick={() => handleSort('cost_price')}
-                  className={LIST_TH_SORTABLE}
+                  className="w-28 text-right py-3 px-3 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className="flex items-center justify-end gap-1">
                     <span>Cost Price</span>
                     {renderSortIndicator('cost_price')}
                   </div>
-                  {renderResizeHandle("cost_price")}
                 </th>
               )}
               {visibleColumns.sale_price && (
                 <th
                   onClick={() => handleSort('sale_price')}
-                  className={LIST_TH_SORTABLE}
+                  className="w-28 text-right py-3 px-3 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className="flex items-center justify-end gap-1">
                     <span>Sale Price</span>
                     {renderSortIndicator('sale_price')}
                   </div>
-                  {renderResizeHandle("sale_price")}
                 </th>
               )}
               {visibleColumns.total_value && (
-                <th className={LIST_TH}>
+                <th className="w-28 text-right py-3 px-3 font-bold text-[var(--text-primary)]">
                   Total Value
-                  {renderResizeHandle("total_value")}
                 </th>
               )}
               {visibleColumns.status && (
-                <th className={LIST_TH}>
+                <th className="w-28 text-center py-3 px-3 font-bold text-[var(--text-primary)]">
                   Status
-                  {renderResizeHandle("status")}
                 </th>
               )}
               {visibleColumns.warranty && (
-                <th className={LIST_TH}>
+                <th className="w-24 text-center py-3 px-2 font-bold text-[var(--text-primary)]">
                   Warranty
-                  {renderResizeHandle("warranty")}
                 </th>
               )}
               {visibleColumns.actions && (
-                <th className={`${LIST_TH} rounded-r-lg`}>
+                <th className="w-36 text-center py-3 px-3 rounded-r-lg font-bold text-[var(--text-primary)]">
                   Actions
-                  {renderResizeHandle("actions")}
                 </th>
               )}
             </tr>

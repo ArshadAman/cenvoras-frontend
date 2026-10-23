@@ -23,8 +23,6 @@ import {
 } from "@heroicons/react/24/outline";
 import PaymentForm from "../ledger/PaymentForm";
 import { getCurrencySymbol } from '../../utils/currency';
-import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
 
 const COLUMN_OPTIONS = [
   { id: "customer", label: "Customer" },
@@ -60,7 +58,7 @@ export default function SalesTable({
 }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-invoice_number"); // default: document number desc
+  const [ordering, setOrdering] = useState("-invoice_date"); // default: newest first
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
     try {
@@ -90,7 +88,7 @@ export default function SalesTable({
   const [dateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: "invoice_number", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({ key: "invoice_date", direction: "desc" });
   const [visibleColumns, setVisibleColumns] = useState(() => {
     try {
       const saved = localStorage.getItem("sales_table_columns");
@@ -137,9 +135,69 @@ export default function SalesTable({
     }));
   };
 
-  const { colWidths, renderResizeHandle } = useResizableColumns(
-    "cenvoras_sales_table_col_widths",
-    DEFAULT_COLUMN_WIDTHS
+  const [colWidths, setColWidths] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cenvoras_sales_table_col_widths");
+      if (saved) {
+        return { ...DEFAULT_COLUMN_WIDTHS, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.error("Failed to load saved column widths", e);
+    }
+    return DEFAULT_COLUMN_WIDTHS;
+  });
+
+  const handleMouseDownResize = (e, colKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = colWidths[colKey] || DEFAULT_COLUMN_WIDTHS[colKey] || 100;
+
+    const onMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const minWidth = colKey === "checkbox" ? 36 : 50;
+      const newWidth = Math.max(minWidth, startWidth + deltaX);
+      setColWidths((prev) => {
+        const updated = { ...prev, [colKey]: newWidth };
+        try {
+          localStorage.setItem("cenvoras_sales_table_col_widths", JSON.stringify(updated));
+        } catch (err) {
+          console.error("Failed to save column widths", err);
+        }
+        return updated;
+      });
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const handleDoubleClickReset = (colKey) => {
+    setColWidths((prev) => {
+      const updated = { ...prev, [colKey]: DEFAULT_COLUMN_WIDTHS[colKey] };
+      try {
+        localStorage.setItem("cenvoras_sales_table_col_widths", JSON.stringify(updated));
+      } catch (err) {
+        console.error("Failed to save column widths", err);
+      }
+      return updated;
+    });
+  };
+
+  const renderResizeHandle = (colKey) => (
+    <div
+      className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-[var(--accent-primary)]/50 active:bg-[var(--accent-primary)] transition-colors z-20 group"
+      onMouseDown={(e) => handleMouseDownResize(e, colKey)}
+      onDoubleClick={() => handleDoubleClickReset(colKey)}
+      title="Drag to resize, double-click to reset"
+    >
+      <div className="w-0.5 h-full mx-auto bg-transparent group-hover:bg-[var(--accent-primary)]/70" />
+    </div>
   );
 
   const [isExporting, setIsExporting] = useState(false);
@@ -724,9 +782,9 @@ export default function SalesTable({
               {visibleColumns.items && <col style={{ width: `${colWidths.items}px` }} />}
               <col style={{ width: `${colWidths.actions}px` }} />
             </colgroup>
-            <thead className={LIST_THEAD}>
+            <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
               <tr className="border-b border-[var(--border-subtle)]">
-                <th className={`${LIST_TH} rounded-l-lg`}>
+                <th className="relative px-3 py-3 text-left rounded-l-lg select-none">
                   <input
                     type="checkbox"
                     checked={isAllCurrentPageSelected}
@@ -740,9 +798,9 @@ export default function SalesTable({
                 </th>
                 <th 
                   onClick={() => handleSort("invoice_number")}
-                  className={LIST_TH_SORTABLE}
+                  className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className="flex items-center gap-1.5 truncate">
                     <span>Invoice No.</span>
                     {sortConfig.key === "invoice_number" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -752,9 +810,9 @@ export default function SalesTable({
                 </th>
                 <th 
                   onClick={() => handleSort("invoice_date")}
-                  className={LIST_TH_SORTABLE}
+                  className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className="flex items-center gap-1.5 truncate">
                     <span>Date</span>
                     {sortConfig.key === "invoice_date" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -765,9 +823,9 @@ export default function SalesTable({
                 {visibleColumns.customer && (
                   <th 
                     onClick={() => handleSort("customer_name")}
-                    className={LIST_TH_SORTABLE}
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                   >
-                    <div className={LIST_TH_LABEL}>
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Customer</span>
                       {sortConfig.key === "customer_name" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -779,9 +837,9 @@ export default function SalesTable({
                 {visibleColumns.po_number && (
                   <th 
                     onClick={() => handleSort("po_number")}
-                    className={LIST_TH_SORTABLE}
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                   >
-                    <div className={LIST_TH_LABEL}>
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Purchase Order</span>
                       {sortConfig.key === "po_number" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -793,9 +851,9 @@ export default function SalesTable({
                 {visibleColumns.untaxed_amount && (
                   <th 
                     onClick={() => handleSort("untaxed_amount")}
-                    className={LIST_TH_SORTABLE}
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                   >
-                    <div className={LIST_TH_LABEL}>
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Amount (Before Tax)</span>
                       {sortConfig.key === "untaxed_amount" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -807,9 +865,9 @@ export default function SalesTable({
                 {visibleColumns.total_amount && (
                   <th 
                     onClick={() => handleSort("total_amount")}
-                    className={LIST_TH_SORTABLE}
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                   >
-                    <div className={LIST_TH_LABEL}>
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Total Amount (With Tax)</span>
                       {sortConfig.key === "total_amount" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -821,9 +879,9 @@ export default function SalesTable({
                 {visibleColumns.status && (
                   <th 
                     onClick={() => handleSort("status")}
-                    className={LIST_TH_SORTABLE}
+                    className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
                   >
-                    <div className={LIST_TH_LABEL}>
+                    <div className="flex items-center gap-1.5 truncate">
                       <span>Status</span>
                       {sortConfig.key === "status" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -833,12 +891,12 @@ export default function SalesTable({
                   </th>
                 )}
                 {visibleColumns.items && (
-                  <th className={LIST_TH}>
+                  <th className="relative px-3.5 py-3 text-left text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider select-none">
                     <div className="truncate">Items</div>
                     {renderResizeHandle("items")}
                   </th>
                 )}
-                <th className={`${LIST_TH} rounded-r-lg`}>
+                <th className="relative px-3.5 py-3 text-right text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider rounded-r-lg select-none">
                   <span>Actions</span>
                   {renderResizeHandle("actions")}
                 </th>

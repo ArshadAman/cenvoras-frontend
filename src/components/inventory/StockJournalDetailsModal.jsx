@@ -3,21 +3,9 @@ import { createPortal } from "react-dom";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { format } from "date-fns";
 import useEscKey from "../../hooks/useEscStack";
-import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH } from "../common/tableHeaderClasses";
-
-const DEFAULT_COLUMN_WIDTHS = {
-  product: 220,
-  batch: 160,
-  qty: 140,
-};
 
 export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
   useEscKey(onClose, isOpen, 15);
-  const { colWidths, renderResizeHandle } = useResizableColumns(
-    "cenvoras_stock_journal_details_col_widths",
-    DEFAULT_COLUMN_WIDTHS
-  );
   if (!isOpen || !journal) return null;
 
   return createPortal(
@@ -89,26 +77,12 @@ export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
               Adjusted Items
             </h3>
             <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
-              <table className="w-full table-fixed text-sm">
-                <colgroup>
-                  <col style={{ width: `${colWidths.product}px` }} />
-                  <col style={{ width: `${colWidths.batch}px` }} />
-                  <col style={{ width: `${colWidths.qty}px` }} />
-                </colgroup>
-                <thead className={LIST_THEAD}>
-                  <tr className="border-b border-[var(--border-subtle)]">
-                    <th className={LIST_TH}>
-                      Product
-                      {renderResizeHandle("product")}
-                    </th>
-                    <th className={LIST_TH}>
-                      Batch
-                      {renderResizeHandle("batch")}
-                    </th>
-                    <th className={LIST_TH}>
-                      Quantity Change
-                      {renderResizeHandle("qty")}
-                    </th>
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                    <th className="p-3 font-medium">Product</th>
+                    <th className="p-3 font-medium">Batch</th>
+                    <th className="p-3 font-medium text-right">Quantity Change</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-subtle)]">

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDebitNotes, deleteDebitNote } from "../api/gst";
 import { ArrowUturnRightIcon, TrashIcon, PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
@@ -11,28 +11,10 @@ import DebitNoteForm from "../components/returns/DebitNoteForm";
 import DebitNoteDetailsModal from "../components/returns/DebitNoteDetailsModal";
 import { getCurrencySymbol } from '../utils/currency';
 import { parseDateOnly } from '../utils/date';
-import useResizableColumns from '../hooks/useResizableColumns';
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../components/common/tableHeaderClasses';
-
-const DEFAULT_COLUMN_WIDTHS = {
-  number: 150,
-  date: 120,
-  vendor: 180,
-  gstin: 140,
-  reason: 140,
-  items: 90,
-  amount: 140,
-  actions: 110,
-};
 
 export default function DebitNoteList() {
   const [showForm, setShowForm] = useState(false);
   const [viewId, setViewId] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: "number", direction: "desc" });
-  const { colWidths, renderResizeHandle } = useResizableColumns(
-    "cenvoras_debit_note_list_col_widths",
-    DEFAULT_COLUMN_WIDTHS
-  );
   const queryClient = useQueryClient();
 
   const { data: notesResult, isLoading } = useQuery({
@@ -41,34 +23,6 @@ export default function DebitNoteList() {
   });
 
   const notes = Array.isArray(notesResult) ? notesResult : notesResult?.results || [];
-
-  const handleSort = (key) => {
-    setSortConfig((prev) => {
-      if (prev.key === key) {
-        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
-      }
-      return { key, direction: "asc" };
-    });
-  };
-
-  const sortedNotes = useMemo(() => {
-    const factor = sortConfig.direction === "asc" ? 1 : -1;
-    return [...notes].sort((a, b) => {
-      if (sortConfig.key === "number") {
-        return factor * String(a.debit_note_number || "").localeCompare(String(b.debit_note_number || ""), undefined, { numeric: true });
-      }
-      if (sortConfig.key === "date") {
-        return factor * String(a.date || "").localeCompare(String(b.date || ""));
-      }
-      if (sortConfig.key === "vendor") {
-        return factor * String(a.vendor_name || "").localeCompare(String(b.vendor_name || ""));
-      }
-      if (sortConfig.key === "amount") {
-        return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
-      }
-      return 0;
-    });
-  }, [notes, sortConfig]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteDebitNote,
@@ -117,77 +71,23 @@ export default function DebitNoteList() {
 
         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full table-fixed divide-y divide-[var(--border-subtle)]">
-              <colgroup>
-                <col style={{ width: `${colWidths.number}px` }} />
-                <col style={{ width: `${colWidths.date}px` }} />
-                <col style={{ width: `${colWidths.vendor}px` }} />
-                <col style={{ width: `${colWidths.gstin}px` }} />
-                <col style={{ width: `${colWidths.reason}px` }} />
-                <col style={{ width: `${colWidths.items}px` }} />
-                <col style={{ width: `${colWidths.amount}px` }} />
-                <col style={{ width: `${colWidths.actions}px` }} />
-              </colgroup>
-              <thead className={LIST_THEAD}>
-                <tr className="border-b border-[var(--border-subtle)]">
-                  <th onClick={() => handleSort("number")} className={LIST_TH_SORTABLE}>
-                    <div className={LIST_TH_LABEL}>
-                      <span>DN Number</span>
-                      {sortConfig.key === "number" && (
-                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    {renderResizeHandle("number")}
-                  </th>
-                  <th onClick={() => handleSort("date")} className={LIST_TH_SORTABLE}>
-                    <div className={LIST_TH_LABEL}>
-                      <span>Date</span>
-                      {sortConfig.key === "date" && (
-                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    {renderResizeHandle("date")}
-                  </th>
-                  <th onClick={() => handleSort("vendor")} className={LIST_TH_SORTABLE}>
-                    <div className={LIST_TH_LABEL}>
-                      <span>Vendor</span>
-                      {sortConfig.key === "vendor" && (
-                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    {renderResizeHandle("vendor")}
-                  </th>
-                  <th className={LIST_TH}>
-                    GSTIN
-                    {renderResizeHandle("gstin")}
-                  </th>
-                  <th className={LIST_TH}>
-                    Reason
-                    {renderResizeHandle("reason")}
-                  </th>
-                  <th className={LIST_TH}>
-                    Items
-                    {renderResizeHandle("items")}
-                  </th>
-                  <th onClick={() => handleSort("amount")} className={LIST_TH_SORTABLE}>
-                    <div className={LIST_TH_LABEL}>
-                      <span>Amount</span>
-                      {sortConfig.key === "amount" && (
-                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                    {renderResizeHandle("amount")}
-                  </th>
-                  <th className={LIST_TH}>
-                    Actions
-                    {renderResizeHandle("actions")}
-                  </th>
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
+                  <th className="px-6 py-4 font-semibold">DN Number</th>
+                  <th className="px-6 py-4 font-semibold">Date</th>
+                  <th className="px-6 py-4 font-semibold">Vendor</th>
+                  <th className="px-6 py-4 font-semibold">GSTIN</th>
+                  <th className="px-6 py-4 font-semibold">Reason</th>
+                  <th className="px-6 py-4 font-semibold">Items</th>
+                  <th className="px-6 py-4 font-semibold text-right">Amount</th>
+                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {isLoading ? (
                   <tr><td colSpan="8" className="px-6 py-12 text-center text-[var(--text-muted)] text-sm">Loading debit notes...</td></tr>
-                ) : sortedNotes.length === 0 ? (
+                ) : notes.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="px-6 py-12 text-center text-[var(--text-muted)] text-sm">
                       <ArrowUturnRightIcon className="w-8 h-8 mx-auto mb-2 opacity-40 text-[var(--text-muted)]" />
@@ -195,7 +95,7 @@ export default function DebitNoteList() {
                     </td>
                   </tr>
                 ) : (
-                  sortedNotes.map((dn) => (
+                  notes.map((dn) => (
                     <tr key={dn.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       <td className="px-6 py-4">
                         <button

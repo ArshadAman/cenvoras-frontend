@@ -4,23 +4,6 @@ import { getAccounts } from "../api/ledger";
 import { showErrorToast, showSuccessToast } from "../utils/toastUtils";
 import { getCurrencySymbol, formatCurrency } from "../utils/currency";
 import { cash40A3Warning } from "../utils/s40a3";
-import useResizableColumns from "../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH } from "../components/common/tableHeaderClasses";
-
-const UNPAID_COLUMN_WIDTHS = {
-  bill: 160,
-  vendor: 190,
-  due: 130,
-  days: 80,
-  actions: 90,
-};
-
-const RULE37_COLUMN_WIDTHS = {
-  bill: 160,
-  vendor: 190,
-  itc: 140,
-  status: 120,
-};
 
 const TDS_FIXED_RATES = {
   "194J": 10,
@@ -37,14 +20,6 @@ export default function VendorPayments() {
   const [accountId, setAccountId] = useState("");
   const [tdsSection, setTdsSection] = useState("");
   const [paying, setPaying] = useState(false);
-  const unpaidCols = useResizableColumns(
-    "cenvoras_vendor_payments_unpaid_col_widths",
-    UNPAID_COLUMN_WIDTHS
-  );
-  const rule37Cols = useResizableColumns(
-    "cenvoras_vendor_payments_rule37_col_widths",
-    RULE37_COLUMN_WIDTHS
-  );
 
   const reload = async () => {
     setLoading(true);
@@ -190,35 +165,14 @@ export default function VendorPayments() {
           <p className="text-[var(--text-muted)] text-sm">Loading…</p>
         ) : (
           <div className="overflow-x-auto border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)] shadow-sm">
-            <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] text-sm">
-              <colgroup>
-                <col style={{ width: `${unpaidCols.colWidths.bill}px` }} />
-                <col style={{ width: `${unpaidCols.colWidths.vendor}px` }} />
-                <col style={{ width: `${unpaidCols.colWidths.due}px` }} />
-                <col style={{ width: `${unpaidCols.colWidths.days}px` }} />
-                <col style={{ width: `${unpaidCols.colWidths.actions}px` }} />
-              </colgroup>
-              <thead className={LIST_THEAD}>
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-left">
                 <tr>
-                  <th className={LIST_TH}>
-                    Bill
-                    {unpaidCols.renderResizeHandle("bill")}
-                  </th>
-                  <th className={LIST_TH}>
-                    Vendor
-                    {unpaidCols.renderResizeHandle("vendor")}
-                  </th>
-                  <th className={LIST_TH}>
-                    Due
-                    {unpaidCols.renderResizeHandle("due")}
-                  </th>
-                  <th className={LIST_TH}>
-                    Days
-                    {unpaidCols.renderResizeHandle("days")}
-                  </th>
-                  <th className={LIST_TH}>
-                    {unpaidCols.renderResizeHandle("actions")}
-                  </th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Bill</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Vendor</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Due</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Days</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
@@ -255,31 +209,13 @@ export default function VendorPayments() {
           </button>
         </div>
         <div className="overflow-x-auto border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-surface)] shadow-sm">
-            <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] text-sm">
-            <colgroup>
-              <col style={{ width: `${rule37Cols.colWidths.bill}px` }} />
-              <col style={{ width: `${rule37Cols.colWidths.vendor}px` }} />
-              <col style={{ width: `${rule37Cols.colWidths.itc}px` }} />
-              <col style={{ width: `${rule37Cols.colWidths.status}px` }} />
-            </colgroup>
-            <thead className={LIST_THEAD}>
+          <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+            <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-left">
               <tr>
-                <th className={LIST_TH}>
-                  Bill
-                  {rule37Cols.renderResizeHandle("bill")}
-                </th>
-                <th className={LIST_TH}>
-                  Vendor
-                  {rule37Cols.renderResizeHandle("vendor")}
-                </th>
-                <th className={LIST_TH}>
-                  ITC at risk
-                  {rule37Cols.renderResizeHandle("itc")}
-                </th>
-                <th className={LIST_TH}>
-                  Status
-                  {rule37Cols.renderResizeHandle("status")}
-                </th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Bill</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Vendor</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">ITC at risk</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-subtle)]">
