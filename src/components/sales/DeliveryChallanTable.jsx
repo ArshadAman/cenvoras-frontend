@@ -19,6 +19,21 @@ import {
   CurrencyRupeeIcon
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  checkbox: 44,
+  challan_number: 140,
+  date: 110,
+  customer: 190,
+  sales_order: 130,
+  transport: 160,
+  items: 80,
+  total_amount: 140,
+  status: 110,
+  actions: 160,
+};
 
 const COLUMN_OPTIONS = [
   { id: "date", label: "Date" },
@@ -38,7 +53,11 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
   const [page] = useState(1);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const [selectedChallans, setSelectedChallans] = useState(new Set());
-  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({ key: "challan_number", direction: "desc" });
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_delivery_challan_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const [visibleColumns, setVisibleColumns] = useState(() => {
     try {
@@ -293,7 +312,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
         return (new Date(a.date || a.created_at) - new Date(b.date || b.created_at)) * dir;
       }
       if (sortConfig.key === "challan_number") {
-        return String(a.challan_number || "").localeCompare(String(b.challan_number || "")) * dir;
+        return String(a.challan_number || "").localeCompare(String(b.challan_number || ""), undefined, { numeric: true }) * dir;
       }
       if (sortConfig.key === "customer_name") {
         return String(a.customer_name || "").localeCompare(String(b.customer_name || "")) * dir;
@@ -426,10 +445,22 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
 
       {/* Desktop Table View */}
       <div className="hidden lg:block overflow-x-auto">
-        <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
-          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
-            <tr className="border-b border-[var(--border-subtle)] text-left">
-              <th className="px-4 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider rounded-l-lg w-10 text-center">
+        <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+          <colgroup>
+            <col style={{ width: `${colWidths.checkbox}px` }} />
+            <col style={{ width: `${colWidths.challan_number}px` }} />
+            {visibleColumns.date && <col style={{ width: `${colWidths.date}px` }} />}
+            {visibleColumns.customer && <col style={{ width: `${colWidths.customer}px` }} />}
+            {visibleColumns.sales_order && <col style={{ width: `${colWidths.sales_order}px` }} />}
+            {visibleColumns.transport && <col style={{ width: `${colWidths.transport}px` }} />}
+            {visibleColumns.items && <col style={{ width: `${colWidths.items}px` }} />}
+            {visibleColumns.total_amount && <col style={{ width: `${colWidths.total_amount}px` }} />}
+            {visibleColumns.status && <col style={{ width: `${colWidths.status}px` }} />}
+            <col style={{ width: `${colWidths.actions}px` }} />
+          </colgroup>
+          <thead className={LIST_THEAD}>
+            <tr className="border-b border-[var(--border-subtle)]">
+              <th className={`${LIST_TH} rounded-l-lg`}>
                 <input
                   type="checkbox"
                   checked={filteredChallans.length > 0 && selectedChallans.size === filteredChallans.length}
@@ -437,87 +468,97 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                   className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                   title="Select All"
                 />
+                {renderResizeHandle("checkbox")}
               </th>
               <th
                 onClick={() => handleSort("challan_number")}
-                className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Challan #</span>
                   {sortConfig.key === "challan_number" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("challan_number")}
               </th>
               {visibleColumns.date && (
                 <th
                   onClick={() => handleSort("date")}
-                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                  className={LIST_TH_SORTABLE}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className={LIST_TH_LABEL}>
                     <span>Date</span>
                     {sortConfig.key === "date" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
+                  {renderResizeHandle("date")}
                 </th>
               )}
               {visibleColumns.customer && (
                 <th
                   onClick={() => handleSort("customer_name")}
-                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                  className={LIST_TH_SORTABLE}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className={LIST_TH_LABEL}>
                     <span>Customer</span>
                     {sortConfig.key === "customer_name" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
+                  {renderResizeHandle("customer")}
                 </th>
               )}
               {visibleColumns.sales_order && (
-                <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                <th className={LIST_TH}>
                   Ref Order
+                  {renderResizeHandle("sales_order")}
                 </th>
               )}
               {visibleColumns.transport && (
-                <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                <th className={LIST_TH}>
                   Transport / Vehicle
+                  {renderResizeHandle("transport")}
                 </th>
               )}
               {visibleColumns.items && (
-                <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                <th className={LIST_TH}>
                   Items
+                  {renderResizeHandle("items")}
                 </th>
               )}
               {visibleColumns.total_amount && (
                 <th
                   onClick={() => handleSort("total_amount")}
-                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                  className={LIST_TH_SORTABLE}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className={LIST_TH_LABEL}>
                     <span>Total Value</span>
                     {sortConfig.key === "total_amount" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
+                  {renderResizeHandle("total_amount")}
                 </th>
               )}
               {visibleColumns.status && (
                 <th
                   onClick={() => handleSort("status")}
-                  className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                  className={LIST_TH_SORTABLE}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className={LIST_TH_LABEL}>
                     <span>Status</span>
                     {sortConfig.key === "status" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
+                  {renderResizeHandle("status")}
                 </th>
               )}
-              <th className="px-5 py-3.5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider rounded-r-lg text-right">
+              <th className={`${LIST_TH} rounded-r-lg`}>
                 Actions
+                {renderResizeHandle("actions")}
               </th>
             </tr>
           </thead>
