@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -204,10 +204,10 @@ const ProfessionalTemplate = forwardRef(({
                     <p className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
                   </div>
                 )}
-                {(invoice.delivery_challan_number || invoice.challan_number) && (
+                {formatLinkedChallanList(invoice) && (
                   <div>
                     <p className="text-xs text-gray-700 font-semibold mb-0.5">Challan No</p>
-                    <p className="font-bold text-gray-900">{invoice.delivery_challan_number || invoice.challan_number}</p>
+                    <p className="font-bold text-gray-900">{formatLinkedChallanList(invoice)}</p>
                   </div>
                 )}
               </>

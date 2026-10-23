@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -59,32 +59,7 @@ const InvoicePreview = forwardRef(({
   const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
   const challanNumber = invoice.challan_number || invoice.delivery_challan_number || '';
   const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
-  const formatMetaDate = (value) => {
-    if (!value) return '';
-    try {
-      return new Date(value).toLocaleDateString('en-IN');
-    } catch {
-      return String(value);
-    }
-  };
-  const challanEntries = (() => {
-    const raw = invoice.challans || invoice.delivery_challans;
-    if (Array.isArray(raw) && raw.length > 0) {
-      return raw
-        .map((c) => {
-          const num = c?.number || c?.challan_number || c?.delivery_challan_number || '';
-          const date = formatMetaDate(c?.date || c?.challan_date);
-          if (!num && !date) return null;
-          return date ? `${num} - ${date}` : String(num);
-        })
-        .filter(Boolean);
-    }
-    if (challanNumber) {
-      return [challanDate ? `${challanNumber} - ${challanDate}` : challanNumber];
-    }
-    return [];
-  })();
-  const challanListText = challanEntries.join(' ; ');
+  const challanListText = formatLinkedChallanList(invoice);
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const customerAddress = billingAddress;
   const hasSeparateShipping = Boolean(

@@ -138,12 +138,14 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'classic',
     name: 'Classic Professional',
+    isDefault: true,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'classic' },
   },
   {
     ...defaultInvoiceTemplate,
     id: 'professional',
     name: 'Professional (Marico Style)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'professional' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -154,6 +156,7 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'service',
     name: 'Service Template (LTIMindtree)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'service' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -164,6 +167,7 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'legend',
     name: 'Legend Corporate (ITC Style)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'legend' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -175,6 +179,7 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'billship',
     name: 'Bill To - Ship To (Flipkart Style)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'billship' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -196,6 +201,7 @@ export const documentTypeToSectionKey = (documentType) => {
     case 'delivery_challan':
       return 'delivery_challan';
     case 'sales_order':
+    case 'proforma':
       return 'sales_order';
     case 'invoice':
     case 'sales_invoice':
@@ -223,6 +229,15 @@ const mergeMissingPresets = (parsed) => {
   return [...pruned, ...missingPresets];
 };
 
+const applySingleDefault = (templates, activeId) => {
+  if (!Array.isArray(templates) || templates.length === 0) return templates || [];
+  const preferred =
+    (activeId && templates.some((t) => t.id === activeId) && activeId) ||
+    templates.find((t) => t.isDefault)?.id ||
+    templates[0].id;
+  return templates.map((t) => ({ ...t, isDefault: t.id === preferred }));
+};
+
 /**
  * Load templates for a single section. Never shares writes across sections.
  * On first access: clone from legacy shared pool (if any), else deep-clone presets.
@@ -230,29 +245,31 @@ const mergeMissingPresets = (parsed) => {
 export const getInvoiceTemplates = (sectionKey = 'sales_invoice') => {
   try {
     const key = sectionTemplatesKey(sectionKey);
+    const scopedActive = localStorage.getItem(`cenvora_active_template_${sectionKey}`);
     const stored = localStorage.getItem(key);
     if (stored) {
-      const parsed = mergeMissingPresets(JSON.parse(stored));
-      if (parsed.length !== JSON.parse(stored).length) {
-        localStorage.setItem(key, JSON.stringify(parsed));
-      }
+      const parsed = applySingleDefault(mergeMissingPresets(JSON.parse(stored)), scopedActive);
+      localStorage.setItem(key, JSON.stringify(parsed));
       return parsed;
     }
 
     // One-time seed from legacy shared pool so existing customizations aren't lost
     const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacy) {
-      const cloned = mergeMissingPresets(JSON.parse(JSON.stringify(JSON.parse(legacy))));
+      const cloned = applySingleDefault(
+        mergeMissingPresets(JSON.parse(JSON.stringify(JSON.parse(legacy)))),
+        scopedActive
+      );
       localStorage.setItem(key, JSON.stringify(cloned));
       return cloned;
     }
 
-    const presets = deepClonePresets();
+    const presets = applySingleDefault(deepClonePresets(), scopedActive);
     localStorage.setItem(key, JSON.stringify(presets));
     return presets;
   } catch (error) {
     console.error('Error loading invoice templates:', error);
-    return deepClonePresets();
+    return applySingleDefault(deepClonePresets(), 'classic');
   }
 };
 
@@ -297,6 +314,9 @@ export const getActiveTemplateForSection = ({
       if (match) return match;
     }
 
+    const flaggedDefault = templates.find((t) => t.isDefault);
+    if (flaggedDefault) return flaggedDefault;
+
     return templates[0] || defaultInvoiceTemplate;
   } catch (error) {
     console.error('Error loading active template for section:', error);
@@ -307,9 +327,11 @@ export const getActiveTemplateForSection = ({
 // Set active template scoped to section
 export const setActiveTemplateForSection = (sectionKey, templateId) => {
   try {
-    if (!sectionKey) return false;
+    if (!sectionKey || !templateId) return false;
     const scopedKey = `cenvora_active_template_${sectionKey}`;
     localStorage.setItem(scopedKey, templateId);
+    const templates = applySingleDefault(getInvoiceTemplates(sectionKey), templateId);
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(templates));
     return true;
   } catch (error) {
     console.error('Error setting active template for section:', error);
@@ -340,8 +362,10 @@ export const saveInvoiceTemplate = (template, sectionKey = 'sales_invoice') => {
       templates.push(updatedTemplate);
     }
 
-    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(templates));
-    return updatedTemplate;
+    const activeId = localStorage.getItem(`cenvora_active_template_${sectionKey}`);
+    const normalized = applySingleDefault(templates, activeId);
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(normalized));
+    return normalized.find((t) => t.id === updatedTemplate.id) || updatedTemplate;
   } catch (error) {
     console.error('Error saving invoice template:', error);
     return null;
@@ -412,6 +436,34 @@ export const resetToDefaults = (sectionKey = 'sales_invoice') => {
     return false;
   }
 };
+
+export const formatLinkedChallanEntries = (invoice) => {
+  const formatDate = (value) => {
+    if (!value) return '';
+    try {
+      return new Date(value).toLocaleDateString('en-IN');
+    } catch {
+      return String(value);
+    }
+  };
+  const raw = invoice?.delivery_challans || invoice?.challans;
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw
+      .map((c) => {
+        const num = c?.challan_number || c?.number || c?.delivery_challan_number || '';
+        const date = formatDate(c?.challan_date || c?.date);
+        if (!num && !date) return null;
+        return date ? `${num} - ${date}` : String(num);
+      })
+      .filter(Boolean);
+  }
+  const number = invoice?.challan_number || invoice?.delivery_challan_number || '';
+  if (!number) return [];
+  const date = formatDate(invoice?.challan_date);
+  return [date ? `${number} - ${date}` : number];
+};
+
+export const formatLinkedChallanList = (invoice) => formatLinkedChallanEntries(invoice).join(' ; ');
 
 // Number to words converter for Indian currency
 export const numberToWords = (num) => {
@@ -506,4 +558,6 @@ export default {
   resetToDefaults,
   numberToWords,
   amountInWords,
+  formatLinkedChallanEntries,
+  formatLinkedChallanList,
 };

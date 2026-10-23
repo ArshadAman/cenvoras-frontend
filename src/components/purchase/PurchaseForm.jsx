@@ -909,7 +909,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     >
                       
                         {/* Table Header */}
-                        <div className="hidden md:grid grid-cols-12 gap-1.5 px-6 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-base text-center text-[var(--text-muted)] uppercase tracking-widest mb-3">
+                        <div className="hidden md:grid grid-cols-12 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-[15px] text-center text-[var(--text-muted)] uppercase tracking-widest mb-3 [&>div]:border-r [&>div]:border-[var(--border-subtle)] [&>div:last-child]:border-r-0 [&>div]:px-2">
                             <div className="col-span-3 text-center">Product / HSN</div>
                             <div className="col-span-2 text-center">Batch Details</div>
                             <div className="col-span-1 text-center">Quantity</div>
@@ -1079,7 +1079,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
   const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
 
   return (
-     <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-[20px] px-4 py-1 scroll-mt-12 transition-all hover:border-[var(--accent-primary)] group mb-3 shadow-sm">
+     <div className="grid grid-cols-1 md:grid-cols-12 items-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-[20px] py-1 scroll-mt-12 transition-all hover:border-[var(--accent-primary)] group mb-3 shadow-sm md:[&>*]:border-r md:[&>*]:border-[var(--border-subtle)] md:[&>*:last-child]:border-r-0 md:[&>*]:px-2">
       
       {/* Product & HSN (3 cols) */}
       <div className="md:col-span-3 space-y-2.5">
@@ -1186,7 +1186,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                   type="number"
                   min="0"
                   step="0.0001"
-                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-3 text-right text-[var(--text-primary)] font-black focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs tabular-nums"
+                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-3 text-center text-[var(--text-primary)] font-black focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs tabular-nums"
               />
           </div>
           <div className="col-span-3 space-y-1.5">

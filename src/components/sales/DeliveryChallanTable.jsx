@@ -20,7 +20,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
 import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TH_CUSTOMER, LIST_TH_LABEL_LEFT, LIST_TD, LIST_TD_AMOUNT, LIST_TD_CUSTOMER } from "../common/tableHeaderClasses";
 
 const DEFAULT_COLUMN_WIDTHS = {
   checkbox: 44,
@@ -499,9 +499,9 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
               {visibleColumns.customer && (
                 <th
                   onClick={() => handleSort("customer_name")}
-                  className={LIST_TH_SORTABLE}
+                  className={LIST_TH_CUSTOMER}
                 >
-                  <div className={LIST_TH_LABEL}>
+                  <div className={LIST_TH_LABEL_LEFT}>
                     <span>Customer</span>
                     {sortConfig.key === "customer_name" && (
                       <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
@@ -589,7 +589,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       isSelected ? "bg-[var(--accent-primary)]/10" : ""
                     }`}
                   >
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                    <td className={LIST_TD}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -597,8 +597,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                         className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                       />
                     </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <td className={LIST_TD}>
+                      <div className="font-bold text-[var(--text-primary)] flex items-center justify-center gap-1.5">
                         <TruckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                         #{challan.challan_number}
                       </div>
@@ -624,12 +624,12 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       )}
                     </td>
                     {visibleColumns.date && (
-                      <td className="px-5 py-3.5 whitespace-nowrap text-[var(--text-secondary)]">
+                      <td className={`${LIST_TD} text-[var(--text-secondary)]`}>
                         {challan.date ? format(new Date(challan.date), "dd/MM/yyyy") : "—"}
                       </td>
                     )}
                     {visibleColumns.customer && (
-                      <td className="px-5 py-3.5 whitespace-nowrap">
+                      <td className={LIST_TD_CUSTOMER}>
                         <div className="font-medium text-[var(--text-primary)]">{challan.customer_name}</div>
                         {challan.customer_gstin && (
                           <div className="text-xs text-[var(--text-muted)] font-mono">
@@ -639,7 +639,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       </td>
                     )}
                     {visibleColumns.sales_order && (
-                      <td className="px-5 py-3.5 whitespace-nowrap">
+                      <td className={LIST_TD}>
                         {challan.sales_order || challan.sales_order_number ? (
                           <button
                             type="button"
@@ -660,7 +660,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       </td>
                     )}
                     {visibleColumns.transport && (
-                      <td className="px-5 py-3.5 whitespace-nowrap">
+                      <td className={LIST_TD}>
                         {challan.vehicle_number ? (
                           <div className="text-sm text-[var(--text-primary)] font-mono font-medium">
                             {challan.vehicle_number}
@@ -676,12 +676,12 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       </td>
                     )}
                     {visibleColumns.items && (
-                      <td className="px-5 py-3.5 whitespace-nowrap text-[var(--text-secondary)]">
+                      <td className={`${LIST_TD} text-[var(--text-secondary)]`}>
                         {challan.items?.length || 0} item{challan.items?.length === 1 ? "" : "s"}
                       </td>
                     )}
                     {visibleColumns.total_amount && (
-                      <td className="px-5 py-3.5 whitespace-nowrap font-bold text-[var(--text-primary)]">
+                      <td className={`${LIST_TD_AMOUNT} font-bold text-[var(--text-primary)]`}>
                         {getCurrencySymbol()}
                         {Number(challan.total_amount || 0).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -690,7 +690,7 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                       </td>
                     )}
                     {visibleColumns.status && (
-                      <td className="px-5 py-3.5 whitespace-nowrap">
+                      <td className={LIST_TD}>
                         {isInvoiced ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs uppercase font-bold tracking-wider bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
                             <DocumentCheckIcon className="w-3.5 h-3.5" />
@@ -707,8 +707,8 @@ export default function DeliveryChallanTable({ onEdit, onView, onViewInvoice, on
                         )}
                       </td>
                     )}
-                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className={LIST_TD}>
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => onView(challan)}
