@@ -12,6 +12,17 @@ import {
   ArrowPathRoundedSquareIcon,
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  order_number: 160,
+  date: 110,
+  customer: 190,
+  amount: 140,
+  status: 140,
+  actions: 160,
+};
 
 export default function SalesOrderTable({ 
   onEdit, 
@@ -24,7 +35,11 @@ export default function SalesOrderTable({
   const [search, setSearch] = useState(initialSearch || "");
   const [page, setPage] = useState(1);
   const [convertOrder, setConvertOrder] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({ key: "order_number", direction: "desc" });
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_sales_order_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   React.useEffect(() => {
     if (initialSearch) {
@@ -90,65 +105,81 @@ export default function SalesOrderTable({
       <>
         {/* Desktop Table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
-              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+          <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+              <colgroup>
+                <col style={{ width: `${colWidths.order_number}px` }} />
+                <col style={{ width: `${colWidths.date}px` }} />
+                <col style={{ width: `${colWidths.customer}px` }} />
+                <col style={{ width: `${colWidths.amount}px` }} />
+                <col style={{ width: `${colWidths.status}px` }} />
+                <col style={{ width: `${colWidths.actions}px` }} />
+              </colgroup>
+              <thead className={LIST_THEAD}>
                 <tr className="border-b border-[var(--border-subtle)]">
-                  <th 
+                  <th
                     onClick={() => handleSort("order_number")}
-                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                    className={LIST_TH_SORTABLE}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Order #</span>
                       {sortConfig.key === "order_number" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("order_number")}
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort("date")}
-                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                    className={LIST_TH_SORTABLE}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Date</span>
                       {sortConfig.key === "date" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("date")}
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort("customer")}
-                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                    className={LIST_TH_SORTABLE}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Customer</span>
                       {sortConfig.key === "customer" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("customer")}
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort("amount")}
-                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                    className={LIST_TH_SORTABLE}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Amount</span>
                       {sortConfig.key === "amount" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("amount")}
                   </th>
-                  <th 
+                  <th
                     onClick={() => handleSort("status")}
-                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none transition-colors"
+                    className={LIST_TH_SORTABLE}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Status</span>
                       {sortConfig.key === "status" && (
                         <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
+                    {renderResizeHandle("status")}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
+                  <th className={LIST_TH}>
+                    Actions
+                    {renderResizeHandle("actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
