@@ -29,6 +29,33 @@ import { yupGstinOptional, isValidGstin, normalizeGstin, GSTIN_INVALID_MSG } fro
 
 const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
 const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
+const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`;
+
+function makeEmptySalesItem() {
+  return {
+    _key: `item-${Math.random().toString(36).substring(2, 9)}`,
+    row_type: "item",
+    product: "",
+    product_name: "",
+    product_id: null,
+    description: "",
+    product_description: "",
+    quantity: 1,
+    free_quantity: 0,
+    batch: "",
+    unit: "pcs",
+    price: 0,
+    discount: 0,
+    tax: 0,
+    hsn_sac_code: "",
+    tax_rate: 0,
+    amount: 0,
+    manufacturer: "",
+    internal_reference: "",
+    storage_condition: "",
+    isExistingProduct: false,
+  };
+}
 
 function formatChipDate(iso) {
   if (!iso || typeof iso !== "string") return "";
@@ -300,7 +327,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 setTimeout(() => setShowDropdown(false), 100);
               }}
               placeholder="Product name"
-              className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-xs ${ITEM_CELL_FOCUS}`}
+              className={`${ITEM_INPUT_CLASS} transition-all`}
               autoComplete="off"
               onKeyDown={(e) => {
                 const exactMatch = (filteredProducts || []).some(
@@ -817,32 +844,6 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
 
 const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.trim());
 
-/** Fisher–Yates shuffle of product rows; note rows stay glued after their preceding product. */
-function shuffleItemsKeepingNotes(items) {
-  const groups = [];
-  const orphanNotes = [];
-  let current = null;
-  for (const item of items) {
-    if (item.row_type === 'note') {
-      if (current) current.notes.push(item);
-      else orphanNotes.push(item);
-    } else {
-      current = { product: item, notes: [] };
-      groups.push(current);
-    }
-  }
-  for (let i = groups.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [groups[i], groups[j]] = [groups[j], groups[i]];
-  }
-  const result = [];
-  for (const g of groups) {
-    result.push(g.product, ...g.notes);
-  }
-  result.push(...orphanNotes);
-  return result;
-}
-
 const SalesSchema = Yup.object().shape({
   // Required fields
   customer_name: Yup.string().required("Customer name is required").min(1).max(255),
@@ -1004,6 +1005,7 @@ export default function SalesForm({
   const queryClient = useQueryClient();
   const isEdit = !!editData && !!editData.id;
   const formikRef = React.useRef(null);
+  const itemsGridRef = React.useRef(null);
   const submitActionRef = React.useRef(forceDraft ? 'draft' : 'final');
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const columnPickerRef = React.useRef(null);
@@ -1497,6 +1499,10 @@ export default function SalesForm({
       return;
     }
     if (formikRef.current) {
+      if (!formikRef.current.dirty) {
+        onClose();
+        return;
+      }
       const values = formikRef.current.values || {};
       const cleanedItems = (values.items || []).filter((item) =>
         item.row_type === 'note'
@@ -1526,11 +1532,10 @@ export default function SalesForm({
         return;
       }
 
-      // Auto-save draft on close (Esc or backdrop click) only when customer is already saved in the database
+      // Auto-save draft on close only when the form was actually edited
       if (hasCustomerName && hasAtLeastOneItem) {
         submitActionRef.current = 'draft';
         await formikRef.current.submitForm();
-        // mutateAsync inside onSubmit waits for save; onSuccess closes + refreshes
         return;
       }
     }
@@ -1605,7 +1610,8 @@ export default function SalesForm({
       total_amount: editData?.total_amount || null,
       notes: editData?.notes || "",
       
-      items: (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
+      items: (() => {
+        const mapped = (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
         const isNote = item.row_type === 'note' || (!item.product && !!item.description);
         const qty = Number(item.quantity) || (isNote ? 0 : 1);
         const price = Number(item.price || 0) || 0;
@@ -1682,7 +1688,14 @@ export default function SalesForm({
         internal_reference: "",
         storage_condition: "",
         isExistingProduct: false,
-      }],
+      }];
+        const last = mapped[mapped.length - 1];
+        const lastHasData = last && (last.product?.trim() || last.product_id || last.row_type === 'note');
+        if (lastHasData) {
+          return [...mapped, makeEmptySalesItem()];
+        }
+        return mapped;
+      })(),
     };
   }, [editData?.id, aiDraftData]);
 
@@ -1790,16 +1803,7 @@ export default function SalesForm({
             }
             
             try {
-              // Auto-shuffle item order on create (Bill / Quotation / Challan only)
-              let itemsForSave = cleanedItems;
-              if (
-                !isEdit &&
-                (documentType === 'invoice' ||
-                  documentType === 'quotation' ||
-                  documentType === 'delivery_challan')
-              ) {
-                itemsForSave = shuffleItemsKeepingNotes(cleanedItems);
-              }
+              const itemsForSave = cleanedItems;
 
               // Bare product names (no UUID) require explicit catalog-create confirm
               const bareNameItems = itemsForSave.filter((item) => {
@@ -2548,39 +2552,33 @@ export default function SalesForm({
                                        currentItem?.hsn_sac_code?.trim();
                         
                         if (isLastRow && hasData) {
-                          // Only add if there isn't already an empty row at the end
                           const nextRowExists = values.items[currentIndex + 1];
                           if (!nextRowExists) {
-                            // Add new empty row
-                            push({
-                              _key: `item-${Math.random().toString(36).substring(2, 9)}`,
-                              row_type: "item",
-                              product: "",
-                              product_name: "",
-                              product_id: null,
-                              description: "",
-                              product_description: "",
-                              quantity: 1,
-                              free_quantity: 0,
-                              batch: "",
-                              unit: "pcs", 
-                              price: 0,
-                              discount: 0,
-                              tax: 0,
-                              hsn_sac_code: "",
-                              tax_rate: 0,
-                              amount: 0,
-                              manufacturer: "",
-                              internal_reference: "",
-                              storage_condition: "",
-                              isExistingProduct: false,
-                            });
+                            const emptyRow = makeEmptySalesItem();
+                            const wasDirty = formikRef.current?.dirty;
+                            const nextItems = [...values.items, emptyRow];
+                            if (!wasDirty && formikRef.current) {
+                              formikRef.current.resetForm({
+                                values: { ...formikRef.current.values, items: nextItems },
+                              });
+                            } else {
+                              push(emptyRow);
+                            }
                           }
                         }
                       };
 
                       return (
-                        <div className="space-y-2">
+                        <div
+                          ref={itemsGridRef}
+                          className="space-y-2"
+                          onFocusCapture={(event) => {
+                            const focused = event.target;
+                            if (focused && typeof focused.scrollIntoView === 'function') {
+                              focused.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                            }
+                          }}
+                        >
                           {(() => {
                             const desktopColumns = [
                               { key: "drag", label: "#", show: true, width: "52px", minWidth: 52 },
@@ -2606,14 +2604,11 @@ export default function SalesForm({
                             return (
                               <>
                                 <div className="hidden md:block overflow-x-auto border-y border-[var(--border-subtle)] bg-[var(--bg-primary)]/50">
-                                  <div className="grid items-center gap-2 px-2 py-2 text-xs font-semibold text-[var(--text-secondary)]" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                  <div className="grid items-center gap-1.5 px-2 py-1 text-base font-semibold text-center text-[var(--text-secondary)]" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
                                         key={col.key}
-                                        className={[
-                                          col.key === "amount" || col.key === "price" ? "text-right" : "",
-                                          col.key === "drag" || col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
-                                        ].join(" ")}
+                                        className="text-center"
                                       >
                                         {col.label}
                                       </div>
@@ -2767,7 +2762,7 @@ export default function SalesForm({
                                           dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-[var(--accent-primary)] bg-[var(--accent-primary)]/10" : "",
                                         ].join(" ")}
                                       >
-                                        <div className="grid items-start gap-2 px-2 py-2" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                        <div className="grid items-center gap-1.5 px-2 py-1 scroll-mt-12" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                           {desktopColumns.map((col) => {
                                            if (col.key === "drag") {
                                              return (
@@ -2831,7 +2826,7 @@ export default function SalesForm({
                                                     name={`items.${index}.manufacturer`}
                                                     type="text"
                                                     placeholder="Manufacturer"
-                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
+                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
                                                   />
                                                 </div>
                                               );
@@ -2844,7 +2839,7 @@ export default function SalesForm({
                                                     name={`items.${index}.internal_reference`}
                                                     type="text"
                                                     placeholder="Internal Ref"
-                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
+                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
                                                   />
                                                 </div>
                                               );
@@ -2858,7 +2853,7 @@ export default function SalesForm({
                                                      <input
                                                        {...field}
                                                        type="text"
-                                                       className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                       className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                        onBlur={async (e) => {
                                                          field.onBlur(e);
                                                          await autofillTaxFromLearnedHsn(
@@ -2879,7 +2874,7 @@ export default function SalesForm({
                                                <div key={col.key}>
                                                  <Field name={`items.${index}.batch`}>
                                                    {({ field }) => (
-                                                     <select {...field} className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`} disabled={!item.product_id}>
+                                                     <select {...field} className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`} disabled={!item.product_id}>
                                                        <option value="">Auto (FEFO)</option>
                                                        {productBatches.map((b) => (
                                                          <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -2898,7 +2893,7 @@ export default function SalesForm({
                                                    name={`items.${index}.quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                                  />
                                                </div>
@@ -2914,7 +2909,7 @@ export default function SalesForm({
                                                    name={`items.${index}.free_quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--status-success)] font-bold ${ITEM_CELL_FOCUS}`}
+                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--status-success)] font-bold ${ITEM_CELL_FOCUS}`}
                                                  />
                                                  {matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0 && (
                                                    <span
@@ -2946,7 +2941,7 @@ export default function SalesForm({
                                                       setFieldValue(`items.${index}.unit`, val);
                                                     }
                                                   }}
-                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                 >
                                                   {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
@@ -2963,7 +2958,7 @@ export default function SalesForm({
                                                   readOnly
                                                   value={item.purchase_price ?? item.cost_price ?? 0}
                                                   title="Purchase / Cost Price (Internal Drafting Reference Only - Never Printed)"
-                                                  className="w-full text-right bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono text-[var(--text-muted)] cursor-not-allowed select-all"
+                                                  className="w-full text-right bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono text-[var(--text-muted)] cursor-not-allowed select-all"
                                                 />
                                               </div>
                                             );
@@ -2977,7 +2972,7 @@ export default function SalesForm({
                                                    type="number"
                                                    min="0"
                                                    step="0.0001"
-                                                   className={`w-full text-right bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                   className={`w-full text-right bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -2998,7 +2993,7 @@ export default function SalesForm({
                                                 <Field
                                                   name={`items.${index}.discount`}
                                                   type="number"
-                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                   onChange={(e) => {
                                                     const discount = e.target.value;
                                                     setFieldValue(`items.${index}.discount`, discount);
@@ -3018,7 +3013,7 @@ export default function SalesForm({
                                                   name={`items.${index}.tax`}
                                                   type="number"
                                                   step="1"
-                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                   onKeyDown={(e) => {
                                                     if (e.key === "Tab" && !e.shiftKey) {
                                                       const isLastRow = index === values.items.length - 1;
@@ -3060,7 +3055,7 @@ export default function SalesForm({
 
                                           if (col.key === "amount") {
                                             return (
-                                              <div key={col.key} className="text-right px-2 py-1.5 font-mono font-bold font-tabular text-[var(--text-primary)] text-xs">
+                                              <div key={col.key} className="text-right px-2 py-1.5 font-mono font-bold font-tabular text-[var(--text-primary)] text-base">
                                                 {item.amount?.toFixed(2) || "0.00"}
                                               </div>
                                             );
@@ -3620,7 +3615,7 @@ export default function SalesForm({
                   ) : (
                     <>
                   <div className="text-[var(--text-muted)] text-xs flex-1 mr-4 hidden sm:block">
-                    Closing this window automatically saves as a draft. Or click Save Draft.
+                    Close without changes to leave this document as-is. Unsaved edits are saved as a draft.
                   </div>
                   {!forceDraft && (
                     <button

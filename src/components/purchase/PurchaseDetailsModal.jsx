@@ -16,10 +16,26 @@ import {
 import { getCurrencySymbol, formatCurrency } from "../../utils/currency";
 import useEscKey from "../../hooks/useEscStack";
 import { parseDateOnly } from '../../utils/date';
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  hash: 44,
+  description: 220,
+  qty: 110,
+  unit_price: 120,
+  disc: 80,
+  tax: 100,
+  total: 130,
+};
 
 export default function PurchaseDetailsModal({ billId, onClose }) {
   const printRef = useRef(null);
   useEscKey(onClose, Boolean(billId), 15);
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_purchase_details_items_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ["purchase-bill", billId],
@@ -298,16 +314,46 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
 
                 {/* Desktop View */}
                 <div className="hidden sm:block border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-surface)]">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs text-[var(--text-muted)] font-semibold uppercase">
-                        <th className="px-4 py-3 text-left w-12">#</th>
-                        <th className="px-4 py-3 text-left">Description</th>
-                        <th className="px-4 py-3 text-center w-24">Qty / Unit</th>
-                        <th className="px-4 py-3 text-right w-28">Unit Price</th>
-                        <th className="px-4 py-3 text-right w-20">Disc.</th>
-                        <th className="px-4 py-3 text-right w-24">Tax</th>
-                        <th className="px-4 py-3 text-right w-32">Total</th>
+                  <table className="w-full table-fixed border-collapse">
+                    <colgroup>
+                      <col style={{ width: `${colWidths.hash}px` }} />
+                      <col style={{ width: `${colWidths.description}px` }} />
+                      <col style={{ width: `${colWidths.qty}px` }} />
+                      <col style={{ width: `${colWidths.unit_price}px` }} />
+                      <col style={{ width: `${colWidths.disc}px` }} />
+                      <col style={{ width: `${colWidths.tax}px` }} />
+                      <col style={{ width: `${colWidths.total}px` }} />
+                    </colgroup>
+                    <thead className={LIST_THEAD}>
+                      <tr className="border-b border-[var(--border-subtle)]">
+                        <th className={LIST_TH}>
+                          #
+                          {renderResizeHandle("hash")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Description
+                          {renderResizeHandle("description")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Qty / Unit
+                          {renderResizeHandle("qty")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Unit Price
+                          {renderResizeHandle("unit_price")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Disc.
+                          {renderResizeHandle("disc")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Tax
+                          {renderResizeHandle("tax")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Total
+                          {renderResizeHandle("total")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">

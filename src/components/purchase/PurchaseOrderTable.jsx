@@ -8,11 +8,25 @@ import {
   EllipsisVerticalIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  order_details: 180,
+  vendor: 200,
+  amount: 140,
+  status: 140,
+  actions: 145,
+};
 
 export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders = [], isLoading }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortConfig, setSortConfig] = useState({ key: "created_at", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({ key: "po_number", direction: "desc" });
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_purchase_order_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const handleSort = (key) => {
     setSortConfig(prev => {
@@ -85,54 +99,68 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
 
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
-        <table className="min-w-full divide-y divide-[var(--border-subtle)] text-left text-sm whitespace-nowrap">
-          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
+        <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] text-sm whitespace-nowrap">
+          <colgroup>
+            <col style={{ width: `${colWidths.order_details}px` }} />
+            <col style={{ width: `${colWidths.vendor}px` }} />
+            <col style={{ width: `${colWidths.amount}px` }} />
+            <col style={{ width: `${colWidths.status}px` }} />
+            <col style={{ width: `${colWidths.actions}px` }} />
+          </colgroup>
+          <thead className={LIST_THEAD}>
             <tr className="border-b border-[var(--border-subtle)]">
-              <th 
+              <th
                 onClick={() => handleSort("po_number")}
-                className="px-6 py-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Order Details</span>
                   {sortConfig.key === "po_number" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("order_details")}
               </th>
-              <th 
+              <th
                 onClick={() => handleSort("vendor")}
-                className="px-6 py-4 font-bold text-[var(--text-primary)] cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Vendor</span>
                   {sortConfig.key === "vendor" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("vendor")}
               </th>
-              <th 
+              <th
                 onClick={() => handleSort("amount")}
-                className="px-6 py-4 font-bold text-[var(--text-primary)] text-right cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center justify-end gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Amount</span>
                   {sortConfig.key === "amount" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("amount")}
               </th>
-              <th 
+              <th
                 onClick={() => handleSort("status")}
-                className="px-6 py-4 font-bold text-[var(--text-primary)] text-center cursor-pointer select-none hover:text-[var(--accent-primary)] transition-colors"
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center justify-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Status</span>
                   {sortConfig.key === "status" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("status")}
               </th>
-              <th className="px-6 py-4 font-bold text-[var(--text-primary)] text-right">Actions</th>
+              <th className={LIST_TH}>
+                Actions
+                {renderResizeHandle("actions")}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-subtle)]">

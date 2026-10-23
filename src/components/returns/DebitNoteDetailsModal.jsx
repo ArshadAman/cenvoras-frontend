@@ -6,6 +6,18 @@ import { getDebitNote } from "../../api/gst";
 import { getCurrencySymbol } from "../../utils/currency";
 import { formatDateKolkata, parseDateOnly } from "../../utils/date";
 import useEscKey from "../../hooks/useEscStack";
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  product: 180,
+  hsn: 90,
+  qty: 70,
+  price: 100,
+  disc: 70,
+  tax: 80,
+  amount: 110,
+};
 
 const fmt = (v) =>
   parseFloat(v || 0).toLocaleString("en-IN", {
@@ -33,6 +45,10 @@ function formatDnDate(dateStr) {
 
 export default function DebitNoteDetailsModal({ isOpen, onClose, debitNoteId }) {
   useEscKey(onClose, isOpen, 15);
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_debit_note_details_items_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const { data: note, isLoading, isError } = useQuery({
     queryKey: ["debit-note", debitNoteId],
@@ -138,16 +154,46 @@ export default function DebitNoteDetailsModal({ isOpen, onClose, debitNoteId }) 
                   Line Items
                 </h3>
                 <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-primary)] overflow-x-auto">
-                  <table className="w-full text-left text-sm min-w-[640px]">
-                    <thead>
-                      <tr className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
-                        <th className="p-3 font-medium">Product</th>
-                        <th className="p-3 font-medium">HSN</th>
-                        <th className="p-3 font-medium text-right">Qty</th>
-                        <th className="p-3 font-medium text-right">Price</th>
-                        <th className="p-3 font-medium text-center">Disc.</th>
-                        <th className="p-3 font-medium text-center">Tax</th>
-                        <th className="p-3 font-medium text-right">Amount</th>
+                  <table className="w-full table-fixed text-sm min-w-[640px]">
+                    <colgroup>
+                      <col style={{ width: `${colWidths.product}px` }} />
+                      <col style={{ width: `${colWidths.hsn}px` }} />
+                      <col style={{ width: `${colWidths.qty}px` }} />
+                      <col style={{ width: `${colWidths.price}px` }} />
+                      <col style={{ width: `${colWidths.disc}px` }} />
+                      <col style={{ width: `${colWidths.tax}px` }} />
+                      <col style={{ width: `${colWidths.amount}px` }} />
+                    </colgroup>
+                    <thead className={LIST_THEAD}>
+                      <tr className="border-b border-[var(--border-subtle)]">
+                        <th className={LIST_TH}>
+                          Product
+                          {renderResizeHandle("product")}
+                        </th>
+                        <th className={LIST_TH}>
+                          HSN
+                          {renderResizeHandle("hsn")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Qty
+                          {renderResizeHandle("qty")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Price
+                          {renderResizeHandle("price")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Disc.
+                          {renderResizeHandle("disc")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Tax
+                          {renderResizeHandle("tax")}
+                        </th>
+                        <th className={LIST_TH}>
+                          Amount
+                          {renderResizeHandle("amount")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
