@@ -312,79 +312,97 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
-            <input
-              {...field}
-              value={inputValue}
-              onChange={handleInputChange}
-              onFocus={() => {
-                setIsFocused(true);
-                if ((inputValue || "").trim() && filteredProducts.length > 0) {
-                  setShowDropdown(true);
-                }
-              }}
-              onBlur={() => {
-                setIsFocused(false);
-                setTimeout(() => setShowDropdown(false), 100);
-              }}
-              placeholder="Product name"
-              className={`${ITEM_INPUT_CLASS} transition-all`}
-              autoComplete="off"
-              onKeyDown={(e) => {
-                const exactMatch = (filteredProducts || []).some(
-                  (p) => (p.name || '').trim().toLowerCase() === (inputValue || '').trim().toLowerCase()
-                );
-                const showAddButton = Boolean(inputValue.trim() && !exactMatch && onCreateNewProduct);
-                const displayLimit = Math.min(filteredProducts.length, 50);
-                const totalOptions = displayLimit + (showAddButton ? 1 : 0);
-
-                if (e.key === 'Tab') {
-                  if (showDropdown && filteredProducts.length === 1 && !showAddButton) {
-                    e.preventDefault();
-                    selectProduct(filteredProducts[0]);
-                  } else if (showDropdown && selectedIndex >= 0 && selectedIndex < displayLimit) {
-                    e.preventDefault();
-                    selectProduct(filteredProducts[selectedIndex]);
-                  } else if (showDropdown && selectedIndex === displayLimit && showAddButton) {
-                    e.preventDefault();
-                    onCreateNewProduct(inputValue.trim(), idx);
+            <div className="relative">
+              <input
+                {...field}
+                value={inputValue}
+                onChange={handleInputChange}
+                onFocus={() => {
+                  setIsFocused(true);
+                  if ((inputValue || "").trim() && filteredProducts.length > 0) {
+                    setShowDropdown(true);
                   }
-                  setShowDropdown(false);
-                  setSelectedIndex(-1);
-                  return;
-                }
+                }}
+                onBlur={() => {
+                  setIsFocused(false);
+                  setTimeout(() => setShowDropdown(false), 100);
+                }}
+                placeholder="Product name"
+                className={`${ITEM_INPUT_CLASS} transition-all ${showDescription && !descExpanded && !hasDescription ? "!pr-7" : ""}`}
+                autoComplete="off"
+                onKeyDown={(e) => {
+                  const exactMatch = (filteredProducts || []).some(
+                    (p) => (p.name || '').trim().toLowerCase() === (inputValue || '').trim().toLowerCase()
+                  );
+                  const showAddButton = Boolean(inputValue.trim() && !exactMatch && onCreateNewProduct);
+                  const displayLimit = Math.min(filteredProducts.length, 50);
+                  const totalOptions = displayLimit + (showAddButton ? 1 : 0);
 
-                // Handle dropdown navigation
-                if (showDropdown && totalOptions > 0) {
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setSelectedIndex(prev => (prev < totalOptions - 1) ? prev + 1 : 0);
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalOptions - 1);
-                  } else if (e.key === 'Enter') {
-                    if (filteredProducts.length === 1 && !showAddButton) {
+                  if (e.key === 'Tab') {
+                    if (showDropdown && filteredProducts.length === 1 && !showAddButton) {
                       e.preventDefault();
                       selectProduct(filteredProducts[0]);
-                    } else if (selectedIndex >= 0 && selectedIndex < displayLimit) {
+                    } else if (showDropdown && selectedIndex >= 0 && selectedIndex < displayLimit) {
                       e.preventDefault();
                       selectProduct(filteredProducts[selectedIndex]);
-                    } else if (selectedIndex === displayLimit && showAddButton) {
+                    } else if (showDropdown && selectedIndex === displayLimit && showAddButton) {
+                      e.preventDefault();
+                      onCreateNewProduct(inputValue.trim(), idx);
+                    }
+                    setShowDropdown(false);
+                    setSelectedIndex(-1);
+                    return;
+                  }
+
+                  // Handle dropdown navigation
+                  if (showDropdown && totalOptions > 0) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => (prev < totalOptions - 1) ? prev + 1 : 0);
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalOptions - 1);
+                    } else if (e.key === 'Enter') {
+                      if (filteredProducts.length === 1 && !showAddButton) {
+                        e.preventDefault();
+                        selectProduct(filteredProducts[0]);
+                      } else if (selectedIndex >= 0 && selectedIndex < displayLimit) {
+                        e.preventDefault();
+                        selectProduct(filteredProducts[selectedIndex]);
+                      } else if (selectedIndex === displayLimit && showAddButton) {
+                        e.preventDefault();
+                        setShowDropdown(false);
+                        setSelectedIndex(-1);
+                        onCreateNewProduct(inputValue.trim(), idx);
+                      }
+                    } else if (e.key === 'Escape') {
                       e.preventDefault();
                       setShowDropdown(false);
                       setSelectedIndex(-1);
-                      onCreateNewProduct(inputValue.trim(), idx);
                     }
                   } else if (e.key === 'Escape') {
-                    e.preventDefault();
                     setShowDropdown(false);
                     setSelectedIndex(-1);
                   }
-                } else if (e.key === 'Escape') {
-                  setShowDropdown(false);
-                  setSelectedIndex(-1);
-                }
-              }}
-            />
+                }}
+              />
+              {showDescription && !descExpanded && !hasDescription && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  title="Add note"
+                  aria-label="Add note"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setDescExpanded(true);
+                    setFocusDesc(true);
+                  }}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm leading-none px-1"
+                >
+                  +
+                </button>
+              )}
+            </div>
             {meta.touched && meta.error && (
               <div className="text-[var(--status-danger)] text-xs mt-1">{meta.error}</div>
             )}
@@ -393,43 +411,29 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
-            {showDescription && (
+            {showDescription && (descExpanded || hasDescription) && (
               <div className="mt-1">
-                {descExpanded || hasDescription ? (
-                  <textarea
-                    ref={descRef}
-                    rows={1}
-                    value={descValue}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFieldValue(`items.${idx}.description`, val);
-                      setFieldValue(`items.${idx}.product_description`, val);
-                      e.target.style.height = 'auto';
-                      e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.height = 'auto';
-                      e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
-                    }}
-                    onBlur={(e) => {
-                      if (!e.target.value.trim()) setDescExpanded(false);
-                    }}
-                    placeholder="Enter a description / note..."
-                    className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => {
-                      setDescExpanded(true);
-                      setFocusDesc(true);
-                    }}
-                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] italic"
-                  >
-                    Add note
-                  </button>
-                )}
+                <textarea
+                  ref={descRef}
+                  rows={1}
+                  value={descValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFieldValue(`items.${idx}.description`, val);
+                    setFieldValue(`items.${idx}.product_description`, val);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value.trim()) setDescExpanded(false);
+                  }}
+                  placeholder="Enter a description / note..."
+                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic"
+                />
               </div>
             )}
           </div>

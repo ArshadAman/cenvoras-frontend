@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createDeliveryChallan, updateDeliveryChallan } from "../../api/delivery_challan";
@@ -14,6 +14,22 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
+  const descRef = useRef(null);
+  const descValue = values.items[idx]?.description ?? values.items[idx]?.product_description ?? "";
+  const hasDescription = Boolean(String(descValue).trim());
+  const [descExpanded, setDescExpanded] = useState(hasDescription);
+  const [focusDesc, setFocusDesc] = useState(false);
+
+  useEffect(() => {
+    if (hasDescription) setDescExpanded(true);
+  }, [hasDescription]);
+
+  useEffect(() => {
+    if (focusDesc && descExpanded && descRef.current) {
+      descRef.current.focus();
+      setFocusDesc(false);
+    }
+  }, [focusDesc, descExpanded]);
 
   useEffect(() => {
     setInputValue(values.items[idx]?.product || "");
@@ -54,51 +70,75 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       <Field name={`items.${idx}.product`}>
         {({ field }) => (
           <div>
-            <input
-              {...field}
-              value={inputValue}
-              onChange={handleInputChange}
-              placeholder="Product name"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)]"
-              autoComplete="off"
-              onKeyDown={(e) => {
-                if (e.key === 'Tab') {
-                  if (showDropdown && filteredProducts.length === 1) {
-                    selectProduct(filteredProducts[0]);
+            <div className="relative">
+              <input
+                {...field}
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder="Product name"
+                className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] ${!descExpanded && !hasDescription ? "!pr-7" : ""}`}
+                autoComplete="off"
+                onKeyDown={(e) => {
+                  if (e.key === 'Tab') {
+                    if (showDropdown && filteredProducts.length === 1) {
+                      selectProduct(filteredProducts[0]);
+                    }
+                    setShowDropdown(false);
+                    return;
                   }
-                  setShowDropdown(false);
-                  return;
-                }
-                if (showDropdown && filteredProducts.length === 1 && e.key === 'Enter') {
-                  e.preventDefault();
-                  selectProduct(filteredProducts[0]);
-                } else if (e.key === 'Escape') {
-                  setShowDropdown(false);
-                }
-              }}
-            />
+                  if (showDropdown && filteredProducts.length === 1 && e.key === 'Enter') {
+                    e.preventDefault();
+                    selectProduct(filteredProducts[0]);
+                  } else if (e.key === 'Escape') {
+                    setShowDropdown(false);
+                  }
+                }}
+              />
+              {!descExpanded && !hasDescription && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  title="Add note"
+                  aria-label="Add note"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setDescExpanded(true);
+                    setFocusDesc(true);
+                  }}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm leading-none px-1"
+                >
+                  +
+                </button>
+              )}
+            </div>
             {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
               <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
                 ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
               </div>
             )}
-            <textarea
-              rows={1}
-              value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFieldValue(`items.${idx}.description`, val);
-                setFieldValue(`items.${idx}.product_description`, val);
-                e.target.style.height = 'auto';
-                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
-              }}
-              onFocus={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
-              }}
-              placeholder="Enter a description / note..."
-              className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)]/40 rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
-            />
+            {(descExpanded || hasDescription) && (
+              <textarea
+                ref={descRef}
+                rows={1}
+                value={descValue}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFieldValue(`items.${idx}.description`, val);
+                  setFieldValue(`items.${idx}.product_description`, val);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                }}
+                onFocus={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value.trim()) setDescExpanded(false);
+                }}
+                placeholder="Enter a description / note..."
+                className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)]/40 rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
+              />
+            )}
           </div>
         )}
       </Field>
