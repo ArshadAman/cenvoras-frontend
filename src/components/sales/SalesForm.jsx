@@ -1415,12 +1415,16 @@ export default function SalesForm({
 
   // Auto-focus removed: It scrolled the user to the bottom of the form which was disorienting
   
-  // Preview only — never write into the form on open (avoids burning INV-### on drafts)
+  const storedDocNumber = editData?.order_number || editData?.quotation_number || editData?.invoice_number || editData?.challan_number || "";
+  const storedIsPlaceholder = !storedDocNumber || /^(DFT-|D-QT-|D-DC-|D-SO-|D-PO-|D-BILL-|D-CN-|D-DN-|PB-DRAFT-)/i.test(storedDocNumber);
+
+  // Preview only — never write into Formik on open (avoids burning INV-### on drafts)
   const { data: nextInvData } = useQuery({
-    queryKey: ["nextInvoiceNumber", invoicePrefix],
+    queryKey: ["nextDocumentNumber", documentType, invoicePrefix],
     queryFn: () => getNextNumber(invoicePrefix ?? ""),
-    enabled: !isEdit && isOpen
+    enabled: isOpen && (!isEdit || storedIsPlaceholder)
   });
+  const previewNextNumber = (!isEdit || storedIsPlaceholder) ? (nextInvData?.next_number || "") : "";
 
   const extractErrorMessage = (error, defaultMsg) => {
     return formatErrorMessage(error, defaultMsg);
@@ -1437,6 +1441,7 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["nextDocumentNumber"] });
       if (submitActionRef.current === 'draft') {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
@@ -1473,6 +1478,7 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["nextDocumentNumber"] });
       if (submitActionRef.current === 'draft') {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
@@ -2095,20 +2101,26 @@ export default function SalesForm({
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                           {isSalesOrder ? 'Order Number *' : isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                         </label>
-                        <Field
-                          name="invoice_number"
-                          type="text"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          spellCheck="false"
-                          data-1p-ignore="true"
-                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
-                          placeholder={
-                            !isEdit && nextInvData?.next_number
-                              ? `Auto on save (next: ${nextInvData.next_number})`
-                              : (isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001")
-                          }
-                        />
+                        <Field name="invoice_number">
+                          {({ field }) => {
+                            const typed = field.value && !/^(DFT-|D-QT-|D-DC-|D-SO-|D-PO-|D-BILL-|D-CN-|D-DN-|PB-DRAFT-)/i.test(field.value)
+                              ? field.value
+                              : "";
+                            return (
+                            <input
+                              {...field}
+                              type="text"
+                              autoComplete="off"
+                              autoCorrect="off"
+                              spellCheck="false"
+                              data-1p-ignore="true"
+                              value={typed || previewNextNumber}
+                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
+                              placeholder={isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001"}
+                            />
+                            );
+                          }}
+                        </Field>
                         <ErrorMessage name="invoice_number" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                       </div>
 
