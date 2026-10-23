@@ -41,6 +41,9 @@ export default function SalesOrderList() {
 
   const saveSalesOrderPrefixMutation = useMutation({
     mutationFn: (prefix) => patchUserProfile({ sales_order_prefix: prefix }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
   });
 
   const billingProfile = userProfile?.billing_profile || userProfile?.profile;
