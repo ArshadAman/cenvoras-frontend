@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { getCurrencySymbol } from "../../utils/currency";
 import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
 
 const DEFAULT_COLUMN_WIDTHS = {
   order_number: 160,
@@ -194,8 +194,8 @@ export default function SalesOrderTable({
                             : 'border-[var(--border-subtle)] hover:bg-[var(--bg-primary)]'
                         }`}
                       >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-[var(--text-primary)] font-medium flex items-center gap-2">
+                          <td className={LIST_TD}>
+                            <div className="text-[var(--text-primary)] font-medium flex items-center justify-center gap-2">
                               <span>{order.order_number}</span>
                               {isHighlighted && (
                                 <span className="px-2 py-0.5 text-xs font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full">
@@ -214,10 +214,10 @@ export default function SalesOrderTable({
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-[var(--text-secondary)]">{order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-[var(--text-primary)]">{order.customer_display_name || order.customer_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-[var(--text-primary)] font-bold">{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
-                           <td className="px-6 py-4 whitespace-nowrap">
+                          <td className={`${LIST_TD} text-[var(--text-secondary)]`}>{order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}</td>
+                          <td className={`${LIST_TD} text-[var(--text-primary)]`}>{order.customer_display_name || order.customer_name}</td>
+                          <td className={`${LIST_TD_AMOUNT} text-[var(--text-primary)] font-bold`}>{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
+                           <td className={LIST_TD}>
                               <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
                                 order.stage === 'completed' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border-[var(--status-success)]/30' : 
                                 order.stage === 'shipped' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border-[var(--status-info)]/30' : 
@@ -227,8 +227,8 @@ export default function SalesOrderTable({
                                   {order.stage === 'shipped' ? 'Partially Shipped' : (order.stage || 'new')}
                               </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-1.5">
+                          <td className={LIST_TD}>
+                            <div className="flex items-center justify-center space-x-1.5">
                               <button
                                 type="button"
                                 onClick={() => onView && onView(order)}

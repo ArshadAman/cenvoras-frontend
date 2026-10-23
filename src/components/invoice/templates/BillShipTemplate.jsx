@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -150,9 +150,9 @@ const BillShipTemplate = forwardRef(({
                    PO / Order: {invoice.po_number || invoice.sales_order_number}
                  </p>
                )}
-               {(invoice.challan_number || invoice.delivery_challan_number) && (
+               {formatLinkedChallanList(invoice) && (
                  <p className="text-sm text-gray-800 font-semibold mt-1">
-                   Challan: {invoice.challan_number || invoice.delivery_challan_number}
+                   Challan: {formatLinkedChallanList(invoice)}
                  </p>
                )}
                {invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>}

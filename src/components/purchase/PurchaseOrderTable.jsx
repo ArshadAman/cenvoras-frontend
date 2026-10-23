@@ -9,7 +9,7 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
 
 const DEFAULT_COLUMN_WIDTHS = {
   order_details: 180,
@@ -173,13 +173,13 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
             ) : (
               filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
-                  <td className="px-6 py-4">
+                  <td className={LIST_TD}>
                     <div className="font-semibold text-[var(--text-primary)]">{order.po_number || "Draft"}</div>
                     <div className="text-xs text-[var(--text-muted)] mt-1">
                       {order.created_at ? format(new Date(order.created_at), "dd/MM/yyyy") : "N/A"}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className={LIST_TD}>
                     <div className="font-medium text-[var(--text-primary)]">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
                     {order.expected_date && (
                       <div className="text-xs text-[var(--text-muted)] mt-1">
@@ -187,12 +187,12 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className={LIST_TD_AMOUNT}>
                     <div className="font-bold text-[var(--text-primary)] tabular-nums">
                       {getCurrencySymbol()}{parseFloat(order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className={LIST_TD}>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
                       order.status === 'received' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
                       order.status === 'cancelled' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
@@ -202,8 +202,8 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                       {order.status || 'draft'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className={LIST_TD}>
+                    <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {order.status !== 'received' && (
                         <button
                           onClick={() => onConvert(order)}

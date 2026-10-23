@@ -290,7 +290,11 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   // Set as active template for this section only
   const handleSetActive = () => {
     setActiveTemplateForSection(sectionKey, currentTemplate.id);
-    setActiveTemplateId(currentTemplate.id);
+    const refreshed = getInvoiceTemplates(sectionKey);
+    const active = refreshed.find((t) => t.id === currentTemplate.id) || currentTemplate;
+    setTemplates(refreshed);
+    setCurrentTemplate(active);
+    setActiveTemplateId(active.id);
     toast.success('Template set as default for this section!');
   };
 
@@ -300,10 +304,12 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     if (newName) {
       const newTemplate = createTemplateFromPreset('classic', newName, sectionKey);
       if (newTemplate) {
-        setTemplates(getInvoiceTemplates(sectionKey));
-        setCurrentTemplate(newTemplate);
-        setActiveTemplateId(newTemplate.id);
         setActiveTemplateForSection(sectionKey, newTemplate.id);
+        const refreshed = getInvoiceTemplates(sectionKey);
+        const active = refreshed.find((t) => t.id === newTemplate.id) || newTemplate;
+        setTemplates(refreshed);
+        setCurrentTemplate(active);
+        setActiveTemplateId(active.id);
         toast.success('New template created!');
       }
     }
@@ -329,8 +335,10 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     if (confirm('Are you sure you want to delete this template?')) {
       deleteInvoiceTemplate(currentTemplate.id, sectionKey);
       const remaining = getInvoiceTemplates(sectionKey);
+      const next = remaining.find((t) => t.isDefault) || remaining[0] || defaultInvoiceTemplate;
       setTemplates(remaining);
-      setCurrentTemplate(remaining[0] || defaultInvoiceTemplate);
+      setCurrentTemplate(next);
+      setActiveTemplateId(next?.id || null);
       toast.success('Template deleted!');
     }
   };
@@ -439,7 +447,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
             className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-left flex items-center justify-between hover:bg-white/10 transition-colors"
           >
             <span className="text-white font-medium truncate">{currentTemplate.name}</span>
-            {activeTemplateId === currentTemplate.id && (
+            {(templates.find((t) => t.isDefault)?.id === currentTemplate.id || activeTemplateId === currentTemplate.id) && (
               <span className="text-xs bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] px-2 py-0.5 rounded">Active</span>
             )}
           </button>
@@ -456,7 +464,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   }`}
                 >
                   <span className="text-white">{template.name}</span>
-                  {activeTemplateId === template.id && (
+                  {template.isDefault && (
                     <CheckIcon className="w-4 h-4 text-cyan-400" />
                   )}
                 </button>

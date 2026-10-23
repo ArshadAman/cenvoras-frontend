@@ -7,7 +7,7 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { parseDateOnly } from '../../utils/date';
 import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
 
 const DEFAULT_COLUMN_WIDTHS = {
   checkbox: 44,
@@ -473,7 +473,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     key={bill.id}
                     className="hover:bg-[var(--bg-primary)] transition-colors"
                   >
-                    <td className="py-3 px-4">
+                    <td className={LIST_TD}>
                       <input
                         type="checkbox"
                         checked={selectedBills.has(bill.id)}
@@ -481,14 +481,14 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                       />
                     </td>
-                    <td className="py-3 px-4 font-semibold text-[var(--text-primary)]">
+                    <td className={`${LIST_TD} font-semibold text-[var(--text-primary)]`}>
                       {bill.bill_number}
                     </td>
-                    <td className="py-3 px-4 text-[var(--text-secondary)]">
+                    <td className={`${LIST_TD} text-[var(--text-secondary)]`}>
                       {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
                     </td>
-                    <td className="py-3 px-4 text-[var(--text-primary)] font-medium">{bill.vendor_name}</td>
-                    <td className="py-3 px-4">
+                    <td className={`${LIST_TD} text-[var(--text-primary)] font-medium`}>{bill.vendor_name}</td>
+                    <td className={LIST_TD}>
                       {bill.items && bill.items.length > 0 ? (
                         <div className="flex items-center gap-2">
                           {/* Show first 2 items as compact pills */}
@@ -520,13 +520,13 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         <span className="text-[var(--text-muted)] text-xs italic">No items</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-[var(--text-primary)] tabular-nums">
+                    <td className={`${LIST_TD_AMOUNT} font-bold text-[var(--text-primary)] tabular-nums`}>
                       {getCurrencySymbol()}{Number(bill.total_amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className={LIST_TD}>
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"

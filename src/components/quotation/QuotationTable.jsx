@@ -20,7 +20,7 @@ import QuotationConvertModal from './QuotationConvertModal';
 import { getCurrencySymbol } from '../../utils/currency';
 import EmptyState from '../common/EmptyState';
 import useResizableColumns from '../../hooks/useResizableColumns';
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from '../common/tableHeaderClasses';
 
 const DEFAULT_COLUMN_WIDTHS = {
   number: 150,
@@ -234,11 +234,11 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {sortedRows.map((q) => (
                   <tr key={q.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
-                    <td className="px-4 py-3 text-[var(--text-primary)] font-mono font-medium">{q.quotation_number || q.invoice_number}</td>
-                    <td className="px-4 py-3 text-[var(--text-secondary)]">{q.quotation_date || q.invoice_date}</td>
-                    <td className="px-4 py-3 text-[var(--text-primary)]">{q.customer_name}</td>
-                    <td className="px-4 py-3 text-[var(--text-primary)] font-mono font-semibold">{getCurrencySymbol()}{Number(q.total_amount || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3">
+                    <td className={`${LIST_TD} text-[var(--text-primary)] font-mono font-medium`}>{q.quotation_number || q.invoice_number}</td>
+                    <td className={`${LIST_TD} text-[var(--text-secondary)]`}>{q.quotation_date || q.invoice_date}</td>
+                    <td className={`${LIST_TD} text-[var(--text-primary)]`}>{q.customer_name}</td>
+                    <td className={`${LIST_TD_AMOUNT} text-[var(--text-primary)] font-mono font-semibold`}>{getCurrencySymbol()}{Number(q.total_amount || 0).toFixed(2)}</td>
+                    <td className={LIST_TD}>
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
                         q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
                         q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
@@ -248,8 +248,8 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                         {q.status?.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
+                    <td className={LIST_TD}>
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => onView?.(q)}

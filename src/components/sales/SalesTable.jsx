@@ -24,7 +24,7 @@ import {
 import PaymentForm from "../ledger/PaymentForm";
 import { getCurrencySymbol } from '../../utils/currency';
 import useResizableColumns from "../../hooks/useResizableColumns";
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
 
 const COLUMN_OPTIONS = [
   { id: "customer", label: "Customer" },
@@ -863,7 +863,7 @@ export default function SalesTable({
               paginatedInvoices.map((invoice) => {
                 return (
               <tr key={invoice.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
-                <td className="px-3 py-3.5 whitespace-nowrap">
+                <td className={LIST_TD}>
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
@@ -871,32 +871,32 @@ export default function SalesTable({
                     className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] accent-[var(--accent-primary)] cursor-pointer"
                   />
                 </td>
-                <td className="px-3.5 py-3.5 whitespace-nowrap">
+                <td className={LIST_TD}>
                   <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight truncate" title={`#${invoice.invoice_number}`}>
                     #{invoice.invoice_number}
                   </div>
                 </td>
-                <td className="px-3.5 py-3.5 whitespace-nowrap">
+                <td className={LIST_TD}>
                   <div className="text-xs font-mono text-[var(--text-muted)] truncate">
                     {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </td>
                 {visibleColumns.customer && (
-                  <td className="px-3.5 py-3.5 whitespace-nowrap">
+                  <td className={LIST_TD}>
                     <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={invoice.customer_name}>
                       {invoice.customer_name}
                     </div>
                   </td>
                 )}
                 {visibleColumns.po_number && (
-                  <td className="px-3.5 py-3.5 whitespace-nowrap">
+                  <td className={LIST_TD}>
                     <div className="text-xs font-mono text-[var(--text-secondary)] truncate" title={invoice.po_number || '-'}>
                       {invoice.po_number || '-'}
                     </div>
                   </td>
                 )}
                 {visibleColumns.untaxed_amount && (
-                  <td className="px-3.5 py-3.5 whitespace-nowrap">
+                  <td className={LIST_TD_AMOUNT}>
                     <div className="text-xs font-mono font-medium text-[var(--text-primary)] font-tabular truncate">
                       {getCurrencySymbol()}{(() => {
                         // Calculate untaxed amount from items factoring in discounts
@@ -916,7 +916,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.total_amount && (
-                  <td className="px-3.5 py-3.5 whitespace-nowrap">
+                  <td className={LIST_TD_AMOUNT}>
                     {(() => {
                       const roundOff = parseFloat(invoice.round_off || 0) || 0;
                       const calculations = invoice.items?.reduce((acc, item) => {
@@ -957,7 +957,7 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.status && (
-                  <td className="px-3.5 py-3.5 whitespace-nowrap">
+                  <td className={LIST_TD}>
                     {(() => {
                       const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
                       if (isDraft) {
@@ -979,12 +979,12 @@ export default function SalesTable({
                   </td>
                 )}
                 {visibleColumns.items && (
-                  <td className="px-3.5 py-3.5 whitespace-nowrap text-sm text-[var(--text-muted)] truncate">
+                  <td className={`${LIST_TD} text-sm text-[var(--text-muted)] truncate`}>
                     {invoice.items?.length || 0} items
                   </td>
                 )}
-                <td className="px-3.5 py-3.5 whitespace-nowrap text-sm font-medium text-right">
-                  <div className="flex items-center justify-end gap-1.5">
+                <td className={`${LIST_TD} text-sm font-medium`}>
+                  <div className="flex items-center justify-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => onView(invoice)}

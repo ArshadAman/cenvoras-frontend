@@ -29,7 +29,8 @@ import { yupGstinOptional, isValidGstin, normalizeGstin, GSTIN_INVALID_MSG } fro
 
 const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
 const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
-const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`;
+const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`;
+const ITEM_GRID_RULES = "[&>*]:border-r [&>*]:border-[var(--border-subtle)] [&>*:last-child]:border-r-0 [&>*]:px-1.5";
 
 function makeEmptySalesItem() {
   return {
@@ -1895,11 +1896,19 @@ export default function SalesForm({
                 values.invoice_number?.startsWith('QT') ||
                 values.invoice_number?.startsWith('DC');
 
-              const serializedChallanNumber = Array.isArray(values.delivery_challans)
-                ? values.delivery_challans.map(c => c.challan_number?.trim()).filter(Boolean).join(', ')
+              const linkedChallans = Array.isArray(values.delivery_challans)
+                ? values.delivery_challans
+                    .filter((c) => c.challan_number?.trim())
+                    .map((c) => ({
+                      challan_number: c.challan_number.trim(),
+                      challan_date: c.challan_date || null,
+                    }))
+                : [];
+              const serializedChallanNumber = linkedChallans.length
+                ? linkedChallans.map((c) => c.challan_number).join(', ')
                 : (values.challan_number || null);
-              const serializedChallanDate = Array.isArray(values.delivery_challans)
-                ? (values.delivery_challans.find(c => c.challan_date)?.challan_date || values.challan_date || null)
+              const serializedChallanDate = linkedChallans.length
+                ? (linkedChallans.map((c) => c.challan_date).filter(Boolean).sort()[0] || values.challan_date || null)
                 : (values.challan_date || null);
 
               const formData = {
@@ -1921,6 +1930,7 @@ export default function SalesForm({
                 round_off: Number(roundOffValue).toFixed(2),
                 notes: values.notes || "",
                 items: processedItems,
+                ...(!isDeliveryChallan && !isQuotation && !isSalesOrder && linkedChallans.length ? { meta: { linked_challans: linkedChallans } } : {}),
                 // Optional customer fields for new record creation
                 ...(values.customer_email && { customer_email: values.customer_email }),
                 ...(values.customer_phone && { customer_phone: values.customer_phone }),
@@ -2608,7 +2618,7 @@ export default function SalesForm({
                             return (
                               <>
                                 <div className="hidden md:block overflow-x-auto border-y border-[var(--border-subtle)] bg-[var(--bg-primary)]/50">
-                                  <div className="grid items-center gap-1.5 px-2 py-1 text-base font-semibold text-center text-[var(--text-secondary)]" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                  <div className={`grid items-center py-1 text-[15px] font-semibold text-center text-[var(--text-secondary)] ${ITEM_GRID_RULES}`} style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                     {desktopColumns.map((col) => (
                                       <div
                                         key={col.key}
@@ -2766,7 +2776,7 @@ export default function SalesForm({
                                           dragOverRowIndex === index && draggedRowIndex !== index ? "border-t-2 border-t-[var(--accent-primary)] bg-[var(--accent-primary)]/10" : "",
                                         ].join(" ")}
                                       >
-                                        <div className="grid items-center gap-1.5 px-2 py-1 scroll-mt-12" style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
+                                        <div className={`grid items-center py-1 scroll-mt-12 ${ITEM_GRID_RULES}`} style={{ gridTemplateColumns, minWidth: `${totalMinWidth}px`, width: '100%' }}>
                                           {desktopColumns.map((col) => {
                                            if (col.key === "drag") {
                                              return (
@@ -2830,7 +2840,7 @@ export default function SalesForm({
                                                     name={`items.${index}.manufacturer`}
                                                     type="text"
                                                     placeholder="Manufacturer"
-                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
+                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
                                                   />
                                                 </div>
                                               );
@@ -2843,7 +2853,7 @@ export default function SalesForm({
                                                     name={`items.${index}.internal_reference`}
                                                     type="text"
                                                     placeholder="Internal Ref"
-                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
+                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
                                                   />
                                                 </div>
                                               );
@@ -2857,7 +2867,7 @@ export default function SalesForm({
                                                      <input
                                                        {...field}
                                                        type="text"
-                                                       className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                       className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                        onBlur={async (e) => {
                                                          field.onBlur(e);
                                                          await autofillTaxFromLearnedHsn(
@@ -2878,7 +2888,7 @@ export default function SalesForm({
                                                <div key={col.key}>
                                                  <Field name={`items.${index}.batch`}>
                                                    {({ field }) => (
-                                                     <select {...field} className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`} disabled={!item.product_id}>
+                                                     <select {...field} className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`} disabled={!item.product_id}>
                                                        <option value="">Auto (FEFO)</option>
                                                        {productBatches.map((b) => (
                                                          <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -2945,7 +2955,7 @@ export default function SalesForm({
                                                       setFieldValue(`items.${index}.unit`, val);
                                                     }
                                                   }}
-                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                 >
                                                   {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
@@ -2962,7 +2972,7 @@ export default function SalesForm({
                                                   readOnly
                                                   value={item.purchase_price ?? item.cost_price ?? 0}
                                                   title="Purchase / Cost Price (Internal Drafting Reference Only - Never Printed)"
-                                                  className="w-full text-right bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono text-[var(--text-muted)] cursor-not-allowed select-all"
+                                                  className="w-full text-center bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono text-[var(--text-muted)] cursor-not-allowed select-all"
                                                 />
                                               </div>
                                             );
@@ -2976,7 +2986,7 @@ export default function SalesForm({
                                                    type="number"
                                                    min="0"
                                                    step="0.0001"
-                                                   className={`w-full text-right bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
