@@ -4,10 +4,28 @@ import { getProductBatches } from '../../api/inventory';
 import Pagination from '../../components/common/Pagination';
 import { CubeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import useResizableColumns from '../../hooks/useResizableColumns';
+import { LIST_THEAD, LIST_TH } from '../../components/common/tableHeaderClasses';
+
+const DEFAULT_COLUMN_WIDTHS = {
+  product: 180,
+  batch: 120,
+  mfg: 110,
+  expiry: 130,
+  mrp: 100,
+  cost: 100,
+  sale: 110,
+  status: 100,
+  notes: 140,
+};
 
 export default function BatchListPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    'cenvoras_batch_list_col_widths',
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['batches', search, page],
@@ -64,18 +82,56 @@ export default function BatchListPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
-                <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
-                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
-                    <th className="px-5 py-3.5 text-left">Product</th>
-                    <th className="px-5 py-3.5 text-left">Batch #</th>
-                    <th className="px-5 py-3.5 text-left">MFG Date</th>
-                    <th className="px-5 py-3.5 text-left">Expiry Date</th>
-                    <th className="px-5 py-3.5 text-right">MRP</th>
-                    <th className="px-5 py-3.5 text-right">Cost</th>
-                    <th className="px-5 py-3.5 text-right">Sale Price</th>
-                    <th className="px-5 py-3.5 text-left">Status</th>
-                    <th className="px-5 py-3.5 text-left">Notes</th>
+              <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] text-sm">
+                <colgroup>
+                  <col style={{ width: `${colWidths.product}px` }} />
+                  <col style={{ width: `${colWidths.batch}px` }} />
+                  <col style={{ width: `${colWidths.mfg}px` }} />
+                  <col style={{ width: `${colWidths.expiry}px` }} />
+                  <col style={{ width: `${colWidths.mrp}px` }} />
+                  <col style={{ width: `${colWidths.cost}px` }} />
+                  <col style={{ width: `${colWidths.sale}px` }} />
+                  <col style={{ width: `${colWidths.status}px` }} />
+                  <col style={{ width: `${colWidths.notes}px` }} />
+                </colgroup>
+                <thead className={LIST_THEAD}>
+                  <tr className="border-b border-[var(--border-subtle)]">
+                    <th className={LIST_TH}>
+                      Product
+                      {renderResizeHandle('product')}
+                    </th>
+                    <th className={LIST_TH}>
+                      Batch #
+                      {renderResizeHandle('batch')}
+                    </th>
+                    <th className={LIST_TH}>
+                      MFG Date
+                      {renderResizeHandle('mfg')}
+                    </th>
+                    <th className={LIST_TH}>
+                      Expiry Date
+                      {renderResizeHandle('expiry')}
+                    </th>
+                    <th className={LIST_TH}>
+                      MRP
+                      {renderResizeHandle('mrp')}
+                    </th>
+                    <th className={LIST_TH}>
+                      Cost
+                      {renderResizeHandle('cost')}
+                    </th>
+                    <th className={LIST_TH}>
+                      Sale Price
+                      {renderResizeHandle('sale')}
+                    </th>
+                    <th className={LIST_TH}>
+                      Status
+                      {renderResizeHandle('status')}
+                    </th>
+                    <th className={LIST_TH}>
+                      Notes
+                      {renderResizeHandle('notes')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-subtle)]">
