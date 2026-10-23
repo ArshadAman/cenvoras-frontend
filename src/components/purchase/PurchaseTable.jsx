@@ -6,10 +6,22 @@ import AdvancedPurchaseFilters from "./AdvancedPurchaseFilters";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { parseDateOnly } from '../../utils/date';
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  checkbox: 44,
+  bill_number: 140,
+  bill_date: 110,
+  vendor_name: 190,
+  items: 80,
+  total_amount: 140,
+  actions: 145,
+};
 
 export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-bill_date"); // default: newest first
+  const [ordering, setOrdering] = useState("-bill_number"); // default: document number desc
   const [page, setPage] = useState(1);
   const [limit] = useState(10); // Items per page
   const [selectedBills, setSelectedBills] = useState(new Set());
@@ -30,7 +42,11 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
     status: "all",
     hasOverdue: false,
   });
-  const [sortConfig, setSortConfig] = useState({ key: "bill_date", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({ key: "bill_number", direction: "desc" });
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_purchase_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const handleSort = (key) => {
     setSortConfig(prev => {
@@ -361,63 +377,83 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
-          <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+          <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+            <colgroup>
+              <col style={{ width: `${colWidths.checkbox}px` }} />
+              <col style={{ width: `${colWidths.bill_number}px` }} />
+              <col style={{ width: `${colWidths.bill_date}px` }} />
+              <col style={{ width: `${colWidths.vendor_name}px` }} />
+              <col style={{ width: `${colWidths.items}px` }} />
+              <col style={{ width: `${colWidths.total_amount}px` }} />
+              <col style={{ width: `${colWidths.actions}px` }} />
+            </colgroup>
+          <thead className={LIST_THEAD}>
             <tr className="border-b border-[var(--border-subtle)]">
-              <th className="text-left py-3.5 px-4 rounded-l-lg">
+              <th className={`${LIST_TH} rounded-l-lg`}>
                 <input
                   type="checkbox"
                   checked={filteredBills.length > 0 && selectedBills.size === filteredBills.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
                   className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                 />
+                {renderResizeHandle("checkbox")}
               </th>
-              <th 
-                onClick={() => handleSort("bill_number")} 
-                className="text-left py-3.5 px-4 font-bold text-[var(--text-primary)] cursor-pointer hover:text-[var(--accent-primary)] transition-colors select-none text-xs uppercase tracking-wider"
+              <th
+                onClick={() => handleSort("bill_number")}
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Bill Number</span>
                   {sortConfig.key === "bill_number" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("bill_number")}
               </th>
-              <th 
-                onClick={() => handleSort("bill_date")} 
-                className="text-left py-3.5 px-4 font-bold text-[var(--text-primary)] cursor-pointer hover:text-[var(--accent-primary)] transition-colors select-none text-xs uppercase tracking-wider"
+              <th
+                onClick={() => handleSort("bill_date")}
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Bill Date</span>
                   {sortConfig.key === "bill_date" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("bill_date")}
               </th>
-              <th 
-                onClick={() => handleSort("vendor_name")} 
-                className="text-left py-3.5 px-4 font-bold text-[var(--text-primary)] cursor-pointer hover:text-[var(--accent-primary)] transition-colors select-none text-xs uppercase tracking-wider"
+              <th
+                onClick={() => handleSort("vendor_name")}
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Vendor</span>
                   {sortConfig.key === "vendor_name" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("vendor_name")}
               </th>
-              <th className="text-left py-3.5 px-4 font-bold text-[var(--text-primary)] text-xs uppercase tracking-wider">Items</th>
-              <th 
-                onClick={() => handleSort("total_amount")} 
-                className="text-right py-3.5 px-4 font-bold text-[var(--text-primary)] cursor-pointer hover:text-[var(--accent-primary)] transition-colors select-none text-xs uppercase tracking-wider"
+              <th className={LIST_TH}>
+                Items
+                {renderResizeHandle("items")}
+              </th>
+              <th
+                onClick={() => handleSort("total_amount")}
+                className={LIST_TH_SORTABLE}
               >
-                <div className="flex items-center justify-end gap-1.5">
+                <div className={LIST_TH_LABEL}>
                   <span>Total Amount</span>
                   {sortConfig.key === "total_amount" && (
                     <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                   )}
                 </div>
+                {renderResizeHandle("total_amount")}
               </th>
-              <th className="text-center py-3.5 px-4 rounded-r-lg font-bold text-[var(--text-primary)] text-xs uppercase tracking-wider">Actions</th>
+              <th className={`${LIST_TH} rounded-r-lg`}>
+                Actions
+                {renderResizeHandle("actions")}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-subtle)]">

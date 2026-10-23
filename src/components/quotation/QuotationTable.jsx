@@ -2,9 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import {
-  ChevronUpIcon,
-  ChevronDownIcon,
-  ArrowsUpDownIcon,
   EyeIcon,
   PencilSquareIcon,
   TrashIcon,
@@ -22,14 +19,29 @@ import {
 import QuotationConvertModal from './QuotationConvertModal';
 import { getCurrencySymbol } from '../../utils/currency';
 import EmptyState from '../common/EmptyState';
+import useResizableColumns from '../../hooks/useResizableColumns';
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
+
+const DEFAULT_COLUMN_WIDTHS = {
+  number: 150,
+  date: 110,
+  customer: 190,
+  amount: 140,
+  status: 150,
+  actions: 180,
+};
 
 export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [convertTarget, setConvertTarget] = useState(null);
-  const [sortField, setSortField] = useState('date');
+  const [sortField, setSortField] = useState('number');
   const [sortOrder, setSortOrder] = useState('desc');
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    'cenvoras_quotation_table_col_widths',
+    DEFAULT_COLUMN_WIDTHS
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['quotations', search, status],
@@ -54,6 +66,9 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
       if (sortField === 'number') {
         valA = a.quotation_number || a.invoice_number || '';
         valB = b.quotation_number || b.invoice_number || '';
+        return sortOrder === 'asc'
+          ? String(valA).localeCompare(String(valB), undefined, { numeric: true })
+          : String(valB).localeCompare(String(valA), undefined, { numeric: true });
       } else if (sortField === 'date') {
         const timeA = new Date(a.quotation_date || a.invoice_date || 0).getTime();
         const timeB = new Date(b.quotation_date || b.invoice_date || 0).getTime();
@@ -139,75 +154,81 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
         <>
           {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="min-w-full text-sm divide-y divide-[var(--border-subtle)]">
-              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
-                <tr className="border-b border-[var(--border-subtle)] text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+            <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+              <colgroup>
+                <col style={{ width: `${colWidths.number}px` }} />
+                <col style={{ width: `${colWidths.date}px` }} />
+                <col style={{ width: `${colWidths.customer}px` }} />
+                <col style={{ width: `${colWidths.amount}px` }} />
+                <col style={{ width: `${colWidths.status}px` }} />
+                <col style={{ width: `${colWidths.actions}px` }} />
+              </colgroup>
+              <thead className={LIST_THEAD}>
+                <tr className="border-b border-[var(--border-subtle)]">
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                    className={LIST_TH_SORTABLE}
                     onClick={() => handleSort('number')}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Quotation #</span>
-                      {sortField === 'number' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                      ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
+                      {sortField === 'number' && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </div>
+                    {renderResizeHandle('number')}
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                    className={LIST_TH_SORTABLE}
                     onClick={() => handleSort('date')}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Date</span>
-                      {sortField === 'date' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                      ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
+                      {sortField === 'date' && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </div>
+                    {renderResizeHandle('date')}
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                    className={LIST_TH_SORTABLE}
                     onClick={() => handleSort('customer')}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Customer</span>
-                      {sortField === 'customer' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                      ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
+                      {sortField === 'customer' && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </div>
+                    {renderResizeHandle('customer')}
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                    className={LIST_TH_SORTABLE}
                     onClick={() => handleSort('amount')}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Amount</span>
-                      {sortField === 'amount' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                      ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
+                      {sortField === 'amount' && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </div>
+                    {renderResizeHandle('amount')}
                   </th>
                   <th
-                    className="px-4 py-3 text-left cursor-pointer hover:text-[var(--text-primary)] transition-colors select-none"
+                    className={LIST_TH_SORTABLE}
                     onClick={() => handleSort('status')}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className={LIST_TH_LABEL}>
                       <span>Status</span>
-                      {sortField === 'status' ? (
-                        sortOrder === 'asc' ? <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                      ) : (
-                        <ArrowsUpDownIcon className="w-3 h-3 text-[var(--text-muted)] opacity-60" />
+                      {sortField === 'status' && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </div>
+                    {renderResizeHandle('status')}
                   </th>
-                  <th className="px-4 py-3 text-left text-[var(--text-secondary)]">Actions</th>
+                  <th className={LIST_TH}>
+                    Actions
+                    {renderResizeHandle('actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
