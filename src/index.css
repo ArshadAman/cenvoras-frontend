@@ -635,7 +635,7 @@
     border-color: var(--status-info-border) !important;
   }
 
-  [class*="border-[var(--accent-primary)"] {
+  [class*="border-[var(--accent-primary)"]:not([class*="focus:border-[var(--accent-primary)"]):not([class*="hover:border-[var(--accent-primary)"]) {
     border-color: var(--border-focus) !important;
   }
 

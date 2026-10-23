@@ -16,7 +16,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
-import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon, TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon, TrashIcon, PencilSquareIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import DateInputField from "../common/DateInputField";
 import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
@@ -27,6 +27,70 @@ import { GST_RATES } from "../../utils/gstRates";
 import { calculateLineAmount, calculateLineGross } from "../../utils/lineAmount";
 import { yupGstinOptional, isValidGstin, normalizeGstin, GSTIN_INVALID_MSG } from "../../utils/gstin";
 
+const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
+const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
+
+function formatChipDate(iso) {
+  if (!iso || typeof iso !== "string") return "";
+  const clean = iso.split("T")[0];
+  const parts = clean.split("-");
+  if (parts.length === 3 && parts[0].length === 4) {
+    const [y, m, d] = parts;
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  return iso;
+}
+
+function normCatalogStr(value) {
+  return String(value ?? "").trim();
+}
+
+function normCatalogNum(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function isLineDifferentFromCatalog(item, products) {
+  if (!item?.product_id) return false;
+  const catalog = (products || []).find((p) => String(p.id) === String(item.product_id));
+  if (!catalog) return false;
+  const catalogHsn = catalog.hsn_code || catalog.hsn_sac_code || "";
+  const catalogPrice = catalog.sale_price ?? catalog.price ?? 0;
+  const catalogDesc = catalog.description || "";
+  const lineDesc = item.description ?? item.product_description ?? "";
+  return (
+    normCatalogStr(item.product) !== normCatalogStr(catalog.name) ||
+    normCatalogStr(item.manufacturer) !== normCatalogStr(catalog.manufacturer) ||
+    normCatalogStr(item.internal_reference) !== normCatalogStr(catalog.internal_reference) ||
+    normCatalogStr(item.unit).toLowerCase() !== normCatalogStr(catalog.unit || "pcs").toLowerCase() ||
+    normCatalogNum(item.tax) !== normCatalogNum(catalog.tax) ||
+    normCatalogStr(item.hsn_sac_code) !== normCatalogStr(catalogHsn) ||
+    normCatalogStr(lineDesc) !== normCatalogStr(catalogDesc) ||
+    normCatalogNum(item.price) !== normCatalogNum(catalogPrice)
+  );
+}
+
+function shouldShowCatalogAction(item, products, canAccessInventory) {
+  if (!canAccessInventory || !normCatalogStr(item?.product)) return false;
+  if (!item.product_id) return true;
+  return isLineDifferentFromCatalog(item, products);
+}
+
+function catalogSyncPayload(item, index) {
+  return {
+    idx: index,
+    product_id: item.product_id || null,
+    name: item.product,
+    manufacturer: item.manufacturer,
+    internal_reference: item.internal_reference,
+    price: item.price,
+    hsn_sac_code: item.hsn_sac_code,
+    tax: item.tax,
+    description: item.description || item.product_description || "",
+    unit: item.unit || "pcs",
+  };
+}
+
 // Product Autocomplete Component
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -35,7 +99,24 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef(null);
+  const descRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
+  const descValue = values.items[idx]?.description ?? values.items[idx]?.product_description ?? "";
+  const hasDescription = Boolean(String(descValue).trim());
+  const [descExpanded, setDescExpanded] = useState(hasDescription);
+
+  const [focusDesc, setFocusDesc] = useState(false);
+
+  useEffect(() => {
+    if (hasDescription) setDescExpanded(true);
+  }, [hasDescription]);
+
+  useEffect(() => {
+    if (focusDesc && descExpanded && descRef.current) {
+      descRef.current.focus();
+      setFocusDesc(false);
+    }
+  }, [focusDesc, descExpanded]);
 
   useEscKey(() => setShowDropdown(false), showDropdown, 30);
 
@@ -219,7 +300,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 setTimeout(() => setShowDropdown(false), 100);
               }}
               placeholder="Product name"
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-xs"
+              className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-xs ${ITEM_CELL_FOCUS}`}
               autoComplete="off"
               onKeyDown={(e) => {
                 const exactMatch = (filteredProducts || []).some(
@@ -287,23 +368,41 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             )}
             {showDescription && (
               <div className="mt-1">
-                <textarea
-                  rows={1}
-                  value={values.items[idx]?.description ?? values.items[idx]?.product_description ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFieldValue(`items.${idx}.description`, val);
-                    setFieldValue(`items.${idx}.product_description`, val);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
-                  }}
-                  placeholder="Enter a description / note..."
-                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic"
-                />
+                {descExpanded || hasDescription ? (
+                  <textarea
+                    ref={descRef}
+                    rows={1}
+                    value={descValue}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFieldValue(`items.${idx}.description`, val);
+                      setFieldValue(`items.${idx}.product_description`, val);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value.trim()) setDescExpanded(false);
+                    }}
+                    placeholder="Enter a description / note..."
+                    className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] focus:bg-[var(--bg-surface-hover)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => {
+                      setDescExpanded(true);
+                      setFocusDesc(true);
+                    }}
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] italic"
+                  >
+                    Add note
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -519,7 +618,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 }
               }}
               placeholder="Customer name"
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
+              className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${HEADER_FIELD_FOCUS}`}
             />
             {meta.touched && meta.error && (
               <div className="text-[var(--status-danger)] text-sm mt-1">{meta.error}</div>
@@ -847,6 +946,13 @@ export default function SalesForm({
   const handleBeforeCloseRef = React.useRef(null);
   const [draggedRowIndex, setDraggedRowIndex] = useState(null);
   const [dragOverRowIndex, setDragOverRowIndex] = useState(null);
+  const [challanComposer, setChallanComposer] = useState({ open: false, number: "", date: "" });
+
+  useEffect(() => {
+    if (!isOpen) {
+      setChallanComposer({ open: false, number: "", date: "" });
+    }
+  }, [isOpen]);
 
   // Register hierarchical ESC key navigation for this form (auto-saves draft if data entered)
   useEscKey(() => (handleBeforeCloseRef.current ? handleBeforeCloseRef.current() : onClose()), isOpen, 10);
@@ -1464,7 +1570,6 @@ export default function SalesForm({
       customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
       customer_gstin: editData?.customer_gstin || aiDraftData?.customer_gstin || "",
       delivery_address: editData?.delivery_address || "",
-      save_shipping_address: false,
       vehicle_number: editData?.vehicle_number || "",
       transport_mode: editData?.transport_mode || "",
       eway_bill_number: editData?.eway_bill_number || "",
@@ -1477,25 +1582,21 @@ export default function SalesForm({
       challan_date: safeDateStr(editData?.challan_date),
       delivery_challans: (() => {
         if (Array.isArray(editData?.delivery_challans) && editData.delivery_challans.length > 0) {
-          return editData.delivery_challans.map(c => ({
-            challan_number: c.challan_number || '',
-            challan_date: safeDateStr(c.challan_date) || '',
-          }));
+          return editData.delivery_challans
+            .map((c) => ({
+              challan_number: c.challan_number || "",
+              challan_date: safeDateStr(c.challan_date) || "",
+            }))
+            .filter((c) => c.challan_number.trim());
         }
         if (editData?.challan_number) {
-          const numbers = String(editData.challan_number).split(',').map(s => s.trim()).filter(Boolean);
-          if (numbers.length > 1) {
-            return numbers.map(num => ({
-              challan_number: num,
-              challan_date: safeDateStr(editData.challan_date) || '',
-            }));
-          }
-          return [{
-            challan_number: editData.challan_number,
-            challan_date: safeDateStr(editData.challan_date) || '',
-          }];
+          const numbers = String(editData.challan_number).split(",").map((s) => s.trim()).filter(Boolean);
+          return numbers.map((num) => ({
+            challan_number: num,
+            challan_date: safeDateStr(editData.challan_date) || "",
+          }));
         }
-        return [{ challan_number: '', challan_date: '' }];
+        return [];
       })(),
       gst_treatment: editData?.gst_treatment || "registered",
       place_of_supply: editData?.place_of_supply || aiDraftData?.place_of_supply || "",
@@ -1839,30 +1940,41 @@ export default function SalesForm({
 
               console.log("DEBUG: Submitting Sales Invoice:", formData);
 
-              if (values.save_shipping_address && values.delivery_address) {
-                const matchedCust = (customers || []).find(
-                  (c) =>
-                    (values.customer && String(c.id) === String(values.customer)) ||
-                    (values.customer_name &&
-                      c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
-                );
-                if (matchedCust?.id) {
-                  const currentAddresses = Array.isArray(matchedCust.meta?.shipping_addresses)
-                    ? [...matchedCust.meta.shipping_addresses]
-                    : (matchedCust.meta?.shipping_address ? [matchedCust.meta.shipping_address] : []);
-                  const cleanAddr = values.delivery_address.trim();
-                  if (!currentAddresses.includes(cleanAddr)) {
-                    currentAddresses.unshift(cleanAddr);
-                  }
-                  patchCustomer(matchedCust.id, {
-                    meta: {
-                      ...(matchedCust.meta || {}),
-                      shipping_address: cleanAddr,
-                      shipping_addresses: currentAddresses,
+              if (!isDraft) {
+                const cleanAddr = (values.delivery_address || "").trim();
+                const billingAddr = (values.customer_address || "").trim();
+                if (cleanAddr && cleanAddr !== billingAddr) {
+                  const matchedCust = (customers || []).find(
+                    (c) =>
+                      (values.customer && String(c.id) === String(values.customer)) ||
+                      (values.customer_name &&
+                        c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
+                  );
+                  if (matchedCust?.id) {
+                    const currentAddresses = Array.isArray(matchedCust.meta?.shipping_addresses)
+                      ? [...matchedCust.meta.shipping_addresses]
+                      : (matchedCust.meta?.shipping_address ? [matchedCust.meta.shipping_address] : []);
+                    const alreadySaved = currentAddresses.some(
+                      (addr) => (addr || "").trim() === cleanAddr
+                    );
+                    if (!alreadySaved) {
+                      const shouldSave = window.confirm(
+                        `Save this shipping address for ${values.customer_name || "this customer"}?`
+                      );
+                      if (shouldSave) {
+                        currentAddresses.unshift(cleanAddr);
+                        patchCustomer(matchedCust.id, {
+                          meta: {
+                            ...(matchedCust.meta || {}),
+                            shipping_address: cleanAddr,
+                            shipping_addresses: currentAddresses,
+                          }
+                        }).then(() => {
+                          queryClient.invalidateQueries({ queryKey: ["customers"] });
+                        }).catch(() => {});
+                      }
                     }
-                  }).then(() => {
-                    queryClient.invalidateQueries({ queryKey: ["customers"] });
-                  }).catch(() => {});
+                  }
                 }
               }
 
@@ -1972,7 +2084,7 @@ export default function SalesForm({
                           autoCorrect="off"
                           spellCheck="false"
                           data-1p-ignore="true"
-                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm font-mono"
+                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
                           placeholder={
                             !isEdit && nextInvData?.next_number
                               ? `Auto on save (next: ${nextInvData.next_number})`
@@ -2005,7 +2117,7 @@ export default function SalesForm({
                           name="due_date"
                           value={values.due_date}
                           onChange={(e) => setFieldValue('due_date', e.target.value)}
-                          placeholder="DD/MM/YYYY"
+                          placeholder="Optional"
                         />
                       </div>
 
@@ -2015,7 +2127,7 @@ export default function SalesForm({
                         <Field
                           name="po_number"
                           type="text"
-                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm font-mono"
+                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
                           placeholder="e.g. PO-8921"
                         />
                       </div>
@@ -2027,7 +2139,7 @@ export default function SalesForm({
                           name="po_date"
                           value={values.po_date}
                           onChange={(e) => setFieldValue('po_date', e.target.value)}
-                          placeholder="DD/MM/YYYY"
+                          placeholder="Optional"
                         />
                       </div>
                     </div>
@@ -2149,7 +2261,7 @@ export default function SalesForm({
                                     setFieldValue('delivery_address', e.target.value);
                                   }
                                 }}
-                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] mb-2"
+                                className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] mb-2 ${HEADER_FIELD_FOCUS}`}
                               >
                                 <option value="">-- Select from saved shipping addresses --</option>
                                 {savedList.map((addr, idx) => (
@@ -2162,24 +2274,16 @@ export default function SalesForm({
                           );
                         })()}
 
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="mb-1.5">
                           <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                             Shipping Address
-                          </label>
-                          <label className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] cursor-pointer hover:text-[var(--text-primary)] transition-colors">
-                            <Field
-                              type="checkbox"
-                              name="save_shipping_address"
-                              className="rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] bg-[var(--bg-surface)] h-3 w-3"
-                            />
-                            <span>Save for future</span>
                           </label>
                         </div>
                         <Field
                           name="delivery_address"
                           as="textarea"
                           rows="2"
-                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm"
+                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
                           placeholder="123 Shipping Address, City, State, PIN"
                         />
                       </div>
@@ -2198,7 +2302,7 @@ export default function SalesForm({
                         <Field
                           name="place_of_supply"
                           as="select"
-                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm"
+                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
                         >
                           <option value="">Select State</option>
                           {INDIAN_STATES.map(s => (
@@ -2215,7 +2319,7 @@ export default function SalesForm({
                             <Field
                               name="vehicle_number"
                               type="text"
-                              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] ${HEADER_FIELD_FOCUS}`}
                               placeholder="e.g. KA-01-1234"
                             />
                           </div>
@@ -2224,7 +2328,7 @@ export default function SalesForm({
                             <Field
                               name="transport_mode"
                               type="text"
-                              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] ${HEADER_FIELD_FOCUS}`}
                               placeholder="e.g. Road / Tempo"
                             />
                           </div>
@@ -2233,7 +2337,7 @@ export default function SalesForm({
                             <Field
                               name="eway_bill_number"
                               type="text"
-                              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] ${HEADER_FIELD_FOCUS}`}
                               placeholder="E-Way Bill #"
                             />
                           </div>
@@ -2245,7 +2349,21 @@ export default function SalesForm({
                   {/* Multiple Delivery Challans Section (For Invoices) */}
                   {!isDeliveryChallan && !isQuotation && !isSalesOrder && (
                     <FieldArray name="delivery_challans">
-                      {({ push: pushChallan, remove: removeChallan }) => (
+                      {({ push: pushChallan, remove: removeChallan }) => {
+                        const attachedChallans = (values.delivery_challans || []).filter(
+                          (c) => c.challan_number?.trim()
+                        );
+                        const confirmComposer = () => {
+                          const num = (challanComposer.number || "").trim();
+                          if (num) {
+                            pushChallan({
+                              challan_number: num,
+                              challan_date: challanComposer.date || "",
+                            });
+                          }
+                          setChallanComposer({ open: false, number: "", date: "" });
+                        };
+                        return (
                         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-5 space-y-3">
                           <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                             <div className="flex items-center gap-2">
@@ -2254,12 +2372,16 @@ export default function SalesForm({
                                 Delivery Challans
                               </span>
                               <span className="text-xs text-[var(--text-muted)] font-mono">
-                                ({values.delivery_challans?.length || 0} attached)
+                                ({attachedChallans.length} attached)
                               </span>
                             </div>
                             <button
                               type="button"
-                              onClick={() => pushChallan({ challan_number: '', challan_date: '' })}
+                              onClick={() => {
+                                if (!challanComposer.open) {
+                                  setChallanComposer({ open: true, number: "", date: "" });
+                                }
+                              }}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-xs font-semibold border border-[var(--accent-primary)]/30 transition-colors"
                             >
                               <PlusIcon className="w-3.5 h-3.5" />
@@ -2267,47 +2389,96 @@ export default function SalesForm({
                             </button>
                           </div>
 
-                          <div className="space-y-2.5">
-                            {(values.delivery_challans || []).map((ch, chIdx) => (
-                              <div key={chIdx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-center bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
-                                <div>
-                                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
-                                    Challan Number #{chIdx + 1}
-                                  </label>
-                                  <Field
-                                    name={`delivery_challans.${chIdx}.challan_number`}
-                                    type="text"
-                                    placeholder="e.g. DC-2026-001"
-                                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none font-mono"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
-                                    Challan Date (DD/MM/YYYY)
-                                  </label>
-                                  <DateInputField
-                                    name={`delivery_challans.${chIdx}.challan_date`}
-                                    value={ch.challan_date}
-                                    onChange={(e) => setFieldValue(`delivery_challans.${chIdx}.challan_date`, e.target.value)}
-                                    placeholder="DD/MM/YYYY"
-                                  />
-                                </div>
-                                <div className="sm:pt-5 flex items-center justify-end">
-                                  <button
-                                    type="button"
-                                    onClick={() => removeChallan(chIdx)}
-                                    disabled={values.delivery_challans.length <= 1}
-                                    className="p-2 text-[var(--text-muted)] hover:text-[var(--status-danger)] disabled:opacity-20 hover:bg-[var(--bg-primary)] rounded-lg transition-colors"
-                                    title="Remove Challan"
+                          {attachedChallans.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {(values.delivery_challans || []).map((ch, chIdx) => {
+                                const number = ch.challan_number?.trim();
+                                if (!number) return null;
+                                const dateLabel = formatChipDate(ch.challan_date);
+                                return (
+                                  <div
+                                    key={`${number}-${chIdx}`}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-primary)]"
                                   >
-                                    <TrashIcon className="w-4 h-4" />
-                                  </button>
-                                </div>
+                                    <span className="font-mono font-semibold">{number}</span>
+                                    {dateLabel ? (
+                                      <span className="text-[var(--text-muted)]">· {dateLabel}</span>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeChallan(chIdx)}
+                                      className="ml-0.5 p-0.5 rounded-full text-[var(--text-muted)] hover:text-[var(--status-danger)] hover:bg-[var(--bg-primary)] transition-colors"
+                                      title="Remove Challan"
+                                    >
+                                      <XMarkIcon className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {challanComposer.open && (
+                            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
+                              <div>
+                                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
+                                  Challan Number
+                                </label>
+                                <input
+                                  type="text"
+                                  value={challanComposer.number}
+                                  onChange={(e) => setChallanComposer((prev) => ({ ...prev, number: e.target.value }))}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      confirmComposer();
+                                    } else if (e.key === "Escape") {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setChallanComposer({ open: false, number: "", date: "" });
+                                    }
+                                  }}
+                                  placeholder="e.g. DC-2026-001"
+                                  autoFocus
+                                  data-no-enter="true"
+                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-xs placeholder-[var(--text-muted)] font-mono ${HEADER_FIELD_FOCUS}`}
+                                />
                               </div>
-                            ))}
-                          </div>
+                              <div>
+                                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 uppercase tracking-wide">
+                                  Challan Date
+                                </label>
+                                <DateInputField
+                                  name="challan_composer_date"
+                                  value={challanComposer.date}
+                                  onChange={(e) => setChallanComposer((prev) => ({ ...prev, date: e.target.value }))}
+                                  placeholder="Optional"
+                                />
+                              </div>
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  type="button"
+                                  onClick={confirmComposer}
+                                  className="p-2 text-[var(--status-success)] hover:bg-[var(--bg-primary)] rounded-lg transition-colors"
+                                  title="Add challan"
+                                >
+                                  <CheckIcon className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setChallanComposer({ open: false, number: "", date: "" })}
+                                  className="p-2 text-[var(--text-muted)] hover:text-[var(--status-danger)] hover:bg-[var(--bg-primary)] rounded-lg transition-colors"
+                                  title="Cancel"
+                                >
+                                  <XMarkIcon className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        );
+                      }}
                     </FieldArray>
                   )}
                 </div>
@@ -2412,7 +2583,7 @@ export default function SalesForm({
                         <div className="space-y-2">
                           {(() => {
                             const desktopColumns = [
-                              { key: "drag", label: "", show: true, width: "36px", minWidth: 36 },
+                              { key: "drag", label: "#", show: true, width: "52px", minWidth: 52 },
                               { key: "product", label: "Product", show: true, width: "minmax(300px, 1fr)", minWidth: 300 },
                               { key: "manufacturer", label: "Manufacturer", show: itemSettings.show_item_manufacturer, width: "130px", minWidth: 130 },
                               { key: "internal_reference", label: "Internal Ref", show: itemSettings.show_item_internal_reference, width: "120px", minWidth: 120 },
@@ -2425,7 +2596,7 @@ export default function SalesForm({
                               { key: "price", label: "Price", show: true, width: "110px", minWidth: 110 },
                               { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
                               { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
-                              { key: "amount", label: "Amount", show: true, width: "130px", minWidth: 130 },
+                              { key: "amount", label: "Taxable", show: true, width: "130px", minWidth: 130 },
                               { key: "action", label: "", show: true, width: "70px", minWidth: 70 },
                             ].filter((col) => col.show);
 
@@ -2441,7 +2612,7 @@ export default function SalesForm({
                                         key={col.key}
                                         className={[
                                           col.key === "amount" || col.key === "price" ? "text-right" : "",
-                                          col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
+                                          col.key === "drag" || col.key === "quantity" || col.key === "free" || col.key === "unit" || col.key === "discount" || col.key === "tax" ? "text-center" : "",
                                         ].join(" ")}
                                       >
                                         {col.label}
@@ -2495,9 +2666,10 @@ export default function SalesForm({
                                           style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}
                                         >
                                           <div
-                                            className="flex items-center justify-center cursor-grab active:cursor-grabbing text-[var(--status-warning)]/70 hover:text-[var(--status-warning)] p-1 rounded hover:bg-[var(--bg-primary)] transition-colors select-none shrink-0"
+                                            className="flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-[var(--status-warning)]/70 hover:text-[var(--status-warning)] p-1 rounded hover:bg-[var(--bg-primary)] transition-colors select-none shrink-0"
                                             title="Hold and drag to reorder row"
                                           >
+                                            <span className="text-xs font-mono tabular-nums leading-none mb-0.5">{index + 1}</span>
                                             <Bars3Icon className="w-4 h-4" />
                                           </div>
                                           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--status-warning)]/20 border border-[var(--status-warning)]/30 text-[var(--status-warning)] text-xs font-black uppercase tracking-wider shrink-0">
@@ -2599,7 +2771,8 @@ export default function SalesForm({
                                           {desktopColumns.map((col) => {
                                            if (col.key === "drag") {
                                              return (
-                                               <div key={col.key} className="flex items-center justify-center pt-2.5">
+                                               <div key={col.key} className="flex flex-col items-center justify-center pt-1 gap-0.5">
+                                                 <span className="text-xs font-mono tabular-nums leading-none text-[var(--text-muted)]">{index + 1}</span>
                                                  <div
                                                    className="cursor-grab active:cursor-grabbing text-[var(--text-muted)] hover:text-[var(--accent-primary)] p-1 rounded hover:bg-[var(--bg-surface)] transition-colors select-none"
                                                    title="Hold and drag to reorder row"
@@ -2631,57 +2804,10 @@ export default function SalesForm({
                                                         name={`items.${index}.storage_condition`}
                                                         type="text"
                                                         placeholder="e.g. Store in cool, dry place"
-                                                        className="flex-1 bg-transparent border-0 border-b border-[var(--border-subtle)] focus:border-[var(--accent-primary)] px-1 py-0.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none transition-colors"
+                                                        className={`flex-1 bg-transparent border-0 border-b border-[var(--border-subtle)] px-1 py-0.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-colors ${ITEM_CELL_FOCUS}`}
                                                       />
                                                     </div>
                                                   )}
-                                                 {canAccessInventory && item.product?.trim() && (
-                                                   <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                                     {item.product_id ? (
-                                                       <button
-                                                         type="button"
-                                                         onClick={() => setCatalogSyncModal({
-                                                           idx: index,
-                                                           product_id: item.product_id,
-                                                           name: item.product,
-                                                            manufacturer: item.manufacturer,
-                                                            internal_reference: item.internal_reference,
-                                                           price: item.price,
-                                                           hsn_sac_code: item.hsn_sac_code,
-                                                           tax: item.tax,
-                                                           description: item.description || item.product_description || "",
-                                                           unit: item.unit || "pcs",
-                                                         })}
-                                                         className="inline-flex items-center gap-1 text-xs text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
-                                                         title="Update master catalog item with these values"
-                                                       >
-                                                         <ArrowPathIcon className="w-3 h-3" />
-                                                         <span>Update Catalog</span>
-                                                       </button>
-                                                     ) : (
-                                                       <button
-                                                         type="button"
-                                                         onClick={() => setCatalogSyncModal({
-                                                           idx: index,
-                                                           product_id: null,
-                                                           name: item.product,
-                                                            manufacturer: item.manufacturer,
-                                                            internal_reference: item.internal_reference,
-                                                           price: item.price,
-                                                           hsn_sac_code: item.hsn_sac_code,
-                                                           tax: item.tax,
-                                                           description: item.description || item.product_description || "",
-                                                           unit: item.unit || "pcs",
-                                                         })}
-                                                         className="inline-flex items-center gap-1 text-xs text-[var(--accent-primary)] hover:opacity-80 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 px-1.5 py-0.5 rounded transition-colors"
-                                                         title="Save this line item as a new product in your catalog"
-                                                       >
-                                                         <PlusIcon className="w-3 h-3" />
-                                                         <span>Save to Catalog</span>
-                                                       </button>
-                                                     )}
-                                                   </div>
-                                                 )}
                                                  {matchedScheme && (
                                                    <div className="mt-1 flex items-center gap-1 text-xs text-[var(--status-success)] font-bold bg-[var(--status-success)]/10 border border-[var(--status-success)]/20 px-1.5 py-0.5 rounded w-fit">
                                                      <span>🎁</span>
@@ -2705,7 +2831,7 @@ export default function SalesForm({
                                                     name={`items.${index}.manufacturer`}
                                                     type="text"
                                                     placeholder="Manufacturer"
-                                                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
                                                   />
                                                 </div>
                                               );
@@ -2718,7 +2844,7 @@ export default function SalesForm({
                                                     name={`items.${index}.internal_reference`}
                                                     type="text"
                                                     placeholder="Internal Ref"
-                                                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                                                    className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`}
                                                   />
                                                 </div>
                                               );
@@ -2732,7 +2858,7 @@ export default function SalesForm({
                                                      <input
                                                        {...field}
                                                        type="text"
-                                                       className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                       className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                        onBlur={async (e) => {
                                                          field.onBlur(e);
                                                          await autofillTaxFromLearnedHsn(
@@ -2753,7 +2879,7 @@ export default function SalesForm({
                                                <div key={col.key}>
                                                  <Field name={`items.${index}.batch`}>
                                                    {({ field }) => (
-                                                     <select {...field} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none" disabled={!item.product_id}>
+                                                     <select {...field} className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`} disabled={!item.product_id}>
                                                        <option value="">Auto (FEFO)</option>
                                                        {productBatches.map((b) => (
                                                          <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -2772,7 +2898,7 @@ export default function SalesForm({
                                                    name={`items.${index}.quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                                  />
                                                </div>
@@ -2788,7 +2914,7 @@ export default function SalesForm({
                                                    name={`items.${index}.free_quantity`}
                                                    type="number"
                                                    min="0"
-                                                   className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--status-success)] font-bold focus:border-[var(--accent-primary)] outline-none"
+                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--status-success)] font-bold ${ITEM_CELL_FOCUS}`}
                                                  />
                                                  {matchedScheme && matchedScheme.scheme_type === 'bogo' && freeQtyNum > 0 && (
                                                    <span
@@ -2820,7 +2946,7 @@ export default function SalesForm({
                                                       setFieldValue(`items.${index}.unit`, val);
                                                     }
                                                   }}
-                                                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                 >
                                                   {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
@@ -2851,7 +2977,7 @@ export default function SalesForm({
                                                    type="number"
                                                    min="0"
                                                    step="0.0001"
-                                                   className="w-full text-right bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                   className={`w-full text-right bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -2872,7 +2998,7 @@ export default function SalesForm({
                                                 <Field
                                                   name={`items.${index}.discount`}
                                                   type="number"
-                                                  className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                   onChange={(e) => {
                                                     const discount = e.target.value;
                                                     setFieldValue(`items.${index}.discount`, discount);
@@ -2892,7 +3018,7 @@ export default function SalesForm({
                                                   name={`items.${index}.tax`}
                                                   type="number"
                                                   step="1"
-                                                  className="w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                   onKeyDown={(e) => {
                                                     if (e.key === "Tab" && !e.shiftKey) {
                                                       const isLastRow = index === values.items.length - 1;
@@ -2967,26 +3093,19 @@ export default function SalesForm({
                                                 >
                                                   <DocumentPlusIcon className="w-3.5 h-3.5" />
                                                 </button>
-                                                {canAccessInventory && item.product?.trim() && (
+                                                {shouldShowCatalogAction(item, products, canAccessInventory) && (
                                                   <button
                                                     type="button"
-                                                    onClick={() => setCatalogSyncModal({
-                                                      idx: index,
-                                                      product_id: item.product_id || null,
-                                                      name: item.product,
-                                                            manufacturer: item.manufacturer,
-                                                            internal_reference: item.internal_reference,
-                                                      price: item.price,
-                                                      hsn_sac_code: item.hsn_sac_code,
-                                                      tax: item.tax,
-                                                      description: item.description || item.product_description || "",
-                                                      unit: item.unit || "pcs",
-                                                    })}
+                                                    onClick={() => setCatalogSyncModal(catalogSyncPayload(item, index))}
                                                     className="text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors p-1"
                                                     title={item.product_id ? "Update Catalog Item" : "Save as New Product in Catalog"}
                                                     tabIndex={-1}
                                                   >
-                                                    <ArrowPathIcon className="h-3.5 w-3.5" />
+                                                    {item.product_id ? (
+                                                      <ArrowPathIcon className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                      <PlusIcon className="h-3.5 w-3.5" />
+                                                    )}
                                                   </button>
                                                 )}
                                                 <button
@@ -3053,7 +3172,7 @@ export default function SalesForm({
                                       <div key={item._key ? `mobile-${item._key}` : `mobile-${index}`} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 flex flex-col gap-4">
                                       {/* Row 1: Product */}
                                       <div className="w-full">
-                                          <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Product Name</label>
+                                          <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Line {index + 1} · Product Name</label>
                                           <ProductAutocomplete
                                             idx={index}
                                             values={values}
@@ -3072,55 +3191,10 @@ export default function SalesForm({
                                                         name={`items.${index}.storage_condition`}
                                                         type="text"
                                                         placeholder="e.g. Store in cool, dry place"
-                                                        className="flex-1 bg-transparent border-0 border-b border-[var(--border-subtle)] focus:border-[var(--accent-primary)] px-1 py-0.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none transition-colors"
+                                                        className={`flex-1 bg-transparent border-0 border-b border-[var(--border-subtle)] px-1 py-0.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-colors ${ITEM_CELL_FOCUS}`}
                                                       />
                                                     </div>
                                                   )}
-                                          {canAccessInventory && item.product?.trim() && (
-                                            <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                              {item.product_id ? (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setCatalogSyncModal({
-                                                    idx: index,
-                                                    product_id: item.product_id,
-                                                    name: item.product,
-                                                            manufacturer: item.manufacturer,
-                                                            internal_reference: item.internal_reference,
-                                                    price: item.price,
-                                                    hsn_sac_code: item.hsn_sac_code,
-                                                    tax: item.tax,
-                                                    description: item.description || item.product_description || "",
-                                                    unit: item.unit || "pcs",
-                                                  })}
-                                                  className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 px-2 py-1 rounded-lg transition-colors font-medium"
-                                                >
-                                                  <ArrowPathIcon className="w-3.5 h-3.5" />
-                                                  <span>Update Catalog Item</span>
-                                                </button>
-                                              ) : (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setCatalogSyncModal({
-                                                    idx: index,
-                                                    product_id: null,
-                                                    name: item.product,
-                                                            manufacturer: item.manufacturer,
-                                                            internal_reference: item.internal_reference,
-                                                    price: item.price,
-                                                    hsn_sac_code: item.hsn_sac_code,
-                                                    tax: item.tax,
-                                                    description: item.description || item.product_description || "",
-                                                    unit: item.unit || "pcs",
-                                                  })}
-                                                  className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 px-2 py-1 rounded-lg transition-colors font-medium"
-                                                >
-                                                  <PlusIcon className="w-3.5 h-3.5" />
-                                                  <span>Save to Catalog</span>
-                                                </button>
-                                              )}
-                                            </div>
-                                          )}
                                           {(() => {
                                             const matchedScheme = findMatchingScheme(item.product_id, item.quantity);
                                             if (!matchedScheme) return null;
@@ -3308,7 +3382,7 @@ export default function SalesForm({
                                       {/* Row 4: Amount & Actions */}
                                       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)]">
                                           <div>
-                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">Subtotal</label>
+                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">Taxable</label>
                                               <div className="text-xl font-mono font-black text-[var(--accent-primary)]">
                                                   {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
@@ -3337,6 +3411,21 @@ export default function SalesForm({
                                             >
                                               <DocumentPlusIcon className="w-4 h-4" />
                                             </button>
+                                            {shouldShowCatalogAction(item, products, canAccessInventory) && (
+                                              <button
+                                                type="button"
+                                                onClick={() => setCatalogSyncModal(catalogSyncPayload(item, index))}
+                                                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors"
+                                                title={item.product_id ? "Update Catalog Item" : "Save as New Product in Catalog"}
+                                                tabIndex={-1}
+                                              >
+                                                {item.product_id ? (
+                                                  <ArrowPathIcon className="w-4 h-4" />
+                                                ) : (
+                                                  <PlusIcon className="w-4 h-4" />
+                                                )}
+                                              </button>
+                                            )}
                                             <button
                                               type="button"
                                               onClick={() => remove(index)}
