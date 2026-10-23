@@ -102,7 +102,7 @@ export default function DateInputField({
         disabled={disabled}
         required={required}
         autoComplete="off"
-        className={`w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl pl-4 pr-10 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all ${className}`}
+        className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl pl-4 pr-10 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] transition-all ${className}`}
       />
 
       {/* Calendar Icon Button */}
