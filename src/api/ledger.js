@@ -77,6 +77,24 @@ export const getAccounts = async (params = {}) => {
   }
 };
 
+export const getBankDepositSummary = async () => {
+  try {
+    const response = await api.get('/ledger/bank-deposit/summary/');
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to load bank balances.');
+  }
+};
+
+export const createBankDeposit = async (payload) => {
+  try {
+    const response = await api.post('/ledger/bank-deposit/', payload);
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to record bank deposit.');
+  }
+};
+
 // Get specific account
 export const getAccount = async (id) => {
   try {
