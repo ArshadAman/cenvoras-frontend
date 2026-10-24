@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
 import { hrApi } from "../../api/hr";
 import { getAccounts } from "../../api/ledger";
 import {
@@ -835,7 +836,11 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
           </div>
           {insufficientBalance && (
             <p className="text-xs text-[var(--status-danger)]">
-              Insufficient balance. Available ₹{selectedAccBal.toLocaleString('en-IN')}, required ₹{requiredNet.toLocaleString('en-IN')}.
+              Insufficient balance. Available ₹{selectedAccBal.toLocaleString('en-IN')}, required ₹{requiredNet.toLocaleString('en-IN')}.{' '}
+              <Link to="/integrations?tab=bank" className="underline text-[var(--accent-primary)]">
+                Add cash collected or extra money in Business Tools
+              </Link>
+              .
             </p>
           )}
           {cashWarning ? (

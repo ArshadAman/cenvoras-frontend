@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { getUnpaidPurchaseBills, createVendorPayment, getRule37Itc, applyRule37Itc } from "../api/purchase";
 import { getAccounts } from "../api/ledger";
 import { showErrorToast, showSuccessToast } from "../utils/toastUtils";
@@ -351,7 +352,11 @@ export default function VendorPayments() {
             )}
             {insufficient && (
               <p className="text-xs text-[var(--status-danger)]">
-                Insufficient balance. Available ₹{bal.toLocaleString("en-IN")}, required ₹{requiredNet.toLocaleString("en-IN")}.
+                Insufficient balance. Available ₹{bal.toLocaleString("en-IN")}, required ₹{requiredNet.toLocaleString("en-IN")}.{' '}
+                <Link to="/integrations?tab=bank" className="underline text-[var(--accent-primary)]">
+                  Add cash or extra money in Business Tools
+                </Link>
+                .
               </p>
             )}
             <div className="flex justify-end gap-2 pt-2">

@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   EnvelopeIcon, ChatBubbleLeftIcon, QrCodeIcon, CloudArrowDownIcon, CloudArrowUpIcon,
   KeyIcon, CheckCircleIcon, XCircleIcon, BellAlertIcon, CameraIcon,
   ArrowPathIcon, SparklesIcon, ShieldCheckIcon, ExclamationTriangleIcon,
-  PlusIcon
+  PlusIcon, BanknotesIcon
 } from '@heroicons/react/24/outline';
+import BankDepositTab from './BankDepositTab';
 import {
   getNotificationLogs, sendCustomEmail, sendPaymentReminders,
   exportData, importData,
@@ -20,6 +21,7 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 // ─── Back to — not needed here, this is under System group in sidebar ───
 
 const TABS = [
+  { id: 'bank', label: 'Bank Balance', icon: BanknotesIcon },
   { id: 'email', label: 'Email Automation', icon: EnvelopeIcon },
   { id: 'backup', label: 'Data Backup', icon: CloudArrowDownIcon },
   { id: 'whatsapp', label: 'WhatsApp Automation', icon: ChatBubbleLeftIcon, badge: 'On demand', badgeClass: 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' },
@@ -667,8 +669,21 @@ function BackupTab() {
 
 // ─── Main IntegrationsPage ───
 export default function IntegrationsPage() {
-  const [activeTab, setActiveTab] = useState('email');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(TABS.some((t) => t.id === tabFromUrl) ? tabFromUrl : 'bank');
   const activeTabConfig = TABS.find((tab) => tab.id === activeTab);
+
+  useEffect(() => {
+    if (tabFromUrl && TABS.some((t) => t.id === tabFromUrl) && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl, activeTab]);
+
+  const selectTab = (id) => {
+    setActiveTab(id);
+    setSearchParams(id === 'bank' ? {} : { tab: id }, { replace: true });
+  };
 
   return (
     <>
@@ -678,7 +693,7 @@ export default function IntegrationsPage() {
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] mb-2 font-bold">System Hub</p>
               <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-2">Business Tools</h1>
-              <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-2xl">Centralized automation for communication, backup, and platform operations.</p>
+              <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-2xl">Bank deposits, communication, backup, and platform operations.</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-3 text-sm text-[var(--text-primary)]">
               <span className="text-[var(--text-secondary)]">Active Tool:</span>{' '}
@@ -696,7 +711,7 @@ export default function IntegrationsPage() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => selectTab(tab.id)}
                     className={`w-full rounded-2xl px-4 py-3.5 text-left transition-all border flex items-center justify-between gap-3 ${
                       isActive
                         ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold shadow-sm'
@@ -727,6 +742,7 @@ export default function IntegrationsPage() {
           <section className="lg:col-span-9">
             <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 md:p-6 shadow-sm">
               {/* Tab Content */}
+              {activeTab === 'bank' && <BankDepositTab />}
               {activeTab === 'email' && <EmailTab />}
               {activeTab === 'backup' && <BackupTab />}
               {activeTab === 'whatsapp' && (
