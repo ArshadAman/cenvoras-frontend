@@ -2,23 +2,19 @@ import React, { useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { getProducts, getVendorProducts, getPurchaseBills } from "../../api/purchase";
+import { getPurchaseBills, getPurchaseBill } from "../../api/purchase";
 import { getVendors } from "../../api/vendors";
 import { createDebitNote } from "../../api/gst";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata } from '../../utils/date';
 
 export default function DebitNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
-  const [step, setStep] = useState(1);
   const [vendorName, setVendorName] = useState("");
   const [vendorGstin, setVendorGstin] = useState("");
   const [originalBillId, setOriginalBillId] = useState("");
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [returnQty, setReturnQty] = useState(1);
-  const [price, setPrice] = useState(0);
 
   const [reason, setReason] = useState("return");
   const [notes, setNotes] = useState("");
@@ -32,15 +28,6 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
 
-  // Fetch Products constrained by Vendor instead of all products
-  const { data: products } = useQuery({
-    queryKey: ["vendorProducts", vendorName],
-    queryFn: () => vendorName ? getVendorProducts(vendorName) : Promise.resolve([]),
-    enabled: isOpen && step === 1 && !!vendorName,
-  });
-
-  const productList = Array.isArray(products) ? products : products?.results || [];
-
   const { data: billsResult } = useQuery({
     queryKey: ["purchase-bills-for-dn", vendorName],
     queryFn: () => getPurchaseBills({ search: vendorName, page_size: 50 }),
@@ -49,51 +36,35 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   const billList = (Array.isArray(billsResult) ? billsResult : billsResult?.results || [])
     .filter((b) => !vendorName || (b.vendor_name || '').toLowerCase().includes(vendorName.toLowerCase()));
 
-  const handleBillSelect = (billId) => {
+  const handleBillSelect = async (billId) => {
     setOriginalBillId(billId);
     const bill = billList.find((b) => String(b.id) === String(billId));
     if (bill) {
       if (bill.vendor_name) setVendorName(bill.vendor_name);
       if (bill.vendor_gstin) setVendorGstin(bill.vendor_gstin);
     }
-  };
-
-  const handleAddProduct = () => {
-    if (!selectedProductId) {
-      toast.error("Please select a product");
+    if (!billId) {
+      setReturnItems([]);
       return;
     }
-    const product = productList.find(p => p.id === selectedProductId);
-    if (!product) return;
-    
-    const existingIndex = returnItems.findIndex(item => item.product_id === product.id);
-    if (existingIndex >= 0) {
-      const newItems = [...returnItems];
-      newItems[existingIndex].return_qty += parseFloat(returnQty);
-      newItems[existingIndex].amount = newItems[existingIndex].price * newItems[existingIndex].return_qty;
-      setReturnItems(newItems);
-    } else {
-      const itemPrice = parseFloat(price) || parseFloat(product.price || 0);
-      setReturnItems([...returnItems, {
-        product_id: product.id,
-        product_name: product.name,
-        hsn_sac_code: product.hsn_sac_code,
-        unit: product.unit,
-        price: itemPrice,
-        return_qty: parseFloat(returnQty),
-        discount: 0,
-        tax: product.tax || 0,
-        amount: itemPrice * parseFloat(returnQty)
-      }]);
+    try {
+      const detail = await getPurchaseBill(billId);
+      const lines = detail?.items || [];
+      setReturnItems(lines.map((item) => ({
+        product_id: item.product || item.product_id || item.product_detail?.id,
+        product_name: item.product_name || item.product_detail?.name || item.description || 'Item',
+        hsn_sac_code: item.hsn_sac_code,
+        unit: item.unit,
+        price: parseFloat(item.price || 0),
+        return_qty: 0,
+        original_qty: parseFloat(item.quantity || 0),
+        discount: parseFloat(item.discount || 0),
+        tax: parseFloat(item.tax || 0),
+        amount: 0,
+      })));
+    } catch (err) {
+      toast.error('Could not load bill lines');
     }
-    
-    setSelectedProductId("");
-    setReturnQty(1);
-    setPrice(0);
-  };
-
-  const handleRemoveProduct = (index) => {
-    setReturnItems(returnItems.filter((_, i) => i !== index));
   };
 
   const createMutation = useMutation({
@@ -163,13 +134,9 @@ export default function DebitNoteForm({ isOpen, onClose }) {
   };
 
   const handleClose = () => {
-    setStep(1);
     setVendorName("");
     setVendorGstin("");
     setOriginalBillId("");
-    setSelectedProductId("");
-    setReturnQty(1);
-    setPrice(0);
     setReturnItems([]);
     setNotes("");
     onClose();
@@ -258,52 +225,11 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* Step 3: Add Items */}
               <div className="border border-[var(--border-subtle)] rounded-lg p-4 space-y-4">
-                <h4 className="text-sm font-medium text-[var(--text-primary)]">Return Items</h4>
-                <div className="flex gap-2 items-end">
-                  <div className="flex-1">
-                    <label className="block text-xs text-[var(--text-muted)] mb-1">Product</label>
-                    <select 
-                      value={selectedProductId}
-                      onChange={(e) => setSelectedProductId(e.target.value)}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
-                    >
-                      <option value="">{vendorName ? "Select Product..." : "Please enter a Vendor first..."}</option>
-                      {productList.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-xs text-[var(--text-muted)] mb-1">Price</label>
-                    <input 
-                      type="number" 
-                      min="0"
-                      step="0.01"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-xs text-[var(--text-muted)] mb-1">Qty</label>
-                    <input 
-                      type="number" 
-                      min="1"
-                      value={returnQty}
-                      onChange={(e) => setReturnQty(e.target.value)}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent-primary)]"
-                    />
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={handleAddProduct}
-                    className="btn-primary px-4 py-1.5 rounded text-sm transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
+                <h4 className="text-sm font-medium text-[var(--text-primary)]">Return items from the selected bill</h4>
+                {!originalBillId && (
+                  <p className="text-xs text-[var(--text-muted)]">Select an original purchase bill to load its lines.</p>
+                )}
 
                 {returnItems.length > 0 && (
                   <div className="mt-4 border border-[var(--border-subtle)] rounded-lg overflow-hidden">
@@ -314,7 +240,6 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                           <th className="p-3 text-right">Price</th>
                           <th className="p-3 text-right w-32">Return Qty</th>
                           <th className="p-3 text-right w-24">Total</th>
-                          <th className="p-3 text-center w-12"></th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)]">
@@ -325,10 +250,12 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                             <td className="p-3">
                               <input 
                                 type="number"
-                                min="1"
+                                min="0"
+                                max={item.original_qty || undefined}
                                 value={item.return_qty}
                                 onChange={(e) => {
-                                  const newQty = Math.max(parseFloat(e.target.value) || 1, 1);
+                                  const maxQty = item.original_qty || Infinity;
+                                  const newQty = Math.min(Math.max(parseFloat(e.target.value) || 0, 0), maxQty);
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
                                   newItems[idx].amount = newItems[idx].price * newQty;
@@ -338,11 +265,6 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                               />
                             </td>
                             <td className="p-3 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{item.amount.toFixed(2)}</td>
-                            <td className="p-3 text-center">
-                              <button type="button" onClick={() => handleRemoveProduct(idx)} className="btn-secondary text-xs px-2 py-1 rounded">
-                                <XMarkIcon className="w-4 h-4 mx-auto" />
-                              </button>
-                            </td>
                           </tr>
                         ))}
                       </tbody>

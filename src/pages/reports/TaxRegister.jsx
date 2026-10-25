@@ -248,8 +248,16 @@ export default function TaxRegister() {
                       <tr className="bg-[var(--bg-primary)]/50 border-t border-[var(--border-subtle)] font-semibold">
                         <td colSpan="2" className="p-4 text-[var(--text-primary)]">Total ({hsnData.count} HSN codes)</td>
                         <td className="p-4 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_taxable_value)}</td>
-                        <td colSpan="3" className="p-4 text-right text-[var(--status-warning)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_tax)}</td>
-                        <td className="p-4"></td>
+                        {country === 'IN' ? (
+                          <>
+                            <td className="p-4"></td>
+                            <td className="p-4"></td>
+                            <td className="p-4"></td>
+                          </>
+                        ) : (
+                          <td className="p-4"></td>
+                        )}
+                        <td className="p-4 text-right text-[var(--status-warning)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_tax)}</td>
                         <td className="p-4 text-right text-[var(--text-primary)]">{getCurrencySymbol()}{fmt(hsnData.summary?.total_value)}</td>
                       </tr>
                     </>

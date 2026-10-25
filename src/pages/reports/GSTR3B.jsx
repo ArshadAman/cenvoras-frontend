@@ -54,6 +54,7 @@ export default function GSTR3B() {
 
   const payment = data?.table_6_1_payment || {};
   const t31 = data?.table_3_1 || {};
+  const filingWarnings = data?.warnings || [];
   const t311 = data?.table_3_1_1 || {};
   const t32 = data?.table_3_2 || [];
   const t4 = data?.table_4_itc || {};
@@ -208,6 +209,14 @@ export default function GSTR3B() {
           <p className="text-xs text-[var(--text-secondary)] mt-1">Net sales taxable amount</p>
         </div>
       </div>
+
+      {filingWarnings.length > 0 && (
+        <div className="rounded-xl border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-4 py-3 text-sm text-[var(--text-primary)]">
+          {filingWarnings.map((w, i) => (
+            <p key={i}>{w.message}</p>
+          ))}
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex border-b border-[var(--border-subtle)] gap-2 overflow-x-auto pb-1">
@@ -757,7 +766,7 @@ export default function GSTR3B() {
                         {getCurrencySymbol()}{fmt(payment.total_tax_payable)}
                       </td>
                       <td className="py-3 px-4 text-right font-mono text-[var(--status-success)]">
-                        {getCurrencySymbol()}{fmt(payment.total_net_itc)}
+                        {getCurrencySymbol()}{fmt(payment.total_itc_utilized)}
                       </td>
                       <td className="py-3 px-4 text-right font-mono text-[var(--status-danger)]">
                         {getCurrencySymbol()}{fmt(payment.total_tax_paid_cash)}

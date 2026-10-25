@@ -20,11 +20,14 @@ import {
 } from "@heroicons/react/24/outline";
 
 const today = getTodayKolkata();
-const fmt = (v) =>
-  parseFloat(v || 0).toLocaleString("en-IN", {
+const fmt = (v) => {
+  const n = parseFloat(v || 0);
+  const abs = Math.abs(n).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+  return n < 0 ? `${abs} (contra)` : abs;
+};
 
 // Collapsible sub-group within a section
 function SubGroup({ label, items = [], total, color }) {

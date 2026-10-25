@@ -58,8 +58,8 @@ const LedgerTable = ({
   const [viewEntry, setViewEntry] = useState(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [dateFilter, setDateFilter] = useState({
-    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd')
+    startDate: '',
+    endDate: ''
   });
   
   const itemsPerPage = 20;

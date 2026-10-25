@@ -198,7 +198,7 @@ export default function PulseSection({ data, isLoading }) {
     {
       label: 'Net Profit (Est.)',
       value: formatCurrencyAbs(pulse.net_profit_today),
-      subtitle: pulse.net_profit_today >= 0 ? 'Sales above COGS today' : 'Below COGS today',
+      subtitle: pulse.net_profit_today >= 0 ? 'Estimated sales above COGS today — not statutory P&L' : 'Below COGS today — not statutory P&L',
       icon: pulse.net_profit_today >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon,
       color: pulse.net_profit_today >= 0 ? 'emerald' : 'red',
     },

@@ -154,8 +154,11 @@ export default function Dashboard({ onLogout }) {
   // Financial Ticker Card Data
   const cardData = [
     {
-      label: 'Total Sales',
+      label: metrics?.sales_label || 'Sales this month (incl. GST)',
       value: metrics?.total_sales != null ? `${getCurrencySymbol()}${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
+      subtitle: metrics?.sales_taxable_net != null
+        ? `${metrics.sales_taxable_label || 'Taxable (excl. GST, net of CNs)'}: ${getCurrencySymbol()}${Number(metrics.sales_taxable_net).toLocaleString('en-IN')}`
+        : null,
       icon: <CurrencyRupeeIcon className="w-6 h-6 text-[var(--status-info)]" />,
       color: 'text-[var(--status-info)]'
     },
@@ -178,7 +181,7 @@ export default function Dashboard({ onLogout }) {
       color: 'text-[var(--status-danger)]'
     },
     {
-      label: metrics?.gst_payable < 0 ? 'GST Credit' : 'GST Payable',
+      label: metrics?.gst_label || (metrics?.gst_payable < 0 ? 'GST Credit (3B 4C this month)' : 'GST Payable'),
       value: metrics?.gst_payable != null
         ? `${getCurrencySymbol()}${Math.abs(Number(metrics.gst_payable)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : '--',
@@ -299,6 +302,9 @@ export default function Dashboard({ onLogout }) {
                     <div>
                       <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular">{card.value}</div>
                       <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">{card.label}</div>
+                      {card.subtitle ? (
+                        <div className="text-[10px] text-[var(--text-secondary)] mt-1 font-medium normal-case">{card.subtitle}</div>
+                      ) : null}
                     </div>
                   </div>
               ))
