@@ -36,8 +36,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   const customerList = Array.isArray(customers) ? customers : customers?.results || [];
   const invoiceList = Array.isArray(invoices) ? invoices : invoices?.results || [];
   const filteredInvoiceList = invoiceList.filter(inv =>
-    inv.invoice_number?.toLowerCase().includes(selectedInvoiceId.toLowerCase()) ||
-    inv.invoice_number || inv.invoice_date
+    (inv.status || 'final') === 'final' && (
+      inv.invoice_number?.toLowerCase().includes(selectedInvoiceId.toLowerCase()) ||
+      inv.invoice_number || inv.invoice_date
+    )
   );
 
   // Selected Invoice Details
@@ -56,10 +58,13 @@ export default function CreditNoteForm({ isOpen, onClose }) {
 
   const createMutation = useMutation({
     mutationFn: createCreditNote,
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
       await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
       toast.success("Credit Note Created");
+      if (data?.section34_warning) {
+        toast.warn(data.section34_warning);
+      }
       handleClose();
     },
     onError: (err) => toast.error(err.message || "Failed to create credit note"),
@@ -100,6 +105,16 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     }
 
     const totalAmt = Math.round(itemsToReturn.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
+    const hasTax = itemsToReturn.some((item) => parseFloat(item.tax || 0) > 0);
+    if (hasTax && selectedInvoice?.invoice_date) {
+      const invDate = new Date(`${selectedInvoice.invoice_date}T00:00:00`);
+      const fyEndYear = invDate.getMonth() >= 3 ? invDate.getFullYear() + 1 : invDate.getFullYear();
+      const deadline = new Date(fyEndYear, 10, 30);
+      const noteDate = new Date(`${getTodayKolkata()}T00:00:00`);
+      if (noteDate > deadline) {
+        toast.warn(`GST Act s.34: tax credit notes for this invoice's FY can only be issued until 30 Nov ${fyEndYear}.`);
+      }
+    }
 
     const payload = {
       date: getTodayKolkata(),
