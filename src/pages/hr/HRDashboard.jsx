@@ -44,18 +44,19 @@ function AlertDetailsModal({ isOpen, onClose, alert, onSelectEmployee }) {
             alert.items.map((item, idx) => (
               <div key={item.id || idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition">
                 <div className="min-w-0 pr-3">
-                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{item.name}</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{item.name || item.employee_name}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5 truncate">
                     {item.employee_code && <span className="font-mono text-[var(--accent-primary)] mr-1.5">{item.employee_code}</span>}
                     {item.department && <span className="text-[var(--text-secondary)]">· {item.department} </span>}
                     {item.designation && <span className="text-[var(--text-muted)]">({item.designation}) </span>}
                     {item.reason && <span className="text-[var(--status-warning)] font-medium">· {item.reason}</span>}
+                    {item.message && !item.reason && <span className="text-[var(--status-warning)] font-medium">· {item.message}</span>}
                   </p>
                 </div>
-                {item.id && onSelectEmployee && (
+                {(item.employee_id || item.id) && onSelectEmployee && (
                   <button
                     type="button"
-                    onClick={() => onSelectEmployee(item.id)}
+                    onClick={() => onSelectEmployee(item.employee_id || item.id)}
                     className="shrink-0 btn-primary text-xs py-1 px-3"
                   >
                     Edit / Fix
@@ -681,6 +682,10 @@ export default function HRDashboard() {
   const [activeAlertDetails, setActiveAlertDetails] = useState(null);
 
   const handleFixAlertEmployee = async (empId) => {
+    if (!empId) {
+      toast.error("No employee record linked to this alert");
+      return;
+    }
     setActiveAlertDetails(null);
     const existing = employees.find(e => String(e.id) === String(empId));
     if (existing) {
@@ -954,11 +959,11 @@ export default function HRDashboard() {
                                 <button
                                   key={it.id || i}
                                   type="button"
-                                  onClick={() => handleFixAlertEmployee(it.id)}
+                                  onClick={() => handleFixAlertEmployee(it.employee_id || it.id)}
                                   className="text-xs px-2 py-0.5 rounded-md bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition inline-flex items-center gap-1"
                                   title="Click to view/edit employee"
                                 >
-                                  <span>{it.name}</span>
+                                  <span>{it.name || it.employee_name}</span>
                                   {it.employee_code && <span className="text-[var(--text-muted)] font-mono text-xs">({it.employee_code})</span>}
                                 </button>
                               ))}
