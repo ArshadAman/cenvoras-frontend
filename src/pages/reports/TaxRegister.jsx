@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail, getGSTR1Filing, setGSTR1Filing } from "../../api/gst";
+import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail, getGSTR1Filing, setGSTR1Filing, downloadGSTR1AdvancesCSV, portalGSTR1 } from "../../api/gst";
 import { extractServerMessage } from "../../utils/fieldErrors";
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
@@ -62,7 +62,7 @@ export default function TaxRegister() {
 
   const downloadGSTR1 = () => {
     if (!gstr1Data) return;
-    const blob = new Blob([JSON.stringify(gstr1Data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(portalGSTR1(gstr1Data), null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -325,6 +325,18 @@ export default function TaxRegister() {
                   </div>
                 </div>
 
+                {gstr1Data._cenvora && !gstr1Data._cenvora.advances_in_json && (
+                  <div className="rounded-xl border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-4 py-3 text-sm text-[var(--text-primary)] space-y-2">
+                    <p>Advances: report via the GSTN offline tool AT/ATADJ sheets. They are not included in this JSON.</p>
+                    {gstr1Data._cenvora.has_advances && (
+                      <div className="flex gap-2">
+                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'at').catch(() => toast.error('Download failed'))}>AT sheet (CSV)</button>
+                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'atadj').catch(() => toast.error('Download failed'))}>ATADJ sheet (CSV)</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Raw JSON Preview */}
                 <div className="bento-card p-4">
                   <div className="flex justify-between items-center mb-3">
@@ -334,7 +346,7 @@ export default function TaxRegister() {
                     </button>
                   </div>
                   <pre className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 text-xs text-[var(--text-secondary)] overflow-auto max-h-96 font-mono">
-                    {JSON.stringify(gstr1Data, null, 2)}
+                    {JSON.stringify(portalGSTR1(gstr1Data), null, 2)}
                   </pre>
                 </div>
               </>

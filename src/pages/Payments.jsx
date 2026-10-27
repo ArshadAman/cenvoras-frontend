@@ -23,6 +23,7 @@ import { toast } from 'react-toastify';
 import api from '../api/api';
 import { allocatePayment, reverseAdvanceAdjustment } from '../api/ledger';
 import { extractServerMessage } from '../utils/fieldErrors';
+import { getGSTR1Filing } from '../api/gst';
 import { getCurrencySymbol } from '../utils/currency';
 import { getTodayKolkata } from '../utils/date';
 
@@ -575,6 +576,14 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
   const [selectedInvoice, setSelectedInvoice] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [qrmpWarning, setQrmpWarning] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    getGSTR1Filing(getTodayKolkata().slice(0, 7))
+      .then((f) => setQrmpWarning(f?.qrmp_warning || null))
+      .catch(() => setQrmpWarning(null));
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !payment?.customer) return;
@@ -649,6 +658,9 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
             <span className="text-[var(--text-secondary)]">Payment Amount:</span>
             <span className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
           </div>
+          {qrmpWarning && (
+            <div className="rounded-lg border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-3 py-2 text-xs text-[var(--text-primary)]">{qrmpWarning}</div>
+          )}
           {payment.unapplied_amount != null && (
             <div className="flex justify-between text-sm">
               <span className="text-[var(--text-secondary)]">Unapplied:</span>
