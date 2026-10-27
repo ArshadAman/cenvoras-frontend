@@ -167,7 +167,18 @@ export default function Sales({ documentType = "invoice" }) {
     if (!canEditInvoicePrefix) {
       return;
     }
-    if (normalized !== normalizePrefix(billingProfile?.invoice_prefix || DEFAULT_INVOICE_PREFIX)) {
+    const current = normalizePrefix(billingProfile?.invoice_prefix || DEFAULT_INVOICE_PREFIX);
+    if (normalized !== current) {
+      // R21: the prefix box used to save silently on blur, so a stray edit (e.g. "R19-INV-4") became
+      // the configured series and every new invoice was suggested as R19-INV-4-001. Confirm first.
+      const ok = window.confirm(
+        `Change the invoice series prefix from "${current}" to "${normalized || DEFAULT_INVOICE_PREFIX}"?\n\n` +
+        `New invoices will be numbered ${normalized || DEFAULT_INVOICE_PREFIX}-001, -002, ...`
+      );
+      if (!ok) {
+        setInvoicePrefix(current);
+        return;
+      }
       saveInvoicePrefixMutation.mutate(normalized);
     }
   };

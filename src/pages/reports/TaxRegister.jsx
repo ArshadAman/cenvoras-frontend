@@ -336,6 +336,14 @@ export default function TaxRegister() {
                 </div>
 
                 {/* Rudra CA: CN carry-forward / s.34(2) warnings (b2cs + Table 8 floors) */}
+                {(gstr1Data._cenvora?.b2cs_zero_rows || []).length > 0 && (
+                  <div className="bento-card p-4 space-y-1">
+                    <div className="text-[var(--text-primary)] font-semibold text-sm">B2CS rows at ₹0 after credit notes (not in the JSON)</div>
+                    {gstr1Data._cenvora.b2cs_zero_rows.map((r, i) => (
+                      <div key={i} className="text-xs text-[var(--text-secondary)]">{(r.label || '').replace(/^B2CS /, '')}: taxable ₹0.00; the excess credit note is carried forward (see note).</div>
+                    ))}
+                  </div>
+                )}
                 {(gstr1Data._cenvora?.warnings || []).length > 0 && (
                   <div className="bento-card p-4 border border-[var(--status-warning)] space-y-1">
                     {(gstr1Data._cenvora.warnings).map((w, i) => (

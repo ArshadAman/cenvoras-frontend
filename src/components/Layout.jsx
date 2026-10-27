@@ -309,6 +309,8 @@ export default function Layout({ children, onLogout }) {
     || String(currentPlanName).toLowerCase().includes('vip')
   );
   const displayPlanName = isVipAccess ? 'VIP Lifetime' : currentPlanName;
+  // R21: no plan badge until the subscription has loaded (avoids a STARTER -> VIP flash).
+  const planBadgeReady = Boolean(entitlementsFetched);
   const isFreePlan = Boolean(currentPlanCode) && (currentPlanCode === 'free' || currentPlanCode === 'starter');
   const showFreeLock = isFreePlan && !entitlementsLoading && (entitlementsFetched || Boolean(profileData?.profile?.plan_code));
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
@@ -413,6 +415,7 @@ export default function Layout({ children, onLogout }) {
                 />
               </Link>
               <div className="flex items-center gap-1.5 shrink-0">
+                {planBadgeReady && (
                 <span
                   className={`px-2 py-0.5 rounded-md text-xs font-bold tracking-wider uppercase border truncate max-w-[85px] ${
                     isVipAccess
@@ -423,6 +426,7 @@ export default function Layout({ children, onLogout }) {
                 >
                   {isVipAccess ? 'VIP' : displayPlanName}
                 </span>
+                )}
                 <button
                   type="button"
                   onClick={toggleSidebar}
@@ -750,12 +754,14 @@ export default function Layout({ children, onLogout }) {
             >
               <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-secondary)]" />
             </button>
+            {planBadgeReady && (
             <span
               className="px-2 py-1 rounded-md text-xs font-bold tracking-wider uppercase border bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-default)]"
               title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
             >
               {isVipAccess ? 'VIP' : displayPlanName}
             </span>
+            )}
           </div>
         </header>
 

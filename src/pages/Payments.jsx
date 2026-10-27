@@ -238,6 +238,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       });
       setClassConfirmed(false);
       setCustomerSearch(editData.customer_name || '');
+      setError(null);
+      setShowCustomerDropdown(false);
     } else if (isOpen && !editData) {
       resetForm();
     }
@@ -355,24 +357,20 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     let targetCustomerId = formData.customer;
 
     try {
-      // Handle manual entry for new customer if no UUID selected
-      if (!targetCustomerId && customerSearch.trim()) {
-        const custRes = await api.post('/billing/customers/', {
-          name: customerSearch.trim()
-        });
-        targetCustomerId = custRes.data.id;
-      }
-
-      if (!targetCustomerId) {
+      // R21 P1: a typed new customer is created by the server in the same transaction as the payment
+      // (reused by name on retry), so a failed save never leaves an orphan or duplicate customer.
+      const newCustomerName = !targetCustomerId ? customerSearch.trim() : '';
+      if (!targetCustomerId && !newCustomerName) {
         throw new Error("Please select or enter a customer name");
       }
 
       const { receipt_mode: receiptMode, ...rest } = formData;
       const paymentPayload = {
         ...rest,
-        customer: targetCustomerId,
         amount: roundTo3(formData.amount)
       };
+      if (targetCustomerId) paymentPayload.customer = targetCustomerId;
+      else { delete paymentPayload.customer; paymentPayload.new_customer_name = newCustomerName; }
 
       if (formData.invoice) {
         paymentPayload.invoice = formData.invoice;
@@ -449,6 +447,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     setCustomerSearch('');
     setSelectedInvoice(null);
     setInvoices([]);
+    // R21: no stale inline error / dropdown / submit state when the form is reopened.
+    setError(null);
+    setShowCustomerDropdown(false);
+    setIsSubmitting(false);
+    setEditReason('');
   };
 
   if (!isOpen) return null;
