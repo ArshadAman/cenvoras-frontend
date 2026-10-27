@@ -158,6 +158,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   });
   // R18 (Rudra CA): advance classification is suggested from past invoices but must be confirmed.
   const [classConfirmed, setClassConfirmed] = useState(false);
+  const [editReason, setEditReason] = useState('');
   const [classHint, setClassHint] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -379,7 +380,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       }
 
       if (editData) {
+        if (editReason.trim()) paymentPayload.edit_reason = editReason.trim();
         await api.put(`/billing/payments/${editData.id}/`, paymentPayload);
+        setEditReason('');
         toast.success("Payment updated successfully");
       } else {
         await api.post('/billing/payments/', paymentPayload);
@@ -627,6 +630,20 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   <input type="checkbox" checked={classConfirmed} onChange={(e) => setClassConfirmed(e.target.checked)} className="mt-0.5" />
                   <span>I confirm this classification{formData.receipt_mode === 'dues' ? ' for any amount not applied to invoices' : ''}.</span>
                 </label>
+              </div>
+            )}
+
+            {editData && (
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Reason for edit (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Receipt edited"
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
+                />
+                <p className="mt-1 text-xs text-[var(--text-muted)]">The original entries are kept; a reversal and a corrected entry are posted with this reason.</p>
               </div>
             )}
 
