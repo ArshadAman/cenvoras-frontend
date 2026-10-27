@@ -8,7 +8,7 @@ import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory";
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
 import { getUserProfile } from "../../api/users";
-import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants"; // Added imports
+import { INDIAN_STATES, GST_STATE_CODE_MAP, customerPosCode } from "../../utils/constants"; // Added imports
 import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { formatErrorMessage } from "../../utils/toastUtils";
@@ -546,15 +546,9 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setFieldValue('delivery_address', savedShippingAddress);
     setFieldValue('customer', customer.id || null);
 
-    // Auto-fetch place of supply from GSTIN (first 2 digits)
-    if (customer.gstin && customer.gstin.length >= 2) {
-      const stateCode = customer.gstin.substring(0, 2);
-      if (GST_STATE_CODE_MAP[stateCode]) {
-        setFieldValue('place_of_supply', GST_STATE_CODE_MAP[stateCode]);
-      }
-    } else if (customer.state) {
-      setFieldValue('place_of_supply', customer.state);
-    }
+    // R20: POS from GSTIN state, else address state (normalised to the picker's state code).
+    const posCode = customerPosCode(customer);
+    if (posCode) setFieldValue('place_of_supply', posCode);
 
     setInputValue(customer.name);
     setShowDropdown(false);
@@ -3893,13 +3887,9 @@ export default function SalesForm({
                 if (updatedCustomer.gstin) formikRef.current.setFieldValue('customer_gstin', updatedCustomer.gstin);
                 if (updatedCustomer.phone) formikRef.current.setFieldValue('customer_phone', updatedCustomer.phone);
                 if (updatedCustomer.email) formikRef.current.setFieldValue('customer_email', updatedCustomer.email);
-                if (updatedCustomer.gstin && updatedCustomer.gstin.length >= 2) {
-                  const stateCode = updatedCustomer.gstin.substring(0, 2);
-                  if (GST_STATE_CODE_MAP[stateCode]) {
-                    formikRef.current.setFieldValue('place_of_supply', GST_STATE_CODE_MAP[stateCode]);
-                  }
-                } else if (updatedCustomer.state) {
-                  formikRef.current.setFieldValue('place_of_supply', updatedCustomer.state);
+                {
+                  const posCode = customerPosCode(updatedCustomer);
+                  if (posCode) formikRef.current.setFieldValue('place_of_supply', posCode);
                 }
               }
               setEditingCustomer(null);

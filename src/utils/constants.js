@@ -75,3 +75,23 @@ export const GST_STATE_CODE_MAP = {
   '37': 'AP',
   '38': 'LA',
 };
+
+// Customer place of supply (same rule as backend billing.gst_rules.customer_pos):
+// registered -> GSTIN state code, else address state. Returns the INDIAN_STATES code (e.g. 'OR') or ''.
+const STATE_ALIASES = { OD: 'OR', ORISSA: 'OR', TS: 'TG', UK: 'UT', UTTARANCHAL: 'UT' };
+export const stateToCode = (v) => {
+  if (!v) return '';
+  const t = String(v).trim();
+  if (/^\d{1,2}$/.test(t)) return GST_STATE_CODE_MAP[t.padStart(2, '0')] || '';
+  const up = t.toUpperCase();
+  const byCode = INDIAN_STATES.find((s) => s.code === up);
+  if (byCode) return byCode.code;
+  if (STATE_ALIASES[up]) return STATE_ALIASES[up];
+  const byName = INDIAN_STATES.find((s) => s.name.toUpperCase() === up.replace(/^\d{2}\s*-\s*/, ''));
+  return byName ? byName.code : '';
+};
+export const customerPosCode = (customer) => {
+  const g = String(customer?.gstin || '').trim();
+  if (g.length === 15 && GST_STATE_CODE_MAP[g.slice(0, 2)]) return GST_STATE_CODE_MAP[g.slice(0, 2)];
+  return stateToCode(customer?.state);
+};
