@@ -17,6 +17,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
   const [reason, setReason] = useState("return");
   const [notes, setNotes] = useState("");
+  const [noteDate, setNoteDate] = useState(getTodayKolkata());
   const [returnItems, setReturnItems] = useState([]);
 
   // Fetch Customers
@@ -50,6 +51,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     queryKey: ["cn-remaining", selectedInvoiceId],
     queryFn: () => getInvoiceReturnRemaining(selectedInvoiceId),
     enabled: isOpen && !!selectedInvoice,
+    // R21: never show a stale "X of Y" after a credit note is created.
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   useEffect(() => {
@@ -66,10 +70,12 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   }, [selectedInvoice, invoiceRemaining]);
 
   const lastPayloadRef = useRef(null);
+  const wholeUnits = reason === 'return' || reason === 'defective';
   const createMutation = useMutation({
     mutationFn: createCreditNote,
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
+      await queryClient.invalidateQueries({ queryKey: ["cn-remaining"] });
       await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
       toast.success(data?.gst_time_barred ? "Credit note without GST (time-barred under s.34) created" : "Credit Note Created");
       if (data?.section34_warning) {
@@ -150,14 +156,14 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       const invDate = new Date(`${selectedInvoice.invoice_date}T00:00:00`);
       const fyEndYear = invDate.getMonth() >= 3 ? invDate.getFullYear() + 1 : invDate.getFullYear();
       const deadline = new Date(fyEndYear, 9, 31); // Rudra CA: prior-FY CNs dated by 31 Oct (monthly), declared by 30 Nov
-      const noteDate = new Date(`${getTodayKolkata()}T00:00:00`);
-      if (noteDate > deadline) {
+      const cnDate = new Date(`${noteDate}T00:00:00`);
+      if (cnDate > deadline) {
         toast.warn(`GST Act s.34(2): tax credit notes for this invoice's FY must be dated by 31 Oct ${fyEndYear} and declared by 30 Nov ${fyEndYear}.`);
       }
     }
 
     const payload = {
-      date: getTodayKolkata(),
+      date: noteDate,
       customer: selectedCustomer,
       original_invoice: selectedInvoiceId,
       reason,
@@ -177,6 +183,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     setSelectedInvoiceId("");
     setReturnItems([]);
     setNotes("");
+    setNoteDate(getTodayKolkata());
     onClose();
   };
 
@@ -254,7 +261,13 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Reason</label>
                   <select 
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setReason(next);
+                      if (next === 'return' || next === 'defective') {
+                        setReturnItems((rows) => rows.map((it) => ({ ...it, return_qty: Math.floor(Number(it.return_qty) || 0) })));
+                      }
+                    }}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                   >
                     <option value="return">Goods Returned</option>
@@ -263,6 +276,18 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     <option value="rate_diff">Rate Difference</option>
                     <option value="other">Other</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Credit note date</label>
+                  <input
+                    type="date"
+                    value={noteDate}
+                    min={selectedInvoice?.invoice_date ? String(selectedInvoice.invoice_date).slice(0, 10) : undefined}
+                    max={getTodayKolkata()}
+                    onChange={(e) => setNoteDate(e.target.value || getTodayKolkata())}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                  />
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Not before the invoice date or in a month whose GSTR-1 is filed.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
@@ -300,10 +325,14 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                               <input 
                                 type="number"
                                 min="0"
+                                step={wholeUnits ? 1 : 0.01}
                                 max={item.remaining_qty}
                                 value={item.return_qty}
                                 onChange={(e) => {
-                                  const newQty = Math.max(0, Math.min(parseFloat(e.target.value) || 0, item.remaining_qty));
+                                  const raw = parseFloat(e.target.value) || 0;
+                                  // R21: whole units for returns (stock), up to 2 decimals for value credits.
+                                  const stepped = wholeUnits ? Math.floor(raw) : Math.round(raw * 100) / 100;
+                                  const newQty = Math.max(0, Math.min(stepped, item.remaining_qty));
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
                                   setReturnItems(newItems);
@@ -340,10 +369,14 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                               <input 
                                 type="number" 
                                 min="0" 
+                                step={wholeUnits ? 1 : 0.01}
                                 max={item.remaining_qty}
                                 value={item.return_qty}
                                 onChange={(e) => {
-                                  const newQty = Math.max(0, Math.min(parseFloat(e.target.value) || 0, item.remaining_qty));
+                                  const raw = parseFloat(e.target.value) || 0;
+                                  // R21: whole units for returns (stock), up to 2 decimals for value credits.
+                                  const stepped = wholeUnits ? Math.floor(raw) : Math.round(raw * 100) / 100;
+                                  const newQty = Math.max(0, Math.min(stepped, item.remaining_qty));
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
                                   setReturnItems(newItems);

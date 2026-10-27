@@ -1307,6 +1307,15 @@ export default function SalesForm({
       const defaultName = name?.trim() ? name.trim() : "New Product";
       const newName = window.prompt("Enter product name to save in catalog:", defaultName);
       if (!newName || !newName.trim()) return;
+      // R21 P1: the catalog requires an HSN/SAC code; ask for it instead of failing with a 400.
+      let hsnForCatalog = (hsn_sac_code || "").trim();
+      if (!hsnForCatalog) {
+        hsnForCatalog = (window.prompt("HSN/SAC code is required to save this product in the catalog:", "") || "").trim();
+        if (!hsnForCatalog) {
+          toast.info("Not saved: an HSN/SAC code is required for catalog products.");
+          return;
+        }
+      }
 
       const created = await createProduct({
         name: newName.trim(),
@@ -1316,7 +1325,7 @@ export default function SalesForm({
         cost_price: Number(price) || 0,
         unit: unit || "pcs",
         tax: Number(tax) || 0,
-        hsn_sac_code: hsn_sac_code || null,
+        hsn_sac_code: hsnForCatalog,
         description: description || null,
         stock: 0,
       });
@@ -1334,7 +1343,7 @@ export default function SalesForm({
       toast.success(`Saved new product "${created.name}" in catalog!`);
       setCatalogSyncModal(null);
     } catch (err) {
-      toast.error(formatErrorMessage(err, "Failed to create new catalog product"));
+      toast.error(formatErrorMessage(err, "Failed to create new catalog product"), { autoClose: false, toastId: 'catalog-save-error' });
     }
   };
 
@@ -1457,7 +1466,8 @@ export default function SalesForm({
             extractErrorMessage(
               error,
               `Failed to create ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
-            )
+            ),
+            { autoClose: false, toastId: 'sales-save-error' }
           );
       }
     },
@@ -1495,7 +1505,8 @@ export default function SalesForm({
             extractErrorMessage(
               error,
               `Failed to update ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
-            )
+            ),
+            { autoClose: false, toastId: 'sales-save-error' }
           );
       }
     },
@@ -1613,6 +1624,9 @@ export default function SalesForm({
       })(),
       gst_treatment: editData?.gst_treatment || "registered",
       place_of_supply: editData?.place_of_supply || aiDraftData?.place_of_supply || "",
+      // R21: boolean initial values so Formik treats these as true/false checkboxes (not "on" arrays).
+      bill_to_ship_to: false,
+      default_pos: "",
       warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || aiDraftData?.warehouse || ""),
       journal: editData?.journal || (isSalesOrder ? "Sales" : isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
       total_amount: editData?.total_amount || null,
@@ -1829,8 +1843,14 @@ export default function SalesForm({
                 allowCreateProducts = window.confirm(
                   `${bareNameItems.length} line(s) use a product name without a catalog ID (${names}${bareNameItems.length > 5 ? ', …' : ''}).\n\n` +
                   'OK = create missing products in catalog and continue.\n' +
-                  'Cancel = continue only if those names already exist (or use "Save as New Product" first).'
+                  'Cancel = go back (use "Save as New Product" first, or pick a catalog item).'
                 );
+                // R21 P1: Cancel used to send the save anyway and fail with a 400. Stop here instead.
+                if (!allowCreateProducts) {
+                  toast.info(`Not saved: ${names} ${bareNameItems.length > 1 ? 'are' : 'is'} not in your catalog yet.`, { autoClose: false, toastId: 'bare-product-cancel' });
+                  setSubmitting(false);
+                  return;
+                }
               }
 
               const processedItems = itemsForSave.map(item => {
@@ -1926,7 +1946,7 @@ export default function SalesForm({
                 delivery_address: values.delivery_address || null,
                 gst_treatment: values.gst_treatment || null,
                 place_of_supply: values.place_of_supply || (values.customer_gstin && values.customer_gstin.length >= 2 ? GST_STATE_CODE_MAP[values.customer_gstin.substring(0, 2)] : null) || null,
-                bill_to_ship_to: !!values.bill_to_ship_to,
+                bill_to_ship_to: values.bill_to_ship_to === true,
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : finalSubmitStatus,
@@ -2338,7 +2358,11 @@ export default function SalesForm({
                           ))}
                         </Field>
                         <label className="mt-2 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                          <Field type="checkbox" name="bill_to_ship_to" />
+                          <input
+                            type="checkbox"
+                            checked={values.bill_to_ship_to === true}
+                            onChange={(e) => setFieldValue('bill_to_ship_to', e.target.checked)}
+                          />
                           Bill-to-ship-to (goods delivered to a third party on the customer's order)
                         </label>
                         {(() => {
@@ -2352,7 +2376,7 @@ export default function SalesForm({
                             <p className="mt-1.5 text-xs text-[var(--status-warning)]">Mixed goods and services: confirm POS.</p>
                           ) : null;
                           if (!def || !pos || def === pos) return mixedNote;
-                          if (services || values.bill_to_ship_to) {
+                          if (services || values.bill_to_ship_to === true) {
                             return (
                               <p className="mt-1.5 text-xs text-[var(--status-error)]">
                                 {services
@@ -2597,33 +2621,6 @@ export default function SalesForm({
                   )}
                   <FieldArray name="items">
                     {({ push, remove, swap, insert }) => {
-                      // Function to auto-add new row when user starts typing in the last row
-                      const handleAutoAddRow = (currentIndex) => {
-                        const isLastRow = currentIndex === values.items.length - 1;
-                        const currentItem = values.items[currentIndex];
-                        
-                        // Check if current row has meaningful data (product name or any other field)
-                        const hasData = currentItem?.product?.trim() || 
-                                       (currentItem?.quantity && currentItem.quantity > 1) || 
-                                       (currentItem?.price && currentItem.price > 0) || 
-                                       currentItem?.hsn_sac_code?.trim();
-                        
-                        if (isLastRow && hasData) {
-                          const nextRowExists = values.items[currentIndex + 1];
-                          if (!nextRowExists) {
-                            const emptyRow = makeEmptySalesItem();
-                            const wasDirty = formikRef.current?.dirty;
-                            const nextItems = [...values.items, emptyRow];
-                            if (!wasDirty && formikRef.current) {
-                              formikRef.current.resetForm({
-                                values: { ...formikRef.current.values, items: nextItems },
-                              });
-                            } else {
-                              push(emptyRow);
-                            }
-                          }
-                        }
-                      };
 
                       return (
                         <div
@@ -2843,7 +2840,7 @@ export default function SalesForm({
                                                    values={values}
                                                    setFieldValue={setFieldValue}
                                                    products={products}
-                                                   onInputChange={() => handleAutoAddRow(index)}
+                                                   onInputChange={() => { /* R21: no auto blank row on typing/pick; use + Add item or Tab */ }}
                                                    showDescription={itemSettings.show_item_description}
                                                    showManufacturer={itemSettings.show_item_manufacturer}
                                                    onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
@@ -3037,7 +3034,7 @@ export default function SalesForm({
                                                      const actualPrice = Number(price) || 0;
                                                      const discount = Number(values.items[index]?.discount) || 0;
                                                      setFieldValue(`items.${index}.amount`, calculateLineAmount(qty, actualPrice, discount));
-                                                     if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                     /* R21: no auto blank row after a product pick */
                                                    }}
                                                  />
                                               </div>
@@ -3230,7 +3227,7 @@ export default function SalesForm({
                                             values={values}
                                             setFieldValue={setFieldValue}
                                             products={products}
-                                            onInputChange={() => handleAutoAddRow(index)}
+                                            onInputChange={() => { /* R21: no auto blank row on typing/pick; use + Add item or Tab */ }}
                                             showDescription={itemSettings.show_item_description}
                                             showManufacturer={itemSettings.show_item_manufacturer}
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
@@ -3376,7 +3373,7 @@ export default function SalesForm({
                                                    const actualPrice = Number(price) || 0;
                                                    const discount = Number(values.items[index]?.discount) || 0;
                                                    setFieldValue(`items.${index}.amount`, calculateLineAmount(qty, actualPrice, discount));
-                                                   if (price && Number(price) > 0) handleAutoAddRow(index);
+                                                   /* R21: no auto blank row after a product pick */
                                                  }}
                                                />
                                           </div>
