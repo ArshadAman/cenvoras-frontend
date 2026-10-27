@@ -155,7 +155,7 @@ export const getGSTR1Filing = (period) =>
 export const setGSTR1Filing = (period, filed) =>
   api.post('/billing/gst/gstr1-filing/', { period, filed, confirm: true }).then(res => res.data);
 
-// GSTR-1 advances laid out like the GSTN offline tool AT / ATADJ sheets (CSV). sheet: 'at' | 'atadj'
+// GSTR-1 offline-tool sheets as CSV. sheet: 'at' | 'atadj' | 'nil' (Table 8)
 export const downloadGSTR1AdvancesCSV = async (from, to, sheet) => {
   const res = await api.get(`/billing/gst/gstr1-advances-csv/?from=${from}&to=${to}&sheet=${sheet}`, { responseType: 'blob' });
   const url = URL.createObjectURL(res.data);

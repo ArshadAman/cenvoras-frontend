@@ -335,6 +335,51 @@ export default function TaxRegister() {
                   </div>
                 </div>
 
+                {/* Rudra CA: CN carry-forward / s.34(2) warnings (b2cs + Table 8 floors) */}
+                {(gstr1Data._cenvora?.warnings || []).length > 0 && (
+                  <div className="bento-card p-4 border border-[var(--status-warning)] space-y-1">
+                    {(gstr1Data._cenvora.warnings).map((w, i) => (
+                      <div key={i} className={`text-xs ${w.code === 'cn_carried_forward' ? 'text-[var(--status-warning)]' : 'text-[var(--status-error)]'}`}>{w.message}</div>
+                    ))}
+                  </div>
+                )}
+                {/* Rudra CA: Table 8 (nil / exempt / non-GST), net of credit notes; on screen + CSV, JSON only behind GSTR1_NIL_JSON_ENABLED */}
+                {(() => {
+                  const meta = gstr1Data._cenvora || {};
+                  const rows = meta.table8 || [];
+                  const labels = { INTRB2B: 'Inter-State, registered', INTRAB2B: 'Intra-State, registered', INTRB2C: 'Inter-State, unregistered', INTRAB2C: 'Intra-State, unregistered' };
+                  const fmt = (v) => formatCurrency(Number(v) || 0);
+                  return (
+                    <div className="bento-card p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[var(--text-primary)] font-semibold text-sm">Table 8: Nil rated, exempted and non-GST supplies</div>
+                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'nil').catch(() => toast.error('Download failed'))}>Table 8 (CSV)</button>
+                      </div>
+                      {rows.length === 0 ? (
+                        <div className="text-xs text-[var(--text-muted)]">None in this period.</div>
+                      ) : (
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-[var(--text-secondary)] text-left">
+                              <th className="py-1">Description</th><th className="text-right">Nil rated</th><th className="text-right">Exempted</th><th className="text-right">Non-GST</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r) => (
+                              <tr key={r.sply_ty} className="border-t border-[var(--border-subtle)] text-[var(--text-primary)]">
+                                <td className="py-1">{labels[r.sply_ty] || r.sply_ty}</td><td className="text-right">{fmt(r.nil_amt)}</td>
+                                <td className="text-right">{fmt(r.expt_amt)}</td><td className="text-right">{fmt(r.ngsup_amt)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                      {!meta.nil_in_json && rows.length > 0 && (
+                        <div className="text-xs text-[var(--text-muted)]">Not included in the JSON download; enter Table 8 from the CSV in the offline tool.</div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {/* R18 P0-B: Advances (Table 11A 'at' / 11B 'txpd'), always shown with CSV downloads */}
                 {(() => {
                   const meta = gstr1Data._cenvora || {};

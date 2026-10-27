@@ -95,3 +95,12 @@ export const customerPosCode = (customer) => {
   if (g.length === 15 && GST_STATE_CODE_MAP[g.slice(0, 2)]) return GST_STATE_CODE_MAP[g.slice(0, 2)];
   return stateToCode(customer?.state);
 };
+
+// Rule 46: POS printed as "State name (GST code)", e.g. "Odisha (21)".
+export const posLabel = (v) => {
+  const code = stateToCode(v);
+  if (!code) return v ? String(v) : '';
+  const st = INDIAN_STATES.find((s) => s.code === code);
+  const num = Object.keys(GST_STATE_CODE_MAP).find((k) => GST_STATE_CODE_MAP[k] === code);
+  return `${st ? st.name : code}${num ? ` (${num})` : ''}`;
+};

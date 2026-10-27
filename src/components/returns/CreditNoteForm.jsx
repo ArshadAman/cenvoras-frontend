@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react"; // Assuming headlessui is used for modals
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCustomers } from "../../api/sales";
@@ -65,18 +65,49 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     }
   }, [selectedInvoice, invoiceRemaining]);
 
+  const lastPayloadRef = useRef(null);
   const createMutation = useMutation({
     mutationFn: createCreditNote,
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
       await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
-      toast.success("Credit Note Created");
+      toast.success(data?.gst_time_barred ? "Credit note without GST (time-barred under s.34) created" : "Credit Note Created");
       if (data?.section34_warning) {
         toast.warn(data.section34_warning);
       }
       handleClose();
     },
-    onError: (err) => toast.error(extractServerMessage(err, "Failed to create credit note")),
+    onError: (err) => {
+      // Rudra CA s.34(2): past the deadline the API refuses a GST credit note and offers a commercial one.
+      const body = err?.response?.data;
+      const raw = JSON.stringify(body || {});
+      if (raw.includes('offer_without_gst') && lastPayloadRef.current) {
+        const find = (o) => (o && typeof o === 'object'
+          ? (o.section34 ? [].concat(o.section34)[0] : Object.values(o).map(find).find(Boolean))
+          : null);
+        const msg = find(body) || 'The s.34(2) deadline has passed for this invoice.';
+        if (window.confirm(`${msg}\n\nIssue as 'Credit note without GST (time-barred under s.34)'?`)) {
+          const p = lastPayloadRef.current;
+          const items = p.items.map((it) => {
+            const taxable = Math.round(it.quantity * it.price * (1 - (it.discount || 0) / 100) * 100) / 100;
+            return { ...it, tax: 0, amount: taxable };
+          });
+          const total = Math.round(items.reduce((t, it) => t + it.amount, 0) * 100) / 100;
+          createMutation.mutate({ ...p, items, total_amount: total, without_gst: true });
+        }
+        return;
+      }
+      // s.34 tax cap / zero-GST invoice: show every message, keep it on screen.
+      const findTax = (o) => (o && typeof o === 'object'
+        ? (Array.isArray(o.tax) && raw.includes('cn_tax_cap') ? o.tax : Object.values(o).map(findTax).find(Boolean))
+        : null);
+      const taxErrors = findTax(body);
+      if (taxErrors && taxErrors.length) {
+        toast.error(taxErrors.join('\n'), { autoClose: false, toastId: 'cn-tax-cap', style: { whiteSpace: 'pre-line' } });
+        return;
+      }
+      toast.error(extractServerMessage(err, "Failed to create credit note"));
+    },
   });
 
   const handleSubmit = (e) => {
@@ -118,10 +149,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     if (hasTax && selectedInvoice?.invoice_date) {
       const invDate = new Date(`${selectedInvoice.invoice_date}T00:00:00`);
       const fyEndYear = invDate.getMonth() >= 3 ? invDate.getFullYear() + 1 : invDate.getFullYear();
-      const deadline = new Date(fyEndYear, 10, 30);
+      const deadline = new Date(fyEndYear, 9, 31); // Rudra CA: prior-FY CNs dated by 31 Oct (monthly), declared by 30 Nov
       const noteDate = new Date(`${getTodayKolkata()}T00:00:00`);
       if (noteDate > deadline) {
-        toast.warn(`GST Act s.34: tax credit notes for this invoice's FY can only be issued until 30 Nov ${fyEndYear}.`);
+        toast.warn(`GST Act s.34(2): tax credit notes for this invoice's FY must be dated by 31 Oct ${fyEndYear} and declared by 30 Nov ${fyEndYear}.`);
       }
     }
 
@@ -136,6 +167,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       warehouse: selectedInvoice.warehouse // Return to same warehouse
     };
 
+    lastPayloadRef.current = payload;
     createMutation.mutate(payload);
   };
 

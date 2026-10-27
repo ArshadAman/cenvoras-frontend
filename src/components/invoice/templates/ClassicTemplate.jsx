@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
@@ -287,6 +288,7 @@ const InvoicePreview = forwardRef(({
                 {getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}
               </p>
             )}
+            <PlaceOfSupplyLine invoice={invoice} />
           </div>
         </div>
 
@@ -360,6 +362,7 @@ const InvoicePreview = forwardRef(({
           <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${typography.smallSize || 9}px` }}>
             {customerAddress && <p className="whitespace-pre-line">{customerAddress}</p>}
             {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
+            <PlaceOfSupplyLine invoice={invoice} showDelivery />
           </div>
           </div>
         </div>
