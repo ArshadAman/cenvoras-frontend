@@ -21,7 +21,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import api from '../api/api';
-import { allocatePayment } from '../api/ledger';
+import { allocatePayment, reverseAdvanceAdjustment } from '../api/ledger';
+import { extractServerMessage } from '../utils/fieldErrors';
 import { getCurrencySymbol } from '../utils/currency';
 import { getTodayKolkata } from '../utils/date';
 
@@ -74,7 +75,7 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
           </span>
         ) : (
           <span className="text-xs font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
-            Customer Advance
+            Customer Advance{payment.adjustments?.some((a) => !a.reversed_on) ? ` · ${getCurrencySymbol()}${formatAmount(payment.unapplied_amount)} unapplied` : ''}
           </span>
         )}
         {payment.reference && (
@@ -599,16 +600,31 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
   const handleAllocate = async () => {
     setSubmitting(true);
     try {
-      await allocatePayment(payment.id, selectedInvoice || null);
-      toast.success('Payment successfully allocated to invoice(s)!');
+      const res = await allocatePayment(payment.id, selectedInvoice || null);
+      toast.success(res?.message || 'Payment successfully allocated to invoice(s)!');
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.message || 'Failed to allocate payment');
+      toast.error(extractServerMessage(err, err.message || 'Failed to allocate payment'));
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleUnapply = async (adj) => {
+    setSubmitting(true);
+    try {
+      await reverseAdvanceAdjustment(adj.id);
+      toast.success(`Un-applied from ${adj.invoice_number}`);
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error(extractServerMessage(err, err.message || 'Failed to un-apply'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const activeAdjustments = (payment.adjustments || []).filter((a) => !a.reversed_on);
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -633,6 +649,18 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
             <span className="text-[var(--text-secondary)]">Payment Amount:</span>
             <span className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
           </div>
+          {payment.unapplied_amount != null && (
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--text-secondary)]">Unapplied:</span>
+              <span className="text-[var(--text-primary)] font-semibold">{getCurrencySymbol()}{formatAmount(payment.unapplied_amount)}</span>
+            </div>
+          )}
+          {activeAdjustments.map((a) => (
+            <div key={a.id} className="flex justify-between items-center text-xs">
+              <span className="text-[var(--text-secondary)]">Applied {getCurrencySymbol()}{formatAmount(a.amount)} to #{a.invoice_number} on {a.date}</span>
+              <button type="button" disabled={submitting} onClick={() => handleUnapply(a)} className="text-[var(--status-danger)] hover:underline">Un-apply</button>
+            </div>
+          ))}
           <div className="flex justify-between text-xs text-[var(--text-muted)]">
             <span>Date:</span>
             <span>{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
