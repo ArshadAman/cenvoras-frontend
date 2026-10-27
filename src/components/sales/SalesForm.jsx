@@ -796,7 +796,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 onClick={async () => {
                   const name = document.getElementById('new-customer-name')?.value?.trim();
                   if (!name) {
-                    formError('sales', 'Customer name is required');
+                    toast.error('Customer name is required');
                     return;
                   }
                   const email = document.getElementById('new-customer-email')?.value?.trim();
@@ -805,7 +805,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                   const gstinRaw = document.getElementById('new-customer-gstin')?.value?.trim();
                   const gstin = gstinRaw ? normalizeGstin(gstinRaw) : '';
                   if (gstin && !isValidGstin(gstin)) {
-                    formError('sales', GSTIN_INVALID_MSG);
+                    toast.error(GSTIN_INVALID_MSG);
                     return;
                   }
 
@@ -821,13 +821,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
 
                     const createdCust = newCust?.data || newCust;
                     queryClient.invalidateQueries({ queryKey: ["customers"] });
-                    clearFormErrors('sales');
                     toast.success(`Customer "${createdCust.name || name}" added successfully`);
 
                     selectCustomer(createdCust);
                     setShowNewCustomerModal(false);
                   } catch (err) {
-                    formError('sales', formatErrorMessage(err, "Failed to create customer"));
+                    toast.error(formatErrorMessage(err, "Failed to create customer"));
                   } finally {
                     setIsCreatingCustomer(false);
                   }
@@ -1295,11 +1294,10 @@ export default function SalesForm({
         if (description !== undefined) formikRef.current.setFieldValue(`${itemPath}.product_description`, description);
         formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
       }
-      clearFormErrors('sales');
       toast.success("Catalog item updated successfully!");
       setCatalogSyncModal(null);
     } catch (err) {
-      formError('sales', formatErrorMessage(err, "Failed to update catalog product"));
+      toast.error(formatErrorMessage(err, "Failed to update catalog product"));
     }
   };
 
@@ -1347,7 +1345,7 @@ export default function SalesForm({
       toast.success(`Saved new product "${created.name}" in catalog!`);
       setCatalogSyncModal(null);
     } catch (err) {
-      formError('sales', formatErrorMessage(err, "Failed to create new catalog product"), { autoClose: false, toastId: 'catalog-save-error' });
+      formError('sales', formatErrorMessage(err, "Failed to create new catalog product"), { key: 'catalog' });
     }
   };
 
@@ -1413,12 +1411,10 @@ export default function SalesForm({
         formikRef.current.setFieldValue(`${itemPath}.isExistingProduct`, true);
       }
 
-      clearFormErrors('sales');
-
       toast.success(`Added ${createdProduct.name} to inventory.`);
       setProductCreationState(null);
     } catch (error) {
-      formError('sales', formatErrorMessage(error, "Failed to create inventory item"));
+      toast.error(formatErrorMessage(error, "Failed to create inventory item"));
     }
   };
   
@@ -1452,11 +1448,10 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["nextDocumentNumber"] });
+      clearFormErrors('sales');
       if (submitActionRef.current === 'draft') {
-        clearFormErrors('sales');
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
-        clearFormErrors('sales');
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       }
       if (data?.pos_warning) toast.warn(data.pos_warning, { autoClose: false, toastId: 'pos-warning' });
@@ -1470,7 +1465,7 @@ export default function SalesForm({
       if (error.response?.status === 409) {
           formError('sales', error.response?.data?.error || "Invoice number already exists!");
       } else {
-          formError('sales', 
+          formError('sales',
             extractErrorMessage(
               error,
               `Failed to create ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
@@ -1493,11 +1488,10 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["nextDocumentNumber"] });
+      clearFormErrors('sales');
       if (submitActionRef.current === 'draft') {
-        clearFormErrors('sales');
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
-        clearFormErrors('sales');
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       }
       if (data?.pos_warning) toast.warn(data.pos_warning, { autoClose: false, toastId: 'pos-warning' });
@@ -1511,7 +1505,7 @@ export default function SalesForm({
       if (error.response?.status === 409) {
           formError('sales', error.response?.data?.error || "Invoice number already exists!");
       } else {
-          formError('sales', 
+          formError('sales',
             extractErrorMessage(
               error,
               `Failed to update ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
@@ -1784,14 +1778,14 @@ export default function SalesForm({
             if (isDraft) {
                if (!values.customer_name || values.customer_name.trim() === '') {
                    setFieldError('customer_name', 'Customer name is required');
-                   formError('sales', 'Customer name is required to save a draft');
+                   toast.error('Customer name is required to save a draft');
                    setSubmitting(false);
                    return;
                }
             } else {
                 // Final Invoices require at least one item
                 if (cleanedItems.length === 0) {
-                   formError('sales', 'At least one item is required to create an invoice');
+                   toast.error('At least one item is required to create an invoice');
                    setSubmitting(false);
                    return;
                 }
@@ -1799,7 +1793,7 @@ export default function SalesForm({
                 if (itemSettings.show_item_batch && itemSettings.require_item_batch) {
                   const missingBatchRow = cleanedItems.findIndex((item) => item.row_type !== 'note' && !item.batch);
                   if (missingBatchRow >= 0) {
-                    formError('sales', `Batch is required for row ${missingBatchRow + 1}.`);
+                    toast.error(`Batch is required for row ${missingBatchRow + 1}.`);
                     setSubmitting(false);
                     return;
                   }
@@ -1826,7 +1820,7 @@ export default function SalesForm({
                   // Show the first error in a toast for better UX
                   if (err.inner?.length > 0) {
                     const firstMsg = Object.values(errors)[0] || err.inner[0].message;
-                    formError('sales', firstMsg);
+                    toast.error(firstMsg);
                   }
                   
                   setSubmitting(false);
@@ -1848,7 +1842,6 @@ export default function SalesForm({
                 return true;
               });
               let allowCreateProducts = false;
-              const bareHsn = new Map();
               if (bareNameItems.length > 0) {
                 const names = bareNameItems.map((i) => (i.product || '').trim()).filter(Boolean).slice(0, 5).join(', ');
                 allowCreateProducts = window.confirm(
@@ -1858,23 +1851,9 @@ export default function SalesForm({
                 );
                 // R21 P1: Cancel used to send the save anyway and fail with a 400. Stop here instead.
                 if (!allowCreateProducts) {
-                  formError('sales', `Not saved: ${names} ${bareNameItems.length > 1 ? 'are' : 'is'} not in your catalog yet.`, { type: 'warning', key: 'bare' });
+                  toast.info(`Not saved: ${names} ${bareNameItems.length > 1 ? 'are' : 'is'} not in your catalog yet.`, { autoClose: false, toastId: 'bare-product-cancel' });
                   setSubmitting(false);
                   return;
-                }
-                // R22: products created from typed lines need an HSN/SAC (catalog rule). The line HSN was
-                // dropped when the HSN column is hidden, so OK failed with 'Line 1: HSN/SAC code is required'.
-                // Ask for each missing one here and always send it for these lines.
-                for (const it of bareNameItems) {
-                  if (!String(it.hsn_sac_code || '').trim()) {
-                    const v = (window.prompt(`HSN/SAC code for "${(it.product || '').trim()}" (required to create it in the catalog):`, '') || '').trim();
-                    if (!v) {
-                      formError('sales', `Not saved: enter the HSN/SAC code for "${(it.product || '').trim()}" to create it in the catalog.`, { type: 'warning', key: 'bare' });
-                      setSubmitting(false);
-                      return;
-                    }
-                    bareHsn.set(it, v);
-                  }
                 }
               }
 
@@ -1917,9 +1896,7 @@ export default function SalesForm({
                   price: price,
                   amount: amount,
                   unit: item.unit || null,
-                  hsn_sac_code: (isBareName && allowCreateProducts)
-                    ? (bareHsn.get(item) || String(item.hsn_sac_code || '').trim() || null)
-                    : (itemSettings.show_item_hsn ? (item.hsn_sac_code || null) : null),
+                  hsn_sac_code: itemSettings.show_item_hsn ? (item.hsn_sac_code || null) : null,
                   description: (item.description || item.product_description || "").trim(),
                   product_description: (item.description || item.product_description || "").trim(),
                   manufacturer: item.manufacturer || "",
@@ -2055,7 +2032,7 @@ export default function SalesForm({
             } catch (error) {
               // mutateAsync errors are already toasted in onError; avoid double toast for those
               if (!error?.response) {
-                formError('sales', "Error processing form data");
+                toast.error("Error processing form data");
               }
               console.error(error);
             }
