@@ -147,3 +147,23 @@ export const getBillReturnRemaining = (billId) =>
 
 export const getInvoiceReturnRemaining = (invoiceId) =>
   api.get('/billing/credit-notes/remaining/', { params: { invoice: invoiceId } }).then(res => res.data).catch(() => null);
+
+// GSTR-1 "filed" flag for a month (YYYY-MM). Unfiled by default.
+export const getGSTR1Filing = (period) =>
+  api.get('/billing/gst/gstr1-filing/', { params: { period } }).then(res => res.data);
+
+export const setGSTR1Filing = (period, filed) =>
+  api.post('/billing/gst/gstr1-filing/', { period, filed, confirm: true }).then(res => res.data);
+
+// GSTR-1 advances laid out like the GSTN offline tool AT / ATADJ sheets (CSV). sheet: 'at' | 'atadj'
+export const downloadGSTR1AdvancesCSV = async (from, to, sheet) => {
+  const res = await api.get(`/billing/gst/gstr1-advances-csv/?from=${from}&to=${to}&sheet=${sheet}`, { responseType: 'blob' });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `GSTR1_${sheet.toUpperCase()}_${from}_${to}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+export { portalGSTR1 } from '../utils/gstr1';

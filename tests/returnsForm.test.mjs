@@ -20,3 +20,8 @@ test('remaining qty caps at server remaining', () => {
   assert.equal(remainingQtyFor('p2', 10, { p1: '1' }), 10);
   assert.equal(remainingQtyFor('p1', 2, { p1: '-1' }), 0);
 });
+
+import { portalGSTR1 } from '../src/utils/gstr1.js';
+test('portalGSTR1 strips Cenvora metadata keys', () => {
+  assert.deepEqual(portalGSTR1({ gstin: 'X', b2b: [], _cenvora: { advances_note: 'n' } }), { gstin: 'X', b2b: [] });
+});

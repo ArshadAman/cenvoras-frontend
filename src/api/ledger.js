@@ -396,6 +396,16 @@ export const allocatePayment = async (paymentId, invoiceId = null) => {
   }
 };
 
+// Undo an advance application (posts a mirror entry dated today; nothing is deleted)
+export const reverseAdvanceAdjustment = async (adjustmentId) => {
+  try {
+    const response = await api.post(`/billing/payments/adjustments/${adjustmentId}/reverse/`, {});
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to un-apply advance.');
+  }
+};
+
 // ==================== MANUAL LEDGER ENTRY CREATION ====================
 
 // Create ledger entries for a sales invoice

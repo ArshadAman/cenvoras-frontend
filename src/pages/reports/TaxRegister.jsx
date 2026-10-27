@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail } from "../../api/gst";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail, getGSTR1Filing, setGSTR1Filing, downloadGSTR1AdvancesCSV, portalGSTR1 } from "../../api/gst";
+import { extractServerMessage } from "../../utils/fieldErrors";
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -37,9 +38,31 @@ export default function TaxRegister() {
     enabled: activeTab === 'gstr1',
   });
 
+  const queryClient = useQueryClient();
+  const filingPeriod = (fromDate || '').slice(0, 7);
+  const { data: filing } = useQuery({
+    queryKey: ["gstr1-filing", filingPeriod],
+    queryFn: () => getGSTR1Filing(filingPeriod),
+    enabled: activeTab === 'gstr1' && !!filingPeriod,
+  });
+  const toggleFiled = async () => {
+    const next = !filing?.filed;
+    const msg = next
+      ? `Mark GSTR-1 for ${filingPeriod} as FILED? Advances applied later will not change this month; any adjustment goes to the next open month (txpd).`
+      : `Mark GSTR-1 for ${filingPeriod} as NOT filed? Only do this if the return was not actually filed.`;
+    if (!window.confirm(msg)) return;
+    try {
+      await setGSTR1Filing(filingPeriod, next);
+      await queryClient.invalidateQueries({ queryKey: ["gstr1-filing", filingPeriod] });
+      toast.success(next ? 'Marked as filed' : 'Marked as not filed');
+    } catch (err) {
+      toast.error(extractServerMessage(err, 'Could not update filing status'));
+    }
+  };
+
   const downloadGSTR1 = () => {
     if (!gstr1Data) return;
-    const blob = new Blob([JSON.stringify(gstr1Data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(portalGSTR1(gstr1Data), null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -116,8 +139,13 @@ export default function TaxRegister() {
                 </select>
               </div>
             )}
+            {activeTab === 'gstr1' && filing && (
+              <button onClick={toggleFiled} className="btn-secondary flex items-center gap-2 ml-auto" title="Cenvora does not file returns; record here that you filed this month on the GST portal.">
+                {filing.filed ? `GSTR-1 ${filingPeriod}: Filed ✓ (undo)` : `Mark GSTR-1 ${filingPeriod} as filed`}
+              </button>
+            )}
             {activeTab === 'gstr1' && gstr1Data && (
-              <button onClick={downloadGSTR1} className="btn-primary flex items-center gap-2 ml-auto">
+              <button onClick={downloadGSTR1} className="btn-primary flex items-center gap-2">
                 <ArrowDownTrayIcon className="w-4 h-4" /> Download JSON
               </button>
             )}
@@ -297,6 +325,18 @@ export default function TaxRegister() {
                   </div>
                 </div>
 
+                {gstr1Data._cenvora && !gstr1Data._cenvora.advances_in_json && (
+                  <div className="rounded-xl border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-4 py-3 text-sm text-[var(--text-primary)] space-y-2">
+                    <p>Advances: report via the GSTN offline tool AT/ATADJ sheets. They are not included in this JSON.</p>
+                    {gstr1Data._cenvora.has_advances && (
+                      <div className="flex gap-2">
+                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'at').catch(() => toast.error('Download failed'))}>AT sheet (CSV)</button>
+                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'atadj').catch(() => toast.error('Download failed'))}>ATADJ sheet (CSV)</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Raw JSON Preview */}
                 <div className="bento-card p-4">
                   <div className="flex justify-between items-center mb-3">
@@ -306,7 +346,7 @@ export default function TaxRegister() {
                     </button>
                   </div>
                   <pre className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 text-xs text-[var(--text-secondary)] overflow-auto max-h-96 font-mono">
-                    {JSON.stringify(gstr1Data, null, 2)}
+                    {JSON.stringify(portalGSTR1(gstr1Data), null, 2)}
                   </pre>
                 </div>
               </>
