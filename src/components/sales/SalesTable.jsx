@@ -967,12 +967,14 @@ export default function SalesTable({
                           </span>
                         );
                       }
-                      const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
+                      const ps = String(invoice.payment_status || '').toLowerCase();
+                      const isPaid = ps === 'paid';
+                      const isPartial = ps === 'partial_paid';
                       return (
                         <span className={`px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${
-                          isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
+                          isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : isPartial ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
                         }`}>
-                          {isPaid ? 'Paid' : 'Not Paid'}
+                          {isPaid ? 'Paid' : isPartial ? 'Partly Paid' : 'Not Paid'}
                         </span>
                       );
                     })()}
@@ -1150,12 +1152,14 @@ export default function SalesTable({
                         </div>
                       );
                     }
-                    const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
+                    const ps = String(invoice.payment_status || '').toLowerCase();
+                      const isPaid = ps === 'paid';
+                      const isPartial = ps === 'partial_paid';
                     return (
                       <div className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold ${
-                        isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
+                        isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : isPartial ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
                       }`}>
-                        {isPaid ? 'Paid' : 'Not Paid'}
+                        {isPaid ? 'Paid' : isPartial ? 'Partly Paid' : 'Not Paid'}
                       </div>
                     );
                   })()}
