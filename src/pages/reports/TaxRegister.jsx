@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail } from "../../api/gst";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getTaxRegister, getHSNSummary, getGSTR1Export, getTaxRegisterInvoiceDetail, getGSTR1Filing, setGSTR1Filing } from "../../api/gst";
+import { extractServerMessage } from "../../utils/fieldErrors";
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -36,6 +37,28 @@ export default function TaxRegister() {
     queryFn: () => getGSTR1Export(fromDate, toDate),
     enabled: activeTab === 'gstr1',
   });
+
+  const queryClient = useQueryClient();
+  const filingPeriod = (fromDate || '').slice(0, 7);
+  const { data: filing } = useQuery({
+    queryKey: ["gstr1-filing", filingPeriod],
+    queryFn: () => getGSTR1Filing(filingPeriod),
+    enabled: activeTab === 'gstr1' && !!filingPeriod,
+  });
+  const toggleFiled = async () => {
+    const next = !filing?.filed;
+    const msg = next
+      ? `Mark GSTR-1 for ${filingPeriod} as FILED? Advances applied later will not change this month; any adjustment goes to the next open month (txpd).`
+      : `Mark GSTR-1 for ${filingPeriod} as NOT filed? Only do this if the return was not actually filed.`;
+    if (!window.confirm(msg)) return;
+    try {
+      await setGSTR1Filing(filingPeriod, next);
+      await queryClient.invalidateQueries({ queryKey: ["gstr1-filing", filingPeriod] });
+      toast.success(next ? 'Marked as filed' : 'Marked as not filed');
+    } catch (err) {
+      toast.error(extractServerMessage(err, 'Could not update filing status'));
+    }
+  };
 
   const downloadGSTR1 = () => {
     if (!gstr1Data) return;
@@ -116,8 +139,13 @@ export default function TaxRegister() {
                 </select>
               </div>
             )}
+            {activeTab === 'gstr1' && filing && (
+              <button onClick={toggleFiled} className="btn-secondary flex items-center gap-2 ml-auto" title="Cenvora does not file returns; record here that you filed this month on the GST portal.">
+                {filing.filed ? `GSTR-1 ${filingPeriod}: Filed ✓ (undo)` : `Mark GSTR-1 ${filingPeriod} as filed`}
+              </button>
+            )}
             {activeTab === 'gstr1' && gstr1Data && (
-              <button onClick={downloadGSTR1} className="btn-primary flex items-center gap-2 ml-auto">
+              <button onClick={downloadGSTR1} className="btn-primary flex items-center gap-2">
                 <ArrowDownTrayIcon className="w-4 h-4" /> Download JSON
               </button>
             )}
