@@ -3,7 +3,8 @@ import { Dialog, Transition } from "@headlessui/react"; // Assuming headlessui i
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCustomers } from "../../api/sales";
 import { getSalesInvoices } from "../../api/sales";
-import { createCreditNote } from "../../api/gst";
+import { createCreditNote, getInvoiceReturnRemaining } from "../../api/gst";
+import { extractServerMessage, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -45,16 +46,24 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   // Selected Invoice Details
   const selectedInvoice = invoiceList.find(inv => inv.id === selectedInvoiceId);
 
+  const { data: invoiceRemaining } = useQuery({
+    queryKey: ["cn-remaining", selectedInvoiceId],
+    queryFn: () => getInvoiceReturnRemaining(selectedInvoiceId),
+    enabled: isOpen && !!selectedInvoice,
+  });
+
   useEffect(() => {
     if (selectedInvoice) {
-      // Pre-fill items with 0 return quantity
+      const remainingMap = invoiceRemaining?.remaining_qty || null;
+      // Pre-fill items with 0 return quantity; cap at what is still creditable
       setReturnItems(selectedInvoice.items.map(item => ({
         ...item,
         return_qty: 0,
-        original_qty: item.quantity, 
+        original_qty: parseFloat(item.quantity || 0),
+        remaining_qty: remainingQtyFor(lineProductId(item), item.quantity, remainingMap),
       })));
     }
-  }, [selectedInvoice]);
+  }, [selectedInvoice, invoiceRemaining]);
 
   const createMutation = useMutation({
     mutationFn: createCreditNote,
@@ -67,7 +76,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       }
       handleClose();
     },
-    onError: (err) => toast.error(err.message || "Failed to create credit note"),
+    onError: (err) => toast.error(extractServerMessage(err, "Failed to create credit note")),
   });
 
   const handleSubmit = (e) => {
@@ -86,7 +95,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
         const taxAmt = taxable * (taxRate / 100);
         const lineGross = Math.round((taxable + taxAmt) * 100) / 100;
         return {
-          product: item.product_detail?.id || item.product_id || item.product,
+          product: lineProductId(item),
           batch: item.batch_id || item.batch || null,
           hsn_sac_code: item.hsn_sac_code,
           description: item.description || item.product_description || "",
@@ -244,7 +253,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                       <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                         <tr>
                           <th className="px-4 py-3">Product</th>
-                          <th className="px-4 py-3 text-right">Sold Qty</th>
+                          <th className="px-4 py-3 text-right">Can credit</th>
                           <th className="px-4 py-3 text-right">Price</th>
                           <th className="px-4 py-3 text-right w-36">Return Qty</th>
                         </tr>
@@ -253,16 +262,16 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                         {returnItems.map((item, idx) => (
                           <tr key={idx} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
                             <td className="px-4 py-3 text-[var(--text-primary)] font-medium">{item.product_detail?.name || 'N/A'}</td>
-                            <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{item.original_qty} {item.unit}</td>
+                            <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{item.remaining_qty} of {item.original_qty} {item.unit}</td>
                             <td className="px-4 py-3 text-right text-[var(--text-secondary)] tabular-nums">{getCurrencySymbol()}{item.price}</td>
                             <td className="px-4 py-3">
                               <input 
                                 type="number"
                                 min="0"
-                                max={item.original_qty}
+                                max={item.remaining_qty}
                                 value={item.return_qty}
                                 onChange={(e) => {
-                                  const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
+                                  const newQty = Math.max(0, Math.min(parseFloat(e.target.value) || 0, item.remaining_qty));
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
                                   setReturnItems(newItems);
@@ -284,8 +293,8 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Sold Qty</label>
-                            <div className="text-[var(--text-primary)] text-sm font-medium">{item.original_qty} {item.unit}</div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Can credit</label>
+                            <div className="text-[var(--text-primary)] text-sm font-medium">{item.remaining_qty} of {item.original_qty} {item.unit}</div>
                           </div>
                           <div>
                             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Price</label>
@@ -299,10 +308,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                               <input 
                                 type="number" 
                                 min="0" 
-                                max={item.original_qty}
+                                max={item.remaining_qty}
                                 value={item.return_qty}
                                 onChange={(e) => {
-                                  const newQty = Math.min(parseFloat(e.target.value) || 0, item.original_qty);
+                                  const newQty = Math.max(0, Math.min(parseFloat(e.target.value) || 0, item.remaining_qty));
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
                                   setReturnItems(newItems);
@@ -310,7 +319,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                                 className="w-full bg-[var(--bg-surface)] border border-[var(--input-border)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none transition-all text-center font-bold text-lg"
                               />
                               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs uppercase font-semibold pointer-events-none">
-                                max: {item.original_qty}
+                                max: {item.remaining_qty}
                               </div>
                            </div>
                         </div>

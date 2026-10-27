@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getPurchaseBills, getPurchaseBill } from "../../api/purchase";
 import { getVendors } from "../../api/vendors";
-import { createDebitNote } from "../../api/gst";
+import { createDebitNote, getBillReturnRemaining } from "../../api/gst";
+import { extractServerMessage, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol } from '../../utils/currency';
@@ -48,10 +49,13 @@ export default function DebitNoteForm({ isOpen, onClose }) {
       return;
     }
     try {
-      const detail = await getPurchaseBill(billId);
+      const [detail, remaining] = await Promise.all([getPurchaseBill(billId), getBillReturnRemaining(billId)]);
       const lines = detail?.items || [];
+      const remainingMap = remaining?.remaining_qty || null;
       setReturnItems(lines.map((item) => ({
-        product_id: item.product || item.product_id || item.product_detail?.id,
+        // `product` on a bill line is the product NAME; the API needs the UUID.
+        product_id: lineProductId(item),
+        remaining_qty: remainingQtyFor(lineProductId(item), item.quantity, remainingMap),
         product_name: item.product_name || item.product_detail?.name || item.description || 'Item',
         hsn_sac_code: item.hsn_sac_code,
         unit: item.unit,
@@ -75,7 +79,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
       toast.success("Debit Note Created");
       handleClose();
     },
-    onError: (err) => toast.error(err.message || "Failed to create debit note"),
+    onError: (err) => toast.error(extractServerMessage(err, "Failed to create debit note")),
   });
 
   const handleSubmit = (e) => {
@@ -238,6 +242,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                         <tr>
                           <th className="p-3">Product</th>
                           <th className="p-3 text-right">Price</th>
+                          <th className="p-3 text-right">Can return</th>
                           <th className="p-3 text-right w-32">Return Qty</th>
                           <th className="p-3 text-right w-24">Total</th>
                         </tr>
@@ -247,14 +252,16 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                           <tr key={idx}>
                             <td className="p-3 text-[var(--text-primary)]">{item.product_name}</td>
                             <td className="p-3 text-right text-[var(--text-muted)]">{getCurrencySymbol()}{item.price}</td>
+                            <td className="p-3 text-right text-[var(--text-muted)]">{item.remaining_qty} of {item.original_qty}</td>
                             <td className="p-3">
                               <input 
                                 type="number"
                                 min="0"
-                                max={item.original_qty || undefined}
+                                max={item.remaining_qty}
+                                disabled={item.remaining_qty <= 0}
                                 value={item.return_qty}
                                 onChange={(e) => {
-                                  const maxQty = item.original_qty || Infinity;
+                                  const maxQty = item.remaining_qty ?? item.original_qty ?? 0;
                                   const newQty = Math.min(Math.max(parseFloat(e.target.value) || 0, 0), maxQty);
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
