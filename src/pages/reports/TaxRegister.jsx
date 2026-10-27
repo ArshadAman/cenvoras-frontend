@@ -45,18 +45,28 @@ export default function TaxRegister() {
     queryFn: () => getGSTR1Filing(filingPeriod),
     enabled: activeTab === 'gstr1' && !!filingPeriod,
   });
-  const toggleFiled = async () => {
+  const [filingBusy, setFilingBusy] = useState(false);
+  const toggleFiled = async (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (filingBusy) return;
     const next = !filing?.filed;
     const msg = next
       ? `Mark GSTR-1 for ${filingPeriod} as FILED? Advances applied later will not change this month; any adjustment goes to the next open month (txpd).`
       : `Mark GSTR-1 for ${filingPeriod} as NOT filed? Only do this if the return was not actually filed.`;
     if (!window.confirm(msg)) return;
+    setFilingBusy(true);
     try {
-      await setGSTR1Filing(filingPeriod, next);
-      await queryClient.invalidateQueries({ queryKey: ["gstr1-filing", filingPeriod] });
+      const res = await setGSTR1Filing(filingPeriod, next);
+      // R19 P2: update the button at once from the server's answer, then refetch.
+      queryClient.setQueryData(["gstr1-filing", filingPeriod], (old) => ({ ...(old || {}), ...(res || {}), filed: res?.filed ?? next }));
+      queryClient.invalidateQueries({ queryKey: ["gstr1-filing", filingPeriod] });
+      queryClient.invalidateQueries({ queryKey: ["gstr1-export"] });
       toast.success(next ? 'Marked as filed' : 'Marked as not filed');
     } catch (err) {
       toast.error(extractServerMessage(err, 'Could not update filing status'));
+    } finally {
+      setFilingBusy(false);
     }
   };
 
@@ -140,8 +150,8 @@ export default function TaxRegister() {
               </div>
             )}
             {activeTab === 'gstr1' && filing && (
-              <button onClick={toggleFiled} className="btn-secondary flex items-center gap-2 ml-auto" title="Cenvora does not file returns; record here that you filed this month on the GST portal.">
-                {filing.filed ? `GSTR-1 ${filingPeriod}: Filed ✓ (undo)` : `Mark GSTR-1 ${filingPeriod} as filed`}
+              <button type="button" onClick={toggleFiled} disabled={filingBusy} className="btn-secondary flex items-center gap-2 ml-auto" title="Cenvora does not file returns; record here that you filed this month on the GST portal.">
+                {filingBusy ? 'Saving…' : filing.filed ? `GSTR-1 ${filingPeriod}: Filed ✓ (undo)` : `Mark GSTR-1 ${filingPeriod} as filed`}
               </button>
             )}
             {activeTab === 'gstr1' && gstr1Data && (
