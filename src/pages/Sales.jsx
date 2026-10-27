@@ -11,6 +11,10 @@ import SalesSummary from "../components/sales/SalesSummary";
 import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { getUserProfile, patchUserProfile } from "../api/users";
+import { getNextInvoiceNumber } from "../api/sales";
+
+// R22: matches users.User.invoice_prefix max_length=20 (the old maxLength=10 silently cut "R22-CANCELTEST").
+const PREFIX_MAX = 20;
 
 const DEFAULT_INVOICE_PREFIX = "INV";
 
@@ -161,7 +165,7 @@ export default function Sales({ documentType = "invoice" }) {
     };
   }, [showForm, showDetails, deleteInvoice, showUpload]);
 
-  const handlePrefixBlur = () => {
+  const handlePrefixBlur = async () => {
     const normalized = normalizePrefix(invoicePrefix);
     setInvoicePrefix(normalized);
     if (!canEditInvoicePrefix) {
@@ -171,9 +175,16 @@ export default function Sales({ documentType = "invoice" }) {
     if (normalized !== current) {
       // R21: the prefix box used to save silently on blur, so a stray edit (e.g. "R19-INV-4") became
       // the configured series and every new invoice was suggested as R19-INV-4-001. Confirm first.
+      // R22: show the number the server will actually issue. The counter is per prefix
+      // (sequence_service.preview_next_number), so a prefix used before continues its series (e.g. INV-016).
+      const target = normalized || DEFAULT_INVOICE_PREFIX;
+      let nextLine = 'The next invoice number could not be checked.';
+      try {
+        const res = await getNextInvoiceNumber(encodeURIComponent(target));
+        if (res?.next_number) nextLine = `The next invoice will be ${res.next_number}.`;
+      } catch { /* keep generic line */ }
       const ok = window.confirm(
-        `Change the invoice series prefix from "${current}" to "${normalized || DEFAULT_INVOICE_PREFIX}"?\n\n` +
-        `New invoices will be numbered ${normalized || DEFAULT_INVOICE_PREFIX}-001, -002, ...`
+        `Change the invoice series prefix from "${current}" to "${target}"?\n\n${nextLine}`
       );
       if (!ok) {
         setInvoicePrefix(current);
@@ -210,9 +221,12 @@ export default function Sales({ documentType = "invoice" }) {
                  disabled={!canEditInvoicePrefix}
                  className="bg-transparent border-none text-[var(--text-primary)] text-sm flex-1 sm:w-28 outline-none placeholder-[var(--text-muted)] focus:ring-0 p-0"
                  placeholder="INV"
-                 maxLength={10}
-                 title={!canEditInvoicePrefix ? 'Invoice prefix is managed by the main account.' : ''}
+                 maxLength={PREFIX_MAX}
+                 title={!canEditInvoicePrefix ? 'Invoice prefix is managed by the main account.' : `Up to ${PREFIX_MAX} characters`}
                />
+               {invoicePrefix.length >= PREFIX_MAX && (
+                 <span className="text-[10px] text-amber-400 whitespace-nowrap">Max {PREFIX_MAX} characters</span>
+               )}
              </div>
              <div className="flex gap-2 w-full sm:w-auto">
                <button

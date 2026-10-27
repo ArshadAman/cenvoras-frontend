@@ -11,6 +11,7 @@ import { getUserProfile } from "../../api/users";
 import { INDIAN_STATES, GST_STATE_CODE_MAP, customerPosCode } from "../../utils/constants"; // Added imports
 import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
+import { formError, clearFormErrors } from "../../utils/formToasts";
 import { formatErrorMessage } from "../../utils/toastUtils";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
@@ -1314,7 +1315,7 @@ export default function SalesForm({
       if (!hsnForCatalog) {
         hsnForCatalog = (window.prompt("HSN/SAC code is required to save this product in the catalog:", "") || "").trim();
         if (!hsnForCatalog) {
-          toast.info("Not saved: an HSN/SAC code is required for catalog products.");
+          formError('sales', "Not saved: an HSN/SAC code is required for catalog products.", { type: 'warning', key: 'hsn' });
           return;
         }
       }
@@ -1342,10 +1343,11 @@ export default function SalesForm({
         if (created.hsn_sac_code) formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, created.hsn_sac_code);
         if (created.unit) formikRef.current.setFieldValue(`${itemPath}.unit`, created.unit);
       }
+      clearFormErrors('sales');
       toast.success(`Saved new product "${created.name}" in catalog!`);
       setCatalogSyncModal(null);
     } catch (err) {
-      toast.error(formatErrorMessage(err, "Failed to create new catalog product"), { autoClose: false, toastId: 'catalog-save-error' });
+      formError('sales', formatErrorMessage(err, "Failed to create new catalog product"), { key: 'catalog' });
     }
   };
 
@@ -1448,6 +1450,7 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["nextDocumentNumber"] });
+      clearFormErrors('sales');
       if (submitActionRef.current === 'draft') {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
@@ -1462,9 +1465,9 @@ export default function SalesForm({
     },
     onError: (error) => {
       if (error.response?.status === 409) {
-          toast.error(error.response?.data?.error || "Invoice number already exists!");
+          formError('sales', error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(
+          formError('sales',
             extractErrorMessage(
               error,
               `Failed to create ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
@@ -1487,6 +1490,7 @@ export default function SalesForm({
       queryClient.invalidateQueries({ queryKey: ["smart-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["nextDocumentNumber"] });
+      clearFormErrors('sales');
       if (submitActionRef.current === 'draft') {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} saved as draft`);
       } else {
@@ -1501,9 +1505,9 @@ export default function SalesForm({
     },
     onError: (error) => {
       if (error.response?.status === 409) {
-          toast.error(error.response?.data?.error || "Invoice number already exists!");
+          formError('sales', error.response?.data?.error || "Invoice number already exists!");
       } else {
-          toast.error(
+          formError('sales',
             extractErrorMessage(
               error,
               `Failed to update ${isSalesOrder ? 'sales order' : isDeliveryChallan ? 'delivery challan' : isQuotation ? 'quotation' : 'sales bill'}`
