@@ -160,6 +160,19 @@ export default function ProfitLossStatement() {
               </table>
             </div>
 
+            {data.inventory && (
+              <div className="bento-card p-4 text-sm text-[var(--text-secondary)] space-y-1">
+                <div>Opening stock {getCurrencySymbol()}{fmt(data.inventory.opening_stock)} · Closing stock {getCurrencySymbol()}{fmt(data.inventory.closing_stock)} · Change {getCurrencySymbol()}{fmt(data.inventory.change)}</div>
+                <div className="text-xs text-[var(--text-muted)]">{data.inventory.valuation}</div>
+                {data.memo?.cogs_estimate != null && (
+                  <div className="text-xs text-[var(--text-muted)]">Memo (not in totals): cost of goods sold estimate {getCurrencySymbol()}{fmt(data.memo.cogs_estimate)}</div>
+                )}
+                {data.inventory.negative_stock_items?.length > 0 && (
+                  <div className="text-xs text-[var(--status-danger)]">Negative stock on {data.inventory.negative_stock_items.length} item(s) (e.g. {data.inventory.negative_stock_items.slice(0, 3).map((i) => i.product).join(', ')}). Closing stock may be understated; check purchases and returns.</div>
+                )}
+              </div>
+            )}
+
             {/* Net Result */}
             <div className={`bento-card p-5 border ${isProfit ? 'border-[var(--status-success)]/30' : 'border-[var(--status-danger)]/30'}`}>
               <div className="flex justify-between items-center">
