@@ -1,3 +1,4 @@
+import StockWarningBanner from '../../components/reports/StockWarningBanner';
 import React, { useState } from "react";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getTodayKolkata } from '../../utils/date';
@@ -265,6 +266,8 @@ export default function BalanceSheet() {
             </div>
           </div>
         )}
+
+        <StockWarningBanner inventory={data?.inventory} />
 
         {isLoading ? (
           <div className="bento-card p-12 text-center">

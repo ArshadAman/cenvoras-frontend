@@ -5,6 +5,7 @@ import { getProfitLossStatement } from "../../api/gst";
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getTodayKolkata, getKolkataFYStart } from '../../utils/date';
+import StockWarningBanner from '../../components/reports/StockWarningBanner';
 
 const today = getTodayKolkata();
 const yearStart = getKolkataFYStart();
@@ -33,6 +34,8 @@ export default function ProfitLossStatement() {
           <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1">Profit &amp; Loss Statement</h1>
           <p className="text-[var(--text-secondary)] text-sm">Income statement showing revenue, expenses, and net profit.</p>
         </div>
+
+        <StockWarningBanner inventory={data?.inventory} />
 
         {/* Date Filters */}
         <div className="bento-card p-4">
@@ -159,6 +162,16 @@ export default function ProfitLossStatement() {
                 </tbody>
               </table>
             </div>
+
+            {data.inventory && (
+              <div className="bento-card p-4 text-sm text-[var(--text-secondary)] space-y-1">
+                <div>Opening stock {getCurrencySymbol()}{fmt(data.inventory.opening_stock)} · Closing stock {getCurrencySymbol()}{fmt(data.inventory.closing_stock)} · Change {getCurrencySymbol()}{fmt(data.inventory.change)}</div>
+                <div className="text-xs text-[var(--text-muted)]">{data.inventory.valuation}</div>
+                {data.memo?.cogs_estimate != null && (
+                  <div className="text-xs text-[var(--text-muted)]">Memo (not in totals): cost of goods sold estimate {getCurrencySymbol()}{fmt(data.memo.cogs_estimate)}</div>
+                )}
+              </div>
+            )}
 
             {/* Net Result */}
             <div className={`bento-card p-5 border ${isProfit ? 'border-[var(--status-success)]/30' : 'border-[var(--status-danger)]/30'}`}>
