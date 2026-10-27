@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLoadingPolicy } from '../hooks/useLoadingPolicy';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -77,7 +77,7 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
           </span>
         ) : (
           <span className="text-xs font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
-            Customer Advance{payment.adjustments?.some((a) => !a.reversed_on) ? ` · ${getCurrencySymbol()}${formatAmount(payment.unapplied_amount)} unapplied` : ''}
+            Customer Advance{(payment.adjustments?.some((a) => !a.reversed_on) || (payment.unapplied_amount != null && Number(payment.unapplied_amount) < Number(payment.amount))) ? ` · ${getCurrencySymbol()}${formatAmount(payment.unapplied_amount)} unapplied` : ''}
           </span>
         )}
         {payment.reference && (
@@ -129,6 +129,14 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
   );
 }
 
+// Map a server state name/code to the picker's option value (exact INDIAN_STATES name), else ''.
+function matchStateName(v) {
+  if (!v) return '';
+  const t = String(v).trim().toLowerCase();
+  const hit = INDIAN_STATES.find((st) => st.name.toLowerCase() === t || st.code.toLowerCase() === t);
+  return hit ? hit.name : '';
+}
+
 // Rule 50 receipt voucher (service advances): open the printable HTML in a new tab.
 async function openReceiptVoucher(payment) {
   try {
@@ -162,6 +170,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const [classHint, setClassHint] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const errorRef = useRef(null);
   
   // Search & Invoice Logic
   const [customerSearch, setCustomerSearch] = useState('');
@@ -240,16 +249,16 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   // Fetch invoices when customer changes
   useEffect(() => {
     if (formData.customer) {
-      fetchInvoices(formData.customer, formData.invoice || editData?.invoice || null);
+      fetchInvoices(formData.customer, formData.invoice || editData?.invoice || null, formData.date);
     } else {
       setInvoices([]);
       setSelectedInvoice(null);
       // Keep the typed amount; only drop the invoice link.
       setFormData(prev => (prev.invoice ? { ...prev, invoice: '' } : prev));
     }
-  }, [formData.customer, formData.invoice, editData?.invoice]);
+  }, [formData.customer, formData.invoice, formData.date, editData?.invoice]);
 
-  const fetchInvoices = async (customerId, currentInvoiceId = null) => {
+  const fetchInvoices = async (customerId, currentInvoiceId = null, receiptDate = formData.date) => {
     setIsLoadingInvoices(true);
     try {
       const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
@@ -257,6 +266,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
       const openInvoices = data.filter((inv) => {
         if (inv?.status === 'draft') return false;
+        // R19: a receipt can only be linked to an invoice dated on/before it (else it is an advance).
+        if (receiptDate && inv?.invoice_date && String(inv.invoice_date).slice(0, 10) > receiptDate) return false;
         const outstanding = roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0));
         return outstanding > 0;
       });
@@ -294,7 +305,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           ...prev,
           supply_kind: data?.supply_kind || '',
           gst_rate: data?.gst_rate != null ? String(Number(data.gst_rate)) : '',
-          place_of_supply: data?.place_of_supply || '',
+          place_of_supply: matchStateName(data?.place_of_supply),
         }));
       })
       .catch(() => setClassHint(null));
@@ -368,7 +379,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           throw new Error('Choose whether the advance is for goods or services.');
         }
         if (formData.supply_kind === 'services' && (!formData.gst_rate || !formData.place_of_supply)) {
-          throw new Error('A service advance needs a GST rate and place of supply (choose Unknown if not known).');
+          throw new Error(!formData.place_of_supply
+            ? 'Select the place of supply (state) for this service advance.'
+            : 'Select a GST rate (choose Unknown to use 18%).');
         }
         if (!classConfirmed) {
           throw new Error('Please confirm the advance classification.');
@@ -393,7 +406,10 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       onClose();
       if (!editData) resetForm();
     } catch (err) {
-      setError(extractApiErrorMessage(err));
+      const msg = extractApiErrorMessage(err);
+      setError(msg);
+      toast.error(msg);
+      setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     } finally {
       setIsSubmitting(false);
     }
@@ -617,11 +633,10 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Place of supply</label>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Place of supply *</label>
                       <select value={formData.place_of_supply} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, place_of_supply: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
                         <option value="">Select</option>
                         {INDIAN_STATES.map(st => <option key={st.code} value={st.name}>{st.name}</option>)}
-                        <option value="unknown">Unknown (treat as inter-state, IGST)</option>
                       </select>
                     </div>
                   </div>
@@ -660,7 +675,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           </div>
           
           {error && (
-            <div className="text-sm text-[var(--status-danger)] bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl p-3">
+            <div ref={errorRef} className="text-sm text-[var(--status-danger)] bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl p-3">
               {error}
             </div>
           )}
@@ -747,7 +762,7 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
       }
       const res = await allocatePayment(payment.id, selectedInvoice || null, amt);
       toast.success(res?.message || 'Payment successfully allocated to invoice(s)!');
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(res);
       onClose();
     } catch (err) {
       toast.error(extractServerMessage(err, err.message || 'Failed to allocate payment'));
@@ -918,7 +933,11 @@ export default function Payments() {
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
       toast.error(extractServerMessage(err, "Failed to delete payment"));
-    }
+    },
+    onSettled: () => {
+      // R19 P2: never leave the dialog spinning (reset pending state whatever the outcome).
+      setTimeout(() => deleteMutation.reset(), 0);
+    },
   });
 
   const handleEdit = (payment) => {
@@ -1208,7 +1227,21 @@ export default function Payments() {
             setPaymentToAllocate(null);
           }}
           payment={paymentToAllocate}
-          onSuccess={() => {
+          onSuccess={(res) => {
+            // R19 P2: show the new unapplied amount on the card at once, then refetch.
+            const pid = paymentToAllocate?.id;
+            if (pid && res?.unapplied != null) {
+              const patch = (p) => (p.id === pid ? {
+                ...p,
+                unapplied_amount: res.unapplied,
+                adjustments: [...(p.adjustments || []), ...(res.adjustments || []).map((id) => ({ id, reversed_on: null }))],
+              } : p);
+              queryClient.setQueryData(['payments'], (old) => {
+                if (Array.isArray(old)) return old.map(patch);
+                if (old && Array.isArray(old.results)) return { ...old, results: old.results.map(patch) };
+                return old;
+              });
+            }
             invalidatePaymentRelatedQueries();
             setPaymentToAllocate(null);
           }}
