@@ -135,7 +135,7 @@ const LegendTemplate = forwardRef(({
              <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Customer Details:</p>
              <p className="font-semibold text-gray-900">{customerName}</p>
              {invoice.customer_gstin && <p className="font-medium text-xs mt-0.5">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
-             <PlaceOfSupplyLine invoice={invoice} showDelivery className="text-xs mt-0.5" />
+             <PlaceOfSupplyLine invoice={invoice} showDelivery hidePos className="text-xs mt-0.5" />
              <p className="whitespace-pre-line mt-0.5 text-xs text-gray-600 leading-snug">{billingAddress}</p>
           </div>
           <div className="w-1/2 flex flex-col justify-between">
