@@ -97,6 +97,15 @@ export default function CreditNoteForm({ isOpen, onClose }) {
         }
         return;
       }
+      // s.34 tax cap / zero-GST invoice: show every message, keep it on screen.
+      const findTax = (o) => (o && typeof o === 'object'
+        ? (Array.isArray(o.tax) && raw.includes('cn_tax_cap') ? o.tax : Object.values(o).map(findTax).find(Boolean))
+        : null);
+      const taxErrors = findTax(body);
+      if (taxErrors && taxErrors.length) {
+        toast.error(taxErrors.join('\n'), { autoClose: false, toastId: 'cn-tax-cap', style: { whiteSpace: 'pre-line' } });
+        return;
+      }
       toast.error(extractServerMessage(err, "Failed to create credit note"));
     },
   });
@@ -140,10 +149,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     if (hasTax && selectedInvoice?.invoice_date) {
       const invDate = new Date(`${selectedInvoice.invoice_date}T00:00:00`);
       const fyEndYear = invDate.getMonth() >= 3 ? invDate.getFullYear() + 1 : invDate.getFullYear();
-      const deadline = new Date(fyEndYear, 10, 30);
+      const deadline = new Date(fyEndYear, 9, 31); // Rudra CA: prior-FY CNs dated by 31 Oct (monthly), declared by 30 Nov
       const noteDate = new Date(`${getTodayKolkata()}T00:00:00`);
       if (noteDate > deadline) {
-        toast.warn(`GST Act s.34: tax credit notes for this invoice's FY can only be issued until 30 Nov ${fyEndYear}.`);
+        toast.warn(`GST Act s.34(2): tax credit notes for this invoice's FY must be dated by 31 Oct ${fyEndYear} and declared by 30 Nov ${fyEndYear}.`);
       }
     }
 
