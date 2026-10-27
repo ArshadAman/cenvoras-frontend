@@ -88,6 +88,15 @@ export default function CreditNoteDetailsModal({ isOpen, onClose, creditNoteId }
             {cnNumber && (
               <p className="text-[var(--text-secondary)] text-xs mt-0.5 font-mono">{cnNumber}</p>
             )}
+            {note?.created_at && (
+              <p className="text-[var(--text-muted)] text-xs mt-0.5">
+                Entered {new Date(note.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                {note.entered_by_name ? ` by ${note.entered_by_name}` : ''}
+                {note.back_dated && (
+                  <span className="ml-2 px-1.5 py-0.5 rounded border bg-[var(--status-warning-bg)] text-[var(--status-warning-text)] border-[var(--status-warning-border)]">Back-dated entry</span>
+                )}
+              </p>
+            )}
           </div>
           <button
             type="button"

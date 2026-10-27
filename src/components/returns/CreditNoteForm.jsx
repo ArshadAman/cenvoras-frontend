@@ -78,6 +78,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       await queryClient.invalidateQueries({ queryKey: ["cn-remaining"] });
       await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
       toast.success(data?.gst_time_barred ? "Credit note without GST (time-barred under s.34) created" : "Credit Note Created");
+      if (data?.back_dated?.message) {
+        toast.warn(data.back_dated.message, { autoClose: 8000 });
+      }
       if (data?.section34_warning) {
         toast.warn(data.section34_warning);
       }
@@ -288,6 +291,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                   />
                   <p className="mt-1 text-xs text-[var(--text-muted)]">Not before the invoice date or in a month whose GSTR-1 is filed.</p>
+                  {noteDate < getTodayKolkata() && (
+                    <p className="mt-1 text-xs font-medium text-amber-500">Back-dated entry: this credit note is dated before today ({getTodayKolkata()}). You can still save it; the entry date and your name are recorded.</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
