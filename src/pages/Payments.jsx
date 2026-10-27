@@ -175,8 +175,13 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   // Search & Invoice Logic
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [invoices, setInvoices] = useState([]);
+  // R20: fetch a customer's invoices once; re-filter locally when the receipt date changes (no refetch).
+  const [rawInvoices, setRawInvoices] = useState([]);
+  const setInvoices = setRawInvoices;
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [needsReconfirm, setNeedsReconfirm] = useState(false);
+  const touchedRef = useRef(new Set());
+  const defaultsReqRef = useRef(0);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
   const extractApiErrorMessage = (err) => {
@@ -246,42 +251,42 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 
   const selectedCustomer = customers.find(c => String(c.id) === String(formData.customer));
 
-  // Fetch invoices when customer changes
+  const linkedInvoiceId = formData.invoice || editData?.invoice || null;
+  const invoices = useMemo(() => {
+    const receiptDate = formData.date;
+    const open = rawInvoices.filter((inv) => {
+      if (inv?.status === 'draft') return false;
+      // R19: a receipt can only be linked to an invoice dated on/before it (else it is an advance).
+      if (receiptDate && inv?.invoice_date && String(inv.invoice_date).slice(0, 10) > receiptDate) return false;
+      return roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0)) > 0;
+    });
+    if (linkedInvoiceId && !open.some((inv) => String(inv.id) === String(linkedInvoiceId))) {
+      const linked = rawInvoices.find((inv) => String(inv.id) === String(linkedInvoiceId));
+      if (linked) return [linked, ...open];
+    }
+    return open;
+  }, [rawInvoices, formData.date, linkedInvoiceId]);
+
+  // Fetch invoices when the customer changes (not on every date/invoice change)
   useEffect(() => {
     if (formData.customer) {
-      fetchInvoices(formData.customer, formData.invoice || editData?.invoice || null, formData.date);
+      fetchInvoices(formData.customer, editData?.invoice || null);
     } else {
       setInvoices([]);
       setSelectedInvoice(null);
       // Keep the typed amount; only drop the invoice link.
       setFormData(prev => (prev.invoice ? { ...prev, invoice: '' } : prev));
     }
-  }, [formData.customer, formData.invoice, formData.date, editData?.invoice]);
+  }, [formData.customer, editData?.invoice]);
 
-  const fetchInvoices = async (customerId, currentInvoiceId = null, receiptDate = formData.date) => {
+  const fetchInvoices = async (customerId, currentInvoiceId = null) => {
     setIsLoadingInvoices(true);
     try {
       const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
       // Handle array or object results
       const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
-      const openInvoices = data.filter((inv) => {
-        if (inv?.status === 'draft') return false;
-        // R19: a receipt can only be linked to an invoice dated on/before it (else it is an advance).
-        if (receiptDate && inv?.invoice_date && String(inv.invoice_date).slice(0, 10) > receiptDate) return false;
-        const outstanding = roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0));
-        return outstanding > 0;
-      });
-
-      let invoiceOptions = openInvoices;
-      if (currentInvoiceId) {
-        const linkedInvoice = data.find((inv) => String(inv.id) === String(currentInvoiceId));
-        const alreadyIncluded = openInvoices.some((inv) => String(inv.id) === String(currentInvoiceId));
-        if (linkedInvoice && !alreadyIncluded) {
-          invoiceOptions = [linkedInvoice, ...openInvoices];
-        }
-      }
-
-      setInvoices(invoiceOptions);
+      setRawInvoices(data);
+      const invoiceOptions = data;
 
       if (currentInvoiceId) {
         const current = invoiceOptions.find((inv) => String(inv.id) === String(currentInvoiceId));
@@ -298,17 +303,21 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     // Functional update: keep amount/date/mode already filled (R18 P2: picker reset the form).
     setFormData(prev => ({ ...prev, customer: customer.id, invoice: '' }));
     setClassConfirmed(false);
+    // R20: ignore stale responses (customer changed meanwhile) and never overwrite fields the user edited.
+    const reqId = ++defaultsReqRef.current;
     api.get('/billing/payments/advance-defaults/', { params: { customer: customer.id } })
       .then(({ data }) => {
+        if (reqId !== defaultsReqRef.current) return;
         setClassHint(data);
+        const touched = touchedRef.current;
         setFormData(prev => ({
           ...prev,
-          supply_kind: data?.supply_kind || '',
-          gst_rate: data?.gst_rate != null ? String(Number(data.gst_rate)) : '',
-          place_of_supply: matchStateName(data?.place_of_supply),
+          ...(touched.has('supply_kind') ? {} : { supply_kind: data?.supply_kind || prev.supply_kind || '' }),
+          ...(touched.has('gst_rate') ? {} : { gst_rate: data?.gst_rate != null ? String(Number(data.gst_rate)) : prev.gst_rate }),
+          ...(touched.has('place_of_supply') ? {} : { place_of_supply: matchStateName(data?.place_of_supply) || prev.place_of_supply }),
         }));
       })
-      .catch(() => setClassHint(null));
+      .catch(() => { if (reqId === defaultsReqRef.current) setClassHint(null); });
     setCustomerSearch(customer.name);
     setSelectedInvoice(null);
     setShowCustomerDropdown(false);
@@ -398,8 +407,10 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         setEditReason('');
         toast.success("Payment updated successfully");
       } else {
-        await api.post('/billing/payments/', paymentPayload);
-        toast.success("Payment recorded successfully");
+        const { data: saved } = await api.post('/billing/payments/', paymentPayload);
+        toast.success(saved?.receipt_voucher_number
+          ? `Advance saved. Receipt voucher ${saved.receipt_voucher_number}`
+          : (saved?.invoice ? 'Payment recorded' : 'Advance saved'));
       }
       
       onSuccess();
@@ -408,7 +419,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     } catch (err) {
       const msg = extractApiErrorMessage(err);
       setError(msg);
-      toast.error(msg);
+      // R20: visible even when the inline error is off-screen; stays until dismissed.
+      toast.error(msg, { toastId: 'payment-save-error', autoClose: false });
       setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     } finally {
       setIsSubmitting(false);
@@ -431,6 +443,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     });
     setClassConfirmed(false);
     setClassHint(null);
+    setNeedsReconfirm(false);
+    touchedRef.current = new Set();
+    defaultsReqRef.current += 1;
     setCustomerSearch('');
     setSelectedInvoice(null);
     setInvoices([]);
@@ -613,7 +628,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
                     {formData.receipt_mode === 'dues' ? 'Any amount left over is an advance for' : 'Advance for'}
                   </label>
-                  <select value={formData.supply_kind} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, supply_kind: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                  <select value={formData.supply_kind} onChange={(e) => { touchedRef.current.add('supply_kind'); if (classConfirmed) setNeedsReconfirm(true); setClassConfirmed(false); setFormData(prev => ({ ...prev, supply_kind: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
                     <option value="">Select goods or services</option>
                     <option value="services">Services (GST at receipt, receipt voucher issued)</option>
                     <option value="goods">Goods (no GST at receipt)</option>
@@ -626,7 +641,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">GST rate</label>
-                      <select value={formData.gst_rate} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, gst_rate: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                      <select value={formData.gst_rate} onChange={(e) => { touchedRef.current.add('gst_rate'); setFormData(prev => ({ ...prev, gst_rate: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
                         <option value="">Select</option>
                         {['0', '5', '12', '18', '28'].map(r => <option key={r} value={r}>{r}%</option>)}
                         <option value="unknown">Unknown (use 18%)</option>
@@ -634,7 +649,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Place of supply *</label>
-                      <select value={formData.place_of_supply} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, place_of_supply: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                      <select value={formData.place_of_supply} onChange={(e) => { touchedRef.current.add('place_of_supply'); setFormData(prev => ({ ...prev, place_of_supply: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
                         <option value="">Select</option>
                         {INDIAN_STATES.map(st => <option key={st.code} value={st.name}>{st.name}</option>)}
                       </select>
@@ -642,9 +657,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   </div>
                 )}
                 <label className="flex items-start gap-2 text-xs text-[var(--text-primary)]">
-                  <input type="checkbox" checked={classConfirmed} onChange={(e) => setClassConfirmed(e.target.checked)} className="mt-0.5" />
+                  <input type="checkbox" checked={classConfirmed} onChange={(e) => { setClassConfirmed(e.target.checked); if (e.target.checked) setNeedsReconfirm(false); }} className="mt-0.5" />
                   <span>I confirm this classification{formData.receipt_mode === 'dues' ? ' for any amount not applied to invoices' : ''}.</span>
                 </label>
+                {needsReconfirm && !classConfirmed && (
+                  <p className="text-xs text-[var(--status-warning)]">Goods/services changed: please confirm the classification again.</p>
+                )}
               </div>
             )}
 
@@ -932,7 +950,8 @@ export default function Payments() {
       // R18 P2: not optimistic; the card stays until the server answers, and we show its reason.
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
-      toast.error(extractServerMessage(err, "Failed to delete payment"));
+      // R20: the refusal reason stays until dismissed.
+      toast.error(extractServerMessage(err, "Failed to delete payment"), { toastId: 'payment-delete-error', autoClose: false });
     },
     onSettled: () => {
       // R19 P2: never leave the dialog spinning (reset pending state whatever the outcome).
