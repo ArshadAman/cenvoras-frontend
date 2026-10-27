@@ -1,4 +1,6 @@
 import React, { forwardRef } from 'react';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
+import { posLabel } from '../../../utils/constants';
 import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
@@ -133,6 +135,7 @@ const LegendTemplate = forwardRef(({
              <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Customer Details:</p>
              <p className="font-semibold text-gray-900">{customerName}</p>
              {invoice.customer_gstin && <p className="font-medium text-xs mt-0.5">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
+             <PlaceOfSupplyLine invoice={invoice} showDelivery className="text-xs mt-0.5" />
              <p className="whitespace-pre-line mt-0.5 text-xs text-gray-600 leading-snug">{billingAddress}</p>
           </div>
           <div className="w-1/2 flex flex-col justify-between">
@@ -162,7 +165,7 @@ const LegendTemplate = forwardRef(({
                   <>
                     <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
                        <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
-                       <p className="font-semibold text-gray-900">{invoice.place_of_supply || 'Same State'}</p>
+                       <p className="font-semibold text-gray-900">{posLabel(invoice.place_of_supply) || 'Same State'}</p>
                        {formatLinkedChallanList(invoice) && (
                          <p className="text-xs text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{formatLinkedChallanList(invoice)}</span></p>
                        )}

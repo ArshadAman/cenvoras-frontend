@@ -1442,6 +1442,7 @@ export default function SalesForm({
       } else {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       }
+      if (data?.pos_warning) toast.warn(data.pos_warning, { autoClose: false, toastId: 'pos-warning' });
       if (typeof onSaved === 'function') {
         const savedStatus = submitActionRef.current === 'draft' ? 'draft' : (data?.status || finalSubmitStatus);
         onSaved({ ...(data || {}), status: savedStatus });
@@ -1479,6 +1480,7 @@ export default function SalesForm({
       } else {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       }
+      if (data?.pos_warning) toast.warn(data.pos_warning, { autoClose: false, toastId: 'pos-warning' });
       if (typeof onSaved === 'function') {
         const savedStatus = submitActionRef.current === 'draft' ? 'draft' : (data?.status || finalSubmitStatus);
         onSaved({ ...(data || {}), status: savedStatus });
@@ -2343,9 +2345,13 @@ export default function SalesForm({
                           // Rudra CA: s.10 / s.12 IGST Act POS rules
                           const def = values.default_pos;
                           const pos = values.place_of_supply;
-                          if (!def || !pos || def === pos) return null;
                           const lines = (values.items || []).filter((it) => it && it.row_type !== 'note' && String(it.hsn_sac_code || '').trim());
                           const services = lines.length > 0 && lines.every((it) => String(it.hsn_sac_code).trim().startsWith('99'));
+                          const mixed = lines.some((it) => String(it.hsn_sac_code).trim().startsWith('99')) && !services;
+                          const mixedNote = mixed ? (
+                            <p className="mt-1.5 text-xs text-[var(--status-warning)]">Mixed goods and services: confirm POS.</p>
+                          ) : null;
+                          if (!def || !pos || def === pos) return mixedNote;
                           if (services || values.bill_to_ship_to) {
                             return (
                               <p className="mt-1.5 text-xs text-[var(--status-error)]">
@@ -2356,9 +2362,12 @@ export default function SalesForm({
                             );
                           }
                           return (
+                            <>
+                            {mixedNote}
                             <p className="mt-1.5 text-xs text-[var(--status-warning)]">
                               Place of supply ({pos}) differs from the customer's state ({def}). Allowed for goods shipped to another state; check the ship-to address.
                             </p>
+                            </>
                           );
                         })()}
                       </div>

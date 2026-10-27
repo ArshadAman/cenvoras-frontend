@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
@@ -227,6 +228,7 @@ const ProfessionalTemplate = forwardRef(({
               <strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {customerGST}
             </p>
           )}
+          <PlaceOfSupplyLine invoice={invoice} className="text-gray-600 mt-1" />
         </div>
         {(shippingAddress && shippingAddress !== billingAddress) && (
           <div className="col-span-1">

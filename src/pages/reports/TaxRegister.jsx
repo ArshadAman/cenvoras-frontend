@@ -335,6 +335,14 @@ export default function TaxRegister() {
                   </div>
                 </div>
 
+                {/* Rudra CA: CN carry-forward / s.34(2) warnings (b2cs + Table 8 floors) */}
+                {(gstr1Data._cenvora?.warnings || []).length > 0 && (
+                  <div className="bento-card p-4 border border-[var(--status-warning)] space-y-1">
+                    {(gstr1Data._cenvora.warnings).map((w, i) => (
+                      <div key={i} className={`text-xs ${w.code === 'cn_carried_forward' ? 'text-[var(--status-warning)]' : 'text-[var(--status-error)]'}`}>{w.message}</div>
+                    ))}
+                  </div>
+                )}
                 {/* R18 P0-B: Advances (Table 11A 'at' / 11B 'txpd'), always shown with CSV downloads */}
                 {(() => {
                   const meta = gstr1Data._cenvora || {};

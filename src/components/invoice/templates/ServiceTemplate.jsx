@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
@@ -156,6 +157,7 @@ const ServiceTemplate = forwardRef(({
           <p className="font-bold text-lg text-gray-900 leading-none mb-1">{customerName}</p>
           <p className="whitespace-pre-line text-gray-600 text-sm leading-relaxed">{billingAddress}</p>
           {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
+          <PlaceOfSupplyLine invoice={invoice} showDelivery className="text-xs text-gray-800 mt-1" />
         </div>
         <div className="w-1/2 space-y-2 text-sm pl-12 border-l border-gray-100">
           <div className="flex justify-between">

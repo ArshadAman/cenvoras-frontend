@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
@@ -173,7 +174,7 @@ const BillShipTemplate = forwardRef(({
            <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2">Ship To:</h3>
            <p className="font-bold text-base">{customerName}</p>
            <p className="whitespace-pre-line text-gray-700 leading-snug mt-1">{shippingAddress}</p>
-           <p className="font-bold text-gray-800 mt-2 text-xs">Place of Supply: {invoice.place_of_supply || '-'}</p>
+           <PlaceOfSupplyLine invoice={invoice} className="font-bold text-gray-800 mt-2 text-xs" />
         </div>
       </div>
 
