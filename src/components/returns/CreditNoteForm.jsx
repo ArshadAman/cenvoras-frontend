@@ -8,7 +8,7 @@ import { extractServerMessage, lineProductId, remainingQtyFor } from "../../util
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import { getTodayKolkata } from '../../utils/date';
+import { getTodayKolkata, formatDMY } from '../../utils/date';
 
 export default function CreditNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -28,7 +28,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   });
 
   // Fetch Invoices for Customer
-  const { data: invoices } = useQuery({
+  const { data: invoices, isLoading: invoicesLoading, isFetching: invoicesFetching } = useQuery({
     queryKey: ["sales-invoices", selectedCustomer],
     queryFn: () => getSalesInvoices({ customer: selectedCustomer }),
     enabled: !!selectedCustomer,
@@ -73,13 +73,16 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   const wholeUnits = reason === 'return' || reason === 'defective';
   const createMutation = useMutation({
     mutationFn: createCreditNote,
-    onSuccess: async (data) => {
-      await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
-      await queryClient.invalidateQueries({ queryKey: ["cn-remaining"] });
-      await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
+    onSuccess: (data) => {
+      // R22: don't hold the save button on list refetches. It used to await the credit-note list twice
+      // (invalidate + refetch) and cn-remaining before the toast. Refresh in the background instead,
+      // including the inventory list, whose stock the CN may have changed.
+      queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
+      queryClient.invalidateQueries({ queryKey: ["cn-remaining"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success(data?.gst_time_barred ? "Credit note without GST (time-barred under s.34) created" : "Credit Note Created");
       if (data?.back_dated?.message) {
-        toast.warn(data.back_dated.message, { autoClose: 8000 });
+        toast.warn(`Back-dated entry: dated ${formatDMY(data.date)}, entered on ${formatDMY(data.back_dated.entered_on)}.`, { autoClose: 8000 });
       }
       if (data?.section34_warning) {
         toast.warn(data.section34_warning);
@@ -119,8 +122,32 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     },
   });
 
+  // R22: the app's own messages for dates/quantities (not only the browser's picker limits).
+  const today = getTodayKolkata();
+  const invDateStr = selectedInvoice?.invoice_date ? String(selectedInvoice.invoice_date).slice(0, 10) : '';
+  const dateError = !noteDate
+    ? 'Enter the credit note date.'
+    : (invDateStr && noteDate < invDateStr)
+      ? `The credit note date can't be before the invoice date (${formatDMY(invDateStr)}).`
+      : noteDate > today
+        ? `The credit note date can't be in the future (today is ${formatDMY(today)}).`
+        : '';
+  const fractionalReturn = wholeUnits && returnItems.some((it) => {
+    const q = Number(it.return_qty) || 0;
+    return q > 0 && !Number.isInteger(q);
+  });
+  const WHOLE_UNITS_MSG = 'Returns and defective items must be whole units';
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dateError) {
+      toast.error(dateError, { toastId: 'cn-date-error', autoClose: false });
+      return;
+    }
+    if (fractionalReturn) {
+      toast.error(WHOLE_UNITS_MSG, { toastId: 'cn-qty-error', autoClose: false });
+      return;
+    }
     
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
@@ -230,7 +257,12 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                       {selectedCustomer ? (
-                        filteredInvoiceList.length > 0 ? (
+                        (invoicesLoading || (invoicesFetching && invoiceList.length === 0)) ? (
+                          <div className="px-3 py-4 text-sm text-[var(--text-muted)] flex items-center gap-2">
+                            <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Loading invoices…
+                          </div>
+                        ) : filteredInvoiceList.length > 0 ? (
                           filteredInvoiceList.map((inv) => {
                             const isSelected = selectedInvoiceId === inv.id;
                             return (
@@ -267,9 +299,6 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     onChange={(e) => {
                       const next = e.target.value;
                       setReason(next);
-                      if (next === 'return' || next === 'defective') {
-                        setReturnItems((rows) => rows.map((it) => ({ ...it, return_qty: Math.floor(Number(it.return_qty) || 0) })));
-                      }
                     }}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                   >
@@ -285,14 +314,16 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                   <input
                     type="date"
                     value={noteDate}
-                    min={selectedInvoice?.invoice_date ? String(selectedInvoice.invoice_date).slice(0, 10) : undefined}
-                    max={getTodayKolkata()}
-                    onChange={(e) => setNoteDate(e.target.value || getTodayKolkata())}
+                    onChange={(e) => setNoteDate(e.target.value)}
+                    aria-invalid={!!dateError}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                   />
                   <p className="mt-1 text-xs text-[var(--text-muted)]">Not before the invoice date or in a month whose GSTR-1 is filed.</p>
-                  {noteDate < getTodayKolkata() && (
-                    <p className="mt-1 text-xs font-medium text-amber-500">Back-dated entry: this credit note is dated before today ({getTodayKolkata()}). You can still save it; the entry date and your name are recorded.</p>
+                  {dateError && (
+                    <p className="mt-1 text-xs font-medium text-red-400" role="alert">{dateError}</p>
+                  )}
+                  {!dateError && noteDate < today && (
+                    <p className="mt-1 text-xs font-medium text-amber-500">Back-dated entry: this credit note is dated {formatDMY(noteDate)}, before today ({formatDMY(today)}). You can still save it; the entry date and your name are recorded.</p>
                   )}
                 </div>
                 <div>
@@ -331,13 +362,14 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                               <input 
                                 type="number"
                                 min="0"
-                                step={wholeUnits ? 1 : 0.01}
+                                step="0.01"
                                 max={item.remaining_qty}
                                 value={item.return_qty}
                                 onChange={(e) => {
                                   const raw = parseFloat(e.target.value) || 0;
                                   // R21: whole units for returns (stock), up to 2 decimals for value credits.
-                                  const stepped = wholeUnits ? Math.floor(raw) : Math.round(raw * 100) / 100;
+                                  // R22: keep what was typed (no silent snap to 0); whole-unit rule is shown inline.
+                                  const stepped = Math.round(raw * 100) / 100;
                                   const newQty = Math.max(0, Math.min(stepped, item.remaining_qty));
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
@@ -350,6 +382,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                         ))}
                       </tbody>
                     </table>
+                    {fractionalReturn && (<p className="px-4 py-2 text-xs font-medium text-red-400" role="alert">{WHOLE_UNITS_MSG}</p>)}
                   </div>
 
                   {/* Mobile Item Cards */}
@@ -375,13 +408,14 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                               <input 
                                 type="number" 
                                 min="0" 
-                                step={wholeUnits ? 1 : 0.01}
+                                step="0.01"
                                 max={item.remaining_qty}
                                 value={item.return_qty}
                                 onChange={(e) => {
                                   const raw = parseFloat(e.target.value) || 0;
                                   // R21: whole units for returns (stock), up to 2 decimals for value credits.
-                                  const stepped = wholeUnits ? Math.floor(raw) : Math.round(raw * 100) / 100;
+                                  // R22: keep what was typed (no silent snap to 0); whole-unit rule is shown inline.
+                                  const stepped = Math.round(raw * 100) / 100;
                                   const newQty = Math.max(0, Math.min(stepped, item.remaining_qty));
                                   const newItems = [...returnItems];
                                   newItems[idx].return_qty = newQty;
@@ -411,9 +445,15 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 <button
                   type="submit"
                   disabled={createMutation.isPending || !selectedInvoiceId}
+                  aria-busy={createMutation.isPending}
                   className="btn-primary w-full sm:w-auto py-3 px-8 text-sm font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create Credit Note'}
+                  {createMutation.isPending ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Saving…
+                    </span>
+                  ) : 'Create Credit Note'}
                 </button>
               </div>
             </form>

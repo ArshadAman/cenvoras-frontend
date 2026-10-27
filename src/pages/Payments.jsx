@@ -20,6 +20,7 @@ import {
   LinkIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
+import { formError, clearFormErrors } from '../utils/formToasts';
 import api from '../api/api';
 import { allocatePayment, reverseAdvanceAdjustment } from '../api/ledger';
 import { extractServerMessage } from '../utils/fieldErrors';
@@ -145,7 +146,7 @@ async function openReceiptVoucher(payment) {
     window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (err) {
-    toast.error(extractServerMessage(err, 'Could not open receipt voucher'));
+    formError('payment', extractServerMessage(err, 'Could not open receipt voucher'));
   }
 }
 
@@ -403,9 +404,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         if (editReason.trim()) paymentPayload.edit_reason = editReason.trim();
         await api.put(`/billing/payments/${editData.id}/`, paymentPayload);
         setEditReason('');
+        clearFormErrors('payment');
         toast.success("Payment updated successfully");
       } else {
         const { data: saved } = await api.post('/billing/payments/', paymentPayload);
+        clearFormErrors('payment');
         toast.success(saved?.receipt_voucher_number
           ? `Advance saved. Receipt voucher ${saved.receipt_voucher_number}`
           : (saved?.invoice ? 'Payment recorded' : 'Advance saved'));
@@ -418,7 +421,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       const msg = extractApiErrorMessage(err);
       setError(msg);
       // R20: visible even when the inline error is off-screen; stays until dismissed.
-      toast.error(msg, { toastId: 'payment-save-error', autoClose: false });
+      formError('payment', msg, { toastId: 'payment-save-error', autoClose: false });
       setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     } finally {
       setIsSubmitting(false);
@@ -775,18 +778,19 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
       const amt = allocAmount === '' ? null : Number(allocAmount);
       if (amt !== null) {
         const unapplied = Number(payment.unapplied_amount ?? payment.amount) || 0;
-        if (!(amt > 0)) { toast.error('Enter an amount greater than 0.'); setSubmitting(false); return; }
-        if (amt > unapplied + 0.001) { toast.error(`Amount exceeds the unapplied advance (max ${formatAmount(unapplied)}).`); setSubmitting(false); return; }
+        if (!(amt > 0)) { formError('payment', 'Enter an amount greater than 0.'); setSubmitting(false); return; }
+        if (amt > unapplied + 0.001) { formError('payment', `Amount exceeds the unapplied advance (max ${formatAmount(unapplied)}).`); setSubmitting(false); return; }
         const inv = invoices.find(i => String(i.id) === String(selectedInvoice));
         const due = inv ? Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0) : null;
-        if (due !== null && amt > due + 0.001) { toast.error(`Amount exceeds the invoice outstanding (max ${formatAmount(due)}).`); setSubmitting(false); return; }
+        if (due !== null && amt > due + 0.001) { formError('payment', `Amount exceeds the invoice outstanding (max ${formatAmount(due)}).`); setSubmitting(false); return; }
       }
       const res = await allocatePayment(payment.id, selectedInvoice || null, amt);
+      clearFormErrors('payment');
       toast.success(res?.message || 'Payment successfully allocated to invoice(s)!');
       if (onSuccess) onSuccess(res);
       onClose();
     } catch (err) {
-      toast.error(extractServerMessage(err, err.message || 'Failed to allocate payment'));
+      formError('payment', extractServerMessage(err, err.message || 'Failed to allocate payment'));
     } finally {
       setSubmitting(false);
     }
@@ -796,11 +800,12 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
     setSubmitting(true);
     try {
       await reverseAdvanceAdjustment(adj.id);
+      clearFormErrors('payment');
       toast.success(`Un-applied from ${adj.invoice_number}`);
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      toast.error(extractServerMessage(err, err.message || 'Failed to un-apply'));
+      formError('payment', extractServerMessage(err, err.message || 'Failed to un-apply'));
     } finally {
       setSubmitting(false);
     }
@@ -945,6 +950,7 @@ export default function Payments() {
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
     onSuccess: async () => {
       await invalidatePaymentRelatedQueries();
+      clearFormErrors('payment');
       toast.success("Payment deleted successfully");
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
@@ -954,7 +960,7 @@ export default function Payments() {
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
       // R20: the refusal reason stays until dismissed.
-      toast.error(extractServerMessage(err, "Failed to delete payment"), { toastId: 'payment-delete-error', autoClose: false });
+      formError('payment', extractServerMessage(err, "Failed to delete payment"), { toastId: 'payment-delete-error', autoClose: false });
     },
     onSettled: () => {
       // R19 P2: never leave the dialog spinning (reset pending state whatever the outcome).

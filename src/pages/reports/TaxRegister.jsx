@@ -8,6 +8,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getCurrencySymbol, formatCurrency, getCountryCode } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+
+// R22: display-only labels for Table 11 supply type; JSON/CSV keep INTER/INTRA.
+const SUPPLY_TYPE_LABELS = { INTER: 'Inter-state', INTRA: 'Intra-state' };
 
 export default function TaxRegister() {
   const { from: monthStart, to: today } = getKolkataMonthBounds();
@@ -46,15 +50,20 @@ export default function TaxRegister() {
     enabled: activeTab === 'gstr1' && !!filingPeriod,
   });
   const [filingBusy, setFilingBusy] = useState(false);
-  const toggleFiled = async (e) => {
+  const [filingConfirmOpen, setFilingConfirmOpen] = useState(false);
+  const nextFiled = !filing?.filed;
+  const filingMsg = nextFiled
+    ? `Mark GSTR-1 for ${filingPeriod} as FILED? Advances applied later will not change this month; any adjustment goes to the next open month (txpd).`
+    : `Mark GSTR-1 for ${filingPeriod} as NOT filed? Only do this if the return was not actually filed.`;
+  // R22: the app's modal instead of the browser's confirm().
+  const toggleFiled = (e) => {
     e?.preventDefault?.();
     e?.stopPropagation?.();
     if (filingBusy) return;
-    const next = !filing?.filed;
-    const msg = next
-      ? `Mark GSTR-1 for ${filingPeriod} as FILED? Advances applied later will not change this month; any adjustment goes to the next open month (txpd).`
-      : `Mark GSTR-1 for ${filingPeriod} as NOT filed? Only do this if the return was not actually filed.`;
-    if (!window.confirm(msg)) return;
+    setFilingConfirmOpen(true);
+  };
+  const doToggleFiled = async () => {
+    const next = nextFiled;
     setFilingBusy(true);
     try {
       const res = await setGSTR1Filing(filingPeriod, next);
@@ -67,6 +76,7 @@ export default function TaxRegister() {
       toast.error(extractServerMessage(err, 'Could not update filing status'));
     } finally {
       setFilingBusy(false);
+      setFilingConfirmOpen(false);
     }
   };
 
@@ -154,6 +164,16 @@ export default function TaxRegister() {
                 {filingBusy ? 'Saving…' : filing.filed ? `GSTR-1 ${filingPeriod}: Filed ✓ (undo)` : `Mark GSTR-1 ${filingPeriod} as filed`}
               </button>
             )}
+            <ConfirmDialog
+              isOpen={filingConfirmOpen}
+              onClose={() => { if (!filingBusy) setFilingConfirmOpen(false); }}
+              onConfirm={doToggleFiled}
+              title={nextFiled ? 'Mark GSTR-1 as filed' : 'Mark GSTR-1 as not filed'}
+              description={filingMsg}
+              confirmLabel={nextFiled ? 'Mark as filed' : 'Mark as not filed'}
+              variant="warning"
+              isPending={filingBusy}
+            />
             {activeTab === 'gstr1' && gstr1Data && (
               <button onClick={downloadGSTR1} className="btn-primary flex items-center gap-2">
                 <ArrowDownTrayIcon className="w-4 h-4" /> Download JSON
@@ -411,7 +431,7 @@ export default function TaxRegister() {
                           <tbody>
                             {rows.map((r, i) => (
                               <tr key={i} className="border-t border-[var(--border-subtle)] text-[var(--text-primary)]">
-                                <td className="py-1">{r.pos_label || r.pos}</td><td>{r.sply_ty}</td>
+                                <td className="py-1">{r.pos_label || r.pos}</td><td>{SUPPLY_TYPE_LABELS[r.sply_ty] || r.sply_ty}</td>
                                 <td className="text-right">{r.rt}</td><td className="text-right">{fmt(r.ad_amt)}</td>
                                 <td className="text-right">{fmt(r.iamt)}</td><td className="text-right">{fmt(r.camt)}</td>
                                 <td className="text-right">{fmt(r.samt)}</td>

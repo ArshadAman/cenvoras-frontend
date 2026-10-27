@@ -3,6 +3,16 @@
  * Prevents UTC day rollover bugs where 13/10 displays as 12/10.
  */
 
+// R22: DD/MM/YYYY for user-facing messages (input: 'YYYY-MM-DD' or a Date-parsable string).
+export function formatDMY(value) {
+  if (!value) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+}
+
 export function getTodayKolkata(date = new Date()) {
   const d = date instanceof Date ? date : new Date(date);
   // Uses en-CA which outputs YYYY-MM-DD
