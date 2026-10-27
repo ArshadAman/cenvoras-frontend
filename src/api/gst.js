@@ -140,3 +140,10 @@ export const getCashbook = (from, to) => {
   if (to) params.append('to', to);
   return api.get(`/ledger/cashbook/?${params}`).then(res => res.data);
 };
+
+// Remaining returnable qty per product id. Returns null if the endpoint is not deployed yet.
+export const getBillReturnRemaining = (billId) =>
+  api.get('/billing/debit-notes/remaining/', { params: { bill: billId } }).then(res => res.data).catch(() => null);
+
+export const getInvoiceReturnRemaining = (invoiceId) =>
+  api.get('/billing/credit-notes/remaining/', { params: { invoice: invoiceId } }).then(res => res.data).catch(() => null);

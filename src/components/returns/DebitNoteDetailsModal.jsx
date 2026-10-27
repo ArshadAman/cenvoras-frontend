@@ -54,6 +54,7 @@ export default function DebitNoteDetailsModal({ isOpen, onClose, debitNoteId }) 
     queryKey: ["debit-note", debitNoteId],
     queryFn: () => getDebitNote(debitNoteId),
     enabled: isOpen && !!debitNoteId,
+    retry: 1,
   });
 
   if (!isOpen) return null;
@@ -65,6 +66,7 @@ export default function DebitNoteDetailsModal({ isOpen, onClose, debitNoteId }) 
     : "";
 
   const originalBill =
+    note?.original_bill_number ||
     note?.original_bill?.bill_number ||
     note?.original_bill?.id ||
     note?.original_bill ||
