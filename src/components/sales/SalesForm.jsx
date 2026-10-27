@@ -549,6 +549,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     // R20: POS from GSTIN state, else address state (normalised to the picker's state code).
     const posCode = customerPosCode(customer);
     if (posCode) setFieldValue('place_of_supply', posCode);
+    setFieldValue('default_pos', posCode || '');
 
     setInputValue(customer.name);
     setShowDropdown(false);
@@ -1923,6 +1924,7 @@ export default function SalesForm({
                 delivery_address: values.delivery_address || null,
                 gst_treatment: values.gst_treatment || null,
                 place_of_supply: values.place_of_supply || (values.customer_gstin && values.customer_gstin.length >= 2 ? GST_STATE_CODE_MAP[values.customer_gstin.substring(0, 2)] : null) || null,
+                bill_to_ship_to: !!values.bill_to_ship_to,
                 journal: values.journal || "Sales",
                 warehouse: values.warehouse || null,
                 status: isDraft ? 'draft' : finalSubmitStatus,
@@ -2333,6 +2335,32 @@ export default function SalesForm({
                             <option key={s.code} value={s.code}>{s.name} ({s.code})</option>
                           ))}
                         </Field>
+                        <label className="mt-2 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                          <Field type="checkbox" name="bill_to_ship_to" />
+                          Bill-to-ship-to (goods delivered to a third party on the customer's order)
+                        </label>
+                        {(() => {
+                          // Rudra CA: s.10 / s.12 IGST Act POS rules
+                          const def = values.default_pos;
+                          const pos = values.place_of_supply;
+                          if (!def || !pos || def === pos) return null;
+                          const lines = (values.items || []).filter((it) => it && it.row_type !== 'note' && String(it.hsn_sac_code || '').trim());
+                          const services = lines.length > 0 && lines.every((it) => String(it.hsn_sac_code).trim().startsWith('99'));
+                          if (services || values.bill_to_ship_to) {
+                            return (
+                              <p className="mt-1.5 text-xs text-[var(--status-error)]">
+                                {services
+                                  ? `Place of supply for services must be the customer's state (${def}). Saving will be blocked.`
+                                  : `Bill-to-ship-to: place of supply must be the bill-to customer's state (${def}). Saving will be blocked.`}
+                              </p>
+                            );
+                          }
+                          return (
+                            <p className="mt-1.5 text-xs text-[var(--status-warning)]">
+                              Place of supply ({pos}) differs from the customer's state ({def}). Allowed for goods shipped to another state; check the ship-to address.
+                            </p>
+                          );
+                        })()}
                       </div>
 
                       {/* Transport & Vehicle Details if Delivery Challan */}
@@ -3890,6 +3918,7 @@ export default function SalesForm({
                 {
                   const posCode = customerPosCode(updatedCustomer);
                   if (posCode) formikRef.current.setFieldValue('place_of_supply', posCode);
+                  formikRef.current.setFieldValue('default_pos', posCode || '');
                 }
               }
               setEditingCustomer(null);
