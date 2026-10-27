@@ -23,6 +23,7 @@ import { toast } from 'react-toastify';
 import api from '../api/api';
 import { allocatePayment, reverseAdvanceAdjustment } from '../api/ledger';
 import { extractServerMessage } from '../utils/fieldErrors';
+import { INDIAN_STATES } from '../utils/constants';
 import { getGSTR1Filing } from '../api/gst';
 import { getCurrencySymbol } from '../utils/currency';
 import { getTodayKolkata } from '../utils/date';
@@ -100,6 +101,15 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
             <LinkIcon className="w-4 h-4" />
           </button>
         )}
+        {payment.receipt_voucher_number && (
+          <button
+            onClick={() => openReceiptVoucher(payment)}
+            className="px-2 py-1 text-xs bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-lg border border-[var(--border-subtle)]"
+            title="View / print receipt voucher (Rule 50)"
+          >
+            {payment.receipt_voucher_number}
+          </button>
+        )}
         <button 
           onClick={() => onEdit(payment)} 
           className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
@@ -119,6 +129,18 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
   );
 }
 
+// Rule 50 receipt voucher (service advances): open the printable HTML in a new tab.
+async function openReceiptVoucher(payment) {
+  try {
+    const res = await api.get(`/billing/payments/${payment.id}/receipt-voucher/`, { responseType: 'text' });
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'text/html' }));
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (err) {
+    toast.error(extractServerMessage(err, 'Could not open receipt voucher'));
+  }
+}
+
 // Payment Modal (Creates & Edits)
 function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const [formData, setFormData] = useState({
@@ -129,8 +151,14 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     mode: 'cash',
     reference: '',
     notes: '',
-    supply_kind: 'services'
+    receipt_mode: 'advance',
+    supply_kind: '',
+    gst_rate: '',
+    place_of_supply: ''
   });
+  // R18 (Rudra CA): advance classification is suggested from past invoices but must be confirmed.
+  const [classConfirmed, setClassConfirmed] = useState(false);
+  const [classHint, setClassHint] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   
@@ -188,8 +216,12 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         mode: editData.mode || 'cash',
         reference: editData.reference || '',
         notes: editData.notes || '',
-        supply_kind: editData.supply_kind || 'services'
+        receipt_mode: 'advance',
+        supply_kind: editData.supply_kind || '',
+        gst_rate: editData.gst_rate != null ? String(Number(editData.gst_rate)) : '',
+        place_of_supply: editData.place_of_supply || ''
       });
+      setClassConfirmed(false);
       setCustomerSearch(editData.customer_name || '');
     } else if (isOpen && !editData) {
       resetForm();
@@ -253,6 +285,18 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   const handleSelectCustomer = (customer) => {
     // Functional update: keep amount/date/mode already filled (R18 P2: picker reset the form).
     setFormData(prev => ({ ...prev, customer: customer.id, invoice: '' }));
+    setClassConfirmed(false);
+    api.get('/billing/payments/advance-defaults/', { params: { customer: customer.id } })
+      .then(({ data }) => {
+        setClassHint(data);
+        setFormData(prev => ({
+          ...prev,
+          supply_kind: data?.supply_kind || '',
+          gst_rate: data?.gst_rate != null ? String(Number(data.gst_rate)) : '',
+          place_of_supply: data?.place_of_supply || '',
+        }));
+      })
+      .catch(() => setClassHint(null));
     setCustomerSearch(customer.name);
     setSelectedInvoice(null);
     setShowCustomerDropdown(false);
@@ -302,8 +346,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         throw new Error("Please select or enter a customer name");
       }
 
+      const { receipt_mode: receiptMode, ...rest } = formData;
       const paymentPayload = {
-        ...formData,
+        ...rest,
         customer: targetCustomerId,
         amount: roundTo3(formData.amount)
       };
@@ -311,15 +356,25 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       if (formData.invoice) {
         paymentPayload.invoice = formData.invoice;
         delete paymentPayload.supply_kind;
+        delete paymentPayload.gst_rate;
+        delete paymentPayload.place_of_supply;
       } else {
         delete paymentPayload.invoice;
-        if (formData.supply_kind === 'dues') {
-          // Plain receipt against existing dues: oldest open invoices dated on/before the receipt date.
-          delete paymentPayload.supply_kind;
-          paymentPayload.auto_allocate = true;
-        } else {
-          // Recorded as an advance: never auto-applied; apply later from "Allocate".
-          paymentPayload.auto_allocate = false;
+        // 'dues': oldest open invoices dated on/before the receipt; any remainder stays a classified advance.
+        // 'advance': never auto-applied; apply later from "Allocate".
+        if (!editData) paymentPayload.auto_allocate = receiptMode === 'dues';
+        if (!['goods', 'services'].includes(formData.supply_kind)) {
+          throw new Error('Choose whether the advance is for goods or services.');
+        }
+        if (formData.supply_kind === 'services' && (!formData.gst_rate || !formData.place_of_supply)) {
+          throw new Error('A service advance needs a GST rate and place of supply (choose Unknown if not known).');
+        }
+        if (!classConfirmed) {
+          throw new Error('Please confirm the advance classification.');
+        }
+        if (formData.supply_kind === 'goods') {
+          delete paymentPayload.gst_rate;
+          delete paymentPayload.place_of_supply;
         }
       }
 
@@ -350,8 +405,13 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       mode: 'cash',
       reference: '',
       notes: '',
-      supply_kind: 'services'
+      receipt_mode: 'advance',
+      supply_kind: '',
+      gst_rate: '',
+      place_of_supply: ''
     });
+    setClassConfirmed(false);
+    setClassHint(null);
     setCustomerSearch('');
     setSelectedInvoice(null);
     setInvoices([]);
@@ -520,22 +580,53 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             </div>
             
             {!formData.invoice && (
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Receipt type</label>
-                <select
-                  value={formData.supply_kind || 'services'}
-                  onChange={(e) => setFormData({ ...formData, supply_kind: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
-                >
-                  <option value="services">Advance for Services (GST at receipt)</option>
-                  <option value="goods">Advance for Goods (no GST at receipt)</option>
-                  <option value="dues">Against open invoices dated on/before this receipt (oldest first)</option>
-                </select>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">
-                  {formData.supply_kind === 'dues'
-                    ? 'Any amount left over stays as an advance.'
-                    : 'Stays as an advance until you apply it to an invoice with Allocate.'}
-                </p>
+              <div className="space-y-3">
+                {!editData && (
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Receipt type</label>
+                    <select value={formData.receipt_mode} onChange={(e) => setFormData(prev => ({ ...prev, receipt_mode: e.target.value }))} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                      <option value="advance">Advance (apply to an invoice later)</option>
+                      <option value="dues">Against open invoices dated on/before this receipt (oldest first)</option>
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+                    {formData.receipt_mode === 'dues' ? 'Any amount left over is an advance for' : 'Advance for'}
+                  </label>
+                  <select value={formData.supply_kind} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, supply_kind: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                    <option value="">Select goods or services</option>
+                    <option value="services">Services (GST at receipt, receipt voucher issued)</option>
+                    <option value="goods">Goods (no GST at receipt)</option>
+                  </select>
+                  {classHint?.supply_kind && (
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">Suggested from this customer's past invoices ({Object.entries(classHint.line_counts || {}).map(([k, v]) => `${v} ${k}`).join(', ')} lines). Please check.</p>
+                  )}
+                </div>
+                {formData.supply_kind === 'services' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">GST rate</label>
+                      <select value={formData.gst_rate} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, gst_rate: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                        <option value="">Select</option>
+                        {['0', '5', '12', '18', '28'].map(r => <option key={r} value={r}>{r}%</option>)}
+                        <option value="unknown">Unknown (use 18%)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Place of supply</label>
+                      <select value={formData.place_of_supply} onChange={(e) => { setClassConfirmed(false); setFormData(prev => ({ ...prev, place_of_supply: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                        <option value="">Select</option>
+                        {INDIAN_STATES.map(st => <option key={st.code} value={st.name}>{st.name}</option>)}
+                        <option value="unknown">Unknown (treat as inter-state, IGST)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                <label className="flex items-start gap-2 text-xs text-[var(--text-primary)]">
+                  <input type="checkbox" checked={classConfirmed} onChange={(e) => setClassConfirmed(e.target.checked)} className="mt-0.5" />
+                  <span>I confirm this classification{formData.receipt_mode === 'dues' ? ' for any amount not applied to invoices' : ''}.</span>
+                </label>
               </div>
             )}
 
