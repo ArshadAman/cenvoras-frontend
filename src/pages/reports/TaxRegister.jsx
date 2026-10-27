@@ -325,17 +325,65 @@ export default function TaxRegister() {
                   </div>
                 </div>
 
-                {gstr1Data._cenvora && !gstr1Data._cenvora.advances_in_json && (
-                  <div className="rounded-xl border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-4 py-3 text-sm text-[var(--text-primary)] space-y-2">
-                    <p>Advances: report via the GSTN offline tool AT/ATADJ sheets. They are not included in this JSON.</p>
-                    {gstr1Data._cenvora.has_advances && (
-                      <div className="flex gap-2">
-                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'at').catch(() => toast.error('Download failed'))}>AT sheet (CSV)</button>
-                        <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'atadj').catch(() => toast.error('Download failed'))}>ATADJ sheet (CSV)</button>
+                {/* R18 P0-B: Advances (Table 11A 'at' / 11B 'txpd'), always shown with CSV downloads */}
+                {(() => {
+                  const meta = gstr1Data._cenvora || {};
+                  const adv = meta.advances || { at: [], txpd: [] };
+                  const inJson = !!meta.advances_in_json;
+                  const fmt = (v) => formatCurrency(Number(v) || 0);
+                  const table = (title, rows, total) => (
+                    <div className="space-y-1">
+                      <div className="text-[var(--text-primary)] font-semibold text-sm">{title}</div>
+                      {rows.length === 0 ? (
+                        <div className="text-xs text-[var(--text-muted)]">None in this period.</div>
+                      ) : (
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-[var(--text-secondary)] text-left">
+                              <th className="py-1">Place of supply</th><th>Type</th><th className="text-right">Rate %</th>
+                              <th className="text-right">Taxable value</th><th className="text-right">IGST</th>
+                              <th className="text-right">CGST</th><th className="text-right">SGST</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r, i) => (
+                              <tr key={i} className="border-t border-[var(--border-subtle)] text-[var(--text-primary)]">
+                                <td className="py-1">{r.pos_label || r.pos}</td><td>{r.sply_ty}</td>
+                                <td className="text-right">{r.rt}</td><td className="text-right">{fmt(r.ad_amt)}</td>
+                                <td className="text-right">{fmt(r.iamt)}</td><td className="text-right">{fmt(r.camt)}</td>
+                                <td className="text-right">{fmt(r.samt)}</td>
+                              </tr>
+                            ))}
+                            {total && (
+                              <tr className="border-t border-[var(--border-subtle)] font-semibold text-[var(--text-primary)]">
+                                <td className="py-1" colSpan={3}>Total</td><td className="text-right">{fmt(total.ad_amt)}</td>
+                                <td className="text-right">{fmt(total.iamt)}</td><td className="text-right">{fmt(total.camt)}</td>
+                                <td className="text-right">{fmt(total.samt)}</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  );
+                  return (
+                    <div className="bento-card p-4 space-y-3">
+                      <div className="flex flex-wrap justify-between items-center gap-2">
+                        <h3 className="text-[var(--text-primary)] font-semibold">Advances (Table 11)</h3>
+                        <div className="flex gap-2">
+                          <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'at').catch(() => toast.error('Download failed'))}>AT sheet (CSV)</button>
+                          <button className="btn-secondary text-xs" onClick={() => downloadGSTR1AdvancesCSV(fromDate, toDate, 'atadj').catch(() => toast.error('Download failed'))}>ATADJ sheet (CSV)</button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                      {!inJson && (
+                        <p className="text-xs text-[var(--status-warning)]">Not included in the JSON below: enter these in the GSTN offline tool AT/ATADJ sheets (CSV downloads above).</p>
+                      )}
+                      {table('11A: Advances received (at)', adv.at || [], adv.at_total)}
+                      {table('11B: Advances adjusted (atadj / txpd)', adv.txpd || [], adv.txpd_total)}
+                      <p className="text-xs text-[var(--text-muted)]">Service advances only (goods advances carry no GST). An advance and invoice in the same unfiled month appear in neither table. Amounts are taxable value.</p>
+                    </div>
+                  );
+                })()}
 
                 {/* Raw JSON Preview */}
                 <div className="bento-card p-4">

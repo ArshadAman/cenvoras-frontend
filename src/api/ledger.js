@@ -382,11 +382,14 @@ export const getTrialBalance = async (params = {}) => {
 };
 
 // Allocate unlinked payment / customer advance
-export const allocatePayment = async (paymentId, invoiceId = null) => {
+export const allocatePayment = async (paymentId, invoiceId = null, amount = null) => {
   try {
     const payload = {};
     if (invoiceId) {
       payload.invoice_id = invoiceId;
+    }
+    if (amount !== null && amount !== undefined && amount !== '') {
+      payload.amount = amount;
     }
     const response = await api.post(`/billing/payments/${paymentId}/allocate/`, payload);
     return response.data;

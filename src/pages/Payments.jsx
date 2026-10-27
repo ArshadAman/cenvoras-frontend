@@ -211,7 +211,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     } else {
       setInvoices([]);
       setSelectedInvoice(null);
-      setFormData(prev => ({ ...prev, invoice: '', amount: '' }));
+      // Keep the typed amount; only drop the invoice link.
+      setFormData(prev => (prev.invoice ? { ...prev, invoice: '' } : prev));
     }
   }, [formData.customer, formData.invoice, editData?.invoice]);
 
@@ -250,7 +251,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   };
 
   const handleSelectCustomer = (customer) => {
-    setFormData({ ...formData, customer: customer.id, invoice: '', amount: '' });
+    // Functional update: keep amount/date/mode already filled (R18 P2: picker reset the form).
+    setFormData(prev => ({ ...prev, customer: customer.id, invoice: '' }));
     setCustomerSearch(customer.name);
     setSelectedInvoice(null);
     setShowCustomerDropdown(false);
@@ -308,8 +310,17 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 
       if (formData.invoice) {
         paymentPayload.invoice = formData.invoice;
+        delete paymentPayload.supply_kind;
       } else {
         delete paymentPayload.invoice;
+        if (formData.supply_kind === 'dues') {
+          // Plain receipt against existing dues: oldest open invoices dated on/before the receipt date.
+          delete paymentPayload.supply_kind;
+          paymentPayload.auto_allocate = true;
+        } else {
+          // Recorded as an advance: never auto-applied; apply later from "Allocate".
+          paymentPayload.auto_allocate = false;
+        }
       }
 
       if (editData) {
@@ -510,15 +521,21 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             
             {!formData.invoice && (
               <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Advance for</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Receipt type</label>
                 <select
                   value={formData.supply_kind || 'services'}
                   onChange={(e) => setFormData({ ...formData, supply_kind: e.target.value })}
                   className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
                 >
-                  <option value="services">Services (GST at receipt)</option>
-                  <option value="goods">Goods (no GST at receipt)</option>
+                  <option value="services">Advance for Services (GST at receipt)</option>
+                  <option value="goods">Advance for Goods (no GST at receipt)</option>
+                  <option value="dues">Against open invoices dated on/before this receipt (oldest first)</option>
                 </select>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {formData.supply_kind === 'dues'
+                    ? 'Any amount left over stays as an advance.'
+                    : 'Stays as an advance until you apply it to an invoice with Allocate.'}
+                </p>
               </div>
             )}
 
@@ -574,6 +591,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState('');
+  const [allocAmount, setAllocAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [qrmpWarning, setQrmpWarning] = useState(null);
@@ -587,6 +605,7 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
 
   useEffect(() => {
     if (!isOpen || !payment?.customer) return;
+    setAllocAmount('');
     setLoading(true);
     api.get(`/billing/sales-invoices/?customer=${payment.customer}`)
       .then(res => {
@@ -609,7 +628,16 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
   const handleAllocate = async () => {
     setSubmitting(true);
     try {
-      const res = await allocatePayment(payment.id, selectedInvoice || null);
+      const amt = allocAmount === '' ? null : Number(allocAmount);
+      if (amt !== null) {
+        const unapplied = Number(payment.unapplied_amount ?? payment.amount) || 0;
+        if (!(amt > 0)) { toast.error('Enter an amount greater than 0.'); setSubmitting(false); return; }
+        if (amt > unapplied + 0.001) { toast.error(`Amount exceeds the unapplied advance (max ${formatAmount(unapplied)}).`); setSubmitting(false); return; }
+        const inv = invoices.find(i => String(i.id) === String(selectedInvoice));
+        const due = inv ? Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0) : null;
+        if (due !== null && amt > due + 0.001) { toast.error(`Amount exceeds the invoice outstanding (max ${formatAmount(due)}).`); setSubmitting(false); return; }
+      }
+      const res = await allocatePayment(payment.id, selectedInvoice || null, amt);
       toast.success(res?.message || 'Payment successfully allocated to invoice(s)!');
       if (onSuccess) onSuccess();
       onClose();
@@ -702,6 +730,18 @@ function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
               })}
             </select>
           )}
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mt-3 mb-1.5">
+            Amount to apply (optional)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder={`Full: up to ${formatAmount(payment.unapplied_amount ?? payment.amount)}`}
+            value={allocAmount}
+            onChange={(e) => setAllocAmount(e.target.value)}
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none"
+          />
           <p className="text-xs text-[var(--text-muted)]">
             {selectedInvoice
               ? 'This unlinked payment will pay down the selected invoice.'
@@ -759,42 +799,17 @@ export default function Payments() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['payments'] });
-      const previousPayments = queryClient.getQueryData(['payments']);
-
-      queryClient.setQueryData(['payments'], (old) => {
-        if (!old) return old;
-        if (Array.isArray(old)) {
-          return old.filter((payment) => payment.id !== id);
-        }
-
-        if (Array.isArray(old.results)) {
-          return {
-            ...old,
-            results: old.results.filter((payment) => payment.id !== id),
-            count: Math.max(Number(old.count || 0) - 1, 0),
-          };
-        }
-
-        return old;
-      });
-
-      setIsDeleteModalOpen(false);
-      setPaymentToDelete(null);
-      return { previousPayments };
-    },
     onSuccess: async () => {
       await invalidatePaymentRelatedQueries();
       toast.success("Payment deleted successfully");
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
     },
-    onError: (err, _id, context) => {
-      if (context?.previousPayments) {
-        queryClient.setQueryData(['payments'], context.previousPayments);
-      }
-      toast.error(err.response?.data?.detail || "Failed to delete payment");
+    onError: (err) => {
+      // R18 P2: not optimistic; the card stays until the server answers, and we show its reason.
+      setIsDeleteModalOpen(false);
+      setPaymentToDelete(null);
+      toast.error(extractServerMessage(err, "Failed to delete payment"));
     }
   });
 
