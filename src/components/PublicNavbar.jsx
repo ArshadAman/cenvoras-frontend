@@ -110,9 +110,9 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
                 aria-label="Toggle navigation menu"
                 aria-expanded={menuOpen}
               >
-                <div className="relative h-4.5 w-4.5 sm:h-5 sm:w-5 flex items-center justify-center">
-                  <Bars3Icon className={`absolute h-4.5 w-4.5 sm:h-5 sm:w-5 transition-all duration-300 ${menuOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`} />
-                  <XMarkIcon className={`absolute h-4.5 w-4.5 sm:h-5 sm:w-5 transition-all duration-300 ${menuOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`} />
+                <div className="relative h-[18px] w-[18px] sm:h-5 sm:w-5 flex items-center justify-center">
+                  <Bars3Icon className={`absolute h-[18px] w-[18px] sm:h-5 sm:w-5 transition-all duration-300 ${menuOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`} />
+                  <XMarkIcon className={`absolute h-[18px] w-[18px] sm:h-5 sm:w-5 transition-all duration-300 ${menuOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`} />
                 </div>
               </button>
             </div>
