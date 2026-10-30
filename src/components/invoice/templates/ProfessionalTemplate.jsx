@@ -261,7 +261,7 @@ const ProfessionalTemplate = forwardRef(({
               if (item.row_type === 'note') {
                 return (
                   <tr key={idx} className="bg-gray-50/50">
-                    <td colSpan={visibleColumns.length} className="py-1 px-3 text-left text-xs text-gray-700 italic font-medium align-middle" style={{ verticalAlign: 'middle' }}>
+                    <td colSpan={visibleColumns.length} className="py-1 px-2 text-left text-xs text-gray-700 italic font-medium align-middle" style={{ verticalAlign: 'middle' }}>
                       Note: {item.description || item.product_description || item.product || ''}
                     </td>
                   </tr>
@@ -274,7 +274,7 @@ const ProfessionalTemplate = forwardRef(({
                   const isDesc = col.id === 'description';
                   const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono font-medium' : 'text-center px-2';
                   let val = '';
-                  if(col.id==='serial') val = idx+1;
+                  if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
                   else if(col.id==='description') {
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (

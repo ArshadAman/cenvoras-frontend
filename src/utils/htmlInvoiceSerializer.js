@@ -65,7 +65,8 @@ export function serializeInvoiceHtml(element) {
   hiddenElements.forEach((el) => el.remove());
 
   // Apply print chrome on the clone itself (inline) so backend Chromium cannot
-  // miss stylesheet overrides against React's padding: 7mm sides on .invoice-sheet.
+  // miss stylesheet overrides. Classic already uses full-bleed letterhead + 7mm
+  // body inset on screen; non-classic still needs this padding swap.
   cloned.querySelectorAll('.invoice-sheet').forEach((sheet) => {
     sheet.style.padding = '0 0 10mm 0';
     sheet.style.overflow = 'visible';
@@ -76,7 +77,7 @@ export function serializeInvoiceHtml(element) {
     el.style.border = 'none';
     el.style.overflow = 'visible';
   });
-  cloned.querySelectorAll('.invoice-first-page-header').forEach((el) => {
+  cloned.querySelectorAll('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header').forEach((el) => {
     el.style.display = 'none';
   });
   cloned.querySelectorAll('.invoice-continuation-header').forEach((el) => {
@@ -156,7 +157,9 @@ export function serializeInvoiceHtml(element) {
       break-inside: auto !important;
       page-break-inside: auto !important;
     }
-    .invoice-first-page-header {
+    /* Non-classic: swap in-body seller chrome for the repeating thead.
+       Classic uses the same thead letterhead on screen and print. */
+    .invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header {
       display: none !important;
     }
     .invoice-continuation-header {

@@ -217,7 +217,7 @@ const ServiceTemplate = forwardRef(({
               if (item.row_type === 'note') {
                 return (
                   <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
-                    <td colSpan={visibleColumns.length} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                    <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-xs text-gray-700 italic font-medium">
                       Note: {item.description || item.product_description || item.product || ''}
                     </td>
                   </tr>
@@ -228,7 +228,7 @@ const ServiceTemplate = forwardRef(({
                 {visibleColumns.map(col => {
                   let val = '';
                   let isNumeric = false;
-                  if(col.id==='serial') val = idx+1;
+                  if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
                   else if(col.id==='description') {
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
