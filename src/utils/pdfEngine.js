@@ -37,10 +37,13 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     window.scrollTo(0, 0);
   }
 
-  // Temporarily apply print chrome so letterhead is measurable and captured:
-  // show continuation letterhead, hide duplicate first-page seller chrome.
+  // Temporarily apply print chrome so letterhead is measurable and captured.
+  // Non-classic: show continuation letterhead, hide duplicate first-page seller chrome.
+  // Classic: thead letterhead is already the on-screen header — do not swap.
   // Footer flows under totals (not absolutely pinned to page bottom).
-  const firstPageHeaders = Array.from(element.querySelectorAll('.invoice-first-page-header'));
+  const firstPageHeaders = Array.from(
+    element.querySelectorAll('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header')
+  );
   const continuationHeaders = Array.from(element.querySelectorAll('.invoice-continuation-header'));
   const sheets = Array.from(element.querySelectorAll('.invoice-sheet'));
   const footers = Array.from(element.querySelectorAll('.invoice-page-footer'));
@@ -222,7 +225,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
           });
         }
 
-        clonedDoc.querySelectorAll('.invoice-first-page-header').forEach((el) => {
+        clonedDoc.querySelectorAll('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header').forEach((el) => {
           el.style.display = 'none';
         });
         clonedDoc.querySelectorAll('.invoice-continuation-header').forEach((el) => {

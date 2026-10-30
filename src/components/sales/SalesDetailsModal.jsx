@@ -522,7 +522,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           flex: 0 0 auto !important;
           flex-grow: 0 !important;
         }
-        .invoice-first-page-header {
+        /* Non-classic: swap in-body seller chrome for the repeating thead.
+           Classic uses the same thead letterhead on screen and print. */
+        .invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header {
           display: none !important;
         }
         .invoice-continuation-header {

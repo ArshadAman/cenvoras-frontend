@@ -221,7 +221,7 @@ const LegendTemplate = forwardRef(({
                 if (item.row_type === 'note') {
                   return (
                     <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
-                      <td colSpan={visibleColumns.length} className="py-1.5 px-3 text-left text-xs text-gray-700 italic font-medium">
+                      <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-xs text-gray-700 italic font-medium">
                         Note: {item.description || item.product_description || item.product || ''}
                       </td>
                     </tr>
@@ -235,7 +235,7 @@ const LegendTemplate = forwardRef(({
                   const isDesc = col.id === 'description';
                   const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
                   let val = '';
-                  if(col.id==='serial') val = idx+1;
+                  if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
                   else if(col.id==='description') {
                     const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
@@ -313,7 +313,7 @@ const LegendTemplate = forwardRef(({
               {!isDeliveryChallan && (
                 <tr className="font-bold h-9 bg-gray-50/50">
                   <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
-                    Total items: {items.length}
+                    Total items: {items.filter((row) => row.row_type !== 'note').length}
                   </td>
                   <td colSpan={2} className="text-right px-3 text-xs">
                     <span className="uppercase tracking-wider font-semibold text-gray-700 mr-3">Subtotal</span>

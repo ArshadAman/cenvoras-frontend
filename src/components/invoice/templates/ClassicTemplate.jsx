@@ -69,7 +69,6 @@ const InvoicePreview = forwardRef(({
   const shippingLines = hasSeparateShipping
     ? shippingAddress.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
     : [];
-  const headerIdFontSize = (typography.smallSize || 9) + 1;
   const sectionHeadingSize = (typography.sectionTitleSize || 12) + 2;
   const addressBodySize = (typography.bodySize || 11) + 1;
   const customerNameSize = (typography.bodySize || 11) + 1;
@@ -196,8 +195,8 @@ const InvoicePreview = forwardRef(({
         ...paperStyle,
         width: '210mm',
         minHeight: '297mm',
-        /* No top padding — page starts at the gray letterhead (table cells clip negative top margin). */
-        padding: '0 7mm 10mm 7mm',
+        /* Full-bleed letterhead in thead; 7mm body inset is on the print-shell cell. */
+        padding: '0 0 10mm 0',
         boxSizing: 'border-box',
         margin: '0 auto',
         position: 'relative',
@@ -223,54 +222,13 @@ const InvoicePreview = forwardRef(({
           companyGEM,
           companyDL,
           companyNameColor: '#d11f1f',
-          companyNameSize: typography.companyNameSize || 18,
+          companyNameSize: typography.companyNameSize || 24,
+          fontFamily: typography.headerFont || typography.fontFamily,
+          smallSize: typography.smallSize || 9,
+          showGST: sections.showGST !== false,
+          showGEMID: Boolean(sections.showGEMID),
         }}
       >
-      
-      {/* Header Section — screen/preview; print uses InvoicePrintShell thead instead */}
-      <div
-        className="mb-1 invoice-first-page-header"
-        style={{
-          backgroundColor: '#ececec',
-          /* Horizontal bleed only — top is already flush (sheet has no top padding). */
-          margin: '0 -7mm 0 -7mm',
-          padding: '2mm 6mm 3mm 6mm',
-          borderBottomLeftRadius: '120% 28px',
-          borderBottomRightRadius: '120% 28px',
-        }}
-      >
-        <div className="flex justify-end">
-          <div className="text-right" style={{ maxWidth: '58%' }}>
-            <h1 className="font-normal mb-1" style={{ ...headerStyle, color: '#d11f1f', fontSize: `${typography.companyNameSize || 22}px`, fontWeight: 400 }}>
-              {companyName}
-            </h1>
-            <div className="space-y-0.5" style={{ color: '#1f2937', fontSize: `${typography.smallSize || 9}px` }}>
-              {companyAddress && <p className="whitespace-pre-line font-normal">{companyAddress}</p>}
-              {(companyPhone || companyEmail) && (
-                <p className="font-normal">
-                  {companyPhone ? `Ph- ${companyPhone}` : ''}
-                  {companyPhone && companyEmail ? ', ' : ''}
-                  {companyEmail ? `email-${companyEmail}` : ''}
-                </p>
-              )}
-              {sections.showGST && companyGST && (
-                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>
-                  {getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}
-                </p>
-              )}
-              {companyPAN && (
-                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>PAN: {companyPAN}</p>
-              )}
-              {sections.showGEMID && companyGEM && (
-                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>GEM ID: {companyGEM}</p>
-              )}
-              {companyDL && (
-                <p style={{ fontWeight: 700, fontSize: `${headerIdFontSize}px` }}>DL No- {companyDL}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Address Section */}
       <div className="flex justify-between items-start mb-1 gap-8">
@@ -516,7 +474,7 @@ const InvoicePreview = forwardRef(({
                     <tr key={index} style={{ backgroundColor: '#fbfbfb' }}>
                       <td
                         colSpan={visibleColumns.length}
-                        className="border px-3 py-1.5 text-xs text-slate-700 italic text-left font-medium"
+                        className="border px-2 py-1.5 text-xs text-slate-700 italic text-left font-medium"
                         style={{ borderColor: colors.tableBorder }}
                       >
                         Note: {item.description || item.product_description || item.product || ''}
@@ -547,7 +505,7 @@ const InvoicePreview = forwardRef(({
                     {visibleColumns.map(col => {
                       let value = '';
                       switch(col.id) {
-                        case 'serial': value = index + 1; break;
+                        case 'serial': value = items.slice(0, index).filter((row) => row.row_type !== 'note').length + 1; break;
                         case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
                         case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
                         case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;

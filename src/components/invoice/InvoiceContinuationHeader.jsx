@@ -1,10 +1,14 @@
 import React from 'react';
 import { getCountryCode } from '../../utils/currency';
+import ClassicLetterhead from './ClassicLetterhead';
 
 /**
  * Seller-only letterhead for Chromium/print (every page).
  * Used inside InvoicePrintShell <thead> so it sits ABOVE billing/items in DOM
- * and repeats on page 2+. Hidden on screen; print shows this and hides
+ * and repeats on page 2+.
+ *
+ * Classic: visible on screen and print (same ClassicLetterhead markup).
+ * Other themes: hidden on screen; print shows this and hides
  * .invoice-first-page-header. Does NOT include invoice title / bill-to.
  */
 export default function InvoiceContinuationHeader({
@@ -22,6 +26,10 @@ export default function InvoiceContinuationHeader({
   showLogo = false,
   companyNameColor = '#d11f1f',
   companyNameSize = 18,
+  fontFamily,
+  smallSize = 9,
+  showGST = true,
+  showGEMID = false,
   primaryColor,
 }) {
   const gstLabel = getCountryCode() === 'IN' ? 'GSTIN' : 'TRN';
@@ -145,53 +153,33 @@ export default function InvoiceContinuationHeader({
       </div>
     );
   } else {
-    // classic (default) — same chrome as .invoice-first-page-header (preview).
-    // Print/PDF zeros .invoice-sheet padding so this band is edge-to-edge (no negative margins).
     inner = (
-      <div
-        className="invoice-continuation-letterhead-classic"
-        style={{
-          display: 'block',
-          width: '100%',
-          boxSizing: 'border-box',
-          backgroundColor: '#ececec',
-          margin: 0,
-          padding: '2mm 6mm 3mm 6mm',
-          borderBottomLeftRadius: '120% 28px',
-          borderBottomRightRadius: '120% 28px',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ textAlign: 'right', maxWidth: '62%' }}>
-            <div
-              style={{
-                fontWeight: 400,
-                fontSize: `${companyNameSize}px`,
-                color: companyNameColor,
-                lineHeight: 1.25,
-                marginBottom: 4,
-              }}
-            >
-              {companyName}
-            </div>
-            <div style={{ color: '#1f2937', fontSize: '9px', lineHeight: 1.35, fontWeight: 400 }}>
-              {companyAddress ? (
-                <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
-              ) : null}
-              {contactLine ? <div>{contactLine}</div> : null}
-              {taxLines}
-            </div>
-          </div>
-        </div>
-      </div>
+      <ClassicLetterhead
+        companyName={companyName}
+        companyAddress={companyAddress}
+        companyPhone={companyPhone}
+        companyEmail={companyEmail}
+        companyGST={companyGST}
+        companyPAN={companyPAN}
+        companyGEM={companyGEM}
+        companyDL={companyDL}
+        companyNameColor={companyNameColor}
+        companyNameSize={companyNameSize}
+        fontFamily={fontFamily}
+        smallSize={smallSize}
+        showGST={showGST}
+        showGEMID={showGEMID}
+      />
     );
   }
+
+  const isClassic = theme === 'classic';
 
   return (
     <tr
       className="invoice-continuation-header"
       data-print-continuation-header="true"
-      style={{ display: 'none' }}
+      style={{ display: isClassic ? 'table-row' : 'none' }}
     >
       <td
         colSpan={colSpan}
