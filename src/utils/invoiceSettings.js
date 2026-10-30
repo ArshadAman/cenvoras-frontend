@@ -40,8 +40,16 @@ export const defaultInvoiceTemplate = {
     fontFamily: 'Inter, system-ui, sans-serif',
     headerFont: 'Inter, system-ui, sans-serif',
     companyNameSize: 24,
+    companyAddressSize: 9,
     invoiceTitleSize: 18,
     sectionTitleSize: 12,
+    customerNameSize: 12,
+    addressSize: 12,
+    tableHeaderSize: 10,
+    tableBodySize: 12,
+    totalsSize: 12,
+    bankDetailsSize: 12,
+    footerSize: 9,
     bodySize: 11,
     smallSize: 9,
     lineHeight: 1.5,
@@ -542,6 +550,35 @@ export const amountInWords = (amount) => {
   return result.trim();
 };
 
+export function resolveTypography(typography = {}) {
+  const smallSize = Number(typography.smallSize) || 9;
+  const bodySize = Number(typography.bodySize) || 11;
+  const pick = (value, fallback) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  };
+
+  return {
+    fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif',
+    headerFont: typography.headerFont || typography.fontFamily || 'Inter, system-ui, sans-serif',
+    companyNameSize: pick(typography.companyNameSize, 24),
+    companyAddressSize: pick(typography.companyAddressSize, smallSize),
+    invoiceTitleSize: pick(typography.invoiceTitleSize, 18),
+    sectionTitleSize: pick(typography.sectionTitleSize, 12),
+    customerNameSize: pick(typography.customerNameSize, bodySize),
+    addressSize: pick(typography.addressSize, bodySize),
+    tableHeaderSize: pick(typography.tableHeaderSize, smallSize),
+    tableBodySize: pick(typography.tableBodySize, 12),
+    smallSize,
+    bodySize,
+    totalsSize: pick(typography.totalsSize, bodySize),
+    bankDetailsSize: pick(typography.bankDetailsSize, 12),
+    footerSize: pick(typography.footerSize, smallSize),
+    lineHeight: pick(typography.lineHeight, 1.5),
+    letterSpacing: Number(typography.letterSpacing) || 0,
+  };
+}
+
 export default {
   defaultInvoiceTemplate,
   templatePresets,
@@ -560,4 +597,5 @@ export default {
   amountInWords,
   formatLinkedChallanEntries,
   formatLinkedChallanList,
+  resolveTypography,
 };

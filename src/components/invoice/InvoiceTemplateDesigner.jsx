@@ -30,6 +30,7 @@ import {
   documentTypeToSectionKey,
   templatePresets,
   defaultInvoiceTemplate,
+  resolveTypography,
 } from '../../utils/invoiceSettings';
 
 // Color Picker Component
@@ -77,7 +78,7 @@ const ToggleSwitch = ({ label, checked, onChange, description }) => (
 );
 
 // Number Input Component
-const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) => (
+const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '', step }) => (
   <div className="flex items-center justify-between gap-3">
     <span className="text-sm text-[var(--text-secondary)]">{label}</span>
     <div className="flex items-center gap-1">
@@ -87,6 +88,7 @@ const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) 
         onChange={(e) => onChange(Number(e.target.value))}
         min={min}
         max={max}
+        step={step}
         className="w-16 px-2 py-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-sm text-[var(--text-primary)] text-center font-mono"
       />
       {unit && <span className="text-xs text-[var(--text-muted)]">{unit}</span>}
@@ -384,7 +386,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     { id: 'layout', label: 'Layout', icon: Squares2X2Icon },
     { id: 'branding', label: 'Branding', icon: PhotoIcon },
     { id: 'colors', label: 'Colors', icon: SwatchIcon },
-    { id: 'typography', label: 'Typography', icon: DocumentTextIcon },
+    { id: 'typography', label: 'Font', icon: DocumentTextIcon },
     { id: 'sections', label: 'Sections', icon: Squares2X2Icon },
     { id: 'content', label: 'Content', icon: Cog6ToothIcon },
     { id: 'columns', label: 'Columns', icon: Squares2X2Icon },
@@ -688,8 +690,11 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
             </div>
           )}
 
-          {/* Typography Tab */}
-          {activeTab === 'typography' && (
+          {/* Font Tab */}
+          {activeTab === 'typography' && (() => {
+            const type = resolveTypography(currentTemplate.typography);
+            const setSize = (field) => (v) => updateTemplate(`typography.${field}`, v);
+            return (
             <div className="space-y-4">
               <SectionHeader>Fonts</SectionHeader>
               <Select
@@ -704,60 +709,47 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   { value: 'Courier New, monospace', label: 'Courier New' },
                 ]}
               />
-              
-              <SectionHeader>Font Sizes</SectionHeader>
-              <NumberInput
-                label="Company Name"
-                value={currentTemplate.typography?.companyNameSize}
-                onChange={(v) => updateTemplate('typography.companyNameSize', v)}
-                min={14}
-                max={36}
-                unit="px"
-              />
-              <NumberInput
-                label="Invoice Title"
-                value={currentTemplate.typography?.invoiceTitleSize}
-                onChange={(v) => updateTemplate('typography.invoiceTitleSize', v)}
-                min={12}
-                max={28}
-                unit="px"
-              />
-              <NumberInput
-                label="Section Titles"
-                value={currentTemplate.typography?.sectionTitleSize}
-                onChange={(v) => updateTemplate('typography.sectionTitleSize', v)}
-                min={10}
-                max={16}
-                unit="px"
-              />
-              <NumberInput
-                label="Body Text"
-                value={currentTemplate.typography?.bodySize}
-                onChange={(v) => updateTemplate('typography.bodySize', v)}
-                min={8}
-                max={14}
-                unit="px"
-              />
-              <NumberInput
-                label="Small Text"
-                value={currentTemplate.typography?.smallSize}
-                onChange={(v) => updateTemplate('typography.smallSize', v)}
-                min={7}
-                max={12}
-                unit="px"
-              />
-              
+
+              <SectionHeader>Header</SectionHeader>
+              <NumberInput label="Company Name" value={type.companyNameSize} onChange={setSize('companyNameSize')} min={14} max={36} unit="px" />
+              <NumberInput label="Company Address" value={type.companyAddressSize} onChange={setSize('companyAddressSize')} min={7} max={16} unit="px" />
+
+              <SectionHeader>Document</SectionHeader>
+              <NumberInput label="Invoice Title" value={type.invoiceTitleSize} onChange={setSize('invoiceTitleSize')} min={12} max={32} unit="px" />
+              <NumberInput label="Invoice Details" value={type.bodySize} onChange={setSize('bodySize')} min={8} max={16} unit="px" />
+              <NumberInput label="Section Titles" value={type.sectionTitleSize} onChange={setSize('sectionTitleSize')} min={8} max={18} unit="px" />
+
+              <SectionHeader>Parties</SectionHeader>
+              <NumberInput label="Customer Name" value={type.customerNameSize} onChange={setSize('customerNameSize')} min={8} max={18} unit="px" />
+              <NumberInput label="Bill / Ship Address" value={type.addressSize} onChange={setSize('addressSize')} min={7} max={16} unit="px" />
+
+              <SectionHeader>Table</SectionHeader>
+              <NumberInput label="Table Header" value={type.tableHeaderSize} onChange={setSize('tableHeaderSize')} min={7} max={14} unit="px" />
+              <NumberInput label="Line Items" value={type.tableBodySize} onChange={setSize('tableBodySize')} min={7} max={16} unit="px" />
+              <NumberInput label="Line Notes" value={type.smallSize} onChange={setSize('smallSize')} min={7} max={14} unit="px" />
+
+              <SectionHeader>Totals</SectionHeader>
+              <NumberInput label="Totals" value={type.totalsSize} onChange={setSize('totalsSize')} min={8} max={18} unit="px" />
+
+              <SectionHeader>Bank</SectionHeader>
+              <NumberInput label="Bank Details" value={type.bankDetailsSize} onChange={setSize('bankDetailsSize')} min={7} max={16} unit="px" />
+
+              <SectionHeader>Terms / Footer</SectionHeader>
+              <NumberInput label="Terms / Footer" value={type.footerSize} onChange={setSize('footerSize')} min={7} max={14} unit="px" />
+
               <SectionHeader>Spacing</SectionHeader>
               <NumberInput
                 label="Line Height"
-                value={currentTemplate.typography?.lineHeight}
-                onChange={(v) => updateTemplate('typography.lineHeight', v)}
+                value={type.lineHeight}
+                onChange={setSize('lineHeight')}
                 min={1}
                 max={2}
+                step={0.1}
                 unit=""
               />
             </div>
-          )}
+            );
+          })()}
 
           {/* Sections Tab */}
           {activeTab === 'sections' && (
