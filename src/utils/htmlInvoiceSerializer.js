@@ -64,26 +64,24 @@ export function serializeInvoiceHtml(element) {
   const hiddenElements = cloned.querySelectorAll('.print-hidden, button, [data-no-print]');
   hiddenElements.forEach((el) => el.remove());
 
-  // Apply print chrome on the clone itself (inline) so backend Chromium cannot
-  // miss stylesheet overrides. Classic already uses full-bleed letterhead + 7mm
-  // body inset on screen; non-classic still needs this padding swap.
+  // Classic print chrome only (full-bleed letterhead + 7mm body inset).
+  // Non-classic keeps in-body .invoice-first-page-header and sheet padding.
   cloned.querySelectorAll('.invoice-sheet').forEach((sheet) => {
-    sheet.style.padding = '0 0 10mm 0';
     sheet.style.overflow = 'visible';
     sheet.style.boxSizing = 'border-box';
+    if (sheet.querySelector('.invoice-print-shell[data-print-theme="classic"]')) {
+      sheet.style.padding = '0 0 10mm 0';
+    }
   });
-  cloned.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
+  cloned.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td').forEach((el) => {
     el.style.padding = '0 7mm';
     el.style.border = 'none';
     el.style.overflow = 'visible';
   });
-  cloned.querySelectorAll('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header').forEach((el) => {
-    el.style.display = 'none';
-  });
-  cloned.querySelectorAll('.invoice-continuation-header').forEach((el) => {
+  cloned.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header').forEach((el) => {
     el.style.display = 'table-row';
   });
-  cloned.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
+  cloned.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td').forEach((el) => {
     el.style.padding = '0 0 3mm 0';
     el.style.border = 'none';
   });
@@ -124,7 +122,7 @@ export function serializeInvoiceHtml(element) {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* A4 sheet; seller letterhead in thead repeats every page; footer flows under totals */
+    /* A4 sheet; Classic thead letterhead repeats every page; footer flows under totals */
     .invoice-sheet {
       position: relative !important;
       display: flex !important;
@@ -134,13 +132,13 @@ export function serializeInvoiceHtml(element) {
       width: 210mm !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
-      /* Zero side padding so letterhead is edge-to-edge; light bottom pad only.
-         Body inset is applied on the print-shell content cell instead. */
-      padding: 0 0 10mm 0 !important;
-      padding-top: 0 !important;
       box-sizing: border-box !important;
       background-color: #ffffff !important;
       overflow: visible !important;
+    }
+    .invoice-sheet:has(.invoice-print-shell[data-print-theme="classic"]) {
+      padding: 0 0 10mm 0 !important;
+      padding-top: 0 !important;
     }
     .invoice-sheet-body,
     .invoice-sheet .flex-1 {
@@ -157,15 +155,10 @@ export function serializeInvoiceHtml(element) {
       break-inside: auto !important;
       page-break-inside: auto !important;
     }
-    /* Non-classic: swap in-body seller chrome for the repeating thead.
-       Classic uses the same thead letterhead on screen and print. */
-    .invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header {
-      display: none !important;
-    }
-    .invoice-continuation-header {
+    .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
       display: table-row !important;
     }
-    .invoice-continuation-header > td {
+    .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
       /* Slight white gap under letterhead before body (items or bank/totals on page break) */
       padding: 0 0 3mm 0 !important;
       border: none !important;
@@ -183,8 +176,7 @@ export function serializeInvoiceHtml(element) {
       width: 100% !important;
       box-sizing: border-box !important;
     }
-    /* Restore Classic 7mm body inset (sheet padding removed for full-bleed header) */
-    .invoice-print-shell-row > td {
+    .invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td {
       padding: 0 7mm !important;
       border: none !important;
       overflow: visible !important;

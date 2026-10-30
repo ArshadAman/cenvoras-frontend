@@ -8,7 +8,7 @@ import ClassicLetterhead from './ClassicLetterhead';
  * and repeats on page 2+.
  *
  * Classic: visible on screen and print (same ClassicLetterhead markup).
- * Other themes: hidden on screen; print shows this and hides
+ * Other themes: stay hidden so print/PDF keep the in-body
  * .invoice-first-page-header. Does NOT include invoice title / bill-to.
  */
 export default function InvoiceContinuationHeader({
