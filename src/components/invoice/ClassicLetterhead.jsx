@@ -18,12 +18,14 @@ export default function ClassicLetterhead({
   companyNameColor = '#d11f1f',
   companyNameSize = 24,
   fontFamily,
+  companyAddressSize,
   smallSize = 9,
   showGST = true,
   showGEMID = false,
 }) {
   const gstLabel = getCountryCode() === 'IN' ? 'GSTIN' : 'TRN';
-  const idSize = smallSize + 1;
+  const addressSize = companyAddressSize || smallSize;
+  const idSize = addressSize + 1;
   const contactLine = [
     companyPhone ? `Ph- ${companyPhone}` : null,
     companyEmail ? `email-${companyEmail}` : null,
@@ -59,7 +61,7 @@ export default function ClassicLetterhead({
           >
             {companyName}
           </div>
-          <div style={{ color: '#1f2937', fontSize: `${smallSize}px`, lineHeight: 1.35, fontWeight: 400 }}>
+          <div style={{ color: '#1f2937', fontSize: `${addressSize}px`, lineHeight: 1.35, fontWeight: 400 }}>
             {companyAddress ? (
               <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
             ) : null}

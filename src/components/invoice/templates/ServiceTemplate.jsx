@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
-import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -11,6 +11,7 @@ const ServiceTemplate = forwardRef(({
 }, ref) => {
   const colors = template.colors || {};
   const typography = template.typography || {};
+  const type = resolveTypography(typography);
   const sections = template.sections || {};
   const content = template.content || {};
   const columns = template.columns || [];
@@ -98,7 +99,7 @@ const ServiceTemplate = forwardRef(({
       style={{
         width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '8mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
-        fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif', fontSize: `${typography.bodySize || 10}px`,
+        fontFamily: type.fontFamily, fontSize: `${type.bodySize}px`, lineHeight: type.lineHeight,
         ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
         border: `3px solid ${primaryColor}`, borderRadius: 0,
         display: 'flex',
@@ -119,6 +120,10 @@ const ServiceTemplate = forwardRef(({
           companyDL: businessInfo.dl_number || businessInfo.drug_license_number || '',
           companyNameColor: primaryColor || '#d11f1f',
           primaryColor: primaryColor || '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          companyAddressSize: type.companyAddressSize,
+          fontFamily: type.headerFont,
+          smallSize: type.smallSize,
           companyLogo: template.branding?.logo || '',
           showLogo: Boolean(sections.showLogo && template.branding?.logo),
         }}
@@ -128,21 +133,23 @@ const ServiceTemplate = forwardRef(({
           {sections.showLogo && template.branding?.logo && (
              <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 50 }} className="mb-4" />
           )}
-          <h1 className="font-bold text-2xl mb-1 uppercase tracking-tight" style={{ color: primaryColor }}>{companyName}</h1>
-          {sections.showGST && businessInfo.gstin && <p className="font-bold text-xs text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
-          {businessInfo.pan_number && <p className="font-bold text-xs text-gray-700">PAN: {businessInfo.pan_number}</p>}
-          {businessInfo.gem_id && <p className="font-bold text-xs text-gray-700">GeM ID: {businessInfo.gem_id}</p>}
-          {businessInfo.drug_license_number && <p className="font-bold text-xs text-gray-700">DL No: {businessInfo.drug_license_number}</p>}
-          <p className="whitespace-pre-line text-gray-600 text-xs mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
+          <h1 className="font-bold mb-1 uppercase tracking-tight" style={{ color: primaryColor, fontSize: `${type.companyNameSize}px` }}>{companyName}</h1>
+          <div style={{ fontSize: `${type.companyAddressSize}px` }}>
+          {sections.showGST && businessInfo.gstin && <p className="font-bold text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+          {businessInfo.pan_number && <p className="font-bold text-gray-700">PAN: {businessInfo.pan_number}</p>}
+          {businessInfo.gem_id && <p className="font-bold text-gray-700">GeM ID: {businessInfo.gem_id}</p>}
+          {businessInfo.drug_license_number && <p className="font-bold text-gray-700">DL No: {businessInfo.drug_license_number}</p>}
+          </div>
+          <p className="whitespace-pre-line text-gray-600 mt-2 leading-relaxed" style={{ maxWidth: '300px', fontSize: `${type.companyAddressSize}px` }}>{companyAddress}</p>
           {(businessInfo.phone || businessInfo.email) && (
-            <p className="text-gray-600 text-xs mt-1 font-medium">
+            <p className="text-gray-600 mt-1 font-medium" style={{ fontSize: `${type.companyAddressSize}px` }}>
               {businessInfo.phone ? `Mobile: +91 ${businessInfo.phone}` : ''}
               {businessInfo.email ? ` | Email: ${businessInfo.email}` : ''}
             </p>
           )}
         </div>
         <div className="text-right">
-          <h2 className="text-3xl font-black tracking-tighter mb-1" style={{ color: primaryColor }}>
+          <h2 className="font-black tracking-tighter mb-1" style={{ color: primaryColor, fontSize: `${type.invoiceTitleSize}px` }}>
             {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}
           </h2>
           <p className="text-gray-900 font-bold text-sm">
@@ -153,13 +160,13 @@ const ServiceTemplate = forwardRef(({
 
       <div className="flex mb-8 border-y-2 py-6" style={{ borderColor: '#f3f4f6' }}>
         <div className="w-1/2">
-          <h3 className="font-bold text-gray-700 text-xs uppercase tracking-widest mb-2">Bill To:</h3>
-          <p className="font-bold text-lg text-gray-900 leading-none mb-1">{customerName}</p>
-          <p className="whitespace-pre-line text-gray-600 text-sm leading-relaxed">{billingAddress}</p>
+          <h3 className="font-bold text-gray-700 uppercase tracking-widest mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bill To:</h3>
+          <p className="font-bold text-gray-900 leading-none mb-1" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+          <p className="whitespace-pre-line text-gray-600 leading-relaxed" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
           <PlaceOfSupplyLine invoice={invoice} showDelivery className="text-xs text-gray-800 mt-1" />
         </div>
-        <div className="w-1/2 space-y-2 text-sm pl-12 border-l border-gray-100">
+        <div className="w-1/2 space-y-2 pl-12 border-l border-gray-100" style={{ fontSize: `${type.bodySize}px` }}>
           <div className="flex justify-between">
             <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">
               {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'}
@@ -204,10 +211,10 @@ const ServiceTemplate = forwardRef(({
               {visibleColumns.map(col => (
                 <th 
                   key={col.id} 
-                  className={`py-3 px-2 text-xs font-black text-gray-900 uppercase tracking-widest ${
+                  className={`py-3 px-2 font-black text-gray-900 uppercase tracking-widest ${
                     ['quantity', 'price', 'amount', 'tax', 'discount'].includes(col.id) ? 'text-right' : ''
                   }`}
-                  style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap' }}
+                  style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}
                 >
                   {col.id === 'serial' ? 'Sl.' : col.label}
                 </th>
@@ -219,7 +226,7 @@ const ServiceTemplate = forwardRef(({
               if (item.row_type === 'note') {
                 return (
                   <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
-                    <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-xs text-gray-700 italic font-medium">
+                    <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-gray-700 italic font-medium" style={{ fontSize: `${type.smallSize}px` }}>
                       Note: {item.description || item.product_description || item.product || ''}
                     </td>
                   </tr>
@@ -298,7 +305,7 @@ const ServiceTemplate = forwardRef(({
                         paddingRight: '8px',
                         margin: 0,
                         lineHeight: 1.2,
-                        fontSize: '12px',
+                        fontSize: `${type.tableBodySize}px`,
                         textAlign: col.id === 'description' ? 'left' : ['price', 'amount'].includes(col.id) ? 'right' : 'center',
                         verticalAlign: 'middle',
                       }}
@@ -319,8 +326,8 @@ const ServiceTemplate = forwardRef(({
           <div className="w-1/2 pr-8">
             {sections.showBankDetails && hasBankDetails && (
               <div className="mb-4 flex items-start gap-4">
-                <div className="text-xs text-gray-700 leading-relaxed flex-1">
-                  <p className="font-bold text-gray-900 mb-1">Bank Details:</p>
+                <div className="text-gray-700 leading-relaxed flex-1" style={{ fontSize: `${type.bankDetailsSize}px` }}>
+                  <p className="font-bold text-gray-900 mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bank Details:</p>
                   {bankName && <p>Bank: {bankName}</p>}
                   {bankAccount && <p>Account #: {bankAccount}</p>}
                   {bankIfsc && <p>IFSC: {bankIfsc}</p>}
@@ -343,7 +350,7 @@ const ServiceTemplate = forwardRef(({
           </div>
 
           <div className="w-[40%]">
-            <table className="w-full text-sm text-right">
+            <table className="w-full text-right" style={{ fontSize: `${type.totalsSize}px` }}>
               <tbody>
                 <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
                 {isIGST ? (
@@ -375,22 +382,22 @@ const ServiceTemplate = forwardRef(({
         <div className="flex justify-between gap-6 mt-8 border-t border-gray-300 pt-4">
           {sections.showTerms && (
             <div className="flex-1 pr-4">
-              <p className="font-bold text-gray-900 text-xs mb-1">Notes:</p>
-              <p className="text-gray-700 text-xs mb-3">{content.footerNote || 'Thank you for the Business!'}</p>
-              <p className="font-bold text-gray-900 text-xs mb-1">Terms and Conditions:</p>
-              <ol className="text-xs text-gray-600 pl-4 list-decimal space-y-0.5">
+              <p className="font-bold text-gray-900 mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Notes:</p>
+              <p className="text-gray-700 mb-3" style={{ fontSize: `${type.footerSize}px` }}>{content.footerNote || 'Thank you for the Business!'}</p>
+              <p className="font-bold text-gray-900 mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Terms and Conditions:</p>
+              <ol className="text-gray-600 pl-4 list-decimal space-y-0.5" style={{ fontSize: `${type.footerSize}px` }}>
                 {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
               </ol>
             </div>
           )}
           <div className="text-right ml-auto pt-2">
-            <p className="text-xs font-bold text-gray-600 mb-8">For {companyName}</p>
-            <p className="text-xs text-gray-700 font-semibold border-t border-gray-400 inline-block w-48 text-center pt-1">
+            <p className="font-bold text-gray-600 mb-8" style={{ fontSize: `${type.footerSize}px` }}>For {companyName}</p>
+            <p className="text-gray-700 font-semibold border-t border-gray-400 inline-block w-48 text-center pt-1" style={{ fontSize: `${type.footerSize}px` }}>
               {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
             </p>
           </div>
         </div>
-        <div className="w-full text-center mt-6 text-xs text-gray-700 font-medium">
+        <div className="w-full text-center mt-6 text-gray-700 font-medium" style={{ fontSize: `${type.footerSize}px` }}>
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'
             : 'This is a computer generated digital invoice and does not require a signature.'}

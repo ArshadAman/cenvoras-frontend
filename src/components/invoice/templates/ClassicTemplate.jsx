@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
-import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -69,10 +69,11 @@ const InvoicePreview = forwardRef(({
   const shippingLines = hasSeparateShipping
     ? shippingAddress.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
     : [];
-  const sectionHeadingSize = (typography.sectionTitleSize || 12) + 2;
-  const addressBodySize = (typography.bodySize || 11) + 1;
-  const customerNameSize = (typography.bodySize || 11) + 1;
-  const docTitleSize = (typography.invoiceTitleSize || 20) + 2;
+  const type = resolveTypography(typography);
+  const sectionHeadingSize = type.sectionTitleSize;
+  const addressBodySize = type.addressSize;
+  const customerNameSize = type.customerNameSize;
+  const docTitleSize = type.invoiceTitleSize;
   
   // Tax type determination
   const taxType = getTaxType(invoice, businessInfo);
@@ -113,9 +114,9 @@ const InvoicePreview = forwardRef(({
 
   // Dynamic styles
   const paperStyle = {
-    fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif',
-    fontSize: `${typography.bodySize || 11}px`,
-    lineHeight: typography.lineHeight || 1.5,
+    fontFamily: type.fontFamily,
+    fontSize: `${type.bodySize}px`,
+    lineHeight: type.lineHeight,
     backgroundColor: colors.background || '#ffffff',
     color: colors.text || '#333333',
     ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
@@ -129,8 +130,8 @@ const InvoicePreview = forwardRef(({
   
   const headerStyle = {
     color: colors.primary || '#1a1a2e',
-    fontSize: `${typography.companyNameSize || 24}px`,
-    fontFamily: typography.headerFont || typography.fontFamily,
+    fontSize: `${type.companyNameSize}px`,
+    fontFamily: type.headerFont,
   };
   
   const tableHeaderStyle = {
@@ -222,9 +223,10 @@ const InvoicePreview = forwardRef(({
           companyGEM,
           companyDL,
           companyNameColor: '#d11f1f',
-          companyNameSize: typography.companyNameSize || 24,
-          fontFamily: typography.headerFont || typography.fontFamily,
-          smallSize: typography.smallSize || 9,
+          companyNameSize: type.companyNameSize,
+          fontFamily: type.headerFont,
+          companyAddressSize: type.companyAddressSize,
+          smallSize: type.smallSize,
           showGST: sections.showGST !== false,
           showGEMID: Boolean(sections.showGEMID),
         }}
@@ -301,7 +303,7 @@ const InvoicePreview = forwardRef(({
           )}
           
           {/* Company Details */}
-          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${typography.smallSize || 9}px` }}>
+          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${type.companyAddressSize}px` }}>
             {companyAddress && <p className="whitespace-pre-line">{companyAddress}</p>}
             {companyPhone && <p>Ph: {companyPhone}</p>}
             {companyEmail && <p>Email: {companyEmail}</p>}
@@ -311,13 +313,13 @@ const InvoicePreview = forwardRef(({
           </div>
           </div>
           <div className="text-right flex-1">
-          <div className="mb-2" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+          <div className="mb-2" style={{ color: colors.secondary, fontSize: `${type.sectionTitleSize}px` }}>
             <span className="font-semibold">BILL TO</span>
           </div>
           <div className="font-bold text-base mb-1" style={{ color: colors.primary }}>
             {customerName}
           </div>
-          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${typography.smallSize || 9}px` }}>
+          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${type.addressSize}px` }}>
             {customerAddress && <p className="whitespace-pre-line">{customerAddress}</p>}
             {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
             <PlaceOfSupplyLine invoice={invoice} showDelivery />
@@ -339,7 +341,7 @@ const InvoicePreview = forwardRef(({
           {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}
         </h2>
         {content.invoiceSubtitle && (
-          <p className="text-sm mt-1" style={{ color: colors.lightText }}>
+          <p className="mt-1" style={{ color: colors.lightText, fontSize: `${type.bodySize}px` }}>
             {content.invoiceSubtitle}
           </p>
         )}
@@ -347,7 +349,7 @@ const InvoicePreview = forwardRef(({
       
       {/* Invoice / Challan Details Row */}
       {isDeliveryChallan ? (
-        <div className="flex justify-between mb-2 text-sm">
+        <div className="flex justify-between mb-2" style={{ fontSize: `${type.bodySize}px` }}>
           <div className="space-y-1">
             <div>
               <span className="font-medium">Challan #:</span>{' '}
@@ -386,7 +388,7 @@ const InvoicePreview = forwardRef(({
           </div>
         </div>
       ) : (
-        <div className="mb-2 text-sm space-y-1">
+        <div className="mb-2 space-y-1" style={{ fontSize: `${type.bodySize}px` }}>
           <div className="flex justify-between gap-4 items-baseline">
             <div>
               <span className="font-medium">Invoice No. :</span>{' '}
@@ -454,7 +456,7 @@ const InvoicePreview = forwardRef(({
                       width: getColumnWidth(col.id),
                       textAlign: 'center',
                       borderColor: colors.tableBorder,
-                      fontSize: `${typography.smallSize || 10}px`,
+                      fontSize: `${type.tableHeaderSize}px`,
                       paddingLeft: '8px',
                       paddingRight: '8px',
                       whiteSpace: isDesc ? 'normal' : 'nowrap',
@@ -474,8 +476,8 @@ const InvoicePreview = forwardRef(({
                     <tr key={index} style={{ backgroundColor: '#fbfbfb' }}>
                       <td
                         colSpan={visibleColumns.length}
-                        className="border px-2 py-1.5 text-xs text-slate-700 italic text-left font-medium"
-                        style={{ borderColor: colors.tableBorder }}
+                        className="border px-2 py-1.5 text-slate-700 italic text-left font-medium"
+                        style={{ borderColor: colors.tableBorder, fontSize: `${type.smallSize}px` }}
                       >
                         Note: {item.description || item.product_description || item.product || ''}
                       </td>
@@ -540,7 +542,7 @@ const InvoicePreview = forwardRef(({
                             paddingRight: '8px',
                             margin: 0,
                             lineHeight: 1.2,
-                            fontSize: '12px',
+                            fontSize: `${type.tableBodySize}px`,
                             textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
                             borderColor: colors.tableBorder,
                             wordBreak: isDesc ? 'break-word' : 'normal',
@@ -558,12 +560,12 @@ const InvoicePreview = forwardRef(({
                                 </div>
                               )}
                               {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
-                                <div className="whitespace-pre-line" style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
+                                <div className="whitespace-pre-line" style={{ fontSize: `${type.smallSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
                                   {item.description || item.product_description || item.product_detail?.description}
                                 </div>
                               ) : null}
                               {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                                <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
+                                <div style={{ fontSize: `${type.smallSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
                                   {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                                   {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                                   {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -600,14 +602,14 @@ const InvoicePreview = forwardRef(({
                 className="font-bold mb-1 pb-0.5"
                 style={{ 
                   color: colors.secondary,
-                  fontSize: `${typography.sectionTitleSize || 12}px`,
+                  fontSize: `${type.sectionTitleSize}px`,
                   borderBottom: `1px solid ${colors.tableBorder}`,
                 }}
               >
                 Our Bank Details:
               </h4>
               <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1" style={{ color: colors.lightText, fontSize: '12px' }}>
+                <div className="space-y-1" style={{ color: colors.lightText, fontSize: `${type.bankDetailsSize}px` }}>
                   {bankName && (
                     <p><span className="font-medium">Bank Name:</span> {bankName}</p>
                   )}
@@ -640,7 +642,7 @@ const InvoicePreview = forwardRef(({
           
           {/* Totals - Right */}
           <div className="w-80">
-            <table className="w-full border-collapse text-sm">
+            <table className="w-full border-collapse" style={{ fontSize: `${type.totalsSize}px` }}>
               <tbody>
                 <tr>
                   <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
@@ -681,7 +683,7 @@ const InvoicePreview = forwardRef(({
                   <td className="px-3 py-1.5 border font-bold">
                     Grand Total
                   </td>
-                  <td className="px-3 py-1.5 border text-right font-bold text-lg">
+                  <td className="px-3 py-1.5 border text-right font-bold">
                     {getCurrencySymbol()}{finalTotal.toFixed(2)}
                   </td>
                 </tr>
@@ -690,7 +692,7 @@ const InvoicePreview = forwardRef(({
             
             {/* Amount in Words */}
             {sections.showAmountInWords && (
-              <div className="mt-1 text-sm text-right" style={{ color: colors.lightText }}>
+              <div className="mt-1 text-right" style={{ color: colors.lightText, fontSize: `${type.totalsSize}px` }}>
                 <span className="font-medium">Total amount in words:</span>
                 <br />
                 <span className="font-medium italic" style={{ color: colors.text }}>
@@ -711,12 +713,12 @@ const InvoicePreview = forwardRef(({
                 className="font-bold mb-1"
                 style={{
                   color: colors.secondary,
-                  fontSize: `${typography.sectionTitleSize || 12}px`,
+                  fontSize: `${type.sectionTitleSize}px`,
                 }}
               >
                 Terms & Conditions
               </h4>
-              <ul className="space-y-1 text-xs" style={{ color: colors.lightText }}>
+              <ul className="space-y-1" style={{ color: colors.lightText, fontSize: `${type.footerSize}px` }}>
                 {content.termsAndConditions.map((term, i) => (
                   <li key={i}>• {term}</li>
                 ))}
@@ -729,7 +731,7 @@ const InvoicePreview = forwardRef(({
               className="border-b-2 mb-1 h-10"
               style={{ borderColor: colors.text }}
             />
-            <p className="text-xs font-medium" style={{ color: colors.secondary }}>
+            <p className="font-medium" style={{ color: colors.secondary, fontSize: `${type.footerSize}px` }}>
               {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
             </p>
           </div>
@@ -737,17 +739,18 @@ const InvoicePreview = forwardRef(({
 
         {content.footerNote && (
           <div
-            className="text-center mt-3 pt-2 text-xs"
+            className="text-center mt-3 pt-2"
             style={{
               color: colors.lightText,
               borderTop: `1px dashed ${colors.tableBorder}`,
+              fontSize: `${type.footerSize}px`,
             }}
           >
             {content.footerNote}
           </div>
         )}
 
-        <div className="mt-3 pt-2 text-center text-xs text-gray-500 font-medium">
+        <div className="mt-3 pt-2 text-center text-gray-500 font-medium" style={{ fontSize: `${type.footerSize}px` }}>
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'
             : 'This is a computer generated digital invoice and does not require a signature.'}

@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { posLabel } from '../../../utils/constants';
-import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -12,6 +12,7 @@ const LegendTemplate = forwardRef(({
 }, ref) => {
   const colors = template.colors || {};
   const typography = template.typography || {};
+  const type = resolveTypography(typography);
   const sections = template.sections || {};
   const content = template.content || {};
   const columns = template.columns || [];
@@ -82,7 +83,7 @@ const LegendTemplate = forwardRef(({
       style={{
         width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '4mm 3px', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#000000',
-        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
+        fontFamily: type.fontFamily, fontSize: `${type.bodySize}px`, lineHeight: type.lineHeight,
         ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
         display: 'flex',
         flexDirection: 'column',
@@ -102,6 +103,10 @@ const LegendTemplate = forwardRef(({
           companyDL: businessInfo.dl_number || '',
           companyNameColor: colors.primary || '#d11f1f',
           primaryColor: colors.primary || '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          companyAddressSize: type.companyAddressSize,
+          fontFamily: type.headerFont,
+          smallSize: type.smallSize,
           companyLogo: template.branding?.logo || '',
           showLogo: Boolean(sections.showLogo && template.branding?.logo),
         }}
@@ -114,17 +119,19 @@ const LegendTemplate = forwardRef(({
               <img src={template.branding.logo} alt="Logo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
             )}
             <div>
-              <h1 className="font-bold text-lg mb-0.5" style={{ color: colors.primary }}>{companyName}</h1>
+              <h1 className="font-bold mb-0.5" style={{ color: colors.primary, fontSize: `${type.companyNameSize}px` }}>{companyName}</h1>
+              <div style={{ fontSize: `${type.companyAddressSize}px` }}>
               <p className="whitespace-pre-line leading-snug">{companyAddress}</p>
               {sections.showGST && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin || '-'}</p>}
               {(businessInfo.pan_number || businessInfo.pan) && <p className="font-bold">PAN: {businessInfo.pan_number || businessInfo.pan}</p>}
-              {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p className="text-xs">GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
-              {(businessInfo.dl_number || invoice.dl_number) && <p className="text-xs">DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
+              {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p>GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
+              {(businessInfo.dl_number || invoice.dl_number) && <p>DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
+              </div>
               {invoice.customer_phone && <p>Mobile: {invoice.customer_phone}</p>}
             </div>
           </div>
           <div className="p-4 w-1/3 text-right">
-            <h2 className="text-xl font-bold tracking-widest">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
+            <h2 className="font-bold tracking-widest" style={{ fontSize: `${type.invoiceTitleSize}px` }}>{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1">Original for Recipient</p>
           </div>
         </div>
@@ -132,11 +139,11 @@ const LegendTemplate = forwardRef(({
         {/* Info Blocks Grid */}
         <div className="flex border-b" style={{ borderColor }}>
           <div className="w-1/2 p-3 border-r" style={{ borderColor }}>
-             <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Customer Details:</p>
-             <p className="font-semibold text-gray-900">{customerName}</p>
+             <p className="font-bold uppercase tracking-wider text-gray-500 mb-0.5" style={{ fontSize: `${type.sectionTitleSize}px` }}>Customer Details:</p>
+             <p className="font-semibold text-gray-900" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
              {invoice.customer_gstin && <p className="font-medium text-xs mt-0.5">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
              <PlaceOfSupplyLine invoice={invoice} showDelivery hidePos className="text-xs mt-0.5" />
-             <p className="whitespace-pre-line mt-0.5 text-xs text-gray-600 leading-snug">{billingAddress}</p>
+             <p className="whitespace-pre-line mt-0.5 text-gray-600 leading-snug" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           </div>
           <div className="w-1/2 flex flex-col justify-between">
              <div className="flex border-b flex-1" style={{ borderColor }}>
@@ -207,8 +214,8 @@ const LegendTemplate = forwardRef(({
                   return (
                     <th 
                       key={col.id} 
-                      className={`py-2 text-xs font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
-                      style={{ width: colWidth, whiteSpace: 'nowrap' }}
+                      className={`py-2 font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
+                      style={{ width: colWidth, whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}
                     >
                       {col.id === 'serial' ? 'Sl.' : col.label}
                     </th>
@@ -221,7 +228,7 @@ const LegendTemplate = forwardRef(({
                 if (item.row_type === 'note') {
                   return (
                     <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
-                      <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-xs text-gray-700 italic font-medium">
+                      <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-gray-700 italic font-medium" style={{ fontSize: `${type.smallSize}px` }}>
                         Note: {item.description || item.product_description || item.product || ''}
                       </td>
                     </tr>
@@ -298,7 +305,7 @@ const LegendTemplate = forwardRef(({
                         paddingRight: '8px',
                         margin: 0, 
                         lineHeight: 1.2, 
-                        fontSize: '12px', 
+                        fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
                         verticalAlign: 'middle' 
                       }}
@@ -333,8 +340,8 @@ const LegendTemplate = forwardRef(({
                  {sections.showBankDetails && hasBankDetails && (
                    <div className="flex items-start justify-between gap-3 mt-2 bg-gray-50/60 p-2.5 rounded border border-gray-100">
                      <div>
-                       <h4 className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Bank Details:</h4>
-                       <table className="text-xs">
+                       <h4 className="font-bold border-b border-gray-300 inline-block mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bank Details:</h4>
+                       <table style={{ fontSize: `${type.bankDetailsSize}px` }}>
                          <tbody>
                            {bankName && <tr><td className="pr-4 py-0.5 text-gray-600">Bank:</td><td className="font-semibold">{bankName}</td></tr>}
                            {bankAccount && <tr><td className="pr-4 py-0.5 text-gray-600">Account #:</td><td className="font-semibold font-mono">{bankAccount}</td></tr>}
@@ -362,7 +369,7 @@ const LegendTemplate = forwardRef(({
             
             {/* Totals Block — stays under table */}
             <div className="w-2/5 flex flex-col">
-               <div className="p-3 text-xs space-y-1">
+               <div className="p-3 space-y-1" style={{ fontSize: `${type.totalsSize}px` }}>
                  <div className="flex justify-between items-center py-0.5">
                    <span className="font-semibold text-gray-700 whitespace-nowrap">Taxable Amount</span>
                    <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
@@ -407,24 +414,24 @@ const LegendTemplate = forwardRef(({
             <div className="flex-1">
               {content.footerNote && (
                 <>
-                  <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Notes:</p>
-                  <p className="mb-2 text-xs">{content.footerNote}</p>
+                  <p className="font-bold border-b border-gray-300 inline-block mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Notes:</p>
+                  <p className="mb-2" style={{ fontSize: `${type.footerSize}px` }}>{content.footerNote}</p>
                 </>
               )}
-              <p className="font-bold border-b border-gray-300 inline-block mb-1 text-xs">Terms & Conditions:</p>
-              <ul className="list-decimal pl-4 space-y-0.5 text-xs text-gray-600">
+              <p className="font-bold border-b border-gray-300 inline-block mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Terms & Conditions:</p>
+              <ul className="list-decimal pl-4 space-y-0.5 text-gray-600" style={{ fontSize: `${type.footerSize}px` }}>
                 {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
               </ul>
             </div>
           )}
-          <div className="text-right text-xs p-3 ml-auto">
+          <div className="text-right p-3 ml-auto" style={{ fontSize: `${type.footerSize}px` }}>
             <p className="font-bold mb-10">For {companyName}</p>
             <p className="border-t border-gray-400 inline-block pt-1">
               {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
             </p>
           </div>
         </div>
-        <div className="mt-2 text-center text-xs text-gray-500 font-medium w-full">
+        <div className="mt-2 text-center text-gray-500 font-medium w-full" style={{ fontSize: `${type.footerSize}px` }}>
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'
             : 'This is a computer generated digital invoice and does not require a signature.'}

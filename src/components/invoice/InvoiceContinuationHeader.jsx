@@ -27,6 +27,7 @@ export default function InvoiceContinuationHeader({
   companyNameColor = '#d11f1f',
   companyNameSize = 18,
   fontFamily,
+  companyAddressSize,
   smallSize = 9,
   showGST = true,
   showGEMID = false,
@@ -34,6 +35,7 @@ export default function InvoiceContinuationHeader({
 }) {
   const gstLabel = getCountryCode() === 'IN' ? 'GSTIN' : 'TRN';
   const accent = primaryColor || companyNameColor || '#d11f1f';
+  const addressSize = companyAddressSize || smallSize;
   const contactLine = [
     companyPhone ? `Ph- ${companyPhone}` : null,
     companyEmail ? `email-${companyEmail}` : null,
@@ -41,7 +43,7 @@ export default function InvoiceContinuationHeader({
     .filter(Boolean)
     .join(', ');
 
-  const idLineStyle = { fontWeight: 700, fontSize: '10px' };
+  const idLineStyle = { fontWeight: 700, fontSize: `${addressSize + 1}px` };
   const taxLines = (
     <>
       {companyGST ? (
@@ -76,7 +78,7 @@ export default function InvoiceContinuationHeader({
           <div style={{ fontWeight: 700, fontSize: `${companyNameSize}px`, color: accent, lineHeight: 1.25 }}>
             {companyName}
           </div>
-          <div style={{ color: '#1f2937', fontSize: '9px', lineHeight: 1.35 }}>
+          <div style={{ color: '#1f2937', fontSize: `${addressSize}px`, lineHeight: 1.35 }}>
             {companyAddress ? (
               <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
             ) : null}
@@ -115,7 +117,7 @@ export default function InvoiceContinuationHeader({
           <div style={{ fontWeight: 800, fontSize: `${companyNameSize}px`, color: '#111827', lineHeight: 1.25 }}>
             {companyName}
           </div>
-          <div style={{ color: '#4b5563', fontSize: '9px', lineHeight: 1.35 }}>
+          <div style={{ color: '#4b5563', fontSize: `${addressSize}px`, lineHeight: 1.35 }}>
             {companyAddress ? (
               <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
             ) : null}
@@ -133,7 +135,7 @@ export default function InvoiceContinuationHeader({
         <div
           style={{
             fontWeight: 700,
-            fontSize: `${Math.max(companyNameSize, theme === 'service' ? 18 : 16)}px`,
+            fontSize: `${companyNameSize}px`,
             color: accent,
             lineHeight: 1.25,
             marginBottom: 4,
@@ -143,7 +145,7 @@ export default function InvoiceContinuationHeader({
         >
           {companyName}
         </div>
-        <div style={{ color: '#4b5563', fontSize: '9px', lineHeight: 1.35, maxWidth: '70%' }}>
+        <div style={{ color: '#4b5563', fontSize: `${addressSize}px`, lineHeight: 1.35, maxWidth: '70%' }}>
           {companyAddress ? (
             <div style={{ whiteSpace: 'pre-line', marginBottom: 2 }}>{companyAddress}</div>
           ) : null}
@@ -166,6 +168,7 @@ export default function InvoiceContinuationHeader({
         companyNameColor={companyNameColor}
         companyNameSize={companyNameSize}
         fontFamily={fontFamily}
+        companyAddressSize={addressSize}
         smallSize={smallSize}
         showGST={showGST}
         showGEMID={showGEMID}

@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
-import { amountInWords, formatLinkedChallanList } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import InvoicePrintShell from '../InvoicePrintShell';
@@ -11,6 +11,7 @@ const BillShipTemplate = forwardRef(({
 }, ref) => {
   const colors = template.colors || {};
   const typography = template.typography || {};
+  const type = resolveTypography(typography);
   const sections = template.sections || {};
   const content = template.content || {};
   const columns = template.columns || [];
@@ -81,7 +82,7 @@ const BillShipTemplate = forwardRef(({
       style={{
         width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '8mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
-        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
+        fontFamily: type.fontFamily, fontSize: `${type.bodySize}px`, lineHeight: type.lineHeight,
         ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
         border: `4px solid ${colors.accent || '#3b82f6'}`, borderRadius: 0,
         display: 'flex',
@@ -102,6 +103,10 @@ const BillShipTemplate = forwardRef(({
           companyDL: businessInfo.dl_number || '',
           companyNameColor: colors.accent || colors.primary || '#d11f1f',
           primaryColor: colors.accent || colors.primary || '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          companyAddressSize: type.companyAddressSize,
+          fontFamily: type.headerFont,
+          smallSize: type.smallSize,
           companyLogo: template.branding?.logo || '',
           showLogo: Boolean(sections.showLogo && template.branding?.logo),
         }}
@@ -113,22 +118,24 @@ const BillShipTemplate = forwardRef(({
              <img src={template.branding.logo} alt="Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} className="p-2 border border-gray-200 rounded-lg" />
            )}
            <div>
-             <h1 className="font-extrabold text-xl mb-1">{companyName}</h1>
-             <p className="whitespace-pre-line text-xs text-gray-600 mb-1">{companyAddress}</p>
-             {sections.showGST && businessInfo.gstin && <p className="font-bold text-xs uppercase text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
-             {(businessInfo.pan_number || businessInfo.pan) && <p className="font-bold text-xs uppercase text-gray-700">PAN: {businessInfo.pan_number || businessInfo.pan}</p>}
-             {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p className="text-xs text-gray-700">GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
-             {(businessInfo.dl_number || invoice.dl_number) && <p className="text-xs text-gray-700">DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
+             <h1 className="font-extrabold mb-1" style={{ fontSize: `${type.companyNameSize}px` }}>{companyName}</h1>
+             <div style={{ fontSize: `${type.companyAddressSize}px` }}>
+             <p className="whitespace-pre-line text-gray-600 mb-1">{companyAddress}</p>
+             {sections.showGST && businessInfo.gstin && <p className="font-bold uppercase text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+             {(businessInfo.pan_number || businessInfo.pan) && <p className="font-bold uppercase text-gray-700">PAN: {businessInfo.pan_number || businessInfo.pan}</p>}
+             {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p className="text-gray-700">GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
+             {(businessInfo.dl_number || invoice.dl_number) && <p className="text-gray-700">DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
+             </div>
              {invoice.customer_phone && <p className="font-bold text-xs text-gray-700 mt-1">Contact: {invoice.customer_phone}</p>}
            </div>
         </div>
         <div className="text-right">
-           <h2 className="text-xl font-bold tracking-widest">{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
-           <p className="text-xs font-semibold text-gray-500 uppercase mt-1">Original for Recipient</p>
-           <p className="text-sm font-bold mt-3">
+           <h2 className="font-bold tracking-widest" style={{ fontSize: `${type.invoiceTitleSize}px` }}>{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}</h2>
+           <p className="font-semibold text-gray-500 uppercase mt-1" style={{ fontSize: `${type.bodySize}px` }}>Original for Recipient</p>
+           <p className="font-bold mt-3" style={{ fontSize: `${type.bodySize}px` }}>
              {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
            </p>
-           <p className="text-sm">
+           <p style={{ fontSize: `${type.bodySize}px` }}>
              {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'} {isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}
            </p>
            {isDeliveryChallan ? (
@@ -165,15 +172,15 @@ const BillShipTemplate = forwardRef(({
       {/* Bill To Ships To side by side precisely */}
       <div className="flex border-b border-gray-300 pb-6 mb-6">
         <div className="w-1/2 pr-6">
-           <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2">Bill To:</h3>
-           <p className="font-bold text-base">{customerName}</p>
-           <p className="whitespace-pre-line text-gray-700 leading-snug mt-1">{billingAddress}</p>
+           <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bill To:</h3>
+           <p className="font-bold" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+           <p className="whitespace-pre-line text-gray-700 leading-snug mt-1" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
            {invoice.customer_gstin && <p className="font-bold text-xs mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
         </div>
         <div className="w-1/2 pl-6 border-l border-gray-300">
-           <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2">Ship To:</h3>
-           <p className="font-bold text-base">{customerName}</p>
-           <p className="whitespace-pre-line text-gray-700 leading-snug mt-1">{shippingAddress}</p>
+           <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>Ship To:</h3>
+           <p className="font-bold" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+           <p className="whitespace-pre-line text-gray-700 leading-snug mt-1" style={{ fontSize: `${type.addressSize}px` }}>{shippingAddress}</p>
            <PlaceOfSupplyLine invoice={invoice} className="font-bold text-gray-800 mt-2 text-xs" />
         </div>
       </div>
@@ -189,7 +196,7 @@ const BillShipTemplate = forwardRef(({
                 const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
                 const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '8%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
                 return (
-                  <th key={col.id} className={`py-2 text-xs font-bold uppercase tracking-widest text-gray-700 ${alignClass} ${!isLast ? 'border-r border-gray-300' : ''}`} style={{ width: colWidth, whiteSpace: 'nowrap' }}>
+                  <th key={col.id} className={`py-2 font-bold uppercase tracking-widest text-gray-700 ${alignClass} ${!isLast ? 'border-r border-gray-300' : ''}`} style={{ width: colWidth, whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}>
                     {col.id === 'serial' ? 'Sl.' : col.label}
                   </th>
                 );
@@ -201,7 +208,7 @@ const BillShipTemplate = forwardRef(({
               if (item.row_type === 'note') {
                 return (
                   <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
-                    <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-xs text-gray-700 italic font-medium">
+                    <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-gray-700 italic font-medium" style={{ fontSize: `${type.smallSize}px` }}>
                       Note: {item.description || item.product_description || item.product || ''}
                     </td>
                   </tr>
@@ -278,7 +285,7 @@ const BillShipTemplate = forwardRef(({
                       paddingRight: '8px',
                       margin: 0,
                       lineHeight: 1.2,
-                      fontSize: '12px',
+                      fontSize: `${type.tableBodySize}px`,
                       textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
                       verticalAlign: 'middle',
                     }}
@@ -299,8 +306,8 @@ const BillShipTemplate = forwardRef(({
           <div className="w-1/2 pr-6 border-r border-gray-200">
              {sections.showBankDetails && hasBankDetails && (
                <div className="mb-6">
-                  <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-900 underline underline-offset-4 decoration-gray-300">Bank Details:</p>
-                  <div className="flex items-start justify-between gap-3 text-xs text-gray-700 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                  <p className="font-bold uppercase tracking-wider mb-2 text-gray-900 underline underline-offset-4 decoration-gray-300" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bank Details:</p>
+                  <div className="flex items-start justify-between gap-3 text-gray-700 bg-gray-50/70 p-2.5 rounded border border-gray-100" style={{ fontSize: `${type.bankDetailsSize}px` }}>
                     <div className="space-y-0.5">
                       {bankName && <p><span className="font-semibold inline-block w-20">Bank:</span> {bankName}</p>}
                       {bankAccount && <p><span className="font-semibold inline-block w-20">Account #:</span> <span className="font-mono">{bankAccount}</span></p>}
@@ -327,9 +334,9 @@ const BillShipTemplate = forwardRef(({
              </div>
           </div>
 
-          <div className="w-1/2 pl-6 flex flex-col justify-between">
+          <div className="w-1/2 pl-6 flex flex-col justify-between" style={{ fontSize: `${type.totalsSize}px` }}>
              <div>
-               <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
+               <div className="flex justify-between font-medium text-gray-700 mb-1.5 items-center" style={{ fontSize: `${type.totalsSize}px` }}>
                  <span>Taxable Amount</span>
                  <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                </div>
@@ -376,24 +383,24 @@ const BillShipTemplate = forwardRef(({
             <div className="flex-1 pr-4">
               {content.footerNote && (
                 <>
-                  <p className="font-bold text-xs text-gray-900 tracking-wider">Notes:</p>
-                  <p className="text-xs text-gray-700 mb-4">{content.footerNote}</p>
+                  <p className="font-bold text-gray-900 tracking-wider" style={{ fontSize: `${type.sectionTitleSize}px` }}>Notes:</p>
+                  <p className="text-gray-700 mb-4" style={{ fontSize: `${type.footerSize}px` }}>{content.footerNote}</p>
                 </>
               )}
-              <p className="font-bold text-xs text-gray-900 tracking-wider">Terms and Conditions:</p>
-              <ol className="text-xs text-gray-600 list-decimal pl-4 space-y-1 mt-1">
+              <p className="font-bold text-gray-900 tracking-wider" style={{ fontSize: `${type.sectionTitleSize}px` }}>Terms and Conditions:</p>
+              <ol className="text-gray-600 list-decimal pl-4 space-y-1 mt-1" style={{ fontSize: `${type.footerSize}px` }}>
                 {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
               </ol>
             </div>
           )}
           <div className="text-right ml-auto">
-            <p className="text-xs font-bold text-gray-600 mb-12">For {companyName}</p>
-            <div className="border-t border-gray-400 inline-block pt-1 text-xs px-4">
+            <p className="font-bold text-gray-600 mb-12" style={{ fontSize: `${type.footerSize}px` }}>For {companyName}</p>
+            <div className="border-t border-gray-400 inline-block pt-1 px-4" style={{ fontSize: `${type.footerSize}px` }}>
               {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
             </div>
           </div>
         </div>
-        <div className="mt-4 text-center text-xs text-gray-500 font-medium">
+        <div className="mt-4 text-center text-gray-500 font-medium" style={{ fontSize: `${type.footerSize}px` }}>
           {isDeliveryChallan
             ? 'This is a computer generated delivery challan and does not require a signature.'
             : 'This is a computer generated digital invoice and does not require a signature.'}

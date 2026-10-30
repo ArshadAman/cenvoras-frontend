@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import ClassicTemplate from './ClassicTemplate';
 import { serializeInvoiceHtml } from '../../../utils/htmlInvoiceSerializer';
+import { resolveTypography } from '../../../utils/invoiceSettings';
 
 afterEach(cleanup);
 
@@ -109,6 +110,29 @@ describe('Classic invoice note rows', () => {
     expect(bodyRows[0].textContent).toContain('Note: 5/5');
     expect(bodyRows[1].querySelector('td').textContent.trim()).toBe('1');
     expect(bodyRows[2].querySelector('td').textContent.trim()).toBe('2');
+  });
+});
+
+describe('resolveTypography', () => {
+  it('falls back so old templates keep looking the same', () => {
+    const type = resolveTypography({ companyNameSize: 24, smallSize: 9, bodySize: 11 });
+    expect(type.companyAddressSize).toBe(9);
+    expect(type.tableHeaderSize).toBe(9);
+    expect(type.tableBodySize).toBe(12);
+    expect(type.bankDetailsSize).toBe(12);
+    expect(type.footerSize).toBe(9);
+    expect(type.customerNameSize).toBe(11);
+  });
+
+  it('uses explicit region sizes when set', () => {
+    const type = resolveTypography({
+      tableHeaderSize: 14,
+      bankDetailsSize: 8,
+      companyAddressSize: 11,
+    });
+    expect(type.tableHeaderSize).toBe(14);
+    expect(type.bankDetailsSize).toBe(8);
+    expect(type.companyAddressSize).toBe(11);
   });
 });
 
