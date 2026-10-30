@@ -37,19 +37,20 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     window.scrollTo(0, 0);
   }
 
-  // Temporarily apply print chrome so letterhead is measurable and captured.
-  // Non-classic: show continuation letterhead, hide duplicate first-page seller chrome.
-  // Classic: thead letterhead is already the on-screen header — do not swap.
-  // Footer flows under totals (not absolutely pinned to page bottom).
-  const firstPageHeaders = Array.from(
-    element.querySelectorAll('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header')
+  // Classic-only print chrome: thead letterhead is already the on-screen header.
+  // Non-classic keeps .invoice-first-page-header and sheet padding (no header swap).
+  const classicSelector = '.invoice-print-shell[data-print-theme="classic"]';
+  const continuationHeaders = Array.from(
+    element.querySelectorAll(`${classicSelector} .invoice-continuation-header`)
   );
-  const continuationHeaders = Array.from(element.querySelectorAll('.invoice-continuation-header'));
-  const sheets = Array.from(element.querySelectorAll('.invoice-sheet'));
+  const sheets = Array.from(element.querySelectorAll('.invoice-sheet')).filter((sheet) =>
+    sheet.querySelector(classicSelector)
+  );
   const footers = Array.from(element.querySelectorAll('.invoice-page-footer'));
-  const firstPagePrev = firstPageHeaders.map((el) => el.style.display);
   const continuationPrev = continuationHeaders.map((el) => el.style.display);
-  const shellContentCells = Array.from(element.querySelectorAll('.invoice-print-shell-row > td'));
+  const shellContentCells = Array.from(
+    element.querySelectorAll(`${classicSelector} .invoice-print-shell-row > td`)
+  );
   const sheetPrev = sheets.map((el) => ({
     position: el.style.position,
     padding: el.style.padding,
@@ -69,15 +70,11 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     right: el.style.right,
     marginTop: el.style.marginTop,
   }));
-  firstPageHeaders.forEach((el) => {
-    el.style.display = 'none';
-  });
   continuationHeaders.forEach((el) => {
     el.style.display = 'table-row';
   });
   sheets.forEach((el) => {
     el.style.position = 'relative';
-    // Full shorthand — clear React inline padding; small bottom pad only (footer flows in-document)
     el.style.padding = '0 0 10mm 0';
     el.style.paddingTop = '0';
     el.style.paddingRight = '0';
@@ -92,12 +89,12 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     el.style.width = '100%';
     el.style.margin = '0';
   });
-  element.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
+  shellContentCells.forEach((el) => {
     el.style.padding = '0 7mm';
     el.style.border = 'none';
     el.style.overflow = 'visible';
   });
-  element.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
+  element.querySelectorAll(`${classicSelector} .invoice-continuation-header > td`).forEach((el) => {
     el.style.padding = '0 0 3mm 0';
     el.style.border = 'none';
   });
@@ -146,21 +143,29 @@ export async function generatePixelPerfectPDF(element, options = {}) {
   const totalsBlockBottom =
     totalsBlockTop != null ? totalsBlockTop + totalsBlockHeight : null;
 
-  // Seller letterhead + items column thead for page 2+ stamps (now visible).
-  // Prefer the letterhead chrome itself (exclude td padding below it — that gap is applied via drawOffsetY).
-  const letterheadRow = element.querySelector('[data-print-continuation-header]');
-  const letterheadEl =
-    element.querySelector('.invoice-continuation-letterhead-classic') ||
-    letterheadRow?.querySelector('td > div') ||
-    letterheadRow;
+  // Classic seller letterhead for page 2+ stamps. Skip when the continuation
+  // row is hidden (non-classic keeps the in-body header instead).
+  const letterheadRow = element.querySelector(
+    `${classicSelector} [data-print-continuation-header]`
+  );
+  const letterheadVisible = Boolean(
+    letterheadRow &&
+    letterheadRow.style.display !== 'none' &&
+    (typeof window === 'undefined' || getComputedStyle(letterheadRow).display !== 'none')
+  );
+  const letterheadEl = letterheadVisible
+    ? (element.querySelector('.invoice-continuation-letterhead-classic') ||
+      letterheadRow.querySelector('td > div') ||
+      letterheadRow)
+    : null;
   const letterheadRect = letterheadEl ? letterheadEl.getBoundingClientRect() : null;
   const columnThead =
     element.querySelector('.invoice-print-shell-row table thead') ||
     element.querySelector('table:not(.invoice-print-shell) thead');
   const columnTheadRect = columnThead ? columnThead.getBoundingClientRect() : null;
 
-  const letterheadDomTop = toDomY(letterheadRect);
-  const letterheadDomHeight = Math.max(toDomH(letterheadRect), 1);
+  const letterheadDomTop = letterheadVisible ? toDomY(letterheadRect) : 0;
+  const letterheadDomHeight = letterheadVisible ? Math.max(toDomH(letterheadRect), 1) : 0;
   const columnTheadDomTop = toDomY(columnTheadRect);
   const columnTheadDomHeight = toDomH(columnTheadRect);
 
@@ -200,13 +205,15 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             sheet.style.margin = '0';
             sheet.style.boxShadow = 'none';
             sheet.style.position = 'relative';
-            sheet.style.padding = '0 0 10mm 0';
-            sheet.style.paddingTop = '0';
-            sheet.style.paddingRight = '0';
-            sheet.style.paddingBottom = '10mm';
-            sheet.style.paddingLeft = '0';
             sheet.style.overflow = 'visible';
             sheet.style.boxSizing = 'border-box';
+            if (sheet.querySelector('.invoice-print-shell[data-print-theme="classic"]')) {
+              sheet.style.padding = '0 0 10mm 0';
+              sheet.style.paddingTop = '0';
+              sheet.style.paddingRight = '0';
+              sheet.style.paddingBottom = '10mm';
+              sheet.style.paddingLeft = '0';
+            }
           });
           clonedDoc.querySelectorAll('.invoice-print-shell').forEach((el) => {
             el.style.borderCollapse = 'collapse';
@@ -214,21 +221,18 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             el.style.width = '100%';
             el.style.margin = '0';
           });
-          clonedDoc.querySelectorAll('.invoice-print-shell-row > td').forEach((el) => {
+          clonedDoc.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td').forEach((el) => {
             el.style.padding = '0 7mm';
             el.style.border = 'none';
             el.style.overflow = 'visible';
           });
-          clonedDoc.querySelectorAll('.invoice-continuation-header > td').forEach((el) => {
+          clonedDoc.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td').forEach((el) => {
             el.style.padding = '0 0 3mm 0';
             el.style.border = 'none';
           });
         }
 
-        clonedDoc.querySelectorAll('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header').forEach((el) => {
-          el.style.display = 'none';
-        });
-        clonedDoc.querySelectorAll('.invoice-continuation-header').forEach((el) => {
+        clonedDoc.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header').forEach((el) => {
           el.style.display = 'table-row';
         });
         clonedDoc.querySelectorAll('.invoice-page-footer').forEach((el) => {
@@ -251,9 +255,6 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     });
   } finally {
     // Restore screen chrome
-    firstPageHeaders.forEach((el, i) => {
-      el.style.display = firstPagePrev[i] || '';
-    });
     continuationHeaders.forEach((el, i) => {
       el.style.display = continuationPrev[i] || '';
     });
@@ -330,7 +331,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     const stampedHeaderDomHeight =
       letterheadDomHeight +
       (columnTheadDomHeight > 0 ? columnTheadDomHeight : 0) +
-      CONTINUATION_TOTALS_GAP_PX;
+      (letterheadVisible ? CONTINUATION_TOTALS_GAP_PX : 0);
     const page1ContentDomHeight = pageCanvasHeight / scaleFactor - bottomInsetDom;
     const continuationContentDomHeight = Math.max(
       80,
@@ -373,9 +374,9 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       let drawOffsetY = 0;
 
       if (pageIndex > 0) {
-        // Stamp seller letterhead flush to the page top (seamless)
+        // Stamp Classic seller letterhead only when that thead row is visible
         const lhCanvasH = Math.round(letterheadDomHeight * scaleFactor);
-        if (lhCanvasH > 0) {
+        if (letterheadVisible && lhCanvasH > 0) {
           ctx.drawImage(
             canvas,
             0,
@@ -409,9 +410,10 @@ export async function generatePixelPerfectPDF(element, options = {}) {
           drawOffsetY += thCanvasH;
         }
 
-        // Slight margin under letterhead; a bit more when bank/totals open the page
-        const gapPx = sliceHasItems ? CONTINUATION_CONTENT_GAP_PX : CONTINUATION_TOTALS_GAP_PX;
-        drawOffsetY += Math.round(gapPx * scaleFactor);
+        if (letterheadVisible || (sliceHasItems && columnTheadDomHeight > 0)) {
+          const gapPx = sliceHasItems ? CONTINUATION_CONTENT_GAP_PX : CONTINUATION_TOTALS_GAP_PX;
+          drawOffsetY += Math.round(gapPx * scaleFactor);
+        }
       }
 
       ctx.drawImage(

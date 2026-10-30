@@ -509,28 +509,24 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           max-width: 100% !important;
           min-height: 100% !important;
           margin: 0 !important;
-          /* Zero side padding so letterhead is edge-to-edge; light bottom pad only.
-             Body inset is applied on the print-shell content cell instead. */
-          padding: 0 0 10mm 0 !important;
-          padding-top: 0 !important;
           box-sizing: border-box !important;
           background: #ffffff !important;
           overflow: visible !important;
+        }
+        /* Classic: full-bleed letterhead; 7mm body inset on the print-shell cell. */
+        .invoice-sheet:has(.invoice-print-shell[data-print-theme="classic"]) {
+          padding: 0 0 10mm 0 !important;
+          padding-top: 0 !important;
         }
         .invoice-sheet-body,
         .invoice-sheet .flex-1 {
           flex: 0 0 auto !important;
           flex-grow: 0 !important;
         }
-        /* Non-classic: swap in-body seller chrome for the repeating thead.
-           Classic uses the same thead letterhead on screen and print. */
-        .invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header {
-          display: none !important;
-        }
-        .invoice-continuation-header {
+        .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
           display: table-row !important;
         }
-        .invoice-continuation-header > td {
+        .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
           /* Slight white gap under letterhead before body (items or bank/totals on page break) */
           padding: 0 0 3mm 0 !important;
           border: none !important;
@@ -548,8 +544,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           width: 100% !important;
           box-sizing: border-box !important;
         }
-        /* Restore Classic 7mm body inset (sheet padding removed for full-bleed header) */
-        .invoice-print-shell-row > td {
+        .invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td {
           padding: 0 7mm !important;
           border: none !important;
           overflow: visible !important;

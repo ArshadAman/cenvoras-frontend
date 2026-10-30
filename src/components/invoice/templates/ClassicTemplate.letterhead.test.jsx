@@ -73,7 +73,8 @@ describe('Classic delivery challan letterhead', () => {
     expect(html).toContain('Cenvora Traders');
     expect(html).toContain('data-print-theme="classic"');
     expect(html).not.toContain('invoice-first-page-header');
-    expect(html).toContain('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header');
+    expect(html).toContain('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header');
+    expect(html).not.toContain('.invoice-print-shell:not([data-print-theme="classic"]) .invoice-first-page-header');
   });
 });
 

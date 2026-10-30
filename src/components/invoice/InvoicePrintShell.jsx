@@ -6,8 +6,8 @@ import InvoiceContinuationHeader from './InvoiceContinuationHeader';
  * top of every page — before billing/items (DOM order matches preview).
  *
  * Classic: thead letterhead is visible on screen and print (full-bleed band;
- * 7mm inset on the body cell). Other themes: continuation row hidden on
- * screen; print hides .invoice-first-page-header and shows this thead.
+ * 7mm inset on the body cell). Other themes: continuation row stays hidden;
+ * print/PDF keep the in-body .invoice-first-page-header so page 1 matches preview.
  */
 export default function InvoicePrintShell({ children, theme = 'classic', headerProps = {} }) {
   const isClassic = theme === 'classic';
