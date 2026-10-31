@@ -59,6 +59,12 @@ function makeEmptySalesItem() {
   };
 }
 
+function moveRowInsertBefore(move, fromIdx, dropIndex, length) {
+  if (Number.isNaN(fromIdx) || fromIdx === dropIndex || fromIdx < 0 || fromIdx >= length) return;
+  const toIdx = fromIdx < dropIndex ? dropIndex - 1 : dropIndex;
+  if (fromIdx !== toIdx) move(fromIdx, toIdx);
+}
+
 function formatChipDate(iso) {
   if (!iso || typeof iso !== "string") return "";
   const clean = iso.split("T")[0];
@@ -1915,7 +1921,7 @@ export default function SalesForm({
                 }
               }
 
-              const processedItems = itemsForSave.map(item => {
+              const processedItems = itemsForSave.map((item, index) => {
                 if (item.row_type === 'note') {
                   return {
                     row_type: 'note',
@@ -1931,6 +1937,9 @@ export default function SalesForm({
                     product_description: (item.description || item.product_description || "").trim(),
                     discount: 0,
                     tax: 0,
+                    sort_order: index,
+                    ...(item.id ? { id: item.id } : {}),
+                    ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                   };
                 }
                 const quantity = Number(item.quantity) || 1;
@@ -1964,6 +1973,7 @@ export default function SalesForm({
                   storage_condition: item.storage_condition || "",
                   discount: itemSettings.show_item_discount ? discount : 0,
                   tax: itemSettings.show_item_tax ? tax : 0,
+                  sort_order: index,
                   ...(item.id ? { id: item.id } : {}),
                   ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                 };
@@ -2684,7 +2694,7 @@ export default function SalesForm({
                     </div>
                   )}
                   <FieldArray name="items">
-                    {({ push, remove, swap, insert }) => {
+                    {({ push, remove, insert, move }) => {
 
                       return (
                         <div
@@ -2740,12 +2750,6 @@ export default function SalesForm({
                                       return (
                                         <div
                                           key={item._key || index}
-                                          draggable
-                                          onDragStart={(e) => {
-                                            e.dataTransfer.setData('text/plain', String(index));
-                                            e.dataTransfer.effectAllowed = 'move';
-                                            setDraggedRowIndex(index);
-                                          }}
                                           onDragOver={(e) => {
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'move';
@@ -2761,13 +2765,7 @@ export default function SalesForm({
                                           onDrop={(e) => {
                                             e.preventDefault();
                                             const fromIdx = draggedRowIndex !== null ? draggedRowIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
-                                            if (!isNaN(fromIdx) && fromIdx !== index && fromIdx >= 0 && fromIdx < values.items.length) {
-                                              swap(fromIdx, index);
-                                            }
-                                            setDraggedRowIndex(null);
-                                            setDragOverRowIndex(null);
-                                          }}
-                                          onDragEnd={() => {
+                                            moveRowInsertBefore(move, fromIdx, index, values.items.length);
                                             setDraggedRowIndex(null);
                                             setDragOverRowIndex(null);
                                           }}
@@ -2779,6 +2777,18 @@ export default function SalesForm({
                                           style={{ minWidth: `${totalMinWidth}px`, width: '100%' }}
                                         >
                                           <div
+                                            draggable
+                                            data-row-drag-handle
+                                            onDragStart={(e) => {
+                                              e.stopPropagation();
+                                              e.dataTransfer.setData('text/plain', String(index));
+                                              e.dataTransfer.effectAllowed = 'move';
+                                              setDraggedRowIndex(index);
+                                            }}
+                                            onDragEnd={() => {
+                                              setDraggedRowIndex(null);
+                                              setDragOverRowIndex(null);
+                                            }}
                                             className="flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-[var(--status-warning)]/70 hover:text-[var(--status-warning)] p-1 rounded hover:bg-[var(--bg-primary)] transition-colors select-none shrink-0"
                                             title="Hold and drag to reorder row"
                                           >
@@ -2843,12 +2853,6 @@ export default function SalesForm({
                                     return (
                                       <div
                                         key={item._key || index}
-                                        draggable
-                                        onDragStart={(e) => {
-                                          e.dataTransfer.setData('text/plain', String(index));
-                                          e.dataTransfer.effectAllowed = 'move';
-                                          setDraggedRowIndex(index);
-                                        }}
                                         onDragOver={(e) => {
                                           e.preventDefault();
                                           e.dataTransfer.dropEffect = 'move';
@@ -2864,13 +2868,7 @@ export default function SalesForm({
                                         onDrop={(e) => {
                                           e.preventDefault();
                                           const fromIdx = draggedRowIndex !== null ? draggedRowIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
-                                          if (!isNaN(fromIdx) && fromIdx !== index && fromIdx >= 0 && fromIdx < values.items.length) {
-                                            swap(fromIdx, index);
-                                          }
-                                          setDraggedRowIndex(null);
-                                          setDragOverRowIndex(null);
-                                        }}
-                                        onDragEnd={() => {
+                                          moveRowInsertBefore(move, fromIdx, index, values.items.length);
                                           setDraggedRowIndex(null);
                                           setDragOverRowIndex(null);
                                         }}
@@ -2884,11 +2882,26 @@ export default function SalesForm({
                                           {desktopColumns.map((col) => {
                                            if (col.key === "drag") {
                                              return (
-                                               <div key={col.key} className="flex flex-col items-center justify-center pt-1 gap-0.5">
+                                               <div
+                                                 key={col.key}
+                                                 draggable
+                                                 data-row-drag-handle
+                                                 onDragStart={(e) => {
+                                                   e.stopPropagation();
+                                                   e.dataTransfer.setData('text/plain', String(index));
+                                                   e.dataTransfer.effectAllowed = 'move';
+                                                   setDraggedRowIndex(index);
+                                                 }}
+                                                 onDragEnd={() => {
+                                                   setDraggedRowIndex(null);
+                                                   setDragOverRowIndex(null);
+                                                 }}
+                                                 className="flex flex-col items-center justify-center pt-1 gap-0.5 cursor-grab active:cursor-grabbing select-none"
+                                                 title="Hold and drag to reorder row"
+                                               >
                                                  <span className="text-xs font-mono tabular-nums leading-none text-[var(--text-muted)]">{index + 1}</span>
                                                  <div
-                                                   className="cursor-grab active:cursor-grabbing text-[var(--text-muted)] hover:text-[var(--accent-primary)] p-1 rounded hover:bg-[var(--bg-surface)] transition-colors select-none"
-                                                   title="Hold and drag to reorder row"
+                                                   className="text-[var(--text-muted)] hover:text-[var(--accent-primary)] p-1 rounded hover:bg-[var(--bg-surface)] transition-colors"
                                                  >
                                                    <Bars3Icon className="w-4 h-4" />
                                                  </div>
