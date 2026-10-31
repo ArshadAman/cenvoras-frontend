@@ -184,6 +184,13 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
   });
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
 
+  const { data: customersResult } = useQuery({
+    queryKey: ["customers"],
+    queryFn: getCustomers,
+    staleTime: 5 * 60 * 1000,
+  });
+  const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
+
   const createMutation = useMutation({
     mutationFn: createDeliveryChallan,
     onSuccess: () => {
@@ -237,7 +244,17 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
             })) || [{ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, unit: "pcs" }]
           }}
           validationSchema={DeliveryChallanSchema}
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setFieldError }) => {
+            const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
+            const isSavedCustomerInDb = Boolean(
+              (customers || []).some((c) => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
+            );
+            if (!isSavedCustomerInDb) {
+              setFieldError('customer_name', 'Save this customer first before creating a delivery challan.');
+              toast.error('Save this customer first before creating a delivery challan.');
+              setSubmitting(false);
+              return;
+            }
             const formData = {
                 customer_name: values.customer_name,
                 challan_number: values.challan_number,

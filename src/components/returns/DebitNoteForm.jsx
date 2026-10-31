@@ -3,7 +3,8 @@ import { Dialog, Transition } from "@headlessui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getPurchaseBills, getPurchaseBill } from "../../api/purchase";
-import { getVendors } from "../../api/vendors";
+import { getVendors, createVendor } from "../../api/vendors";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { createDebitNote, getBillReturnRemaining } from "../../api/gst";
 import { extractServerMessage, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -14,6 +15,7 @@ import { getTodayKolkata } from '../../utils/date';
 export default function DebitNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
   const [vendorName, setVendorName] = useState("");
+  const [vendorId, setVendorId] = useState("");
   const [vendorGstin, setVendorGstin] = useState("");
   const [originalBillId, setOriginalBillId] = useState("");
 
@@ -42,6 +44,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
     const bill = billList.find((b) => String(b.id) === String(billId));
     if (bill) {
       if (bill.vendor_name) setVendorName(bill.vendor_name);
+      if (bill.vendor?.id || bill.vendor) setVendorId(bill.vendor?.id || bill.vendor);
       if (bill.vendor_gstin) setVendorGstin(bill.vendor_gstin);
     }
     if (!billId) {
@@ -115,6 +118,16 @@ export default function DebitNoteForm({ isOpen, onClose }) {
       return;
     }
 
+    const vendorNameTrimmed = (vendorName || '').trim().toLowerCase();
+    const isSavedVendorInDb = Boolean(
+      vendorId ||
+      (vendors || []).some((v) => v.id && (v.name || '').trim().toLowerCase() === vendorNameTrimmed)
+    );
+    if (!isSavedVendorInDb) {
+      toast.error("Save this vendor first before creating a debit note.");
+      return;
+    }
+
     const totalAmt = Math.round(itemsToReturn.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
 
     if (!originalBillId) {
@@ -139,6 +152,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
 
   const handleClose = () => {
     setVendorName("");
+    setVendorId("");
     setVendorGstin("");
     setOriginalBillId("");
     setReturnItems([]);
@@ -167,7 +181,8 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Vendor Name (Type to search)</label>
                   <VendorAutocomplete 
                      vendorName={vendorName} 
-                     setVendorName={setVendorName} 
+                     setVendorName={setVendorName}
+                     setVendorId={setVendorId}
                      vendorGstin={vendorGstin}
                      setVendorGstin={setVendorGstin}
                      vendors={vendors} 
@@ -305,12 +320,16 @@ export default function DebitNoteForm({ isOpen, onClose }) {
 }
 
 // Inline Vendor Autocomplete Component for DebitNoteForm (Simplified for raw State hooks)
-function VendorAutocomplete({ vendorName, setVendorName, vendorGstin, setVendorGstin, vendors }) {
+function VendorAutocomplete({ vendorName, setVendorName, setVendorId, vendorGstin, setVendorGstin, vendors }) {
   const [filteredVendors, setFilteredVendors] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNewVendorModal, setShowNewVendorModal] = useState(false);
+  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const queryClient = useQueryClient();
 
   const selectVendor = (vendor) => {
     setVendorName(vendor.name || "");
+    setVendorId(vendor.id || "");
     setVendorGstin(vendor.gstin || "");
     setShowDropdown(false);
   };
@@ -318,13 +337,14 @@ function VendorAutocomplete({ vendorName, setVendorName, vendorGstin, setVendorG
   const handleInputChange = (e) => {
     const value = e.target.value;
     setVendorName(value);
+    setVendorId("");
 
     if (value.trim()) {
       const filtered = vendors.filter(v =>
         v.name?.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredVendors(filtered);
-      setShowDropdown(filtered.length > 0);
+      setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
@@ -365,11 +385,57 @@ function VendorAutocomplete({ vendorName, setVendorName, vendorGstin, setVendorG
               </div>
             </div>
           ))}
-          {filteredVendors.length === 0 && (
-             <div className="px-3 py-3 text-sm text-[var(--text-muted)] italic">
-                No saved vendors found. 
-             </div>
+          {vendorName.trim() && !(vendors || []).some((v) => v.name?.trim().toLowerCase() === vendorName.trim().toLowerCase()) && (
+            <div
+              className="px-3 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] text-[var(--accent-primary)] font-medium"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setShowNewVendorModal(true);
+                setShowDropdown(false);
+              }}
+            >
+              ➕ Add New Vendor: "{vendorName}"
+            </div>
           )}
+        </div>
+      )}
+      {showNewVendorModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowNewVendorModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Add New Vendor</h3>
+            <input type="text" defaultValue={vendorName} id="dn-new-vendor-name" className="w-full mb-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)]" />
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setShowNewVendorModal(false)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+              <button
+                type="button"
+                disabled={isCreatingVendor}
+                onClick={async () => {
+                  const name = document.getElementById('dn-new-vendor-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Vendor name is required');
+                    return;
+                  }
+                  setIsCreatingVendor(true);
+                  try {
+                    const created = await createVendor({ name });
+                    const vendor = created?.data || created;
+                    queryClient.invalidateQueries({ queryKey: ["vendors"] });
+                    toast.success(`Vendor "${vendor.name || name}" added`);
+                    selectVendor(vendor);
+                    setShowNewVendorModal(false);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create vendor"));
+                  } finally {
+                    setIsCreatingVendor(false);
+                  }
+                }}
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {isCreatingVendor ? "Adding..." : "Add Vendor"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

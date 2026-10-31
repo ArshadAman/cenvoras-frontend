@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractServerMessage, lineProductId, remainingQtyFor } from '../src/utils/fieldErrors.js';
+import { extractServerMessage, exceedsRemainingQty, lineProductId, remainingQtyFor } from '../src/utils/fieldErrors.js';
 
 test('bill line product id prefers product_detail.id over the name', () => {
   assert.equal(lineProductId({ product: 'R17 Part', product_detail: { id: 'b38e42b3-0000' } }), 'b38e42b3-0000');
@@ -19,6 +19,11 @@ test('remaining qty caps at server remaining', () => {
   assert.equal(remainingQtyFor('p1', 10, null), 10);
   assert.equal(remainingQtyFor('p2', 10, { p1: '1' }), 10);
   assert.equal(remainingQtyFor('p1', 2, { p1: '-1' }), 0);
+});
+test('submit rejects qty above remaining', () => {
+  assert.equal(exceedsRemainingQty(6, 1.5), true);
+  assert.equal(exceedsRemainingQty(1.5, 1.5), false);
+  assert.equal(exceedsRemainingQty(1, 1.5), false);
 });
 
 import { portalGSTR1 } from '../src/utils/gstr1.js';

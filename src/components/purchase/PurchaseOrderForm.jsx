@@ -3,7 +3,8 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseOrder, updatePurchaseOrder } from "../../api/purchase_orders";
 import { getProducts } from "../../api/purchase";
-import { getVendors } from "../../api/vendors";
+import { getVendors, createVendor } from "../../api/vendors";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -177,6 +178,9 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.vendor_name || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showNewVendorModal, setShowNewVendorModal] = useState(false);
+  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setInputValue(values.vendor_name || "");
@@ -202,7 +206,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
         v.name?.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredVendors(filtered);
-      setShowDropdown(filtered.length > 0);
+      setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
@@ -251,11 +255,56 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
               </div>
             </div>
           ))}
-          {filteredVendors.length === 0 && (
-            <div className="px-4 py-2 text-xs text-[var(--text-muted)] text-center italic border-t border-[var(--border-subtle)]">
-              No matching vendors found.
+          {inputValue.trim() && !(vendors || []).some((v) => v.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
+            <div
+              className="px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] text-[var(--accent-primary)] font-medium hover:bg-[var(--bg-primary)]"
+              onClick={() => {
+                setShowNewVendorModal(true);
+                setShowDropdown(false);
+              }}
+            >
+              ➕ Add New Vendor: "{inputValue}"
             </div>
           )}
+        </div>
+      )}
+      {showNewVendorModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowNewVendorModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Add New Vendor</h3>
+            <input type="text" defaultValue={inputValue} id="po-new-vendor-name" className="w-full mb-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)]" placeholder="Vendor name" />
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setShowNewVendorModal(false)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+              <button
+                type="button"
+                disabled={isCreatingVendor}
+                onClick={async () => {
+                  const name = document.getElementById('po-new-vendor-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Vendor name is required');
+                    return;
+                  }
+                  setIsCreatingVendor(true);
+                  try {
+                    const created = await createVendor({ name });
+                    const vendor = created?.data || created;
+                    queryClient.invalidateQueries({ queryKey: ["vendors"] });
+                    toast.success(`Vendor "${vendor.name || name}" added`);
+                    selectVendor(vendor);
+                    setShowNewVendorModal(false);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create vendor"));
+                  } finally {
+                    setIsCreatingVendor(false);
+                  }
+                }}
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {isCreatingVendor ? "Adding..." : "Add Vendor"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -385,8 +434,19 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
             }]
           }}
           validationSchema={PurchaseOrderSchema}
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setFieldError }) => {
             if (submitLockRef.current || createMutation.isPending || updateMutation.isPending) {
+              return;
+            }
+            const vendorNameTrimmed = (values.vendor_name || '').trim().toLowerCase();
+            const isSavedVendorInDb = Boolean(
+              values.vendor_id ||
+              (vendors || []).some((v) => v.id && (v.name || '').trim().toLowerCase() === vendorNameTrimmed)
+            );
+            if (!isSavedVendorInDb) {
+              setFieldError('vendor_name', 'Save this vendor first before creating a bill or purchase order.');
+              toast.error('Save this vendor first before creating a bill or purchase order.');
+              setSubmitting(false);
               return;
             }
             submitLockRef.current = true;

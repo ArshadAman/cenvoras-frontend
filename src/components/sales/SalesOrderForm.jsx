@@ -3,7 +3,8 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesOrder, updateSalesOrder } from "../../api/sales_order";
 import { getProducts } from "../../api/sales";
-import { getCustomers } from "../../api/customers";
+import { getCustomers, createCustomer } from "../../api/customers";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { getWarehouses, getStockPoints } from "../../api/inventory";
 import { INDIAN_STATES } from "../../utils/constants";
 import { toast } from "react-toastify";
@@ -199,6 +200,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const selectCustomer = (customer) => {
     // New API: set customer_name directly, optionally set email for Customer record creation
     setFieldValue('customer_name', customer.name);
+    setFieldValue('customer', customer.id || null);
     setFieldValue('customer_email', customer.email || '');
     setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
@@ -212,6 +214,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     const value = e.target.value;
     setInputValue(value);
     setFieldValue('customer_name', value);  // For manual entry, store the name
+    setFieldValue('customer', null);
     setSelectedIndex(-1);
 
     if (value.trim()) {
@@ -386,16 +389,27 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const name = document.getElementById('new-customer-name').value;
-                  const email = document.getElementById('new-customer-email').value;
-                  const phone = document.getElementById('new-customer-phone').value;
-                  
-                  setFieldValue('customer_name', name);
-                  setFieldValue('customer_email', email);
-                  setFieldValue('customer_phone', phone);
-                  setInputValue(name);
-                  setShowNewCustomerModal(false);
+                onClick={async () => {
+                  const name = document.getElementById('new-customer-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Customer name is required');
+                    return;
+                  }
+                  const email = document.getElementById('new-customer-email')?.value?.trim();
+                  const phone = document.getElementById('new-customer-phone')?.value?.trim();
+                  try {
+                    const created = await createCustomer({
+                      name,
+                      email: email || null,
+                      phone: phone || null,
+                    });
+                    const customer = created?.data || created;
+                    selectCustomer(customer);
+                    setShowNewCustomerModal(false);
+                    toast.success(`Customer "${customer.name || name}" added`);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create customer"));
+                  }
                 }}
                 className="btn-primary text-sm"
               >
@@ -532,8 +546,19 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             }]
           }}
           validationSchema={SalesOrderSchema}
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setFieldError }) => {
             if (submitLockRef.current || createMutation.isPending || updateMutation.isPending) {
+              return;
+            }
+            const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
+            const isSavedCustomerInDb = Boolean(
+              values.customer ||
+              (customers || []).some((c) => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
+            );
+            if (!isSavedCustomerInDb) {
+              setFieldError('customer_name', 'Save this customer first before creating a sales order.');
+              toast.error('Save this customer first before creating a sales order.');
+              setSubmitting(false);
               return;
             }
             submitLockRef.current = true;

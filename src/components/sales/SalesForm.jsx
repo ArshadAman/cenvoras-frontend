@@ -557,11 +557,29 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setSelectedIndex(-1);
   };
 
+  const clearSavedCustomerLink = () => {
+    setFieldValue('customer', null);
+    setFieldValue('customer_id', null);
+    setFieldValue('customer_email', '');
+    setFieldValue('customer_phone', '');
+  };
+
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
     setFieldValue('customer_name', value);  // For manual entry, store the name
     setSelectedIndex(-1);
+
+    const typed = value.trim().toLowerCase();
+    const selectedStillMatches = Boolean(
+      values.customer &&
+      (customers || []).some(
+        (c) => c.id === values.customer && (c.name || '').trim().toLowerCase() === typed
+      )
+    );
+    if (!selectedStillMatches && (values.customer || values.customer_id || values.customer_email)) {
+      clearSavedCustomerLink();
+    }
 
     if (value.trim()) {
       const query = value.toLowerCase();
@@ -1538,6 +1556,7 @@ export default function SalesForm({
       const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
       // Check if this customer is actually saved in the database
       const isSavedCustomerInDb = Boolean(
+        values.customer ||
         values.customer_id ||
         (customers || []).some(c => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
       );
@@ -1595,6 +1614,7 @@ export default function SalesForm({
       invoice_date: parsedInvoiceDate,
       
       // Optional customer fields (for Customer record creation)
+      customer: editData?.customer_details?.id || editData?.customer?.id || editData?.customer || null,
       customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
       customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
       customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
@@ -1776,6 +1796,13 @@ export default function SalesForm({
             );
             const valuesToValidate = { ...values, items: cleanedItems };
 
+            const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
+            const isSavedCustomerInDb = Boolean(
+              values.customer ||
+              values.customer_id ||
+              (customers || []).some((c) => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
+            );
+
             // Drafts only require customer name
             if (isDraft) {
                if (!values.customer_name || values.customer_name.trim() === '') {
@@ -1828,6 +1855,20 @@ export default function SalesForm({
                   setSubmitting(false);
                   return;
                 }
+            }
+
+            if (!isSavedCustomerInDb) {
+              const unsavedCustomerMsg = isSalesOrder
+                ? 'Save this customer first before creating a sales order.'
+                : isDeliveryChallan
+                  ? 'Save this customer first before creating a delivery challan.'
+                  : isQuotation
+                    ? 'Save this customer first before creating a quotation.'
+                    : 'Save this customer first before billing or quoting them.';
+              setFieldError('customer_name', unsavedCustomerMsg);
+              toast.error(unsavedCustomerMsg);
+              setSubmitting(false);
+              return;
             }
             
             try {
@@ -1978,11 +2019,11 @@ export default function SalesForm({
                 notes: values.notes || "",
                 items: processedItems,
                 ...(!isDeliveryChallan && !isQuotation && !isSalesOrder && linkedChallans.length ? { meta: { linked_challans: linkedChallans } } : {}),
-                // Optional customer fields for new record creation
-                ...(values.customer_email && { customer_email: values.customer_email }),
-                ...(values.customer_phone && { customer_phone: values.customer_phone }),
                 ...(values.customer_address && { customer_address: values.customer_address }),
                 ...(values.customer_gstin && { customer_gstin: values.customer_gstin }),
+                // Email/phone identify a saved customer; do not send them for typed-only names.
+                ...(values.customer && values.customer_email && { customer_email: values.customer_email }),
+                ...(values.customer && values.customer_phone && { customer_phone: values.customer_phone }),
                 // Delivery Challan specific fields
                 ...(isDeliveryChallan && {
                   challan_number: values.invoice_number,

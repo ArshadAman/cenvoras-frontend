@@ -358,11 +358,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     let targetCustomerId = formData.customer;
 
     try {
-      // R21 P1: a typed new customer is created by the server in the same transaction as the payment
-      // (reused by name on retry), so a failed save never leaves an orphan or duplicate customer.
-      const newCustomerName = !targetCustomerId ? customerSearch.trim() : '';
-      if (!targetCustomerId && !newCustomerName) {
-        throw new Error("Please select or enter a customer name");
+      if (!targetCustomerId) {
+        throw new Error("Save this customer first before recording a payment.");
       }
 
       const { receipt_mode: receiptMode, ...rest } = formData;
@@ -370,8 +367,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         ...rest,
         amount: roundTo3(formData.amount)
       };
-      if (targetCustomerId) paymentPayload.customer = targetCustomerId;
-      else { delete paymentPayload.customer; paymentPayload.new_customer_name = newCustomerName; }
+      paymentPayload.customer = targetCustomerId;
 
       if (formData.invoice) {
         paymentPayload.invoice = formData.invoice;
