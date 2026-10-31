@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/purchase";
-import { getVendors } from "../../api/vendors";
+import { getVendors, createVendor } from "../../api/vendors";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
@@ -264,8 +265,12 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
   const [filteredVendors, setFilteredVendors] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.vendor_name || "");
+  const [showNewVendorModal, setShowNewVendorModal] = useState(false);
+  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const queryClient = useQueryClient();
 
   useEscKey(() => setShowDropdown(false), showDropdown, 30);
+  useEscKey(() => setShowNewVendorModal(false), showNewVendorModal, 20);
 
   useEffect(() => {
     setInputValue(values.vendor_name || "");
@@ -273,6 +278,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 
   const selectVendor = (vendor) => {
     setFieldValue("vendor_name", vendor.name || "");
+    setFieldValue("vendor_id", vendor.id || null);
     setFieldValue("vendor_address", vendor.address || "");
     setFieldValue("vendor_gstin", vendor.gstin || "");
     setFieldValue("gst_treatment", vendor.meta?.gst_type || "registered");
@@ -285,6 +291,17 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
     setInputValue(value);
     setFieldValue("vendor_name", value);
 
+    const typed = value.trim().toLowerCase();
+    const selectedStillMatches = Boolean(
+      values.vendor_id &&
+      (vendors || []).some(
+        (v) => v.id === values.vendor_id && (v.name || "").trim().toLowerCase() === typed
+      )
+    );
+    if (!selectedStillMatches && values.vendor_id) {
+      setFieldValue("vendor_id", null);
+    }
+
     if (value.trim()) {
       const query = value.toLowerCase();
       const filtered = (vendors || []).filter(v =>
@@ -294,7 +311,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
         (v.phone && v.phone.includes(query))
       );
       setFilteredVendors(filtered);
-      setShowDropdown(filtered.length > 0);
+      setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
@@ -324,7 +341,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
                 }
               }}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-              placeholder="Enter vendor name to search or create new"
+              placeholder="Search a saved vendor or add a new one"
               className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none transition-all text-xs font-bold"
               autoComplete="off"
               autoCorrect="off"
@@ -362,11 +379,89 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
               </div>
             </div>
           ))}
-          {filteredVendors.length === 0 && (
-             <div className="px-4 py-3 text-sm text-[var(--text-muted)] italic">
-                No saved vendors found. A new one will be created.
-             </div>
+          {inputValue.trim() && !(vendors || []).some((v) => v.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
+            <div
+              className="px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)] font-medium"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowNewVendorModal(true);
+                setShowDropdown(false);
+              }}
+            >
+              ➕ Add New Vendor: "{inputValue}"
+            </div>
           )}
+        </div>
+      )}
+      {showNewVendorModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowNewVendorModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)]">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Add New Vendor</h3>
+              <button
+                type="button"
+                onClick={() => setShowNewVendorModal(false)}
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Name *</label>
+                <input type="text" defaultValue={inputValue} id="new-vendor-name" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Email</label>
+                <input type="email" id="new-vendor-email" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Phone</label>
+                <input type="tel" id="new-vendor-phone" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">GSTIN</label>
+                <input type="text" id="new-vendor-gstin" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none" />
+              </div>
+            </div>
+            <div className="p-5 pt-0 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowNewVendorModal(false)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+              <button
+                type="button"
+                disabled={isCreatingVendor}
+                onClick={async () => {
+                  const name = document.getElementById('new-vendor-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Vendor name is required');
+                    return;
+                  }
+                  setIsCreatingVendor(true);
+                  try {
+                    const created = await createVendor({
+                      name,
+                      email: document.getElementById('new-vendor-email')?.value?.trim() || null,
+                      phone: document.getElementById('new-vendor-phone')?.value?.trim() || null,
+                      gstin: document.getElementById('new-vendor-gstin')?.value?.trim() || null,
+                    });
+                    const vendor = created?.data || created;
+                    queryClient.invalidateQueries({ queryKey: ["vendors"] });
+                    toast.success(`Vendor "${vendor.name || name}" added`);
+                    selectVendor(vendor);
+                    setShowNewVendorModal(false);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create vendor"));
+                  } finally {
+                    setIsCreatingVendor(false);
+                  }
+                }}
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {isCreatingVendor ? "Adding..." : "Add Vendor"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -540,6 +635,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             bill_date: bill?.bill_date || getTodayKolkata(),
             due_date: bill?.due_date || "",
             warehouse: bill?.warehouse || "",
+            vendor_id: bill?.vendor?.id || bill?.vendor || null,
             vendor_name: bill?.vendor_name || "",
             vendor_address: bill?.vendor_address || "",
             vendor_gstin: bill?.vendor_gstin || "",
@@ -596,6 +692,18 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             
              if (validItems.length === 0) {
                toast.error('At least one item with a valid product name is required');
+               setSubmitting(false);
+               return;
+             }
+
+             const vendorNameTrimmed = (values.vendor_name || '').trim().toLowerCase();
+             const isSavedVendorInDb = Boolean(
+               values.vendor_id ||
+               (vendors || []).some((v) => v.id && (v.name || '').trim().toLowerCase() === vendorNameTrimmed)
+             );
+             if (!isSavedVendorInDb) {
+               setFieldError('vendor_name', 'Save this vendor first before creating a bill or purchase order.');
+               toast.error('Save this vendor first before creating a bill or purchase order.');
                setSubmitting(false);
                return;
              }

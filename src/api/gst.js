@@ -146,7 +146,7 @@ export const getBillReturnRemaining = (billId) =>
   api.get('/billing/debit-notes/remaining/', { params: { bill: billId } }).then(res => res.data).catch(() => null);
 
 export const getInvoiceReturnRemaining = (invoiceId) =>
-  api.get('/billing/credit-notes/remaining/', { params: { invoice: invoiceId } }).then(res => res.data).catch(() => null);
+  api.get('/billing/credit-notes/remaining/', { params: { invoice: invoiceId } }).then(res => res.data);
 
 // GSTR-1 "filed" flag for a month (YYYY-MM). Unfiled by default.
 export const getGSTR1Filing = (period) =>

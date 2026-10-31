@@ -44,3 +44,8 @@ export function remainingQtyFor(productId, originalQty, remainingMap) {
   if (!remainingMap || productId == null || !(String(productId) in remainingMap)) return orig;
   return Math.max(0, Math.min(orig, parseFloat(remainingMap[String(productId)] || 0)));
 }
+
+/** True when a typed return qty exceeds the server remaining cap. */
+export function exceedsRemainingQty(returnQty, remainingQty) {
+  return (Number(returnQty) || 0) > (Number(remainingQty) || 0);
+}

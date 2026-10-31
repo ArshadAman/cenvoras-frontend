@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCustomers } from "../../api/sales";
 import { getSalesInvoices } from "../../api/sales";
 import { createCreditNote, getInvoiceReturnRemaining } from "../../api/gst";
-import { extractServerMessage, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
+import { extractServerMessage, exceedsRemainingQty, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -47,27 +47,36 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   // Selected Invoice Details
   const selectedInvoice = invoiceList.find(inv => inv.id === selectedInvoiceId);
 
-  const { data: invoiceRemaining } = useQuery({
+  const {
+    data: invoiceRemaining,
+    isFetched: remainingFetched,
+    isPending: remainingPending,
+    isError: remainingError,
+  } = useQuery({
     queryKey: ["cn-remaining", selectedInvoiceId],
     queryFn: () => getInvoiceReturnRemaining(selectedInvoiceId),
-    enabled: isOpen && !!selectedInvoice,
+    enabled: isOpen && !!selectedInvoiceId,
     // R21: never show a stale "X of Y" after a credit note is created.
     staleTime: 0,
     refetchOnMount: 'always',
   });
+  const remainingReady = Boolean(selectedInvoice && remainingFetched && invoiceRemaining?.remaining_qty);
 
   useEffect(() => {
-    if (selectedInvoice) {
-      const remainingMap = invoiceRemaining?.remaining_qty || null;
-      // Pre-fill items with 0 return quantity; cap at what is still creditable
-      setReturnItems(selectedInvoice.items.map(item => ({
-        ...item,
-        return_qty: 0,
-        original_qty: parseFloat(item.quantity || 0),
-        remaining_qty: remainingQtyFor(lineProductId(item), item.quantity, remainingMap),
-      })));
-    }
-  }, [selectedInvoice, invoiceRemaining]);
+    setReturnItems([]);
+  }, [selectedInvoiceId]);
+
+  useEffect(() => {
+    if (!selectedInvoice || !remainingReady) return;
+    const remainingMap = invoiceRemaining.remaining_qty;
+    // Pre-fill items only after remaining has settled — never flash original qty as remaining.
+    setReturnItems((selectedInvoice.items || []).map(item => ({
+      ...item,
+      return_qty: 0,
+      original_qty: parseFloat(item.quantity || 0),
+      remaining_qty: remainingQtyFor(lineProductId(item), item.quantity, remainingMap),
+    })));
+  }, [selectedInvoice, invoiceRemaining, remainingReady]);
 
   const lastPayloadRef = useRef(null);
   const wholeUnits = reason === 'return' || reason === 'defective';
@@ -148,7 +157,15 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       toast.error(WHOLE_UNITS_MSG, { toastId: 'cn-qty-error', autoClose: false });
       return;
     }
-    
+    if (!remainingReady) {
+      toast.error("Wait for remaining quantities to load before creating a credit note.");
+      return;
+    }
+    if (returnItems.some((it) => exceedsRemainingQty(it.return_qty, it.remaining_qty))) {
+      toast.error("Return quantity exceeds remaining creditable quantity on the original invoice.");
+      return;
+    }
+
     const itemsToReturn = returnItems
       .filter(item => item.return_qty > 0)
       .map(item => {
@@ -174,6 +191,11 @@ export default function CreditNoteForm({ isOpen, onClose }) {
           amount: lineGross
         };
       });
+
+    if (!selectedCustomer) {
+      toast.error("Save this customer first before creating a credit note.");
+      return;
+    }
 
     if (itemsToReturn.length === 0) {
       toast.error("Please select at least one item to return");
@@ -248,6 +270,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
+                  {customerList.length === 0 && (
+                    <p className="text-xs text-[var(--text-muted)] mt-1.5">Save a customer first before creating a credit note.</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Original Invoice</label>
@@ -341,6 +366,17 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               {/* Step 3: Items Table (Responsive) */}
               {selectedInvoice && (
                 <div className="space-y-4">
+                  {(remainingPending || !remainingFetched) ? (
+                    <div className="px-3 py-8 text-sm text-[var(--text-muted)] flex items-center justify-center gap-2 border border-[var(--border-subtle)] rounded-xl">
+                      <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Loading remaining quantities…
+                    </div>
+                  ) : remainingError || !invoiceRemaining?.remaining_qty ? (
+                    <div className="px-3 py-4 text-sm text-red-400 border border-[var(--border-subtle)] rounded-xl" role="alert">
+                      Could not load remaining creditable quantities. Try selecting the invoice again.
+                    </div>
+                  ) : (
+                  <>
                   {/* Desktop Table */}
                   <div className="hidden lg:block border border-[var(--border-subtle)] rounded-xl overflow-hidden">
                     <table className="w-full text-left text-sm">
@@ -431,6 +467,8 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                       </div>
                     ))}
                   </div>
+                  </>
+                  )}
                 </div>
               )}
 
@@ -444,7 +482,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={createMutation.isPending || !selectedInvoiceId}
+                  disabled={createMutation.isPending || !selectedInvoiceId || !remainingReady}
                   aria-busy={createMutation.isPending}
                   className="btn-primary w-full sm:w-auto py-3 px-8 text-sm font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >
