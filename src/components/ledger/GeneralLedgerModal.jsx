@@ -7,6 +7,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from '../../hooks/useEscStack';
 import useResizableColumns from '../../hooks/useResizableColumns';
 import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
+import { typeSignedNet, typeSignedNetLabel } from '../../utils/ledgerBalance';
 
 const DEFAULT_COLUMN_WIDTHS = {
   date: 130,
@@ -94,10 +95,17 @@ export default function GeneralLedgerModal({
   const totalEntries = ledgerData?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
 
-  // Calculate running balance and totals
+  // Calculate running balance and totals (liability/equity/revenue nets as Cr)
   let runningBalance = 0;
   const totalDebits = entries.reduce((sum, entry) => sum + (parseFloat(entry.debit) || 0), 0);
   const totalCredits = entries.reduce((sum, entry) => sum + (parseFloat(entry.credit) || 0), 0);
+  const pageNet = typeSignedNet(totalDebits, totalCredits, account?.account_type);
+  const pageNetLabel = typeSignedNetLabel(pageNet, account?.account_type);
+  const accountBalance = Number(account?.current_balance ?? account?.balance);
+  const headerBalance = Number.isFinite(accountBalance)
+    ? accountBalance
+    : pageNet;
+  const headerBalanceLabel = typeSignedNetLabel(headerBalance, account?.account_type);
   
   const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
   const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide";
@@ -182,8 +190,8 @@ export default function GeneralLedgerModal({
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-[var(--text-secondary)]">Balance:</span>
-                  <span className={`font-mono font-bold ${totalDebits - totalCredits >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
-                    {formatCurrency(totalDebits - totalCredits)}
+                  <span className={`font-mono font-bold ${headerBalance >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
+                    {formatCurrency(Math.abs(headerBalance))} {headerBalanceLabel}
                   </span>
                 </div>
               </div>
@@ -262,7 +270,8 @@ export default function GeneralLedgerModal({
                     {entries.map((entry) => {
                       const debit = parseFloat(entry.debit) || 0;
                       const credit = parseFloat(entry.credit) || 0;
-                      runningBalance += debit - credit;
+                      runningBalance += typeSignedNet(debit, credit, account?.account_type);
+                      const rowLabel = typeSignedNetLabel(runningBalance, account?.account_type);
                       
                       return (
                         <tr key={entry.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors group">
@@ -287,7 +296,7 @@ export default function GeneralLedgerModal({
                           <td className={`px-6 py-4 whitespace-nowrap text-right font-medium font-mono ${
                             runningBalance >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'
                           }`}>
-                            {formatCurrency(runningBalance)}
+                            {formatCurrency(Math.abs(runningBalance))} {rowLabel}
                           </td>
                         </tr>
                       );
@@ -306,9 +315,9 @@ export default function GeneralLedgerModal({
                         {formatCurrency(totalCredits)}
                       </td>
                       <td className={`px-6 py-4 text-sm font-bold text-right font-mono text-lg ${
-                        (totalDebits - totalCredits) >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'
+                        pageNet >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'
                       }`}>
-                        {formatCurrency(totalDebits - totalCredits)}
+                        {formatCurrency(Math.abs(pageNet))} {pageNetLabel}
                       </td>
                     </tr>
                   </tfoot>

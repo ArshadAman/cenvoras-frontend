@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { getTrialBalance, repairRoundOffEntries } from '../api/ledger';
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { typeSignedNetLabel } from '../utils/ledgerBalance';
 import { getTodayKolkata } from '../utils/date';
 import { toast } from 'react-toastify';
 import {
@@ -424,10 +425,9 @@ export default function TrialBalance() {
                           const acc = item.account || {};
                           const dr = Number(item.debit_total || 0);
                           const cr = Number(item.credit_total || 0);
-                          // Trial balance net side uses raw Dr−Cr (not account-type signed balance).
-                          // Liabilities/revenue are credit-normal; their signed `balance` is flipped vs Dr/Cr.
-                          const netDrCr = dr - cr;
-                          const netLabel = netDrCr >= 0 ? 'Dr' : 'Cr';
+                          // Liability/equity/revenue use type-signed `item.balance` (Cr when >= 0).
+                          const signedNet = Number(item.balance || 0);
+                          const netLabel = typeSignedNetLabel(signedNet, acc.account_type);
 
                           return (
                             <tr key={acc.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
@@ -446,8 +446,8 @@ export default function TrialBalance() {
                               <td className="py-3 px-4 text-right font-mono font-medium text-[var(--text-primary)]">
                                 {cr > 0.001 ? `${getCurrencySymbol()}${fmt(cr)}` : '—'}
                               </td>
-                              <td className={`py-3 px-4 text-right font-mono font-semibold ${netDrCr >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
-                                {getCurrencySymbol()}{fmt(Math.abs(netDrCr))} {netLabel}
+                              <td className={`py-3 px-4 text-right font-mono font-semibold ${signedNet >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
+                                {getCurrencySymbol()}{fmt(Math.abs(signedNet))} {netLabel}
                               </td>
                               <td className="py-3 px-4 text-center">
                                 <Link

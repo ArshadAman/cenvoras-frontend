@@ -8,6 +8,7 @@ import BulkDeleteModal from '../components/BulkDeleteModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { typeSignedNetLabel } from '../utils/ledgerBalance';
 
 const ACCOUNT_TYPE_LABELS = {
   asset: 'Asset',
@@ -492,7 +493,14 @@ export default function ChartOfAccounts() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">
-                        {account.balance !== undefined ? `${getCurrencySymbol()}${Number(account.balance).toLocaleString('en-IN')}` : '-'}
+                        {(() => {
+                          const raw = account.current_balance ?? account.balance;
+                          if (raw === undefined || raw === null || raw === '') return '-';
+                          const n = Number(raw);
+                          if (!Number.isFinite(n)) return '-';
+                          const label = typeSignedNetLabel(n, account.account_type);
+                          return `${getCurrencySymbol()}${Math.abs(n).toLocaleString('en-IN')} ${label}`;
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
