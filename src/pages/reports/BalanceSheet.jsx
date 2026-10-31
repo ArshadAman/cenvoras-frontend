@@ -308,7 +308,7 @@ export default function BalanceSheet() {
                 items={data.equity?.items || []}
                 total={data.equity?.total}
                 extra={{
-                  label: "Retained Earnings (Net Profit)",
+                  label: "Retained Earnings (Current-year net profit)",
                   amount: data.equity?.retained_earnings,
                 }}
                 onRowClick={setSelectedAccount}
