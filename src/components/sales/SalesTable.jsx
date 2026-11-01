@@ -189,6 +189,33 @@ export default function SalesTable({
     queryFn: () => getSalesInvoices({ search, ordering, status: statusFilterTab }),
   });
 
+  const otherTab = statusFilterTab === 'final' ? 'draft' : statusFilterTab === 'draft' ? 'final' : null;
+  const { data: otherData } = useQuery({
+    queryKey: ["salesInvoices", search, ordering, otherTab],
+    queryFn: () => getSalesInvoices({ search, ordering, status: otherTab }),
+    enabled: Boolean(search?.trim() && otherTab),
+  });
+
+  const invoiceMatchesSearch = (invoice, term) => {
+    if (!term || !term.trim()) return true;
+    const s = term.toLowerCase().trim();
+    if (invoice.invoice_number?.toLowerCase().includes(s)) return true;
+    if (invoice.customer_name?.toLowerCase().includes(s)) return true;
+    if (invoice.customer?.name?.toLowerCase().includes(s)) return true;
+    if (invoice.po_number?.toLowerCase().includes(s)) return true;
+    if (invoice.challan_number?.toLowerCase().includes(s)) return true;
+    if (invoice.notes?.toLowerCase().includes(s)) return true;
+    if (Array.isArray(invoice.items)) {
+      return invoice.items.some((it) =>
+        it.description?.toLowerCase().includes(s) ||
+        it.product_detail?.name?.toLowerCase().includes(s) ||
+        it.product_name?.toLowerCase().includes(s) ||
+        (typeof it.product === 'string' && it.product.toLowerCase().includes(s))
+      );
+    }
+    return false;
+  };
+
   if (error) {
     return (
       <div className="bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 rounded-xl p-6 text-center">
@@ -212,13 +239,20 @@ export default function SalesTable({
     ? data
     : data?.data || data?.results || [];
 
+  const otherInvoicesRaw = Array.isArray(otherData)
+    ? otherData
+    : otherData?.data || otherData?.results || [];
+
+  const otherMatches = useMemo(() => {
+    if (!search?.trim() || !otherTab) return [];
+    return otherInvoicesRaw.filter((inv) => invoiceMatchesSearch(inv, search));
+  }, [otherInvoicesRaw, search, otherTab]);
+
   // Frontend search and filter
   const filteredInvoices = invoicesRaw
     .filter(invoice => {
-      // Search by invoice number or customer (case-insensitive)
-      const searchLower = search.toLowerCase();
-      const matchesSearch = invoice.invoice_number?.toLowerCase().includes(searchLower) ||
-        invoice.customer_name?.toLowerCase().includes(searchLower);
+      // Search across invoice number, customer, PO, challan, notes, and item descriptions
+      const matchesSearch = invoiceMatchesSearch(invoice, search);
       
       // Date range filter (use advanced filters if available, otherwise basic)
       const dateRange = advancedFilters.dateRange.start || advancedFilters.dateRange.end 
@@ -708,6 +742,22 @@ export default function SalesTable({
         </div>
       )}
 
+      {/* Cross-tab search prompt */}
+      {Boolean(search?.trim() && filteredInvoices.length === 0 && otherMatches.length > 0) && (
+        <div className="mx-4 lg:mx-0 mb-4 p-3 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/25 rounded-xl flex items-center justify-between text-xs sm:text-sm text-[var(--text-primary)]">
+          <span>
+            Found <strong>{otherMatches.length}</strong> matching {otherMatches.length === 1 ? 'invoice' : 'invoices'} in <strong>{otherTab === 'draft' ? 'Drafts' : 'Finals'}</strong>.
+          </span>
+          <button
+            type="button"
+            onClick={() => setStatusFilterTab(otherTab)}
+            className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer ml-3 whitespace-nowrap"
+          >
+            [View {otherTab === 'draft' ? 'Drafts' : 'Finals'}]
+          </button>
+        </div>
+      )}
+
       {/* Table for desktop, Cards for mobile */}
       <div ref={tableTopRef} className="hidden lg:block">
         <div className="overflow-x-auto">
@@ -856,7 +906,23 @@ export default function SalesTable({
             ) : filteredInvoices.length === 0 ? (
               <tr>
                 <td colSpan="10" className="px-6 py-12 text-center text-[var(--text-muted)]">
-                  No invoices found matching your criteria.
+                  {search?.trim() && otherMatches.length > 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-sm">No {docLabelPlural.toLowerCase()} found matching "{search}" in {statusFilterTab === 'final' ? 'Finals' : statusFilterTab === 'draft' ? 'Drafts' : 'this view'}.</p>
+                      <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl text-sm font-medium text-[var(--text-primary)]">
+                        <span>Found {otherMatches.length} matching {otherMatches.length === 1 ? 'invoice' : 'invoices'} in {otherTab === 'draft' ? 'Drafts' : 'Finals'}.</span>
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilterTab(otherTab)}
+                          className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer ml-1"
+                        >
+                          [View {otherTab === 'draft' ? 'Drafts' : 'Finals'}]
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span>No {docLabelPlural.toLowerCase()} found matching your criteria.</span>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -1067,8 +1133,24 @@ export default function SalesTable({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
           </div>
         ) : filteredInvoices.length === 0 ? (
-          <div className="text-center py-12 text-[var(--text-muted)] bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
-            No invoices found matching your criteria.
+          <div className="text-center py-12 px-4 text-[var(--text-muted)] bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
+            {search?.trim() && otherMatches.length > 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2">
+                <p className="text-sm">No {docLabelPlural.toLowerCase()} found matching "{search}" in {statusFilterTab === 'final' ? 'Finals' : statusFilterTab === 'draft' ? 'Drafts' : 'this view'}.</p>
+                <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-2 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl text-sm font-medium text-[var(--text-primary)]">
+                  <span>Found {otherMatches.length} matching {otherMatches.length === 1 ? 'invoice' : 'invoices'} in {otherTab === 'draft' ? 'Drafts' : 'Finals'}.</span>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilterTab(otherTab)}
+                    className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer"
+                  >
+                    [View {otherTab === 'draft' ? 'Drafts' : 'Finals'}]
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <span>No {docLabelPlural.toLowerCase()} found matching your criteria.</span>
+            )}
           </div>
         ) : (
           paginatedInvoices.map((invoice) => (

@@ -65,7 +65,12 @@ api.interceptors.response.use(
           failedQueue.push({ resolve, reject })
         })
           .then((token) => {
-            originalRequest.headers.Authorization = 'Bearer ' + token
+            if (originalRequest.headers?.set) {
+              originalRequest.headers.set('Authorization', `Bearer ${token}`);
+            } else if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            }
             return api(originalRequest)
           })
           .catch((err) => Promise.reject(err))
@@ -90,6 +95,12 @@ api.interceptors.response.use(
         })
         localStorage.setItem('token', data.access)
         api.defaults.headers.common['Authorization'] = 'Bearer ' + data.access
+        if (originalRequest.headers?.set) {
+          originalRequest.headers.set('Authorization', `Bearer ${data.access}`);
+        } else if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${data.access}`;
+          originalRequest.headers['Authorization'] = `Bearer ${data.access}`;
+        }
         processQueue(null, data.access)
         return api(originalRequest)
       } catch (err) {

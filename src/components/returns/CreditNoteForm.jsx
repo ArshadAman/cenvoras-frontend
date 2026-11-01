@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react"; // Assuming headlessui is used for modals
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCustomers } from "../../api/sales";
-import { getSalesInvoices } from "../../api/sales";
+import { getCustomers, getSalesInvoices } from "../../api/sales";
 import { createCreditNote, getInvoiceReturnRemaining } from "../../api/gst";
 import { extractServerMessage, exceedsRemainingQty, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -18,6 +17,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   const [reason, setReason] = useState("return");
   const [notes, setNotes] = useState("");
   const [noteDate, setNoteDate] = useState(getTodayKolkata());
+  const [dismissedDateError, setDismissedDateError] = useState(false);
   const [returnItems, setReturnItems] = useState([]);
 
   // Fetch Customers
@@ -89,12 +89,12 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
       queryClient.invalidateQueries({ queryKey: ["cn-remaining"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(data?.gst_time_barred ? "Credit note without GST (time-barred under s.34) created" : "Credit Note Created");
+      toast.success(data?.gst_time_barred ? "Credit note without GST (time-barred under s.34) created" : "Credit Note Created", { autoClose: 3500 });
       if (data?.back_dated?.message) {
-        toast.warn(`Back-dated entry: dated ${formatDMY(data.date)}, entered on ${formatDMY(data.back_dated.entered_on)}.`, { autoClose: 8000 });
+        toast.warn(`Back-dated entry: dated ${formatDMY(data.date)}, entered on ${formatDMY(data.back_dated.entered_on)}.`, { autoClose: 5000 });
       }
       if (data?.section34_warning) {
-        toast.warn(data.section34_warning);
+        toast.warn(data.section34_warning, { autoClose: 3500 });
       }
       handleClose();
     },
@@ -124,50 +124,84 @@ export default function CreditNoteForm({ isOpen, onClose }) {
         : null);
       const taxErrors = findTax(body);
       if (taxErrors && taxErrors.length) {
-        toast.error(taxErrors.join('\n'), { autoClose: false, toastId: 'cn-tax-cap', style: { whiteSpace: 'pre-line' } });
+        toast.error(taxErrors.join('\n'), { autoClose: 5000, toastId: 'cn-tax-cap', style: { whiteSpace: 'pre-line' } });
         return;
       }
-      toast.error(extractServerMessage(err, "Failed to create credit note"));
+      toast.error(extractServerMessage(err, "Failed to create credit note"), { autoClose: 3500 });
     },
   });
 
   // R22: the app's own messages for dates/quantities (not only the browser's picker limits).
   const today = getTodayKolkata();
   const invDateStr = selectedInvoice?.invoice_date ? String(selectedInvoice.invoice_date).slice(0, 10) : '';
-  const dateError = !noteDate
-    ? 'Enter the credit note date.'
-    : (invDateStr && noteDate < invDateStr)
-      ? `The credit note date can't be before the invoice date (${formatDMY(invDateStr)}).`
-      : noteDate > today
-        ? `The credit note date can't be in the future (today is ${formatDMY(today)}).`
-        : '';
+  const dateError = useMemo(() => {
+    if (!noteDate) return 'Enter the credit note date.';
+    if (invDateStr && noteDate < invDateStr) {
+      return `The credit note date can't be before the invoice date (${formatDMY(invDateStr)}).`;
+    }
+    if (noteDate > today) {
+      return `The credit note date can't be in the future (today is ${formatDMY(today)}).`;
+    }
+    const hasTax = returnItems.some((item) => parseFloat(item.tax || 0) > 0);
+    if (hasTax && selectedInvoice?.invoice_date) {
+      const invDate = new Date(`${selectedInvoice.invoice_date}T00:00:00`);
+      const fyEndYear = invDate.getMonth() >= 3 ? invDate.getFullYear() + 1 : invDate.getFullYear();
+      const deadline = new Date(fyEndYear, 10, 30);
+      const cnDate = new Date(`${noteDate}T00:00:00`);
+      if (cnDate > deadline) {
+        return `GST Act Section 34: Tax credit notes for this invoice's FY can only be issued until 30 Nov ${fyEndYear}.`;
+      }
+    }
+    return '';
+  }, [noteDate, invDateStr, today, returnItems, selectedInvoice]);
+
+  useEffect(() => {
+    setDismissedDateError(false);
+  }, [dateError]);
+
   const fractionalReturn = wholeUnits && returnItems.some((it) => {
     const q = Number(it.return_qty) || 0;
     return q > 0 && !Number.isInteger(q);
   });
   const WHOLE_UNITS_MSG = 'Returns and defective items must be whole units';
 
+  const hasExcessQty = returnItems.some(item => {
+    const qty = parseFloat(item.return_qty) || 0;
+    const maxAllowed = item.remaining_qty !== undefined ? item.remaining_qty : (item.original_qty ?? 0);
+    return qty > maxAllowed;
+  });
+
+  const activeReturnItems = returnItems.filter(item => (parseFloat(item.return_qty) || 0) > 0);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (dateError) {
-      toast.error(dateError, { toastId: 'cn-date-error', autoClose: false });
+      toast.error(dateError, { toastId: 'cn-date-error', autoClose: 3500 });
       return;
     }
     if (fractionalReturn) {
-      toast.error(WHOLE_UNITS_MSG, { toastId: 'cn-qty-error', autoClose: false });
+      toast.error(WHOLE_UNITS_MSG, { toastId: 'cn-qty-error', autoClose: 3500 });
       return;
     }
     if (!remainingReady) {
-      toast.error("Wait for remaining quantities to load before creating a credit note.");
+      toast.error("Wait for remaining quantities to load before creating a credit note.", { autoClose: 3500 });
       return;
     }
-    if (returnItems.some((it) => exceedsRemainingQty(it.return_qty, it.remaining_qty))) {
-      toast.error("Return quantity exceeds remaining creditable quantity on the original invoice.");
-      return;
+    for (const item of returnItems) {
+      const qty = parseFloat(item.return_qty) || 0;
+      const maxAllowed = item.remaining_qty !== undefined ? item.remaining_qty : (item.original_qty ?? 0);
+      if (qty > maxAllowed) {
+        const prodName = item.product_detail?.name || item.product || 'item';
+        toast.error(`Return quantity for ${prodName} cannot exceed remaining quantity (${maxAllowed})`, {
+          toastId: `excess-qty-${item.id || prodName}`,
+          autoClose: 3500,
+        });
+        return;
+      }
     }
 
     const itemsToReturn = returnItems
-      .filter(item => item.return_qty > 0)
+      .filter(item => (parseFloat(item.return_qty) || 0) > 0)
       .map(item => {
         const qty = parseFloat(item.return_qty) || 0;
         const price = parseFloat(item.price) || 0;
@@ -193,12 +227,12 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       });
 
     if (!selectedCustomer) {
-      toast.error("Save this customer first before creating a credit note.");
+      toast.error("Save this customer first before creating a credit note.", { autoClose: 3500 });
       return;
     }
 
     if (itemsToReturn.length === 0) {
-      toast.error("Please select at least one item to return");
+      toast.error("Please select at least one item to return", { autoClose: 3500 });
       return;
     }
 
@@ -210,7 +244,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       const deadline = new Date(fyEndYear, 9, 31); // Rudra CA: prior-FY CNs dated by 31 Oct (monthly), declared by 30 Nov
       const cnDate = new Date(`${noteDate}T00:00:00`);
       if (cnDate > deadline) {
-        toast.warn(`GST Act s.34(2): tax credit notes for this invoice's FY must be dated by 31 Oct ${fyEndYear} and declared by 30 Nov ${fyEndYear}.`);
+        toast.warn(`GST Act s.34(2): tax credit notes for this invoice's FY must be dated by 31 Oct ${fyEndYear} and declared by 30 Nov ${fyEndYear}.`, { autoClose: 5000 });
       }
     }
 
@@ -236,6 +270,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     setReturnItems([]);
     setNotes("");
     setNoteDate(getTodayKolkata());
+    setDismissedDateError(false);
     onClose();
   };
 
@@ -249,14 +284,18 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-[var(--text-primary)]">
                 New Credit Note (Sales Return)
               </Dialog.Title>
-              <button onClick={handleClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                <XMarkIcon className="w-5 h-5" />
+              <button
+                type="button"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1"
+                onClick={handleClose}
+              >
+                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Step 1: Select Customer & Invoice */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Step 1: Customer & Invoice Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Customer</label>
                   <select 
@@ -316,7 +355,25 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               </div>
 
               {/* Step 2: Return Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Credit note date</label>
+                  <input 
+                    type="date" 
+                    value={noteDate}
+                    onChange={(e) => setNoteDate(e.target.value)}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+                    aria-invalid={!!dateError}
+                    required
+                  />
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Not before the invoice date or in a month whose GSTR-1 is filed.</p>
+                  {dateError && (
+                    <p className="mt-1 text-xs font-medium text-red-400" role="alert">{dateError}</p>
+                  )}
+                  {!dateError && noteDate < today && (
+                    <p className="mt-1 text-xs font-medium text-amber-500">Back-dated entry: this credit note is dated {formatDMY(noteDate)}, before today ({formatDMY(today)}). You can still save it; the entry date and your name are recorded.</p>
+                  )}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Reason</label>
                   <select 
@@ -329,93 +386,94 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                   >
                     <option value="return">Goods Returned</option>
                     <option value="defective">Defective</option>
-                    <option value="discount">Post-Sale Discount</option>
-                    <option value="rate_diff">Rate Difference</option>
-                    <option value="other">Other</option>
+                    <option value="overcharge">Price Correction / Overcharge</option>
+                    <option value="post_sale_discount">Post-Sale Discount</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Credit note date</label>
-                  <input
-                    type="date"
-                    value={noteDate}
-                    onChange={(e) => setNoteDate(e.target.value)}
-                    aria-invalid={!!dateError}
-                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
-                  />
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">Not before the invoice date or in a month whose GSTR-1 is filed.</p>
-                  {dateError && (
-                    <p className="mt-1 text-xs font-medium text-red-400" role="alert">{dateError}</p>
-                  )}
-                  {!dateError && noteDate < today && (
-                    <p className="mt-1 text-xs font-medium text-amber-500">Back-dated entry: this credit note is dated {formatDMY(noteDate)}, before today ({formatDMY(today)}). You can still save it; the entry date and your name are recorded.</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes / Internal Reference</label>
                   <input 
                     type="text" 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
+                    placeholder="e.g. Return of damaged stock"
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
-                    placeholder="Optional remarks"
                   />
                 </div>
               </div>
 
-              {/* Step 3: Items Table (Responsive) */}
+              {/* Step 3: Items to Return */}
               {selectedInvoice && (
                 <div className="space-y-4">
-                  {(remainingPending || !remainingFetched) ? (
-                    <div className="px-3 py-8 text-sm text-[var(--text-muted)] flex items-center justify-center gap-2 border border-[var(--border-subtle)] rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                      Invoice Items
+                    </h4>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {wholeUnits ? 'Returns and defective items must be whole units.' : 'Enter return quantities.'}
+                    </span>
+                  </div>
+
+                  {!remainingReady ? (
+                    <div className="p-6 text-center text-sm text-[var(--text-muted)] border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-primary)]/40 flex items-center justify-center gap-2">
                       <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Loading remaining quantities…
-                    </div>
-                  ) : remainingError || !invoiceRemaining?.remaining_qty ? (
-                    <div className="px-3 py-4 text-sm text-red-400 border border-[var(--border-subtle)] rounded-xl" role="alert">
-                      Could not load remaining creditable quantities. Try selecting the invoice again.
+                      Loading remaining returnable quantities…
                     </div>
                   ) : (
                   <>
-                  {/* Desktop Table */}
-                  <div className="hidden lg:block border border-[var(--border-subtle)] rounded-xl overflow-hidden">
+                  {/* Desktop Items Table */}
+                  <div className="hidden lg:block overflow-hidden rounded-xl border border-[var(--border-subtle)]">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                         <tr>
                           <th className="px-4 py-3">Product</th>
                           <th className="px-4 py-3 text-right">Can credit</th>
                           <th className="px-4 py-3 text-right">Price</th>
-                          <th className="px-4 py-3 text-right w-36">Return Qty</th>
+                          <th className="px-4 py-3 text-right w-44">Return Qty</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)]">
-                        {returnItems.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
-                            <td className="px-4 py-3 text-[var(--text-primary)] font-medium">{item.product_detail?.name || 'N/A'}</td>
-                            <td className="px-4 py-3 text-right text-[var(--text-secondary)]">{item.remaining_qty} of {item.original_qty} {item.unit}</td>
-                            <td className="px-4 py-3 text-right text-[var(--text-secondary)] tabular-nums">{getCurrencySymbol()}{item.price}</td>
-                            <td className="px-4 py-3">
-                              <input 
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                max={item.remaining_qty}
-                                value={item.return_qty}
-                                onChange={(e) => {
-                                  const raw = parseFloat(e.target.value) || 0;
-                                  // R21: whole units for returns (stock), up to 2 decimals for value credits.
-                                  // R22: keep what was typed (no silent snap to 0); whole-unit rule is shown inline.
-                                  const stepped = Math.round(raw * 100) / 100;
-                                  const newQty = Math.max(0, Math.min(stepped, item.remaining_qty));
-                                  const newItems = [...returnItems];
-                                  newItems[idx].return_qty = newQty;
-                                  setReturnItems(newItems);
-                                }}
-                                className="w-full bg-[var(--bg-primary)] border border-[var(--input-border)] rounded-xl px-3 py-1.5 text-right text-sm text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none"
-                              />
-                            </td>
-                          </tr>
-                        ))}
+                        {returnItems.map((item, idx) => {
+                          const maxAllowed = item.remaining_qty !== undefined ? item.remaining_qty : item.original_qty;
+                          const isExcess = (parseFloat(item.return_qty) || 0) > maxAllowed;
+                          return (
+                            <tr key={idx} className="hover:bg-[var(--bg-primary)]/40 transition-colors">
+                              <td className="px-4 py-3 text-[var(--text-primary)] font-medium">{item.product_detail?.name || 'N/A'}</td>
+                              <td className="px-4 py-3 text-right text-[var(--text-secondary)]">
+                                <span className="font-medium text-[var(--text-primary)]">{item.remaining_qty}</span>
+                                <span className="text-xs text-[var(--text-muted)]"> of {item.original_qty} {item.unit}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right text-[var(--text-secondary)] tabular-nums">{getCurrencySymbol()}{item.price}</td>
+                              <td className="px-4 py-3">
+                                <input 
+                                  type="number"
+                                  min="0"
+                                  step={wholeUnits ? "1" : "0.01"}
+                                  value={item.return_qty === 0 ? '' : item.return_qty}
+                                  placeholder="0"
+                                  onChange={(e) => {
+                                    const valStr = e.target.value;
+                                    const raw = valStr === '' ? 0 : parseFloat(valStr);
+                                    const stepped = wholeUnits ? Math.round(raw) : (Math.round(raw * 100) / 100);
+                                    const newItems = [...returnItems];
+                                    newItems[idx].return_qty = isNaN(stepped) ? 0 : stepped;
+                                    setReturnItems(newItems);
+                                  }}
+                                  className={`w-full bg-[var(--bg-primary)] border ${
+                                    isExcess
+                                      ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)] ring-1 ring-[var(--status-danger)]'
+                                      : 'border-[var(--input-border)] focus:border-[var(--accent-primary)]'
+                                  } rounded-xl px-3 py-1.5 text-right text-sm text-[var(--text-primary)] focus:outline-none`}
+                                />
+                                {isExcess && (
+                                  <div className="text-[11px] text-[var(--status-danger)] text-right mt-1 font-semibold">
+                                    Max returnable is {maxAllowed}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                     {fractionalReturn && (<p className="px-4 py-2 text-xs font-medium text-red-400" role="alert">{WHOLE_UNITS_MSG}</p>)}
@@ -423,52 +481,80 @@ export default function CreditNoteForm({ isOpen, onClose }) {
 
                   {/* Mobile Item Cards */}
                   <div className="lg:hidden space-y-4">
-                    {returnItems.map((item, idx) => (
-                      <div key={idx} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 space-y-4">
-                        <div className="text-[var(--text-primary)] font-semibold text-base">{item.product_detail?.name || 'N/A'}</div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Can credit</label>
-                            <div className="text-[var(--text-primary)] text-sm font-medium">{item.remaining_qty} of {item.original_qty} {item.unit}</div>
+                    {returnItems.map((item, idx) => {
+                      const maxAllowed = item.remaining_qty !== undefined ? item.remaining_qty : item.original_qty;
+                      const isExcess = (parseFloat(item.return_qty) || 0) > maxAllowed;
+                      return (
+                        <div key={idx} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 space-y-4">
+                          <div className="text-[var(--text-primary)] font-semibold text-base">{item.product_detail?.name || 'N/A'}</div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Can credit</label>
+                              <div className="text-[var(--text-primary)] text-sm font-medium">{item.remaining_qty} of {item.original_qty} {item.unit}</div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Price</label>
+                              <div className="text-[var(--text-primary)] text-sm font-medium tabular-nums">{getCurrencySymbol()}{item.price}</div>
+                            </div>
                           </div>
-                          <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Price</label>
-                            <div className="text-[var(--text-primary)] text-sm font-medium tabular-nums">{getCurrencySymbol()}{item.price}</div>
-                          </div>
-                        </div>
 
-                        <div className="pt-3 border-t border-[var(--border-subtle)]">
-                           <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">Quantity to Return</label>
-                           <div className="relative">
-                              <input 
-                                type="number" 
-                                min="0" 
-                                step="0.01"
-                                max={item.remaining_qty}
-                                value={item.return_qty}
-                                onChange={(e) => {
-                                  const raw = parseFloat(e.target.value) || 0;
-                                  // R21: whole units for returns (stock), up to 2 decimals for value credits.
-                                  // R22: keep what was typed (no silent snap to 0); whole-unit rule is shown inline.
-                                  const stepped = Math.round(raw * 100) / 100;
-                                  const newQty = Math.max(0, Math.min(stepped, item.remaining_qty));
-                                  const newItems = [...returnItems];
-                                  newItems[idx].return_qty = newQty;
-                                  setReturnItems(newItems);
-                                }}
-                                className="w-full bg-[var(--bg-surface)] border border-[var(--input-border)] rounded-xl px-4 py-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none transition-all text-center font-bold text-lg"
-                              />
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs uppercase font-semibold pointer-events-none">
-                                max: {item.remaining_qty}
-                              </div>
-                           </div>
+                          <div className="pt-3 border-t border-[var(--border-subtle)]">
+                             <div className="flex justify-between items-center mb-1">
+                               <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Quantity to Return</label>
+                               <span className="text-xs text-[var(--text-muted)] font-medium">Available: {maxAllowed} {item.unit || ''}</span>
+                             </div>
+                             <div className="relative">
+                                <input 
+                                  type="number" 
+                                  min="0"
+                                  step={wholeUnits ? "1" : "0.01"}
+                                  value={item.return_qty === 0 ? '' : item.return_qty}
+                                  placeholder="0"
+                                  onChange={(e) => {
+                                    const valStr = e.target.value;
+                                    const raw = valStr === '' ? 0 : parseFloat(valStr);
+                                    const stepped = wholeUnits ? Math.round(raw) : (Math.round(raw * 100) / 100);
+                                    const newItems = [...returnItems];
+                                    newItems[idx].return_qty = isNaN(stepped) ? 0 : stepped;
+                                    setReturnItems(newItems);
+                                  }}
+                                  className={`w-full bg-[var(--bg-surface)] border ${
+                                    isExcess
+                                      ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)] ring-1 ring-[var(--status-danger)]'
+                                      : 'border-[var(--input-border)] focus:border-[var(--accent-primary)]'
+                                  } rounded-xl px-4 py-3 text-[var(--text-primary)] outline-none transition-all text-center font-bold text-lg`}
+                                />
+                             </div>
+                             {isExcess && (
+                               <div className="text-xs text-[var(--status-danger)] text-center mt-1 font-semibold">
+                                 Max returnable is {maxAllowed}
+                               </div>
+                             )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   </>
                   )}
+                </div>
+              )}
+
+              {/* Dismissible Date Error Banner */}
+              {dateError && !dismissedDateError && (
+                <div className="rounded-xl border border-[var(--status-danger)]/40 bg-[var(--status-danger)]/10 p-4 flex items-start justify-between gap-3 text-sm text-[var(--status-danger)]">
+                  <div className="flex items-start gap-2.5">
+                    <span className="font-bold text-base leading-none">⚠</span>
+                    <span>{dateError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedDateError(true)}
+                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-semibold px-2 py-0.5 rounded border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-colors"
+                  >
+                    Dismiss
+                  </button>
                 </div>
               )}
 
@@ -482,7 +568,15 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={createMutation.isPending || !selectedInvoiceId || !remainingReady}
+                  disabled={
+                    Boolean(dateError) ||
+                    hasExcessQty ||
+                    fractionalReturn ||
+                    createMutation.isPending ||
+                    !selectedInvoiceId ||
+                    !remainingReady ||
+                    activeReturnItems.length === 0
+                  }
                   aria-busy={createMutation.isPending}
                   className="btn-primary w-full sm:w-auto py-3 px-8 text-sm font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >

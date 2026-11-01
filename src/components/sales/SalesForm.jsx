@@ -670,9 +670,13 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 }
               }}
               placeholder="Customer name"
-              className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${HEADER_FIELD_FOCUS}`}
+              className={`w-full bg-[var(--bg-primary)] border ${
+                meta.error
+                  ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)] ring-1 ring-[var(--status-danger)]'
+                  : 'border-[var(--border-subtle)]'
+              } rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${HEADER_FIELD_FOCUS}`}
             />
-            {meta.touched && meta.error && (
+            {meta.error && (
               <div className="text-[var(--status-danger)] text-sm mt-1">{meta.error}</div>
             )}
           </div>
@@ -871,7 +875,11 @@ const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f
 
 const SalesSchema = Yup.object().shape({
   // Required fields
-  customer_name: Yup.string().required("Customer name is required").min(1).max(255),
+  customer_name: Yup.string()
+    .trim()
+    .required("Please select a customer")
+    .min(1, "Please select a customer")
+    .max(255),
   // Empty = auto-assigned on final save (do not pre-fill INV-### on open)
   invoice_number: Yup.string().max(100),
   warehouse: Yup.string().nullable(),
@@ -1482,7 +1490,9 @@ export default function SalesForm({
   const { data: nextInvData } = useQuery({
     queryKey: ["nextDocumentNumber", documentType, invoicePrefix],
     queryFn: () => getNextNumber(invoicePrefix ?? ""),
-    enabled: isOpen && (!isEdit || storedIsPlaceholder)
+    enabled: isOpen && (!isEdit || storedIsPlaceholder),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
   const previewNextNumber = (!isEdit || storedIsPlaceholder) ? (nextInvData?.next_number || "") : "";
 
@@ -1861,15 +1871,20 @@ export default function SalesForm({
             // Drafts only require customer name
             if (isDraft) {
                if (!values.customer_name || values.customer_name.trim() === '') {
-                   setFieldError('customer_name', 'Customer name is required');
-                   toast.error('Customer name is required to save a draft');
+                   setFieldError('customer_name', 'Please select a customer');
+                   const custEl = document.getElementById('customer_name');
+                   if (custEl) custEl.focus();
+                   toast.error('Please select a customer', {
+                     toastId: 'customer-validation-error',
+                     autoClose: 3500
+                   });
                    setSubmitting(false);
                    return;
                }
             } else {
                 // Final Invoices require at least one item
                 if (cleanedItems.length === 0) {
-                   toast.error('At least one item is required to create an invoice');
+                   toast.error('At least one item is required to create an invoice', { autoClose: 3500 });
                    setSubmitting(false);
                    return;
                 }
@@ -1877,7 +1892,7 @@ export default function SalesForm({
                 if (itemSettings.show_item_batch && itemSettings.require_item_batch) {
                   const missingBatchRow = cleanedItems.findIndex((item) => item.row_type !== 'note' && !item.batch);
                   if (missingBatchRow >= 0) {
-                    toast.error(`Batch is required for row ${missingBatchRow + 1}.`);
+                    toast.error(`Batch is required for row ${missingBatchRow + 1}.`, { autoClose: 3500 });
                     setSubmitting(false);
                     return;
                   }
@@ -1904,10 +1919,16 @@ export default function SalesForm({
                   });
                   setErrors(errors);
                   
-                  // Show the first error in a toast for better UX
-                  if (err.inner?.length > 0) {
+                  if (errors.customer_name) {
+                    const custEl = document.getElementById('customer_name');
+                    if (custEl) custEl.focus();
+                    toast.error(errors.customer_name, {
+                      toastId: 'customer-validation-error',
+                      autoClose: 3500
+                    });
+                  } else if (err.inner?.length > 0) {
                     const firstMsg = Object.values(errors)[0] || err.inner[0].message;
-                    toast.error(firstMsg);
+                    toast.error(firstMsg, { autoClose: 3500 });
                   }
                   
                   setSubmitting(false);
@@ -2060,9 +2081,13 @@ export default function SalesForm({
                 ? (linkedChallans.map((c) => c.challan_date).filter(Boolean).sort()[0] || values.challan_date || null)
                 : (values.challan_date || null);
 
+              const finalInvoiceNumber = (!values.invoice_number?.trim() && !isDraft)
+                ? (previewNextNumber || "")
+                : ((!isEdit && isDraft && isFormalAutoSeq) ? "" : values.invoice_number);
+
               const formData = {
                 customer_name: values.customer_name,
-                invoice_number: (!isEdit && isDraft && isFormalAutoSeq) ? "" : values.invoice_number,
+                invoice_number: finalInvoiceNumber,
                 invoice_date: values.invoice_date,
                 ...(isQuotation ? {} : {
                   due_date: values.due_date || null,
@@ -2090,7 +2115,7 @@ export default function SalesForm({
                 ...(values.customer && values.customer_phone && { customer_phone: values.customer_phone }),
                 // Delivery Challan specific fields
                 ...(isDeliveryChallan && {
-                  challan_number: values.invoice_number,
+                  challan_number: finalInvoiceNumber,
                   date: values.invoice_date,
                   vehicle_number: values.vehicle_number || null,
                   transport_mode: values.transport_mode || null,
@@ -2098,12 +2123,12 @@ export default function SalesForm({
                 }),
                 // Quotation specific fields
                 ...(isQuotation && {
-                  quotation_number: values.invoice_number,
+                  quotation_number: finalInvoiceNumber,
                   quotation_date: values.invoice_date,
                 }),
                 // Sales Order specific fields
                 ...(isSalesOrder && {
-                  order_number: values.invoice_number,
+                  order_number: finalInvoiceNumber,
                   date: values.invoice_date,
                 }),
               };
@@ -3737,18 +3762,22 @@ export default function SalesForm({
                         <span>↳ IGST (Inter-state)</span>
                         <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
                       </div>
-                    ) : (
-                      <>
-                        <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
-                          <span>↳ CGST (Intra-state)</span>
-                          <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
-                          <span>↳ SGST (Intra-state)</span>
-                          <span>{getCurrencySymbol()}{(totalTax / 2).toFixed(2)}</span>
-                        </div>
-                      </>
-                    )}
+                    ) : (() => {
+                      const cgstTax = Math.floor((totalTax * 100) / 2) / 100;
+                      const sgstTax = Number((totalTax - cgstTax).toFixed(2));
+                      return (
+                        <>
+                          <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
+                            <span>↳ CGST (Intra-state)</span>
+                            <span>{getCurrencySymbol()}{cgstTax.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
+                            <span>↳ SGST (Intra-state)</span>
+                            <span>{getCurrencySymbol()}{sgstTax.toFixed(2)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                     <div className="h-px bg-[var(--border-subtle)] my-3"></div>
                     {roundOffApplied && (
                       <div className="flex justify-between text-[var(--status-warning)] font-mono font-tabular">

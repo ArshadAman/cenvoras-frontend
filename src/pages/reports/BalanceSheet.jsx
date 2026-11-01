@@ -78,6 +78,7 @@ function SubGroup({ label, items = [], total, color }) {
 
 // Full section card (Assets / Liabilities / Equity)
 function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGroups, onRowClick }) {
+  const extraList = Array.isArray(extra) ? extra : (extra ? [extra] : []);
   return (
     <div className="bento-card overflow-hidden">
       {/* Section Header */}
@@ -106,7 +107,7 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
             <SubGroup key={i} {...sg} color={color} />
           ))}
         </>
-      ) : items.length === 0 && !extra ? (
+      ) : items.length === 0 && extraList.length === 0 ? (
         <div className="px-5 py-8 text-center text-[var(--text-muted)] text-sm">No entries</div>
       ) : (
         <div className="divide-y divide-[var(--border-subtle)]/50">
@@ -126,14 +127,14 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
               <span className={`text-sm font-semibold ${color}`}>{getCurrencySymbol()}{fmt(item.amount)}</span>
             </button>
           ))}
-          {extra && (
-            <div className="flex justify-between items-center px-5 py-3 bg-[var(--bg-primary)]/40 border-t border-[var(--border-subtle)]">
-              <span className="text-[var(--text-secondary)] text-sm italic">{extra.label}</span>
-              <span className={`text-sm font-semibold ${extra.amount >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-danger)]"}`}>
-                {getCurrencySymbol()}{fmt(extra.amount)}
+          {extraList.filter(Boolean).map((ext, idx) => (
+            <div key={idx} className="flex justify-between items-center px-5 py-3 bg-[var(--bg-primary)]/40 border-t border-[var(--border-subtle)]">
+              <span className="text-[var(--text-secondary)] text-sm italic">{ext.label}</span>
+              <span className={`text-sm font-semibold ${ext.amount >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-danger)]"}`}>
+                {getCurrencySymbol()}{fmt(ext.amount)}
               </span>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>
@@ -155,6 +156,7 @@ export default function BalanceSheet() {
     onSuccess: (d) => {
       toast.success(d.message || "Round-off entries repaired.");
       queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
+      queryClient.invalidateQueries({ queryKey: ["trial-balance"] });
     },
     onError: () => toast.error("Failed to repair round-off entries."),
   });
@@ -307,10 +309,16 @@ export default function BalanceSheet() {
                 bg="bg-[var(--status-success)]/10"
                 items={data.equity?.items || []}
                 total={data.equity?.total}
-                extra={{
-                  label: "Retained Earnings (Current-year net profit)",
-                  amount: data.equity?.retained_earnings,
-                }}
+                extra={[
+                  (data.equity?.opening_reserves !== undefined && data.equity?.opening_reserves !== null && Number(data.equity?.opening_reserves) !== 0) && {
+                    label: "Opening Reserves",
+                    amount: data.equity?.opening_reserves,
+                  },
+                  {
+                    label: "Current Year Net Profit",
+                    amount: data.equity?.current_year_net_profit ?? data.equity?.retained_earnings ?? 0,
+                  }
+                ].filter(Boolean)}
                 onRowClick={setSelectedAccount}
               />
             </div>
