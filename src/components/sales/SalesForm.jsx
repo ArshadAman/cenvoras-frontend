@@ -886,7 +886,10 @@ const SalesSchema = Yup.object().shape({
   due_date: Yup.string().nullable().test(
     'not-past-date',
     'Due date cannot be in the past',
-    (value) => !value || value >= getTodayKolkata()
+    function (value) {
+      if (this.options?.context?.documentType === 'quotation') return true;
+      return !value || value >= getTodayKolkata();
+    }
   ),
   
   // Optional invoice fields
@@ -964,9 +967,27 @@ export default function SalesForm({
   const isQuotation = documentType === "quotation";
   const isDeliveryChallan = documentType === "delivery_challan";
   const isSalesOrder = documentType === "sales_order";
-  const isLocked = Boolean(
-    readOnly
-    || (isQuotation && (editData?.status === 'converted' || editData?.status === 'partially_converted' || editData?._locked))
+  const isLocked = Boolean(readOnly);
+  const hasLinkedSalesOrder = Boolean(
+    isQuotation && (editData?.status === 'converted' || editData?.status === 'partially_converted')
+  );
+  const protectedItemQtyById = useMemo(() => {
+    const map = {};
+    if (!hasLinkedSalesOrder) return map;
+    (editData?.items || []).forEach((item) => {
+      const isNote = item.row_type === 'note' || (!item.product && !!item.description);
+      if (isNote || item.id == null || item.id === '') return;
+      map[String(item.id)] = Number(item.quantity) || 0;
+    });
+    return map;
+  }, [hasLinkedSalesOrder, editData?.items]);
+  const getProtectedMinQty = (item) => {
+    if (!item?.id) return 0;
+    const minQty = protectedItemQtyById[String(item.id)];
+    return minQty == null ? 0 : minQty;
+  };
+  const isProtectedProductLine = (item) => (
+    item?.row_type !== 'note' && item?.id != null && item.id !== '' && protectedItemQtyById[String(item.id)] != null
   );
 
   const handleBeforeCloseRef = React.useRef(null);
@@ -1205,9 +1226,16 @@ export default function SalesForm({
   };
 
   const handleItemQuantityChange = (index, qtyValue, setFieldValue, currentValues) => {
-    setFieldValue(`items.${index}.quantity`, qtyValue);
-    const price = Number(currentValues.items[index]?.price) || 0;
-    const numQty = parseFloat(qtyValue) || 0;
+    const item = currentValues.items[index];
+    const protectedMinQty = getProtectedMinQty(item);
+    let nextValue = qtyValue;
+    const parsedQty = parseFloat(qtyValue);
+    if (protectedMinQty > 0 && (qtyValue === '' || Number.isNaN(parsedQty) || parsedQty < protectedMinQty)) {
+      nextValue = protectedMinQty;
+    }
+    setFieldValue(`items.${index}.quantity`, nextValue);
+    const price = Number(item?.price) || 0;
+    const numQty = parseFloat(nextValue) || 0;
     let discount = Number(currentValues.items[index]?.discount) || 0;
 
     const prodId = currentValues.items[index]?.product_id;
@@ -1788,7 +1816,7 @@ export default function SalesForm({
           enableReinitialize={isEdit}
           onSubmit={async (values, { setSubmitting, setErrors, setFieldError }) => {
             if (isLocked) {
-              toast.info(isQuotation ? 'Converted quotations are locked and cannot be edited.' : 'This document is read-only.');
+              toast.info('This document is read-only.');
               setSubmitting(false);
               return;
             }
@@ -1801,6 +1829,27 @@ export default function SalesForm({
                 : ((item.product && item.product.trim() !== '') || item.product_id)
             );
             const valuesToValidate = { ...values, items: cleanedItems };
+
+            if (hasLinkedSalesOrder) {
+              const missingProtected = Object.keys(protectedItemQtyById).some((id) =>
+                !cleanedItems.some((item) => item.row_type !== 'note' && String(item.id) === String(id))
+              );
+              if (missingProtected) {
+                toast.error('Cannot remove existing items after a sales order has been created.');
+                setSubmitting(false);
+                return;
+              }
+              const decreased = cleanedItems.some((item) => {
+                if (item.row_type === 'note' || item.id == null || item.id === '') return false;
+                const minQty = protectedItemQtyById[String(item.id)];
+                return minQty != null && Number(item.quantity) < minQty;
+              });
+              if (decreased) {
+                toast.error('Cannot decrease quantity of existing items after a sales order has been created.');
+                setSubmitting(false);
+                return;
+              }
+            }
 
             const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
             const isSavedCustomerInDb = Boolean(
@@ -1836,7 +1885,10 @@ export default function SalesForm({
                 
                 // Perform validation manually for Final invoices using the cleaned items
                 try {
-                  await SalesSchema.validate(valuesToValidate, { abortEarly: false });
+                  await SalesSchema.validate(valuesToValidate, {
+                    abortEarly: false,
+                    context: { documentType, protectedItemQtyById },
+                  });
                 } catch (err) {
                   const errors = {};
                   const docLabel = isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Challan' : isQuotation ? 'Quotation' : 'Invoice';
@@ -2012,9 +2064,11 @@ export default function SalesForm({
                 customer_name: values.customer_name,
                 invoice_number: (!isEdit && isDraft && isFormalAutoSeq) ? "" : values.invoice_number,
                 invoice_date: values.invoice_date,
-                due_date: values.due_date || null,
-                po_number: values.po_number || null,
-                po_date: values.po_date || null,
+                ...(isQuotation ? {} : {
+                  due_date: values.due_date || null,
+                  po_number: values.po_number || null,
+                  po_date: values.po_date || null,
+                }),
                 challan_number: serializedChallanNumber || null,
                 challan_date: serializedChallanDate || null,
                 delivery_address: values.delivery_address || null,
@@ -2187,7 +2241,7 @@ export default function SalesForm({
                         {isSalesOrder ? 'Order Details' : isDeliveryChallan ? 'Challan Details' : isQuotation ? 'Quotation Details' : 'Invoice Details'}
                       </h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${isQuotation ? 'md:grid-cols-2' : 'md:grid-cols-3 lg:grid-cols-5'} gap-4`}>
                       {/* Document / Invoice Number */}
                       <div>
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
@@ -2230,40 +2284,44 @@ export default function SalesForm({
                         <ErrorMessage name="invoice_date" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
                       </div>
 
-                      {/* Due Date */}
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
-                          Due Date
-                        </label>
-                        <DateInputField
-                          name="due_date"
-                          value={values.due_date}
-                          onChange={(e) => setFieldValue('due_date', e.target.value)}
-                          placeholder="Optional"
-                        />
-                      </div>
+                      {!isQuotation && (
+                        <>
+                          {/* Due Date */}
+                          <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
+                              Due Date
+                            </label>
+                            <DateInputField
+                              name="due_date"
+                              value={values.due_date}
+                              onChange={(e) => setFieldValue('due_date', e.target.value)}
+                              placeholder="Optional"
+                            />
+                          </div>
 
-                      {/* PO Number */}
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Number</label>
-                        <Field
-                          name="po_number"
-                          type="text"
-                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
-                          placeholder="e.g. PO-8921"
-                        />
-                      </div>
+                          {/* PO Number */}
+                          <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Number</label>
+                            <Field
+                              name="po_number"
+                              type="text"
+                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
+                              placeholder="e.g. PO-8921"
+                            />
+                          </div>
 
-                      {/* PO Date */}
-                      <div>
-                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Date</label>
-                        <DateInputField
-                          name="po_date"
-                          value={values.po_date}
-                          onChange={(e) => setFieldValue('po_date', e.target.value)}
-                          placeholder="Optional"
-                        />
-                      </div>
+                          {/* PO Date */}
+                          <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Date</label>
+                            <DateInputField
+                              name="po_date"
+                              value={values.po_date}
+                              onChange={(e) => setFieldValue('po_date', e.target.value)}
+                              placeholder="Optional"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -3018,12 +3076,13 @@ export default function SalesForm({
                                            }
 
                                            if (col.key === "quantity") {
+                                             const minQty = isProtectedProductLine(item) ? getProtectedMinQty(item) : 0;
                                              return (
                                                <div key={col.key}>
                                                  <Field
                                                    name={`items.${index}.quantity`}
                                                    type="number"
-                                                   min="0"
+                                                   min={minQty}
                                                    className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                                  />
@@ -3237,9 +3296,9 @@ export default function SalesForm({
                                                 <button
                                                   type="button"
                                                   onClick={() => remove(index)}
-                                                  disabled={values.items.length === 1}
+                                                  disabled={values.items.length === 1 || isProtectedProductLine(item)}
                                                   className="text-[var(--text-muted)] hover:text-[var(--status-danger)] transition-colors p-1 disabled:opacity-30"
-                                                  title="Remove Item"
+                                                  title={isProtectedProductLine(item) ? "Cannot remove items after a sales order has been created." : "Remove Item"}
                                                   tabIndex={-1}
                                                 >
                                                   <TrashIcon className="h-3.5 w-3.5" />
@@ -3407,7 +3466,7 @@ export default function SalesForm({
                                               <Field
                                                 name={`items.${index}.quantity`}
                                                 type="number"
-                                                min="0"
+                                                min={isProtectedProductLine(item) ? getProtectedMinQty(item) : 0}
                                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center font-bold focus:border-[var(--accent-primary)] outline-none"
                                                 onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                               />
@@ -3555,8 +3614,9 @@ export default function SalesForm({
                                             <button
                                               type="button"
                                               onClick={() => remove(index)}
-                                              disabled={values.items.length === 1}
+                                              disabled={values.items.length === 1 || isProtectedProductLine(item)}
                                               className="px-3 py-1.5 bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/20 rounded-xl transition-all hover:bg-[var(--status-danger)]/20 disabled:opacity-30 text-xs font-black uppercase tracking-widest"
+                                              title={isProtectedProductLine(item) ? "Cannot remove items after a sales order has been created." : "Remove Item"}
                                               tabIndex={-1}
                                             >
                                               Remove
@@ -3731,9 +3791,7 @@ export default function SalesForm({
                   {isLocked ? (
                     <>
                       <div className="text-[var(--status-warning)] text-xs flex-1 mr-4">
-                        {isQuotation
-                          ? 'This quotation has been converted and is locked. Editing is disabled.'
-                          : 'This document is read-only.'}
+                        This document is read-only.
                       </div>
                       <button
                         type="button"

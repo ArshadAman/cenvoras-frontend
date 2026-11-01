@@ -96,6 +96,9 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
       toast.success('Quotation deleted');
       queryClient.invalidateQueries({ queryKey: ['quotations'] });
     },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Failed to delete quotation');
+    },
   });
 
   const approveMutation = useMutation({
@@ -301,19 +304,21 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                             <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
-                              deleteMutation.mutate(q.id);
-                            }
-                          }}
-                          title="Delete Quotation"
-                          aria-label="Delete Quotation"
-                          className="p-1.5 rounded-lg bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-all"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
+                        {q.status !== 'converted' && q.status !== 'partially_converted' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
+                                deleteMutation.mutate(q.id);
+                              }
+                            }}
+                            title="Delete Quotation"
+                            aria-label="Delete Quotation"
+                            className="p-1.5 rounded-lg bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-all"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -427,19 +432,21 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                         <ArrowPathRoundedSquareIcon className="w-4 h-4" />
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
-                          deleteMutation.mutate(q.id);
-                        }
-                      }}
-                      title="Delete Quotation"
-                      aria-label="Delete Quotation"
-                      className="p-2 rounded-lg bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-all"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                    {q.status !== 'converted' && q.status !== 'partially_converted' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Delete quotation ${q.quotation_number}?`)) {
+                            deleteMutation.mutate(q.id);
+                          }
+                        }}
+                        title="Delete Quotation"
+                        aria-label="Delete Quotation"
+                        className="p-2 rounded-lg bg-[var(--status-danger)]/10 text-[var(--status-danger)] border border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/20 transition-all"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
