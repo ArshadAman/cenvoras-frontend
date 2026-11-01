@@ -127,14 +127,21 @@ function Section({ title, icon: Icon, color, bg, items = [], total, extra, subGr
               <span className={`text-sm font-semibold ${color}`}>{getCurrencySymbol()}{fmt(item.amount)}</span>
             </button>
           ))}
-          {extraList.filter(Boolean).map((ext, idx) => (
-            <div key={idx} className="flex justify-between items-center px-5 py-3 bg-[var(--bg-primary)]/40 border-t border-[var(--border-subtle)]">
-              <span className="text-[var(--text-secondary)] text-sm italic">{ext.label}</span>
-              <span className={`text-sm font-semibold ${ext.amount >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-danger)]"}`}>
-                {getCurrencySymbol()}{fmt(ext.amount)}
-              </span>
-            </div>
-          ))}
+          {extraList.filter(Boolean).map((ext, idx) => {
+            const isLoss = ext.isLoss || ext.amount < 0;
+            const absVal = Math.abs(parseFloat(ext.amount || 0)).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+            return (
+              <div key={idx} className="flex justify-between items-center px-5 py-3 bg-[var(--bg-primary)]/40 border-t border-[var(--border-subtle)]">
+                <span className="text-[var(--text-secondary)] text-sm italic">{ext.label}</span>
+                <span className={`text-sm font-semibold ${isLoss ? "text-[var(--status-danger)]" : "text-[var(--status-success)]"}`}>
+                  {isLoss ? `-${getCurrencySymbol()}${absVal}` : `${getCurrencySymbol()}${absVal}`}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -314,10 +321,15 @@ export default function BalanceSheet() {
                     label: "Opening Reserves",
                     amount: data.equity?.opening_reserves,
                   },
-                  {
-                    label: "Current Year Net Profit",
-                    amount: data.equity?.current_year_net_profit ?? data.equity?.retained_earnings ?? 0,
-                  }
+                  (() => {
+                    const pl = data.equity?.current_year_net_profit ?? data.equity?.retained_earnings ?? 0;
+                    const isLoss = Number(pl) < 0;
+                    return {
+                      label: isLoss ? "Current Year Net Loss" : "Current Year Net Profit",
+                      amount: pl,
+                      isLoss,
+                    };
+                  })()
                 ].filter(Boolean)}
                 onRowClick={setSelectedAccount}
               />

@@ -386,8 +386,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                   >
                     <option value="return">Goods Returned</option>
                     <option value="defective">Defective</option>
-                    <option value="overcharge">Price Correction / Overcharge</option>
-                    <option value="post_sale_discount">Post-Sale Discount</option>
+                    <option value="discount">Post-Sale Discount</option>
+                    <option value="rate_diff">Price Correction / Rate Difference</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 <div>
@@ -396,7 +397,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                     type="text" 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Return of damaged stock"
+                    placeholder={reason === 'other' ? "Please specify the return / credit reason" : "e.g. Return of damaged stock"}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                   />
                 </div>
