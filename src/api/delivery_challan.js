@@ -18,8 +18,10 @@ export const patchDeliveryChallan = (id, data) =>
 export const deleteDeliveryChallan = (id) => 
   api.delete(`/billing/delivery-challans/${id}/`).then(res => res.data);
 
-export const getNextDeliveryChallanNumber = (prefix = "DC-") =>
-  api.get(`/billing/delivery-challans/next-number/?prefix=${prefix}`).then(res => res.data);
+export const getNextDeliveryChallanNumber = (prefix) =>
+  api.get("/billing/delivery-challans/next-number/", {
+    params: prefix ? { prefix } : undefined,
+  }).then(res => res.data);
 
 export const convertOrderToChallan = (orderId, data = {}) =>
   api.post(`/billing/sales-orders/${orderId}/convert_to_challan/`, data).then(res => res.data);

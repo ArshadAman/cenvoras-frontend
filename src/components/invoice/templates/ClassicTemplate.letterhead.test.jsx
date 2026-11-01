@@ -60,6 +60,8 @@ describe('Classic delivery challan letterhead', () => {
 
     expect(container.textContent).toContain('Cenvora Traders');
     expect(container.textContent).toContain('DELIVERY CHALLAN');
+    expect(container.textContent).toContain('Customer Address');
+    expect(container.textContent).not.toContain('Billing Address');
     expect(container.textContent).toContain('DC-001');
     expect(container.textContent).toContain('GSTIN: 29AAKCG6382L1ZU');
   });

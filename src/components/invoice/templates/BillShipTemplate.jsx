@@ -172,7 +172,7 @@ const BillShipTemplate = forwardRef(({
       {/* Bill To Ships To side by side precisely */}
       <div className="flex border-b border-gray-300 pb-6 mb-6">
         <div className="w-1/2 pr-6">
-           <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bill To:</h3>
+           <h3 className="font-bold text-gray-900 border-b border-gray-300 pb-1 mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>{isDeliveryChallan ? 'Customer Address:' : 'Bill To:'}</h3>
            <p className="font-bold" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
            <p className="whitespace-pre-line text-gray-700 leading-snug mt-1" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
            {invoice.customer_gstin && <p className="font-bold text-xs mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
