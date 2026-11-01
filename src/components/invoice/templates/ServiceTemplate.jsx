@@ -160,7 +160,7 @@ const ServiceTemplate = forwardRef(({
 
       <div className="flex mb-8 border-y-2 py-6" style={{ borderColor: '#f3f4f6' }}>
         <div className="w-1/2">
-          <h3 className="font-bold text-gray-700 uppercase tracking-widest mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bill To:</h3>
+          <h3 className="font-bold text-gray-700 uppercase tracking-widest mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>{isDeliveryChallan ? 'Customer Address:' : 'Bill To:'}</h3>
           <p className="font-bold text-gray-900 leading-none mb-1" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
           <p className="whitespace-pre-line text-gray-600 leading-relaxed" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}

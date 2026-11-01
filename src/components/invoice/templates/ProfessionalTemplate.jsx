@@ -223,7 +223,7 @@ const ProfessionalTemplate = forwardRef(({
       {/* Bill To & Ship To */}
       <div className="grid grid-cols-3 gap-6 mb-8">
         <div className="col-span-1">
-          <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary, fontSize: `${type.sectionTitleSize}px` }}>Bill To</h3>
+          <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary, fontSize: `${type.sectionTitleSize}px` }}>{isDeliveryChallan ? 'Customer Address' : 'Bill To'}</h3>
           <p className="font-bold" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
           <p className="whitespace-pre-line text-gray-600" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           {customerGST && (

@@ -236,7 +236,7 @@ const InvoicePreview = forwardRef(({
       <div className="flex justify-between items-start mb-1 gap-8">
         <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
           <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
-            Billing Address
+            {isDeliveryChallan ? 'Customer Address' : 'Billing Address'}
           </div>
           <div className="space-y-0.5" style={{ color: colors.text }}>
             <div className="font-bold" style={{ fontSize: `${customerNameSize}px` }}>{customerName}</div>
