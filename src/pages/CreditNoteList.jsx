@@ -87,9 +87,9 @@ export default function CreditNoteList() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
       await queryClient.refetchQueries({ queryKey: ["credit-notes"] });
-      toast.success("Credit note deleted");
+      toast.success("Credit note deleted", { autoClose: 3500 });
     },
-    onError: () => toast.error("Failed to delete"),
+    onError: () => toast.error("Failed to delete", { autoClose: 3500 }),
   });
 
   const reasonLabels = {
