@@ -21,6 +21,11 @@ import { Link } from 'react-router-dom';
 import { downloadPartnerStatementPdf } from '../../api/ledger';
 import { toast } from 'react-toastify';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
+import PartyDetailsHost from './PartyDetailsHost';
+import { getCustomer } from '../../api/customers';
+import { getVendor } from '../../api/vendors';
+
+const cellClip = 'overflow-hidden text-ellipsis whitespace-nowrap min-w-0 max-w-full';
 
 const DEFAULT_COLUMN_WIDTHS = {
   checkbox: 44,
@@ -56,6 +61,7 @@ const LedgerTable = ({
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
   const [viewEntry, setViewEntry] = useState(null);
+  const [partyDetails, setPartyDetails] = useState(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
@@ -245,34 +251,59 @@ const LedgerTable = ({
   const getCleanReference = (entry) => {
     if (!entry) return '-';
     let ref = (entry.reference || '').trim();
-    
-    // Strip raw UUID from strings like "Payment Received <uuid>"
     ref = ref.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '').trim();
+    if (/^payment received$/i.test(ref)) ref = '';
 
-    if (entry.payment) {
-      if (entry.sales_invoice_number) {
-        return `Receipt (${entry.sales_invoice_number})`;
+    if (entry.sales_invoice_number) return entry.sales_invoice_number;
+    if (entry.purchase_bill_number) return entry.purchase_bill_number;
+    if (entry.credit_note_number) return entry.credit_note_number;
+    if (entry.debit_note_number) return entry.debit_note_number;
+    return ref || entry.receipt_voucher_number || '-';
+  };
+
+  const openPartyDetails = async (entry) => {
+    if (!entry) return;
+    const party = { customer: null, vendor: null };
+    if (entry.customer) {
+      party.customer = { id: entry.customer, name: entry.customer_name };
+      try {
+        const full = await getCustomer(entry.customer);
+        const data = full?.data || full;
+        party.customer = { id: data.id, name: data.name };
+        if (data.linked_vendor?.id) {
+          party.vendor = { id: data.linked_vendor.id, name: data.linked_vendor.name };
+        }
+      } catch {
+        /* keep stub */
       }
-      if (entry.purchase_bill_number) {
-        return `Payment (${entry.purchase_bill_number})`;
+    }
+    if (entry.vendor) {
+      party.vendor = { id: entry.vendor, name: entry.vendor_name };
+      try {
+        const full = await getVendor(entry.vendor);
+        const data = full?.data || full;
+        party.vendor = { id: data.id, name: data.name };
+        if (data.linked_customer?.id) {
+          party.customer = { id: data.linked_customer.id, name: data.linked_customer.name };
+        }
+      } catch {
+        /* keep stub */
       }
-      return ref || 'Payment Receipt';
     }
+    if (party.customer || party.vendor) setPartyDetails(party);
+  };
 
-    if (entry.sales_invoice_number) {
-      return entry.sales_invoice_number;
+  const runningType = (entry) => {
+    if (entry?.running_balance_type === 'Cr' || entry?.running_balance_type === 'Dr') {
+      return entry.running_balance_type;
     }
-    if (entry.purchase_bill_number) {
-      return entry.purchase_bill_number;
+    const credit = parseFloat(entry?.credit) || 0;
+    const debit = parseFloat(entry?.debit) || 0;
+    if (entry?.payment && customerFilter && credit > 0 && (parseFloat(entry.running_balance) || 0) <= 0.001) {
+      return 'Cr';
     }
-    if (entry.credit_note_number) {
-      return `Credit Note #${entry.credit_note_number}`;
-    }
-    if (entry.debit_note_number) {
-      return `Debit Note #${entry.debit_note_number}`;
-    }
-
-    return ref || '-';
+    if (credit > 0 && !debit) return entry?.running_balance_type || '';
+    return entry?.running_balance_type || '';
   };
 
   if (loadingPolicy.visible) {
@@ -579,41 +610,54 @@ const LedgerTable = ({
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)] font-mono">
                         {formatDate(entry.date)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-[var(--text-primary)]">
-                          {entry.customer_name ? entry.customer_name : (entry.vendor_name ? entry.vendor_name : `${entry.account_code || ''} ${entry.account_name || ''}`)}
-                        </div>
-                        <div className="text-xs text-[var(--text-muted)] capitalize">
-                          {entry.account_name} ({entry.account_type})
+                      <td className="px-4 py-4 overflow-hidden">
+                        <div className="min-w-0">
+                          {(entry.customer || entry.vendor) ? (
+                            <button
+                              type="button"
+                              onClick={() => openPartyDetails(entry)}
+                              className={`text-sm font-semibold text-[var(--accent-primary)] hover:underline text-left ${cellClip} block w-full`}
+                              title={entry.customer_name || entry.vendor_name}
+                            >
+                              {entry.customer_name || entry.vendor_name}
+                            </button>
+                          ) : (
+                            <div className={`text-sm font-semibold text-[var(--text-primary)] ${cellClip}`} title={`${entry.account_code || ''} ${entry.account_name || ''}`}>
+                              {`${entry.account_code || ''} ${entry.account_name || ''}`.trim() || '—'}
+                            </div>
+                          )}
+                          <div className={`text-xs text-[var(--text-muted)] capitalize ${cellClip}`}>
+                            {entry.account_name} ({entry.account_type})
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
+                      <td className="px-4 py-4 overflow-hidden text-sm text-[var(--text-primary)]">
                         {entry.payment ? (
-                          <Link to="/payments" className="text-[var(--status-success)] hover:underline font-medium inline-flex items-center gap-1" title="View Payments">
-                            <span>{getCleanReference(entry)}</span>
-                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                          <Link to="/payments" className={`text-[var(--status-success)] hover:underline font-medium inline-flex items-center gap-1 max-w-full ${cellClip}`} title={getCleanReference(entry)}>
+                            <span className={cellClip}>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />
                           </Link>
                         ) : entry.sales_invoice ? (
-                          <Link to="/sales" className="text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1" title="View Sales Invoices">
-                            <span>{getCleanReference(entry)}</span>
-                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                          <Link to="/sales" className={`text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1 max-w-full ${cellClip}`} title={getCleanReference(entry)}>
+                            <span className={cellClip}>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />
                           </Link>
                         ) : entry.purchase_bill ? (
-                          <Link to="/purchases" className="text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1" title="View Purchase Bills">
-                            <span>{getCleanReference(entry)}</span>
-                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                          <Link to="/purchases" className={`text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1 max-w-full ${cellClip}`} title={getCleanReference(entry)}>
+                            <span className={cellClip}>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />
                           </Link>
                         ) : (
-                          <span className="font-mono text-[var(--text-secondary)]">{getCleanReference(entry)}</span>
+                          <span className={`font-mono text-[var(--text-secondary)] ${cellClip} block`} title={getCleanReference(entry)}>{getCleanReference(entry)}</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-[var(--text-primary)]">
+                      <td className="px-4 py-4 overflow-hidden text-sm text-[var(--text-primary)]">
                         <button
                           onClick={() => setViewEntry(entry)}
-                          className="text-left group"
-                          title="Click for full details"
+                          className="text-left group w-full min-w-0"
+                          title={entry.description || 'Click for full details'}
                         >
-                          <div className="max-w-xs truncate text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors underline-offset-2 group-hover:underline" title={entry.description}>
+                          <div className={`${cellClip} text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors underline-offset-2 group-hover:underline`}>
                             {entry.description || 'General Ledger Entry'}
                           </div>
                           <div className="text-xs text-[var(--text-muted)]">
@@ -637,9 +681,11 @@ const LedgerTable = ({
                       <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
                         <div className="font-mono font-bold font-tabular text-[var(--text-primary)] text-sm flex items-center justify-end gap-1.5">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
-                            {entry.running_balance_type || 'Dr'}
+                          {runningType(entry) && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${runningType(entry) === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+                            {runningType(entry)}
                           </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
@@ -708,9 +754,13 @@ const LedgerTable = ({
                           className="rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] bg-[var(--bg-surface)]"
                         />
                         <div>
-                          <div className="text-base font-bold text-[var(--text-primary)]">
+                          <button
+                            type="button"
+                            onClick={() => openPartyDetails(entry)}
+                            className="text-base font-bold text-[var(--accent-primary)] hover:underline text-left"
+                          >
                             {entry.customer_name || entry.vendor_name || entry.account_name || 'N/A'}
-                          </div>
+                          </button>
                           <div className="text-xs text-[var(--text-muted)] font-mono">
                             {formatDate(entry.date)} &bull; {getCleanReference(entry)}
                           </div>
@@ -745,9 +795,11 @@ const LedgerTable = ({
                         <span className="text-[var(--text-muted)]">Running Balance:</span>
                         <span className="font-mono font-bold text-[var(--text-primary)] text-sm flex items-center gap-1">
                           <span>{formatCurrency(entry.running_balance || 0)}</span>
-                          <span className={`text-xs px-1 py-0.5 rounded font-bold ${entry.running_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'}`}>
-                            {entry.running_balance_type || 'Dr'}
+                          {runningType(entry) && (
+                          <span className={`text-xs px-1 py-0.5 rounded font-bold ${runningType(entry) === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'}`}>
+                            {runningType(entry)}
                           </span>
+                          )}
                         </span>
                       </div>
                     </div>
@@ -969,6 +1021,9 @@ const LedgerTable = ({
         </div>
       </div>,
       document.body
+    )}
+    {partyDetails && (
+      <PartyDetailsHost party={partyDetails} onClose={() => setPartyDetails(null)} />
     )}
   </>);
 };

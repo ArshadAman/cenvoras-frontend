@@ -3,6 +3,7 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/purchase";
 import { getVendors, createVendor } from "../../api/vendors";
+import { getCustomers, ensureCustomerVendor } from "../../api/customers";
 import { formatErrorMessage } from "../../utils/toastUtils";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
@@ -261,7 +262,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
 }
 
 // Vendor Autocomplete Component - Smart Feature
-function VendorAutocomplete({ values, setFieldValue, vendors }) {
+function VendorAutocomplete({ values, setFieldValue, vendors, customers = [] }) {
   const [filteredVendors, setFilteredVendors] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.vendor_name || "");
@@ -276,13 +277,34 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
     setInputValue(values.vendor_name || "");
   }, [values.vendor_name]);
 
-  const selectVendor = (vendor) => {
-    setFieldValue("vendor_name", vendor.name || "");
-    setFieldValue("vendor_id", vendor.id || null);
-    setFieldValue("vendor_address", vendor.address || "");
-    setFieldValue("vendor_gstin", vendor.gstin || "");
-    setFieldValue("gst_treatment", vendor.meta?.gst_type || "registered");
-    setInputValue(vendor.name || "");
+  const partyOptions = [
+    ...(vendors || []).map((v) => ({ ...v, _kind: 'vendor' })),
+    ...(customers || [])
+      .filter((c) => !(vendors || []).some((v) =>
+        (c.gstin && v.gstin && String(c.gstin).toLowerCase() === String(v.gstin).toLowerCase())
+        || (c.linked_vendor?.id && String(c.linked_vendor.id) === String(v.id))
+      ))
+      .map((c) => ({ ...c, _kind: 'customer' })),
+  ];
+
+  const selectVendor = async (vendor) => {
+    let chosen = vendor;
+    if (vendor._kind === 'customer') {
+      try {
+        const res = await ensureCustomerVendor(vendor.id);
+        chosen = res?.vendor || vendor;
+        queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      } catch (err) {
+        toast.error(formatErrorMessage(err) || 'Could not use this customer as a vendor');
+        return;
+      }
+    }
+    setFieldValue("vendor_name", chosen.name || "");
+    setFieldValue("vendor_id", chosen.id || null);
+    setFieldValue("vendor_address", chosen.address || "");
+    setFieldValue("vendor_gstin", chosen.gstin || "");
+    setFieldValue("gst_treatment", chosen.meta?.gst_type || "registered");
+    setInputValue(chosen.name || "");
     setShowDropdown(false);
   };
 
@@ -294,7 +316,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
     const typed = value.trim().toLowerCase();
     const selectedStillMatches = Boolean(
       values.vendor_id &&
-      (vendors || []).some(
+      partyOptions.some(
         (v) => v.id === values.vendor_id && (v.name || "").trim().toLowerCase() === typed
       )
     );
@@ -304,7 +326,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 
     if (value.trim()) {
       const query = value.toLowerCase();
-      const filtered = (vendors || []).filter(v =>
+      const filtered = partyOptions.filter(v =>
         v.name?.toLowerCase().includes(query) ||
         (v.gstin && v.gstin.toLowerCase().includes(query)) ||
         (v.email && v.email.toLowerCase().includes(query)) ||
@@ -330,7 +352,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
               onFocus={() => {
                 if (inputValue.trim()) {
                    const query = inputValue.toLowerCase();
-                   const filtered = (vendors || []).filter(v => 
+                   const filtered = partyOptions.filter(v => 
                      v.name?.toLowerCase().includes(query) ||
                      (v.gstin && v.gstin.toLowerCase().includes(query))
                    );
@@ -341,7 +363,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
                 }
               }}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-              placeholder="Search a saved vendor or add a new one"
+              placeholder="Search vendor or customer"
               className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none transition-all text-xs font-bold"
               autoComplete="off"
               autoCorrect="off"
@@ -364,8 +386,11 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
                 selectVendor(vendor);
               }}
             >
-              <div className="font-semibold text-[var(--text-primary)] flex items-center justify-between">
-                <span>{vendor.name}</span>
+              <div className="font-semibold text-[var(--text-primary)] flex items-center justify-between gap-2">
+                <span className="truncate">{vendor.name}</span>
+                {vendor._kind === 'customer' && (
+                  <span className="text-xs text-[var(--accent-primary)] shrink-0">Customer</span>
+                )}
                 {vendor.gstin && (
                   <span className="text-xs bg-[var(--bg-primary)] text-[var(--text-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)] font-mono">
                     GST: {vendor.gstin}
@@ -515,6 +540,12 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
       staleTime: 5 * 60 * 1000, 
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
+  const { data: customersResult } = useQuery({
+    queryKey: ["customers"],
+    queryFn: () => getCustomers({ search: "", ordering: "name" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
 
   const { data: userProfileData } = useQuery({
     queryKey: ["userProfile"],
@@ -902,7 +933,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                         <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
                           Vendor Name <span className="text-[var(--status-danger)]">*</span>
                         </label>
-                        <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
+                        <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} customers={customers} />
                         <ErrorMessage name="vendor_name" component="div" className="text-[var(--status-danger)] text-xs mt-1.5 ml-1 font-medium" />
                       </div>
                       

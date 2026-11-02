@@ -33,6 +33,9 @@ export const patchCustomer = (id, data) =>
 export const deleteCustomer = id =>
   api.delete(`/billing/customers/${id}/edit/`).then(res => res.data);
 
+export const ensureCustomerVendor = (id) =>
+  api.post(`/billing/customers/${id}/ensure-vendor/`).then(res => res.data);
+
 // Upload customers via CSV (if supported)
 export const uploadCustomersCsv = formData =>
   api.post("/billing/upload-customers-csv/", formData, {
