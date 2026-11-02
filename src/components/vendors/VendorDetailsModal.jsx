@@ -183,6 +183,11 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
             <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] uppercase tracking-tight">
               Vendor <span className="text-[var(--accent-primary)]">Profile & Ledger</span>
             </h2>
+            {vendorDetails?.linked_customer?.name && (
+              <span className="text-xs font-semibold px-2 py-1 rounded-lg bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                Also customer: {vendorDetails.linked_customer.name}
+              </span>
+            )}
             <div className="flex bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-0.5 text-xs font-semibold">
               <button
                 type="button"

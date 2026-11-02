@@ -301,18 +301,25 @@ export const getGeneralLedger = async (accountId, params = {}) => {
 
     const url = `/ledger/general-ledger/${accountId}/${queryString.toString() ? `?${queryString}` : ''}`;
     const response = await api.get(url);
-    
-    // Handle both array and paginated responses
-    if (Array.isArray(response.data)) {
+    const data = response.data;
+
+    if (Array.isArray(data)) {
       return {
-        results: response.data,
-        count: response.data.length,
+        results: data,
+        entries: data,
+        count: data.length,
         next: null,
         previous: null
       };
     }
-    
-    return response.data;
+
+    const entries = data?.entries || data?.results || [];
+    return {
+      ...data,
+      entries,
+      results: entries,
+      count: data?.count ?? entries.length,
+    };
   } catch (error) {
     console.error('Error fetching general ledger:', error);
     throw createUserFriendlyError(error, 'Failed to load general ledger for this account. Please try again.');
@@ -573,7 +580,8 @@ export const recordClientPayment = async (paymentData) => {
       mode: paymentData.mode || 'cash',
       notes: paymentData.description || paymentData.notes || "Payment received",
       date: paymentData.date || new Date().toLocaleDateString('sv-SE'),
-      reference: paymentData.reference || ""
+      reference: paymentData.reference || "",
+      bank_account_id: paymentData.bank_account_id || undefined,
     };
 
     const response = await api.post('/billing/payments/', requestData);

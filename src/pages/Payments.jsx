@@ -28,6 +28,8 @@ import { INDIAN_STATES } from '../utils/constants';
 import { getGSTR1Filing } from '../api/gst';
 import { getCurrencySymbol } from '../utils/currency';
 import { getTodayKolkata } from '../utils/date';
+import { getUserProfile } from '../api/users';
+import { profileBankAccounts, defaultBankAccountId, findBankAccount, bankAccountLabel, BANK_MODES } from '../utils/profileBanks';
 
 const roundTo3 = (value) => {
   const num = Number(value || 0);
@@ -79,6 +81,11 @@ function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
         ) : (
           <span className="text-xs font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
             Customer Advance{(payment.adjustments?.some((a) => !a.reversed_on) || (payment.unapplied_amount != null && Number(payment.unapplied_amount) < Number(payment.amount))) ? ` · ${getCurrencySymbol()}${formatAmount(payment.unapplied_amount)} unapplied` : ''}
+          </span>
+        )}
+        {payment.bank_account_label && (
+          <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
+            {payment.bank_account_label}
           </span>
         )}
         {payment.reference && (
@@ -151,7 +158,7 @@ async function openReceiptVoucher(payment) {
 }
 
 // Payment Modal (Creates & Edits)
-function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
+function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAccounts = [] }) {
   const [formData, setFormData] = useState({
     customer: '',
     invoice: '',
@@ -163,7 +170,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     receipt_mode: 'advance',
     supply_kind: '',
     gst_rate: '',
-    place_of_supply: ''
+    place_of_supply: '',
+    bank_account_id: ''
   });
   // R18 (Rudra CA): advance classification is suggested from past invoices but must be confirmed.
   const [classConfirmed, setClassConfirmed] = useState(false);
@@ -235,7 +243,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         receipt_mode: 'advance',
         supply_kind: editData.supply_kind || '',
         gst_rate: editData.gst_rate != null ? String(Number(editData.gst_rate)) : '',
-        place_of_supply: editData.place_of_supply || ''
+        place_of_supply: editData.place_of_supply || '',
+        bank_account_id: editData.bank_account_id || ''
       });
       setClassConfirmed(false);
       setCustomerSearch(editData.customer_name || '');
@@ -368,6 +377,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         amount: roundTo3(formData.amount)
       };
       paymentPayload.customer = targetCustomerId;
+      if (!BANK_MODES.has(formData.mode)) {
+        delete paymentPayload.bank_account_id;
+      } else if (!paymentPayload.bank_account_id && bankAccounts.length) {
+        paymentPayload.bank_account_id = defaultBankAccountId(bankAccounts);
+      }
 
       if (formData.invoice) {
         paymentPayload.invoice = formData.invoice;
@@ -436,7 +450,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       receipt_mode: 'advance',
       supply_kind: '',
       gst_rate: '',
-      place_of_supply: ''
+      place_of_supply: '',
+      bank_account_id: defaultBankAccountId(bankAccounts)
     });
     setClassConfirmed(false);
     setClassHint(null);
@@ -589,7 +604,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setFormData({ ...formData, mode: key })}
+                  onClick={() => setFormData({
+                    ...formData,
+                    mode: key,
+                    bank_account_id: BANK_MODES.has(key) ? (formData.bank_account_id || defaultBankAccountId(bankAccounts)) : '',
+                  })}
                   className={`p-3 rounded-xl border text-center transition-all ${
                     formData.mode === key
                       ? `${bg} border-[var(--accent-primary)] ring-2 ring-[var(--accent-primary)]/20`
@@ -602,6 +621,36 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
               ))}
             </div>
           </div>
+
+          {BANK_MODES.has(formData.mode) && (
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Bank Account</label>
+              {bankAccounts.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  Add a bank account under Profile → Bank & Payment Details to show it on this receipt.
+                </p>
+              ) : bankAccounts.length === 1 ? (
+                <div className="text-sm text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  <div className="font-semibold">{bankAccounts[0].bank_name || bankAccounts[0].account_name || 'Bank'}</div>
+                  <div className="text-xs text-[var(--text-muted)] font-mono">
+                    A/C {bankAccounts[0].account_number || '—'}{bankAccounts[0].ifsc_code ? ` · IFSC ${bankAccounts[0].ifsc_code}` : ''}
+                  </div>
+                </div>
+              ) : (
+                <select
+                  value={formData.bank_account_id || defaultBankAccountId(bankAccounts)}
+                  onChange={(e) => setFormData({ ...formData, bank_account_id: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
+                >
+                  {bankAccounts.map((acc) => (
+                    <option key={acc.id || acc.account_number} value={acc.id || acc.account_number}>
+                      {acc.bank_name || acc.account_name || 'Bank'}{acc.account_number ? ` ···${String(acc.account_number).slice(-4)}` : ''}{acc.ifsc_code ? ` · ${acc.ifsc_code}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
           
           <div className="space-y-4">
             <div>
@@ -993,6 +1042,12 @@ export default function Payments() {
     queryFn: () => api.get('/billing/customers/').then(res => res.data)
   });
   const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+  });
+  const bankAccounts = profileBankAccounts(userProfile);
   const loadingPolicy = useLoadingPolicy(isLoading);
   
   // Filter and search payments
@@ -1219,7 +1274,10 @@ export default function Payments() {
             {sortedAndFilteredPayments.map((payment) => (
               <PaymentCard 
                 key={payment.id} 
-                payment={payment} 
+                payment={{
+                  ...payment,
+                  bank_account_label: bankAccountLabel(findBankAccount(bankAccounts, payment.bank_account_id)),
+                }} 
                 onEdit={handleEdit} 
                 onDelete={handleDelete}
                 onAllocate={handleAllocate}
@@ -1236,6 +1294,7 @@ export default function Payments() {
             setSelectedPayment(null);
           }}
           customers={customers}
+          bankAccounts={bankAccounts}
           editData={selectedPayment}
           onSuccess={() => {
             invalidatePaymentRelatedQueries();

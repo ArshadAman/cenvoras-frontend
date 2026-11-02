@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getTrialBalance, repairRoundOffEntries } from '../api/ledger';
-import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { getCurrencySymbol } from '../utils/currency';
 import { typeSignedNetLabel } from '../utils/ledgerBalance';
 import { getTodayKolkata } from '../utils/date';
 import { toast } from 'react-toastify';
+import GeneralLedgerModal from '../components/ledger/GeneralLedgerModal';
 import {
   ScaleIcon,
   CheckCircleIcon,
@@ -19,7 +20,6 @@ import {
   ChevronRightIcon,
   ArrowTopRightOnSquareIcon,
   ArrowLeftIcon,
-  FunnelIcon,
   DocumentChartBarIcon
 } from '@heroicons/react/24/outline';
 
@@ -38,7 +38,6 @@ const ACCOUNT_TYPE_CONFIG = {
 };
 
 export default function TrialBalance() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [asOfDate, setAsOfDate] = useState(getTodayKolkata());
@@ -46,6 +45,7 @@ export default function TrialBalance() {
   const [selectedType, setSelectedType] = useState('all');
   const [hideZeroBalances, setHideZeroBalances] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState({});
+  const [drillAccount, setDrillAccount] = useState(null);
 
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['trialBalance', asOfDate],
@@ -450,13 +450,14 @@ export default function TrialBalance() {
                                 {getCurrencySymbol()}{fmt(Math.abs(signedNet))} {netLabel}
                               </td>
                               <td className="py-3 px-4 text-center">
-                                <Link
-                                  to={`/ledger?account=${acc.id}`}
+                                <button
+                                  type="button"
+                                  onClick={() => setDrillAccount(acc)}
                                   className="p-1.5 inline-flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 rounded-lg transition-colors border border-transparent hover:border-[var(--accent-primary)]/20"
                                   title={`View general ledger for ${acc.name}`}
                                 >
                                   <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
-                                </Link>
+                                </button>
                               </td>
                             </tr>
                           );
@@ -498,6 +499,13 @@ export default function TrialBalance() {
           </div>
         </div>
       )}
+
+      <GeneralLedgerModal
+        isOpen={Boolean(drillAccount)}
+        onClose={() => setDrillAccount(null)}
+        account={drillAccount}
+        dateTo={asOfDate}
+      />
     </div>
   );
 }

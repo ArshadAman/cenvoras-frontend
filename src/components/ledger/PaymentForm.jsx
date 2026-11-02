@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { recordClientPayment } from "../../api/ledger";
 import { getCustomers } from "../../api/customers";
 import api from "../../api/api";
@@ -16,6 +16,8 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
+import { getUserProfile } from '../../api/users';
+import { profileBankAccounts, defaultBankAccountId, BANK_MODES } from '../../utils/profileBanks';
 
 const PAYMENT_MODES = {
   cash: { label: 'Cash', icon: BanknotesIcon },
@@ -168,6 +170,13 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     ? roundTo3(Math.max(roundTo3(initialInvoice.total_amount || 0) - roundTo3(initialInvoice.amount_paid || 0), 0))
     : '';
 
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+  });
+  const bankAccounts = profileBankAccounts(userProfile);
+
   const initialValues = useMemo(() => ({
     customer: customerId,
     customer_name: customerName,
@@ -179,6 +188,7 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       : 'Payment received',
     date: format(new Date(), 'yyyy-MM-dd'),
     invoice: initialInvoice?.id || '',
+    bank_account_id: '',
   }), [customerId, customerName, initialInvoice, invoiceOutstanding]);
 
   const handleInvoicesLoaded = useCallback((invoices) => {
@@ -213,6 +223,9 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       date: values.date,
       invoice: values.invoice || undefined,
     };
+    if (BANK_MODES.has(values.mode)) {
+      paymentData.bank_account_id = values.bank_account_id || defaultBankAccountId(bankAccounts);
+    }
 
     try {
       await recordPaymentMutation.mutateAsync(paymentData);
@@ -371,7 +384,10 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setFieldValue('mode', key)}
+                  onClick={() => {
+                    setFieldValue('mode', key);
+                    setFieldValue('bank_account_id', BANK_MODES.has(key) ? (values.bank_account_id || defaultBankAccountId(bankAccounts)) : '');
+                  }}
                   className={`p-3 rounded-xl border text-center transition-all ${
                     values.mode === key
                       ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] border-[var(--accent-primary)] shadow-md'
@@ -388,6 +404,32 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
               ))}
             </div>
           </div>
+
+          {BANK_MODES.has(values.mode) && (
+            <div>
+              <label className={labelClass}>Bank Account</label>
+              {bankAccounts.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  Add a bank account under Profile → Bank & Payment Details to show it on this receipt.
+                </p>
+              ) : bankAccounts.length === 1 ? (
+                <div className="text-sm text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  <div className="font-semibold">{bankAccounts[0].bank_name || bankAccounts[0].account_name || 'Bank'}</div>
+                  <div className="text-xs text-[var(--text-muted)] font-mono">
+                    A/C {bankAccounts[0].account_number || '—'}{bankAccounts[0].ifsc_code ? ` · IFSC ${bankAccounts[0].ifsc_code}` : ''}
+                  </div>
+                </div>
+              ) : (
+                <Field as="select" name="bank_account_id" className={inputClass}>
+                  {bankAccounts.map((acc) => (
+                    <option key={acc.id || acc.account_number} value={acc.id || acc.account_number}>
+                      {acc.bank_name || acc.account_name || 'Bank'}{acc.account_number ? ` ···${String(acc.account_number).slice(-4)}` : ''}
+                    </option>
+                  ))}
+                </Field>
+              )}
+            </div>
+          )}
 
           {/* Reference (Optional) */}
           <div>
