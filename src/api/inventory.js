@@ -115,6 +115,16 @@ export const getStockMovements = (params) =>
 export const createStockMovement = (data) =>
   api.post("/inventory/transfers/", data).then(res => res.data);
 
+// UAT P1 #15: value + e-way warning before saving (no writes), and the Rule 55 challan print.
+export const previewStockTransfer = (data) =>
+  api.post("/inventory/transfers/preview/", data).then(res => res.data);
+
+export const printTransferChallan = async (id) => {
+  const res = await api.get(`/inventory/transfers/${id}/challan/`, { responseType: 'text' });
+  const w = window.open('', '_blank');
+  if (w) { w.document.open(); w.document.write(res.data); w.document.close(); w.focus(); }
+};
+
 export const getStockAdjustments = (params) =>
   api.get("/inventory/stock-adjustments/", { params }).then(res => res.data);
 

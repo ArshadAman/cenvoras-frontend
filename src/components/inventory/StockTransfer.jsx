@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getWarehouses, getProducts, getStockPoints, createStockMovement } from "../../api/inventory";
+import { getWarehouses, getProducts, getStockPoints, createStockMovement, previewStockTransfer, printTransferChallan } from "../../api/inventory";
 import { toast } from "react-toastify";
 import { 
   XMarkIcon, 
@@ -32,6 +32,8 @@ const transferSchema = Yup.object().shape({
 export default function StockTransfer({ onClose }) {
   const queryClient = useQueryClient();
   const [sourceId, setSourceId] = useState(null);
+  // Pre-save warnings (e.g. e-way bill above ₹50k); the second click confirms.
+  const [preview, setPreview] = useState(null);
 
   // Queries
   const { data: warehousesData } = useQuery({ 
@@ -57,16 +59,21 @@ export default function StockTransfer({ onClose }) {
 
   const createMutation = useMutation({
     mutationFn: createStockMovement,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data?.id) printTransferChallan(data.id).catch(() => {});
       queryClient.invalidateQueries(["stockPoints"]);
       queryClient.invalidateQueries(["stockMovements"]);
       queryClient.invalidateQueries(["products"]);
       queryClient.invalidateQueries(["warehouses"]);
-      toast.success("Stock Transfer completed successfully!");
+      toast.success(data?.challan_number
+        ? `Stock transferred. Delivery challan ${data.challan_number} (no GST).`
+        : "Stock Transfer completed successfully!");
       onClose();
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.detail || error?.response?.data?.message || error?.message || "Failed to create transfer");
+      const d = error?.response?.data;
+      const itemErr = Array.isArray(d?.items) ? d.items.filter(x => typeof x === 'string').join(' ') : '';
+      toast.error(itemErr || d?.detail || d?.message || error?.message || "Failed to create transfer");
     }
   });
 
@@ -81,6 +88,23 @@ export default function StockTransfer({ onClose }) {
         quantity: item.quantity
       }))
     };
+    const key = JSON.stringify(payload);
+    if (!preview || preview.key !== key) {
+      try {
+        const p = await previewStockTransfer(payload);
+        if (p?.warnings?.length) {
+          setPreview({ key, warnings: p.warnings, total: p.total_value });
+          if (setSubmitting) setSubmitting(false);
+          return; // show the warning first; clicking again confirms
+        }
+      } catch (error) {
+        const d = error?.response?.data;
+        const itemErr = Array.isArray(d?.items) ? d.items.filter(x => typeof x === 'string').join(' ') : '';
+        toast.error(itemErr || d?.error || "Couldn't check this transfer");
+        if (setSubmitting) setSubmitting(false);
+        return;
+      }
+    }
     try {
       await createMutation.mutateAsync(payload);
     } catch {
@@ -90,28 +114,17 @@ export default function StockTransfer({ onClose }) {
     }
   };
 
-  // Get batches for a product
+  // Get batches for a product at the SOURCE location (stock-point API returns
+  // batch as an id and product as product_id).
   const getBatchesForProduct = (productId) => {
-    console.log('[DEBUG] getBatchesForProduct called with productId:', productId);
-    console.log('[DEBUG] stockPoints:', stockPoints);
-    console.log('[DEBUG] sourceId:', sourceId);
-    
-    if (!productId || !stockPoints.length) {
-      console.log('[DEBUG] Returning empty - no productId or stockPoints');
-      return [];
-    }
-    
-    const filtered = stockPoints.filter(sp => {
-      console.log('[DEBUG] Checking stockPoint:', sp);
-      const spProductId = sp?.batch?.product || sp?.product;
-      console.log('[DEBUG] spProductId:', spProductId, 'vs productId:', productId);
-      const matches = String(spProductId) === String(productId) && (sp?.quantity || 0) > 0;
-      console.log('[DEBUG] matches:', matches);
-      return matches;
+    if (!productId || !stockPoints.length) return [];
+    return stockPoints.filter(sp => {
+      const spProductId = sp?.product_id ?? sp?.batch?.product ?? sp?.product;
+      const spWarehouse = sp?.warehouse?.id ?? sp?.warehouse;
+      return String(spProductId) === String(productId)
+        && (!sourceId || String(spWarehouse) === String(sourceId))
+        && Number(sp?.quantity || 0) > 0;
     });
-    
-    console.log('[DEBUG] Filtered batches:', filtered);
-    return filtered;
   };
 
   return createPortal(
@@ -240,7 +253,7 @@ export default function StockTransfer({ onClose }) {
                                     {!sourceId ? 'Select source first' : !item.product ? 'Select product' : 'Select Batch'}
                                   </option>
                                   {batches.map(sp => (
-                                    <option key={sp?.batch?.id || sp?.id} value={sp?.batch?.id || sp?.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                                    <option key={sp?.id} value={sp?.batch?.id ?? sp?.batch} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                                       {sp?.batch?.batch_number || sp?.batch_number || 'Batch'} (Qty: {sp?.quantity || 0})
                                     </option>
                                   ))}
@@ -285,6 +298,13 @@ export default function StockTransfer({ onClose }) {
                   </FieldArray>
                 </div>
               </div>
+
+              {preview?.warnings?.length > 0 && (
+                <div className="mx-5 mb-2 p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 text-sm">
+                  {preview.warnings.map((w, i) => <p key={i}>{w}</p>)}
+                  <p className="mt-1 text-xs">Value at weighted-average cost: ₹{Number(preview.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}. Click "Complete Transfer" again to save.</p>
+                </div>
+              )}
 
               {/* Footer */}
               <div className="p-5 border-t border-[var(--border-subtle)] flex justify-end gap-3 bg-[var(--bg-surface)]">
