@@ -6,6 +6,13 @@ import { getVendors, createVendor } from "../../api/vendors";
 import { getCustomers, ensureCustomerVendor } from "../../api/customers";
 import { formatErrorMessage } from "../../utils/toastUtils";
 import { initialReceiptDate, initialReceiptTouched, receiptDateAfterBillDateChange, receiptDatePayload, receiptDateError, hasReverseCharge } from "../../utils/rcmReceiptDate";
+
+// Import of services (IGST Act s.5(3)): on an Overseas bill every SAC (chapter 99) line is reverse charge,
+// always IGST. Same rules as the backend (billing.itc / PurchaseBillSerializer).
+const IGST_TREATMENTS = ['interstate', 'igst', 'overseas', 'sez', 'export', 'exports'];
+export const isImportOfServicesLine = (values, item) =>
+  (values.gst_treatment || '').toLowerCase() === 'overseas' && String(item.hsn_code || '').trim().startsWith('99');
+export const lineIsRcm = (values, item) => !!(item.is_rcm || values.is_reverse_charge || isImportOfServicesLine(values, item));
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
@@ -304,7 +311,8 @@ function VendorAutocomplete({ values, setFieldValue, vendors, customers = [] }) 
     setFieldValue("vendor_id", chosen.id || null);
     setFieldValue("vendor_address", chosen.address || "");
     setFieldValue("vendor_gstin", chosen.gstin || "");
-    setFieldValue("gst_treatment", chosen.meta?.gst_type || "registered");
+    setFieldValue("gst_treatment", chosen.meta?.gst_type || chosen.gst_type || "registered");
+    setFieldValue("vendor_country", chosen.country || "");
     setInputValue(chosen.name || "");
     setShowDropdown(false);
   };
@@ -675,6 +683,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             vendor_address: bill?.vendor_address || "",
             vendor_gstin: bill?.vendor_gstin || "",
             gst_treatment: bill?.gst_treatment || "registered",
+            vendor_country: bill?.vendor_country || "",
             is_reverse_charge: !!bill?.is_reverse_charge,
             rcm_receipt_date: initialReceiptDate(bill, bill?.bill_date || getTodayKolkata()),
             journal: bill?.journal || "Purchase",
@@ -773,7 +782,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                   amount: Number(calculatedAmount.toFixed(2)),
                   discount,
                   tax,
-                  is_rcm: !!item.is_rcm,
+                  is_rcm: !!item.is_rcm || isImportOfServicesLine(values, item),
                   itc_blocked: !!item.itc_blocked,
                 };
               });
@@ -785,7 +794,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 const tax = Number(item.tax) || 0;
                 const discountAmount = ((quantity * price) * discount) / 100;
                 const taxAmount = (((quantity * price) - discountAmount) * tax) / 100;
-                const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
+                // RCM lines: the vendor is owed the taxable value only (tax is payable by us).
+                const calculatedAmount = ((quantity * price) - discountAmount) + (lineIsRcm(values, item) ? 0 : taxAmount);
                 return sum + calculatedAmount;
               }, 0);
 
@@ -837,6 +847,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
           {({ values, isSubmitting, setFieldValue }) => {
             let taxableSubtotal = 0;
             let taxTotal = 0;
+            let rcmTaxTotal = 0;
             values.items.forEach((item) => {
                 const quantity = Number(item.quantity) || 0;
                 const price = Number(item.purchase_price) || 0;
@@ -846,19 +857,27 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 const taxable = (quantity * price) - discountAmount;
                 const taxAmount = (taxable * tax) / 100;
                 taxableSubtotal += taxable;
-                taxTotal += taxAmount;
+                if (lineIsRcm(values, item)) rcmTaxTotal += taxAmount;  // payable by us, not the vendor
+                else taxTotal += taxAmount;
             });
+            // Vendor payable (= saved bill total): taxable + GST charged by the vendor; RCM tax excluded.
             const grandTotal = taxableSubtotal + taxTotal;
+            const importWarning = !(values.vendor_gstin || '').trim()
+              && (values.gst_treatment || '').toLowerCase() !== 'overseas'
+              && values.vendor_country && !['india', 'in'].includes(values.vendor_country.trim().toLowerCase())
+              && values.items.some((it) => String(it.hsn_code || '').trim().startsWith('99'));
             const vendorGstin = (values.vendor_gstin || '').trim();
             const vendorStateCode = vendorGstin.length >= 2 ? vendorGstin.slice(0, 2) : '';
             const companyStateCode = companyGstin.length >= 2
               ? companyGstin.slice(0, 2)
               : (INDIAN_STATES.find((s) => s.name.toLowerCase() === companyState.toLowerCase())?.code || '');
-            const isInterstate = Boolean(
+            const isInterstate = IGST_TREATMENTS.includes((values.gst_treatment || '').toLowerCase()) || Boolean(
               vendorStateCode
               && companyStateCode
               && vendorStateCode !== companyStateCode
             );
+            const rcmCgst = isInterstate ? 0 : rcmTaxTotal / 2;
+            const rcmSgst = isInterstate ? 0 : rcmTaxTotal - rcmCgst;
             const cgst = isInterstate ? 0 : taxTotal / 2;
             const sgst = isInterstate ? 0 : taxTotal - cgst;
             const igst = isInterstate ? taxTotal : 0;
@@ -1200,11 +1219,29 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                           </div>
                         </>
                       )}
+                      {rcmTaxTotal > 0 && (
+                        <div className="rounded-xl border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 p-2 text-xs space-y-1" data-testid="rcm-tax-summary">
+                          <div className="font-semibold text-[var(--text-primary)]">Reverse-charge tax payable by us (not paid to the vendor)</div>
+                          {isInterstate ? (
+                            <div className="flex justify-between"><span>RCM IGST</span><span className="font-mono tabular-nums">{getCurrencySymbol()}{rcmTaxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                          ) : (
+                            <>
+                              <div className="flex justify-between"><span>RCM CGST</span><span className="font-mono tabular-nums">{getCurrencySymbol()}{rcmCgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                              <div className="flex justify-between"><span>RCM SGST</span><span className="font-mono tabular-nums">{getCurrencySymbol()}{rcmSgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {importWarning && (
+                        <div role="alert" className="rounded-xl border border-[var(--status-danger)]/40 bg-[var(--status-danger)]/10 p-2 text-xs text-[var(--text-primary)]">
+                          This supplier has no GSTIN, is outside India and the bill has SAC (chapter 99) lines: set GST treatment to Overseas (import of services, IGST under reverse charge).
+                        </div>
+                      )}
                       <div className="h-px bg-[var(--border-subtle)]"></div>
                       <div className="flex justify-between items-center">
                         <div className="flex flex-col">
                           <span className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-widest">Payable Amount</span>
-                          <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-tighter">Net Total (Inclusive of all taxes)</span>
+                          <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-tighter">{rcmTaxTotal > 0 ? 'To the vendor (excludes reverse-charge tax)' : 'Net Total (Inclusive of all taxes)'}</span>
                         </div>
                         <span className="text-3xl font-black text-[var(--text-primary)] tabular-nums drop-shadow-md">{getCurrencySymbol()}{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
@@ -1426,15 +1463,27 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
           <div className="text-right">
               <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest mb-1">Subtotal</label>
               <div className="font-black text-[var(--text-primary)] text-base tabular-nums tracking-tighter">
-                  {getCurrencySymbol()}{calculatedAmount.toFixed(2)}
+                  {getCurrencySymbol()}{(lineIsRcm(values, item) ? calculatedAmount - taxAmount : calculatedAmount).toFixed(2)}
               </div>
           </div>
           {/* Per-line GST flags (#214): PurchaseBillItem.is_rcm / itc_blocked */}
           <div className="flex flex-col items-end gap-1 text-[11px] text-[var(--text-secondary)]">
+              {isImportOfServicesLine(values, item) ? (
+                <label className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Import of services: always reverse charge (IGST)">
+                  <input type="checkbox" checked disabled className="rounded border-[var(--border-subtle)]" />
+                  Reverse charge (import of services)
+                </label>
+              ) : (
               <label className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Reverse charge applies to this line: you pay the GST, not the supplier">
                   <Field type="checkbox" name={`items.${idx}.is_rcm`} className="rounded border-[var(--border-subtle)]" />
                   Reverse charge
               </label>
+              )}
+              {lineIsRcm(values, item) && (Number(item.tax) || 0) > 0 && (
+                <span data-testid={`rcm-line-tax-${idx}`} className="text-[var(--status-warning)]">
+                  {(IGST_TREATMENTS.includes((values.gst_treatment || '').toLowerCase()) ? 'RCM IGST' : 'RCM tax')} {getCurrencySymbol()}{taxAmount.toFixed(2)} payable by us
+                </span>
+              )}
               <label className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Input tax credit is blocked under section 17(5): the tax is added to cost">
                   <Field type="checkbox" name={`items.${idx}.itc_blocked`} className="rounded border-[var(--border-subtle)]" />
                   ITC blocked u/s 17(5)
