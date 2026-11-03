@@ -101,10 +101,16 @@ export default function SalaryBreakdownCalculator({
     const list = [];
     let conv = 0;
     let med = 0;
-    Object.entries(initialComponents).forEach(([name, val], i) => {
+    const seen = new Set();
+    Object.entries(initialComponents).forEach(([rawName, val], i) => {
       const amt = Number(val);
-      const norm = String(name).trim().toLowerCase().replace(/_/g, ' ');
+      const name = String(rawName).trim();
+      const norm = name.toLowerCase().replace(/_/g, ' ');
       if (name.startsWith('_') || core.has(norm) || !(amt > 0)) return;
+      // One row per allowance: duplicate stored keys ('Retaining Allowance' / 'retaining_allowance')
+      // used to make two rows, so removing one left the other and it saved back.
+      if (seen.has(norm)) return;
+      seen.add(norm);
       if (norm === 'conveyance allowance') conv = amt;
       else if (norm === 'medical allowance') med = amt;
       else list.push({ id: `saved-${i}-${name}`, name, amount: amt,
@@ -229,6 +235,36 @@ export default function SalaryBreakdownCalculator({
 
   const calcRequestIdRef = useRef(0);
 
+  // Report the current split to the parent IMMEDIATELY on every edit (no wait for the debounced
+  // breakdown API). Before, a remove followed quickly by Save (or a failed breakdown call) saved the
+  // previous components, so a removed custom allowance came back on reopen.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+  const mountedOnce = useRef(false);
+  useEffect(() => {
+    if (!mountedOnce.current) { mountedOnce.current = true; return; }  // not an edit yet
+    if (!onChangeRef.current || !monthlyCtc || monthlyCtc <= 0) return;
+    const basicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
+    const hraVal = Math.round(basicVal * (hraPctOfBasic / 100) * 100) / 100;
+    const comps = { Basic: basicVal, HRA: hraVal };
+    if (Number(conveyance) > 0) comps['Conveyance Allowance'] = Number(conveyance);
+    if (Number(medical) > 0) comps['Medical Allowance'] = Number(medical);
+    customAllowances.forEach((ca) => {
+      const n = (ca.name || '').trim();
+      if (n && Number(ca.amount) > 0) comps[n] = Number(ca.amount);
+    });
+    const adHoc = {};
+    adHocAdditions.forEach((ah) => { if (ah.name && Number(ah.amount) > 0) adHoc[ah.name] = Number(ah.amount); });
+    onChangeRef.current({
+      monthly_ctc: monthlyCtc, annual_ctc: annualCtc, tax_regime: taxRegime, work_state: workState,
+      basic_pct: basicPct, hra_pct: hraPctOfBasic, components: comps, ad_hoc_earnings: adHoc,
+      pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0
+        && !(structureComponents || []).some((c) => String(c.name) === ca.name.trim())).map((ca) => ca.name.trim()),
+      breakdown: null,
+    });
+  }, [monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic, conveyance, medical,
+      customAllowances, adHocAdditions, structureComponents]);
+
   // Fetch / Compute breakdown from backend
   const calculateBreakdown = useCallback(async () => {
     if (!monthlyCtc || monthlyCtc <= 0) {
@@ -255,8 +291,9 @@ export default function SalaryBreakdownCalculator({
       }
 
       customAllowances.forEach(ca => {
-        if (ca.name && Number(ca.amount) > 0) {
-          components[ca.name] = Number(ca.amount);
+        const n = (ca.name || '').trim();
+        if (n && Number(ca.amount) > 0) {
+          components[n] = Number(ca.amount);
         }
       });
 
