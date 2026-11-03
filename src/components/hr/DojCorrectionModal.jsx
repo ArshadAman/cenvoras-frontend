@@ -1,3 +1,4 @@
+import { dojHistoryLines as doJHistoryLines } from '../../utils/dojHistory';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { hrApi } from '../../api/hr';
@@ -119,6 +120,11 @@ function ExistingCorrections({ employee, refreshKey }) {
               <button type="button" className="underline" onClick={() => setEditing(editing === c.id ? null : c.id)}>{editing === c.id ? 'Close' : 'Edit amounts'}</button>
             ) : <span className="text-[var(--text-muted)]">Locked (run approved)</span>}
           </div>
+          {doJHistoryLines(c).length > 0 && (
+            <ul className="ml-3 list-disc text-xs text-[var(--text-muted)]">
+              {doJHistoryLines(c).map((h, i) => <li key={i}>{h}</li>)}
+            </ul>
+          )}
           {editing === c.id && <EditCorrection employee={employee} corr={c} onSaved={() => { setEditing(null); load(); }} />}
         </div>
       ))}
