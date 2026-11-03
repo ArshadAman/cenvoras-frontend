@@ -58,6 +58,7 @@ export default function SalaryBreakdownCalculator({
   onWorkStateChange = null,
   initialComponents = null,
   initialBasicPct = null,
+  initialPfWageComponents = null,
   initialHraPct = null,
   initialTaxDeclarations = null,
   dateOfJoining = null,
@@ -105,7 +106,8 @@ export default function SalaryBreakdownCalculator({
       if (name.startsWith('_') || core.has(norm) || !(amt > 0)) return;
       if (norm === 'conveyance allowance') conv = amt;
       else if (norm === 'medical allowance') med = amt;
-      else list.push({ id: `saved-${i}-${name}`, name, amount: amt });
+      else list.push({ id: `saved-${i}-${name}`, name, amount: amt,
+        pfWages: Array.isArray(initialPfWageComponents) && initialPfWageComponents.includes(name) });
     });
     allowancesPreloaded.current = true;
     if (conv) setConveyance(conv);
@@ -192,7 +194,7 @@ export default function SalaryBreakdownCalculator({
   const addCustomAllowance = () => {
     setCustomAllowances(prev => [
       ...prev,
-      { id: Date.now().toString(), name: 'Special Benefit', amount: 1000 }
+      { id: Date.now().toString(), name: 'Special Benefit', amount: 1000, pfWages: false }
     ]);
   };
 
@@ -308,6 +310,8 @@ export default function SalaryBreakdownCalculator({
             ),
           },
           ad_hoc_earnings: adHocEarnings,
+          // Custom allowances ticked 'Counts as PF wages (DA / retaining allowance)'.
+          pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0).map((ca) => ca.name),
           breakdown: res.data,
         });
       }
@@ -679,8 +683,17 @@ export default function SalaryBreakdownCalculator({
                             placeholder="Amount"
                           />
                         </div>
+                        <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] whitespace-nowrap" title="Counts as PF wages (DA / retaining allowance): added to Basic for PF, capped at the PF wage ceiling">
+                          <input
+                            type="checkbox"
+                            checked={!!ca.pfWages}
+                            onChange={(e) => updateCustomAllowance(ca.id, 'pfWages', e.target.checked)}
+                          />
+                          Counts as PF wages (DA / retaining allowance)
+                        </label>
                         <button
                           type="button"
+                          aria-label={`Remove ${ca.name}`}
                           onClick={() => removeCustomAllowance(ca.id)}
                           className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition"
                         >

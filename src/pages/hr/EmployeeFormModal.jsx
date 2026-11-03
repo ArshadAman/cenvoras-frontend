@@ -357,6 +357,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           components: salaryConfig.components || {},
           basic_pct: salaryConfig.basic_pct,
           hra_pct: salaryConfig.hra_pct,
+          ...(Array.isArray(salaryConfig.pf_wage_components) ? { pf_wage_components: salaryConfig.pf_wage_components } : {}),
         };
         if (!employee && formData.date_of_joining) {
           payload.salary.effective_from = formData.date_of_joining;
@@ -877,6 +878,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     setFormData((prev) => ({ ...prev, work_state: ws }));
                     setSalaryConfig((prev) => (prev ? { ...prev, work_state: ws } : prev));
                   }}
+                  initialPfWageComponents={employee?.salary_details?.pf_wage_components || []}
                   initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
                   initialBasicPct={
                     salaryConfig?.basic_pct ??
