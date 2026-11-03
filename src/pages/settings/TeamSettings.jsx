@@ -191,14 +191,14 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-[var(--text-primary)] font-medium">Subscription Plan: <span className="text-[var(--accent-primary)] font-bold">{planName}</span></p>
-              <p className="text-[var(--text-secondary)]">Limit: {maxLimit === -1 ? 'Unlimited' : maxLimit} Managers</p>
+              <p className="text-[var(--text-secondary)]">Limit: {maxLimit === -1 ? 'Unlimited' : maxLimit} Members</p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tighter">
               {currentCount} <span className="text-lg text-[var(--text-secondary)]">/ {maxLimit === -1 ? 'Unlimited' : maxLimit}</span>
             </p>
-            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest mt-1">Managers Used</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest mt-1">Members Used</p>
           </div>
         </div>
 
@@ -225,7 +225,7 @@ export default function TeamSettings() {
                         <UserPlusIcon className="w-8 h-8 text-[var(--text-secondary)]" />
                       </div>
                       <p className="text-[var(--text-primary)] font-medium mb-1">No team members yet</p>
-                      <p className="text-sm text-[var(--text-secondary)] mb-4">Start creating managers to help run your business.</p>
+                      <p className="text-sm text-[var(--text-secondary)] mb-4">Add team members to help run your business.</p>
                       {canAddMore && (
                         <button onClick={() => setShowAddModal(true)} className="text-[var(--accent-primary)] hover:underline text-sm font-medium">
                           + Invite your first member
