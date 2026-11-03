@@ -90,7 +90,7 @@ function RecalcPreviewModal({ run, onClose, onConfirm }) {
           <table className="w-full text-xs" data-testid="recalc-diff">
             <thead><tr className="text-[var(--text-muted)] text-left">
               <th>Employee</th><th className="text-right">Old gross</th><th className="text-right">New gross</th>
-              <th className="text-right">ESI (old → new)</th><th className="text-right">PT (old → new)</th><th className="text-right">PF wage (old → new)</th><th>Notes</th>
+              <th className="text-right">ESI (old → new)</th><th className="text-right">PT (old → new)</th><th className="text-right">PF base, capped (old → new)</th><th>Notes</th>
             </tr></thead>
             <tbody>
               {rows.map((r) => (
@@ -102,7 +102,7 @@ function RecalcPreviewModal({ run, onClose, onConfirm }) {
                   <td className="text-right">{inrFmt(r.old_pt)} → {inrFmt(r.new_pt)}</td>
                   <td className="text-right">{inrFmt(r.old_pf_wage)} → {inrFmt(r.new_pf_wage)}</td>
                   <td className="text-[var(--status-warning)]">
-                    {[r.esi_change, r.pt_changed ? 'PT slab changed' : null, r.pf_wage_changed ? 'PF wage (Basic + DA/RA) changed' : null,
+                    {[r.esi_change, r.pt_changed ? 'PT slab changed' : null, r.pf_wage_changed ? 'PF contribution base or PF amount changed' : null,
                       r.verify_salary_structure ? 'VERIFY salary structure: components exceed CTC' : null].filter(Boolean).join('; ')}
                   </td>
                 </tr>
@@ -1393,18 +1393,21 @@ export default function PayrollRuns() {
 
                         {/* Approve (Posts Accrual to Ledger) */}
                         {['calculated', 'review', 'completed'].includes(run.status) && (
-                          <span title={blockerTooltip(run.id) || undefined} className="inline-block">
+                          <span title={blockerTooltip(run.id) || undefined} className={blockerTooltip(run.id) ? "inline-block cursor-not-allowed" : "inline-block"}>
                           <button
                             disabled={!!blockerTooltip(run.id)}
-                            aria-disabled={!!blockerTooltip(run.id)}
+                            aria-describedby={blockerTooltip(run.id) ? `approve-block-${run.id}` : undefined}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleApprove(run.id);
                             }}
-                            className="disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 text-xs font-semibold inline-flex items-center gap-1 transition"
+                            className="disabled:opacity-50 disabled:pointer-events-none px-3 py-1 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 text-xs font-semibold inline-flex items-center gap-1 transition"
                           >
                             <CheckBadgeIcon className="w-3.5 h-3.5" /> Approve
                           </button>
+                          {blockerTooltip(run.id) && (
+                            <span id={`approve-block-${run.id}`} className="sr-only">{blockerTooltip(run.id)}</span>
+                          )}
                           </span>
                         )}
 
