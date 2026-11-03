@@ -8,6 +8,7 @@ import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getTodayKolkata, formatDMY } from '../../utils/date';
+import { quantityError, isMeasuredUnit } from '../../utils/uqc';
 
 export default function CreditNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -159,11 +160,11 @@ export default function CreditNoteForm({ isOpen, onClose }) {
     setDismissedDateError(false);
   }, [dateError]);
 
-  const fractionalReturn = wholeUnits && returnItems.some((it) => {
-    const q = Number(it.return_qty) || 0;
-    return q > 0 && !Number.isInteger(q);
-  });
-  const WHOLE_UNITS_MSG = 'Returns and defective items must be whole units';
+  // UAT P1 item 5: precision by UQC; typed quantities are kept as typed, never rounded.
+  const qtyErrorFor = (it) => quantityError(it.return_qty, it.unit || it.product_detail?.unit, { stockReturn: wholeUnits });
+  const firstQtyError = returnItems.map(qtyErrorFor).find(Boolean) || '';
+  const fractionalReturn = Boolean(firstQtyError);
+  const WHOLE_UNITS_MSG = firstQtyError;
 
   const hasExcessQty = returnItems.some(item => {
     const qty = parseFloat(item.return_qty) || 0;
@@ -411,7 +412,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                       Invoice Items
                     </h4>
                     <span className="text-xs text-[var(--text-muted)]">
-                      {wholeUnits ? 'Returns and defective items must be whole units.' : 'Enter return quantities.'}
+                      {'Count units (pcs, nos, box…) take whole numbers; kg, ltr, mtr and other measured units take up to 3 decimals.'}
                     </span>
                   </div>
 
@@ -449,15 +450,13 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                                 <input 
                                   type="number"
                                   min="0"
-                                  step={wholeUnits ? "1" : "0.01"}
+                                  step={isMeasuredUnit(item.unit || item.product_detail?.unit) ? "0.001" : "1"}
                                   value={item.return_qty === 0 ? '' : item.return_qty}
                                   placeholder="0"
                                   onChange={(e) => {
                                     const valStr = e.target.value;
-                                    const raw = valStr === '' ? 0 : parseFloat(valStr);
-                                    const stepped = wholeUnits ? Math.round(raw) : (Math.round(raw * 100) / 100);
                                     const newItems = [...returnItems];
-                                    newItems[idx].return_qty = isNaN(stepped) ? 0 : stepped;
+                                    newItems[idx].return_qty = valStr === '' ? 0 : valStr;
                                     setReturnItems(newItems);
                                   }}
                                   className={`w-full bg-[var(--bg-primary)] border ${
@@ -509,15 +508,13 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                                 <input 
                                   type="number" 
                                   min="0"
-                                  step={wholeUnits ? "1" : "0.01"}
+                                  step={isMeasuredUnit(item.unit || item.product_detail?.unit) ? "0.001" : "1"}
                                   value={item.return_qty === 0 ? '' : item.return_qty}
                                   placeholder="0"
                                   onChange={(e) => {
                                     const valStr = e.target.value;
-                                    const raw = valStr === '' ? 0 : parseFloat(valStr);
-                                    const stepped = wholeUnits ? Math.round(raw) : (Math.round(raw * 100) / 100);
                                     const newItems = [...returnItems];
-                                    newItems[idx].return_qty = isNaN(stepped) ? 0 : stepped;
+                                    newItems[idx].return_qty = valStr === '' ? 0 : valStr;
                                     setReturnItems(newItems);
                                   }}
                                   className={`w-full bg-[var(--bg-surface)] border ${
