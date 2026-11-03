@@ -866,19 +866,22 @@ function PaymentModal({ isOpen, onClose, payrollRun, onSuccess }) {
 function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setReason('');
+      setError('');
     }
   }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reason.trim()) {
-      showErrorToast('Please enter a reason for reopening');
+      setError('A reason is required to reopen a payroll run.');
       return;
     }
+    setError('');
     setSaving(true);
     try {
       await hrApi.reopenPayroll(payrollRun.id, { reason: reason.trim() });
@@ -886,7 +889,7 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
       onSuccess();
       onClose();
     } catch (err) {
-      showErrorToast(err, 'Failed to reopen payroll');
+      setError(showErrorToast(err, 'Failed to reopen payroll'));
     } finally {
       setSaving(false);
     }
@@ -913,6 +916,11 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason for Reopening *</label>
             <textarea required rows={3} value={reason} onChange={e => setReason(e.target.value)} className={ic + ' resize-none'} placeholder="e.g. Leave adjustments reported post approval" />
           </div>
+
+          <p className="text-xs text-[var(--text-muted)]">Admin only. Only an approved, unpaid run can be reopened. Your name, the time and this reason are logged.</p>
+          {error && (
+            <div role="alert" className="text-sm text-[var(--status-danger)] bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl px-3 py-2">{error}</div>
+          )}
 
           <div className="pt-3 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl hover:text-[var(--text-primary)] transition">Cancel</button>
@@ -1274,7 +1282,8 @@ export default function PayrollRuns() {
                         )}
 
                         {/* Reopen */}
-                        {['approved', 'paid', 'locked'].includes(run.status) && (
+                        {/* Rudra: only approved-but-UNPAID runs can be reopened; paid / TDS-PF-ESI deposited runs are corrected via arrears or recovery in the next open run */}
+                        {['approved', 'locked', 'finalised'].includes(run.status) && !run.paid_at && !run.tds_deposited_at && !run.pf_deposited_at && !run.esi_deposited_at && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

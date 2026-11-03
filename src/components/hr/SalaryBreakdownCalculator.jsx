@@ -54,7 +54,8 @@ function derivePctsFromComponents(components, monthlyCtc, fallbackBasic = 50, fa
 export default function SalaryBreakdownCalculator({
   initialMonthlyCtc = 50000,
   initialTaxRegime = 'new',
-  initialWorkState = 'Karnataka',
+  initialWorkState = '',
+  onWorkStateChange = null,
   initialComponents = null,
   initialBasicPct = null,
   initialHraPct = null,
@@ -74,7 +75,7 @@ export default function SalaryBreakdownCalculator({
   const [monthlyCtc, setMonthlyCtc] = useState(startCtc);
   const [annualCtc, setAnnualCtc] = useState(Math.round(startCtc * 12 * 100) / 100);
   const [taxRegime, setTaxRegime] = useState(initialTaxRegime || 'new');
-  const [workState, setWorkState] = useState(initialWorkState || 'Karnataka');
+  const [workState, setWorkState] = useState(initialWorkState || '');
   const workStateTouched = useRef(false);
   // Company state can arrive after mount (profile query); follow it until the user picks a state.
   useEffect(() => {
@@ -565,9 +566,16 @@ export default function SalaryBreakdownCalculator({
               </label>
               <select
                 value={workState}
-                onChange={(e) => { workStateTouched.current = true; setWorkState(e.target.value); }}
+                onChange={(e) => {
+                  workStateTouched.current = true;
+                  setWorkState(e.target.value);
+                  // UAT item 1: push the pick to the parent form at once, not only after the
+                  // async breakdown call returns (which could be superseded/fail and drop it).
+                  if (onWorkStateChange) onWorkStateChange(e.target.value);
+                }}
                 className="w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               >
+                {!workState && <option value="">Company state (default)</option>}
                 {INDIAN_STATES.map((st) => (
                   <option key={st} value={st} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                     {st}

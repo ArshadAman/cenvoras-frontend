@@ -1,6 +1,8 @@
 /**
  * Company state for PT defaults. The COMPANY (tenant billing_profile) wins over the
  * logged-in user's own profile; a GSTIN prefix (29 = Karnataka) wins over a free-text state.
+ * UAT item 1: no hard-coded fallback state; empty means 'not known yet' and the backend
+ * defaults a blank work state to the company's state.
  * QA: Add Employee defaulted 'Work State (PT)' to Odisha for a Karnataka (29…) company.
  */
 export function stateLabelFromGstin(gstin, indianStates, getGSTStateCode) {
@@ -23,7 +25,7 @@ export function stateLabelFromText(raw, indianStates, getGSTStateCode) {
   return null;
 }
 
-export function resolveCompanyWorkStateFromProfile(profileData, indianStates, getGSTStateCode, fallback = 'Karnataka') {
+export function resolveCompanyWorkStateFromProfile(profileData, indianStates, getGSTStateCode, fallback = '') {
   const company = profileData?.billing_profile || {};
   const user = profileData?.profile || {};
   return (
