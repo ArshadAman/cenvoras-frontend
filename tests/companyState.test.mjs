@@ -15,6 +15,7 @@ test('company state used when there is no GSTIN', () => {
   assert.equal(run({ billing_profile: { state: 'Maharashtra' } }), 'Maharashtra');
   assert.equal(run({ billing_profile: { state: 'KA' } }), 'Karnataka');
 });
-test('falls back to Karnataka when nothing is known', () => {
-  assert.equal(run({}), 'Karnataka');
+test('no hard-coded state when nothing is known (backend defaults to company state)', () => {
+  assert.equal(run({}), '');
+  assert.equal(run(undefined), '');
 });

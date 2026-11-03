@@ -650,7 +650,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
 
               <div>
                 <label className={labelCls}>Work State *</label>
-                <input required type="text" name="work_state" value={formData.work_state} onChange={handleChange} className={inputCls} placeholder="e.g. Maharashtra" />
+                <input type="text" name="work_state" value={formData.work_state} onChange={handleChange} className={inputCls} placeholder={companyWorkState ? `Default: ${companyWorkState} (company state)` : 'Defaults to company state'} />
               </div>
             </div>
           )}
@@ -866,7 +866,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
                   }
                   initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
-                  initialWorkState={salaryConfig?.work_state || formData.work_state || companyWorkState}
+                  initialWorkState={formData.work_state || companyWorkState}
+                  onWorkStateChange={(ws) => {
+                    setFormData((prev) => ({ ...prev, work_state: ws }));
+                    setSalaryConfig((prev) => (prev ? { ...prev, work_state: ws } : prev));
+                  }}
                   initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
                   initialBasicPct={
                     salaryConfig?.basic_pct ??
@@ -890,7 +894,10 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     setFormData((prev) => ({
                       ...prev,
                       tax_regime: calcData.tax_regime,
-                      work_state: calcData.work_state || prev.work_state,
+                      // formData.work_state is the single source of truth (set by
+                      // onWorkStateChange / the Employment tab); a breakdown response must not
+                      // overwrite it with the calculator's initial state.
+                      work_state: prev.work_state || calcData.work_state,
                     }));
                   }}
                 />
