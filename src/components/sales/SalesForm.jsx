@@ -1104,10 +1104,13 @@ export default function SalesForm({
     setRoundOffApplied(existingRoundOff !== 0);
   }, [isOpen, editData?.id, editData?.round_off]);
 
+  // Round half up to the rupee on whole paise (avoids float error such as 1157.5 -> 1157.4999).
   const computeRoundedTotal = (amount) => {
-    const integerPart = Math.floor(amount);
-    const fraction = amount - integerPart;
-    return fraction >= 0.5 ? Math.ceil(amount) : Math.floor(amount);
+    const paise = Math.round(Number(amount || 0) * 100);
+    const sign = paise < 0 ? -1 : 1;
+    const abs = Math.abs(paise);
+    const rupees = Math.floor(abs / 100);
+    return sign * (abs - rupees * 100 >= 50 ? rupees + 1 : rupees);
   };
 
   const { data: subscriptionData } = useQuery({
@@ -1204,6 +1207,14 @@ export default function SalesForm({
     userProfileData?.profile?.gstin ||
     userProfileData?.gstin ||
     null;
+
+  // UAT P1 item 4 (Rudra CA): round-off is a company setting (default on). New documents start
+  // with it applied; the server recomputes the amount (half up to the rupee) on invoices.
+  const companyAutoRoundOff = userProfileData?.auto_round_off !== false;
+  useEffect(() => {
+    if (!isOpen || editData?.id) return;
+    setRoundOffApplied(companyAutoRoundOff);
+  }, [isOpen, editData?.id, companyAutoRoundOff]);
 
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,
@@ -2105,6 +2116,7 @@ export default function SalesForm({
                 status: isDraft ? 'draft' : finalSubmitStatus,
                 total_amount: Number(finalTotal).toFixed(2),
                 round_off: Number(roundOffValue).toFixed(2),
+                apply_round_off: roundOffApplied,
                 notes: values.notes || "",
                 items: processedItems,
                 ...(!isDeliveryChallan && !isQuotation && !isSalesOrder && linkedChallans.length ? { meta: { linked_challans: linkedChallans } } : {}),
