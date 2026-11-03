@@ -18,7 +18,7 @@ const EMPTY_TEAM_FORM = {
   email: '',
   phone: '',
   password: '',
-  role: 'manager',
+  role: 'employee', // UAT P1 #11: least-access default
   permissions: { ...DEFAULT_PERMISSIONS },
 };
 
@@ -107,7 +107,7 @@ export default function TeamSettings() {
     e.preventDefault();
     const payload = {
       ...formData,
-      role: formData.role || 'manager',
+      role: formData.role || 'employee',
       permissions: {
         ...DEFAULT_PERMISSIONS,
         ...(formData.permissions || {}),
@@ -133,7 +133,7 @@ export default function TeamSettings() {
       email: member.email || '',
       phone: member.phone || '',
       password: '', // Leave blank unless changing
-      role: member.role || 'manager',
+      role: member.role || 'employee',
       permissions: {
         ...DEFAULT_PERMISSIONS,
         ...(typeof member.permissions === 'object' && member.permissions !== null ? member.permissions : {}),
@@ -332,7 +332,9 @@ export default function TeamSettings() {
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Role</label>
                   <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none">
+                    <option value="employee" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Employee (own payslips &amp; profile only)</option>
                     <option value="manager" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Manager</option>
+                    <option value="hr" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">HR</option>
                     <option value="salesman" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Salesman</option>
                     <option value="accountant" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Accountant</option>
                   </select>
