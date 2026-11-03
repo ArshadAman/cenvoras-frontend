@@ -52,3 +52,12 @@ export function isGstReturnLink(link) {
 export function needsGstStatusConfirmation(profile) {
   return !!(profile && profile.gst_status_needs_confirmation);
 }
+
+// Sales invoice form heading: "Bill of Supply" (Composition), "Invoice" (Not registered),
+// else "Sales Invoice" (Regular or status not yet stored).
+export function salesFormDocName(profile) {
+  const st = storedGstStatus(profile);
+  if (st === 'composition') return 'Bill of Supply';
+  if (st === 'unregistered') return 'Invoice';
+  return 'Sales Invoice';
+}

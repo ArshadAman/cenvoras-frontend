@@ -1,4 +1,4 @@
-import { taxLocked, documentTitle } from '../../utils/gstStatus';
+import { taxLocked, documentTitle, salesFormDocName } from '../../utils/gstStatus';
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -1830,8 +1830,8 @@ export default function SalesForm({
           <div>
             <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
               {isEdit
-                ? `Edit ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`
-                : `New ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales Invoice'}`}
+                ? `Edit ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : salesFormDocName(companyProfile)}`
+                : `New ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : salesFormDocName(companyProfile)}`}
             </h2>
              <p className="text-xs text-[var(--text-secondary)] flex items-center gap-2">
               <span>Press <kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">F2</kbd> to save</span>
@@ -2834,8 +2834,8 @@ export default function SalesForm({
                               { key: "purchase_price", label: "Pur. Price", show: itemSettings.show_item_purchase_price, width: "100px", minWidth: 100 },
                               { key: "price", label: "Price", show: true, width: "110px", minWidth: 110 },
                               { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
-                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax, width: "90px", minWidth: 90 },
-                              { key: "amount", label: "Taxable", show: true, width: "130px", minWidth: 130 },
+                              { key: "tax", label: "Taxes", show: itemSettings.show_item_tax && !gstTaxLocked, width: "90px", minWidth: 90 },
+                              { key: "amount", label: gstTaxLocked ? "Amount" : "Taxable", show: true, width: "130px", minWidth: 130 },
                               { key: "action", label: "", show: true, width: "70px", minWidth: 70 },
                             ].filter((col) => col.show);
 
@@ -3612,7 +3612,7 @@ export default function SalesForm({
                                                     />
                                                 </div>
                                             )}
-                                            {itemSettings.show_item_tax && (
+                                            {itemSettings.show_item_tax && !gstTaxLocked && (
                                                 <div>
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Tax %</label>
                                                     <Field name={`items.${index}.tax`} type="number" disabled={gstTaxLocked} className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
@@ -3624,7 +3624,7 @@ export default function SalesForm({
                                       {/* Row 4: Amount & Actions */}
                                       <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)]">
                                           <div>
-                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">Taxable</label>
+                                              <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-1">{gstTaxLocked ? 'Amount' : 'Taxable'}</label>
                                               <div className="text-xl font-mono font-black text-[var(--accent-primary)]">
                                                   {getCurrencySymbol()}{Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                               </div>
@@ -3785,6 +3785,7 @@ export default function SalesForm({
                       <span>Total Discount</span>
                       <span className="font-mono font-tabular">-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
                     </div>
+                    {!gstTaxLocked && (<>
                     <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Total Tax (GST)</span>
                       <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
@@ -3810,6 +3811,7 @@ export default function SalesForm({
                         </>
                       );
                     })()}
+                    </>)}
                     <div className="h-px bg-[var(--border-subtle)] my-3"></div>
                     {roundOffApplied && (
                       <div className="flex justify-between text-[var(--status-warning)] font-mono font-tabular">
