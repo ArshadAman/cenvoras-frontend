@@ -57,6 +57,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [allEmployees, setAllEmployees] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(false);
+  const [calcBusy, setCalcBusy] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [salaryConfig, setSalaryConfig] = useState(null);
   const [salaryEdited, setSalaryEdited] = useState(false);
@@ -249,6 +250,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (calcBusy) return;  // safety net: the breakdown is still updating
 
     // 1. Mandatory phone number check (10 to 11 digits, e.g. 9876543210 or 09876543210)
     const rawPhone = (formData.personal_phone || '').trim();
@@ -894,6 +896,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                       : null)
                   }
                   dateOfJoining={formData.date_of_joining || employee?.date_of_joining || null}
+                  onBusyChange={setCalcBusy}
                   onChange={(calcData) => {
                     const session = formSessionRef.current;
                     // Ignore stale calculator responses from a previous open session
@@ -949,8 +952,11 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <button type="button" onClick={onClose} className="btn-secondary px-5 py-2 text-sm font-medium rounded-xl">
                 Cancel
               </button>
-              <button type="submit" disabled={loading} className="btn-primary px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-50">
-                {loading ? 'Saving...' : 'Save Employee'}
+              <button type="submit" disabled={loading || calcBusy} aria-busy={calcBusy || undefined} className="btn-primary px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-50 inline-flex items-center gap-2">
+                {calcBusy && !loading && (
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                )}
+                {loading ? 'Saving...' : calcBusy ? 'Updating breakdown…' : 'Save Employee'}
               </button>
             </div>
           </div>
