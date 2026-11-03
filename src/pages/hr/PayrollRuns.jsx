@@ -1126,12 +1126,41 @@ export default function PayrollRuns() {
   const [selectedReopenRun, setSelectedReopenRun] = useState(null);
   const [selectedDetailsRun, setSelectedDetailsRun] = useState(null);
 
+  // Unresolved critical exceptions block approval on the backend (approve view); mirror that here.
+  const [blockers, setBlockers] = useState({});
+  const loadBlockers = async (list) => {
+    const pending = (list || []).filter((r) => ['calculated', 'review', 'completed'].includes(r.status));
+    const entries = await Promise.all(pending.map(async (r) => {
+      if (!(r.critical_exceptions_count > 0)) return [r.id, []];
+      try {
+        const res = await hrApi.getExceptions({ payroll_run: r.id });
+        const items = (res.data?.results || res.data || []).filter((e) => e.severity === 'critical' && !e.is_resolved);
+        return [r.id, items];
+      } catch {
+        return [r.id, [{ id: 'unknown', code: 'UNKNOWN', employee_name: '', message: `${r.critical_exceptions_count} critical exception(s)` }]];
+      }
+    }));
+    setBlockers(Object.fromEntries(entries));
+  };
+  const blockerTooltip = (runId) => {
+    const items = blockers[runId] || [];
+    if (!items.length) return '';
+    const who = (e) => (e.employee_code ? e.employee_code : (e.employee_name || 'General'));
+    const verify = items.filter((e) => e.code === 'SALARY_EXCEEDS_CTC').map(who);
+    const others = items.filter((e) => e.code !== 'SALARY_EXCEEDS_CTC').map((e) => `${who(e)} (${e.code})`);
+    const parts = [];
+    if (verify.length) parts.push(`Resolve VERIFY salary structure for: ${[...new Set(verify)].join(', ')}`);
+    if (others.length) parts.push(`Resolve critical exceptions: ${[...new Set(others)].join(', ')}`);
+    return parts.join('. ');
+  };
+
   const fetchRuns = async ({ soft = false } = {}) => {
     try {
       if (!soft) setLoading(true);
       const res = await hrApi.getPayrollRuns();
       const list = res.data?.results || res.data || [];
       setRuns(list);
+      loadBlockers(list);
       // Keep details modal in sync after reopen / recalculate
       setSelectedDetailsRun((prev) => {
         if (!prev?.id) return prev;
@@ -1361,15 +1390,19 @@ export default function PayrollRuns() {
 
                         {/* Approve (Posts Accrual to Ledger) */}
                         {['calculated', 'review', 'completed'].includes(run.status) && (
+                          <span title={blockerTooltip(run.id) || undefined} className="inline-block">
                           <button
+                            disabled={!!blockerTooltip(run.id)}
+                            aria-disabled={!!blockerTooltip(run.id)}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleApprove(run.id);
                             }}
-                            className="px-3 py-1 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 text-xs font-semibold inline-flex items-center gap-1 transition"
+                            className="disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 text-xs font-semibold inline-flex items-center gap-1 transition"
                           >
                             <CheckBadgeIcon className="w-3.5 h-3.5" /> Approve
                           </button>
+                          </span>
                         )}
 
                         {/* Pay / Disburse */}
