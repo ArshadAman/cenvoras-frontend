@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { initialReceiptDate, initialReceiptTouched, receiptDateAfterBillDateChange,
-  receiptDatePayload, receiptDateError } from './rcmReceiptDate';
+  receiptDatePayload, receiptDateError, hasReverseCharge } from './rcmReceiptDate';
 
 describe('RCM receipt date', () => {
   it('defaults to the bill date and loads a saved value', () => {
@@ -22,5 +22,11 @@ describe('RCM receipt date', () => {
     expect(receiptDateError({ rcm_receipt_date: ['Enter a valid date.'] })).toBe('Enter a valid date.');
     expect(receiptDateError({ details: { rcm_receipt_date: ['Bad'] } })).toBe('Bad');
     expect(receiptDateError({ bill_number: ['x'] })).toBeNull();
+  });
+  it('treats a bill with any reverse-charge line as reverse charge', () => {
+    const v = { is_reverse_charge: false, bill_date: '2026-08-05', rcm_receipt_date: '', items: [{ is_rcm: false }, { is_rcm: true }] };
+    expect(hasReverseCharge(v)).toBe(true);
+    expect(receiptDatePayload(v)).toBe('2026-08-05');
+    expect(hasReverseCharge({ items: [{ is_rcm: false }] })).toBe(false);
   });
 });

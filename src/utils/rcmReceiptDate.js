@@ -14,8 +14,12 @@ export function receiptDateAfterBillDateChange(newBillDate, currentReceipt, touc
   return touched ? currentReceipt : newBillDate;
 }
 
+export function hasReverseCharge(values) {
+  return !!(values?.is_reverse_charge || (values?.items || []).some((it) => it?.is_rcm));
+}
+
 export function receiptDatePayload(values) {
-  return values?.is_reverse_charge ? (values.rcm_receipt_date || values.bill_date || null) : null;
+  return hasReverseCharge(values) ? (values.rcm_receipt_date || values.bill_date || null) : null;
 }
 
 // error.details from api/purchase.js: { rcm_receipt_date: ["..."] } or a nested { details: {...} }.

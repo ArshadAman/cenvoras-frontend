@@ -8,6 +8,8 @@ import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../../hooks/useEscStack";
 import { yupGstinOptional } from "../../utils/gstin";
+import { extractFieldErrors } from "../../utils/fieldErrors";
+import { formatErrorMessage } from "../../utils/toastUtils";
 
 const customerSchema = Yup.object().shape({
   name: Yup.string()
@@ -40,7 +42,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create customer");
+      toast.error(formatErrorMessage(error, "Failed to create customer"));
     },
   });
 
@@ -53,11 +55,12 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update customer");
+      toast.error(formatErrorMessage(error, "Failed to update customer"));
     },
   });
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting, setFieldError, setStatus }) => {
+    setStatus(undefined);
     // Clean up empty values
     const cleanValues = Object.fromEntries(
       Object.entries(values).filter(([_, value]) => {
@@ -73,7 +76,10 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
         await createMutation.mutateAsync(cleanValues);
       }
     } catch (e) {
-      // Error is handled in the mutation onError callback
+      // Toast is raised in onError; also show the backend's field errors inline (e.g. invalid GSTIN).
+      const fieldErrors = extractFieldErrors(e);
+      Object.entries(fieldErrors).forEach(([f, m]) => setFieldError(f, m));
+      setStatus({ formError: fieldErrors.gstin || Object.values(fieldErrors)[0] || formatErrorMessage(e, 'Could not save customer') });
     } finally {
       setSubmitting(false);
     }
@@ -124,8 +130,13 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting }) => (
+          {({ isSubmitting, status }) => (
             <Form className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+              {status?.formError && (
+                <div role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {status.formError}
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Name */}

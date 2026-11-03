@@ -182,6 +182,12 @@ export function formatErrorMessage(err, fallback = 'Something went wrong. Please
     }
   }
 
+  // Handle { success: false, message: "Validation error.", errors: { field: ["msg"] } }
+  if (responseData.errors && typeof responseData.errors === 'object' && !Array.isArray(responseData.errors)) {
+    const errMessages = flattenValidationErrors(responseData.errors);
+    if (errMessages.length > 0) return errMessages.slice(0, 3).join(' • ');
+  }
+
   // Handle { error: "..." }
   if (typeof responseData.error === 'string' && !responseData.details) {
     for (const { pattern, replacement } of TECHNICAL_MESSAGE_MAP) {
