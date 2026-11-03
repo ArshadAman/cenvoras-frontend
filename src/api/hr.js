@@ -28,6 +28,8 @@ export const hrApi = {
   // UAT #10 (backend #205): admin-only date-of-joining correction. GET previews, POST applies.
   previewDojCorrection: (id, newDoj) => api.get(`/hr/employees/${id}/doj-correction/`, { params: { new_doj: newDoj } }),
   applyDojCorrection: (id, data) => api.post(`/hr/employees/${id}/doj-correction/`, data),
+  listDojCorrections: (id) => api.get(`/hr/employees/${id}/doj-corrections/`),
+  adjustDojCorrection: (id, corrId, data) => api.post(`/hr/employees/${id}/doj-corrections/${corrId}/adjust/`, data),
 
   // Tax Declarations
   getTaxDeclarations: (params) => api.get('/hr/tax-declarations/', { params }),
