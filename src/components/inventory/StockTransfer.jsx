@@ -57,16 +57,21 @@ export default function StockTransfer({ onClose }) {
 
   const createMutation = useMutation({
     mutationFn: createStockMovement,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      (data?.warnings || []).forEach(w => toast.warning(w, { autoClose: 12000 }));
       queryClient.invalidateQueries(["stockPoints"]);
       queryClient.invalidateQueries(["stockMovements"]);
       queryClient.invalidateQueries(["products"]);
       queryClient.invalidateQueries(["warehouses"]);
-      toast.success("Stock Transfer completed successfully!");
+      toast.success(data?.challan_number
+        ? `Stock transferred. Delivery challan ${data.challan_number} (no GST).`
+        : "Stock Transfer completed successfully!");
       onClose();
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.detail || error?.response?.data?.message || error?.message || "Failed to create transfer");
+      const d = error?.response?.data;
+      const itemErr = Array.isArray(d?.items) ? d.items.filter(x => typeof x === 'string').join(' ') : '';
+      toast.error(itemErr || d?.detail || d?.message || error?.message || "Failed to create transfer");
     }
   });
 
@@ -90,28 +95,17 @@ export default function StockTransfer({ onClose }) {
     }
   };
 
-  // Get batches for a product
+  // Get batches for a product at the SOURCE location (stock-point API returns
+  // batch as an id and product as product_id).
   const getBatchesForProduct = (productId) => {
-    console.log('[DEBUG] getBatchesForProduct called with productId:', productId);
-    console.log('[DEBUG] stockPoints:', stockPoints);
-    console.log('[DEBUG] sourceId:', sourceId);
-    
-    if (!productId || !stockPoints.length) {
-      console.log('[DEBUG] Returning empty - no productId or stockPoints');
-      return [];
-    }
-    
-    const filtered = stockPoints.filter(sp => {
-      console.log('[DEBUG] Checking stockPoint:', sp);
-      const spProductId = sp?.batch?.product || sp?.product;
-      console.log('[DEBUG] spProductId:', spProductId, 'vs productId:', productId);
-      const matches = String(spProductId) === String(productId) && (sp?.quantity || 0) > 0;
-      console.log('[DEBUG] matches:', matches);
-      return matches;
+    if (!productId || !stockPoints.length) return [];
+    return stockPoints.filter(sp => {
+      const spProductId = sp?.product_id ?? sp?.batch?.product ?? sp?.product;
+      const spWarehouse = sp?.warehouse?.id ?? sp?.warehouse;
+      return String(spProductId) === String(productId)
+        && (!sourceId || String(spWarehouse) === String(sourceId))
+        && Number(sp?.quantity || 0) > 0;
     });
-    
-    console.log('[DEBUG] Filtered batches:', filtered);
-    return filtered;
   };
 
   return createPortal(
@@ -240,7 +234,7 @@ export default function StockTransfer({ onClose }) {
                                     {!sourceId ? 'Select source first' : !item.product ? 'Select product' : 'Select Batch'}
                                   </option>
                                   {batches.map(sp => (
-                                    <option key={sp?.batch?.id || sp?.id} value={sp?.batch?.id || sp?.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                                    <option key={sp?.id} value={sp?.batch?.id ?? sp?.batch} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                                       {sp?.batch?.batch_number || sp?.batch_number || 'Batch'} (Qty: {sp?.quantity || 0})
                                     </option>
                                   ))}
