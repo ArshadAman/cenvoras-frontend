@@ -119,6 +119,8 @@ export const hrApi = {
   deleteNotification: (id) => api.delete(`/hr/notifications/${id}/`),
 
   // Payroll Lifecycle & Exceptions
+  getPfWageComponents: () => api.get('/hr/pf-wage-components/'),
+  pfWageComponentsAction: (data) => api.post('/hr/pf-wage-components/', data),
   calculatePayroll: (id) => api.post(`/hr/payroll-runs/${id}/calculate/`),
   previewPayrollRecalculation: (id) => api.post(`/hr/payroll-runs/${id}/recalculate-preview/`),
   confirmCtcScaling: (id, data) => api.post(`/hr/payroll-runs/${id}/confirm-ctc-scaling/`, data),
